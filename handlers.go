@@ -99,12 +99,17 @@ func noPage(filename string) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, userstate *permissions.UserState) {
+func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions) {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader := mime.New("/etc/mime.types", true)
 
 	// Handle all requests with this function
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		if perm.Rejected(w, req) {
+			// TODO http status code http.StatusForbidden as well
+			fmt.Fprint(w, "Permission denied!")
+			return
+		}
 		urlpath := req.URL.Path
 		filename := url2filename(servedir, urlpath)
 		// Remove the trailing slash from the filename, if any
@@ -116,11 +121,11 @@ func registerHandlers(mux *http.ServeMux, servedir string, userstate *permission
 		hasfile := exists(noslash)
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, filename, userstate, mimereader)
+			dirPage(w, req, filename, perm.UserState(), mimereader)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, userstate, mimereader)
+			filePage(w, req, noslash, perm.UserState(), mimereader)
 			return
 		}
 		// Not found

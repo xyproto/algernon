@@ -23,7 +23,7 @@ var (
 
 	// List of filenames that should be displayed instead of a directory listing
 	// TODO: Make this configurable
-	indexFilenames = []string{"index.html", "index.md", "index.txt"}
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt"}
 )
 
 func main() {
@@ -62,8 +62,11 @@ func main() {
 
 	// Request handlers
 	mux := http.NewServeMux()
+
+	// New permissions middleware
 	perm := permissions.New()
-	registerHandlers(mux, path, perm.UserState())
+
+	registerHandlers(mux, path, perm)
 
 	s := &http.Server{
 		Addr:           addr,

@@ -256,7 +256,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 	}))
 	// Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 	// Takes nothing
-	L.SetGlobal("Username", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("PasswordAlgo", L.NewFunction(func(L *lua.LState) int {
 		algorithm := userstate.PasswordAlgo()
 		L.Push(lua.LString(algorithm))
 		return 1 // number of results
@@ -284,6 +284,59 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		L.Push(lua.LBool(userstate.CorrectPassword(username, password)))
 		return 1 // number of results
 	}))
-
-	// TODO: The rest of the functions from permissions2/userstate.go
+	// Checks if a confirmation code is already in use, returns a bool
+	// Takes a confirmation code
+	L.SetGlobal("AlreadyHasConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+		confirmationCode := L.ToString(1)
+		L.Push(lua.LBool(userstate.AlreadyHasConfirmationCode(confirmationCode)))
+		return 1 // number of results
+	}))
+	// Find a username based on a given confirmation code, or returns an empty string
+	// Takes a confirmation code
+	L.SetGlobal("FindUserByConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+		confirmationCode := L.ToString(1)
+		username, err := userstate.FindUserByConfirmationCode(confirmationCode)
+		var result lua.LString
+		if err != nil {
+			result = lua.LString("")
+		} else {
+			result = lua.LString(username)
+		}
+		L.Push(result)
+		return 1 // number of results
+	}))
+	// Mark a user as confirmed, returns nothing
+	// Takes a username
+	L.SetGlobal("Confirm", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.Confirm(username)
+		return 0 // number of results
+	}))
+	// Mark a user as confirmed, returns true if it worked out
+	// Takes a confirmation code
+	L.SetGlobal("ConfirmUserByConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+		confirmationCode := L.ToString(1)
+		L.Push(lua.LBool(nil == userstate.ConfirmUserByConfirmationCode(confirmationCode)))
+		return 1 // number of results
+	}))
+	// Set the minimum confirmation code length
+	// Takes the minimum number of characters
+	L.SetGlobal("SetMinimumConfirmationCodeLength", L.NewFunction(func(L *lua.LState) int {
+		length := int(L.ToNumber(1))
+		userstate.SetMinimumConfirmationCodeLength(length)
+		return 0 // number of results
+	}))
+	// Generates and returns a unique confirmation code, or an empty string
+	// Takes no parameters
+	L.SetGlobal("ConfirmUserByConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+		confirmationCode, err := userstate.GenerateUniqueConfirmationCode()
+		var result lua.LString
+		if err != nil {
+			result = lua.LString("")
+		} else {
+			result = lua.LString(confirmationCode)
+		}
+		L.Push(result)
+		return 1 // number of results
+	}))
 }
