@@ -1,5 +1,6 @@
-# luawebserver
-Web server that can run and serve index.lua scripts, when found
+# Algernon
+
+HTTP/2 web server that can serve dynamic lua scripts.
 
 Technologies
 ------------
@@ -189,7 +190,7 @@ LUA functions
 General information
 -------------------
 
-* Version: 0.1
+* Version: 0.2
 * License: MIT
 * Alexander F Rødseth
 
