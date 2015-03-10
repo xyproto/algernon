@@ -1,6 +1,6 @@
 # Algernon
 
-HTTP/2 web server that can serve dynamic lua scripts.
+HTTP/2 web server that can serve markdown and dynamic lua scripts.
 
 Technologies
 ------------
