@@ -1,4 +1,1 @@
-print("hi there", "you")
-print("you are: ")
-print(getUsername())
-print("done")
+print("you have user rights?", tostring(UserRights()))
