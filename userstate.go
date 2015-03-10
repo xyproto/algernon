@@ -69,11 +69,13 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 	// Takes no arguments
 	L.SetGlobal("UsernameCookie", L.NewFunction(func(L *lua.LState) int {
 		username, err := userstate.UsernameCookie(req)
+		var result lua.LString
 		if err != nil {
-			L.Push(lua.LString(""))
+			result = lua.LString("")
 		} else {
-			L.Push(lua.LString(username))
+			result = lua.LString(username)
 		}
+		L.Push(result)
 		return 1 // number of results
 	}))
 	// Store the username in a cookie, returns true if successful
@@ -81,6 +83,60 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 	L.SetGlobal("SetUsernameCookie", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
 		L.Push(lua.LBool(nil == userstate.SetUsernameCookie(w, username)))
+		return 1 // number of results
+	}))
+	// Get the username stored in a cookie, or an empty string
+	// Takes no arguments
+	L.SetGlobal("AllUsernames", L.NewFunction(func(L *lua.LState) int {
+		usernames, err := userstate.AllUsernames()
+		var table *lua.LTable
+		if err != nil {
+			table = L.NewTable()
+		} else {
+			table = strings2table(L, usernames)
+		}
+		L.Push(table)
+		return 1 // number of results
+	}))
+	// Get the email for a given username, or an empty string
+	// Takes a username
+	L.SetGlobal("Email", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		email, err := userstate.Email(username)
+		var result lua.LString
+		if err != nil {
+			result = lua.LString("")
+		} else {
+			result = lua.LString(email)
+		}
+		L.Push(result)
+		return 1 // number of results
+	}))
+	// Get the password hash for a given username, or an empty string
+	// Takes a username
+	L.SetGlobal("PasswordHash", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		pw, err := userstate.PasswordHash(username)
+		var result lua.LString
+		if err != nil {
+			result = lua.LString("")
+		} else {
+			result = lua.LString(pw)
+		}
+		L.Push(result)
+		return 1 // number of results
+	}))
+	// Get all unconfirmed usernames
+	// Takes no arguments
+	L.SetGlobal("AllUnconfirmedUsernames", L.NewFunction(func(L *lua.LState) int {
+		usernames, err := userstate.AllUnconfirmedUsernames()
+		var table *lua.LTable
+		if err != nil {
+			table = L.NewTable()
+		} else {
+			table = strings2table(L, usernames)
+		}
+		L.Push(table)
 		return 1 // number of results
 	}))
 

@@ -9,6 +9,14 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+func strings2table(L *lua.LState, sl []string) *lua.LTable {
+	table := L.NewTable()
+	for _, element := range sl {
+		table.Append(lua.LString(element))
+	}
+	return table
+}
+
 func runLua(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState) {
 	L := lua.NewState()
 	defer L.Close()
