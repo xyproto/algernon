@@ -1,20 +1,8 @@
 # luawebserver
 Web server that can run and serve index.lua scripts, when found
 
-Supported lua functions:
+Also supports:
+* setContentType(string) for setting Content-Type
+* print(string, string) for outputting data to the browser
 
-* getUsername()
-get the username, if set
-
-* setContextType(s)
-set the context type
-
-* print(s)
-return data to the user, in the browser
-
-Planning to add:
-* registerUser(username, password)
-* login
-* logout
-* makeAdmin
-* getPermissions
+Will support all functions in xyproto/permissions2/userstate.go
