@@ -139,6 +139,151 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		L.Push(table)
 		return 1 // number of results
 	}))
+	// Get a confirmation code that can be given to a user, or an empty string
+	// Takes a username
+	L.SetGlobal("ConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		pw, err := userstate.ConfirmationCode(username)
+		var result lua.LString
+		if err != nil {
+			result = lua.LString("")
+		} else {
+			result = lua.LString(pw)
+		}
+		L.Push(result)
+		return 1 // number of results
+	}))
+	// Add a user to the list of unconfirmed users, returns nothing
+	// Takes a username and a confirmation code
+	L.SetGlobal("AddUnconfirmed", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		confirmationCode := L.ToString(2)
+		userstate.AddUnconfirmed(username, confirmationCode)
+		return 0 // number of results
+	}))
+	// Remove a user from the list of unconfirmed users, returns nothing
+	// Takes a username
+	L.SetGlobal("RemoveUnconfirmed", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.RemoveUnconfirmed(username)
+		return 0 // number of results
+	}))
+	// Mark a user as confirmed, returns nothing
+	// Takes a username
+	L.SetGlobal("MarkConfirmed", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.MarkConfirmed(username)
+		return 0 // number of results
+	}))
+	// Removes a user, returns nothing
+	// Takes a username
+	L.SetGlobal("RemoveUser", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.RemoveUser(username)
+		return 0 // number of results
+	}))
+	// Make a user an admin, returns nothing
+	// Takes a username
+	L.SetGlobal("SetAdminStatus", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.SetAdminStatus(username)
+		return 0 // number of results
+	}))
+	// Make an admin user a regular user, returns nothing
+	// Takes a username
+	L.SetGlobal("RemoveAdminStatus", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.RemoveAdminStatus(username)
+		return 0 // number of results
+	}))
+	// Add a user, returns nothing
+	// Takes a username, password and email
+	L.SetGlobal("AddUser", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		password := L.ToString(2)
+		email := L.ToString(3)
+		userstate.AddUser(username, password, email)
+		return 0 // number of results
+	}))
+	// Set a user as logged in on the server (not cookie), returns nothing
+	// Takes a username
+	L.SetGlobal("SetLoggedIn", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.SetLoggedIn(username)
+		return 0 // number of results
+	}))
+	// Set a user as logged out on the server (not cookie), returns nothing
+	// Takes a username
+	L.SetGlobal("SetLoggedOut", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.SetLoggedOut(username)
+		return 0 // number of results
+	}))
+	// Log in a user, both on the server and with a cookie. Returns nothing
+	// Takes a username
+	L.SetGlobal("Login", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.Login(w, username)
+		return 0 // number of results
+	}))
+	// Logs out a user, on the server (which is enough). Returns nothing
+	// Takes a username
+	L.SetGlobal("Logout", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		userstate.Logout(username)
+		return 0 // number of results
+	}))
+	// Get the current username, from the cookie
+	// Takes nothing
+	L.SetGlobal("Username", L.NewFunction(func(L *lua.LState) int {
+		username := userstate.Username(req)
+		L.Push(lua.LString(username))
+		return 1 // number of results
+	}))
+	// Get the current cookie timeout
+	// Takes a username
+	L.SetGlobal("CookieTimeout", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		L.Push(lua.LNumber(userstate.CookieTimeout(username)))
+		return 1 // number of results
+	}))
+	// Set the current cookie timeout
+	// Takes a timeout number, measured in seconds
+	L.SetGlobal("SetCookieTimeout", L.NewFunction(func(L *lua.LState) int {
+		timeout := int64(L.ToNumber(1))
+		userstate.SetCookieTimeout(timeout)
+		return 0 // number of results
+	}))
+	// Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
+	// Takes nothing
+	L.SetGlobal("Username", L.NewFunction(func(L *lua.LState) int {
+		algorithm := userstate.PasswordAlgo()
+		L.Push(lua.LString(algorithm))
+		return 1 // number of results
+	}))
+	// Set the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
+	// Takes a string
+	L.SetGlobal("SetPasswordAlgo", L.NewFunction(func(L *lua.LState) int {
+		algorithm := L.ToString(1)
+		userstate.SetPasswordAlgo(algorithm)
+		return 0 // number of results
+	}))
+	// Hash the password, returns a string
+	// Takes a username and password (username can be used for salting)
+	L.SetGlobal("HashPassword", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		password := L.ToString(2)
+		L.Push(lua.LString(userstate.HashPassword(username, password)))
+		return 1 // number of results
+	}))
+	// Check if a given username and password is correct, returns a bool
+	// Takes a username and password
+	L.SetGlobal("CorrectPassword", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		password := L.ToString(2)
+		L.Push(lua.LBool(userstate.CorrectPassword(username, password)))
+		return 1 // number of results
+	}))
 
 	// TODO: The rest of the functions from permissions2/userstate.go
 }
