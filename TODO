@@ -1,3 +1,7 @@
-* Support all functions in permissions2/userstate
-* Support onthefly and webhandle/instapage as well
-* Create an example webpage where people can log in and chat
+* If a line starts with "<", just output that line directly.
+  (replace < with print([===[, then add ]===]) to the end).
+  * Read the lua file manually, then perform replacements.
+  * Also something like "METHOD=GET" and "PATH=/somewhere" at the top.
+* Support all functions in permissions2/userstate.
+* Support onthefly and webhandle/instapage as well.
+* Create an example webpage where people can log in and chat.
