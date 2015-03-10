@@ -1,0 +1,3 @@
+* Support all functions in permissions2/userstate
+* Support onthefly and webhandle/instapage as well
+* Create an example webpage where people can log in and chat
