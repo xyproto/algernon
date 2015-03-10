@@ -5,4 +5,4 @@ Also supports:
 * setContentType(string) for setting Content-Type
 * print(string, string) for outputting data to the browser
 
-Will support all functions in xyproto/permissions2/userstate.go
+The plan is to support all functions in xyproto/permissions2/userstate.go
