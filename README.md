@@ -4,7 +4,7 @@ Web server that can run and serve index.lua scripts, when found
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting Lua code, [http2](https://github.com/bradfitz/http2) for serving HTTP/2 and [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering.
+Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2 and [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering.
 
 Design choices
 --------------
@@ -26,6 +26,9 @@ LUA functions
 * print(string, string) for outputting data to the browser. Print always takes two arguments, for now.
 
 ~~~
+    User/permission functions that are exposed to Lua scripts
+    ---------------------------------------------------------
+
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments
 	UserRights
@@ -182,3 +185,11 @@ LUA functions
 	// Takes no parameters
 	ConfirmUserByConfirmationCode
 ~~~
+
+General information
+-------------------
+
+* Version: 0.1
+* License: MIT
+* Alexander F Rødseth
+
