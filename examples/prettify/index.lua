@@ -2,7 +2,7 @@ content("text/html")
 
 -- output the given code within a prettyprint class
 function prettyprint(code)
-  print[[<div style="width: 80%;"><pre class="prettyprint">]]..code..[[</pre></div>]]
+  print([[<div style="width: 80%;"><pre class="prettyprint">]]..code..[[</pre></div>]])
 end
 
 -- format the title as relatively large letters
@@ -12,7 +12,7 @@ end
 
 -- format the title as big letters
 function bigtitle(text)
-  print[[<div style="font-size: 3em; font-weight: bold;">]]..text..[[</div>]]
+  print([[<div style="font-size: 3em; font-weight: bold;">]]..text..[[</div>]])
 end
 
 --  horizontal space. There are better ways, but this works too.
