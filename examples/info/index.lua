@@ -1,5 +1,5 @@
 content("text/html")
-print([[<html><body style="background: #202020; color: white; font-family: sans-serif; margin: 4em;">]])
+print([[<!doctype html><html><body style="background: #202020; color: white; font-family: sans-serif; margin: 4em;">]])
 mprint(version().."\n====")
 mprint("* HTTP method: "..method())
 mprint("* URL path: "..urlpath())
