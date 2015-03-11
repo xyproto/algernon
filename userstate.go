@@ -328,7 +328,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 	}))
 	// Generates and returns a unique confirmation code, or an empty string
 	// Takes no parameters
-	L.SetGlobal("ConfirmUserByConfirmationCode", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("GenerateUniqueConfirmationCode", L.NewFunction(func(L *lua.LState) int {
 		confirmationCode, err := userstate.GenerateUniqueConfirmationCode()
 		var result lua.LString
 		if err != nil {
