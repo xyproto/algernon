@@ -11,8 +11,9 @@ Technologies
 Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2 and [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering.
 
 
-Design choices
---------------
+Design decisions
+----------------
+
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
 * If not, unecrypted HTTP is used.
 * /data and /repos have user permissions, /admin has admin permissions and / is public.
@@ -24,23 +25,31 @@ Design choices
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
+* UTF-8 is used whenever possible.
+
+
+Screenshot of one of the examples
+---------------------------------
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
 
 
 LUA functions for handling requests
 -----------------------------------
 
-* `content(string)` for setting Content-Type for a page.
-* `print(...)` can be used for outputting data to the browser. Takes a variable number of strings.
-* `urlpath()` returns the current URL path.
-* `mprint(...)` can be used for outputting markdown to the browser. The given text is converted from markdown to html. Takes a variable number of strings.
+* `content(string)` sets the Content-Type for a page.
 * `method()` returns the requested HTTP method (GET, POST etc).
+* `print(...)` can be used for outputting data to the browser. Takes a variable number of strings.
+* `mprint(...)` can be used for outputting markdown to the browser. The given text is converted from markdown to html. Takes a variable number of strings.
+* `urlpath()` returns the current URL path.
+* `header(string)` returns the HTTP header in the request, for a given key, or an empty string.
 * `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
-* `header(string)` returns the HTTP header in the request, for a given key.
 * `version()` returns the version string for the server.
-* `status(number)` for setting a HTTP status code (like 200 or 404).
-* `error(string, number)` for returning an error message and settings a HTTP status code.
-* `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running is joined with a path separator and the given filename, then returned.
-* `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running is joined with a path separator and the given filename, then returned.
+* `status(number)` sets a HTTP status code (like 200 or 404). Must come before any printing.
+* `error(string, number)` sets a HTTP status code and outputs a message.
+* `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
+* `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
+
 
 LUA functions for handling users and permissions
 ------------------------------------------------
