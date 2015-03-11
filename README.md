@@ -11,6 +11,14 @@ Technologies
 Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2 and [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering.
 
 
+Screenshot
+----------
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
+
+Screenshot of the "prettify" example. Served from a single lua script.
+
+
 Design decisions
 ----------------
 
@@ -26,12 +34,6 @@ Design decisions
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
-
-
-Screenshot of one of the examples
----------------------------------
-
-<img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
 
 
 LUA functions for handling requests
