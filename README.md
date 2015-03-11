@@ -2,6 +2,8 @@
 
 HTTP/2 web server that can serve markdown and dynamic lua scripts.
 
+[http2check](https://github.com/xyproto/http2check) can be used for checking if a server is in fact serving HTTP/2.
+
 Technologies
 ------------
 
@@ -30,161 +32,146 @@ LUA functions
     User/permission functions that are exposed to Lua scripts
     ---------------------------------------------------------
 
-	// Check if the current user has "user rights", returns bool
-	// Takes no arguments
-	UserRights
+	// Check if the current user has "user" rights
+	UserRights() -> bool
 
-	// Check if the given username exists, returns bool
-	// Takes a username
-	HasUser
+	// Check if the given username exists
+	HasUser(string) -> bool
 
-	// Get the value from the given boolean field, returns bool
+	// Get the value from the given boolean field
 	// Takes a username and fieldname
-	BooleanField
+	BooleanField(string, string) -> bool
 
-	// Save a value as a boolean field, returns nothing
+	// Save a value as a boolean field
 	// Takes a username, fieldname and boolean value
-	SetBooleanField
+	SetBooleanField(string, string, bool)
 
-	// Check if a given username is confirmed, returns a bool
-	// Takes a username
-	IsConfirmed
+	// Check if a given username is confirmed
+	IsConfirmed(string) -> bool
 
-	// Check if a given username is logged in, returns a bool
-	// Takes a username
-	IsLoggedIn
+	// Check if a given username is logged in
+	IsLoggedIn(string) -> bool
 
-	// Check if the current user has "admin rights", returns a bool
-	// Takes no arguments.
-	AdminRights
+	// Check if the current user has "admin rights"
+	AdminRights() -> bool
 
-	// Check if a given username is an admin, returns a bool
-	// Takes a username
-	IsAdmin
+	// Check if a given username is an admin
+	IsAdmin(string) -> bool
 
 	// Get the username stored in a cookie, or an empty string
-	// Takes no arguments
-	UsernameCookie
+	UsernameCookie() -> string
 
 	// Store the username in a cookie, returns true if successful
-	// Takes a username
-	SetUsernameCookie
+	SetUsernameCookie(string) -> bool
 
-	// Get the username stored in a cookie, or an empty string
-	// Takes no arguments
-	AllUsernames
+    // Get a table containing all usernames
+	AllUsernames() -> table
 
 	// Get the email for a given username, or an empty string
-	// Takes a username
-	Email
+	Email(string) -> string
 
 	// Get the password hash for a given username, or an empty string
-	// Takes a username
-	PasswordHash
+	PasswordHash(string) -> string
 
 	// Get all unconfirmed usernames
-	// Takes no arguments
-	AllUnconfirmedUsernames
+	AllUnconfirmedUsernames() -> table
 
 	// Get a confirmation code that can be given to a user, or an empty string
 	// Takes a username
-	ConfirmationCode
+	ConfirmationCode(string) -> string
 
-	// Add a user to the list of unconfirmed users, returns nothing
+	// Add a user to the list of unconfirmed users
 	// Takes a username and a confirmation code
-	AddUnconfirmed
+	AddUnconfirmed(string, string)
 
-	// Remove a user from the list of unconfirmed users, returns nothing
+	// Remove a user from the list of unconfirmed users
 	// Takes a username
-	RemoveUnconfirmed
+	RemoveUnconfirmed(string)
 
-	// Mark a user as confirmed, returns nothing
+	// Mark a user as confirmed
 	// Takes a username
-	MarkConfirmed
+	MarkConfirmed(string)
 
-	// Removes a user, returns nothing
+	// Removes a user
 	// Takes a username
-	RemoveUser
+	RemoveUser(string)
 
-	// Make a user an admin, returns nothing
+	// Make a user an admin
 	// Takes a username
-	SetAdminStatus
+	SetAdminStatus(string)
 
-	// Make an admin user a regular user, returns nothing
+	// Make an admin user a regular user
 	// Takes a username
-	RemoveAdminStatus
+	RemoveAdminStatus(string)
 
-	// Add a user, returns nothing
+	// Add a user
 	// Takes a username, password and email
-	AddUser
+	AddUser(string, string, string)
 
-	// Set a user as logged in on the server (not cookie), returns nothing
+	// Set a user as logged in on the server (not cookie)
 	// Takes a username
-	SetLoggedIn
+	SetLoggedIn(string)
 
-	// Set a user as logged out on the server (not cookie), returns nothing
+	// Set a user as logged out on the server (not cookie)
 	// Takes a username
-	SetLoggedOut
+	SetLoggedOut(string)
 
-	// Log in a user, both on the server and with a cookie. Returns nothing
+	// Log in a user, both on the server and with a cookie
 	// Takes a username
-	Login
+	Login(string)
 
-	// Logs out a user, on the server (which is enough). Returns nothing
+	// Logs out a user, on the server (which is enough)
 	// Takes a username
-	Logout
+	Logout(string)
 
 	// Get the current username, from the cookie
-	// Takes nothing
-	Username
+	Username() -> string
 
 	// Get the current cookie timeout
 	// Takes a username
-	CookieTimeout
+	CookieTimeout(string) -> number
 
 	// Set the current cookie timeout
 	// Takes a timeout number, measured in seconds
-	SetCookieTimeout
+	SetCookieTimeout(number)
 
 	// Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
-	// Takes nothing
-	PasswordAlgo
+	PasswordAlgo() -> string
 
 	// Set the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 	// Takes a string
-	SetPasswordAlgo
+	SetPasswordAlgo(string)
 
-	// Hash the password, returns a string
+	// Hash the password
 	// Takes a username and password (username can be used for salting)
-	HashPassword
+	HashPassword(string, string) -> string
 
-	// Check if a given username and password is correct, returns a bool
+	// Check if a given username and password is correct
 	// Takes a username and password
-	CorrectPassword
+	CorrectPassword(string) -> bool
 
-	// Checks if a confirmation code is already in use, returns a bool
+	// Checks if a confirmation code is already in use
 	// Takes a confirmation code
-	AlreadyHasConfirmationCode
+	AlreadyHasConfirmationCode(string) -> bool
 
-	// Find a username based on a given confirmation code, or returns an empty string
-	// Takes a confirmation code
-	FindUserByConfirmationCode
+	// Find a username based on a given confirmation code,
+    // or returns an empty string. Takes a confirmation code
+	FindUserByConfirmationCode(string) -> string
 
-	// Mark a user as confirmed, returns nothing
+	// Mark a user as confirmed
 	// Takes a username
-	Confirm
+	Confirm(string)
 
 	// Mark a user as confirmed, returns true if it worked out
 	// Takes a confirmation code
-	ConfirmUserByConfirmationCode
+	ConfirmUserByConfirmationCode(string) -> bool
 
 	// Set the minimum confirmation code length
 	// Takes the minimum number of characters
-	SetMinimumConfirmationCodeLength
+	SetMinimumConfirmationCodeLength(number)
 
 	// Generates and returns a unique confirmation code, or an empty string
-	// Takes no parameters
-	ConfirmUserByConfirmationCode
+    GenerateUniqueConfirmationCode() -> string
 ~~~
 
 General information
