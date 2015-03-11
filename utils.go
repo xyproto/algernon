@@ -23,7 +23,6 @@ func exists(filename string) bool {
 
 // Translate a given URL path to a probable full filename
 func url2filename(dirname, urlpath string) string {
-	sep := string(os.PathSeparator)
 	if strings.Contains(urlpath, "..") {
 		log.Println("Trying to access URL with ..")
 		return dirname + sep

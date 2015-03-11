@@ -16,6 +16,8 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+const sep = string(os.PathSeparator)
+
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState, mimereader *mime.MimeReader, luapool *lStatePool) {
 	// Mimetypes
@@ -51,7 +53,6 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, usersta
 // Directory listing
 func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	var buf bytes.Buffer
-	sep := string(os.PathSeparator)
 	for _, filename := range getFilenames(dirname) {
 
 		// Find the full name
@@ -107,7 +108,6 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader := mime.New("/etc/mime.types", true)
 	rootdir := servedir
-	sep := string(os.PathSeparator)
 
 	// Lua LState pool
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}

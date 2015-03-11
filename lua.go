@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path"
 
 	"github.com/russross/blackfriday"
 	"github.com/xyproto/permissions2"
@@ -120,7 +122,45 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, userstate
 		return 0 // number of results
 	}))
 
+	// Get the full filename of a given file that is in the directory
+	// of the script that is about to be run.
+	// If no filename is given, the directory where the script lies
+	// is returned.
+	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
+		scriptdir := path.Dir(filename)
+		top := L.GetTop()
+		if top == 1 {
+			fn := L.ToString(1)
+			L.Push(lua.LString(scriptdir + sep + fn))
+		} else {
+			L.Push(lua.LString(scriptdir))
+		}
+		return 1 // number of results
+	}))
+
+	// Get the full filename of a given file that is in the directory
+	// where the server is running (root directory for the server).
+	// If no filename is given, the directory where the server is
+	// currently running is returned.
+	L.SetGlobal("serverdir", L.NewFunction(func(L *lua.LState) int {
+		var result string
+		serverdir, err := os.Getwd()
+		if err != nil {
+			result = ""
+		} else if L.GetTop() == 1 {
+			fn := L.ToString(1)
+			result = serverdir + sep + fn
+		} else {
+			result = serverdir
+		}
+		L.Push(lua.LString(result))
+		return 1 // number of results
+	}))
+
+	// Make the functions related to userstate available to the Lua script
 	exportUserstate(w, req, L, userstate)
+
+	// Run the script
 	if err := L.DoFile(filename); err != nil {
 		log.Println(err)
 	}
