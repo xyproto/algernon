@@ -13,10 +13,11 @@ import (
 	"github.com/russross/blackfriday"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/permissions2"
+	"github.com/yuin/gopher-lua"
 )
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState, mimereader *mime.MimeReader) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState, mimereader *mime.MimeReader, luapool *lStatePool) {
 	// Mimetypes
 	ext := path.Ext(filename)
 	// Markdown pages are handled differently
@@ -31,7 +32,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, usersta
 		fmt.Fprint(w, markdownPage(filename, markdownBody))
 		return
 	} else if ext == ".lua" {
-		runLua(w, req, filename, userstate)
+		runLua(w, req, filename, userstate, luapool)
 		return
 	}
 	// Set the correct Content-Type
@@ -63,15 +64,13 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 		// Remove the root directory from the link path
 		urlpath := full_filename[len(rootdir)+1:]
 
-		// For debugging
-		// buf.WriteString(rootdir + " and " + dirname + " and " + urlpath + "<br>")
 		// Output different entries for files and directories
 		buf.WriteString(easyLink(filename, urlpath, isDir(full_filename)))
 	}
 	title := dirname
 	// Strip the leading "./"
-	if strings.HasPrefix(title, "./") {
-		title = title[2:]
+	if strings.HasPrefix(title, "."+sep) {
+		title = title[1+len(sep):]
 	}
 	// Use the application title for the main page
 	//if title == "" {
@@ -85,12 +84,12 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 }
 
 // When serving a directory. The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, userstate *permissions.UserState, mimereader *mime.MimeReader) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, userstate *permissions.UserState, mimereader *mime.MimeReader, luapool *lStatePool) {
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := path.Join(dirname, indexfile)
 		if exists(filename) {
-			filePage(w, req, filename, userstate, mimereader)
+			filePage(w, req, filename, userstate, mimereader, luapool)
 			return
 		}
 	}
@@ -107,32 +106,35 @@ func noPage(filename string) string {
 func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions) {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader := mime.New("/etc/mime.types", true)
-
 	rootdir := servedir
+	sep := string(os.PathSeparator)
+
+	// Lua LState pool
+	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
+	defer luapool.Shutdown()
 
 	// Handle all requests with this function
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		if perm.Rejected(w, req) {
-			// TODO http status code http.StatusForbidden as well
-			fmt.Fprint(w, "Permission denied!")
+			http.Error(w, "Permission denied!", http.StatusForbidden)
 			return
 		}
 		urlpath := req.URL.Path
 		filename := url2filename(servedir, urlpath)
 		// Remove the trailing slash from the filename, if any
 		noslash := filename
-		if strings.HasSuffix(filename, "/") {
+		if strings.HasSuffix(filename, sep) {
 			noslash = filename[:len(filename)-1]
 		}
 		hasdir := exists(filename) && isDir(filename)
 		hasfile := exists(noslash)
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, filename, perm.UserState(), mimereader)
+			dirPage(w, req, rootdir, filename, perm.UserState(), mimereader, luapool)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm.UserState(), mimereader)
+			filePage(w, req, noslash, perm.UserState(), mimereader, luapool)
 			return
 		}
 		// Not found

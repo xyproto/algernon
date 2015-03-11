@@ -23,9 +23,9 @@ func markdown(text string) string {
 	return string(blackfriday.MarkdownCommon([]byte(text)))
 }
 
-func runLua(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState) {
-	L := lua.NewState()
-	defer L.Close()
+func runLua(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState, luapool *lStatePool) {
+	L := luapool.Get()
+	defer luapool.Put(L)
 
 	// Print text to the webpage that is being served
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
