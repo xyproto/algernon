@@ -188,7 +188,7 @@ GenerateUniqueConfirmationCode() -> string
 General information
 -------------------
 
-* Version: 0.3
+* Version: 0.4
 * License: MIT
 * Alexander F Rødseth
 
