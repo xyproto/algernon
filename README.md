@@ -1,6 +1,6 @@
 # Algernon
 
-HTTP/2 web server that can serve Markdown and dynamic Lua scripts.
+[HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16) web server that can serve Markdown and dynamic Lua scripts.
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving HTTP/2.
 
