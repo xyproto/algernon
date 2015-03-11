@@ -48,7 +48,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, usersta
 }
 
 // Directory listing
-func directoryListing(w http.ResponseWriter, dirname string) {
+func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	var buf bytes.Buffer
 	sep := string(os.PathSeparator)
 	for _, filename := range getFilenames(dirname) {
@@ -60,8 +60,13 @@ func directoryListing(w http.ResponseWriter, dirname string) {
 		}
 		full_filename += filename
 
+		// Remove the root directory from the link path
+		urlpath := full_filename[len(rootdir)+1:]
+
+		// For debugging
+		// buf.WriteString(rootdir + " and " + dirname + " and " + urlpath + "<br>")
 		// Output different entries for files and directories
-		buf.WriteString(easyLink(filename, full_filename, isDir(full_filename)))
+		buf.WriteString(easyLink(filename, urlpath, isDir(full_filename)))
 	}
 	title := dirname
 	// Strip the leading "./"
@@ -80,7 +85,7 @@ func directoryListing(w http.ResponseWriter, dirname string) {
 }
 
 // When serving a directory. The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, dirname string, userstate *permissions.UserState, mimereader *mime.MimeReader) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, userstate *permissions.UserState, mimereader *mime.MimeReader) {
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := path.Join(dirname, indexfile)
@@ -90,7 +95,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, dirname string, userstate
 		}
 	}
 	// Serve a directory listing of no index file is found
-	directoryListing(w, dirname)
+	directoryListing(w, rootdir, dirname)
 }
 
 // When a file is not found
@@ -102,6 +107,8 @@ func noPage(filename string) string {
 func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions) {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader := mime.New("/etc/mime.types", true)
+
+	rootdir := servedir
 
 	// Handle all requests with this function
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
@@ -121,7 +128,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		hasfile := exists(noslash)
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, filename, perm.UserState(), mimereader)
+			dirPage(w, req, rootdir, filename, perm.UserState(), mimereader)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
