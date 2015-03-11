@@ -185,7 +185,7 @@ LUA functions
 General information
 -------------------
 
-* Version: 0.2
+* Version: 0.3
 * License: MIT
 * Alexander F Rødseth
 
