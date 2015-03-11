@@ -26,8 +26,9 @@ Design choices
 * Redis is used for the database backend.
 
 
-LUA functions
--------------
+LUA functions for handling requests
+-----------------------------------
+
 * `content(string)` for setting Content-Type for a page.
 * `print(...)` can be used for outputting data to the browser. Takes a variable number of strings.
 * `urlpath()` returns the current URL path.
@@ -38,11 +39,13 @@ LUA functions
 * `version()` returns the version string for the server.
 * `status(number)` for setting a HTTP status code (like 200 or 404).
 * `error(string, number)` for returning an error message and settings a HTTP status code.
+* `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running is joined with a path separator and the given filename, then returned.
+* `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running is joined with a path separator and the given filename, then returned.
+
+LUA functions for handling users and permissions
+------------------------------------------------
 
 ~~~
-User/permission functions that are exposed to Lua scripts
----------------------------------------------------------
-
 // Check if the current user has "user" rights
 UserRights() -> bool
 
