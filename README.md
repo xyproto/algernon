@@ -41,13 +41,13 @@ LUA functions for handling requests
 
 * `content(string)` sets the Content-Type for a page.
 * `method()` returns the requested HTTP method (GET, POST etc).
-* `print(...)` can be used for outputting data to the browser. Takes a variable number of strings.
-* `mprint(...)` can be used for outputting markdown to the browser. The given text is converted from markdown to html. Takes a variable number of strings.
-* `urlpath()` returns the current URL path.
+* `print(...)` can be used for outputting data to the browser/client. Takes a variable number of strings.
+* `mprint(...)` can be used for outputting markdown to the browser/client. The given text is converted from markdown to html. Takes a variable number of strings.
+* `urlpath()` returns the requested URL path.
 * `header(string)` returns the HTTP header in the request, for a given key, or an empty string.
 * `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
 * `version()` returns the version string for the server.
-* `status(number)` sets a HTTP status code (like 200 or 404). Must come before any printing.
+* `status(number)` sets a HTTP status code (like 200 or 404). Must come before other output.
 * `error(string, number)` sets a HTTP status code and outputs a message.
 * `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
