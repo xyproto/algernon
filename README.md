@@ -26,7 +26,15 @@ Design choices
 LUA functions
 -------------
 * `content(string)` for setting Content-Type for a page.
-* print(...) can be used for outputting data to the browser. Takes a variable number of strings.
+* `print(...)` can be used for outputting data to the browser. Takes a variable number of strings.
+* `urlpath()` returns the current URL path.
+* `mprint(...)` can be used for outputting markdown to the browser. The given text is converted from markdown to html. Takes a variable number of strings.
+* `method()` returns the requested HTTP method (GET, POST etc).
+* `body()` returns the HTTP body in the request.
+* `header(string)` returns the HTTP header in the request, for a given key.
+* `version()` returns the version string for the server.
+* `status(number)` for setting a HTTP status code (like 200 or 404).
+* `error(string, number)` for returning an error message and settings a HTTP status code.
 
 ~~~
     User/permission functions that are exposed to Lua scripts
