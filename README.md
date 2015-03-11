@@ -16,7 +16,7 @@ Screenshot
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
 
-Screenshot of the "prettify" example. Served from a single lua script.
+Screenshot of the *prettify* example. Served from a single lua script.
 
 
 Design decisions
