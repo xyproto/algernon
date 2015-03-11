@@ -2,7 +2,7 @@
 
 HTTP/2 web server that can serve markdown and dynamic lua scripts.
 
-[http2check](https://github.com/xyproto/http2check) can be used for checking if a server is in fact serving HTTP/2.
+[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving HTTP/2.
 
 Technologies
 ------------
@@ -25,8 +25,8 @@ Design choices
 
 LUA functions
 -------------
-* setContentType(string) for setting Content-Type
-* print(string, string) for outputting data to the browser. Print always takes two arguments, for now.
+* `content(string)` for setting Content-Type for a page.
+* print(...) can be used for outputting data to the browser. Takes a variable number of strings.
 
 ~~~
     User/permission functions that are exposed to Lua scripts

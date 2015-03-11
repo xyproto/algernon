@@ -21,16 +21,27 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, userstate
 	L := lua.NewState()
 	defer L.Close()
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
-		a := L.ToString(1)
-		b := L.ToString(2)
-		fmt.Fprintln(w, a, b)
+		top := L.GetTop()
+		for i := 1; i <= top; i++ {
+			fmt.Fprint(w, L.Get(i).String())
+			if i != top {
+				fmt.Fprint(w, "\t")
+			}
+		}
+		fmt.Fprint(w, "\n")
 		return 0 // number of results
 	}))
-	L.SetGlobal("setContentType", L.NewFunction(func(L *lua.LState) int {
+	setContentType := L.NewFunction(func(L *lua.LState) int {
 		lv := L.ToString(1)
 		w.Header().Add("Content-Type", lv)
 		return 0 // number of results
-	}))
+	})
+	// Register two aliases
+	L.SetGlobal("content", setContentType)
+	L.SetGlobal("SetContentType", setContentType)
+	// And a third one for backwards compatibility
+	L.SetGlobal("setContentType", setContentType)
+
 	exportUserstate(w, req, L, userstate)
 	if err := L.DoFile(filename); err != nil {
 		log.Println(err)
