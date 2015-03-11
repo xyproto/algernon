@@ -2,7 +2,7 @@ content("text/html")
 
 -- output the given code within a prettyprint class
 function prettyprint(code)
-  print([[<div style="width: 80%;"><pre class="prettyprint">]]..code..[[</pre></div>]])
+  print[[<div style="width: 80%;"><pre class="prettyprint">]]..code..[[</pre></div>]]
 end
 
 -- format the title as relatively large letters
@@ -12,28 +12,28 @@ end
 
 -- format the title as big letters
 function bigtitle(text)
-  print([[<div style="font-size: 3em; font-weight: bold;">]]..text..[[</div>]])
+  print[[<div style="font-size: 3em; font-weight: bold;">]]..text..[[</div>]]
 end
 
 --  horizontal space. There are better ways, but this works too.
 function some_space()
-  print([[<br><br>]])
+  print[[<br><br>]]
 end
 
 -- the beginning of the HTML document
 function head()
-  print([[<!doctype html><html>
+  print[[<!doctype html><html>
   <head>
     <title>prettify</title>
     <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
     <link rel="stylesheet" type="text/css" href="https://google-code-prettify.googlecode.com/svn/trunk/styles/sunburst.css">
   </head>
-  <body style="background: gray; color: black; font-family: sans-serif; margin: 5em;">]])
+  <body style="background: gray; color: black; font-family: sans-serif; margin: 5em;">]]
 end
 
 -- the end of the HTML document
 function tail()
-  print([[</body></html>]])
+  print[[</body></html>]]
 end
 
 -- see if the file exists
