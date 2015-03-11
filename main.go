@@ -52,7 +52,7 @@ func main() {
 
 	fmt.Println(version_string)
 	fmt.Println()
-	fmt.Println("HTTP/2 web server for static content")
+	fmt.Println("HTTP/2 web server")
 	fmt.Println()
 	fmt.Println("[arg 1] directory\t", path)
 	fmt.Println("[arg 2] server addr\t", addr)
