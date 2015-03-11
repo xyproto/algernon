@@ -202,7 +202,7 @@ GenerateUniqueConfirmationCode() -> string
 General information
 -------------------
 
-* Version: 0.4
+* Version: 0.41
 * License: MIT
 * Alexander F Rødseth
 
