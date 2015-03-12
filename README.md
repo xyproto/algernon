@@ -2,8 +2,6 @@
 
 HTTP/2 web server that can serve Markdown and dynamic Lua scripts.
 
-It is named after Algernon Charles Swinburne, my 19th cousin 9 times removed.
-
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
 
