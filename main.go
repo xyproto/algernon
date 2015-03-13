@@ -10,7 +10,7 @@ import (
 	"github.com/xyproto/permissions2"
 )
 
-const version_string = "Algernon 0.42"
+const version_string = "Algernon 0.43"
 
 var (
 	// The font that will be used
