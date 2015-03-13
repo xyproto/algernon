@@ -1,6 +1,14 @@
 # Plans
 
 
+Flags
+-----
+
+* Add a flag for specifying a remote redis host.
+* Add a flag for specifying a different default set of URL prefixes with admin, user or public rights.
+* Add a flag for detailed debug information at errors, or not.
+
+
 Documentation and examples
 --------------------------
 
@@ -48,7 +56,9 @@ Platform support
 Maybe
 -----
 
-* Colored console output.
 * Support for templates somehow.
+* Colored console output.
+* Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and database hosts.
 * Support for the [onthefly](https://github.com/xyproto/onthefly) package.
 * Websockets? WebRTC? Three.js? Web components?
+
