@@ -25,8 +25,7 @@ function head()
   print[[<!doctype html><html>
   <head>
     <title>prettify</title>
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://google-code-prettify.googlecode.com/svn/trunk/styles/sunburst.css">
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
   </head>
   <body style="background: gray; color: black; font-family: sans-serif; margin: 5em;">]]
 end
