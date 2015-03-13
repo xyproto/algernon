@@ -7,6 +7,21 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+// Server-wide functions. Does not make sense in `index.lua`.
+
+/*
+LUA functions related to permissions
+------------------------------------
+
+These can be placed in `server.lua` in the directory where the server is instructed to run from.
+
+* `ClearPaths()` resets the URL prefixes and sets every path as *public*.
+* `AddUserPath(string)` adds a URL prefix as a path that has *user* rights.
+* `AddAdminPath(string)` adds a URL prefix as a path that has *admin* rights.
+* `DenyPage(string)` creates a new page for "permission denied". Takes a message or a HTML page.
+
+*/
+
 // Make functions related to permissions available to Lua scripts
 func exportPermissions(w http.ResponseWriter, req *http.Request, L *lua.LState, perm *permissions.Permissions) {
 

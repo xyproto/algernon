@@ -25,8 +25,6 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	// Make basic functions, like print, available to the Lua script
 	exportBasicFunctions(w, req, L, filename)
 
-	exportPermissions(w, req, L, perm)
-
 	// Make the functions related to userstate available to the Lua script
 	exportUserstate(w, req, L, perm.UserState())
 
