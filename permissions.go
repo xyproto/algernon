@@ -38,5 +38,4 @@ func exportPermissions(w http.ResponseWriter, req *http.Request, L *lua.LState, 
 		return 0 // number of results
 	}))
 
-
 }
