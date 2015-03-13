@@ -7,6 +7,7 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+// Make functions related to users and permissions available to Lua scripts
 func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate *permissions.UserState) {
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments

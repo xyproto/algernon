@@ -19,7 +19,7 @@ import (
 const sep = string(os.PathSeparator)
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, userstate *permissions.UserState, mimereader *mime.MimeReader, luapool *lStatePool) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
 	// Mimetypes
 	ext := path.Ext(filename)
 	// Markdown pages are handled differently
@@ -34,7 +34,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, usersta
 		fmt.Fprint(w, markdownPage(filename, markdownBody))
 		return
 	} else if ext == ".lua" {
-		runLua(w, req, filename, userstate, luapool)
+		runLua(w, req, filename, perm, luapool)
 		return
 	}
 	// Set the correct Content-Type
@@ -85,12 +85,12 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 }
 
 // When serving a directory. The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, userstate *permissions.UserState, mimereader *mime.MimeReader, luapool *lStatePool) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := path.Join(dirname, indexfile)
 		if exists(filename) {
-			filePage(w, req, filename, userstate, mimereader, luapool)
+			filePage(w, req, filename, perm, mimereader, luapool)
 			return
 		}
 	}
@@ -130,11 +130,11 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		hasfile := exists(noslash)
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, filename, perm.UserState(), mimereader, luapool)
+			dirPage(w, req, rootdir, filename, perm, mimereader, luapool)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm.UserState(), mimereader, luapool)
+			filePage(w, req, noslash, perm, mimereader, luapool)
 			return
 		}
 		// Not found

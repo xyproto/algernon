@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/russross/blackfriday"
 )
 
 // Check if a given filename is a directory
@@ -52,6 +54,17 @@ func easyPage(title, body string) string {
 	return "<!doctype html><html><head>" + font + "<title>" + title + "</title><style>" + style + "</style><head><body><h1>" + title + "</h1>" + body + "</body></html>"
 }
 
+func easyLink(text, url string, isDirectory bool) string {
+	if isDirectory {
+		text += "/"
+	}
+	return "<a href=\"/" + url + "\">" + text + "</a><br>"
+}
+
+func markdown(text string) string {
+	return string(blackfriday.MarkdownCommon([]byte(text)))
+}
+
 // TODO: Check if handling "# title <tags" on the first line is valid Markdown or not. Submit a patch to blackfriday if it is.
 func markdownPage(title, htmlbody string) string {
 	h1title := ""
@@ -66,11 +79,4 @@ func markdownPage(title, htmlbody string) string {
 		}
 	}
 	return "<!doctype html><html><head><title>" + title + "</title><style>" + style + "</style><head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>"
-}
-
-func easyLink(text, url string, isDirectory bool) string {
-	if isDirectory {
-		text += "/"
-	}
-	return "<a href=\"/" + url + "\">" + text + "</a><br>"
 }
