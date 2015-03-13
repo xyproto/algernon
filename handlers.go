@@ -34,7 +34,10 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		fmt.Fprint(w, markdownPage(filename, markdownBody))
 		return
 	} else if ext == ".lua" {
-		runLua(w, req, filename, perm, luapool)
+		if err := runLua(w, req, filename, perm, luapool); err != nil {
+			// Print the Lua error message to the browser
+			fmt.Fprint(w, err)
+		}
 		return
 	}
 	// Set the correct Content-Type
