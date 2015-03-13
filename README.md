@@ -222,7 +222,7 @@ Quick start guide
 General information
 -------------------
 
-* Version: 0.43
+* Version: 0.44
 * License: MIT
 * Alexander F Rødseth
 
