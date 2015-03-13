@@ -74,9 +74,6 @@ func exportBasicFunctions(w http.ResponseWriter, req *http.Request, L *lua.LStat
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
 			fmt.Fprint(w, markdown(L.Get(i).String()))
-			if i != top {
-				fmt.Fprint(w, markdown("\t"))
-			}
 		}
 		fmt.Fprint(w, markdown("\n"))
 		return 0 // number of results
