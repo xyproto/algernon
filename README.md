@@ -36,6 +36,22 @@ Screenshot
 Screenshot of the **prettify** example. Served from a single lua script.
 
 
+Quick start guide
+-----------------
+
+* Install go, set $GOPATH and add $GOPATH/bin to the PATH (optional).
+* `go get github.com/xyproto/algernon`
+* `mkdir mypage`
+* `cd mypage`
+* `echo 'print("Hello, Algernon")' >> index.lua`
+* Create a certificate just for testing:
+ * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 9999 -nodes`
+ * (Press return at all the prompts, except at Common Name, where you can type in `localhost`).
+* Start `algernon`
+* Visit https://localhost:3000/
+* Now you can edit and save the index.lua file and all you have to do is reload the browser page to see the new version (or error message, if the script had a problem). This makes for short development cycles.
+
+
 LUA functions for handling requests
 -----------------------------------
 
