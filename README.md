@@ -16,7 +16,7 @@ Design decisions
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
 * If not, unecrypted HTTP is used.
-* /data and /repos have user permissions, /admin has admin permissions and / is public (this can be reset with the `ClearPaths()` function).
+* /data and /repos have user permissions, /admin has admin permissions and / is public, by default (see `TODO.md` for future plans).
 * The following filenames are special, in prioritized order:
     * index.lua is interpreted as a handler function for the current directory
     * index.md is rendered as html
@@ -51,15 +51,6 @@ LUA functions for handling requests
 * `error(string, number)` sets a HTTP status code and outputs a message.
 * `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
-
-
-LUA functions related to permissions
-------------------------------------
-
-* `ClearPaths()` resets the URL prefixes and sets every path as *public*.
-* `AddUserPath(string)` adds a URL prefix as a path that has *user* rights.
-* `AddAdminPath(string)` adds a URL prefix as a path that has *admin* rights.
-* `DenyPage(string)` creates a new page for "permission denied". Takes a message or a HTML page.
 
 
 LUA functions for handling users and permissions
@@ -204,7 +195,7 @@ ConfirmUserByConfirmationCode(string) -> bool
 // Takes the minimum number of characters
 SetMinimumConfirmationCodeLength(number)
 
-// Generates and returns a unique confirmation code, or an empty string
+// Generates a unique confirmation code, or an empty string
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
