@@ -36,6 +36,7 @@ Debugging
 
 * Implement a page, with admin rights, that displays the last error together with the sourcecode.
 * Find a good way to store the last error (system wide? per user?).
+* Decide if Lua errors can be printed to the web page, or if logging to the console is better.
 
 
 Platform support
