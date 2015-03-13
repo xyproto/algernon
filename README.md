@@ -202,7 +202,7 @@ GenerateUniqueConfirmationCode() -> string
 Quick start guide
 -----------------
 
-* Install go, set $GOPATH and add $GOPATH/bin to the PATH (optional).
+* Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
 * `go get github.com/xyproto/algernon`
 * `mkdir mypage`
 * `cd mypage`
