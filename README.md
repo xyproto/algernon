@@ -27,6 +27,13 @@ Design decisions
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
 
+Features
+--------
+
+* HTTP/2
+* The use of Lua allows short development cycles, where code is interpreted when the page is refreshed.
+* Algernon is compiled to native. It's reasonably fast.
+
 
 Screenshot
 ----------
@@ -209,14 +216,14 @@ Quick start guide
 * `echo 'print("Hello, Algernon")' >> index.lua`
 * Create a certificate just for testing:
  * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
- * Just press return at all the prompts, except for Common Name, where `localhost` can work.
+ * Just press return at all the prompts, but enter `localhost` at *Common Name*.
 * Start `algernon`.
 * Enable HTTP/2 in your browser:
  * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
  * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
 * Visit `https://localhost:3000/`.
 * If you have not imported the certificates into the browser, or used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
-* You can now edit and save the index.lua file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem). This allows for short development cycles.
+* You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
 
 
 General information

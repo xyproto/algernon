@@ -19,14 +19,21 @@ func strings2table(L *lua.LState, sl []string) *lua.LTable {
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running lua script, otherwise nil.
 func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) error {
+	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
+
+	// Retrieve the userstate
+	userstate := perm.UserState()
 
 	// Make basic functions, like print, available to the Lua script
 	exportBasicFunctions(w, req, L, filename)
 
+	// Redis functions
+	exportRedisFunctions(w, req, L, userstate)
+
 	// Make the functions related to userstate available to the Lua script
-	exportUserstate(w, req, L, perm.UserState())
+	exportUserstate(w, req, L, userstate)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {

@@ -1,5 +1,20 @@
 # Plans
 
+Server configuration
+--------------------
+
+Add "server.lua" that can be passed to the server when starting.
+Permissions URL path prefixes can be defined here, as well as
+cache URL path prefixes, for where caching should be enabled.
+
+Switching a debug flag on and off should also be possible.
+If pretty errors are turned on, the lua code together with the error message and line
+indicator should be shown in the browser.
+
+Redis host, port and dbindex shuld also be specified.
+
+Perhaps even robots.txt, favicon as base64 (or a way to put pixels in lua code).
+
 
 Flags
 -----
