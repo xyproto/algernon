@@ -1,6 +1,6 @@
 print("creating a new hash map")
 -- Create a place to store users
-local h = NewHashMap("testusers")
+local h = HashMap("testusers")
 -- Add active users
 h:set("bob", "password", "hunter1")
 h:set("bob", "email", "bob@zombo.com")

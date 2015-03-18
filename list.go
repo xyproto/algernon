@@ -128,7 +128,7 @@ func exportList(w http.ResponseWriter, req *http.Request, L *lua.LState, usersta
 	L.SetFuncs(mt, listMethods)
 
 	// The constructor for new lists takes a name and an optional redis db index
-	L.SetGlobal("NewList", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("List", L.NewFunction(func(L *lua.LState) int {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given

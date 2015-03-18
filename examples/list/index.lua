@@ -1,6 +1,6 @@
 print("creating a new list")
 -- Create a list of fruit
-local l = NewList("fruit")
+local l = List("fruit")
 -- Add elements
 l:add("apple")
 l:add("banana")

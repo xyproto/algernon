@@ -172,7 +172,7 @@ func exportHash(w http.ResponseWriter, req *http.Request, L *lua.LState, usersta
 	L.SetFuncs(mt, hashMethods)
 
 	// The constructor for new hash maps takes a name and an optional redis db index
-	L.SetGlobal("NewHashMap", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("HashMap", L.NewFunction(func(L *lua.LState) int {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given

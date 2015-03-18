@@ -124,7 +124,7 @@ func exportSet(w http.ResponseWriter, req *http.Request, L *lua.LState, userstat
 	L.SetFuncs(mt, setMethods)
 
 	// The constructor for new sets takes a name and an optional redis db index
-	L.SetGlobal("NewSet", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("Set", L.NewFunction(func(L *lua.LState) int {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given
