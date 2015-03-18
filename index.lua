@@ -1,2 +1,0 @@
-print("hi")
-print(newset())

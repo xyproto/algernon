@@ -11,7 +11,8 @@ import (
 )
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportBasicFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
+func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
+
 	// Print text to the webpage that is being served
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		top := L.GetTop()

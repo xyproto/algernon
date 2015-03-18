@@ -27,13 +27,13 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	userstate := perm.UserState()
 
 	// Make basic functions, like print, available to the Lua script
-	exportBasicFunctions(w, req, L, filename)
-
-	// Redis functions
-	exportRedisFunctions(w, req, L, userstate)
+	exportBasic(w, req, L, filename)
 
 	// Make the functions related to userstate available to the Lua script
 	exportUserstate(w, req, L, userstate)
+
+	// Simpleredis sets
+	exportSet(w, req, L, userstate)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
