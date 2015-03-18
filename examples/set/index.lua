@@ -1,5 +1,5 @@
 print("creating a new set")
--- Create an overview over which users are active
+-- Create an overview of which users are active
 local s = NewSet("active")
 -- Add active users
 s:add("bob")

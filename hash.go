@@ -15,8 +15,8 @@ const lHashClass = "HASH"
 // Get the first argument, "self", and cast it from userdata to a hash map.
 func checkHash(L *lua.LState) *simpleredis.HashMap {
 	ud := L.CheckUserData(1)
-	if set, ok := ud.Value.(*simpleredis.HashMap); ok {
-		return set
+	if hash, ok := ud.Value.(*simpleredis.HashMap); ok {
+		return hash
 	}
 	L.ArgError(1, "hash map expected")
 	return nil
@@ -106,7 +106,8 @@ func hashExists(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Get all members of the set
+// Get all keys of the hash map
+// hash::getall() -> table
 func hashGetAll(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
 	all, err := hash.GetAll()

@@ -83,6 +83,7 @@ func setHas(L *lua.LState) int {
 }
 
 // Get all members of the set
+// set::getall() -> table
 func setGetAll(L *lua.LState) int {
 	set := checkSet(L) // arg 1
 	all, err := set.GetAll()
