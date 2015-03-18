@@ -66,6 +66,12 @@ Platform support
 * Test on Windows
 
 
+Benchmarking
+------------
+
+* Find a good way to measure how long it takes to serve a page.
+
+
 Maybe
 -----
 
@@ -74,4 +80,4 @@ Maybe
 * Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and database hosts.
 * Support for the [onthefly](https://github.com/xyproto/onthefly) package.
 * Websockets? WebRTC? Three.js? Web components?
-
+* Caching.
