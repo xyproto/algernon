@@ -55,18 +55,21 @@ Lua
 * A way to use Lua libraries, for SQLite and PostgreSQL, for insance.
 * Lua function for checking if a file exists.
 * Lua function for reading the contents of a file.
+* Add a function for calling EVAL on the redis server, while sending
+  Lua code to the server for evaluation.
 
 
 Platform support
 ----------------
 
-* Test on OS X and Windows
+* Test on OS X
+* Test on Windows
 
 
 Maybe
 -----
 
-* Support for templates somehow.
+* Support templates. Add a function tprint("file.tmpl", table).
 * Colored terminal output.
 * Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and database hosts.
 * Support for the [onthefly](https://github.com/xyproto/onthefly) package.
