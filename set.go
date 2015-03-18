@@ -69,16 +69,14 @@ func setDel(L *lua.LState) int {
 }
 
 // Check if a set contains a value
+// Returns true only if the value exists and there were no errors.
 // set:has(string) -> bool
 func setHas(L *lua.LState) int {
 	set := checkSet(L) // arg 1
 	value := L.ToString(2)
 	b, err := set.Has(value)
 	if err != nil {
-		L.Push(lua.LNil)
-		L.Push(lua.LString(err.Error()))
-		L.Push(lua.LNumber(1))
-		return 3 // Number of returned values
+		b = false
 	}
 	L.Push(lua.LBool(b))
 	return 1 // Number of returned values
