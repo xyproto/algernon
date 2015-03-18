@@ -35,6 +35,9 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	// Simpleredis sets
 	exportSet(w, req, L, userstate)
 
+	// Simpleredis hash maps
+	exportHash(w, req, L, userstate)
+
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
 		log.Println(err)
