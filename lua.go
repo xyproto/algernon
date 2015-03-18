@@ -32,6 +32,9 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	// Make the functions related to userstate available to the Lua script
 	exportUserstate(w, req, L, userstate)
 
+	// Simpleredis lists
+	exportList(w, req, L, userstate)
+
 	// Simpleredis sets
 	exportSet(w, req, L, userstate)
 
