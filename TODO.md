@@ -3,8 +3,7 @@
 Server configuration
 -------------------------
 
-- [ ] If a `server.lua` file is given, read it and configure things like debug settings and permission2's URL prefixes.
-
+- [ ] Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and debug settings.
 
 Flags
 -----
@@ -33,6 +32,7 @@ Debugging
 
 - [ ] Add a lua function that makes the page reload whenever the lua file is changed.
 - [ ] If pretty errors are turned on, the lua code together with the error message and line indicator should be shown in the browser.
+- [ ] If the server executable is named something with "debug", turn on debugging.
 
 
 Authentication and authorization
@@ -82,20 +82,15 @@ Maybe
 
 - [ ] Support templates. Add a function tprint("file.tmpl", table).
 - [ ] Colored terminal output.
-- [ ] Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and database hosts.
 - [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package.
 - [ ] Websockets? WebRTC? Three.js? Web components?
 - [ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
 - [ ] Use a virtual DOM?
 - [ ] Caching.
-- [ ] Make it possible to toggle the debug flag in `app.lua`.
-- [ ] Make it possible to set permission URL path prefixes in `app.lua`.
 - [ ] User functions shared by many lua pages should not be placed in `app.lua`, nor in a place related to the server, but be imported where they are needed. Either by importing a lua file, by importing a lua file by url or by connecting to a Lua Function Server.
-- [ ] Make it possible to toggle the pretty error view on or off in `app.lua`.
+- [ ] Make it possible to toggle the pretty error view on or off in `server.lua`.
 - [ ] Find a good way to store errors.
 - [ ] Implement a page, with admin rights, that displays the last error together with the sourcecode, in a pretty way.
 - [ ] Add a flag for specifying a different default set of URL prefixes with admin, user or public rights.
 - [ ] Add a flag for detailed debug information at errors, or not.
 - [ ] If a symbolic link to a directory is made, for instance /chat -> /data, then algernon should also apply user permissions to the symbolic link.
-- [ ] If a file named "DEBUG" is present, debug mode and pretty error messages should be enabled. If not, debug messages should go to the server log. Add the symbolic directories to the permission2 URL Prefix lists, depending on if they are linking to a directory that is already in one of the lists, or not.
-- [ ] Introduce a file named `app.lua` that is only read and interpreted once, unless the file has changed. It should only be read when `index.lua` is accessed and it has changed since last time. Store the timestamps in memory, not in redis. Many things can be configured with this file, including debug on/off, CSS styles, permissions per URL prefix and import of Lua libraries.
