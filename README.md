@@ -37,12 +37,16 @@ Features
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 
 
-Screenshot
-----------
+Screenshots
+-----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
 
 Screenshot of the **prettify** example. Served from a single Lua script.
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis.png">
+
+Screenshot of `algernon` and `redis` running in a terminal emulator.
 
 
 Getting started
