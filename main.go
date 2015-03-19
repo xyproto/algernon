@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/bradfitz/http2"
@@ -30,9 +32,11 @@ func main() {
 	flag.Parse()
 
 	path := "."
-	addr := ":3000" //addr := ":443"
+	addr := ":3000" // addr := ":443"
 	cert := "cert.pem"
 	key := "key.pem"
+	redis_addr := ":6379"
+	redis_dbindex := "0"
 
 	// TODO: Use traditional args/flag handling.
 	//       Add support for --help and --version.
@@ -49,6 +53,19 @@ func main() {
 	if len(flag.Args()) >= 4 {
 		key = flag.Args()[3]
 	}
+	if len(flag.Args()) >= 5 {
+		redis_addr = flag.Args()[4]
+	}
+	if len(flag.Args()) >= 6 {
+		redis_dbindex = flag.Args()[5]
+	}
+
+	// Convert the dbindex from string to int
+	dbindex, err := strconv.Atoi(redis_dbindex)
+	if err != nil {
+		// Default to 0
+		dbindex = 0
+	}
 
 	fmt.Println(version_string)
 	fmt.Println()
@@ -58,13 +75,15 @@ func main() {
 	fmt.Println("[arg 2] server addr\t", addr)
 	fmt.Println("[arg 3] cert file\t", cert)
 	fmt.Println("[arg 4] key file\t", key)
+	fmt.Println("[arg 5] redis addr\t", redis_addr)
+	fmt.Println("[arg 6] redis db index\t", dbindex)
 	fmt.Println()
 
 	// Request handlers
 	mux := http.NewServeMux()
 
 	// New permissions middleware
-	perm := permissions.New()
+	perm := permissions.NewWithRedisConf(dbindex, redis_addr)
 
 	registerHandlers(mux, path, perm)
 
@@ -79,12 +98,12 @@ func main() {
 	// Enable HTTP/2 support
 	http2.ConfigureServer(s, nil)
 
-	fmt.Println("Starting HTTPS server")
+	log.Println("Starting HTTPS server")
 	if err := s.ListenAndServeTLS(cert, key); err != nil {
-		fmt.Println(err)
-		fmt.Println("Starting HTTP server instead")
+		log.Println(err)
+		log.Println("Starting HTTP server instead")
 		if err := s.ListenAndServe(); err != nil {
-			fmt.Printf("Fail: %s\n", err)
+			log.Printf("Fail: %s\n", err)
 		}
 	}
 }
