@@ -185,6 +185,22 @@ hash:del(string) -> bool
 hash:remove() -> bool
 ~~~
 
+##### KeyValue
+
+~~~
+// Set a key and value. Returns true if it worked out.
+kv:set(string, string) -> bool
+
+// Takes a key, returns a value. May return an empty string.
+kv:get(string) -> string
+
+// Remove a key. Returns true if it worked out.
+kv:del(string) -> bool
+
+// Remove the KeyValue itself. Returns true if it worked out.
+kv:remove() -> bool
+~~~
+
 
 Lua functions for handling users and permissions
 ------------------------------------------------
