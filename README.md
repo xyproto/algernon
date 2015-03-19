@@ -60,7 +60,7 @@ Getting started
 
 ##### Run the example
 
-* Make sure Redis is running. On OS X, installing Redis with homebrew and starting `redis-server` should work. On Linux, installing Redis and running `systemctl start redis-server` should work.
+* Make sure Redis is running. On OS X, you can install `redis` with homebrew and start `redis-server`. On Linux, you can install `redis` and run `systemctl start redis-server`, depending on your distro.
 * Run the "bob" example: `./runexample.sh`
 * Visit `https://localhost:3000/`.
 
