@@ -12,19 +12,19 @@ import (
 	"github.com/xyproto/permissions2"
 )
 
-const version_string = "Algernon 0.46"
+const version_string = "Algernon 0.47"
 
 var (
 	// The font that will be used
-	// TODO: Make this configurable in app.lua
+	// TODO: Make this configurable in server.lua
 	font = "<link href='http://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
 
 	// The CSS style that will be used for directory listings and when rendering markdown pages
-	// TODO: Make this configurable in app.lua
+	// TODO: Make this configurable in server.lua
 	style = "body { background-color: #f0f0f0; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300; margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
 
 	// List of filenames that should be displayed instead of a directory listing
-	// TODO: Make this configurable in app.lua
+	// TODO: Make this configurable in server.lua
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt"}
 )
 
