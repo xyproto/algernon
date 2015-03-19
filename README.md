@@ -102,7 +102,7 @@ Lua functions for handling requests
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 
 
-Lua functions for persistent data structures
+Lua functions for the supported data structures
 --------------------------------------------
 
 ##### Set
