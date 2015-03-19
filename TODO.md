@@ -13,6 +13,13 @@ Flags
 - [X] Add a flag for specifying a remote redis host.
 
 
+Console output
+--------------
+
+- [ ] Add a "quiet" flag
+- [ ] Check the terminal capabilities and the terminal width
+
+
 Documentation and examples
 --------------------------
 
