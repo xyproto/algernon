@@ -57,6 +57,7 @@ Lua
 * Lua function for reading the contents of a file.
 * Add a function for calling EVAL on the redis server, while sending Lua code to the server for evaluation.
 * A way to make an interactive session in the browser.
+* Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way.
 
 
 Platform support
