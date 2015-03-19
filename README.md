@@ -48,7 +48,7 @@ Screenshots
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
 
-*Screenshot of the **prettify** example. Served from a single Lua script.*
+*Screenshot of the <strong>prettify</strong> example. Served from a single Lua script.*
 
 
 
