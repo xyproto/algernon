@@ -17,7 +17,7 @@ const version_string = "Algernon 0.47"
 var (
 	// The font that will be used
 	// TODO: Make this configurable in server.lua
-	font = "<link href='http://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
+	font = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
 
 	// The CSS style that will be used for directory listings and when rendering markdown pages
 	// TODO: Make this configurable in server.lua
