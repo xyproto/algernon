@@ -60,6 +60,87 @@ LUA functions for handling requests
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 
 
+LUA functions for [simpleredis](https://github.com/xyproto/simpleredis) data structures
+-----------------------------------
+
+~~~
+// A Redis-backed Set (takes a name, returns an object)
+Set(string) -> userdata
+
+// Add an element to the set
+set:add(string)
+
+// Remove an element from the set
+set:del(string)
+
+// Check if a set contains a value
+// Returns true only if the value exists and there were no errors.
+set:has(string) -> bool
+
+// Get all members of the set
+set:getall() -> table
+
+// Remove the set itself. Returns true if it worked out.
+set:remove() -> bool
+
+---
+
+// A Redis-backed List (takes a name, returns an object)
+List(string) -> userdata
+
+// Add an element to the list
+list:add(string)
+
+// Get all members of the list
+list::getall() -> table
+
+// Get the last element of the list
+// The returned value can be empty
+list::getlast() -> string
+
+// Get the N last elements of the list
+list::getlastn(number) -> table
+
+// Remove the list itself. Returns true if it worked out.
+list:remove() -> bool
+
+---
+
+// A Redis-backed HashMap (takes a name, returns an object)
+HashMap(string) -> userdata
+
+// For a given element id (for instance a user id), set a key (for instance "password") and a value.
+// Returns true if it worked out.
+hash:set(string, string, string) -> bool
+
+// For a given element id (for instance a user id), and a key (for instance "password"), return a value.
+// Returns a value only if they key was found and if there were no errors.
+hash:get(string, string) -> string
+
+// For a given element id (for instance a user id), and a key (for instance "password"), check if it exists in the hash map.
+// Returns true only if it exists and there were no errors.
+hash:has(string, string) -> bool
+
+// For a given element id (for instance a user id), check if it exists in the hash map.
+// Returns true only if it exists and there were no errors.
+hash:exists(string) -> bool
+
+// Get all keys of the hash map
+hash::getall() -> table
+
+// Remove a key for an entry in a hash map (for instance the email field for a user)
+// Returns true if it worked out
+hash:delkey(string, string) -> bool
+
+// Remove an element (for instance a user)
+// Returns true if it worked out
+hash:del(string) -> bool
+
+// Remove the hash map itself. Returns true if it worked out.
+hash:remove() -> bool
+~~~
+
+
 LUA functions for handling users and permissions
 ------------------------------------------------
 
