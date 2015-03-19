@@ -16,7 +16,7 @@ ANSI banner checklist
 1. Select an image.
 2. Convert to png with `convert myimage.file alg.png`.
 3. Crop and resize the image until it is approximately 22 pixels in width.
-4. Convert the image from png to ascii with transmogrifier (npm install) and the `transmogrify` executable.
+4. Convert the image from PNG to ANSI with transmogrifier (npm install) and the `transmogrify` executable.
 5. Compress and encode: `gzip -9 -c input.txt | base64 -w0 > output.b64`
 6. Copy and paste the base64 encoded data as the logo constant in banner.go.
 
