@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"compress/gzip"
+	"encoding/base64"
 	"io/ioutil"
 	"strings"
 )
@@ -26,7 +26,7 @@ const logo = `H4sICLDeClUCA2FsZ2Vybm9uLmFuc2kA1Vi5ccQwDMzZwiVXAgkCBDVXytVw/aeObM
 
 // Decompress text that has first been gzipped and then base64 encoded
 func decompress(asciigfx string) string {
-    unbasedBytes, err := base64.StdEncoding.DecodeString(asciigfx)
+	unbasedBytes, err := base64.StdEncoding.DecodeString(asciigfx)
 	if err != nil {
 		panic("Could not decode base64: " + err.Error())
 	}
@@ -63,8 +63,8 @@ func insertText(s, tabs string, linenr, offset int, message string, removal int)
 func banner() string {
 	s := decompress(logo)
 	tabs := "\t\t\t\t"
-	s = tabs + strings.Replace(s, "\n", "\n" + tabs, -1)
-	s = insertText(s, tabs, 5, 2, version_string, 1)
-	s = insertText(s, tabs, 7, 1, "HTTP/2 web server", 2)
+	s = tabs + strings.Replace(s, "\n", "\n"+tabs, -1)
+	s = insertText(s, tabs, 5, 2, "\x1b[32;1m"+version_string+"\x1b[0m", 1)
+	s = insertText(s, tabs, 7, 1, "\x1b[30;1m"+"HTTP/2 web server"+"\x1b[0m", 2)
 	return s
 }
