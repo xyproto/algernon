@@ -1,23 +1,23 @@
 # Plans
 
-Application configuration
+Server configuration
 -------------------------
 
-- [ ] Introduce a file named `app.lua` that is only read and interpreted once, unless the file has changed. It should only be read when `index.lua` is accessed and it has changed since last time. Store the timestamps in memory, not in redis. Many things can be configured with this file, including debug on/off, CSS styles, permissions per URL prefix and import of Lua libraries.
+- [ ] If a `server.lua` file is given, read it and configure things like debug settings and permission2's URL prefixes.
 
 
 Flags
 -----
 
-- [ ] Handle flags and arguments with the flag package.
 - [X] Add a flag for specifying a remote redis host.
+- [ ] Handle flags and arguments with the flag package.
 
 
 Console output
 --------------
 
-- [ ] Add a "quiet" flag
 - [ ] Check the terminal capabilities and the terminal width
+- [ ] Add a "quiet" flag
 
 
 Documentation and examples
@@ -98,3 +98,4 @@ Maybe
 - [ ] Add a flag for detailed debug information at errors, or not.
 - [ ] If a symbolic link to a directory is made, for instance /chat -> /data, then algernon should also apply user permissions to the symbolic link.
 - [ ] If a file named "DEBUG" is present, debug mode and pretty error messages should be enabled. If not, debug messages should go to the server log. Add the symbolic directories to the permission2 URL Prefix lists, depending on if they are linking to a directory that is already in one of the lists, or not.
+- [ ] Introduce a file named `app.lua` that is only read and interpreted once, unless the file has changed. It should only be read when `index.lua` is accessed and it has changed since last time. Store the timestamps in memory, not in redis. Many things can be configured with this file, including debug on/off, CSS styles, permissions per URL prefix and import of Lua libraries.
