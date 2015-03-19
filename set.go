@@ -88,7 +88,8 @@ func setGetAll(L *lua.LState) int {
 	set := checkSet(L) // arg 1
 	all, err := set.GetAll()
 	if err != nil {
-		L.Push(lua.LString(""))
+		// Return an empty table
+		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
 	L.Push(strings2table(L, all))

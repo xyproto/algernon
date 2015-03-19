@@ -65,7 +65,8 @@ func listGetAll(L *lua.LState) int {
 	list := checkList(L) // arg 1
 	all, err := list.GetAll()
 	if err != nil {
-		L.Push(lua.LString(""))
+		// Return an empty table
+		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
 	L.Push(strings2table(L, all))
@@ -92,7 +93,8 @@ func listGetLastN(L *lua.LState) int {
 	n := int(L.ToNumber(2)) // arg 2
 	results, err := list.GetLastN(n)
 	if err != nil {
-		L.Push(lua.LString(""))
+		// Return an empty table
+		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
 	L.Push(strings2table(L, results))

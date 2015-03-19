@@ -112,7 +112,8 @@ func hashGetAll(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
 	all, err := hash.GetAll()
 	if err != nil {
-		L.Push(lua.LString(""))
+		// Return an empty table
+		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
 	L.Push(strings2table(L, all))
