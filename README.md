@@ -124,7 +124,7 @@ set:has(string) -> bool
 // Get all members of the set
 set:getall() -> table
 
-// Remove the set itself. Returns true if it worked out.
+// Remove the set itself. Returns true if successful.
 set:remove() -> bool
 ~~~
 
@@ -147,7 +147,7 @@ list::getlast() -> string
 // Get the N last elements of the list
 list::getlastn(number) -> table
 
-// Remove the list itself. Returns true if it worked out.
+// Remove the list itself. Returns true if successful.
 list:remove() -> bool
 ~~~
 
@@ -159,7 +159,7 @@ HashMap(string) -> userdata
 
 // For a given element id (for instance a user id), set a key
 // (for instance "password") and a value.
-// Returns true if it worked out.
+// Returns true if successful.
 hash:set(string, string, string) -> bool
 
 // For a given element id (for instance a user id), and a key
@@ -181,14 +181,14 @@ hash::getall() -> table
 
 // Remove a key for an entry in a hash map
 // (for instance the email field for a user)
-// Returns true if it worked out
+// Returns true if successful
 hash:delkey(string, string) -> bool
 
 // Remove an element (for instance a user)
-// Returns true if it worked out
+// Returns true if successful
 hash:del(string) -> bool
 
-// Remove the hash map itself. Returns true if it worked out.
+// Remove the hash map itself. Returns true if successful.
 hash:remove() -> bool
 ~~~
 
@@ -198,16 +198,16 @@ hash:remove() -> bool
 // A Redis-backed KeyValue collection (takes a name, returns an object)
 KeyValue(string) -> userdata
 
-// Set a key and value. Returns true if it worked out.
+// Set a key and value. Returns true if successful.
 kv:set(string, string) -> bool
 
 // Takes a key, returns a value. May return an empty string.
 kv:get(string) -> string
 
-// Remove a key. Returns true if it worked out.
+// Remove a key. Returns true if successful.
 kv:del(string) -> bool
 
-// Remove the KeyValue itself. Returns true if it worked out.
+// Remove the KeyValue itself. Returns true if successful.
 kv:remove() -> bool
 ~~~
 
@@ -346,7 +346,7 @@ FindUserByConfirmationCode(string) -> string
 // Takes a username
 Confirm(string)
 
-// Mark a user as confirmed, returns true if it worked out
+// Mark a user as confirmed, returns true if successful
 // Takes a confirmation code
 ConfirmUserByConfirmationCode(string) -> bool
 
