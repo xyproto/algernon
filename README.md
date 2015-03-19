@@ -45,6 +45,39 @@ Screenshot
 Screenshot of the **prettify** example. Served from a single Lua script.
 
 
+Getting started
+---------------
+
+#### Install Algernon
+
+* Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
+* `go get github.com/xyproto/algernon`
+
+#### Enable HTTP/2 in the browser
+
+* Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
+* Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
+
+#### Run the example
+
+* Make sure Redis is running. On OS X, installing Redis with homebrew and starting `redis-server` should work. On Linux, installing Redis and running `systemctl start redis-server` should work.
+* Run the "bob" example: `./runexample.sh`
+* Visit `https://localhost:3000/`.
+
+#### Create your own Algernon application
+
+* `mkdir mypage`
+* `cd mypage`
+* `echo 'print("Hello, Algernon")' >> index.lua` (or use your favorite editor)
+* Create a certificate just for testing:
+ * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
+ * Just press return at all the prompts, but enter `localhost` at *Common Name*.
+* Start `algernon`.
+* Visit `https://localhost:3000/`.
+* If you have not imported the certificates into the browser, or used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
+* You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
+
+
 Lua functions for handling requests
 -----------------------------------
 
@@ -84,9 +117,9 @@ set:getall() -> table
 
 // Remove the set itself. Returns true if it worked out.
 set:remove() -> bool
+~~~
 
----
-
+~~~
 // A Redis-backed List (takes a name, returns an object)
 List(string) -> userdata
 
@@ -105,32 +138,36 @@ list::getlastn(number) -> table
 
 // Remove the list itself. Returns true if it worked out.
 list:remove() -> bool
+~~~
 
----
-
+~~~
 // A Redis-backed HashMap (takes a name, returns an object)
 HashMap(string) -> userdata
 
-// For a given element id (for instance a user id), set a key (for instance "password") and a value.
+// For a given element id (for instance a user id), set a key
+// (for instance "password") and a value.
 // Returns true if it worked out.
 hash:set(string, string, string) -> bool
 
-// For a given element id (for instance a user id), and a key (for instance "password"), return a value.
+// For a given element id (for instance a user id), and a key
+// (for instance "password"), return a value.
 // Returns a value only if they key was found and if there were no errors.
 hash:get(string, string) -> string
 
-// For a given element id (for instance a user id), and a key (for instance "password"), check if it exists in the hash map.
+// For a given element id (for instance a user id), and a key
+// (for instance "password"), check if it exists in the hash map.
 // Returns true only if it exists and there were no errors.
 hash:has(string, string) -> bool
 
-// For a given element id (for instance a user id), check if it exists in the hash map.
+// For a given element id (for instance a user id), check if it exists.
 // Returns true only if it exists and there were no errors.
 hash:exists(string) -> bool
 
 // Get all keys of the hash map
 hash::getall() -> table
 
-// Remove a key for an entry in a hash map (for instance the email field for a user)
+// Remove a key for an entry in a hash map
+// (for instance the email field for a user)
 // Returns true if it worked out
 hash:delkey(string, string) -> bool
 
@@ -191,8 +228,8 @@ PasswordHash(string) -> string
 // Get all unconfirmed usernames
 AllUnconfirmedUsernames() -> table
 
-// Get a confirmation code that can be given to a user, or an empty string
-// Takes a username
+// Get a confirmation code that can be given to a user,
+// or an empty string. Takes a username.
 ConfirmationCode(string) -> string
 
 // Add a user to the list of unconfirmed users
@@ -288,25 +325,6 @@ SetMinimumConfirmationCodeLength(number)
 // Generates a unique confirmation code, or an empty string
 GenerateUniqueConfirmationCode() -> string
 ~~~
-
-Quick start guide
------------------
-
-* Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
-* `go get github.com/xyproto/algernon`
-* `mkdir mypage`
-* `cd mypage`
-* `echo 'print("Hello, Algernon")' >> index.lua`
-* Create a certificate just for testing:
- * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
- * Just press return at all the prompts, but enter `localhost` at *Common Name*.
-* Start `algernon`.
-* Enable HTTP/2 in your browser:
- * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
- * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
-* Visit `https://localhost:3000/`.
-* If you have not imported the certificates into the browser, or used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
-* You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
 
 
 General information
