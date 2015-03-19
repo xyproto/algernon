@@ -310,7 +310,7 @@ Quick start guide
 General information
 -------------------
 
-* Version: 0.44
+* Version: 0.45
 * License: MIT
 * Alexander F Rødseth
 
