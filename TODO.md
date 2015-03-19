@@ -85,4 +85,6 @@ Maybe
 [ ] Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and database hosts.
 [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package.
 [ ] Websockets? WebRTC? Three.js? Web components?
+[ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
+[ ] Use a virtual DOM?
 [ ] Caching.
