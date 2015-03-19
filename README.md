@@ -1,6 +1,6 @@
 # Algernon
 
-HTTP/2 web server that can serve Markdown and dynamic Lua scripts, with built-in support for users and permissions.
+HTTP/2 web server that can serve Markdown and Lua scripts, with built-in support for users and permissions.
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
@@ -188,6 +188,9 @@ hash:remove() -> bool
 ##### KeyValue
 
 ~~~
+// A Redis-backed KeyValue collection (takes a name, returns an object)
+KeyValue(string) -> userdata
+
 // Set a key and value. Returns true if it worked out.
 kv:set(string, string) -> bool
 
