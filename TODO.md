@@ -3,8 +3,7 @@
 Application configuration
 -------------------------
 
-- [ ] If a symbolic link to a directory is made, for instance /chat -> /data, then algernon should also apply user permissions to the symbolic link.
-- [ ] If a file named "DEBUG" is present, debug mode and pretty error messages should be enabled. If not, debug messages should go to the server log. Add the symbolic directories to the permission2 URL Prefix lists, depending on if they are linking to a directory that is already in one of the lists, or not.
+- [ ] Introduce a file named `app.lua` that is only read and interpreted once, unless the file has changed. It should only be read when `index.lua` is accessed and it has changed since last time. Store the timestamps in memory, not in redis. Many things can be configured with this file, including debug on/off, CSS styles, permissions per URL prefix and import of Lua libraries.
 
 
 Flags
@@ -17,8 +16,9 @@ Flags
 Documentation and examples
 --------------------------
 
-- [ ] Installation instructions with `go get` in README.md.
+- [X] Installation instructions with `go get` in README.md.
 - [ ] Create an example webpage where people can log in and chat.
+- [ ] Create a TODOMVC example application.
 
 
 Debugging
@@ -31,8 +31,9 @@ Debugging
 Authentication and authorization
 --------------------------------
 
-- [ ] Support HTTP basic auth.
-- [ ] Support OAuth 2.
+- [ ] Support HTTP basic auth, as a server.
+- [ ] Support OAuth 2, as a client.
+- [ ] Support OAuth 2, as a server.
 
 
 Lua
@@ -80,7 +81,6 @@ Maybe
 - [ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
 - [ ] Use a virtual DOM?
 - [ ] Caching.
-- [ ] Should be possible to have a file named `app.lua` that is only read and interpreted once, unless the file has changed. It should only be read when `index.lua` is accessed and it has changed since last time. Store the timestamps in memory, not in redis.
 - [ ] Make it possible to toggle the debug flag in `app.lua`.
 - [ ] Make it possible to set permission URL path prefixes in `app.lua`.
 - [ ] User functions shared by many lua pages should not be placed in `app.lua`, nor in a place related to the server, but be imported where they are needed. Either by importing a lua file, by importing a lua file by url or by connecting to a Lua Function Server.
@@ -89,3 +89,5 @@ Maybe
 - [ ] Implement a page, with admin rights, that displays the last error together with the sourcecode, in a pretty way.
 - [ ] Add a flag for specifying a different default set of URL prefixes with admin, user or public rights.
 - [ ] Add a flag for detailed debug information at errors, or not.
+- [ ] If a symbolic link to a directory is made, for instance /chat -> /data, then algernon should also apply user permissions to the symbolic link.
+- [ ] If a file named "DEBUG" is present, debug mode and pretty error messages should be enabled. If not, debug messages should go to the server log. Add the symbolic directories to the permission2 URL Prefix lists, depending on if they are linking to a directory that is already in one of the lists, or not.
