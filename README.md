@@ -48,23 +48,23 @@ Screenshot of the **prettify** example. Served from a single Lua script.
 Getting started
 ---------------
 
-#### Install Algernon
+##### Install Algernon
 
 * Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
 * `go get github.com/xyproto/algernon`
 
-#### Enable HTTP/2 in the browser
+##### Enable HTTP/2 in the browser
 
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
 * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
 
-#### Run the example
+##### Run the example
 
 * Make sure Redis is running. On OS X, installing Redis with homebrew and starting `redis-server` should work. On Linux, installing Redis and running `systemctl start redis-server` should work.
 * Run the "bob" example: `./runexample.sh`
 * Visit `https://localhost:3000/`.
 
-#### Create your own Algernon application
+##### Create your own Algernon application
 
 * `mkdir mypage`
 * `cd mypage`
@@ -98,6 +98,8 @@ Lua functions for handling requests
 Lua functions related to [simpleredis](https://github.com/xyproto/simpleredis) data structures
 -----------------------------------
 
+##### Set
+
 ~~~
 // A Redis-backed Set (takes a name, returns an object)
 Set(string) -> userdata
@@ -119,6 +121,8 @@ set:getall() -> table
 set:remove() -> bool
 ~~~
 
+##### List
+
 ~~~
 // A Redis-backed List (takes a name, returns an object)
 List(string) -> userdata
@@ -139,6 +143,8 @@ list::getlastn(number) -> table
 // Remove the list itself. Returns true if it worked out.
 list:remove() -> bool
 ~~~
+
+##### HashMap
 
 ~~~
 // A Redis-backed HashMap (takes a name, returns an object)
