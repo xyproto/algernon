@@ -30,9 +30,11 @@ Design decisions
 Features
 --------
 
-* HTTP/2
-* The use of Lua allows short development cycles, where code is interpreted when the page is refreshed.
+* Supports HTTP/2.
+* Works on OS X and Linux.
 * Algernon is compiled to native. It's reasonably fast.
+* The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
+* The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 
 
 Screenshot
@@ -40,10 +42,10 @@ Screenshot
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/screenshot.png">
 
-Screenshot of the **prettify** example. Served from a single lua script.
+Screenshot of the **prettify** example. Served from a single Lua script.
 
 
-LUA functions for handling requests
+Lua functions for handling requests
 -----------------------------------
 
 * `content(string)` sets the Content-Type for a page.
@@ -60,7 +62,7 @@ LUA functions for handling requests
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 
 
-LUA functions for [simpleredis](https://github.com/xyproto/simpleredis) data structures
+Lua functions related to [simpleredis](https://github.com/xyproto/simpleredis) data structures
 -----------------------------------
 
 ~~~
@@ -141,7 +143,7 @@ hash:remove() -> bool
 ~~~
 
 
-LUA functions for handling users and permissions
+Lua functions for handling users and permissions
 ------------------------------------------------
 
 ~~~
