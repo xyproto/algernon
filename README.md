@@ -67,7 +67,7 @@ Getting started
 
 ##### Run the example
 
-* Make sure Redis is running. On OS X, you can install `redis` with homebrew and start `redis-server`. On Linux, you can install `redis` and run `systemctl start redis-server`, depending on your distro.
+* Make sure Redis is running. On OS X, you can install `redis` with homebrew and start `redis-server`. On Linux, you can install `redis` and run `systemctl start redis`, depending on your distro.
 * Run the "bob" example: `./runexample.sh`
 * Visit `https://localhost:3000/`.
 
@@ -81,7 +81,7 @@ Getting started
  * Just press return at all the prompts, but enter `localhost` at *Common Name*.
 * Start `algernon`.
 * Visit `https://localhost:3000/`.
-* If you have not imported the certificates into the browser, or used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
+* If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
 * You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
 
 
