@@ -43,7 +43,7 @@ func kvToString(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Set a key and value. Returns true if it worked out.
+// Set a key and value. Returns true if successful.
 // kv:set(string, string) -> bool
 func kvSet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
@@ -66,7 +66,23 @@ func kvGet(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Remove a key. Returns true if it worked out.
+// Takes a key, returns the value+1.
+// Creates a key/value and returns "1" if it did not already exist.
+// May return an empty string.
+// kv:inc(string) -> string
+func kvInc(L *lua.LState) int {
+	kv := checkKeyValue(L) // arg 1
+	key := L.ToString(2)
+	increased, err := kv.Inc(key)
+	if err != nil {
+		L.Push(lua.LString(""))
+		return 1
+	}
+	L.Push(lua.LString(increased))
+	return 1 // Number of returned values
+}
+
+// Remove a key. Returns true if successful.
 // kv:del(string) -> bool
 func kvDel(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
@@ -75,7 +91,7 @@ func kvDel(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Remove the keyvalue itself. Returns true if it worked out.
+// Remove the keyvalue itself. Returns true if successful.
 // kv:remove() -> bool
 func kvRemove(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
@@ -88,6 +104,7 @@ var kvMethods = map[string]lua.LGFunction{
 	"__tostring": kvToString,
 	"set":        kvSet,
 	"get":        kvGet,
+	"inc":        kvInc,
 	"del":        kvDel,
 	"remove":     kvRemove,
 }

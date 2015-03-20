@@ -96,7 +96,7 @@ func setGetAll(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Remove the set itself. Returns true if it worked out.
+// Remove the set itself. Returns true if successful.
 // set:remove() -> bool
 func setRemove(L *lua.LState) int {
 	set := checkSet(L) // arg 1

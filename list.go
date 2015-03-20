@@ -101,7 +101,7 @@ func listGetLastN(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Remove the list itself. Returns true if it worked out.
+// Remove the list itself. Returns true if successful.
 // list:remove() -> bool
 func listRemove(L *lua.LState) int {
 	list := checkList(L) // arg 1

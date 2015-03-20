@@ -51,7 +51,7 @@ func hashToString(L *lua.LState) int {
 }
 
 // For a given element id (for instance a user id), set a key (for instance "password") and a value.
-// Returns true if it worked out.
+// Returns true if successful.
 // hash:set(string, string, string) -> bool
 func hashSet(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
@@ -121,7 +121,7 @@ func hashGetAll(L *lua.LState) int {
 }
 
 // Remove a key for an entry in a hash map (for instance the email field for a user)
-// Returns true if it worked out
+// Returns true if successful
 // hash:delkey(string, string) -> bool
 func hashDelKey(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
@@ -132,7 +132,7 @@ func hashDelKey(L *lua.LState) int {
 }
 
 // Remove an element (for instance a user)
-// Returns true if it worked out
+// Returns true if successful
 // hash:del(string) -> bool
 func hashDel(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
@@ -141,7 +141,7 @@ func hashDel(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Remove the hash map itself. Returns true if it worked out.
+// Remove the hash map itself. Returns true if successful.
 // hash:remove() -> bool
 func hashRemove(L *lua.LState) int {
 	hash := checkHash(L) // arg 1

@@ -204,6 +204,11 @@ kv:set(string, string) -> bool
 // Takes a key, returns a value. May return an empty string.
 kv:get(string) -> string
 
+// Takes a key, returns the value+1.
+// Creates a key/value and returns "1" if it did not already exist.
+// May return an empty string.
+kv:inc(string) -> string
+
 // Remove a key. Returns true if successful.
 kv:del(string) -> bool
 

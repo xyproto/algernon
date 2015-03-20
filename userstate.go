@@ -313,8 +313,8 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		userstate.Confirm(username)
 		return 0 // number of results
 	}))
-	// Mark a user as confirmed, returns true if it worked out
-	// Takes a confirmation code
+	// Mark a user as confirmed, returns true if successful.
+	// Takes a confirmation code.
 	L.SetGlobal("ConfirmUserByConfirmationCode", L.NewFunction(func(L *lua.LState) int {
 		confirmationCode := L.ToString(1)
 		L.Push(lua.LBool(nil == userstate.ConfirmUserByConfirmationCode(confirmationCode)))
