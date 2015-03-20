@@ -1,15 +1,22 @@
 # Plans
 
 Server configuration
--------------------------
+--------------------
 
-- [ ] Reading a `server.lua` file when starting the server, for configuring the permissions, URL prefixes and debug settings.
+- [ ] Reading a `server.lua` file from the working directory of the server, when starting the server, for configuring the permissions, URL prefixes and debug settings.
+
 
 Flags
 -----
 
 - [X] Add a flag for specifying a remote redis host.
 - [ ] Handle flags and arguments with the flag package.
+
+
+Database
+--------
+
+- [ ] If no Redis server is found, use an internal Ledis database
 
 
 Console output
@@ -39,13 +46,12 @@ Authentication and authorization
 --------------------------------
 
 - [ ] Support HTTP basic auth, as a server.
-- [ ] Support OAuth 2, as a client.
-- [ ] Support OAuth 2, as a server.
 
 
 Lua
 ---
-
+    
+- [ ] Support templates. Add a function tprint("file.tmpl", table).
 - [ ] Create an import function for importing online lua libraries.
 - [ ] Find a good way to create a personal collection of Lua functions.
 - [ ] A way to use Lua libraries, for SQLite and PostgreSQL, for insance.
@@ -57,7 +63,7 @@ Lua
 
 
 Unusual features
-------------
+----------------
 
 - [ ] Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way. Perhaps by using the gob format.
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon.
@@ -80,8 +86,9 @@ Benchmarking
 Maybe
 -----
 
-- [ ] Support templates. Add a function tprint("file.tmpl", table).
-- [ ] Colored terminal output.
+- [ ] Support OAuth 2, as a client.
+- [ ] Support OAuth 2, as a server.
+- [X] Colored terminal output.
 - [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package.
 - [ ] Websockets? WebRTC? Three.js? Web components?
 - [ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
