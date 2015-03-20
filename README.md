@@ -97,13 +97,13 @@ Lua functions for handling requests
 * `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
 * `version()` returns the version string for the server.
 * `status(number)` sets a HTTP status code (like 200 or 404). Must come before other output.
-* `error(string, number)` sets a HTTP status code and outputs a message.
+* `error(string, number)` outputs a message and sets a HTTP status code.
 * `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 
 
-Lua functions for the supported data structures
---------------------------------------------
+Lua functions for Redis data structures
+---------------------------------------
 
 ##### Set
 
