@@ -108,7 +108,7 @@ Lua functions for Redis data structures
 ##### Set
 
 ~~~
-// A Redis-backed Set (takes a name, returns an object)
+// A Redis-backed Set (takes a name, returns a set object)
 Set(string) -> userdata
 
 // Add an element to the set
@@ -131,7 +131,7 @@ set:remove() -> bool
 ##### List
 
 ~~~
-// A Redis-backed List (takes a name, returns an object)
+// A Redis-backed List (takes a name, returns a list object)
 List(string) -> userdata
 
 // Add an element to the list
@@ -154,7 +154,7 @@ list:remove() -> bool
 ##### HashMap
 
 ~~~
-// A Redis-backed HashMap (takes a name, returns an object)
+// A Redis-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
 
 // For a given element id (for instance a user id), set a key
@@ -195,7 +195,7 @@ hash:remove() -> bool
 ##### KeyValue
 
 ~~~
-// A Redis-backed KeyValue collection (takes a name, returns an object)
+// A Redis-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
 // Set a key and value. Returns true if successful.
