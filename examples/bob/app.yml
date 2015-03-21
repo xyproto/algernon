@@ -1,0 +1,12 @@
+# Configuration for the "bob" example
+permissions:
+    public : /
+    user   : /data
+    admin  : /admin
+debug:
+    showErrorsInBrowser     : true
+    showSourceCodeInBrowser : true
+logging:
+    logErrors          : true
+    accessLogFilename  : /var/log/somewhere.log
+    errorLogFilename   : /var/log/algernon/error.log

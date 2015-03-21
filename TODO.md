@@ -1,7 +1,10 @@
 # Plans
 
-Server configuration
---------------------
+* YAML parser for app.yml, for debug settings, permissions and per app logging:
+  https://github.com/go-yaml/yaml.git
+
+Application configuration
+-------------------------
 
 - [ ] Reading a `server.lua` file from the working directory of the server, when starting the server, for configuring the permissions, URL prefixes and debug settings.
 
