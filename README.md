@@ -32,7 +32,7 @@ Features
 
 * Supports HTTP/2.
 * Tested and works on Linux and OS X.
-* Also works on 64-bit Windows 8. (Tested with Redis from [here](https://github.com/MSOpenTech/redis/releases) with this executable: [algernon.exe](https://github.com/xyproto/algernon/blob/w8/bin/algernon.exe)).
+* Also works on 64-bit Windows 8. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
