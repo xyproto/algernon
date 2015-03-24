@@ -107,7 +107,7 @@ Lua functions for Redis data structures
 
 ##### Set
 
-~~~
+~~~go
 // A Redis-backed Set (takes a name, returns a set object)
 Set(string) -> userdata
 
@@ -130,7 +130,7 @@ set:remove() -> bool
 
 ##### List
 
-~~~
+~~~go
 // A Redis-backed List (takes a name, returns a list object)
 List(string) -> userdata
 
@@ -153,7 +153,7 @@ list:remove() -> bool
 
 ##### HashMap
 
-~~~
+~~~go
 // A Redis-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
 
@@ -194,7 +194,7 @@ hash:remove() -> bool
 
 ##### KeyValue
 
-~~~
+~~~go
 // A Redis-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
@@ -220,7 +220,7 @@ kv:remove() -> bool
 Lua functions for handling users and permissions
 ------------------------------------------------
 
-~~~
+~~~go
 // Check if the current user has "user" rights
 UserRights() -> bool
 
