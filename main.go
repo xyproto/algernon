@@ -35,7 +35,7 @@ func main() {
 	addr := ":3000" // addr := ":443"
 	cert := "cert.pem"
 	key := "key.pem"
-	redis_addr := ":6379"
+	redis_addr := "localhost:6379"
 	redis_dbindex := "0"
 
 	// TODO: Use traditional args/flag handling.
