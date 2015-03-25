@@ -66,7 +66,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		tpl, err := amber.Compile(buf.String(), amber.Options{true, false})
 		if err != nil {
 			// TODO: Log to browser or console depending on the debug mode.
-			fmt.Fprint(w, "Could not compile amber template:\n\n" + err.Error())
+			fmt.Fprint(w, "Could not compile amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			return 0
 		}
 		//somedata := map[string]string{"": ""}
