@@ -5,27 +5,28 @@ Server configuration
 --------------------
 
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
-- [ ] Server setting for enable the compilation of templates
-- [ ] Server setting for enabling caching
-- [ ] Add a "quiet" flag
+- [ ] Server setting for enable the compilation of templates.
+- [ ] Server setting for enabling caching.
+- [ ] Add a "quiet" flag.
+- [ ] Add a way to run several configuration scripts at start.
 
 
 Database
 --------
 
-- [ ] If no Redis server is found, use an internal Ledis database that runs in RAM
+- [ ] If no Redis server is found, use an internal Ledis database that runs in RAM.
 
 
 CSS
 ---
 
-- [ ] Support SASS
+- [ ] Support SASS.
 
 
 Console output
 --------------
 
-- [ ] Check the terminal capabilities and the terminal width
+- [ ] Check the terminal capabilities and the terminal width.
 
 
 Documentation and examples
@@ -66,7 +67,7 @@ Lua
 Packaging
 ---------
 
-- [ ] Homewbrew / OS X
+- [ ] Homewbrew / OS X.
 
 
 Unusual features

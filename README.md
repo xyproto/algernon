@@ -29,8 +29,8 @@ Design decisions
 * The server is configured either by commandline flags or by a provided lua script.
 
 
-Features
---------
+Features and limitations
+------------------------
 
 * Supports HTTP/2.
 * Tested and works on Linux and OS X.
@@ -38,6 +38,9 @@ Features
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
+* Supports [Markdown](https://github.com/russross/blackfriday) and [Amber](https://github.com/eknkc/amber).
+* No support for caching or template compilation, yet.
+* Will not run without a Redis server to connect to.
 
 
 Screenshots
@@ -52,7 +55,6 @@ Screenshots
 <img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
 
 *Screenshot of the <strong>prettify</strong> example. Served from a single Lua script.*
-
 
 
 Getting started
@@ -366,21 +368,24 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
+
 Lua functions for the server configuration file
 -----------------------------------------------
 
 * `SetAddr(string)` set an address for the server on the form [host][:port].
-* `ClearPermissions()` reset the URL prefixes and set every path as *public*.
-* `AddAdminPrefix(string)` add a URL prefix as a path that has *admin* rights.
-* `AddUserPrefix(string)` add a URL prefix as a path that has *user* rights.
-* `DenyHandler(function)` set a lua function that will be used as the permission denied handler.
+* `ClearPermissions()` reset the URL prefixes and make everything *public*.
+* `AddAdminPrefix(string)` add an URL prefix that will have *admin* rights.
+* `AddUserPrefix(string)` add an URL prefix that will have *user* rights.
+* `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
 * `ServerInfo() -> string` return a string with various server information.
+
 
 Releases
 --------
 
 * Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
 * See also: [releases](https://github.com/xyproto/algernon/releases).
+
 
 General information
 -------------------
