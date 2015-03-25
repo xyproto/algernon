@@ -1,4 +1,4 @@
 #!/bin/sh
 echo 'Please visit https://localhost:3000/'
-./algernon examples/bob
+./algernon -conf server.lua -dir examples/bob
 

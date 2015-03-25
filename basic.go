@@ -10,7 +10,8 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Make functions related to HTTP requests and responses available to Lua scripts
+// Make functions related to HTTP requests and responses available to Lua scripts.
+// Filename can be an empty string.
 func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
 
 	// Print text to the webpage that is being served

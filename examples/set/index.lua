@@ -11,6 +11,7 @@ print(s)
 print(tostring(s))
 print(table.concat(s:getall(), ", "))
 -- Remove two users
+print("removing two users")
 s:del("bob")
 s:del("alice")
 print("has kenny?", s:has("kenny"))

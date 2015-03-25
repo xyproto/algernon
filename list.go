@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/xyproto/permissions2"
@@ -120,7 +119,7 @@ var listMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportList(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate *permissions.UserState) {
+func exportList(L *lua.LState, userstate *permissions.UserState) {
 	pool := userstate.Pool()
 	dbindex := userstate.DatabaseIndex()
 

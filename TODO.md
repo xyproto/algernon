@@ -3,10 +3,11 @@
 * YAML parser for app.yml, for debug settings, permissions and per app logging:
   https://github.com/go-yaml/yaml.git
 
-Application configuration
--------------------------
+Server configuration
+--------------------
 
-- [ ] Reading a `server.lua` file from the working directory of the server, when starting the server, for configuring the permissions, URL prefixes and debug settings.
+- [X] Reading a `server.lua` file from the working directory of the server, when starting the server, for configuring the permissions, URL prefixes and debug settings.
+- [ ] Re-run `server.lua` if it is changed. Restart the server if the addr or port is changed.
 
 
 Flags
@@ -64,6 +65,11 @@ Lua
 - [ ] A way to make an interactive session in the browser.
 - [ ] A way to load parts of a page asynchronously.
 
+Packaging
+---------
+
+- [ ] Homewbrew / OS X
+
 
 Unusual features
 ----------------
@@ -77,7 +83,7 @@ Platform support
 
 - [X] Test on Linux
 - [X] Test on OS X
-- [ ] Test on Windows
+- [X] Test on Windows
 
 
 Benchmarking

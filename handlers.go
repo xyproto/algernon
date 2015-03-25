@@ -13,7 +13,6 @@ import (
 	"github.com/russross/blackfriday"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/permissions2"
-	"github.com/yuin/gopher-lua"
 )
 
 const sep = string(os.PathSeparator)
@@ -36,6 +35,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 	} else if ext == ".lua" {
 		if err := runLua(w, req, filename, perm, luapool); err != nil {
 			// Print the Lua error message to the browser
+			// TODO: Custom logging
 			fmt.Fprint(w, err)
 		}
 		return
@@ -107,19 +107,17 @@ func noPage(filename string) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions) {
+func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions, luapool *lStatePool) {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader := mime.New("/etc/mime.types", true)
 	rootdir := servedir
 
-	// Lua LState pool
-	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
-	defer luapool.Shutdown()
-
 	// Handle all requests with this function
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		if perm.Rejected(w, req) {
-			http.Error(w, "Permission denied!", http.StatusForbidden)
+			// Get and call the Permission Denied function
+			perm.DenyFunction()(w, req)
+			// Reject the request by returning
 			return
 		}
 		urlpath := req.URL.Path

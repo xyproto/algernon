@@ -10,9 +10,13 @@ import (
 
 	"github.com/bradfitz/http2"
 	"github.com/xyproto/permissions2"
+	"github.com/yuin/gopher-lua"
 )
 
-const version_string = "Algernon 0.47"
+const (
+	version_string                = "Algernon 0.48"
+	server_configuration_filename = "server.lua"
+)
 
 var (
 	// The font that will be used
@@ -24,70 +28,81 @@ var (
 	style = "body { background-color: #f0f0f0; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300; margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
 
 	// List of filenames that should be displayed instead of a directory listing
-	// TODO: Make this configurable in server.lua
+	// TODO: Make this configurable in the server configuration script
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt"}
+
+	// Configuration that is exposed to the server configuration script
+	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT string
+
+	// Redis configuration
+	REDIS_ADDR string
+	REDIS_DB   int
 )
 
 func main() {
+	flag.StringVar(&SERVER_DIR, "dir", ".", "Server directory")
+	flag.StringVar(&SERVER_ADDR, "addr", ":3000", "Server [host][:port] (ie \":443\")")
+	flag.StringVar(&SERVER_CERT, "cert", "cert.pem", "Server certificate")
+	flag.StringVar(&SERVER_KEY, "key", "key.pem", "Server key")
+	flag.StringVar(&REDIS_ADDR, "redis", ":6379", "Redis [host][:port] (ie \":6379\")")
+	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
+	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
+
 	flag.Parse()
 
-	path := "."
-	addr := ":3000" // addr := ":443"
-	cert := "cert.pem"
-	key := "key.pem"
-	redis_addr := "localhost:6379"
-	redis_dbindex := "0"
-
-	// TODO: Use traditional args/flag handling.
-	//       Add support for --help and --version.
+	// For backwards compatibility with earlier versions of algernon
 
 	if len(flag.Args()) >= 1 {
-		path = flag.Args()[0]
+		SERVER_DIR = flag.Args()[0]
 	}
 	if len(flag.Args()) >= 2 {
-		addr = flag.Args()[1]
+		SERVER_ADDR = flag.Args()[1]
 	}
 	if len(flag.Args()) >= 3 {
-		cert = flag.Args()[2]
+		SERVER_CERT = flag.Args()[2]
 	}
 	if len(flag.Args()) >= 4 {
-		key = flag.Args()[3]
+		SERVER_KEY = flag.Args()[3]
 	}
 	if len(flag.Args()) >= 5 {
-		redis_addr = flag.Args()[4]
+		REDIS_ADDR = flag.Args()[4]
 	}
 	if len(flag.Args()) >= 6 {
-		redis_dbindex = flag.Args()[5]
+		// Convert the dbindex from string to int
+		dbindex, err := strconv.Atoi(flag.Args()[5])
+		if err != nil {
+			REDIS_DB = dbindex
+		}
 	}
 
-	// Convert the dbindex from string to int
-	dbindex, err := strconv.Atoi(redis_dbindex)
-	if err != nil {
-		// Default to 0
-		dbindex = 0
-	}
-
+	// Console output
 	fmt.Println(banner())
 	fmt.Println("------------------------------- - - · ·")
-	fmt.Println()
-	fmt.Println("[arg 1] directory\t", path)
-	fmt.Println("[arg 2] server addr\t", addr)
-	fmt.Println("[arg 3] cert file\t", cert)
-	fmt.Println("[arg 4] key file\t", key)
-	fmt.Println("[arg 5] redis addr\t", redis_addr)
-	fmt.Println("[arg 6] redis db index\t", dbindex)
-	fmt.Println()
 
 	// Request handlers
 	mux := http.NewServeMux()
 
 	// New permissions middleware
-	perm := permissions.NewWithRedisConf(dbindex, redis_addr)
+	// TODO: Run a Redis clone in RAM if no server is available. Test the connection first.
+	perm := permissions.NewWithRedisConf(REDIS_DB, REDIS_ADDR)
 
-	registerHandlers(mux, path, perm)
+	// Lua LState pool
+	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
+	defer luapool.Shutdown()
 
+	// Register HTTP handler functions
+	registerHandlers(mux, SERVER_DIR, perm, luapool)
+
+	// Read server configuration script, if present.
+	// May change global variables.
+	// TODO: Check if the file is present before trying to run it
+	if runConfiguration(server_configuration_filename, perm, luapool) != nil {
+		log.Fatalln("Could not run: " + server_configuration_filename)
+	}
+
+	// Server configuration
 	s := &http.Server{
-		Addr:           addr,
+		Addr:           SERVER_ADDR,
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -98,9 +113,11 @@ func main() {
 	http2.ConfigureServer(s, nil)
 
 	log.Println("Starting HTTPS server")
-	if err := s.ListenAndServeTLS(cert, key); err != nil {
+	// Try listening to HTTPS requests
+	if err := s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY); err != nil {
 		log.Println(err)
 		log.Println("Starting HTTP server instead")
+		// Try listening to HTTP requests
 		if err := s.ListenAndServe(); err != nil {
 			log.Printf("Fail: %s\n", err)
 		}

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
@@ -110,7 +108,7 @@ var kvMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportKeyValue(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate *permissions.UserState) {
+func exportKeyValue(L *lua.LState, userstate *permissions.UserState) {
 	pool := userstate.Pool()
 	dbindex := userstate.DatabaseIndex()
 

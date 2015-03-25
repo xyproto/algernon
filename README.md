@@ -364,11 +364,15 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
+Releases
+--------
+
+* Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
+* Binary files for [64-bit Windows 8](https://github.com/xyproto/algernon/releases).
 
 General information
 -------------------
 
-* Version: 0.47
+* Version: 0.48
 * License: MIT
 * Alexander F Rødseth
-

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/xyproto/permissions2"
@@ -115,7 +114,7 @@ var setMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportSet(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate *permissions.UserState) {
+func exportSet(L *lua.LState, userstate *permissions.UserState) {
 	pool := userstate.Pool()
 	dbindex := userstate.DatabaseIndex()
 
