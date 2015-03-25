@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,14 +17,17 @@ func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filena
 
 	// Print text to the webpage that is being served
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
+		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
-			fmt.Fprint(w, L.Get(i).String())
+			buf.WriteString(L.Get(i).String())
 			if i != top {
-				fmt.Fprint(w, "\t")
+				buf.WriteString("\t")
 			}
 		}
-		fmt.Fprint(w, "\n")
+		buf.WriteString("\n")
+		// Write the combined text to the http.ResponseWriter
+		w.Write(buf.Bytes())
 		return 0 // number of results
 	}))
 
@@ -69,16 +73,6 @@ func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filena
 		}
 		L.Push(result)
 		return 1 // number of results
-	}))
-
-	// Print markdown text as html
-	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
-		top := L.GetTop()
-		for i := 1; i <= top; i++ {
-			fmt.Fprint(w, markdown(L.Get(i).String()))
-		}
-		fmt.Fprint(w, markdown("\n"))
-		return 0 // number of results
 	}))
 
 	// Return the version string
