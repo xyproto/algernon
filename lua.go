@@ -26,7 +26,10 @@ func luaStateWithCommonFunctions(w http.ResponseWriter, req *http.Request, filen
 	userstate := perm.UserState()
 
 	// Make basic functions, like print, available to the Lua script
-	exportBasic(w, req, L, "")
+	exportBasic(w, req, L, filename)
+
+	// Functions for rendering markdown or amber
+	exportRenderFunctions(w, req, L)
 
 	// Make the functions related to userstate available to the Lua script
 	exportUserstate(w, req, L, userstate)

@@ -4,8 +4,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	"github.com/russross/blackfriday"
 )
 
 // Check if a given filename is a directory
@@ -59,24 +57,4 @@ func easyLink(text, url string, isDirectory bool) string {
 		text += "/"
 	}
 	return "<a href=\"/" + url + "\">" + text + "</a><br>"
-}
-
-func markdown(text string) string {
-	return string(blackfriday.MarkdownCommon([]byte(text)))
-}
-
-// TODO: Check if handling "# title <tags" on the first line is valid Markdown or not. Submit a patch to blackfriday if it is.
-func markdownPage(title, htmlbody string) string {
-	h1title := ""
-	if strings.HasPrefix(htmlbody, "<p>#") {
-		fields := strings.Split(htmlbody, "<")
-		if len(fields) > 2 {
-			h1title = fields[1][2:]
-			htmlbody = htmlbody[len("<p>"+h1title):]
-			if strings.HasPrefix(h1title, "#") {
-				h1title = h1title[1:]
-			}
-		}
-	}
-	return "<!doctype html><html><head><title>" + title + "</title><style>" + style + "</style><head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>"
 }
