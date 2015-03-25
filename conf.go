@@ -14,13 +14,6 @@ var (
 	ACCESS_LOG, ERROR_LOG string
 )
 
-/*
- * `ClearPermissions()` reset the URL prefixes and set every path as *public*.
- * `AddUserPrefix(string)` add a URL prefix as a path that has *user* rights.
- * `AddAdminPrefix(string)` add a URL prefix as a path that has *admin* rights.
- * `DenyHandler(function)` set a lua function that will be used as the permission denied handler.
- */
-
 // Make functions related to server configuration and permissions available
 func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lStatePool, filename string) {
 

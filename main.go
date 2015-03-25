@@ -10,6 +10,7 @@ import (
 
 	"github.com/bradfitz/http2"
 	"github.com/xyproto/permissions2"
+	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -82,8 +83,13 @@ func main() {
 	// Request handlers
 	mux := http.NewServeMux()
 
+	// TODO: Run a Redis clone in RAM if no server is available.
+	if err := simpleredis.TestConnectionHost(REDIS_ADDR); err != nil {
+		log.Println(err)
+		log.Fatalln("A Redis database is required.")
+	}
+
 	// New permissions middleware
-	// TODO: Run a Redis clone in RAM if no server is available. Test the connection first.
 	perm := permissions.NewWithRedisConf(REDIS_DB, REDIS_ADDR)
 
 	// Lua LState pool
@@ -96,8 +102,10 @@ func main() {
 	// Read server configuration script, if present.
 	// May change global variables.
 	// TODO: Check if the file is present before trying to run it
-	if runConfiguration(server_configuration_filename, perm, luapool) != nil {
-		log.Fatalln("Could not run: " + server_configuration_filename)
+	if exists(server_configuration_filename) {
+		if runConfiguration(server_configuration_filename, perm, luapool) != nil {
+			log.Fatalln("Could not use: " + server_configuration_filename)
+		}
 	}
 
 	// Server configuration

@@ -364,11 +364,21 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
+Lua functions for the server configuration file
+-----------------------------------------------
+
+* `SetAddr(string)` set an address for the server on the form [host][:port].
+* `ClearPermissions()` reset the URL prefixes and set every path as *public*.
+* `AddAdminPrefix(string)` add a URL prefix as a path that has *admin* rights.
+* `AddUserPrefix(string)` add a URL prefix as a path that has *user* rights.
+* `DenyHandler(function)` set a lua function that will be used as the permission denied handler.
+* `ServerInfo() -> string` return a string with various server information.
+
 Releases
 --------
 
 * Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
-* Binary files for [64-bit Windows 8](https://github.com/xyproto/algernon/releases).
+* See also: [releases](https://github.com/xyproto/algernon/releases).
 
 General information
 -------------------
