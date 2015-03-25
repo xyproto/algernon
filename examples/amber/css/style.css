@@ -17,11 +17,13 @@ p {
 }
 
 a {
-    color: red;
+    color: black;
 }
 
 a:hover {
-    display: block;
+    background-color: white;
+    text-decoration: none;
+    color: #100000;
 }
 
 a:link, a:visited {
