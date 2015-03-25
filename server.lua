@@ -1,4 +1,4 @@
---- Algernon 0.48 Server Configuration
+--- Algernon Server Configuration
 
 --- Host and port
 SetAddr(":3000")

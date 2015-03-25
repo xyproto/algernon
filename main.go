@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	version_string                = "Algernon 0.48"
+	version_string                = "Algernon 0.49"
 	server_configuration_filename = "server.lua"
 )
 

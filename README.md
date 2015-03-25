@@ -390,6 +390,6 @@ Releases
 General information
 -------------------
 
-* Version: 0.48
+* Version: 0.49
 * License: MIT
 * Alexander F Rødseth
