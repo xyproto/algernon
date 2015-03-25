@@ -384,7 +384,8 @@ Releases
 --------
 
 * Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
-* See also: [releases](https://github.com/xyproto/algernon/releases).
+* [Windows executable](https://github.com/xyproto/algernon/releases).
+* More to come!
 
 
 General information
