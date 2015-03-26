@@ -56,5 +56,8 @@ func easyLink(text, url string, isDirectory bool) string {
 	if isDirectory {
 		text += "/"
 	}
-	return "<a href=\"/" + url + "\">" + text + "</a><br>"
+	// If the directory only contains one index.* file, adding "/" to the URL is not needed,
+	// because no other files will be needed to be accessed from that directory by the index
+	// file in question. Just a note.
+	return "<a href=\"/" + url + "/\">" + text + "</a><br>"
 }
