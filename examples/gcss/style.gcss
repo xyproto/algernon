@@ -14,9 +14,6 @@ body
 #content
   margin-left: 0.5em
 
-p
-  width: 40%
-
 #white
   color: white
 
