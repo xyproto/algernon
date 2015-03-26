@@ -45,7 +45,9 @@ Features and limitations
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 * Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss).
 * No support for caching or template compilation, yet.
+* Not using the term "http2 web server" may limit how easy this application is to search for... until now!
 * Will not run without a Redis server to connect to.
+* HTTP/2 is still pretty new, and so is the [http2](https://github.com/bradfitz/http2) package. `i/o timeout` messages may appear in the log when a HTTP client is done loading a page, but this does not seem to cause any problems.
 
 
 Screenshots
@@ -185,7 +187,7 @@ hash:set(string, string, string) -> bool
 hash:get(string, string) -> string
 
 // For a given element id (for instance a user id), and a key
-// (for instance "password"), check if it exists in the hash map.
+// (for instance "password"), check if the key exists in the hash map.
 // Returns true only if it exists and there were no errors.
 hash:has(string, string) -> bool
 
@@ -406,3 +408,4 @@ General information
 * Version: 0.50
 * License: MIT
 * Alexander F Rødseth
+
