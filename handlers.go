@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/russross/blackfriday"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/permissions2"
 )
@@ -29,8 +28,25 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 			return
 		}
-		markdownBody := string(blackfriday.MarkdownCommon(b))
-		fmt.Fprint(w, markdownPage(filename, markdownBody))
+		markdownPage(w, b, filename)
+		return
+	} else if ext == ".amber" {
+		w.Header().Add("Content-Type", "text/html")
+		b, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			return
+		}
+		amberPage(w, b, filename)
+		return
+	} else if ext == ".gcss" {
+		w.Header().Add("Content-Type", "text/css")
+		b, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			return
+		}
+		gcssPage(w, b, filename)
 		return
 	} else if ext == ".lua" {
 		if err := runLua(w, req, filename, perm, luapool); err != nil {

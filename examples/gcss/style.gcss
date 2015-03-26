@@ -1,0 +1,25 @@
+$font: 'Playball', serif
+
+html
+  height: * /* for the background svg to scale correctly */
+
+body
+  color: black
+  background-color: gray
+  margin: 6em 0 0 6em
+  font-family: $font
+  background-image: url(bg.svg)
+  font-size: 1.8em
+
+#content
+  margin-left: 0.5em
+
+p
+  width: 40%
+
+#white
+  color: white
+
+a
+  &:hover
+    color: red

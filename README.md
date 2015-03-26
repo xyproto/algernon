@@ -8,7 +8,7 @@ HTTP/2 web server that can serve Markdown, Amber, static files and directories a
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering and [amber](https://github.com/eknkc/amber) for Amber templates.
+Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing.
 
 
 Design decisions
@@ -19,9 +19,14 @@ Design decisions
 * /data and /repos have user permissions, /admin has admin permissions and / is public.
 * The following filenames are special, in prioritized order:
     * index.lua is interpreted as a handler function for the current directory
-    * index.md is rendered as html
+    * index.md is rendered as HTML
     * index.html is outputted as it is, with the correct Content-Type
     * index.txt is outputted as it is, with the correct Content-Type
+    * index.amber is rendered as HTML
+* The following filename extensions are handled by Algernon:
+    * .md is interpreted as Markdown and rendered as a HTML page
+    * .amber is interpreted as Amber and rendered as a HTML page
+    * .css is interpreted as GCSS and rendered as a CSS page
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
@@ -38,7 +43,7 @@ Features and limitations
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
-* Supports [Markdown](https://github.com/russross/blackfriday) and [Amber](https://github.com/eknkc/amber).
+* Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss).
 * No support for caching or template compilation, yet.
 * Will not run without a Redis server to connect to.
 
@@ -95,8 +100,7 @@ Lua functions for handling requests
 
 * `content(string)` sets the Content-Type for a page.
 * `method()` returns the requested HTTP method (GET, POST etc).
-* `print(...)` can be used for outputting data to the browser/client. Takes a variable number of strings.
-* `mprint(...)` can be used for outputting markdown to the browser/client. The given text is converted from markdown to html. Takes a variable number of strings.
+* `print(...)` output data to the browser/client. Takes a variable number of strings.
 * `urlpath()` returns the requested URL path.
 * `header(string)` returns the HTTP header in the request, for a given key, or an empty string.
 * `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
@@ -105,6 +109,14 @@ Lua functions for handling requests
 * `error(string, number)` outputs a message and sets a HTTP status code.
 * `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
+
+
+Lua functions for formatted output
+----------------------------------
+
+* `mprint(...)` output Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
+* `aprint(...)` output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
+* `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 
 
 Lua functions for Redis data structures
@@ -391,6 +403,6 @@ Releases
 General information
 -------------------
 
-* Version: 0.49
+* Version: 0.50
 * License: MIT
 * Alexander F Rødseth

@@ -9,6 +9,7 @@ Server configuration
 - [ ] Server setting for enabling caching.
 - [ ] Add a "quiet" flag.
 - [ ] Add a way to run several configuration scripts at start.
+- [ ] A way to recompile templates on command while the server is running.
 
 
 Database
@@ -53,7 +54,7 @@ Authentication and authorization
 
 Lua
 ---
-    
+
 - [ ] Support templates. Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Create an import function for importing online lua libraries.
 - [ ] Find a good way to create a personal collection of Lua functions.

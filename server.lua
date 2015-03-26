@@ -3,29 +3,30 @@
 --- Host and port
 SetAddr(":3000")
 
--- TO IMPLEMENT:
 --- Debug mode (source code and errors may be shown in the browser)
---SetDebug(true)
+SetDebug(true) -- TO IMPLEMENT
 
--- TO IMPLEMENT:
 --- Logging (will log to console unless filenames are provided)
---AccessLog("/var/log/algernon_access.log")
---ErrorLog("/var/log/algernon_error.log")
+AccessLog("/var/log/algernon_access.log") -- TO IMPLEMENT
+ErrorLog("/var/log/algernon_error.log") -- TO IMPLEMENT
 
 --- Clear the URL prefixes for the access permissions
 --- (see https://github.com/xyproto/permissions2 for an overview of the default paths)
 ClearPermissions()
 
--- URL prefixes for the "bob" example, if running from this directory
+--- For the "bob" example, when running from this directory
 AddAdminPrefix("/examples/bob/admin")
 AddUserPrefix("/examples/bob/data")
 
--- URL perfixes for the "bob" example, if running from the "bob" directory
+--- For the "bob" example, when running from the "bob" directory
 AddAdminPrefix("/admin")
 AddUserPrefix("/data")
 
--- URL prefixes for the "chat" example, if running from this directory
+--- For the "chat" example, when running from this directory
 AddUserPrefix("/examples/chat/chat")
+
+--- For the "chat" example, when running from the "chat" directory
+AddUserPrefix("/chat")
 
 -- Output server configuration
 print(ServerInfo())

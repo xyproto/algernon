@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	version_string                = "Algernon 0.49"
+	version_string                = "Algernon 0.50"
 	server_configuration_filename = "server.lua"
 )
 
@@ -30,7 +30,7 @@ var (
 
 	// List of filenames that should be displayed instead of a directory listing
 	// TODO: Make this configurable in the server configuration script
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt"}
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 
 	// Configuration that is exposed to the server configuration script
 	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT string

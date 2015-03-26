@@ -1,0 +1,20 @@
+doctype 5
+html
+  head
+    title Some Amber
+    style
+      body {
+        margin: 4.5em;
+        font-size: 1.3em;
+        font-family: sans-serif;
+        background-color: #e0e0e0;
+      }
+      a {
+        color: #5050ff;
+      }
+    h1 Hi, there
+    div#content
+      p
+        | This text goes into the first paragraph.
+        |  As well as this text. And this. Yarr.
+      p Another paragraph.
