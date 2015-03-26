@@ -1,6 +1,6 @@
 # Algernon
 
-HTTP/2 web server that can serve Markdown, Amber, static files and directories and use Lua scripts as request handlers. Comes with built-in support for users and permissions.
+HTTP/2 web server that can serve Markdown, Amber, GCSS, static files and directories and use Lua scripts as request handlers. Comes with built-in support for users and permissions.
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
@@ -26,7 +26,7 @@ Design decisions
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page
     * .amber is interpreted as Amber and rendered as a HTML page
-    * .css is interpreted as GCSS and rendered as a CSS page
+    * .gcss is interpreted as GCSS and rendered as a CSS page
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
