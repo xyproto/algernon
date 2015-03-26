@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	version_string                = "Algernon 0.50"
-	server_configuration_filename = "server.lua"
+	version_string = "Algernon 0.50"
 )
 
 var (
+	// List of configuration filenames to check
+	server_configuration_filenames = []string{"/etc/algernon/server.lua"}
+
 	// The font that will be used
 	// TODO: Make this configurable in server.lua
 	font = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
@@ -76,6 +78,9 @@ func main() {
 		}
 	}
 
+	// Add the SERVER_CONF_SCRIPT to the list of filenames to check
+	server_configuration_filenames = append(server_configuration_filenames, SERVER_CONF_SCRIPT)
+
 	// Console output
 	fmt.Println(banner())
 	fmt.Println("------------------------------- - - · ·")
@@ -100,11 +105,12 @@ func main() {
 	registerHandlers(mux, SERVER_DIR, perm, luapool)
 
 	// Read server configuration script, if present.
-	// May change global variables.
-	// TODO: Check if the file is present before trying to run it
-	if exists(server_configuration_filename) {
-		if runConfiguration(server_configuration_filename, perm, luapool) != nil {
-			log.Fatalln("Could not use: " + server_configuration_filename)
+	// The scripts may change global variables.
+	for _, filename := range server_configuration_filenames {
+		if exists(filename) {
+			if runConfiguration(filename, perm, luapool) != nil {
+				log.Fatalln("Could not use: " + filename)
+			}
 		}
 	}
 
