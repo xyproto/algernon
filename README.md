@@ -16,17 +16,17 @@ Design decisions
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
 * If not, unencrypted HTTP is used.
-* /data and /repos have user permissions, /admin has admin permissions and / is public.
+* /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
-    * index.lua is interpreted as a handler function for the current directory
-    * index.md is rendered as HTML
-    * index.html is outputted as it is, with the correct Content-Type
-    * index.txt is outputted as it is, with the correct Content-Type
+    * index.lua is interpreted as a handler function for the current directory. 
+    * index.md is rendered as HTML. 
+    * index.html is outputted as it is, with the correct Content-Type. 
+    * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML
 * The following filename extensions are handled by Algernon:
-    * .md is interpreted as Markdown and rendered as a HTML page
-    * .amber is interpreted as Amber and rendered as a HTML page
-    * .gcss is interpreted as GCSS and rendered as a CSS page
+    * .md is interpreted as Markdown and rendered as a HTML page. 
+    * .amber is interpreted as Amber and rendered as a HTML page. 
+    * .gcss is interpreted as GCSS and rendered as a CSS file. 
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
