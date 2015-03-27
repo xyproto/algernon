@@ -55,14 +55,18 @@ Authentication and authorization
 Lua
 ---
 
-- [ ] Support templates. Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
-- [ ] Create an import function for importing online lua libraries.
+- [ ] A way to have several webhandlers in one Lua script. Look for a function name in index.lua if a subdirectory is not found.
 - [ ] Find a good way to create a personal collection of Lua functions.
+- [ ] Support the re-use of templates by introducing functions for compiling templates and executing, saving and loading compiled templates.
+- [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
+- [ ] Create an import function for importing online lua libraries.
 - [ ] A way to use Lua libraries, for SQLite and PostgreSQL, for insance.
 - [ ] Lua function for checking if a file exists.
 - [ ] Lua function for reading the contents of a file.
 - [ ] A way to make an interactive session in the browser.
 - [ ] A way to load parts of a page asynchronously.
+- [ ] A way to discover which functions are used or not in scripts that don't use "eval-like" functions like `loadstring`.
+- [ ] If a Lua script only use some functions, only expose the used functions.
 
 
 Packaging
