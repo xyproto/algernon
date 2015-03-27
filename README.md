@@ -18,20 +18,20 @@ Design decisions
 * If not, unencrypted HTTP is used.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
-    * index.lua is interpreted as a handler function for the current directory. 
-    * index.md is rendered as HTML. 
-    * index.html is outputted as it is, with the correct Content-Type. 
+    * index.lua is interpreted as a handler function for the current directory.
+    * index.md is rendered as HTML.
+    * index.html is outputted as it is, with the correct Content-Type.
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML
 * The following filename extensions are handled by Algernon:
-    * .md is interpreted as Markdown and rendered as a HTML page. 
-    * .amber is interpreted as Amber and rendered as a HTML page. 
-    * .gcss is interpreted as GCSS and rendered as a CSS file. 
+    * .md is interpreted as Markdown and rendered as a HTML page.
+    * .amber is interpreted as Amber and rendered as a HTML page.
+    * .gcss is interpreted as GCSS and rendered as a CSS file.
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
-* The server is configured either by commandline flags or by a provided lua script.
+* The server can be configured by commandline flags or with a provided lua script, but no configuration should be needed to get started.
 
 
 Features and limitations
@@ -45,7 +45,6 @@ Features and limitations
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 * Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss).
 * No support for caching or template compilation, yet.
-* Not using the term "http2 web server" may limit how easy this application is to search for... until now!
 * Will not run without a Redis server to connect to.
 * HTTP/2 is still pretty new, and so is the [http2](https://github.com/bradfitz/http2) package. `i/o timeout` messages may appear in the log when a HTTP client is done loading a page, but this does not seem to cause any problems.
 
