@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/yuin/gopher-lua"
 )
@@ -105,11 +106,15 @@ func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filena
 		scriptdir := path.Dir(filename)
 		top := L.GetTop()
 		if top == 1 {
+			// Also include a separator and a filename
 			fn := L.ToString(1)
-			L.Push(lua.LString(scriptdir + sep + fn))
-		} else {
-			L.Push(lua.LString(scriptdir))
+			scriptdir += sep + fn
 		}
+		if sep != "/" {
+			// For operating systems that use backslash
+			scriptdir = strings.Replace(scriptdir, "\\", "/", -1)
+		}
+		L.Push(lua.LString(scriptdir))
 		return 1 // number of results
 	}))
 
@@ -118,17 +123,20 @@ func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filena
 	// If no filename is given, the directory where the server is
 	// currently running is returned.
 	L.SetGlobal("serverdir", L.NewFunction(func(L *lua.LState) int {
-		var result string
 		serverdir, err := os.Getwd()
 		if err != nil {
-			result = ""
+			// Could not retrieve a directory
+			serverdir = ""
 		} else if L.GetTop() == 1 {
+			// Also include a separator and a filename
 			fn := L.ToString(1)
-			result = serverdir + sep + fn
-		} else {
-			result = serverdir
+			serverdir += sep + fn
 		}
-		L.Push(lua.LString(result))
+		if sep != "/" {
+			// For operating systems that use backslash
+			serverdir = strings.Replace(serverdir, "\\", "/", -1)
+		}
+		L.Push(lua.LString(serverdir))
 		return 1 // number of results
 	}))
 }
