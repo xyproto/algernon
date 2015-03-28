@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/xyproto/permissions2"
@@ -51,8 +50,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
-		// TODO: Customizable
-		log.Println(err)
+		// Logging and/or HTTP response is handled elsewhere
 		return err
 	}
 
@@ -62,13 +60,12 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 // Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm *permissions.Permissions, luapool *lStatePool) error {
-	// Retrieve a Lua state
+	// Retrieve a Lua state. Give no filename (an empty string will be handled correctly by the function).
 	L := luaStateWithCommonFunctions(w, req, "", perm, luapool)
 
 	// Run the script
 	if err := L.DoString(script); err != nil {
-		// TODO: Customizable
-		log.Println(err)
+		// Logging and/or HTTP response is handled elsewhere
 		return err
 	}
 
@@ -96,8 +93,7 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
-		// TODO: Customizable
-		log.Println(err)
+		// Logging and/or HTTP response is handled elsewhere
 		return err
 	}
 

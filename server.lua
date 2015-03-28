@@ -3,8 +3,8 @@
 --- Host and port
 SetAddr(":3000")
 
---- Debug mode (source code and errors may be shown in the browser)
-SetDebug(true) -- TO IMPLEMENT
+--- Debug mode (errors will be shown in the browser)
+SetDebug(true)
 
 --- Logging (will log to console unless filenames are provided)
 AccessLog("/var/log/algernon_access.log") -- TO IMPLEMENT

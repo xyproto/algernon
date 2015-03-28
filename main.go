@@ -64,8 +64,9 @@ func main() {
 	// The scripts may change global variables.
 	for _, filename := range SERVER_CONFIGURATION_FILENAMES {
 		if exists(filename) {
-			if runConfiguration(filename, perm, luapool) != nil {
-				log.Fatalln("Could not use: " + filename)
+			if err := runConfiguration(filename, perm, luapool); err != nil {
+				log.Println("Could not use: " + filename)
+				log.Fatalln("Error: " + err.Error())
 			}
 		}
 	}

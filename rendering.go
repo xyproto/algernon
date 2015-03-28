@@ -8,6 +8,7 @@ import (
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -52,9 +53,15 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := amber.Compile(buf.String(), amber.Options{true, false})
 		if err != nil {
-			// TODO: Log to browser or console depending on the debug mode.
-			fmt.Fprint(w, "Could not compile amber template:\n\t"+err.Error()+"\n\n"+buf.String())
-			return 0
+			if DEBUG_MODE {
+				// TODO: Show where in the source code things went wrong. Make it prettier.
+				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Println("ERROR: Could not compile Amber tamplate:")
+				log.Println(err.Error())
+				log.Println("\n" + buf.String())
+			}
+			return 0 // number of results
 		}
 		//somedata := map[string]string{"": ""}
 		tpl.Execute(w, nil)
@@ -68,8 +75,14 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
 		if _, err := gcss.Compile(w, bytes.NewReader(buf.Bytes())); err != nil {
-			// TODO: Log to browser or console depending on the debug mode.
-			fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
+			if DEBUG_MODE {
+				// TODO: Show where in the source code things went wrong. Make it prettier.
+				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Println("ERROR: Could not compile GCSS:")
+				log.Println(err.Error())
+				log.Println("\n" + buf.String())
+			}
 			//return 0 // number of results
 		}
 		return 0 // number of results
@@ -107,9 +120,16 @@ func amberPage(w io.Writer, b []byte, title string) {
 	ambertext := string(b)
 	tpl, err := amber.Compile(ambertext, amber.Options{true, false})
 	if err != nil {
-		// TODO: Log to browser or console depending on the debug mode.
-		fmt.Fprint(w, "Could not compile amber template:\n\t"+err.Error()+"\n\n"+ambertext)
+		if DEBUG_MODE {
+			// TODO: Show where in the source code things went wrong. Make it prettier.
+			fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+ambertext)
+		} else {
+			log.Println("ERROR: Could not compile Amber tamplate:")
+			log.Println(err.Error())
+			log.Println("\n" + ambertext)
+		}
 		return
+
 	}
 	//somedata := map[string]string{"": ""}
 	tpl.Execute(w, nil)
@@ -118,8 +138,14 @@ func amberPage(w io.Writer, b []byte, title string) {
 // Write the given source bytes as GCSS converted to CSS, to a writer.
 func gcssPage(w io.Writer, b []byte, title string) {
 	if _, err := gcss.Compile(w, bytes.NewReader(b)); err != nil {
-		// TODO: Log to browser or console depending on the debug mode.
-		fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+string(b))
+		if DEBUG_MODE {
+			// TODO: Show where in the source code things went wrong. Make it prettier.
+			fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+string(b))
+		} else {
+			log.Println("ERROR: Could not compile GCSS:")
+			log.Println(err.Error())
+			log.Println("\n" + string(b))
+		}
 		return
 	}
 }

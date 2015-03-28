@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -50,9 +51,13 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		return
 	} else if ext == ".lua" {
 		if err := runLua(w, req, filename, perm, luapool); err != nil {
-			// Print the Lua error message to the browser
-			// TODO: Custom logging
-			fmt.Fprint(w, err)
+			if DEBUG_MODE {
+				// Output the Lua error message to the browser
+				fmt.Fprint(w, err)
+			} else {
+				// Only output the error message to the log
+				log.Println(err)
+			}
 		}
 		return
 	}
