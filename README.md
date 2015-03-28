@@ -52,7 +52,7 @@ Features and limitations
 Screenshots
 -----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_051.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_052.png">
 
 *Screenshot of `algernon` and `redis` running in a terminal emulator. The ANSI graphics are from a photo of Algernon Charles Swinburne, the poet.*
 
