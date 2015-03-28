@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	version_string      = "Algernon 0.51"
+	version_string      = "Algernon 0.52"
 	description         = "HTTP/2 web server"
 	default_server_port = "3000"
 	default_redis_port  = "6379"

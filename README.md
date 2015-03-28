@@ -405,7 +405,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.51
+* Version: 0.52
 * License: MIT
 * Alexander F Rødseth
 
