@@ -1,11 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/bradfitz/http2"
@@ -15,13 +13,13 @@ import (
 )
 
 const (
-	version_string = "Algernon 0.50"
+	version_string      = "Algernon 0.50"
+	description         = "HTTP/2 web server"
+	default_server_port = "3000"
+	default_redis_port  = "6379"
 )
 
 var (
-	// List of configuration filenames to check
-	server_configuration_filenames = []string{"/etc/algernon/server.lua"}
-
 	// The font that will be used
 	// TODO: Make this configurable in server.lua
 	font = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
@@ -33,53 +31,11 @@ var (
 	// List of filenames that should be displayed instead of a directory listing
 	// TODO: Make this configurable in the server configuration script
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
-
-	// Configuration that is exposed to the server configuration script
-	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT string
-
-	// Redis configuration
-	REDIS_ADDR string
-	REDIS_DB   int
 )
 
 func main() {
-	flag.StringVar(&SERVER_DIR, "dir", ".", "Server directory")
-	flag.StringVar(&SERVER_ADDR, "addr", ":3000", "Server [host][:port] (ie \":443\")")
-	flag.StringVar(&SERVER_CERT, "cert", "cert.pem", "Server certificate")
-	flag.StringVar(&SERVER_KEY, "key", "key.pem", "Server key")
-	flag.StringVar(&REDIS_ADDR, "redis", ":6379", "Redis [host][:port] (ie \":6379\")")
-	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
-	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
-
-	flag.Parse()
-
-	// For backwards compatibility with earlier versions of algernon
-
-	if len(flag.Args()) >= 1 {
-		SERVER_DIR = flag.Args()[0]
-	}
-	if len(flag.Args()) >= 2 {
-		SERVER_ADDR = flag.Args()[1]
-	}
-	if len(flag.Args()) >= 3 {
-		SERVER_CERT = flag.Args()[2]
-	}
-	if len(flag.Args()) >= 4 {
-		SERVER_KEY = flag.Args()[3]
-	}
-	if len(flag.Args()) >= 5 {
-		REDIS_ADDR = flag.Args()[4]
-	}
-	if len(flag.Args()) >= 6 {
-		// Convert the dbindex from string to int
-		dbindex, err := strconv.Atoi(flag.Args()[5])
-		if err != nil {
-			REDIS_DB = dbindex
-		}
-	}
-
-	// Add the SERVER_CONF_SCRIPT to the list of filenames to check
-	server_configuration_filenames = append(server_configuration_filenames, SERVER_CONF_SCRIPT)
+	// Set several configuration variables, based on the given flags and arguments
+	handleFlags()
 
 	// Console output
 	fmt.Println(banner())
@@ -106,7 +62,7 @@ func main() {
 
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
-	for _, filename := range server_configuration_filenames {
+	for _, filename := range SERVER_CONFIGURATION_FILENAMES {
 		if exists(filename) {
 			if runConfiguration(filename, perm, luapool) != nil {
 				log.Fatalln("Could not use: " + filename)

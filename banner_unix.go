@@ -74,6 +74,6 @@ func banner() string {
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, -1)
 	s = insertText(s, tabs, 5, 2, "\x1b[32;1m"+version_string+"\x1b[0m", 1)
-	s = insertText(s, tabs, 7, 1, "\x1b[30;1m"+"HTTP/2 web server"+"\x1b[0m", 2)
+	s = insertText(s, tabs, 7, 1, "\x1b[30;1m"+description+"\x1b[0m", 2)
 	return s
 }

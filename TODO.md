@@ -55,6 +55,10 @@ Authentication and authorization
 Lua
 ---
 
+- [ ] A way to store and load functions to the database:
+      register("namespace name", "function name", luafunction)
+      luafunction = getfunction("namespace name", "function name")
+      import("namespace name")
 - [ ] A way to have several webhandlers in one Lua script. Look for a function name in index.lua if a subdirectory is not found.
 - [ ] Find a good way to create a personal collection of Lua functions.
 - [ ] Support the re-use of templates by introducing functions for compiling templates and executing, saving and loading compiled templates.
