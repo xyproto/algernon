@@ -138,6 +138,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// For handling JSON data
 	exportJSONFunctions(L)
 
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
+
 	// pprint
 	//exportREPL(L)
 
@@ -256,6 +259,9 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	// For handling JSON data
 	exportJSONFunctions(L)
+
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {

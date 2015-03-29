@@ -119,6 +119,16 @@ Plugins
 Plugin(string) -> bool // Load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
 CallPlugin(string, string, ...) -> string // Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
 
+Code libraries
+
+CodeLib() -> userdata // creates a code library object.
+codelib:set(string, string, string) -> bool // given a namespace, id and Lua code, registers the given code in the library. Returns true if successful.
+codelib:get(string, string) -> string // given a namespace and id, return Lua code or an empty string.
+codelib:import(string) -> string // return all stored Lua code for the given namespace, or an empty string.
+codelib:clear() -> bool // completely clear the code library. Returns true of successful.
+
+
+
 Various
 
 // Return a string with various server information
@@ -248,6 +258,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 
 	// For handling JSON data
 	exportJSONFunctions(L)
+
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
 
 	// Pretty printing
 	exportREPL(L)

@@ -260,7 +260,19 @@ Lua functions for plugins
 -------------------------
 
 * `Plugin(string)` load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
-* `CallPlugin(string, string, ...)` takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+* `CallPlugin(string, string, ...) -> string` takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+
+
+Lua functions for code libraries
+--------------------------------
+
+These functions can be used in combination with the plugin functions for storing Lua code returned by plugins when serverconf.lua is loaded, then retrieve the Lua code later, when handling requests.
+
+* `CodeLib() -> userdata` creates a code library object. Optionally takes a data structure name as the first parameter.
+* `codelib:set(string, string, string) -> bool` given a namespace, id and Lua code, registers the given code in the library. Returns true if successful.
+* `codelib:get(string, string) -> string` given a namespace and id, return Lua code or an empty string.
+* `codelib:import(string) -> string` return all stored Lua code for the given namespace, or an empty string.
+* `codelib:clear() -> bool` completely clear the code library. Returns true of successful.
 
 
 Lua functions for the file cache
