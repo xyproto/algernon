@@ -36,7 +36,7 @@ func newHashMap(L *lua.LState, pool *simpleredis.ConnectionPool, id string, dbin
 }
 
 // String representation
-// Returns the entire hash map as a comma separated string
+// Returns all keys in the hash map as a comma separated string
 // tostring(hash) -> string
 func hashToString(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
