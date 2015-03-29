@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	//	"bufio"
 )
 
 // Retrieve all the arguments given to a lua function
@@ -57,7 +58,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 				// TODO: Show where in the source code things went wrong. Make it prettier.
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Println("ERROR: Could not compile Amber tamplate:")
+				log.Println("ERROR: Could not compile Amber template:")
 				log.Println(err.Error())
 				log.Println("\n" + buf.String())
 			}
@@ -124,7 +125,7 @@ func amberPage(w io.Writer, b []byte, title string) {
 			// TODO: Show where in the source code things went wrong. Make it prettier.
 			fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+ambertext)
 		} else {
-			log.Println("ERROR: Could not compile Amber tamplate:")
+			log.Println("ERROR: Could not compile Amber template:")
 			log.Println(err.Error())
 			log.Println("\n" + ambertext)
 		}
@@ -132,7 +133,19 @@ func amberPage(w io.Writer, b []byte, title string) {
 
 	}
 	//somedata := map[string]string{"": ""}
-	tpl.Execute(w, nil)
+	var buf bytes.Buffer
+	//bufWriter := bufio.NewWriter(&buf)
+	if err := tpl.Execute(&buf, "MISSING DATA"); err != nil {
+		if DEBUG_MODE {
+			// TODO: Make it prettier.
+			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
+		} else {
+			log.Println("ERROR: Could not execute Amber template:")
+			log.Println(err.Error())
+		}
+		return
+	}
+	buf.WriteTo(w)
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
