@@ -8,7 +8,8 @@ body
   background-color: gray
   margin: 6em 0 0 6em
   font-family: $font
-  background-image: url(bg.svg)
+  background-image: url(bg.svg), none /* svg background image */
+  background: url(bg.png) /* png fallback */
   font-size: 1.8em
 
 #content
