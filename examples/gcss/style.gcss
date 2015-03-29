@@ -1,23 +1,28 @@
-$font: 'Playball', serif
-
-html
-  height: * /* for the background svg to scale correctly */
+$font: 'Dancing Script'
 
 body
-  color: black
-  background-color: gray
-  margin: 6em 0 0 6em
-  font-family: $font
-  background-image: url(bg.svg), none /* svg background image */
-  background: url(bg.png) /* png fallback */
+  color: #111
+  background-color: #eee
+  font-family: $font, serif
   font-size: 1.8em
+  margin: 0
 
-#content
-  margin-left: 0.5em
+p
+  margin-left: 0.7em
 
-#white
-  color: white
+#fg
+  margin: 6em 0 0 6em
 
-a
-  &:hover
-    color: red
+#bg
+  position: fixed
+  right: 0
+  bottom: 0
+  min-width: 100%
+  min-height: 100%
+  width: auto
+  height: auto
+  z-index: -100
+  background-size: cover
+  filter: blur(5px)
+  -webkit-filter: blur(5px)
+  -o-filter: blur(5px)

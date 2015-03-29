@@ -1,120 +1,126 @@
-doctype 5
 $title="The Garden of Prosperine"
+$font="Dancing+Script:700"
+doctype 5
 html
   head
     title #{$title}
-    link[href="//fonts.googleapis.com/css?family=Playball"][rel="stylesheet"][type="text/css"]
+    link[href="//fonts.googleapis.com/css?family="+$font][rel="stylesheet"][type="text/css"]
     link[href="style.gcss"][rel="stylesheet"][type="text/css"]
-    h1 #{$title}
-    div#content
+  body
+    div#bg
+    div#fg
+      h1 #{$title}
       p
         | Here, where the world is quiet,<br>
-        |   Here, where all trouble seems<br>
+        | &nbsp;&nbsp;Here, where all trouble seems<br>
         | Dead winds' and spent waves' riot<br>
-        |   In doubtful dreams of dreams;<br>
+        | &nbsp;&nbsp;In doubtful dreams of dreams;<br>
         | I watch the green field growing<br>
         | For reaping folk and sowing,<br>
         | For harvest-time and mowing,<br>
-        |   A sleepy world of streams. <br>
+        | &nbsp;&nbsp;A sleepy world of streams. <br>
       p
         | I am tired of tears and laughter,<br>
-        |   And men that laugh and weep;<br>
+        | &nbsp;&nbsp;And men that laugh and weep;<br>
         | Of what may come hereafter<br>
-        |   For men that sow to reap:<br>
+        | &nbsp;&nbsp;For men that sow to reap:<br>
         | I am weary of days and hours,<br>
         | Blown buds of barren flowers,<br>
         | Desires and dreams and powers<br>
-        |   And everything but sleep. <br>
-      p#white
+        | &nbsp;&nbsp;And everything but sleep. <br>
+      p
         | Here life has death for neighbour,<br>
-        |   And far from eye or ear<br>
+        | &nbsp;&nbsp;And far from eye or ear<br>
         | Wan waves and wet winds labour,<br>
-        |   Weak ships and spirits steer;<br>
+        | &nbsp;&nbsp;Weak ships and spirits steer;<br>
         | They drive adrift, and whither<br>
         | They wot not who make thither;<br>
         | But no such winds blow hither,<br>
-        |   And no such things grow here. <br>
-      p#white
+        | &nbsp;&nbsp;And no such things grow here. <br>
+      p
         | No growth of moor or coppice,<br>
-        |   No heather-flower or vine,<br>
+        | &nbsp;&nbsp;No heather-flower or vine,<br>
         | But bloomless buds of poppies,<br>
-        |   Green grapes of Proserpine,<br>
+        | &nbsp;&nbsp;Green grapes of Proserpine,<br>
         | Pale beds of blowing rushes,<br>
         | Where no leaf blooms or blushes<br>
         | Save this whereout she crushes<br>
-        |   For dead men deadly wine. <br>
-      p#white
+        | &nbsp;&nbsp;For dead men deadly wine. <br>
+      p
         | Pale, without name or number,<br>
-        |   In fruitless fields of corn,<br>
+        | &nbsp;&nbsp;In fruitless fields of corn,<br>
         | They bow themselves and slumber<br>
-        |   All night till light is born;<br>
+        | &nbsp;&nbsp;All night till light is born;<br>
         | And like a soul belated,<br>
         | In hell and heaven unmated,<br>
         | By cloud and mist abated<br>
-        |   Comes out of darkness morn. <br>
-      p#white
+        | &nbsp;&nbsp;Comes out of darkness morn. <br>
+      p
         | Though one were strong as seven,<br>
-        |   He too with death shall dwell,<br>
+        | &nbsp;&nbsp;He too with death shall dwell,<br>
         | Nor wake with wings in heaven,<br>
-        |   Nor weep for pains in hell;<br>
+        | &nbsp;&nbsp;Nor weep for pains in hell;<br>
         | Though one were fair as roses,<br>
         | His beauty clouds and closes;<br>
         | And well though love reposes,<br>
-        |   In the end it is not well. <br>
-      p#white
+        | &nbsp;&nbsp;In the end it is not well. <br>
+      p
         | Pale, beyond porch and portal,<br>
-        |   Crowned with calm leaves, she stands<br>
+        | &nbsp;&nbsp;Crowned with calm leaves, she stands<br>
         | Who gathers all things mortal<br>
-        |   With cold immortal hands;<br>
+        | &nbsp;&nbsp;With cold immortal hands;<br>
         | Her languid lips are sweeter<br>
         | Than love's who fears to greet her<br>
         | To men that mix and meet her<br>
-        |   From many times and lands. <br>
-      p#white
+        | &nbsp;&nbsp;From many times and lands. <br>
+      p
         | She waits for each and other,<br>
-        |   She waits for all men born;<br>
+        | &nbsp;&nbsp;She waits for all men born;<br>
         | Forgets the earth her mother,<br>
-        |   The life of fruits and corn;<br>
+        | &nbsp;&nbsp;The life of fruits and corn;<br>
         | And spring and seed and swallow<br>
         | Take wing for her and follow<br>
         | Where summer song rings hollow<br>
-        |   And flowers are put to scorn. <br>
-      p#white
+        | &nbsp;&nbsp;And flowers are put to scorn. <br>
+      p
         | There go the loves that wither,<br>
-        |   The old loves with wearier wings;<br>
+        | &nbsp;&nbsp;The old loves with wearier wings;<br>
         | And all dead years draw thither,<br>
-        |   And all disastrous things;<br>
+        | &nbsp;&nbsp;And all disastrous things;<br>
         | Dead dreams of days forsaken,<br>
         | Blind buds that snows have shaken,<br>
         | Wild leaves that winds have taken,<br>
-        |   Red strays of ruined springs. <br>
-      p#white
+        | &nbsp;&nbsp;Red strays of ruined springs. <br>
+      p
         | We are not sure of sorrow,<br>
-        |   And joy was never sure;<br>
+        | &nbsp;&nbsp;And joy was never sure;<br>
         | Today will die tomorrow;<br>
-        |   Time stoops to no man's lure;<br>
+        | &nbsp;&nbsp;Time stoops to no man's lure;<br>
         | And love, grown faint and fretful,<br>
         | With lips but half regretful<br>
         | Sighs, and with eyes forgetful<br>
-        |   Weeps that no loves endure. <br>
-      p#white
+        | &nbsp;&nbsp;Weeps that no loves endure. <br>
+      p
         | From too much love of living,<br>
-        |   From hope and fear set free,<br>
+        | &nbsp;&nbsp;From hope and fear set free,<br>
         | We thank with brief thanksgiving<br>
-        |   Whatever gods may be<br>
+        | &nbsp;&nbsp;Whatever gods may be<br>
         | That no life lives for ever;<br>
         | That dead men rise up never;<br>
         | That even the weariest river<br>
-        |   Winds somewhere safe to sea. <br>
-      p#white
+        | &nbsp;&nbsp;Winds somewhere safe to sea. <br>
+      p
         | Then star nor sun shall waken,<br>
-        |   Nor any change of light:<br>
+        | &nbsp;&nbsp;Nor any change of light:<br>
         | Nor sound of waters shaken,<br>
-        |   Nor any sound or sight:<br>
+        | &nbsp;&nbsp;Nor any sound or sight:<br>
         | Nor wintry leaves nor vernal,<br>
         | Nor days nor things diurnal;<br>
         | Only the sleep eternal<br>
-        |   In an eternal night. <br>
-      i#white - Charles Algernon Swinburne
+        | &nbsp;&nbsp;In an eternal night. <br>
+      i - Charles Algernon Swinburne
       p
         button[onClick="history.go(-1);"] Back
+      script[src="js/three.min.js"][type="text/javascript"]
+      script[src="js/boxes.js"][type="text/javascript"]
+
