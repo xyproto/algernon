@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -55,8 +55,8 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				// Output the Lua error message to the browser
 				fmt.Fprint(w, err)
 			} else {
-				// Only output the error message to the log
-				log.Println(err)
+				// Only output the non-fatal error message to the log
+				log.Error(err)
 			}
 		}
 		return

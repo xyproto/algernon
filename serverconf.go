@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/xyproto/permissions2"
@@ -10,8 +11,7 @@ import (
 )
 
 var (
-	DEBUG_MODE            bool
-	ACCESS_LOG, ERROR_LOG string
+	DEBUG_MODE bool
 )
 
 // Make functions related to server configuration and permissions available
@@ -56,8 +56,8 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {
-				// TODO: Customize where to log
-				log.Println("Permission denied handler failed:", err)
+				// Non-fatal error
+				log.Error("Permission denied handler failed:", err)
 				// Use the default permission handler from now on if the lua function fails
 				perm.SetDenyFunction(permissions.PermissionDenied)
 				perm.DenyFunction()(w, req)
@@ -72,20 +72,24 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 		return 0 // number of results
 	}))
 
-	// Set a access log filename. If blank, the log will go to the console.
-	L.SetGlobal("AccessLog", L.NewFunction(func(L *lua.LState) int {
-		filename := L.ToString(1)
-		// TODO: Test if the given filename is writeable, return true only if it is
-		ACCESS_LOG = filename
-		L.Push(lua.LBool(true))
-		return 1 // number of results
-	}))
-
 	// Set a access log filename. If blank, the log will go to the console (or browser, if debug mode is set).
-	L.SetGlobal("ErrorLog", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("LogTo", L.NewFunction(func(L *lua.LState) int {
 		filename := L.ToString(1)
-		// TODO: Test if the given filename is writeable, return true only if it is
-		ERROR_LOG = filename
+		// Log to stderr if an empty filename is given
+		if filename == "" {
+			log.SetOutput(os.Stderr)
+			L.Push(lua.LBool(true))
+			return 1
+		}
+		// Try opening/creating the given filename, for appending
+		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatal(err)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		// Set the file to log to and return
+		log.SetOutput(f)
 		L.Push(lua.LBool(true))
 		return 1 // number of results
 	}))

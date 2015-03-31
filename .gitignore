@@ -26,3 +26,6 @@ _testmain.go
 # Executables
 algernon
 examples/a
+
+# Logs
+algernon.log

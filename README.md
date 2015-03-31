@@ -8,7 +8,7 @@ HTTP/2 web server that can serve Markdown, Amber, GCSS, static files and directo
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing.
+Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging.
 
 
 Design decisions
@@ -46,7 +46,6 @@ Features and limitations
 * Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss).
 * No support for caching or template compilation, yet.
 * Will not run without a Redis server to connect to.
-* HTTP/2 is still pretty new, and so is the [http2](https://github.com/bradfitz/http2) package. `i/o timeout` messages may appear in the log when a HTTP client is done loading a page, but this does not seem to cause any problems.
 
 
 Screenshots
@@ -392,6 +391,7 @@ Lua functions for the server configuration file
 * `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
 * `ServerInfo() -> string` return a string with various server information.
 * `SetDebug(bool)` enables or disables debug mode, where debug information is exposed to the client.
+* `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
 
 
 Releases

@@ -6,9 +6,8 @@ SetAddr(":3000")
 --- Debug mode (errors will be shown in the browser)
 SetDebug(true)
 
---- Logging (will log to console unless filenames are provided)
-AccessLog("/var/log/algernon_access.log") -- TO IMPLEMENT
-ErrorLog("/var/log/algernon_error.log") -- TO IMPLEMENT
+--- Logging (will log to console if an empty string is given)
+--LogTo("/var/log/algernon.log")
 
 --- Clear the URL prefixes for the access permissions
 --- (see https://github.com/xyproto/permissions2 for an overview of the default paths)

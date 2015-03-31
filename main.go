@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
+	internal "log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/bradfitz/http2"
@@ -13,10 +15,8 @@ import (
 )
 
 const (
-	version_string      = "Algernon 0.52"
-	description         = "HTTP/2 web server"
-	default_server_port = "3000"
-	default_redis_port  = "6379"
+	version_string = "Algernon 0.52"
+	description    = "HTTP/2 web server"
 )
 
 var (
@@ -46,8 +46,8 @@ func main() {
 
 	// TODO: Run a Redis clone in RAM if no server is available.
 	if err := simpleredis.TestConnectionHost(REDIS_ADDR); err != nil {
-		log.Println(err)
-		log.Fatalln("A Redis database is required.")
+		log.Info("A Redis database is required.")
+		log.Fatal(err)
 	}
 
 	// New permissions middleware
@@ -65,8 +65,8 @@ func main() {
 	for _, filename := range SERVER_CONFIGURATION_FILENAMES {
 		if exists(filename) {
 			if err := runConfiguration(filename, perm, luapool); err != nil {
-				log.Println("Could not use: " + filename)
-				log.Fatalln("Error: " + err.Error())
+				log.Error("Could not use configuration script: " + filename)
+				log.Fatal(err)
 			}
 		}
 	}
@@ -83,14 +83,28 @@ func main() {
 	// Enable HTTP/2 support
 	http2.ConfigureServer(s, nil)
 
-	log.Println("Starting HTTPS server")
+	// Silence the logging from the http2 package
+	http2.VerboseLogs = false
+	f, err := os.Open("/dev/null")
+	if err != nil {
+		// Could not open /dev/null, use a file instead
+		f, err := os.OpenFile("discard.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatal("Could not write to /dev/null or to discard.log")
+		}
+		internal.SetOutput(f)
+	} else {
+		internal.SetOutput(f)
+	}
+
+	log.Info("Starting HTTPS server")
 	// Try listening to HTTPS requests
 	if err := s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY); err != nil {
-		log.Println(err)
-		log.Println("Starting HTTP server instead")
+		log.Warn(err)
+		log.Info("Starting HTTP server instead")
 		// Try listening to HTTP requests
 		if err := s.ListenAndServe(); err != nil {
-			log.Printf("Fail: %s\n", err)
+			log.Fatal(err)
 		}
 	}
 }

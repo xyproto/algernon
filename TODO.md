@@ -24,6 +24,12 @@ CSS
 - [ ] Support SASS.
 
 
+Logging
+-------
+
+- [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
+
+
 Console output
 --------------
 

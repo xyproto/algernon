@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
 )
@@ -24,7 +24,7 @@ func exists(filename string) bool {
 // Translate a given URL path to a probable full filename
 func url2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
-		log.Println("Trying to access URL with ..")
+		log.Warn("Someone was trying to access a directory with .. in the URL")
 		return dirname + sep
 	}
 	if strings.HasPrefix(urlpath, "/") {
@@ -37,12 +37,19 @@ func url2filename(dirname, urlpath string) string {
 func getFilenames(dirname string) []string {
 	dir, err := os.Open(dirname)
 	if err != nil {
-		log.Fatalf("Could not open directory: %s (%s)", dirname, err)
+		log.WithFields(log.Fields{
+			"dirname": dirname,
+			"error":   err.Error(),
+		}).Error("Could not open directory")
 		return []string{}
 	}
 	filenames, err := dir.Readdirnames(-1)
 	if err != nil {
-		log.Fatalf("Could not read filenames from directory: %s (%s)", dirname, err)
+		log.WithFields(log.Fields{
+			"dirname": dirname,
+			"error":   err.Error(),
+		}).Error("Could not read filenames from directory")
+
 		return []string{}
 	}
 	return filenames

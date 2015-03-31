@@ -7,6 +7,11 @@ import (
 	"strconv"
 )
 
+const (
+	default_server_colon_port = ":3000"
+	default_redis_colon_port  = ":6379"
+)
+
 var (
 	// List of configuration filenames to check
 	SERVER_CONFIGURATION_FILENAMES = []string{"/etc/algernon/server.lua"}
@@ -61,10 +66,10 @@ func handleFlags() {
 	// Commandline flag configuration
 
 	flag.StringVar(&SERVER_DIR, "dir", ".", "Server directory")
-	flag.StringVar(&SERVER_ADDR, "addr", host+":"+default_server_port, "Server [host][:port] (ie \":443\")")
+	flag.StringVar(&SERVER_ADDR, "addr", host+default_server_colon_port, "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&SERVER_CERT, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&SERVER_KEY, "key", "key.pem", "Server key")
-	flag.StringVar(&REDIS_ADDR, "redis", host+":"+default_redis_port, "Redis [host][:port] (ie \":6379\")")
+	flag.StringVar(&REDIS_ADDR, "redis", host+default_redis_colon_port, "Redis [host][:port] (ie \":6379\")")
 	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
 	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
 
