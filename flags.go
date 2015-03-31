@@ -26,11 +26,13 @@ var (
 
 func Usage() {
 	fmt.Println("\n" + version_string + "\n\n" + description)
+	// Possible arguments are also, for backward compatibility:
+	// server dir, server addr, certificate file, key file, redis addr and redis db index
+	// They are not mentioned here, but are possible to use, in that strict order.
 	fmt.Println(`
 
 Syntax:
-  algernon [flags] [server dir] [server addr] [certificate file] [key file]
-                                              [redis addr] [redis db index]
+  algernon [flags] [server dir] [server addr]
 
 Possible flags:
   --version                    Show application name and version
@@ -38,18 +40,11 @@ Possible flags:
   --addr=[HOST][:PORT]         Host and port the server should listen at
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  --redis=[HOST][:PORT]        Address for connecting to a Redis database
+  --redis=[HOST][:PORT]        Address for connecting to a remote Redis database
+                               (uses port 6379 at localhost by default)
   --dbindex=INDEX              Which Redis database index to use
   --conf=FILENAME              Lua script with additional configuration
   --help                       This text
-
-Note:
-  * Arguments must be given in the specified order. Use flags instead if this
-    is not suitable.
-  * If the certificate and key files are not provided, HTTP will be used
-    instead of HTTPS.
-  * A Redis server running on localhost, or remotely, is required for
-    Algernon to run.
 `)
 }
 
@@ -100,6 +95,6 @@ func handleFlags() {
 		}
 	}
 
-	// Add the SERVER_CONF_SCRIPT to the list of filenames to check
+	// Add the SERVER_CONF_SCRIPT to the list of configuration scripts to be read and executed
 	SERVER_CONFIGURATION_FILENAMES = append(SERVER_CONFIGURATION_FILENAMES, SERVER_CONF_SCRIPT)
 }
