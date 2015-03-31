@@ -50,12 +50,16 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		gcssPage(w, b, filename)
 		return
 	} else if ext == ".lua" {
-		if err := runLua(w, req, filename, perm, luapool); err != nil {
-			if DEBUG_MODE {
-				// Output the Lua error message to the browser
-				fmt.Fprint(w, err)
-			} else {
-				// Only output the non-fatal error message to the log
+		// If in debug mode, let the Lua script print to a buffer first, in
+		// case there are errors that should be displayed instead.
+		if DEBUG_MODE {
+			if err := runLua(w, req, filename, perm, luapool); err != nil {
+				// TODO: Find a way to avoid writing directly to w if there are errors
+				prettyLuaError(w, filename, err)
+			}
+		} else {
+			if err := runLua(w, req, filename, perm, luapool); err != nil {
+				// Output the non-fatal error message to the log
 				log.Error(err)
 			}
 		}

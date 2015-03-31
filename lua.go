@@ -1,12 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
 
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
 )
 
+// Retrieve all the arguments given to a lua function
+// and gather the strings in a buffer.
+func arguments2buffer(L *lua.LState) bytes.Buffer {
+	var buf bytes.Buffer
+	top := L.GetTop()
+	// Add all the string arguments to the buffer
+	for i := 1; i <= top; i++ {
+		buf.WriteString(L.Get(i).String())
+		if i != top {
+			buf.WriteString(" ")
+		}
+	}
+	buf.WriteString("\n")
+	return buf
+}
+
+// Convert a string slice to a lua table
 func strings2table(L *lua.LState, sl []string) *lua.LTable {
 	table := L.NewTable()
 	for _, element := range sl {
@@ -24,8 +42,12 @@ func luaStateWithCommonFunctions(w http.ResponseWriter, req *http.Request, filen
 	// Retrieve the userstate
 	userstate := perm.UserState()
 
-	// Make basic functions, like print, available to the Lua script
-	exportBasic(w, req, L, filename)
+	// Make basic functions, like print, available to the Lua script.
+	// Only exports functions that can relate to HTTP responses or requests.
+	exportBasicWeb(w, req, L, filename)
+
+	// Make other basic functions available
+	exportBasicSystem(L)
 
 	// Functions for rendering markdown or amber
 	exportRenderFunctions(w, req, L)
@@ -84,6 +106,9 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 
 	// Server configuration functions
 	exportServerConf(L, perm, luapool, filename)
+
+	// Other basic system functions, like log()
+	exportBasicSystem(L)
 
 	// Simpleredis data structures (could be used for storing server stats)
 	exportList(L, userstate)

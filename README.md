@@ -104,11 +104,13 @@ Lua functions for handling requests
 * `urlpath()` returns the requested URL path.
 * `header(string)` returns the HTTP header in the request, for a given key, or an empty string.
 * `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
-* `version()` returns the version string for the server.
 * `status(number)` sets a HTTP status code (like 200 or 404). Must come before other output.
 * `error(string, number)` outputs a message and sets a HTTP status code.
 * `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
+* `version()` returns the version string for the server.
+* `log(...)` logs the given strings as INFO. Takes a variable number of strings.
+* `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
 
 
 Lua functions for formatted output
@@ -392,6 +394,9 @@ Lua functions for the server configuration file
 * `ServerInfo() -> string` return a string with various server information.
 * `SetDebug(bool)` enables or disables debug mode, where debug information is exposed to the client.
 * `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
+* `version()` returns the version string for the server. Same function as for handling requests.
+* `log(...)` logs the given strings as INFO. Takes a variable number of strings. Same function as for handling requests.
+* `warn(...)` logs the given strings as WARN. Takes a variable number of strings. Same function as for handling requests.
 
 
 Releases
@@ -405,7 +410,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.52
+* Version: 0.53
 * License: MIT
 * Alexander F Rødseth
 

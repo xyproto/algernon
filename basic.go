@@ -9,12 +9,39 @@ import (
 	"path"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 )
 
+func exportBasicSystem(L *lua.LState) {
+
+	// Return the version string
+	L.SetGlobal("version", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(version_string))
+		return 1 // number of results
+	}))
+
+	// Log text with the "Info" log type
+	L.SetGlobal("log", L.NewFunction(func(L *lua.LState) int {
+		buf := arguments2buffer(L)
+		// Log the combined text
+		log.Info(buf.String())
+		return 0 // number of results
+	}))
+
+	// Log text with the "Warn" log type
+	L.SetGlobal("warn", L.NewFunction(func(L *lua.LState) int {
+		buf := arguments2buffer(L)
+		// Log the combined text
+		log.Warn(buf.String())
+		return 0 // number of results
+	}))
+
+}
+
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
-func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
+func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
 
 	// Print text to the webpage that is being served
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -73,12 +100,6 @@ func exportBasic(w http.ResponseWriter, req *http.Request, L *lua.LState, filena
 			result = lua.LString(string(body))
 		}
 		L.Push(result)
-		return 1 // number of results
-	}))
-
-	// Return the version string
-	L.SetGlobal("version", L.NewFunction(func(L *lua.LState) int {
-		L.Push(lua.LString(version_string))
 		return 1 // number of results
 	}))
 

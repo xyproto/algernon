@@ -22,7 +22,8 @@ end
 
 -- the beginning of the HTML document
 function head()
-  print[[<!doctype html><html>
+  print[[<!doctype html>
+<html>
   <head>
     <title>prettify</title>
     <script src="//google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
