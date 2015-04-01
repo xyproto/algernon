@@ -49,10 +49,12 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 	// Sets a lua script as a custom "permissions denied" page handler.
 	L.SetGlobal("DenyHandler", L.NewFunction(func(L *lua.LState) int {
 		luaDenyFunc := L.ToFunction(1)
+
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			L := luaStateWithCommonFunctions(w, req, filename, perm, luapool)
+			exportCommonFunctions(w, req, filename, perm, L)
+
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {

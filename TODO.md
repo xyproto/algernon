@@ -1,10 +1,15 @@
 # Plans
 
 
+Fix issues
+----------
+
+- [ ] Figure out why reloading the error page if there are Lua errors does not respond, then suddenly responds if the lua file is fixed.
+
+
 Server configuration
 --------------------
 
-- [ ] The first argument should be a directory or a .alg file, the rest should be regular flags. An alg file can be a zipped or tar xz-ed directory with a server.lua file and all needed files.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.
 - [ ] Server setting for enabling caching.
@@ -102,6 +107,8 @@ Benchmarking
 Maybe
 -----
 
+- [ ] The first argument should be a directory or a .alg file, the rest should be regular flags.
+      An alg file can be a zipped or tar xz-ed directory with a server.lua file and all needed files. A bit like a .war file.
 - [ ] Support OAuth 2, as a client.
 - [ ] Support OAuth 2, as a server.
 - [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package, as a virtual DOM.

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 	"strings"
@@ -53,11 +54,19 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 		if DEBUG_MODE {
-			if err := runLua(w, req, filename, perm, luapool); err != nil {
-				// TODO: Find a way to avoid writing directly to w if there are errors
-				prettyLuaError(w, filename, err)
+			// Use a buffered ResponseWriter for delaying the output
+			recorder := httptest.NewRecorder()
+			// Run the lua script
+			if err := runLua(recorder, req, filename, perm, luapool); err != nil {
+				errortext := err.Error()
+				// If there were errors, display an error page
+				prettyError(w, filename, errortext, "lua")
+			} else {
+				// If things went well, write to the ResponseWriter
+				writeRecorder(w, recorder)
 			}
 		} else {
+			// Run the lua script
 			if err := runLua(w, req, filename, perm, luapool); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error(err)

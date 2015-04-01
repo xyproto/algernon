@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	internal "log"
+	internallog "log"
 	"net/http"
 	"os"
 	"time"
@@ -86,15 +86,17 @@ func main() {
 	// Silence the logging from the http2 package
 	http2.VerboseLogs = false
 	f, err := os.Open("/dev/null")
+	defer f.Close()
 	if err != nil {
 		// Could not open /dev/null, use a file instead
 		f, err := os.OpenFile("discard.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		defer f.Close()
 		if err != nil {
 			log.Fatal("Could not write to /dev/null or to discard.log")
 		}
-		internal.SetOutput(f)
+		internallog.SetOutput(f)
 	} else {
-		internal.SetOutput(f)
+		internallog.SetOutput(f)
 	}
 
 	log.Info("Starting HTTPS server")

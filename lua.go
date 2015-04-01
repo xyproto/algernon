@@ -34,10 +34,7 @@ func strings2table(L *lua.LState, sl []string) *lua.LTable {
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func luaStateWithCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) *lua.LState {
-	// Retrieve a Lua state
-	L := luapool.Get()
-	defer luapool.Put(L)
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState) {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -60,15 +57,17 @@ func luaStateWithCommonFunctions(w http.ResponseWriter, req *http.Request, filen
 	exportSet(L, userstate)
 	exportHash(L, userstate)
 	exportKeyValue(L, userstate)
-
-	return L
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) error {
 	// Retrieve a Lua state
-	L := luaStateWithCommonFunctions(w, req, filename, perm, luapool)
+	L := luapool.Get()
+	defer luapool.Put(L)
+
+	// Export functions to the Lua state
+	exportCommonFunctions(w, req, filename, perm, L)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -82,14 +81,24 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 // Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm *permissions.Permissions, luapool *lStatePool) error {
-	// Retrieve a Lua state. Give no filename (an empty string will be handled correctly by the function).
-	L := luaStateWithCommonFunctions(w, req, "", perm, luapool)
+
+	// Retrieve a Lua state
+	L := luapool.Get()
+
+	// Give no filename (an empty string will be handled correctly by the function).
+	exportCommonFunctions(w, req, "", perm, L)
 
 	// Run the script
 	if err := L.DoString(script); err != nil {
+		// Close the Lua state
+		L.Close()
+
 		// Logging and/or HTTP response is handled elsewhere
 		return err
 	}
+
+	// Only put the Lua state back if there were no errors
+	luapool.Put(L)
 
 	return nil
 }
@@ -97,9 +106,9 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 func runConfiguration(filename string, perm *permissions.Permissions, luapool *lStatePool) error {
+
 	// Retrieve a Lua state
 	L := luapool.Get()
-	defer luapool.Put(L)
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -118,9 +127,15 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
+		// Close the Lua state
+		L.Close()
+
 		// Logging and/or HTTP response is handled elsewhere
 		return err
 	}
+
+	// Only put the Lua state back if there were no errors
+	luapool.Put(L)
 
 	return nil
 }
