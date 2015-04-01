@@ -1,12 +1,6 @@
 # Plans
 
 
-Fix issues
-----------
-
-- [ ] Figure out why reloading the error page if there are Lua errors does not respond, then suddenly responds if the lua file is fixed.
-
-
 Server configuration
 --------------------
 
