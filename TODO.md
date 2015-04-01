@@ -4,6 +4,7 @@
 Server configuration
 --------------------
 
+- [ ] The first argument should be a directory or a .alg file, the rest should be regular flags. An alg file can be a zipped or tar xz-ed directory with a server.lua file and all needed files.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.
 - [ ] Server setting for enabling caching.
