@@ -1,0 +1,11 @@
+$font: 'Lato'
+
+body
+  color: #111
+  background-color: #eee
+  font-family: $font, sans-serif
+  font-size: 1.8em
+  margin: 0
+
+p
+  margin-left: 0.7em

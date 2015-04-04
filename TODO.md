@@ -2,6 +2,16 @@
 
 Unsorted
 --------
+- [_] Add a lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
+- [ ] Add a lua function that does the same as above, but reads in templates and stores the compiled templates.
+- [ ] Find a good way to divide web-applications into:
+      * GCSS
+      * CSS
+      * HTML
+      * Amber templates
+      * Lua logic
+      And make it effortless to use them together.
+      Make the ideal "visitor counter" application.
 
 - [ ] Make cookies work when buffering requests. Or disable buffering when cookies are involved.
 - [ ] Add a flag for serving the files in the current directory over HTTP, without using Redis. --oldschool, perhaps
@@ -16,7 +26,10 @@ Unsorted
       For displaying stats, break-in attempts and errors in the code.
 - [ ] Automatic browser reload when served files are changed, for development.
 - [ ] Caching of templates.
+- [ ] A smoother way to combine GCSS, Amber and Lua.
 - [ ] Virtual DOM?
+- [ ] A separate access log.
+- [ ] Modules, Lua libraries, plugins and reuse of code.
 
 
 Server configuration
