@@ -4,13 +4,13 @@ HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users an
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png">
 
-[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
-
 
 Technologies
 ------------
 
 Written in [Go](https://golang.org). Uses [Redis](https://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging.
+
+[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
 
 Design decisions
@@ -56,6 +56,12 @@ Screenshots
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
 *Screenshot of `algernon` and `redis` running in a terminal emulator. The ANSI graphics are from a photo of Algernon Charles Swinburne, the poet.*
+
+--
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_lua_error.png">
+
+*This is how errors in Lua scripts are handled, in debug mode.*
 
 --
 
