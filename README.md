@@ -1,6 +1,8 @@
 # Algernon
 
-HTTP/2 web server that can serve Markdown, Amber, GCSS, static files and directories and use Lua scripts as request handlers. Comes with built-in support for users and permissions.
+HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users and permissions.
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png">
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
@@ -38,13 +40,13 @@ Features and limitations
 ------------------------
 
 * Supports HTTP/2.
-* Tested and works on Linux and OS X.
-* Works on 64-bit Windows 8. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
+* Can use Lua scripts as handlers for HTTP requests.
+* Works on Linux, OS X and 64-bit Windows. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
-* Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss).
-* No support for caching or template compilation, yet.
+* Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss). DRY.
+* No support for caching, yet.
 * Will not run without a Redis server to connect to.
 
 
