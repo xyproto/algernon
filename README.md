@@ -1,8 +1,6 @@
-# Algernon
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png">
 
 HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users and permissions.
-
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png">
 
 
 Technologies
@@ -61,7 +59,7 @@ Screenshots
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_lua_error.png">
 
-*This is how errors in Lua scripts are handled, in debug mode.*
+*This is how errors in Lua scripts are handled, when Debug mode is enabled.*
 
 --
 
