@@ -1,12 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+)
+
+const (
+	// Code highlight
+	pre_highlight  = "<font style='color: red !important'>"
+	post_highlight = "</font>"
+
+	// Highlight theme. See https://highlightjs.org/ for more themes.
+	highlight_theme = "github"
 )
 
 // Write the contents of a ResponseRecorder to a ResponseWriter
@@ -25,10 +35,15 @@ func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 // a string describing which programming language the file is in, ie. "lua".
 func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 
-	w.WriteHeader(http.StatusInternalServerError)
-	//w.WriteHeader(http.StatusOK)
+	// HTTP status
+	//w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusOK)
 
+	// HTTP content type
 	w.Header().Add("Content-Type", "text/html; encoding=UTF-8")
+
+	// The line that the error refers to, for the case of Lua
+	linenr := -1
 
 	// Read the file contents
 	var code string
@@ -36,19 +51,53 @@ func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 	if err != nil {
 		code = err.Error()
 	} else {
-		// Escape the HTML so that the pretty printer is not confused
-		code = strings.Replace(string(filebytes), "<", "&lt;", -1)
+		if lang == "lua" {
+			// If the first line of the error message has two colons, see if the second field is a number
+			fields := strings.SplitN(errormessage, ":", 3)
+			if len(fields) > 2 {
+				// Extract the line number from the error message, if possible
+				numberfield := fields[1]
+				linenr, err = strconv.Atoi(numberfield)
+				// Subtract one to make it a slice index instead of human-friendly line number
+				linenr--
+				// Set linenumber to -1 if the conversion failed
+				if err != nil {
+					linenr = -1
+				}
+			}
+		}
+
+		// Escape any HTML in the code, so that the pretty printer is not confused
+		filebytes = bytes.Replace(filebytes, []byte("<"), []byte("&lt;"), -1)
+
+		// Modify the line that is to be highlighted
+		bytelines := bytes.Split(filebytes, []byte("\n"))
+		if (linenr >= 0) && (linenr < len(bytelines)) {
+			bytelines[linenr] = []byte(pre_highlight + string(bytelines[linenr]) + post_highlight)
+		}
+
+		// Build a string from the bytelines slice
+		code = string(bytes.Join(bytelines, []byte("\n")))
+
 	}
 
-	// Find an appropriate title
-	title := []string{"Preposterous", "Inconceivable", "Unthinkable", "Defies all reason"}[rand.Intn(4)]
+	// Set an appropriate title
+	title := strings.Title(lang) + " Error"
+
+	// Set the highlight class
+	langclass := lang
+	if lang == "" {
+		langclass = "nohighlight"
+	}
+
+	// Highlighting for the error message
+	errorclass := "json" // "nohighlight"
 
 	// Inform the user of the error
 	fmt.Fprint(w, `<!doctype html>
 <html>
   <head>
-    <title>Error in `+filename+`</title>
-    <script src="//google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
+    <title>`+title+`</title>
 	<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
 	<style>
       body {
@@ -66,22 +115,22 @@ func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 	    margin-bottom: 35pt;
 	  }
 	  #right {
-		  text-align:right;
-	  }
-	  li {
-		list-style-type: decimal !important
+        text-align:right;
 	  }
 	</style>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/styles/`+highlight_theme+`.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>	
+	<script>hljs.initHighlightingOnLoad();</script>
   </head>
   <body>
     <div style="font-size: 3em; font-weight: bold;">`+title+`</div>
     Contents of `+filename+`:
     <div>
-	  <pre class="prettyprint lang-`+lang+` linenums">`+code+`</pre>
+	  <pre><code class="`+langclass+`">`+code+`</code></pre>
 	</div>
     Error message:
     <div>
-	  <pre class="prettyprint lang-json">`+errormessage+`</pre>
+	  <pre><code class="`+errorclass+`">`+strings.TrimSpace(errormessage)+`</code></pre>
 	</div>
 	<div id="right">
 	`+version_string+`
