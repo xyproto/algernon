@@ -1,6 +1,17 @@
 # Plans
 
 
+Most important
+--------------
+
+- [ ] Automatic browser reload when served files are changed, for development.
+- [ ] Caching of templates.
+- [ ] A smoother way to combine GCSS, Amber and Lua.
+- [ ] Virtual DOM?
+- [ ] A separate access log.
+- [ ] Modules, Lua libraries, plugins and reuse of code.
+
+
 Server configuration
 --------------------
 
@@ -56,6 +67,7 @@ Authentication and authorization
 --------------------------------
 
 - [ ] Support HTTP basic auth.
+- [ ] Support OAuth 1.
 
 
 Lua

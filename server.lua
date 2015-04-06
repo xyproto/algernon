@@ -7,6 +7,7 @@ SetAddr(":3000")
 SetDebug(true)
 
 --- Logging (will log to console if an empty string is given)
+--LogTo("algernon.log")
 --LogTo("/var/log/algernon.log")
 
 --- Clear the URL prefixes for the access permissions
