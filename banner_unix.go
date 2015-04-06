@@ -70,7 +70,7 @@ func insertText(s, tabs string, linenr, offset int, message string, removal int)
 
 // Return ANSI graphics with the current version number embedded in the text
 func banner() string {
-	s := decompress(image)
+	s := "\n" + decompress(image)
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, -1)
 	s = insertText(s, tabs, 5, 2, "\x1b[32;1m"+version_string+"\x1b[0m", 1)
