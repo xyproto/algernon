@@ -76,15 +76,16 @@ Getting started
 
 * Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
 * `go get github.com/xyproto/algernon`
-* `cd $GOPATH/src/github.com/xyproto/algernon`
-* `go get -d`
-* `go build`
-* `sudo install -Dm755 algernon /usr/bin/algernon` (optional)
 
 ##### Enable HTTP/2 in the browser
 
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
 * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
+
+##### Prepare for running the example
+
+* `cd $GOPATH/src/github.com/xyproto/algernon`
+* `go build`
 
 ##### Run the example
 
