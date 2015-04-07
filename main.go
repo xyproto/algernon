@@ -1,3 +1,4 @@
+// HTTP/2 web server with built-in support for Lua, Markdown, GCSS and Amber.
 package main
 
 import (
