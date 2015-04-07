@@ -4,6 +4,7 @@
 Most important
 --------------
 
+- [ ] Make cookies work not only with HTTP, but also HTTPS+HTTP/2.
 - [ ] Automatic browser reload when served files are changed, for development.
 - [ ] Caching of templates.
 - [ ] A smoother way to combine GCSS, Amber and Lua.

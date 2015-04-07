@@ -46,6 +46,7 @@ Features and limitations
 * Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss). DRY.
 * No support for caching, yet.
 * Will not run without a Redis server to connect to.
+* Cookies currently only works with HTTP, not HTTPS+HTTP/2. To be implemented.
 
 
 Screenshots
