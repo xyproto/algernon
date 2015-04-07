@@ -29,3 +29,6 @@ examples/a
 
 # Logs
 algernon.log
+
+# Leftovers
+.DS_Store
