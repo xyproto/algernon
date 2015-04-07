@@ -40,7 +40,7 @@ func main() {
 
 	// Console output
 	fmt.Println(banner())
-	fmt.Println("------------------------------- - - · ·")
+	fmt.Println("--------------------------------------- - - · ·")
 
 	// Request handlers
 	mux := http.NewServeMux()
@@ -76,24 +76,26 @@ func main() {
 	s := &http.Server{
 		Addr:           SERVER_ADDR,
 		Handler:        mux,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    7 * time.Second,
+		WriteTimeout:   7 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
 	// Enable HTTP/2 support
 	http2.ConfigureServer(s, nil)
 
-	// Silence the logging from the http2 package
-	http2.VerboseLogs = false
-	f, err := os.Open("/dev/null")
+	// If we are not keeping the logs, reduce the verboseness
+	http2.VerboseLogs = (SERVER_HTTP2_LOG != "/dev/null")
+
+	// Direct the logging from the http2 package elsewhere
+	f, err := os.Open(SERVER_HTTP2_LOG)
 	defer f.Close()
 	if err != nil {
-		// Could not open /dev/null, use a file instead
-		f, err := os.OpenFile("discard.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		// Could not open the SERVER_HTTP2_LOG filename, try using another filename
+		f, err := os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer f.Close()
 		if err != nil {
-			log.Fatal("Could not write to /dev/null or to discard.log")
+			log.Fatalf("Could not write to %s nor %s.", SERVER_HTTP2_LOG, "http2.log")
 		}
 		internallog.SetOutput(f)
 	} else {

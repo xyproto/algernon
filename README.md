@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png" alt="Algernon is an http2 web server">
 
 HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users and permissions.
 

@@ -104,8 +104,13 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 		s += "TLS certificate:\t" + SERVER_CERT + "\n"
 		s += "TLS key:\t\t" + SERVER_KEY + "\n"
 		s += "Redis address:\t\t" + REDIS_ADDR + "\n"
-		s += "Redis database index:\t" + strconv.Itoa(REDIS_DB) + "\n"
+		if REDIS_DB != 0 {
+			s += "Redis database index:\t" + strconv.Itoa(REDIS_DB) + "\n"
+		}
 		s += "Server configuration:\t" + SERVER_CONF_SCRIPT + "\n"
+		if SERVER_HTTP2_LOG != "/dev/null" {
+			s += "HTTP/2 log file:\t" + SERVER_HTTP2_LOG + "\n"
+		}
 		L.Push(lua.LString(s))
 		return 1 // number of results
 	}))

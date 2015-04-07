@@ -18,7 +18,7 @@ ANSI banner HOWTO
 1. Find an image.
 2. Convert to png, if needed:
    convert image.jpg image.png
-3. Crop and resize the image until it is approximately 22 pixels in width. Gimp works.
+3. Crop and resize the image until it is approximately 20 pixels in width. Gimp works.
 4. Install the transmogrify executable from the transmogrifier package (for converting to ANSI):
    npm -g install transmogrifier
 5. Transform, compress and encode:

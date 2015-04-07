@@ -17,7 +17,7 @@ var (
 	SERVER_CONFIGURATION_FILENAMES = []string{"/etc/algernon/server.lua"}
 
 	// Configuration that is exposed to the server configuration script
-	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT string
+	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT, SERVER_HTTP2_LOG string
 
 	// Redis configuration
 	REDIS_ADDR string
@@ -44,6 +44,7 @@ Possible flags:
                                (uses port 6379 at localhost by default)
   --dbindex=INDEX              Which Redis database index to use
   --conf=FILENAME              Lua script with additional configuration
+  --http2log=FILENAME          Log the (verbose) HTTP/2 log to a file
   --help                       This text
 `)
 }
@@ -67,6 +68,7 @@ func handleFlags() {
 	flag.StringVar(&REDIS_ADDR, "redis", host+default_redis_colon_port, "Redis [host][:port] (ie \":6379\")")
 	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
 	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
+	flag.StringVar(&SERVER_HTTP2_LOG, "http2log", "/dev/null", "HTTP/2 log")
 
 	flag.Parse()
 
