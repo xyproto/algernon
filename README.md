@@ -76,6 +76,10 @@ Getting started
 
 * Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
 * `go get github.com/xyproto/algernon`
+* `cd $GOPATH/src/github.com/xyproto/algernon`
+* `go get -d`
+* `go build`
+* `sudo install -Dm755 algernon /usr/bin/algernon` (optional)
 
 ##### Enable HTTP/2 in the browser
 
