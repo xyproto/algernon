@@ -75,6 +75,8 @@ func main() {
 	// Set the values that has not been set by flags nor scripts (and can be set by both)
 	FinalConfiguration(host)
 
+	fmt.Println("--------------------------------------- - - · ·")
+
 	// Server configuration
 	s := &http.Server{
 		Addr:           SERVER_ADDR,
