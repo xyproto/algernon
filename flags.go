@@ -19,7 +19,7 @@ var (
 	// Configuration that is exposed to the server configuration script(s)
 	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT, SERVER_HTTP2_LOG string
 
-	SERVER_JUST_HTTP bool
+	SERVE_JUST_HTTP2, SERVE_JUST_HTTP bool
 
 	// Configuration that may only be set in the server configuration script(s)
 	SERVER_ADDR_LUA           string
@@ -52,6 +52,7 @@ Possible flags:
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Log the (verbose) HTTP/2 log to a file
   --http2only                  Serve HTTP/2, not HTTPS + HTTP/2
+  --httponly                   Serve plain old HTTP
   --help                       This text
 `)
 }
@@ -77,7 +78,8 @@ func handleFlags() string {
 	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
 	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
 	flag.StringVar(&SERVER_HTTP2_LOG, "http2log", "/dev/null", "HTTP/2 log")
-	flag.BoolVar(&SERVER_JUST_HTTP, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
+	flag.BoolVar(&SERVE_JUST_HTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
+	flag.BoolVar(&SERVE_JUST_HTTP, "httponly", false, "Serve plain old HTTP")
 
 	flag.Parse()
 

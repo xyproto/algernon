@@ -34,6 +34,22 @@ var (
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 )
 
+func NewServerConfiguration(mux *http.ServeMux, http2support bool) *http.Server {
+	// Server configuration
+	s := &http.Server{
+		Addr:           SERVER_ADDR,
+		Handler:        mux,
+		ReadTimeout:    7 * time.Second,
+		WriteTimeout:   7 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	if http2support {
+		// Enable HTTP/2 support
+		http2.ConfigureServer(s, nil)
+	}
+	return s
+}
+
 func main() {
 	// Set several configuration variables, based on the given flags and arguments
 	host := handleFlags()
@@ -77,17 +93,7 @@ func main() {
 
 	fmt.Println("--------------------------------------- - - · ·")
 
-	// Server configuration
-	s := &http.Server{
-		Addr:           SERVER_ADDR,
-		Handler:        mux,
-		ReadTimeout:    7 * time.Second,
-		WriteTimeout:   7 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
-
-	// Enable HTTP/2 support
-	http2.ConfigureServer(s, nil)
+	s := NewServerConfiguration(mux, true)
 
 	// If we are not keeping the logs, reduce the verboseness
 	http2.VerboseLogs = (SERVER_HTTP2_LOG != "/dev/null")
@@ -108,7 +114,7 @@ func main() {
 	}
 
 	err = nil
-	if !SERVER_JUST_HTTP {
+	if !(SERVE_JUST_HTTP2 || SERVE_JUST_HTTP) {
 		log.Info("Serving HTTPS + HTTP/2")
 		// Try listening to HTTPS requests
 		err = s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
@@ -116,9 +122,15 @@ func main() {
 			log.Warn(err)
 		}
 	}
-	if (err != nil) || SERVER_JUST_HTTP {
-		log.Info("Serving HTTP/2")
+	if (err != nil) || SERVE_JUST_HTTP2 {
+		log.Info("Serving HTTP/2, not HTTPS + HTTP/2")
 		// Try listening to HTTP requests
+		if err := s.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	} else if SERVE_JUST_HTTP {
+		log.Info("Serving HTTP, not HTTP/2")
+		s = NewServerConfiguration(mux, false)
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
