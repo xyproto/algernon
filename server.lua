@@ -1,6 +1,6 @@
 --- Algernon Server Configuration
 
---- Host and port
+--- Set the default host and port.
 SetAddr(":3000")
 
 --- Debug mode (errors will be shown in the browser)
@@ -28,8 +28,10 @@ AddUserPrefix("/examples/chat/chat")
 --- For the "chat" example, when running from the "chat" directory
 AddUserPrefix("/chat")
 
--- Output server configuration
-print(ServerInfo())
+-- Output server configuration after parsing this file and commandline arguments
+OnReady(function()
+  print(ServerInfo())
+end)
 
 -- Custom permission denied handler
 DenyHandler(function()

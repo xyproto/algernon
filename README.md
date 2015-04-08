@@ -398,7 +398,7 @@ GenerateUniqueConfirmationCode() -> string
 Lua functions for the server configuration file
 -----------------------------------------------
 
-* `SetAddr(string)` set an address for the server on the form [host][:port].
+* `SetAddr(string)` set the default address for the server on the form [host][:port].
 * `ClearPermissions()` reset the URL prefixes and make everything *public*.
 * `AddAdminPrefix(string)` add an URL prefix that will have *admin* rights.
 * `AddUserPrefix(string)` add an URL prefix that will have *user* rights.
@@ -409,6 +409,7 @@ Lua functions for the server configuration file
 * `version()` returns the version string for the server. Same function as for handling requests.
 * `log(...)` logs the given strings as INFO. Takes a variable number of strings. Same function as for handling requests.
 * `warn(...)` logs the given strings as WARN. Takes a variable number of strings. Same function as for handling requests.
+* `OnReady(function)` provide a lua function that will be run once the server is ready to start serving.
 
 
 Releases

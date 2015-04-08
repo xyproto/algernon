@@ -15,12 +15,12 @@ var (
 )
 
 // Make functions related to server configuration and permissions available
-func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lStatePool, filename string) {
+func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, filename string) {
 
 	// Registers a path prefix, for instance "/secret",
 	// as having *admin* rights.
 	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
-		SERVER_ADDR = L.ToString(1)
+		SERVER_ADDR_LUA = L.ToString(1)
 		return 0 // number of results
 	}))
 
@@ -46,7 +46,7 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 		return 0 // number of results
 	}))
 
-	// Sets a lua script as a custom "permissions denied" page handler.
+	// Sets a Lua function as a custom "permissions denied" page handler.
 	L.SetGlobal("DenyHandler", L.NewFunction(func(L *lua.LState) int {
 		luaDenyFunc := L.ToFunction(1)
 
@@ -65,6 +65,23 @@ func exportServerConf(L *lua.LState, perm *permissions.Permissions, luapool *lSt
 				perm.DenyFunction()(w, req)
 			}
 		})
+		return 0 // number of results
+	}))
+
+	// Sets a Lua function to be run once the server is done parsing configuration and arguments.
+	L.SetGlobal("OnReady", L.NewFunction(func(L *lua.LState) int {
+		luaReadyFunc := L.ToFunction(1)
+
+		// Custom handler for when permissions are denied.
+		// Put the *lua.LState in a closure.
+		SERVER_READY_FUNCTION_LUA = func() {
+			// Run the given Lua function
+			L.Push(luaReadyFunc)
+			if err := L.PCall(0, lua.MultRet, nil); err != nil {
+				// Non-fatal error
+				log.Error("The OnReady function failed:", err)
+			}
+		}
 		return 0 // number of results
 	}))
 

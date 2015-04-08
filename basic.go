@@ -13,7 +13,7 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-func exportBasicSystem(L *lua.LState) {
+func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Return the version string
 	L.SetGlobal("version", L.NewFunction(func(L *lua.LState) int {

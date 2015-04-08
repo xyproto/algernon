@@ -36,7 +36,7 @@ var (
 
 func main() {
 	// Set several configuration variables, based on the given flags and arguments
-	handleFlags()
+	host := handleFlags()
 
 	// Console output
 	fmt.Println(banner())
@@ -71,6 +71,9 @@ func main() {
 			}
 		}
 	}
+
+	// Set the values that has not been set by flags nor scripts (and can be set by both)
+	FinalConfiguration(host)
 
 	// Server configuration
 	s := &http.Server{

@@ -8,16 +8,20 @@ import (
 )
 
 const (
-	default_server_colon_port = ":3000"
-	default_redis_colon_port  = ":6379"
+	default_web_colon_port   = ":3000"
+	default_redis_colon_port = ":6379"
 )
 
 var (
 	// List of configuration filenames to check
 	SERVER_CONFIGURATION_FILENAMES = []string{"/etc/algernon/server.lua"}
 
-	// Configuration that is exposed to the server configuration script
+	// Configuration that is exposed to the server configuration script(s)
 	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT, SERVER_HTTP2_LOG string
+
+	// Configuration that may only be set in the server configuration script(s)
+	SERVER_ADDR_LUA           string
+	SERVER_READY_FUNCTION_LUA func()
 
 	// Redis configuration
 	REDIS_ADDR string
@@ -37,10 +41,10 @@ Syntax:
 Possible flags:
   --version                    Show application name and version
   --dir=DIRECTORY              The server directory
-  --addr=[HOST][:PORT]         Host and port the server should listen at
+  --addr=[HOST][:PORT]         Host and port the server should listen at (ie :443)
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  --redis=[HOST][:PORT]        Address for connecting to a remote Redis database
+  --redis=[HOST][:PORT]        Address for connecting to a remote Redis database (ie :6379)
                                (uses port 6379 at localhost by default)
   --dbindex=INDEX              Which Redis database index to use
   --conf=FILENAME              Lua script with additional configuration
@@ -49,7 +53,8 @@ Possible flags:
 `)
 }
 
-func handleFlags() {
+// Parse the flags, return the default hostname
+func handleFlags() string {
 	flag.Usage = Usage
 
 	// The default for running the redis server on Windows is to listen
@@ -62,7 +67,7 @@ func handleFlags() {
 	// Commandline flag configuration
 
 	flag.StringVar(&SERVER_DIR, "dir", ".", "Server directory")
-	flag.StringVar(&SERVER_ADDR, "addr", host+default_server_colon_port, "Server [host][:port] (ie \":443\")")
+	flag.StringVar(&SERVER_ADDR, "addr", "", "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&SERVER_CERT, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&SERVER_KEY, "key", "key.pem", "Server key")
 	flag.StringVar(&REDIS_ADDR, "redis", host+default_redis_colon_port, "Redis [host][:port] (ie \":6379\")")
@@ -99,4 +104,25 @@ func handleFlags() {
 
 	// Add the SERVER_CONF_SCRIPT to the list of configuration scripts to be read and executed
 	SERVER_CONFIGURATION_FILENAMES = append(SERVER_CONFIGURATION_FILENAMES, SERVER_CONF_SCRIPT)
+
+	return host
+}
+
+// Set the values that has not been set by flags nor scripts (and can be set by both)
+func FinalConfiguration(host string) {
+	// Set the server host and port (commandline flags overrides Lua configuration)
+	if SERVER_ADDR == "" {
+		if SERVER_ADDR_LUA != "" {
+			SERVER_ADDR = SERVER_ADDR_LUA
+		} else {
+			SERVER_ADDR = host + default_web_colon_port
+		}
+	}
+
+	// Run the Lua function specified with the OnReady function, if available
+	if SERVER_READY_FUNCTION_LUA != nil {
+		// Useful for outputting configuration information after both
+		// configuration scripts have been run and flags have been parsed
+		SERVER_READY_FUNCTION_LUA()
+	}
 }

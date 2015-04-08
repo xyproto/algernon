@@ -44,7 +44,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	exportBasicWeb(w, req, L, filename)
 
 	// Make other basic functions available
-	exportBasicSystem(L)
+	exportBasicSystemFunctions(L)
 
 	// Functions for rendering markdown or amber
 	exportRenderFunctions(w, req, L)
@@ -114,10 +114,10 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 	userstate := perm.UserState()
 
 	// Server configuration functions
-	exportServerConf(L, perm, luapool, filename)
+	exportServerConfigFunctions(L, perm, filename)
 
 	// Other basic system functions, like log()
-	exportBasicSystem(L)
+	exportBasicSystemFunctions(L)
 
 	// Simpleredis data structures (could be used for storing server stats)
 	exportList(L, userstate)
