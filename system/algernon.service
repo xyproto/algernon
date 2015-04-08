@@ -1,0 +1,20 @@
+[Unit]
+Description=Algernon web server
+Requires=redis.service
+After=redis.service
+
+[Service]
+User=algernon
+Group=algernon
+ExecStart=/usr/bin/algernon -conf=/etc/algernon/server.lua
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+RuntimeDirectory=algernon
+RuntimeDirectoryMode=700
+
+[Install]
+WantedBy=multi-user.target
