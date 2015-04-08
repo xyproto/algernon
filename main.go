@@ -107,11 +107,17 @@ func main() {
 		internallog.SetOutput(f)
 	}
 
-	log.Info("Starting HTTPS server")
-	// Try listening to HTTPS requests
-	if err := s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY); err != nil {
-		log.Warn(err)
-		log.Info("Starting HTTP server instead")
+	err = nil
+	if !SERVER_JUST_HTTP {
+		log.Info("Serving HTTPS + HTTP/2")
+		// Try listening to HTTPS requests
+		err = s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
+		if err != nil {
+			log.Warn(err)
+		}
+	}
+	if (err != nil) || SERVER_JUST_HTTP {
+		log.Info("Serving HTTP/2")
 		// Try listening to HTTP requests
 		if err := s.ListenAndServe(); err != nil {
 			log.Fatal(err)

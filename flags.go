@@ -19,6 +19,8 @@ var (
 	// Configuration that is exposed to the server configuration script(s)
 	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT, SERVER_HTTP2_LOG string
 
+	SERVER_JUST_HTTP bool
+
 	// Configuration that may only be set in the server configuration script(s)
 	SERVER_ADDR_LUA           string
 	SERVER_READY_FUNCTION_LUA func()
@@ -49,6 +51,7 @@ Possible flags:
   --dbindex=INDEX              Which Redis database index to use
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Log the (verbose) HTTP/2 log to a file
+  --http2only                  Serve HTTP/2, not HTTPS + HTTP/2
   --help                       This text
 `)
 }
@@ -74,6 +77,7 @@ func handleFlags() string {
 	flag.IntVar(&REDIS_DB, "dbindex", 0, "Redis database index")
 	flag.StringVar(&SERVER_CONF_SCRIPT, "conf", "server.lua", "Server configuration")
 	flag.StringVar(&SERVER_HTTP2_LOG, "http2log", "/dev/null", "HTTP/2 log")
+	flag.BoolVar(&SERVER_JUST_HTTP, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 
 	flag.Parse()
 

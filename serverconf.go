@@ -128,7 +128,8 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		if SERVER_HTTP2_LOG != "/dev/null" {
 			s += "HTTP/2 log file:\t" + SERVER_HTTP2_LOG + "\n"
 		}
-		L.Push(lua.LString(s))
+		// Return the string, but drop the final newline
+		L.Push(lua.LString(s[:len(s)-1]))
 		return 1 // number of results
 	}))
 }
