@@ -4,7 +4,9 @@
 Most important
 --------------
 
-- [ ] Make cookies work not only with HTTP, but also HTTPS+HTTP/2.
+- [ ] Prefer environment variables and flags over lua server configuration.
+- [ ] A separate debug webserver running on a different port.
+      For displaying stats, break-in attempts and errors in the code.
 - [ ] Automatic browser reload when served files are changed, for development.
 - [ ] Caching of templates.
 - [ ] A smoother way to combine GCSS, Amber and Lua.
