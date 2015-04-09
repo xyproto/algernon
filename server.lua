@@ -4,7 +4,7 @@
 SetAddr(":3000")
 
 --- Debug mode (errors will be shown in the browser)
-SetDebug(true)
+SetDebug(false)
 
 --- Logging (will log to console if an empty string is given)
 --LogTo("algernon.log")
