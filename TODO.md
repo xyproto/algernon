@@ -1,9 +1,10 @@
 # Plans
 
-
-Most important
---------------
-
+- [ ] A way to have external projects written in Go that can extend
+      the Lua state by adding functions. Perhaps adding functions to
+      the Lua State object by sending it packed over the network and
+      then receiving the modified Lua State.
+- [ ] A separate access log.
 - [ ] Prefer environment variables and flags over lua server configuration.
 - [ ] A separate debug webserver running on a different port.
       For displaying stats, break-in attempts and errors in the code.
@@ -11,7 +12,6 @@ Most important
 - [ ] Caching of templates.
 - [ ] A smoother way to combine GCSS, Amber and Lua.
 - [ ] Virtual DOM?
-- [ ] A separate access log.
 - [ ] Modules, Lua libraries, plugins and reuse of code.
 
 
