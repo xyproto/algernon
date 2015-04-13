@@ -18,6 +18,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L)
 		// Convert the buffer to markdown and return the translated string
 		w.Write(blackfriday.MarkdownCommon([]byte(buf.String())))
@@ -31,6 +32,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// Output text as rendered amber.
 	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("aprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L)
 
 		// Use the buffer as a template.
@@ -55,6 +57,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// Output text as rendered GCSS
 	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("gprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L)
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.

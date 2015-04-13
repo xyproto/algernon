@@ -56,16 +56,18 @@ func getFilenames(dirname string) []string {
 	return filenames
 }
 
+// Easy way to output a HTML page
 func easyPage(title, body string) string {
 	return "<!doctype html><html><head>" + font + "<title>" + title + "</title><style>" + style + "</style><head><body><h1>" + title + "</h1>" + body + "</body></html>"
 }
 
+// Easy way to build links to directories
 func easyLink(text, url string, isDirectory bool) string {
 	if isDirectory {
 		text += "/"
 	}
-	// If the directory only contains one index.* file, adding "/" to the URL is not needed,
-	// because no other files will be needed to be accessed from that directory by the index
-	// file in question. Just a note.
+	// NOTE: If the directory only contains one index.* file, adding "/" to
+	// the URL is not needed, because no other files will be needed to be
+	// accessed from that directory by the index file in question.
 	return "<a href=\"/" + url + "/\">" + text + "</a><br>"
 }

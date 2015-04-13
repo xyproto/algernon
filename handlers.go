@@ -27,7 +27,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/html")
 		b, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			if DEBUG_MODE {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
 			return
 		}
 		markdownPage(w, b, filename)
@@ -36,7 +40,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/html")
 		b, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			if DEBUG_MODE {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
 			return
 		}
 		amberPage(w, b, filename)
@@ -45,7 +53,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/css")
 		b, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			if DEBUG_MODE {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
 			return
 		}
 		gcssPage(w, b, filename)
@@ -69,7 +81,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			// Run the lua script
 			if err := runLua(w, req, filename, perm, luapool); err != nil {
 				// Output the non-fatal error message to the log
-				log.Error(err)
+				log.Error("Error in ", filename + ":", err)
 			}
 		}
 		return
@@ -80,7 +92,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 	file, err := os.Open(filename)
 	defer file.Close()
 	if err != nil {
-		fmt.Fprintf(w, "Can't open %s: %s", filename, err)
+		if DEBUG_MODE {
+			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
+		} else {
+			log.Errorf("Can't open %s: %s", filename, err)
+		}
 	}
 	// Serve the file
 	io.Copy(w, file)
