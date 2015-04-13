@@ -40,14 +40,14 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		tpl, err := amber.Compile(buf.String(), amber.Options{true, false})
 		if err != nil {
 			if DEBUG_MODE {
-				// TODO: Show where in the source code things went wrong. Make it prettier.
+				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
 			}
 			return 0 // number of results
 		}
-		//somedata := map[string]string{"": ""}
+		// Instead of nil, it's possible to supply a map[string]string
 		tpl.Execute(w, nil)
 		return 0 // number of results
 	}))
@@ -61,7 +61,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Ignoring the number of bytes written.
 		if _, err := gcss.Compile(w, bytes.NewReader(buf.Bytes())); err != nil {
 			if DEBUG_MODE {
-				// TODO: Show where in the source code things went wrong. Make it prettier.
+				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
@@ -95,16 +95,18 @@ func markdownPage(w io.Writer, b []byte, title string) {
 	}
 
 	htmlbytes := []byte("<!doctype html><html><head><title>" + title + "</title><style>" + style + "</style><head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>")
+
+	// Write the rendered Markdown page to the http.ResponseWriter
 	w.Write(htmlbytes)
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
-func amberPage(w io.Writer, b []byte, title string) {
+func amberPage(w io.Writer, b []byte, title string, data map[string]string) {
 	ambertext := string(b)
 	tpl, err := amber.Compile(ambertext, amber.Options{true, false})
 	if err != nil {
 		if DEBUG_MODE {
-			// TODO: Show where in the source code things went wrong. Make it prettier.
+			// TODO: Use a similar error page as for Lua
 			fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+ambertext)
 		} else {
 			log.Errorf("Could not compile Amber template:\n%s\n%s", err, ambertext)
@@ -112,18 +114,17 @@ func amberPage(w io.Writer, b []byte, title string) {
 		return
 
 	}
-	//somedata := map[string]string{"": ""}
 	var buf bytes.Buffer
-	//bufWriter := bufio.NewWriter(&buf)
 	if err := tpl.Execute(&buf, "MISSING DATA"); err != nil {
 		if DEBUG_MODE {
-			// TODO: Make it prettier.
+			// TODO: Use a similar error page as for Lua
 			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
 		} else {
 			log.Error("Could not execute Amber template:", err)
 		}
 		return
 	}
+	// Write the rendered template to the http.ResponseWriter
 	buf.WriteTo(w)
 }
 
@@ -131,7 +132,7 @@ func amberPage(w io.Writer, b []byte, title string) {
 func gcssPage(w io.Writer, b []byte, title string) {
 	if _, err := gcss.Compile(w, bytes.NewReader(b)); err != nil {
 		if DEBUG_MODE {
-			// TODO: Show where in the source code things went wrong. Make it prettier.
+			// TODO: Use a similar error page as for Lua
 			fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+string(b))
 		} else {
 			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(b))
