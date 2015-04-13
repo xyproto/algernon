@@ -43,9 +43,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 				// TODO: Show where in the source code things went wrong. Make it prettier.
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Error("Could not compile Amber template:")
-				log.Error(err)
-				log.Error("\n" + buf.String())
+				log.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
 			}
 			return 0 // number of results
 		}
@@ -66,9 +64,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 				// TODO: Show where in the source code things went wrong. Make it prettier.
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Error("Could not compile GCSS:")
-				log.Error(err)
-				log.Error("\n" + buf.String())
+				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
 			}
 			//return 0 // number of results
 		}
@@ -111,9 +107,7 @@ func amberPage(w io.Writer, b []byte, title string) {
 			// TODO: Show where in the source code things went wrong. Make it prettier.
 			fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+ambertext)
 		} else {
-			log.Error("Could not compile Amber template:")
-			log.Error(err.Error())
-			log.Error("\n" + ambertext)
+			log.Errorf("Could not compile Amber template:\n%s\n%s", err, ambertext)
 		}
 		return
 
@@ -126,8 +120,7 @@ func amberPage(w io.Writer, b []byte, title string) {
 			// TODO: Make it prettier.
 			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
 		} else {
-			log.Error("Could not execute Amber template:")
-			log.Error(err)
+			log.Error("Could not execute Amber template:", err)
 		}
 		return
 	}
@@ -141,9 +134,7 @@ func gcssPage(w io.Writer, b []byte, title string) {
 			// TODO: Show where in the source code things went wrong. Make it prettier.
 			fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+string(b))
 		} else {
-			log.Error("Could not compile GCSS:")
-			log.Error(err)
-			log.Error("\n" + string(b))
+			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(b))
 		}
 		return
 	}

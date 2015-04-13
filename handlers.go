@@ -81,7 +81,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			// Run the lua script
 			if err := runLua(w, req, filename, perm, luapool); err != nil {
 				// Output the non-fatal error message to the log
-				log.Error("Error in ", filename + ":", err)
+				log.Error("Error in ", filename+":", err)
 			}
 		}
 		return
