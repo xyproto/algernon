@@ -47,7 +47,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			}
 			return
 		}
-		amberPage(w, b, filename)
+		amberPage(w, b, filename, nil)
 		return
 	} else if ext == ".gcss" {
 		w.Header().Add("Content-Type", "text/css")
