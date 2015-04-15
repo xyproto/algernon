@@ -6,7 +6,7 @@ SetAddr(":3000")
 --- Debug flag
 --- If set to true, errors will be shown in the browsers,
 --- and request will be buffered (which results in cookies not working, for now)
-SetDebug(true)
+SetDebug(false)
 
 --- Verbose flag
 -- If set to true, log messages will be more frequent
