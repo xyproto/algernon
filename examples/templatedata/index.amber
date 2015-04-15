@@ -1,4 +1,4 @@
-$title=title()
+$title="Counter Example"
 doctype 5
 html
   head

@@ -6,11 +6,6 @@
 -- may return one value that will be converted to string.
 --
 
--- Page title
-function title()
-  return "Counter Example"
-end
-
 -- Count from 0 and up. Return the current value.
 function counter()
   -- Use the "counter" KeyValue and increase the "number" key with 1
