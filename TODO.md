@@ -4,6 +4,7 @@ Unsorted
 --------
 
 - [ ] Make cookies work when buffering requests. Or disable buffering when cookies are involved.
+- [ ] Add a flag for serving the files in the current directory over HTTP, without using Redis. --oldschool, perhaps
 - [ ] A way to have external projects written in Go that can extend
       the Lua state by adding functions. Perhaps adding functions to
       the Lua State object by sending it packed over the network and
