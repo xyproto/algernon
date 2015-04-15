@@ -23,7 +23,7 @@ Design decisions
     * index.html is outputted as it is, with the correct Content-Type.
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML
-    * data.lua is interpreted as Lua code, where the functions are made available for an index.amber file in the same directory.
+    * data.lua is interpreted as Lua code, where the functions are made available for index.amber in the same directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.
