@@ -19,6 +19,9 @@ const (
 	highlight_theme = "github"
 )
 
+// Shorthand function for reading a file
+var read = ioutil.ReadFile
+
 // Write the contents of a ResponseRecorder to a ResponseWriter
 func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 	w.WriteHeader(recorder.Code)
@@ -31,9 +34,9 @@ func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 }
 
 // Return an informative error page to the user
-// Takes a ResponseWriter, filename that will be read, error message and
-// a string describing which programming language the file is in, ie. "lua".
-func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
+// Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
+// programming/scripting/template language (i.e. "lua". Can be empty).
+func prettyError(w http.ResponseWriter, filename string, filebytes []byte, errormessage, lang string) {
 
 	// HTTP status
 	//w.WriteHeader(http.StatusInternalServerError)
@@ -45,19 +48,19 @@ func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 	// The line that the error refers to, for the case of Lua
 	linenr := -1
 
-	// Read the file contents
+	// If there is code to be displayed
 	var code string
-	filebytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		code = err.Error()
-	} else {
+	if len(filebytes) > 0 {
 		if lang == "lua" {
 			// If the first line of the error message has two colons, see if the second field is a number
 			fields := strings.SplitN(errormessage, ":", 3)
 			if len(fields) > 2 {
 				// Extract the line number from the error message, if possible
 				numberfield := fields[1]
-				linenr, err = strconv.Atoi(numberfield)
+				if strings.Contains(numberfield, "(") {
+					numberfield = strings.Split(numberfield, "(")[0]
+				}
+				linenr, err := strconv.Atoi(numberfield)
 				// Subtract one to make it a slice index instead of human-friendly line number
 				linenr--
 				// Set linenumber to -1 if the conversion failed
@@ -78,15 +81,22 @@ func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 
 		// Build a string from the bytelines slice
 		code = string(bytes.Join(bytelines, []byte("\n")))
-
 	}
 
 	// Set an appropriate title
-	title := strings.Title(lang) + " Error"
+	title := "Error"
+	if lang == "gcss" {
+		title = "GCSS Error"
+	} else if lang != "" {
+		title = strings.Title(lang) + " Error"
+	}
 
 	// Set the highlight class
 	langclass := lang
-	if lang == "" {
+
+	// Turn off highlighting for some languages
+	switch lang {
+	case "", "amber", "gcss":
 		langclass = "nohighlight"
 	}
 
@@ -130,7 +140,7 @@ func prettyError(w http.ResponseWriter, filename, errormessage, lang string) {
 	</div>
     Error message:
     <div>
-	  <pre><code class="`+errorclass+`">`+strings.TrimSpace(errormessage)+`</code></pre>
+	  <pre><code style="color: #A00000;" class="`+errorclass+`">`+strings.TrimSpace(errormessage)+`</code></pre>
 	</div>
 	<div id="right">
 	`+version_string+`

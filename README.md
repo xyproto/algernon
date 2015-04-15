@@ -23,6 +23,7 @@ Design decisions
     * index.html is outputted as it is, with the correct Content-Type.
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML
+    * data.lua is interpreted as Lua code, where the functions are made available for an index.amber file in the same directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.
@@ -405,6 +406,7 @@ Lua functions for the server configuration file
 * `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
 * `ServerInfo() -> string` return a string with various server information.
 * `SetDebug(bool)` enables or disables debug mode, where debug information is exposed to the client.
+* `SetVerbose(bool)` enables or disables additional log messages.
 * `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
 * `version()` returns the version string for the server. Same function as for handling requests.
 * `log(...)` logs the given strings as INFO. Takes a variable number of strings. Same function as for handling requests.
@@ -423,7 +425,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.55
+* Version: 0.56
 * License: MIT
 * Alexander F Rødseth
 

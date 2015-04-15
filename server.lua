@@ -3,10 +3,14 @@
 --- Set the default host and port.
 SetAddr(":3000")
 
---- Debug mode
+--- Debug flag
 --- If set to true, errors will be shown in the browsers,
 --- and request will be buffered (which results in cookies not working, for now)
 SetDebug(true)
+
+--- Verbose flag
+-- If set to true, log messages will be more frequent
+SetVerbose(false)
 
 --- Logging (will log to console if an empty string is given)
 --LogTo("algernon.log")

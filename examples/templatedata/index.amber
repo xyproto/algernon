@@ -1,4 +1,4 @@
-$title="Counter II"
+$title=title()
 doctype 5
 html
   head

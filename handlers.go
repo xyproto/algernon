@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,7 +24,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 	// Markdown pages are handled differently
 	if ext == ".md" {
 		w.Header().Add("Content-Type", "text/html")
-		b, err := ioutil.ReadFile(filename)
+		b, err := read(filename)
 		if err != nil {
 			if DEBUG_MODE {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -38,7 +37,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		return
 	} else if ext == ".amber" {
 		w.Header().Add("Content-Type", "text/html")
-		amberdata, err := ioutil.ReadFile(filename)
+		amberdata, err := read(filename)
 		if err != nil {
 			if DEBUG_MODE {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -49,7 +48,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		}
 		// Try reading data.lua as well, if possible
 		luafilename := path.Join(path.Dir(filename), "data.lua")
-		luadata, err := ioutil.ReadFile(luafilename)
+		luadata, err := read(luafilename)
 		if err != nil {
 			// Could not find and/or read data.lua
 			luadata = []byte{}
@@ -57,42 +56,42 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		// Make functions from the given Lua data available
 		funcs := make(LuaDefinedGoFunctions)
 		if len(luadata) > 0 {
-			// There was Lua code available. Now make the functions available from the template.
-
-			fmt.Println("NEW LUA STATE YAY")
-
-			// Retrieve a Lua state
-			L := luapool.Get()
-			defer luapool.Put(L)
-
-			// TODO Close the Lua state and/or figure out why the same Lua is running!
-			//      This has to do with closures, I know it! The DoString.
-
-			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, L)
+			// There was Lua code available. Now make the functions available for the template.
+			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool)
 			if err != nil {
-				// TODO Output a Lua error here
-				// TODO Check DEBUG_MODE, then output to browser or log
-				log.Error(err)
+				if DEBUG_MODE {
+					// Set the title automatically, hence the ""
+					prettyError(w, luafilename, luadata, err.Error(), "lua")
+				} else {
+					log.Error(err)
+				}
 				return
 			}
-			if DEBUG_MODE {
-				infostring := "The following functions from " + luafilename + "\n"
-				infostring += "are made available for use in " + filename + ":\n\t"
-				exportedFunctions := []string{}
+			if DEBUG_MODE && VERBOSE {
+				s := "The following functions from " + luafilename + "\n"
+				s += "are made available for use in " + filename + ":\n\t"
+				// Create a comma separated list of the available functions
 				for key, _ := range funcs {
-					exportedFunctions = append(exportedFunctions, key)
+					s += key + ", "
 				}
-				infostring += strings.Join(exportedFunctions, ", ")
-				log.Info(infostring)
+				// Remove the final comma
+				if strings.HasSuffix(s, ", ") {
+					s = s[:len(s)-2]
+				}
+				// Output the message
+				log.Info(s)
 			}
 		}
-		// Render the Amber page
-		amberPage(w, filename, amberdata, funcs)
+
+		// Render the Amber page, using functions from data.lua, if available
+		amberPage(w, filename, luafilename, amberdata, funcs)
 
 		return
+
 	} else if ext == ".gcss" {
+
 		w.Header().Add("Content-Type", "text/css")
-		b, err := ioutil.ReadFile(filename)
+		gcssdata, err := read(filename)
 		if err != nil {
 			if DEBUG_MODE {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -101,9 +100,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			}
 			return
 		}
-		gcssPage(w, b, filename)
+
+		// Render the GCSS page as CSS
+		gcssPage(w, filename, gcssdata)
+
 		return
+
 	} else if ext == ".lua" {
+
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 		if DEBUG_MODE {
@@ -112,8 +116,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			// Run the lua script
 			if err := runLua(recorder, req, filename, perm, luapool); err != nil {
 				errortext := err.Error()
+				filedata, err := read(filename)
+				if err != nil {
+					// Use the error as the file contents when displaying the error message
+					// if reading the file failed.
+					filedata = []byte(err.Error())
+				}
 				// If there were errors, display an error page
-				prettyError(w, filename, errortext, "lua")
+				prettyError(w, filename, filedata, errortext, "lua")
 			} else {
 				// If things went well, write to the ResponseWriter
 				writeRecorder(w, recorder)
@@ -125,8 +135,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				log.Error("Error in ", filename+":", err)
 			}
 		}
+
 		return
+
 	}
+
 	// Set the correct Content-Type
 	mimereader.SetHeader(w, ext)
 	// Write to the ResponseWriter, from the File

@@ -101,29 +101,37 @@ func markdownPage(w io.Writer, b []byte, title string) {
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
-func amberPage(w io.Writer, title string, amberdata []byte, funcs LuaDefinedGoFunctions) {
+// filename and luafilename are only used if there are errors.
+func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs LuaDefinedGoFunctions) {
+
+	var buf bytes.Buffer
+
 	// Compile the given amber template
 	tpl, err := amber.Compile(string(amberdata), amber.Options{true, false})
 	if err != nil {
 		if DEBUG_MODE {
-			// TODO: Use a similar error page as for Lua
-			fmt.Fprintf(w, "Could not compile Amber template:\n\t%s\n\n%s",
-				err, string(amberdata))
+			prettyError(w, filename, amberdata, err.Error(), "amber")
 		} else {
 			log.Errorf("Could not compile Amber template:\n%s\n%s",
 				err, string(amberdata))
 		}
 		return
-
 	}
-
-	var buf bytes.Buffer
 
 	// Render the Amber template to the buffer
 	if err := tpl.Execute(&buf, funcs); err != nil {
 		if DEBUG_MODE {
-			// TODO: Use a similar error page as for Lua
-			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
+			// TODO: Use a pretty error page, similar to the one for Lua
+			if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
+
+				// If there were errors, display an error page
+				errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
+				// Default title
+				prettyError(w, filename, amberdata, errortext, "amber")
+			} else {
+				// Default title
+				prettyError(w, filename, amberdata, err.Error(), "amber")
+			}
 		} else {
 			log.Errorf("Could not execute Amber template:\n%s", err)
 		}
@@ -134,13 +142,13 @@ func amberPage(w io.Writer, title string, amberdata []byte, funcs LuaDefinedGoFu
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
-func gcssPage(w io.Writer, b []byte, title string) {
-	if _, err := gcss.Compile(w, bytes.NewReader(b)); err != nil {
+// filename is only used if there are errors.
+func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
+	if _, err := gcss.Compile(w, bytes.NewReader(gcssdata)); err != nil {
 		if DEBUG_MODE {
-			// TODO: Use a similar error page as for Lua
-			fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+string(b))
+			prettyError(w, filename, gcssdata, err.Error(), "gcss")
 		} else {
-			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(b))
+			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
 		}
 		return
 	}

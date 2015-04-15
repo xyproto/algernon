@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	DEBUG_MODE bool
+	DEBUG_MODE, VERBOSE bool
 )
 
 // Make functions related to server configuration and permissions available
@@ -88,6 +88,12 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	// Set debug mode to true or false
 	L.SetGlobal("SetDebug", L.NewFunction(func(L *lua.LState) int {
 		DEBUG_MODE = L.ToBool(1)
+		return 0 // number of results
+	}))
+
+	// Set verbose to true or false
+	L.SetGlobal("SetVerbose", L.NewFunction(func(L *lua.LState) int {
+		VERBOSE = L.ToBool(1)
 		return 0 // number of results
 	}))
 
