@@ -115,12 +115,33 @@ func amberPage(w io.Writer, b []byte, title string, data map[string]string) {
 
 	}
 	var buf bytes.Buffer
-	if err := tpl.Execute(&buf, "MISSING DATA"); err != nil {
+	type DataFieldsTest struct {
+		Counter func(int) string
+	}
+	df := DataFieldsTest{
+		func(val int) string {
+			if val == 1 {
+				return "123"
+			} else {
+				return "234"
+			}
+		},
+	}
+
+	// TODO: Look into adding Lua functions with variable numbers
+	//       of arguments. Like here:
+	//       http://jan.newmarch.name/go/template/chapter-template.htm
+
+	//datafields, err := Lua2data("data.lua")
+	// TODO: If data.lua exists, use the function names as field names.
+	// TODO: Check if templates can execute functions
+
+	if err := tpl.Execute(&buf, df); err != nil {
 		if DEBUG_MODE {
 			// TODO: Use a similar error page as for Lua
 			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
 		} else {
-			log.Error("Could not execute Amber template:", err)
+			log.Errorf("Could not execute Amber template:\n%s", err)
 		}
 		return
 	}
