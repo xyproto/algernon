@@ -38,7 +38,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		return
 	} else if ext == ".amber" {
 		w.Header().Add("Content-Type", "text/html")
-		b, err := ioutil.ReadFile(filename)
+		amberdata, err := ioutil.ReadFile(filename)
 		if err != nil {
 			if DEBUG_MODE {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -47,7 +47,48 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			}
 			return
 		}
-		amberPage(w, b, filename, nil)
+		// Try reading data.lua as well, if possible
+		luafilename := path.Join(path.Dir(filename), "data.lua")
+		luadata, err := ioutil.ReadFile(luafilename)
+		if err != nil {
+			// Could not find and/or read data.lua
+			luadata = []byte{}
+		}
+		// Make functions from the given Lua data available
+		funcs := make(LuaDefinedGoFunctions)
+		if len(luadata) > 0 {
+			// There was Lua code available. Now make the functions available from the template.
+
+			fmt.Println("NEW LUA STATE YAY")
+
+			// Retrieve a Lua state
+			L := luapool.Get()
+			defer luapool.Put(L)
+
+			// TODO Close the Lua state and/or figure out why the same Lua is running!
+			//      This has to do with closures, I know it! The DoString.
+
+			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, L)
+			if err != nil {
+				// TODO Output a Lua error here
+				// TODO Check DEBUG_MODE, then output to browser or log
+				log.Error(err)
+				return
+			}
+			if DEBUG_MODE {
+				infostring := "The following functions from " + luafilename + "\n"
+				infostring += "are made available for use in " + filename + ":\n\t"
+				exportedFunctions := []string{}
+				for key, _ := range funcs {
+					exportedFunctions = append(exportedFunctions, key)
+				}
+				infostring += strings.Join(exportedFunctions, ", ")
+				log.Info(infostring)
+			}
+		}
+		// Render the Amber page
+		amberPage(w, filename, amberdata, funcs)
+
 		return
 	} else if ext == ".gcss" {
 		w.Header().Add("Content-Type", "text/css")

@@ -47,8 +47,8 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 			}
 			return 0 // number of results
 		}
-		// Instead of nil, it's possible to supply a map[string]string
-		tpl.Execute(w, nil)
+		// Using "MISSING" instead of nil for slightly better error messages
+		tpl.Execute(w, "MISSING")
 		return 0 // number of results
 	}))
 
@@ -101,42 +101,26 @@ func markdownPage(w io.Writer, b []byte, title string) {
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
-func amberPage(w io.Writer, b []byte, title string, data map[string]string) {
-	ambertext := string(b)
-	tpl, err := amber.Compile(ambertext, amber.Options{true, false})
+func amberPage(w io.Writer, title string, amberdata []byte, funcs LuaDefinedGoFunctions) {
+	// Compile the given amber template
+	tpl, err := amber.Compile(string(amberdata), amber.Options{true, false})
 	if err != nil {
 		if DEBUG_MODE {
 			// TODO: Use a similar error page as for Lua
-			fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+ambertext)
+			fmt.Fprintf(w, "Could not compile Amber template:\n\t%s\n\n%s",
+				err, string(amberdata))
 		} else {
-			log.Errorf("Could not compile Amber template:\n%s\n%s", err, ambertext)
+			log.Errorf("Could not compile Amber template:\n%s\n%s",
+				err, string(amberdata))
 		}
 		return
 
 	}
+
 	var buf bytes.Buffer
-	type DataFieldsTest struct {
-		Counter func(int) string
-	}
-	df := DataFieldsTest{
-		func(val int) string {
-			if val == 1 {
-				return "123"
-			} else {
-				return "234"
-			}
-		},
-	}
 
-	// TODO: Look into adding Lua functions with variable numbers
-	//       of arguments. Like here:
-	//       http://jan.newmarch.name/go/template/chapter-template.htm
-
-	//datafields, err := Lua2data("data.lua")
-	// TODO: If data.lua exists, use the function names as field names.
-	// TODO: Check if templates can execute functions
-
-	if err := tpl.Execute(&buf, df); err != nil {
+	// Render the Amber template to the buffer
+	if err := tpl.Execute(&buf, funcs); err != nil {
 		if DEBUG_MODE {
 			// TODO: Use a similar error page as for Lua
 			fmt.Fprint(w, "Could not execute Amber template:\n\t"+err.Error())
