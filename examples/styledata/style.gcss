@@ -1,4 +1,5 @@
 $font: 'Lato'
+@import url("//fonts.googleapis.com/css?family="+$font)
 
 body
   color: #111
