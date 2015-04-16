@@ -128,20 +128,24 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 
 	// Render the Amber template to the buffer
 	if err := tpl.Execute(&buf, funcs); err != nil {
-		if DEBUG_MODE {
-			// TODO: Use a pretty error page, similar to the one for Lua
-			if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
 
-				// If there were errors, display an error page
-				errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
-				// Default title
+		// If it was one particular error, where the template can not find the
+		// function or variable name that is used, give the user a friendlier
+		// message.
+		if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
+			errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
+			if DEBUG_MODE {
 				prettyError(w, filename, amberdata, errortext, "amber")
 			} else {
-				// Default title
-				prettyError(w, filename, amberdata, err.Error(), "amber")
+				errortext = strings.Replace(errortext, "<br>", "\n", 1)
+				log.Errorf("Could not execute Amber template:\n%s", errortext)
 			}
 		} else {
-			log.Errorf("Could not execute Amber template:\n%s", err)
+			if DEBUG_MODE {
+				prettyError(w, filename, amberdata, err.Error(), "amber")
+			} else {
+				log.Errorf("Could not execute Amber template:\n%s", err)
+			}
 		}
 		return
 	}
