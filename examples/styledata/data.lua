@@ -7,7 +7,6 @@
 --
 
 title = "Counter Example"
-font = "Lato"
 
 -- Count from 0 and up. Return the current value.
 function counter()

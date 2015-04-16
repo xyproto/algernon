@@ -1,16 +1,9 @@
-$title=title
 doctype 5
 html
   head
-    title #{$title}
-    link[href="style.gcss"][rel="stylesheet"][type="text/css"]
-    style
-      body {
-        margin: 4.5em;
-        font-size: 1.3em;
-        font-family: sans-serif;
-        background-color: #e0e0e0;
-      }
-    h1 #{$title}
+    title #{title}
+    link[href="style.gcss"][rel="stylesheet"]
+  body
+    h1 #{title}
     div#content
-      p Counter: #{counter()}
+      p Page view: #{counter()}
