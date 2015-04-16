@@ -21,6 +21,12 @@ Server configuration
 - [ ] If no Redis server is found, use an internal Ledis database that runs in RAM.
 
 
+Examples
+--------
+
+- [ ] Port [niltalk](https://github.com/knadh/niltalk) to Algernon, in a separate repository.
+
+
 Logging
 -------
 
