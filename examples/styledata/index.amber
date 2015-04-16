@@ -2,6 +2,7 @@ doctype 5
 html
   head
     title #{title}
+    link[href="style.gcss"][rel="stylesheet"][type="text/css"]
   body
     h1 #{title}
     div#content

@@ -10,9 +10,6 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Map of variables (name -> value)
-type VarMap map[string]string
-
 // Retrieve all the arguments given to a lua function
 // and gather the strings in a buffer.
 func arguments2buffer(L *lua.LState) bytes.Buffer {
@@ -155,17 +152,14 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, VarMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, error) {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
 
-	// Prepare an empty map of functions
+	// Prepare an empty map of functions (and variables)
 	funcs := make(template.FuncMap)
-
-	// Prepare an empty map of variables
-	vars := make(VarMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
 	exportCommonFunctions(w, req, filename, perm, L)
@@ -176,7 +170,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 		L.Close()
 
 		// Logging and/or HTTP response is handled elsewhere
-		return funcs, vars, err
+		return funcs, err
 	}
 
 	// Extract the available functions from the Lua state
@@ -186,8 +180,9 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 		// Check if the current value is a string variable
 		if luaString, ok := value.(lua.LString); ok {
 
-			// Store the variable in the map
-			vars[key.String()] = luaString.String()
+			// Store the variable in the same map as the functions (string -> interface)
+			// for ease of use together with templates.
+			funcs[key.String()] = luaString.String()
 
 			// Check if the current value is a function
 		} else if luaFunc, ok := value.(*lua.LFunction); ok {
@@ -243,5 +238,5 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	})
 
 	// Return the map of functions
-	return funcs, vars, nil
+	return funcs, nil
 }

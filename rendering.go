@@ -49,7 +49,8 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 			}
 			return 0 // number of results
 		}
-		// Using "MISSING" instead of nil for slightly better error messages
+		// Using "MISSING" instead of nil for a slightly better error message
+		// if the values in the template should not be found.
 		tpl.Execute(w, "MISSING")
 		return 0 // number of results
 	}))
@@ -109,8 +110,9 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	if exists(path.Join(path.Dir(filename), "style.gcss")) {
-		linkToStyle(&amberdata, "style.gcss")
+	const defaultStyleFilename = "style.gcss"
+	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
+		linkToStyle(&amberdata, defaultStyleFilename)
 	}
 
 	// Compile the given amber template

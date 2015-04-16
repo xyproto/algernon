@@ -6,8 +6,8 @@ body
   color: #111
   background-color: #eee
   font-family: $font, sans-serif
-  font-size: 2.7em
-  margin: 0
+  font-size: 2em
+  margin: 3em
 
 p
   margin-left: 0.7em

@@ -118,7 +118,7 @@ func linkToStyle(amberdata *[]byte, url string) {
 			}
 			if found {
 				// Add the link to the stylesheet
-				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundsep), []byte("head"+foundsep+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"]`), 1)
+				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundsep), []byte("head"+foundsep+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
 			}
 		}
 	}
