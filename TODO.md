@@ -4,7 +4,7 @@
 Priority
 --------
 
-- [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved.
+- [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 
 
 Server configuration
