@@ -6,4 +6,4 @@ html
   body
     h1 #{title}
     div#content
-      p Page view: #{counter()}
+      p Page views: #{counter()}

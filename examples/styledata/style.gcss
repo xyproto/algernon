@@ -1,11 +1,12 @@
-$font: 'Lato'
-@import url("//fonts.googleapis.com/css?family=" + $font)
+$font: 'Oswald'
+@import url("//fonts.googleapis.com/css?family=Oswald")
+//@import url(//fonts.googleapis.com/css?family=$font)
 
 body
   color: #111
   background-color: #eee
   font-family: $font, sans-serif
-  font-size: 1.8em
+  font-size: 2.7em
   margin: 0
 
 p
