@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
 )
+
+// Map of variables (name -> value)
+type VarMap map[string]string
 
 // Retrieve all the arguments given to a lua function
 // and gather the strings in a buffer.
@@ -65,6 +67,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) error {
+
 	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
@@ -144,15 +147,6 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 	return nil
 }
 
-// Build up a string on the form "functionname(arg1, arg2, arg3)"
-func infostring(functionName string, args []string) string {
-	s := functionName + "("
-	if len(args) > 0 {
-		s += "\"" + strings.Join(args, "\", \"") + "\""
-	}
-	return s + ")"
-}
-
 /*
  * Return the functions available in the given Lua code as
  * functions in a map that can be used by templates.
@@ -161,7 +155,7 @@ func infostring(functionName string, args []string) string {
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, VarMap, error) {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -169,6 +163,9 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 
 	// Prepare an empty map of functions
 	funcs := make(template.FuncMap)
+
+	// Prepare an empty map of variables
+	vars := make(VarMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
 	exportCommonFunctions(w, req, filename, perm, L)
@@ -179,15 +176,21 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 		L.Close()
 
 		// Logging and/or HTTP response is handled elsewhere
-		return funcs, err
+		return funcs, vars, err
 	}
 
 	// Extract the available functions from the Lua state
 	globalTable := L.G.Global
 	globalTable.ForEach(func(key, value lua.LValue) {
 
-		// Check if the current value is a function
-		if luaFunc, ok := value.(*lua.LFunction); ok {
+		// Check if the current value is a string variable
+		if luaString, ok := value.(lua.LString); ok {
+
+			// Store the variable in the map
+			vars[key.String()] = luaString.String()
+
+			// Check if the current value is a function
+		} else if luaFunc, ok := value.(*lua.LFunction); ok {
 
 			// Only export the functions defined in the given Lua code,
 			// not all the global functions. IsG is true if the function is global.
@@ -240,5 +243,5 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	})
 
 	// Return the map of functions
-	return funcs, nil
+	return funcs, vars, nil
 }

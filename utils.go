@@ -73,8 +73,17 @@ func easyLink(text, url string, isDirectory bool) string {
 	return "<a href=\"/" + url + "/\">" + text + "</a><br>"
 }
 
+// Build up a string on the form "functionname(arg1, arg2, arg3)"
+func infostring(functionName string, args []string) string {
+	s := functionName + "("
+	if len(args) > 0 {
+		s += "\"" + strings.Join(args, "\", \"") + "\""
+	}
+	return s + ")"
+}
+
 // Add a link to a stylesheet in the given Amber code
-// TODO: Replace with a regex
+// TODO: A bit ugly. Rewrite the function. Replace with a regex?
 func linkToStyle(amberdata *[]byte, url string) {
 	// If the given url is not already mentioned
 	if !bytes.Contains(*amberdata, []byte(url)) {
