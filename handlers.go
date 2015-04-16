@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"html/template"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -54,7 +55,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			luadata = []byte{}
 		}
 		// Make functions from the given Lua data available
-		funcs := make(LuaDefinedGoFunctions)
+		funcs := make(template.FuncMap)
 		if len(luadata) > 0 {
 			// There was Lua code available. Now make the functions available for the template.
 			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"html/template"
 	"net/http"
 	"strings"
 
@@ -9,10 +10,6 @@ import (
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
 )
-
-// Used when rendering templates that get values from Lua functions
-// TODO: Try using html/template.FuncMap instead
-type LuaDefinedGoFunctions map[string]interface{}
 
 // Retrieve all the arguments given to a lua function
 // and gather the strings in a buffer.
@@ -164,14 +161,14 @@ func infostring(functionName string, args []string) string {
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (LuaDefinedGoFunctions, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, error) {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
 
 	// Prepare an empty map of functions
-	funcs := make(LuaDefinedGoFunctions)
+	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
 	exportCommonFunctions(w, req, filename, perm, L)

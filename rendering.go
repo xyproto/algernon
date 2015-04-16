@@ -8,6 +8,7 @@ import (
 	"github.com/russross/blackfriday"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
+	"html/template"
 	"io"
 	"net/http"
 	"path"
@@ -103,7 +104,7 @@ func markdownPage(w io.Writer, b []byte, title string) {
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
-func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs LuaDefinedGoFunctions) {
+func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs template.FuncMap) {
 
 	var buf bytes.Buffer
 
