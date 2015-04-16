@@ -122,6 +122,9 @@ func main() {
 			log.Warn(err)
 		}
 	}
+
+	// TODO: Consider removing HTTP/2 without HTTPS and falling back on HTTP
+
 	if (err != nil) || SERVE_JUST_HTTP2 {
 		log.Info("Serving HTTP/2, not HTTPS + HTTP/2")
 		// Try listening to HTTP requests

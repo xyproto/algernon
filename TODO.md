@@ -1,64 +1,32 @@
 # Plans
 
-Unsorted
---------
-- [_] Add a lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
-- [ ] Add a lua function that does the same as above, but reads in templates and stores the compiled templates.
-- [ ] Find a good way to divide web-applications into:
-      * GCSS
-      * CSS
-      * HTML
-      * Amber templates
-      * Lua logic
-      And make it effortless to use them together.
-      Make the ideal "visitor counter" application.
 
-- [ ] Make cookies work when buffering requests. Or disable buffering when cookies are involved.
-- [ ] Add a flag for serving the files in the current directory over HTTP, without using Redis. --oldschool, perhaps
-- [ ] A way to have external projects written in Go that can extend
-      the Lua state by adding functions. Perhaps adding functions to
-      the Lua State object by sending it packed over the network and
-      then receiving the modified Lua State.
-- [ ] Modules, Lua libraries, plugins and reuse of code.
-- [ ] A separate access log.
-- [ ] Prefer environment variables and flags over lua server configuration.
-- [ ] A separate debug webserver running on a different port.
-      For displaying stats, break-in attempts and errors in the code.
-- [ ] Automatic browser reload when served files are changed, for development.
-- [ ] Caching of templates.
-- [ ] A smoother way to combine GCSS, Amber and Lua.
-- [ ] Virtual DOM?
-- [ ] A separate access log.
-- [ ] Modules, Lua libraries, plugins and reuse of code.
+Priority
+--------
+
+- [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved.
 
 
 Server configuration
 --------------------
 
+- [ ] Add a flag for serving the files in the current directory over HTTP, without using Redis. --oldschool, perhaps
+- [ ] Prefer environment variables and flags over lua server configuration.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.
 - [ ] Server setting for enabling caching.
 - [ ] Add a "quiet" flag.
 - [ ] Add a way to run several configuration scripts at start.
 - [ ] A way to recompile templates on command while the server is running.
-
-
-Database
---------
-
 - [ ] If no Redis server is found, use an internal Ledis database that runs in RAM.
-
-
-CSS
----
-
-- [ ] Support SASS.
 
 
 Logging
 -------
 
 - [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
+- [ ] A separate debug webserver / control panel running on a different port.
+      For displaying stats, access logs, break-in attempts and errors in the code.
 
 
 Console output
@@ -77,6 +45,7 @@ Documentation and examples
 Debugging
 ---------
 
+- [ ] Automatic browser reload when served files are changed, for development.
 - [ ] Implement the debug and logging functionality.
 - [ ] Add a lua function that makes the page reload whenever the lua file is changed.
 - [ ] If pretty errors are turned on, the lua code together with the error message and line indicator should be shown in the browser.
@@ -100,15 +69,26 @@ Lua
 - [ ] A way to have several webhandlers in one Lua script. Look for a function name in index.lua if a subdirectory is not found.
 - [ ] Find a good way to create a personal collection of Lua functions.
 - [ ] Support the re-use of templates by introducing functions for compiling templates and executing, saving and loading compiled templates.
-- [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Create an import function for importing online lua libraries.
 - [ ] A way to use Lua libraries, for SQLite and PostgreSQL, for insance.
 - [ ] Lua function for checking if a file exists.
-- [ ] Lua function for reading the contents of a file.
 - [ ] A way to make an interactive session in the browser.
 - [ ] A way to load parts of a page asynchronously.
-- [ ] A way to discover which functions are used or not in scripts that don't use "eval-like" functions like `loadstring`.
-- [ ] If a Lua script only use some functions, only expose the used functions.
+- [_] Lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
+- [ ] A way to have external projects written in Go that can extend
+      the Lua state by adding functions. Perhaps adding functions to
+      the Lua State object by sending it packed over the network and
+      then receiving the modified Lua State.
+- [ ] Modules, Lua libraries, plugins and reuse of code.
+
+
+Performance
+-----------
+
+- [ ] Virtual DOM?
+- [ ] A way to toggle which files and directories that should be cached, in Redis.
+- [ ] Three different cache settings: not cached, cached until file timestamp changes, always use cache.
+- [ ] Find a reliable way to measure serving speed and emulate users.
 
 
 Packaging
@@ -120,14 +100,8 @@ Packaging
 Unusual features
 ----------------
 
-- [ ] Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way. Perhaps by using the gob format.
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon. Update: Someone else has made a format for this! https://github.com/cparnot/ASCIImage
-
-
-Benchmarking
-------------
-
-- [ ] Find a reliable way to measure how long it takes to serve a page.
+- [ ] Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way. Perhaps by using the gob format.
 
 
 Maybe
@@ -150,3 +124,5 @@ Maybe
 - [ ] Consider creating an alternative version that users permissionsql instead of permissions2
 - [ ] Add a function for calling EVAL on the redis server, while sending Lua code to the server for evaluation.
 - [ ] Re-run `server.lua` if it is changed. Restart the server if the addr or port is changed.
+- [ ] Support SASS.
+- [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
