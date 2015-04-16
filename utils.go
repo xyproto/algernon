@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
@@ -70,4 +71,46 @@ func easyLink(text, url string, isDirectory bool) string {
 	// the URL is not needed, because no other files will be needed to be
 	// accessed from that directory by the index file in question.
 	return "<a href=\"/" + url + "/\">" + text + "</a><br>"
+}
+
+// Add a link to a stylesheet in the given Amber code
+// TODO: Replace with a regex
+func linkToStyle(amberdata *[]byte, url string) {
+	// If the given url is not already mentioned
+	if !bytes.Contains(*amberdata, []byte(url)) {
+		// If there is a head section
+		if bytes.Contains(*amberdata, []byte("head")) {
+			// Find the line that contains head
+			var byteline []byte
+			found := false
+			foundsep := ""
+			// Try finding the line with "head", using \n as the separator
+			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
+				if bytes.Contains(byteline, []byte("head")) {
+					found = true
+					foundsep = "\n"
+					break
+				}
+			}
+			if !found {
+				// Try finding the line with "head", using sep as the separator
+				for _, byteline = range bytes.Split(*amberdata, []byte(sep)) {
+					if bytes.Contains(byteline, []byte("head")) {
+						found = true
+						foundsep = sep
+						break
+					}
+				}
+			}
+			fields := bytes.Split(byteline, []byte("head"))
+			spaces := ""
+			if len(fields) > 0 {
+				spaces = string(fields[0])
+			}
+			if found {
+				// Add the link to the stylesheet
+				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundsep), []byte("head"+foundsep+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"]`), 1)
+			}
+		}
+	}
 }

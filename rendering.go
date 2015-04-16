@@ -10,6 +10,7 @@ import (
 	"github.com/yuin/gopher-lua"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -106,14 +107,18 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 
 	var buf bytes.Buffer
 
+	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
+	if exists(path.Join(path.Dir(filename), "style.gcss")) {
+		linkToStyle(&amberdata, "style.gcss")
+	}
+
 	// Compile the given amber template
 	tpl, err := amber.Compile(string(amberdata), amber.Options{true, false})
 	if err != nil {
 		if DEBUG_MODE {
 			prettyError(w, filename, amberdata, err.Error(), "amber")
 		} else {
-			log.Errorf("Could not compile Amber template:\n%s\n%s",
-				err, string(amberdata))
+			log.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
 		}
 		return
 	}
