@@ -22,8 +22,9 @@ Design decisions
     * index.md is rendered as HTML.
     * index.html is outputted as it is, with the correct Content-Type.
     * index.txt is outputted as it is, with the correct Content-Type.
-    * index.amber is rendered as HTML
+    * index.amber is rendered as HTML.
     * data.lua is interpreted as Lua code, where the functions are made available for index.amber in the same directory.
+    * style.gcss is linked with index.amber, if both are present.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.
@@ -38,7 +39,7 @@ Design decisions
 Features and limitations
 ------------------------
 
-* Supports HTTP/2.
+* Supports HTTP/2, with or without HTTPS.
 * Can use Lua scripts as handlers for HTTP requests.
 * Works on Linux, OS X and 64-bit Windows. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
 * Algernon is compiled to native. It's reasonably fast.
@@ -48,6 +49,7 @@ Features and limitations
 * No support for caching, yet.
 * Will not run without a Redis server to connect to.
 * Cookies currently does not work in debug mode, because responses are buffered.
+* Use the `-httponly` flag for serving HTTP, not HTTP/2.
 
 
 Screenshots
