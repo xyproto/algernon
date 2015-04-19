@@ -49,7 +49,7 @@ Features and limitations
 * No support for caching, yet.
 * Will not run without a Redis server to connect to.
 * Cookies currently does not work in debug mode, because responses are buffered.
-* Use the `-httponly` flag for serving HTTP, not HTTP/2.
+* Use the `-httponly` flag for serving HTTP instead of HTTP/2.
 
 
 Screenshots
