@@ -4,6 +4,7 @@
 Priority
 --------
 
+- [ ] Better title when serving .md files.
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 
 
