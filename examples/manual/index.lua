@@ -15,5 +15,5 @@ html
                 | This text goes into the first paragraph.
                 |  As well as this text. And this. Yarr.
 
-            a[href="/"] Back to main
+            a[href="/"][onClick="history.go(-1)"] Back
 ]])

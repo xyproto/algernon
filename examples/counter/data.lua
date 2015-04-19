@@ -8,7 +8,7 @@
 
 title = "Counter Example"
 
--- Count from 0 and up. Return the current value.
+-- Count from 1 and up. Return the current value.
 function counter()
   -- Use the "pageview" KeyValue and increase the "counter" value with 1
   return KeyValue("pageview"):inc("counter")
