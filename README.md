@@ -399,8 +399,8 @@ GenerateUniqueConfirmationCode() -> string
 ~~~
 
 
-Lua functions for the server configuration file
------------------------------------------------
+Lua functions that are only available for the server configuration file
+-----------------------------------------------------------------------
 
 * `SetAddr(string)` set the default address for the server on the form [host][:port].
 * `ClearPermissions()` reset the URL prefixes and make everything *public*.
