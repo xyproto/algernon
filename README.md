@@ -142,7 +142,7 @@ Lua functions for Redis data structures
 ##### Set
 
 ~~~go
-// A Redis-backed Set (takes a name, returns a set object)
+// Get or create Redis-backed Set (takes a name, returns a set object)
 Set(string) -> userdata
 
 // Add an element to the set
@@ -165,7 +165,7 @@ set:remove() -> bool
 ##### List
 
 ~~~go
-// A Redis-backed List (takes a name, returns a list object)
+// Get or create a Redis-backed List (takes a name, returns a list object)
 List(string) -> userdata
 
 // Add an element to the list
@@ -188,7 +188,7 @@ list:remove() -> bool
 ##### HashMap
 
 ~~~go
-// A Redis-backed HashMap (takes a name, returns a hash map object)
+// Get or create a Redis-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
 
 // For a given element id (for instance a user id), set a key
@@ -229,18 +229,19 @@ hash:remove() -> bool
 ##### KeyValue
 
 ~~~go
-// A Redis-backed KeyValue collection (takes a name, returns a key/value object)
+// Get or create a Redis-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
 // Set a key and value. Returns true if successful.
 kv:set(string, string) -> bool
 
-// Takes a key, returns a value. May return an empty string.
+// Takes a key, returns a value.
+// Returns an empty string if the function fails.
 kv:get(string) -> string
 
 // Takes a key, returns the value+1.
 // Creates a key/value and returns "1" if it did not already exist.
-// May return an empty string.
+// Returns an empty string if the function fails.
 kv:inc(string) -> string
 
 // Remove a key. Returns true if successful.
@@ -410,9 +411,9 @@ Lua functions for the server configuration file
 * `SetDebug(bool)` enables or disables debug mode, where debug information is exposed to the client.
 * `SetVerbose(bool)` enables or disables additional log messages.
 * `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
-* `version()` returns the version string for the server. Same function as for handling requests.
-* `log(...)` logs the given strings as INFO. Takes a variable number of strings. Same function as for handling requests.
-* `warn(...)` logs the given strings as WARN. Takes a variable number of strings. Same function as for handling requests.
+* `version()` returns the version string for the server.
+* `log(...)` logs the given strings as INFO. Takes a variable number of strings.
+* `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
 * `OnReady(function)` provide a lua function that will be run once the server is ready to start serving.
 
 
