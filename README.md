@@ -55,7 +55,7 @@ Features and limitations
 Screenshots
 -----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_057.png">
 
 *Screenshot of `algernon` and `redis` running in a terminal emulator.*
 
