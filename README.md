@@ -24,7 +24,7 @@ Design decisions
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML.
     * data.lua is interpreted as Lua code, where the functions are made available for index.amber in the same directory.
-    * style.gcss is linked with index.amber, if both are present.
+    * style.gcss is used as the style for index.amber or index.md, if present.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.
@@ -40,16 +40,17 @@ Features and limitations
 ------------------------
 
 * Supports HTTP/2, with or without HTTPS.
+* Use the `-httponly` flag for serving HTTP instead of HTTP/2.
 * Can use Lua scripts as handlers for HTTP requests.
 * Works on Linux, OS X and 64-bit Windows. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 * Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber) and [GCSS](https://github.com/yosssi/gcss). DRY.
-* No support for caching, yet.
+* No support for internal caching, yet.
 * Will not run without a Redis server to connect to.
 * Cookies currently does not work in debug mode, because responses are buffered.
-* Use the `-httponly` flag for serving HTTP instead of HTTP/2.
+* The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 
 
 Screenshots
