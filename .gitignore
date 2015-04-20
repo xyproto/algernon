@@ -33,3 +33,4 @@ http2.log
 
 # Leftovers
 .DS_Store
+dump.rdb
