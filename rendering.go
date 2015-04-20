@@ -15,6 +15,9 @@ import (
 	"strings"
 )
 
+// Default stylesheet filename (GCSS)
+const defaultStyleFilename = "style.gcss"
+
 // Expose functions that are related to rendering text, to the given Lua state
 func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
 
@@ -77,7 +80,30 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w io.Writer, b []byte, title string) {
+func markdownPage(w io.Writer, b []byte, filename, defaultTitle string) {
+
+	title := defaultTitle
+
+	// If the first line is "title: ...", use that as the title
+	// and don't convert it to Markdown. This is a subset of MultiMarkdown.
+	if bytes.HasPrefix(b, []byte("title:")) {
+		fields := bytes.Split(b, []byte("\n"))
+		if len(fields) > 1 {
+			// Replace the title with the found title
+			title = strings.TrimSpace(string(fields[0])[6:])
+			// Remove the first line
+			b = b[len(fields[0]):]
+		} else {
+			// Try sep instead
+			fields = bytes.Split(b, []byte(sep))
+			if len(fields) > 1 {
+				// Replace the title with the found title
+				title = strings.TrimSpace(string(fields[0])[6:])
+				// Remove the first line
+				b = b[len(fields[0]):]
+			}
+		}
+	}
 
 	// Convert from Markdown to HTML
 	htmlbody := string(blackfriday.MarkdownCommon(b))
@@ -97,7 +123,16 @@ func markdownPage(w io.Writer, b []byte, title string) {
 		}
 	}
 
-	htmlbytes := []byte("<!doctype html><html><head><title>" + title + "</title><style>" + style + "</style><head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>")
+	// If style.gcss is present, use that style in <head>
+	var markdownStyle string
+	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
+		markdownStyle = `<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`
+	} else {
+		// If not, use the default style in <head>
+		markdownStyle = "<style>" + defaultStyle + "</style>"
+	}
+
+	htmlbytes := []byte("<!doctype html><html><head><title>" + title + "</title>" + markdownStyle + "<head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>")
 
 	// Write the rendered Markdown page to the http.ResponseWriter
 	w.Write(htmlbytes)
@@ -110,7 +145,6 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	const defaultStyleFilename = "style.gcss"
 	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
 		linkToStyle(&amberdata, defaultStyleFilename)
 	}

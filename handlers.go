@@ -34,7 +34,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			}
 			return
 		}
-		markdownPage(w, b, filename)
+
+		// Render the markdown page.
+		// Use the base filename as the default title.
+		markdownPage(w, b, filename, path.Base(filename))
+
 		return
 	} else if ext == ".amber" {
 		w.Header().Add("Content-Type", "text/html")

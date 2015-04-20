@@ -59,7 +59,7 @@ func getFilenames(dirname string) []string {
 
 // Easy way to output a HTML page
 func easyPage(title, body string) string {
-	return "<!doctype html><html><head>" + font + "<title>" + title + "</title><style>" + style + "</style><head><body><h1>" + title + "</h1>" + body + "</body></html>"
+	return "<!doctype html><html><head>" + font + "<title>" + title + "</title><style>" + defaultStyle + "</style><head><body><h1>" + title + "</h1>" + body + "</body></html>"
 }
 
 // Easy way to build links to directories
