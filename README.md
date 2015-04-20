@@ -1,4 +1,4 @@
-title: Algernon
+<!-- http2 web server -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png"></a>
 
