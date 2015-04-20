@@ -35,9 +35,8 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			return
 		}
 
-		// Render the markdown page.
-		// Use the base filename as the default title.
-		markdownPage(w, b, filename, path.Base(filename))
+		// Render the markdown page
+		markdownPage(w, b, filename)
 
 		return
 	} else if ext == ".amber" {

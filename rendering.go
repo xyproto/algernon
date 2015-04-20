@@ -80,9 +80,9 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w io.Writer, b []byte, filename, defaultTitle string) {
+func markdownPage(w io.Writer, b []byte, filename string) {
 
-	title := defaultTitle
+	var title string
 
 	// If the first line is "title: ...", use that as the title
 	// and don't convert it to Markdown. This is a subset of MultiMarkdown.
@@ -123,6 +123,16 @@ func markdownPage(w io.Writer, b []byte, filename, defaultTitle string) {
 		}
 	}
 
+	// If there is no title, use the h1title
+	if title == "" {
+		if h1title != "" {
+			title = h1title
+		} else {
+			// If no title has been provided, use the filename
+			title = path.Base(filename)
+		}
+	}
+
 	// If style.gcss is present, use that style in <head>
 	var markdownStyle string
 	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
@@ -132,6 +142,7 @@ func markdownPage(w io.Writer, b []byte, filename, defaultTitle string) {
 		markdownStyle = "<style>" + defaultStyle + "</style>"
 	}
 
+	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmlbytes := []byte("<!doctype html><html><head><title>" + title + "</title>" + markdownStyle + "<head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>")
 
 	// Write the rendered Markdown page to the http.ResponseWriter
