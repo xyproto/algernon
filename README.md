@@ -64,6 +64,12 @@ Screenshots
 
 --
 
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_markdown.png">
+
+*Markdown can easily be styled with GCSS.*
+
+--
+
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_lua_error.png">
 
 *This is how errors in Lua scripts are handled, when Debug mode is enabled.*
