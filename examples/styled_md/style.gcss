@@ -1,0 +1,29 @@
+@import url("//fonts.googleapis.com/css?family=Monoton|Monofett")
+
+html
+  background-color: #222
+
+body
+  color: #111
+  background-color: #999
+  font-family: Monofett, cursive
+  font-size: 2.7em
+  margin: 2.7em
+  padding: 0 0 1em 2em
+  border-radius: 50px
+  border: solid 10px #a00
+  box-shadow: 10px 10px 16px black, 6px 6px 8px #222 inset
+  width: 40%
+
+h2
+  font-family: Monoton, cursive
+  color: black
+
+ul
+  margin-left: 1em
+
+li
+  list-style: none
+
+li:hover
+  color: #d00
