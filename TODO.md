@@ -4,18 +4,18 @@
 Priority
 --------
 
-- [ ] Rate limiting
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
-- [ ] Caching
-- [ ] HTTP Basic Auth
+- [ ] Caching for any file under a certain size. This can be configured in the server configuration. Or in Redis?
+- [ ] Rate limiting
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver ".
+- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] OAuth 1
-- [ ] Chat example with websockets
+- [ ] The ability to set headers and do HTTP Basic Auth manually.
 
 
 Server configuration
 --------------------
 
-- [ ] Add a flag for serving the files in the current directory over HTTP, without using Redis. --oldschool, perhaps
 - [ ] Prefer environment variables and flags over lua server configuration.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.
@@ -23,7 +23,7 @@ Server configuration
 - [ ] Add a "quiet" flag.
 - [ ] Add a way to run several configuration scripts at start.
 - [ ] A way to recompile templates on command while the server is running.
-- [ ] If no Redis server is found, use an internal Ledis database that runs in RAM.
+- [ ] If no Redis server is found, start an internal Ledis database that runs in RAM (see https://github.com/siddontang/ledisdb/blob/master/cmd/ledis-server/main.go)
 
 
 Examples
@@ -118,6 +118,8 @@ Unusual features
 Maybe
 -----
 
+- [ ] Keep all configuration settings in Redis. Use an external package for handling configuration.
+- [ ] Add a flag for acting like a static file server, over HTTP, without using Redis. Perhaps --static.
 - [ ] The first argument should be a directory or a .alg file, the rest should be regular flags.
       An alg file can be a zipped or tar xz-ed directory with a server.lua file and all needed files. A bit like a .war file.
 - [ ] Support OAuth 2, as a client.
