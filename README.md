@@ -439,7 +439,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.57
+* Version: 0.58
 * License: MIT
 * Alexander F Rødseth
 
