@@ -257,6 +257,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		hasfile := exists(noslash)
 
 		// TODO: Only set the server header if configured to do so
+
 		// Set the server header.
 		w.Header().Set("Server", "Algernon")
 
@@ -269,7 +270,9 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 			filePage(w, req, noslash, perm, luapool)
 			return
 		}
+
 		// Not found
+		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, noPage(filename))
 	})
 }
