@@ -15,7 +15,7 @@ var (
 )
 
 // Make functions related to server configuration and permissions available
-func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, filename string) {
+func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, filename string, luapool *lStatePool) {
 
 	// Registers a path prefix, for instance "/secret",
 	// as having *admin* rights.
@@ -53,7 +53,7 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			exportCommonFunctions(w, req, filename, perm, L)
+			exportCommonFunctions(w, req, filename, perm, L, luapool)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)

@@ -90,6 +90,14 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 1 // number of results
 	}))
 
+	// Set the HTTP header in the request, for a given key and value
+	L.SetGlobal("setheader", L.NewFunction(func(L *lua.LState) int {
+		key := L.ToString(1)
+		value := L.ToString(2)
+		w.Header().Set(key, value)
+		return 0 // number of results
+	}))
+
 	// Return the HTTP body in the request
 	L.SetGlobal("body", L.NewFunction(func(L *lua.LState) int {
 		body, err := ioutil.ReadAll(req.Body)
@@ -160,4 +168,5 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results
 	}))
+
 }

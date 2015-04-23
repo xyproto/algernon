@@ -36,7 +36,7 @@ func strings2table(L *lua.LState, sl []string) *lua.LTable {
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState, luapool *lStatePool) {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -44,6 +44,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
 	exportBasicWeb(w, req, L, filename)
+
+	// Functions for serving files in the same directory as a script
+	exportServeFile(w, req, L, filename, perm, luapool)
 
 	// Make other basic functions available
 	exportBasicSystemFunctions(L)
@@ -70,7 +73,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	defer luapool.Put(L)
 
 	// Export functions to the Lua state
-	exportCommonFunctions(w, req, filename, perm, L)
+	exportCommonFunctions(w, req, filename, perm, L, luapool)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -89,7 +92,7 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 	L := luapool.Get()
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, "", perm, L)
+	exportCommonFunctions(w, req, "", perm, L, luapool)
 
 	// Run the script
 	if err := L.DoString(script); err != nil {
@@ -118,7 +121,7 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 	userstate := perm.UserState()
 
 	// Server configuration functions
-	exportServerConfigFunctions(L, perm, filename)
+	exportServerConfigFunctions(L, perm, filename, luapool)
 
 	// Other basic system functions, like log()
 	exportBasicSystemFunctions(L)
@@ -162,7 +165,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, filename, perm, L)
+	exportCommonFunctions(w, req, filename, perm, L, luapool)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -202,7 +205,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					exportCommonFunctions(w, req, filename, perm, L2)
+					exportCommonFunctions(w, req, filename, perm, L2, luapool)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)

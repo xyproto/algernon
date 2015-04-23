@@ -122,19 +122,21 @@ Getting started
 Lua functions for handling requests
 -----------------------------------
 
-* `content(string)` sets the Content-Type for a page.
-* `method()` returns the requested HTTP method (GET, POST etc).
+* `content(string)` set the Content-Type for a page.
+* `method()` return the requested HTTP method (GET, POST etc).
 * `print(...)` output data to the browser/client. Takes a variable number of strings.
-* `urlpath()` returns the requested URL path.
-* `header(string)` returns the HTTP header in the request, for a given key, or an empty string.
-* `body()` returns the HTTP body in the request (will only read the body once, since it's streamed).
-* `status(number)` sets a HTTP status code (like 200 or 404). Must come before other output.
-* `error(string, number)` outputs a message and sets a HTTP status code.
-* `scriptdir(...)` returns the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
-* `serverdir(...)` returns the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
-* `version()` returns the version string for the server.
-* `log(...)` logs the given strings as INFO. Takes a variable number of strings.
-* `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
+* `urlpath()` return the requested URL path.
+* `header(string)` return the HTTP header in the request, for a given key, or an empty string.
+* `setheader(string, string)` set an HTTP header given a key and a value.
+* `body()` return the HTTP body in the request (will only read the body once, since it's streamed).
+* `status(number)` set a HTTP status code (like 200 or 404). Must come before other output.
+* `error(string, number)` output a message and sets a HTTP status code.
+* `scriptdir(...)` return the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
+* `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
+* `servefile(string)` serve a file that exists in the same directory as the script.
+* `version()` return the version string for the server.
+* `log(...)` log the given strings as INFO. Takes a variable number of strings.
+* `warn(...)` log the given strings as WARN. Takes a variable number of strings.
 
 
 Lua functions for formatted output

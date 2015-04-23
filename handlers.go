@@ -20,8 +20,12 @@ const (
 	pathsep = string(os.PathSeparator)
 )
 
+var (
+	mimereader *mime.MimeReader
+)
+
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) {
 	// Mimetypes
 	ext := path.Ext(filename)
 	// Markdown pages are handled differently
@@ -207,12 +211,12 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 }
 
 // When serving a directory. The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm *permissions.Permissions, luapool *lStatePool) {
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := path.Join(dirname, indexfile)
 		if exists(filename) {
-			filePage(w, req, filename, perm, mimereader, luapool)
+			filePage(w, req, filename, perm, luapool)
 			return
 		}
 	}
@@ -228,7 +232,7 @@ func noPage(filename string) string {
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
 func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions, luapool *lStatePool) {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
-	mimereader := mime.New("/etc/mime.types", true)
+	mimereader = mime.New("/etc/mime.types", true)
 	rootdir := servedir
 
 	// Handle all requests with this function
@@ -239,6 +243,9 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 			// Reject the request by returning
 			return
 		}
+
+		// TODO: HTTP Basic Auth check goes here, see "scoreserver"
+
 		urlpath := req.URL.Path
 		filename := url2filename(servedir, urlpath)
 		// Remove the trailing slash from the filename, if any
@@ -248,13 +255,18 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		}
 		hasdir := exists(filename) && isDir(filename)
 		hasfile := exists(noslash)
+
+		// TODO: Only set the server header if configured to do so
+		// Set the server header.
+		w.Header().Set("Server", "Algernon")
+
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, filename, perm, mimereader, luapool)
+			dirPage(w, req, rootdir, filename, perm, luapool)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm, mimereader, luapool)
+			filePage(w, req, noslash, perm, luapool)
 			return
 		}
 		// Not found
