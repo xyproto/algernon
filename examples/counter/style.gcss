@@ -1,4 +1,4 @@
-@import url("//fonts.googleapis.com/css?family=Oswald")
+@import url(//fonts.googleapis.com/css?family=Oswald)
 
 body
   color: #111
