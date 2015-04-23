@@ -26,12 +26,12 @@ func exists(filename string) bool {
 func url2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
 		log.Warn("Someone was trying to access a directory with .. in the URL")
-		return dirname + sep
+		return dirname + pathsep
 	}
 	if strings.HasPrefix(urlpath, "/") {
-		return dirname + sep + urlpath[1:]
+		return dirname + pathsep + urlpath[1:]
 	}
-	return dirname + sep + urlpath
+	return dirname + "/" + urlpath
 }
 
 // Get a list of filenames from a given directory name (that must exist)
@@ -92,23 +92,13 @@ func linkToStyle(amberdata *[]byte, url string) {
 			// Find the line that contains head
 			var byteline []byte
 			found := false
-			foundsep := ""
-			// Try finding the line with "head", using \n as the separator
+			foundnl := ""
+			// Try finding the line with "head", using \n as the newline
 			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
 				if bytes.Contains(byteline, []byte("head")) {
 					found = true
-					foundsep = "\n"
+					foundnl = "\n"
 					break
-				}
-			}
-			if !found {
-				// Try finding the line with "head", using sep as the separator
-				for _, byteline = range bytes.Split(*amberdata, []byte(sep)) {
-					if bytes.Contains(byteline, []byte("head")) {
-						found = true
-						foundsep = sep
-						break
-					}
 				}
 			}
 			fields := bytes.Split(byteline, []byte("head"))
@@ -118,7 +108,7 @@ func linkToStyle(amberdata *[]byte, url string) {
 			}
 			if found {
 				// Add the link to the stylesheet
-				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundsep), []byte("head"+foundsep+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
+				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundnl), []byte("head"+foundnl+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
 			}
 		}
 	}

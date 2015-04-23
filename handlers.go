@@ -16,7 +16,7 @@ import (
 	"github.com/xyproto/permissions2"
 )
 
-const sep = string(os.PathSeparator)
+const pathsep = string(os.PathSeparator)
 
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
@@ -168,9 +168,13 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 
 		// Find the full name
 		full_filename := dirname
-		if !strings.HasSuffix(full_filename, sep) {
-			full_filename += sep
+
+		// Add a "/" after the directory name, if missing
+		if !strings.HasSuffix(full_filename, pathsep) {
+			full_filename += pathsep
 		}
+
+		// Add the filename at the end
 		full_filename += filename
 
 		// Remove the root directory from the link path
@@ -181,8 +185,12 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	}
 	title := dirname
 	// Strip the leading "./"
-	if strings.HasPrefix(title, "."+sep) {
-		title = title[1+len(sep):]
+	if strings.HasPrefix(title, "."+pathsep) {
+		title = title[1+len(pathsep):]
+	}
+	// Strip double "/" at the end, just keep one
+	if strings.HasSuffix(title, pathsep+pathsep) {
+		title = title[:len(title)-1]
 	}
 	// Use the application title for the main page
 	//if title == "" {
@@ -232,7 +240,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		filename := url2filename(servedir, urlpath)
 		// Remove the trailing slash from the filename, if any
 		noslash := filename
-		if strings.HasSuffix(filename, sep) {
+		if strings.HasSuffix(filename, pathsep) {
 			noslash = filename[:len(filename)-1]
 		}
 		hasdir := exists(filename) && isDir(filename)

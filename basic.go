@@ -129,11 +129,11 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		if top == 1 {
 			// Also include a separator and a filename
 			fn := L.ToString(1)
-			scriptdir += sep + fn
+			scriptdir += pathsep + fn
 		}
-		if sep != "/" {
-			// For operating systems that use backslash
-			scriptdir = strings.Replace(scriptdir, "\\", "/", -1)
+		if pathsep != "/" {
+			// For operating systems that use another path separator
+			scriptdir = strings.Replace(scriptdir, pathsep, "/", -1)
 		}
 		L.Push(lua.LString(scriptdir))
 		return 1 // number of results
@@ -151,11 +151,11 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		} else if L.GetTop() == 1 {
 			// Also include a separator and a filename
 			fn := L.ToString(1)
-			serverdir += sep + fn
+			serverdir += pathsep + fn
 		}
-		if sep != "/" {
-			// For operating systems that use backslash
-			serverdir = strings.Replace(serverdir, "\\", "/", -1)
+		if pathsep != "/" {
+			// For operating systems that use another path separator
+			serverdir = strings.Replace(serverdir, pathsep, "/", -1)
 		}
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results

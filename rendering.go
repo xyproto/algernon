@@ -93,15 +93,6 @@ func markdownPage(w io.Writer, b []byte, filename string) {
 			title = strings.TrimSpace(string(fields[0])[6:])
 			// Remove the first line
 			b = b[len(fields[0]):]
-		} else {
-			// Try sep instead
-			fields = bytes.Split(b, []byte(sep))
-			if len(fields) > 1 {
-				// Replace the title with the found title
-				title = strings.TrimSpace(string(fields[0])[6:])
-				// Remove the first line
-				b = b[len(fields[0]):]
-			}
 		}
 	}
 
