@@ -11,7 +11,7 @@ import (
 func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, perm *permissions.Permissions, luapool *lStatePool) {
 
 	// Serve a file in the scriptdir
-	L.SetGlobal("servefile", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := path.Dir(filename)
 		serveFilename := path.Join(scriptdir, L.ToString(1))
 		if exists(serveFilename) {

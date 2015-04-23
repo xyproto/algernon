@@ -133,7 +133,7 @@ Lua functions for handling requests
 * `error(string, number)` output a message and sets a HTTP status code.
 * `scriptdir(...)` return the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
-* `servefile(string)` serve a file that exists in the same directory as the script.
+* `serve(string)` serve a file that exists in the same directory as the script.
 * `version()` return the version string for the server.
 * `log(...)` log the given strings as INFO. Takes a variable number of strings.
 * `warn(...)` log the given strings as WARN. Takes a variable number of strings.

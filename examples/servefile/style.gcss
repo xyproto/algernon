@@ -1,0 +1,6 @@
+body
+  margin: 2em
+  font-size: 2em
+  font-family: monospace
+  color: green
+  background-color: black
