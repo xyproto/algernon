@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	ALL = -1 // Used when replacing strings
+)
+
 // Check if a given filename is a directory
 func isDir(filename string) bool {
 	fs, err := os.Stat(filename)

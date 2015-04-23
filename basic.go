@@ -133,7 +133,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		}
 		if pathsep != "/" {
 			// For operating systems that use another path separator
-			scriptdir = strings.Replace(scriptdir, pathsep, "/", -1)
+			scriptdir = strings.Replace(scriptdir, pathsep, "/", ALL)
 		}
 		L.Push(lua.LString(scriptdir))
 		return 1 // number of results
@@ -155,7 +155,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		}
 		if pathsep != "/" {
 			// For operating systems that use another path separator
-			serverdir = strings.Replace(serverdir, pathsep, "/", -1)
+			serverdir = strings.Replace(serverdir, pathsep, "/", ALL)
 		}
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results

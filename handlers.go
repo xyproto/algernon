@@ -16,7 +16,9 @@ import (
 	"github.com/xyproto/permissions2"
 )
 
-const pathsep = string(os.PathSeparator)
+const (
+	pathsep = string(os.PathSeparator)
+)
 
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, mimereader *mime.MimeReader, luapool *lStatePool) {
@@ -189,8 +191,9 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 		title = title[1+len(pathsep):]
 	}
 	// Strip double "/" at the end, just keep one
-	if strings.HasSuffix(title, pathsep+pathsep) {
-		title = title[:len(title)-1]
+	// Replace "//" with just "/"
+	if strings.Contains(title, pathsep+pathsep) {
+		title = strings.Replace(title, pathsep+pathsep, pathsep, ALL)
 	}
 	// Use the application title for the main page
 	//if title == "" {
