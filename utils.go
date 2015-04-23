@@ -33,7 +33,11 @@ func url2filename(dirname, urlpath string) string {
 		return dirname + pathsep
 	}
 	if strings.HasPrefix(urlpath, "/") {
-		return dirname + pathsep + urlpath[1:]
+		if strings.HasSuffix(dirname, pathsep) {
+			return dirname + urlpath[1:]
+		} else {
+			return dirname + pathsep + urlpath[1:]
+		}
 	}
 	return dirname + "/" + urlpath
 }
