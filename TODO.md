@@ -4,6 +4,7 @@
 Priority
 --------
 
+- [ ] A feature for automatically reloading the page when files are changed!
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 - [ ] Caching for any file under a certain size. This can be configured in the server configuration. Or in Redis?
 - [ ] Rate limiting
