@@ -4,6 +4,7 @@
 
 HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users and permissions.
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 
 Technologies
 ------------
