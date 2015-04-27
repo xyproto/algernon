@@ -100,24 +100,44 @@ func linkToStyle(amberdata *[]byte, url string) {
 			// Find the line that contains head
 			var byteline []byte
 			found := false
-			foundnl := ""
 			// Try finding the line with "head", using \n as the newline
 			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
 				if bytes.Contains(byteline, []byte("head")) {
 					found = true
-					foundnl = "\n"
 					break
 				}
 			}
-			fields := bytes.Split(byteline, []byte("head"))
-			spaces := ""
-			if len(fields) > 0 {
-				spaces = string(fields[0])
-			}
+			// Find the whitespace in front of "head"
+			whitespaceBytes := byteline[:bytes.Index(byteline, []byte("head"))]
+			// Whitespace for two levels of indentation
+			whitespace := string(whitespaceBytes) + string(whitespaceBytes)
 			if found {
 				// Add the link to the stylesheet
-				*amberdata = bytes.Replace(*amberdata, []byte("head"+foundnl), []byte("head"+foundnl+spaces+"\t"+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
+				*amberdata = bytes.Replace(*amberdata, []byte("head\n"), []byte("head\n"+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
 			}
+		} else if bytes.Contains(*amberdata, []byte("html")) && bytes.Contains(*amberdata, []byte("body")) {
+
+			// No head section, but a body and html section. Add both "head" and "link"
+
+			// Find the line that contains html
+			var byteline []byte
+			found := false
+			// Try finding the line with "body", using \n as the newline
+			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
+				if bytes.Contains(byteline, []byte("body")) {
+					found = true
+					break
+				}
+			}
+			// Find the whitespace in front of "body"
+			whitespaceBytes := byteline[:bytes.Index(byteline, []byte("body"))]
+			// Whitespace for one level of indentation
+			whitespace := string(whitespaceBytes) + string(whitespaceBytes)
+			if found {
+				// Add the link to the stylesheet
+				*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
+			}
+
 		}
 	}
 }
