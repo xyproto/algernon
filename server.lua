@@ -1,6 +1,6 @@
 --- Algernon Server Configuration
 
---- Set the default host and port.
+--- Default host and port
 SetAddr(":3000")
 
 --- Debug flag
