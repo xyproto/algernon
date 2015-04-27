@@ -90,54 +90,49 @@ func infostring(functionName string, args []string) string {
 	return s + ")"
 }
 
-// Add a link to a stylesheet in the given Amber code
-// TODO: A bit ugly. Rewrite the function. Replace with a regex?
-func linkToStyle(amberdata *[]byte, url string) {
-	// If the given url is not already mentioned
-	if !bytes.Contains(*amberdata, []byte(url)) {
-		// If there is a head section
-		if bytes.Contains(*amberdata, []byte("head")) {
-			// Find the line that contains head
-			var byteline []byte
-			found := false
-			// Try finding the line with "head", using \n as the newline
-			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
-				if bytes.Contains(byteline, []byte("head")) {
-					found = true
-					break
-				}
+// Find one level of whitespace, given indented data
+// and a keyword to extract the whitespace in front of
+func oneLevelOfIndentation(data *[]byte, keyword string) string {
+	whitespace := ""
+	kwb := []byte(keyword)
+	// If there is a line that contains the given word, extract the whitespace
+	if bytes.Contains(*data, kwb) {
+		// Find the line that contains they keyword
+		var byteline []byte
+		found := false
+		// Try finding the line with keyword, using \n as the newline
+		for _, byteline = range bytes.Split(*data, []byte("\n")) {
+			if bytes.Contains(byteline, kwb) {
+				found = true
+				break
 			}
-			// Find the whitespace in front of "head"
-			whitespaceBytes := byteline[:bytes.Index(byteline, []byte("head"))]
-			// Whitespace for two levels of indentation
-			whitespace := string(whitespaceBytes) + string(whitespaceBytes)
-			if found {
-				// Add the link to the stylesheet
-				*amberdata = bytes.Replace(*amberdata, []byte("head\n"), []byte("head\n"+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
-			}
-		} else if bytes.Contains(*amberdata, []byte("html")) && bytes.Contains(*amberdata, []byte("body")) {
-
-			// No head section, but a body and html section. Add both "head" and "link"
-
-			// Find the line that contains html
-			var byteline []byte
-			found := false
-			// Try finding the line with "body", using \n as the newline
-			for _, byteline = range bytes.Split(*amberdata, []byte("\n")) {
-				if bytes.Contains(byteline, []byte("body")) {
-					found = true
-					break
-				}
-			}
-			// Find the whitespace in front of "body"
-			whitespaceBytes := byteline[:bytes.Index(byteline, []byte("body"))]
+		}
+		if found {
+			// Find the whitespace in front of the keyword
+			whitespaceBytes := byteline[:bytes.Index(byteline, kwb)]
 			// Whitespace for one level of indentation
-			whitespace := string(whitespaceBytes) + string(whitespaceBytes)
-			if found {
-				// Add the link to the stylesheet
-				*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`), 1)
-			}
+			whitespace = string(whitespaceBytes)
+		}
+	}
+	// Return an empty string, or whitespace for one level of indentation
+	return whitespace
+}
 
+// Add a link to a stylesheet in the given Amber code
+func linkToStyle(amberdata *[]byte, url string) {
+	// If the given url is not already mentioned and the data contains "body"
+	if !bytes.Contains(*amberdata, []byte(url)) && bytes.Contains(*amberdata, []byte("html")) && bytes.Contains(*amberdata, []byte("body")) {
+		// Extract one level of indendation
+		whitespace := oneLevelOfIndentation(amberdata, "body")
+		// Check if there already is a head section
+		if bytes.Contains(*amberdata, []byte("head")) {
+			// Add a link to the stylesheet
+			*amberdata = bytes.Replace(*amberdata, []byte("head\n"), []byte("head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
+
+		} else if bytes.Contains(*amberdata, []byte("body")) {
+
+			// Add a link to the stylesheet
+			*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
 		}
 	}
 }
