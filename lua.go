@@ -35,6 +35,15 @@ func strings2table(L *lua.LState, sl []string) *lua.LTable {
 	return table
 }
 
+// Convert a map[string]string to a lua table
+func map2table(L *lua.LState, m map[string]string) *lua.LTable {
+	table := L.NewTable()
+	for key, value := range m {
+		L.RawSet(table, lua.LString(key), lua.LString(value))
+	}
+	return table
+}
+
 // Return a *lua.LState object that contains several exposed functions
 func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState, luapool *lStatePool) {
 
