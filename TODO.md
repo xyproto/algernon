@@ -7,6 +7,7 @@ Priority
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 - [ ] A feature for automatically reloading the page whenever files change
 - [ ] JSON templates
+- [ ] index.jsx for styled react.js (https://facebook.github.io/react/)
 - [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 
