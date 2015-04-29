@@ -4,15 +4,11 @@
 Priority
 --------
 
-- [ ] A feature for automatically reloading the page when files are changed!
-- [ ] JSON templates
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
-- [ ] Caching for any file under a certain size. This can be configured in the server configuration. Or in Redis?
-- [ ] Rate limiting
-- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver ".
+- [ ] A feature for automatically reloading the page whenever files change
+- [ ] JSON templates
+- [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
-- [ ] OAuth 1
-- [ ] The ability to set headers and do HTTP Basic Auth manually.
 
 
 Server configuration
@@ -26,6 +22,19 @@ Server configuration
 - [ ] Add a way to run several configuration scripts at start.
 - [ ] A way to recompile templates on command while the server is running.
 - [ ] If no Redis server is found, start an internal Ledis database that runs in RAM (see https://github.com/siddontang/ledisdb/blob/master/cmd/ledis-server/main.go)
+
+
+Additional security
+-------------------
+
+- [ ] Rate limiting
+- [ ] Option to disable directory listings
+- [ ] Option to only allow whitelisted URL prefixes
+- [ ] Functions for adding URL prefixes to the whitelist
+- [ ] OAuth 1
+- [ ] OAuth 2
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver ".
+- [ ] The ability to set headers and do HTTP Basic Auth manually.
 
 
 Examples
