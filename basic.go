@@ -169,4 +169,17 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 1 // number of results
 	}))
 
+	// Retrieve a table with keys and values from the form in the request
+	L.SetGlobal("formdata", L.NewFunction(func(L *lua.LState) int {
+		// Place the form data in a map
+		m := make(map[string]string)
+		req.ParseForm()
+		for k, v := range req.Form {
+			m[k] = v[0]
+		}
+		// Convert the map to a table and return it
+		L.Push(map2table(L, m))
+		return 1 // number of results
+	}))
+
 }
