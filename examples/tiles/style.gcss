@@ -1,0 +1,67 @@
+@import url(//fonts.googleapis.com/css?family=Raleway)
+
+// From http://masonry.desandro.com/faq.html
+
+*
+  -webkit-box-sizing: border-box
+  -moz-box-sizing: border-box
+  box-sizing: border-box
+
+body
+  font-family: Raleway, sans-serif
+  font-size: 1em
+  margin: 7em
+
+h1
+  font-size: 2em
+
+.masonry
+  background: white
+  max-width: 640px
+
+.masonry .item
+  float: left
+
+/* item is invisible, but used for layout */
+.grid-sizer
+  width: 20%
+  height: 100px
+
+.item
+  width: 20%
+  height: 100px
+  border: none
+  background: transparent
+
+/* item-content is visible, and transitions size */
+.item-content
+  width: 100%
+  height: 100%
+  background: #D26
+  border: 2px solid #333
+  border-color: hsla(0, 0%, 0%, 0.5)
+  border-radius: 5px
+  -webkit-transition: width 0.4s, height 0.4s
+  -moz-transition: width 0.4s, height 0.4s
+  -o-transition: width 0.4s, height 0.4s
+  transition: width 0.4s, height 0.4s
+
+.item:hover .item-content
+  border-color: white
+  background: #A2C
+  cursor: pointer
+
+/* both item and item content change size */
+.item.is-expanded
+  width: 60%
+  height: 250px
+
+.item.is-expanded
+  z-index: 2
+
+.item.is-expanded .item-content
+  background: #F90
+
+/* item has expanded size */
+#animate-item-size-responsive .item.is-expanded
+  width: 60%
