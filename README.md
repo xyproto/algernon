@@ -131,7 +131,7 @@ Lua functions for handling requests
 * `setheader(string, string)` set an HTTP header given a key and a value.
 * `body()` return the HTTP body in the request (will only read the body once, since it's streamed).
 * `status(number)` set a HTTP status code (like 200 or 404). Must come before other output.
-* `error(string, number)` output a message and sets a HTTP status code.
+* `error(string, number)` output a message and set a HTTP status code.
 * `scriptdir(...)` return the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 * `serve(string)` serve a file that exists in the same directory as the script.
