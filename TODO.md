@@ -4,6 +4,7 @@
 Priority
 --------
 
+- [ ] Also support tables from Lua when iterating over values in Amber
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 - [ ] A feature for automatically reloading the page whenever files change
 - [ ] JSON templates
