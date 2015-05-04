@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/eknkc/amber"
 	"github.com/russross/blackfriday"
+	"github.com/xyproto/amber"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
@@ -152,7 +152,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	}
 
 	// Compile the given amber template
-	tpl, err := amber.Compile(string(amberdata), amber.Options{true, false})
+	tpl, err := amber.CompileData(amberdata, filename, amber.Options{true, false})
 	if err != nil {
 		if DEBUG_MODE {
 			prettyError(w, filename, amberdata, err.Error(), "amber")
