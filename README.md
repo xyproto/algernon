@@ -18,7 +18,7 @@ Design decisions
 ----------------
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
-* If not, unencrypted HTTP is used.
+* If not, unencrypted HTTP/2 is used. (For regular HTTP, use the `-httponly` flag).
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is interpreted as a handler function for the current directory.
@@ -36,7 +36,7 @@ Design decisions
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
-* The server can be configured by commandline flags or with a provided lua script, but no configuration should be needed to get started.
+* The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
 
 
 Features and limitations
@@ -110,10 +110,10 @@ Getting started
 
 * `mkdir mypage`
 * `cd mypage`
-* `echo 'print("Hello, Algernon")' >> index.lua` (or use your favorite editor)
-* Create a certificate just for testing:
+* Create a file named `index.lua`, with the following contents: `print("Hello, Algernon")`
+* Create a self-signed certificate, just for testing:
  * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
- * Just press return at all the prompts, but enter `localhost` at *Common Name*.
+ * Press return at all the prompts, but enter `localhost` at *Common Name*.
 * Start `algernon`.
 * Visit `https://localhost:3000/`.
 * If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
@@ -135,7 +135,7 @@ Lua functions for handling requests
 * `scriptdir(...)` return the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 * `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 * `serve(string)` serve a file that exists in the same directory as the script.
-* `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (/some/page?x=7).
+* `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 * `version()` return the version string for the server.
 * `log(...)` log the given strings as INFO. Takes a variable number of strings.
 * `warn(...)` log the given strings as WARN. Takes a variable number of strings.
@@ -431,7 +431,7 @@ Lua functions that are only available for the server configuration file
 * `version()` returns the version string for the server.
 * `log(...)` logs the given strings as INFO. Takes a variable number of strings.
 * `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
-* `OnReady(function)` provide a lua function that will be run once the server is ready to start serving.
+* `OnReady(function)` provide a lua function that will be run once, when the server is ready to start serving.
 
 
 Releases
