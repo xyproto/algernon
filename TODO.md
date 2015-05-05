@@ -12,6 +12,7 @@ Priority
 - [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
+- [ ] Consider using the path/filepath package for walking directories
 
 
 Server configuration
