@@ -67,6 +67,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		buf := arguments2buffer(L)
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
+		// TODO: Can use &buf instead of using NewReader and .Bytes()?
 		if _, err := gcss.Compile(w, bytes.NewReader(buf.Bytes())); err != nil {
 			if DEBUG_MODE {
 				// TODO: Use a similar error page as for Lua
@@ -75,6 +76,38 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
 			}
 			//return 0 // number of results
+		}
+		return 0 // number of results
+	}))
+
+	// Output text as rendered JSX
+	// TODO: Add caching, compilation and reuse
+	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := arguments2buffer(L)
+		// Transform JSX to JavaScript and output the result.
+		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
+		if err != nil {
+			if DEBUG_MODE {
+				// TODO: Use a similar error page as for Lua
+				fmt.Fprint(w, "Could not parse JSX:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not parse JSX:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		gen, err := generator.Generate(prog)
+		if err != nil {
+			if DEBUG_MODE {
+				// TODO: Use a similar error page as for Lua
+				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not generate JavaScript:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		if gen != nil {
+			io.Copy(w, gen)
 		}
 		return 0 // number of results
 	}))
@@ -152,6 +185,9 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
 		linkToStyle(&amberdata, defaultStyleFilename)
 	}
+
+	// If the file starts with "html5\n", replace it with "doctype 5\nhtml\n"
+	//amberdata = bytes.Replace(amberdata, []byte("html5\n"), []byte("doctype 5\nhtml\n"), 1)
 
 	// Compile the given amber template
 	tpl, err := amber.CompileData(amberdata, filename, amber.Options{true, false})
