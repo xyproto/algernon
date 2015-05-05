@@ -1,0 +1,8 @@
+doctype 5
+html
+  head
+    title React example
+    script[src="//cdnjs.cloudflare.com/ajax/libs/react/0.13.2/react.js"]
+  body
+    div[id="example"]
+    script[type="text/javascript"][src="hello.jsx"]
