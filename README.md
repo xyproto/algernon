@@ -447,7 +447,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.58
+* Version: 0.59
 * License: MIT
 * Alexander F Rødseth
 
