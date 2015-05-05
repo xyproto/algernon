@@ -116,6 +116,24 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 
 		return
 
+	} else if ext == ".jsx" {
+
+		w.Header().Add("Content-Type", "text/javascript")
+		jsxdata, err := read(filename)
+		if err != nil {
+			if DEBUG_MODE {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
+			return
+		}
+
+		// Render the JSX page as JavaScript
+		jsxPage(w, filename, jsxdata)
+
+		return
+
 	} else if ext == ".lua" {
 
 		// If in debug mode, let the Lua script print to a buffer first, in

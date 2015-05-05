@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/mamaar/risotto/generator"
+	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	"github.com/xyproto/amber"
 	"github.com/yosssi/gcss"
@@ -199,5 +201,30 @@ func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
 			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
 		}
 		return
+	}
+}
+
+func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
+	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
+	if err != nil {
+		if DEBUG_MODE {
+			prettyError(w, filename, jsxdata, err.Error(), "jsx")
+		} else {
+			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
+		}
+		return
+	}
+	gen, err := generator.Generate(prog)
+	if err != nil {
+		if DEBUG_MODE {
+			prettyError(w, filename, jsxdata, err.Error(), "jsx")
+		} else {
+			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
+		}
+		return
+	}
+	if gen != nil {
+		//w.Header().Add("Content-type", "text/javascript")
+		io.Copy(w, gen)
 	}
 }
