@@ -43,8 +43,7 @@ Design decisions
 Features and limitations
 ------------------------
 
-* Supports HTTP/2, with or without HTTPS.
-* Use the `-httponly` flag for serving HTTP instead of HTTP/2.
+* Supports HTTP/2, with or without HTTPS. Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * Works on Linux, OS X and 64-bit Windows. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
 * Algernon is compiled to native. It's reasonably fast.
