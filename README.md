@@ -18,7 +18,7 @@ Design decisions
 ----------------
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
-* If not, unencrypted HTTP/2 is used. (For regular HTTP, use the `-httponly` flag).
+  * If not, unencrypted HTTP/2 is used. (For regular HTTP, use the `-httponly` flag).
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is interpreted as a handler function for the current directory.
