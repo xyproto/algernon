@@ -2,7 +2,7 @@
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png"></a>
 
-HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, users and permissions.
+HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions.
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 
