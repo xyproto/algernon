@@ -224,7 +224,6 @@ func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
 		return
 	}
 	if gen != nil {
-		//w.Header().Add("Content-type", "text/javascript")
 		io.Copy(w, gen)
 	}
 }
