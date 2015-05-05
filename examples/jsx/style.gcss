@@ -1,0 +1,6 @@
+body
+  margin: 5em
+  background-color: purple
+  color: white
+  font-family: sans-serif
+  font-size: 2em
