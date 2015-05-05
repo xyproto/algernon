@@ -1,0 +1,8 @@
+body
+  margin: 5em
+  font-family: sans-serif
+  background-color: #202020
+  color: #e0e0e0
+
+div
+  margin-bottom: 0.25em
