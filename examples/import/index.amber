@@ -5,7 +5,7 @@ html
     script[type="text/javascript"][src="//cdnjs.cloudflare.com/ajax/libs/masonry/3.3.0/masonry.pkgd.min.js"]
     script[type="text/javascript"][src="//masonry.desandro.com/bower_components/classie/classie.js"]
   body
-    h1 Click the tiles
+    h1 Each tile is an imported Amber template
     div[class="masonry"]
       div[class="grid-sizer"]
       import content/car
@@ -19,5 +19,4 @@ html
       import content/car
       import content/beach
     script[type="text/javascript"][src="js/main.js"]
-    p[align="right"] Uses <a href="http://masonry.desandro.com/">Masonry</a>
 
