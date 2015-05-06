@@ -1,0 +1,5 @@
+body
+  background-color: #f0e0c0
+  color: #501030
+  margin: 5em 0 0 6em
+  font-family: monospace
