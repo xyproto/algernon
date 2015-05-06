@@ -5,7 +5,7 @@ content("text/javascript")
 -- It could just as well have been defined in data.lua.
 local formatted = asciiArtUpper(formdata()["msg"])
 
--- Output JavaScript
+-- Output JSX as JavaScript
 jprint([[React.render(
   <]] .. tag .. ">" .. formatted .. "</" .. tag .. [[>,
   document.getElementById('example')
