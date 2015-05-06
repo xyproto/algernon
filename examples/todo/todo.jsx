@@ -1,3 +1,5 @@
+// The TODO example from http://facebook.github.io/react/
+
 var TodoList = React.createClass({
   render: function() {
     var createItem = function(itemText, index) {
