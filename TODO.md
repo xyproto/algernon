@@ -3,16 +3,12 @@
 
 Priority
 --------
-
-- [ ] Also support tables from Lua when iterating over values in Amber
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
 - [ ] A feature for automatically reloading the page whenever files change
-- [ ] JSON templates
-- [ ] index.jsx for styled react.js (https://facebook.github.io/react/)
-- [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
-- [ ] Consider using the path/filepath package for walking directories
+- [ ] JSON templates
+- [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 
 
 Server configuration
@@ -88,6 +84,7 @@ Authentication and authorization
 Lua
 ---
 
+- [X] Also support tables from Lua when iterating over values in Amber
 - [ ] A way to store and load functions to the database:
       register("namespace name", "function name", luafunction)
       luafunction = getfunction("namespace name", "function name")
@@ -111,7 +108,7 @@ Lua
 Performance
 -----------
 
-- [ ] Virtual DOM?
+- [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] A way to toggle which files and directories that should be cached, in Redis.
 - [ ] Three different cache settings: not cached, cached until file timestamp changes, always use cache.
 - [ ] Find a reliable way to measure serving speed and emulate users.
@@ -128,6 +125,12 @@ Unusual features
 
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon. Update: Someone else has made a format for this! https://github.com/cparnot/ASCIImage
 - [ ] Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way. Perhaps by using the gob format.
+
+
+Various
+-------
+- [ ] Consider using the path/filepath package for walking directories
+- [X] .jsx together with React (https://facebook.github.io/react/)
 
 
 Maybe
