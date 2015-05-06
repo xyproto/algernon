@@ -54,7 +54,6 @@ Features and limitations
 * Will not run without a Redis server to connect to.
 * Cookies currently does not work in debug mode, because responses are buffered.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
-* The [JSX](https://github.com/mamaar/risotto) package currently has [problems rendering whitespace correctly](https://github.com/mamaar/risotto/issues/1).
 * No processes that listens for changes to files needs to be running in the background. Files are converted on the fly.
 
 
