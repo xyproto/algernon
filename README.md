@@ -2,7 +2,6 @@
 title: Algernon
 description: HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions
 keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua
-code_theme: mono-blue
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png"></a>
