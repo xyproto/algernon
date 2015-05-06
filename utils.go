@@ -11,6 +11,11 @@ const (
 	ALL = -1 // Used when replacing strings
 )
 
+var (
+	// A selection of allowed keywords for the HTML meta tag
+	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM"}
+)
+
 // Check if a given filename is a directory
 func isDir(filename string) bool {
 	fs, err := os.Stat(filename)
@@ -134,5 +139,66 @@ func linkToStyle(amberdata *[]byte, url string) {
 			// Add a link to the stylesheet
 			*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
 		}
+	}
+}
+
+// Filter []byte slices into two groups, depending on the given filter function
+func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
+	var special, regular [][]byte
+	for _, byteline := range bytelines {
+		if filterfunc(byteline) {
+			// Special
+			special = append(special, byteline)
+		} else {
+			// Regular
+			regular = append(regular, byteline)
+		}
+	}
+	return special, regular
+}
+
+// Given a source file, extract keywords and values into the given map.
+// The map must be filled with keywords to look for.
+// The keywords in the data must be on the form "keyword: value",
+// and can be within single-line HTML comments (<-- ... -->).
+// Returns the data for the lines that does not contain any of the keywords.
+func extractKeywords(data []byte, special map[string]string) []byte {
+	bnl := []byte("\n")
+	// Find and separate the lines starting with one of the keywords in the special map
+	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
+		// Check if the current line has one of the special keywords
+		for keyword, _ := range special {
+			// Check for lines starting with the keyword and a ":"
+			if bytes.HasPrefix(byteline, []byte(keyword+":")) {
+				// Set (possibly overwrite) the value in the map, if the keyword is found.
+				// Trim the surrounding whitespace and skip the letters of the keyword itself.
+				special[keyword] = strings.TrimSpace(string(byteline)[len(keyword)+1:])
+				return true
+			}
+			// Check for lines that starts with "<!--", ends with "-->" and contains the keyword and a ":"
+			if bytes.HasPrefix(byteline, []byte("<!--")) && bytes.HasSuffix(byteline, []byte("-->")) {
+				// Strip away the comment markers
+				stripped := strings.TrimSpace(string(byteline[5 : len(byteline)-3]))
+				// Check if one of the relevant keywords are present
+				if strings.HasPrefix(stripped, keyword+":") {
+					// Set (possibly overwrite) the value in the map, if the keyword is found.
+					// Trim the surrounding whitespace and skip the letters of the keyword itself.
+					special[keyword] = strings.TrimSpace(stripped[len(keyword)+1:])
+					return true
+				}
+			}
+
+		}
+		// Not special
+		return false
+	})
+	// Use the regular lines as the new data (remove the special lines)
+	return bytes.Join(regular, bnl)
+}
+
+// Add meta tag names to the given map
+func addMetaKeywords(keywords map[string]string) {
+	for _, keyword := range metaKeywords {
+		keywords[keyword] = ""
 	}
 }

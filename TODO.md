@@ -9,7 +9,7 @@ Priority
 - [ ] Support for pretty URLs (/position/x/2/y/4)
 - [ ] JSON templates
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
-
+- [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
 
 Server configuration
 --------------------
@@ -131,6 +131,7 @@ Various
 -------
 - [ ] Consider using the path/filepath package for walking directories
 - [X] .jsx together with React (https://facebook.github.io/react/)
+- [ ] Add editor syntax highlight files
 
 
 Maybe

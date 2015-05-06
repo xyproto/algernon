@@ -11,13 +11,20 @@ import (
 )
 
 const (
-	// Code highlight
-	pre_highlight  = "<font style='color: red !important'>"
-	post_highlight = "</font>"
+	// Highlight of errors in the code
+	preHighlight  = "<font style='color: red !important'>"
+	postHighlight = "</font>"
 
-	// Highlight theme. See https://highlightjs.org/ for more themes.
-	highlight_theme = "github"
+	// Syntax highlighting theme for errors (See https://highlightjs.org/ for more themes).
+	errorTheme = "github"
 )
+
+// HTML to be added for enabling highlighting.
+func highlightHTML(theme string) string {
+	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/styles/` + theme + `.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>`
+}
 
 // Shorthand function for reading a file
 var read = ioutil.ReadFile
@@ -76,7 +83,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 		// Modify the line that is to be highlighted
 		bytelines := bytes.Split(filebytes, []byte("\n"))
 		if (linenr >= 0) && (linenr < len(bytelines)) {
-			bytelines[linenr] = []byte(pre_highlight + string(bytelines[linenr]) + post_highlight)
+			bytelines[linenr] = []byte(preHighlight + string(bytelines[linenr]) + postHighlight)
 		}
 
 		// Build a string from the bytelines slice
@@ -128,9 +135,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
         text-align:right;
 	  }
 	</style>
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/styles/`+highlight_theme+`.min.css">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>	
-	<script>hljs.initHighlightingOnLoad();</script>
+	`+highlightHTML(errorTheme)+`
   </head>
   <body>
     <div style="font-size: 3em; font-weight: bold;">`+title+`</div>

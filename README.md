@@ -1,4 +1,9 @@
-<!-- http2 web server -->
+<!--
+title: Algernon
+description: HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions
+keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua
+code_theme: mono-blue
+-->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo3.png"></a>
 
@@ -156,7 +161,7 @@ Lua functions for Redis data structures
 
 ##### Set
 
-~~~go
+~~~c
 // Get or create Redis-backed Set (takes a name, returns a set object)
 Set(string) -> userdata
 
@@ -179,7 +184,7 @@ set:remove() -> bool
 
 ##### List
 
-~~~go
+~~~c
 // Get or create a Redis-backed List (takes a name, returns a list object)
 List(string) -> userdata
 
@@ -202,7 +207,7 @@ list:remove() -> bool
 
 ##### HashMap
 
-~~~go
+~~~c
 // Get or create a Redis-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
 
@@ -243,7 +248,7 @@ hash:remove() -> bool
 
 ##### KeyValue
 
-~~~go
+~~~c
 // Get or create a Redis-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
@@ -270,7 +275,7 @@ kv:remove() -> bool
 Lua functions for handling users and permissions
 ------------------------------------------------
 
-~~~go
+~~~c
 // Check if the current user has "user" rights
 UserRights() -> bool
 

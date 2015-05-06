@@ -17,8 +17,13 @@ import (
 	"strings"
 )
 
-// Default stylesheet filename (GCSS)
-const defaultStyleFilename = "style.gcss"
+const (
+	// Default stylesheet filename (GCSS)
+	defaultStyleFilename = "style.gcss"
+
+	// Default syntax highlighting theme for Markdown (See https://highlightjs.org/ for more themes).
+	defaultTheme = "mono-blue"
+)
 
 // Expose functions that are related to rendering text, to the given Lua state
 func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
@@ -115,24 +120,18 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w io.Writer, b []byte, filename string) {
+func markdownPage(w io.Writer, data []byte, filename string) {
+	// Prepare for receiving title and code_theme information
+	given := map[string]string{"title": "", "code_theme": defaultTheme}
 
-	var title string
+	// Also prepare for receving meta tag information
+	addMetaKeywords(given)
 
-	// If the first line is "title: ...", use that as the title
-	// and don't convert it to Markdown. This is a subset of MultiMarkdown.
-	if bytes.HasPrefix(b, []byte("title:")) {
-		fields := bytes.Split(b, []byte("\n"))
-		if len(fields) > 1 {
-			// Replace the title with the found title
-			title = strings.TrimSpace(string(fields[0])[6:])
-			// Remove the first line
-			b = b[len(fields[0]):]
-		}
-	}
+	// Extract keywords from the given data, and remove the lines with keywords
+	data = extractKeywords(data, given)
 
 	// Convert from Markdown to HTML
-	htmlbody := string(blackfriday.MarkdownCommon(b))
+	htmlbody := string(blackfriday.MarkdownCommon(data))
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
 	// Markdown or not. Submit a patch to blackfriday if it is.
@@ -149,7 +148,8 @@ func markdownPage(w io.Writer, b []byte, filename string) {
 		}
 	}
 
-	// If there is no title, use the h1title
+	// If there is no given title, use the h1title
+	title := given["title"]
 	if title == "" {
 		if h1title != "" {
 			title = h1title
@@ -160,19 +160,31 @@ func markdownPage(w io.Writer, b []byte, filename string) {
 	}
 
 	// If style.gcss is present, use that style in <head>
-	var markdownStyle string
+	var head bytes.Buffer
+
 	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
-		markdownStyle = `<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`
+		head.WriteString(`<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the default style in <head>
-		markdownStyle = "<style>" + defaultStyle + "</style>"
+		head.WriteString("<style>" + defaultStyle + "</style>")
+	}
+
+	// Add syntax highlighting
+	head.WriteString(highlightHTML(given["code_theme"]))
+
+	// Add meta tags, if metadata information has been declared
+	for _, keyword := range metaKeywords {
+		if given[keyword] != "" {
+			// Add the meta tag
+			head.WriteString(fmt.Sprintf(`<meta name="%s" content="%s" />`, keyword, given[keyword]))
+		}
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmlbytes := []byte("<!doctype html><html><head><title>" + title + "</title>" + markdownStyle + "<head><body><h1>" + h1title + "</h1>" + htmlbody + "</body></html>")
+	htmlPage := fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody)
 
 	// Write the rendered Markdown page to the http.ResponseWriter
-	w.Write(htmlbytes)
+	w.Write([]byte(htmlPage))
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
