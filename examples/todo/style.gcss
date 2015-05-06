@@ -1,5 +1,12 @@
+@import url(//fonts.googleapis.com/css?family=Cabin)
+
 body
-  background-color: #f0e0c0
-  color: #501030
-  margin: 5em 0 0 6em
-  font-family: monospace
+  color: black
+  background-color: white
+  margin: 6em 0 0 7em
+  font-family: 'Cabin', sans-serif
+  font-size: 2em
+
+li
+  border: solid 1px #CCCCCC
+//  float: left
