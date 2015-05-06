@@ -10,6 +10,8 @@ Priority
 - [ ] JSON templates
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 - [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
+- [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+
 
 Server configuration
 --------------------
@@ -62,6 +64,15 @@ Documentation and examples
 
 - [ ] Create an example webpage where people can log in and chat.
 - [ ] Create a TODOMVC example application.
+- [ ] Document possible Markdown keywords somewhere (in a separate document).
+- [ ] Create a React application that uses Algernon as the backend as well.
+
+
+Screenshots and graphics
+------------------------
+- [ ] Of the three.js example
+- [ ] Of one of the React examples
+- [ ] Add the .svg logo as well
 
 
 Debugging
