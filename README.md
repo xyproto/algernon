@@ -45,11 +45,11 @@ Features and limitations
 
 * Supports HTTP/2, with or without HTTPS. Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
-* Works on Linux, OS X and 64-bit Windows. (The [binary release](https://github.com/xyproto/algernon/releases) was tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
+* Works on Linux, OS X and 64-bit Windows.
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
-* Supports [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
+* Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * No support for internal caching, yet.
 * Will not run without a Redis server to connect to.
 * Cookies currently does not work in debug mode, because responses are buffered.
@@ -440,8 +440,8 @@ Releases
 --------
 
 * Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
-* [Windows executable](https://github.com/xyproto/algernon/releases).
-* Source releases are tagged in the repository.
+* [Windows executable](https://github.com/xyproto/algernon/releases) (tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
+* Regular source releases are tagged in the repository.
 
 
 General information
