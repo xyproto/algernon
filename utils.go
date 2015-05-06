@@ -13,7 +13,7 @@ const (
 
 var (
 	// A selection of allowed keywords for the HTML meta tag
-	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM"}
+	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 )
 
 // Check if a given filename is a directory
