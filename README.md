@@ -452,7 +452,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.60
+* Version: 0.61
 * License: MIT
 * Alexander F Rødseth
 
