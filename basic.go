@@ -37,6 +37,14 @@ func exportBasicSystemFunctions(L *lua.LState) {
 		return 0 // number of results
 	}))
 
+	// Log text with the "Error" log type
+	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
+		buf := arguments2buffer(L)
+		// Log the combined text
+		log.Error(buf.String())
+		return 0 // number of results
+	}))
+
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts.

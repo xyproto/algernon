@@ -142,8 +142,9 @@ Lua functions for handling requests
 * `serve(string)` serve a file that exists in the same directory as the script.
 * `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 * `version()` return the version string for the server.
-* `log(...)` log the given strings as INFO. Takes a variable number of strings.
-* `warn(...)` log the given strings as WARN. Takes a variable number of strings.
+* `log(...)` log the given strings as information. Takes a variable number of strings.
+* `warn(...)` log the given strings as a warning. Takes a variable number of strings.
+* `error(...)` log the given strings as an error. Takes a variable number of strings.
 
 
 Lua functions for formatted output

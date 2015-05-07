@@ -19,7 +19,7 @@ var (
 	// Configuration that is exposed to the server configuration script(s)
 	SERVER_DIR, SERVER_ADDR, SERVER_CERT, SERVER_KEY, SERVER_CONF_SCRIPT, SERVER_HTTP2_LOG string
 
-	SERVE_JUST_HTTP2, SERVE_JUST_HTTP bool
+	SERVE_JUST_HTTP2, SERVE_JUST_HTTP, SERVE_PROD bool
 
 	// Configuration that may only be set in the server configuration script(s)
 	SERVER_ADDR_LUA           string
@@ -28,6 +28,9 @@ var (
 	// Redis configuration
 	REDIS_ADDR string
 	REDIS_DB   int
+
+	// Server configuration
+	DEBUG_MODE, VERBOSE bool
 )
 
 func Usage() {
@@ -41,9 +44,10 @@ Syntax:
   algernon [flags] [server dir] [server addr]
 
 Possible flags:
-  --version                    Show application name and version
   --dir=DIRECTORY              The server directory
   --addr=[HOST][:PORT]         Host and port the server should listen at (ie :443)
+  --prod                       Serve HTTP/2+HTTPS on port 443, serve regular HTTP on port 80,
+                               use /srv/algernon as the server directory and disable debug mode.
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
   --redis=[HOST][:PORT]        Address for connecting to a remote Redis database (ie :6379)
@@ -51,8 +55,11 @@ Possible flags:
   --dbindex=INDEX              Which Redis database index to use
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Log the (verbose) HTTP/2 log to a file
-  --http2only                  Serve HTTP/2, not HTTPS + HTTP/2
-  --httponly                   Serve plain old HTTP
+  --httponly                   Serve plain HTTP
+  --http2only                  Serve HTTP/2, without HTTPS (unusual combination)
+  --debug                      Enable debug mode
+  --verbose                    More verbose logging
+  --version                    Show application name and version
   --help                       This text
 `)
 }
@@ -80,6 +87,9 @@ func handleFlags() string {
 	flag.StringVar(&SERVER_HTTP2_LOG, "http2log", "/dev/null", "HTTP/2 log")
 	flag.BoolVar(&SERVE_JUST_HTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 	flag.BoolVar(&SERVE_JUST_HTTP, "httponly", false, "Serve plain old HTTP")
+	flag.BoolVar(&SERVE_PROD, "prod", false, "Production mode")
+	flag.BoolVar(&DEBUG_MODE, "debug", false, "Debug mode")
+	flag.BoolVar(&VERBOSE, "verbose", false, "Verbose logging")
 
 	flag.Parse()
 
@@ -115,7 +125,8 @@ func handleFlags() string {
 }
 
 // Set the values that has not been set by flags nor scripts (and can be set by both)
-func FinalConfiguration(host string) {
+// Returns true if a "ready function" has been run.
+func FinalConfiguration(host string) bool {
 	// Set the server host and port (commandline flags overrides Lua configuration)
 	if SERVER_ADDR == "" {
 		if SERVER_ADDR_LUA != "" {
@@ -125,10 +136,19 @@ func FinalConfiguration(host string) {
 		}
 	}
 
+	// Turn off debug mode if production mode is enabled
+	if SERVE_PROD {
+		DEBUG_MODE = false
+	}
+
+	hasReadyFunction := SERVER_READY_FUNCTION_LUA != nil
+
 	// Run the Lua function specified with the OnReady function, if available
-	if SERVER_READY_FUNCTION_LUA != nil {
+	if hasReadyFunction {
 		// Useful for outputting configuration information after both
 		// configuration scripts have been run and flags have been parsed
 		SERVER_READY_FUNCTION_LUA()
 	}
+
+	return hasReadyFunction
 }

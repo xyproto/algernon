@@ -1,4 +1,4 @@
-// HTTP/2 web server with built-in support for Lua, Markdown, GCSS and Amber.
+// HTTP/2 web server with built-in support for Lua, Markdown, GCSS, Amber and JSX.
 package main
 
 import (
@@ -35,10 +35,10 @@ var (
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 )
 
-func NewServerConfiguration(mux *http.ServeMux, http2support bool) *http.Server {
+func NewServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
 	// Server configuration
 	s := &http.Server{
-		Addr:           SERVER_ADDR,
+		Addr:           addr,
 		Handler:        mux,
 		ReadTimeout:    7 * time.Second,
 		WriteTimeout:   7 * time.Second,
@@ -57,7 +57,11 @@ func main() {
 
 	// Console output
 	fmt.Println(banner())
-	fmt.Println("--------------------------------------- - - · ·")
+
+	// Dividing line between the banner and output from any of the configuration scripts
+	if len(SERVER_CONFIGURATION_FILENAMES) > 0 {
+		fmt.Println("--------------------------------------- - - · ·")
+	}
 
 	// Request handlers
 	mux := http.NewServeMux()
@@ -90,11 +94,12 @@ func main() {
 	}
 
 	// Set the values that has not been set by flags nor scripts (and can be set by both)
-	FinalConfiguration(host)
+	ranServerReadyFunction := FinalConfiguration(host)
 
-	fmt.Println("--------------------------------------- - - · ·")
-
-	s := NewServerConfiguration(mux, true)
+	// Dividing line between the banner and output from any of the configuration scripts
+	if ranServerReadyFunction {
+		fmt.Println("--------------------------------------- - - · ·")
+	}
 
 	// If we are not keeping the logs, reduce the verboseness
 	http2.VerboseLogs = (SERVER_HTTP2_LOG != "/dev/null")
@@ -114,28 +119,50 @@ func main() {
 		internallog.SetOutput(f)
 	}
 
-	err = nil
-	if !(SERVE_JUST_HTTP2 || SERVE_JUST_HTTP) {
-		log.Info("Serving HTTPS + HTTP/2")
-		// Try listening to HTTPS requests
-		err = s.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
-		if err != nil {
-			log.Warn(err)
-		}
-	}
-
-	// TODO: Consider removing HTTP/2 without HTTPS and falling back on HTTP
-
-	if (err != nil) || SERVE_JUST_HTTP2 {
-		log.Info("Serving HTTP/2, not HTTPS + HTTP/2")
-		// Try listening to HTTP requests
-		if err := s.ListenAndServe(); err != nil {
+	// Decide which protocol to listen to
+	switch {
+	case SERVE_PROD:
+		go func() {
+			log.Info("Serving HTTPS + HTTP/2 on port 443")
+			HTTPS_server := NewServerConfiguration(mux, true, host+":443")
+			// Listen for HTTPS + HTTP/2 requests
+			err := HTTPS_server.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
+			if err != nil {
+				log.Error(err)
+			}
+		}()
+		log.Info("Serving HTTP on port 80")
+		HTTP_server := NewServerConfiguration(mux, false, host+":80")
+		if err := HTTP_server.ListenAndServe(); err != nil {
+			// If we can't serve regular HTTP on port 80, give up
 			log.Fatal(err)
 		}
-	} else if SERVE_JUST_HTTP {
-		log.Info("Serving HTTP, not HTTP/2")
-		s = NewServerConfiguration(mux, false)
-		if err := s.ListenAndServe(); err != nil {
+	case SERVE_JUST_HTTP2:
+		log.Info("Serving HTTP/2")
+		// Listen for HTTP/2 requests
+		HTTP2_server := NewServerConfiguration(mux, true, SERVER_ADDR)
+		if err := HTTP2_server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	case !(SERVE_JUST_HTTP2 || SERVE_JUST_HTTP):
+		log.Info("Serving HTTPS + HTTP/2")
+		// Listen for HTTPS + HTTP/2 requests
+		HTTPS2_server := NewServerConfiguration(mux, true, SERVER_ADDR)
+		err := HTTPS2_server.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
+		if err != nil {
+			log.Error(err)
+			// If HTTPS failed (perhaps the key + cert are missing), serve
+			// plain HTTP instead, by falling through to the next case.
+		} else {
+			// Don't fall through to serve regular HTTP
+			break
+		}
+		fallthrough
+	default:
+		log.Info("Serving HTTP")
+		HTTP_server := NewServerConfiguration(mux, false, SERVER_ADDR)
+		if err := HTTP_server.ListenAndServe(); err != nil {
+			// If we can't serve regular HTTP, give up
 			log.Fatal(err)
 		}
 	}

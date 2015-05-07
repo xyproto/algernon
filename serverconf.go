@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"os"
@@ -8,10 +9,6 @@ import (
 
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
-)
-
-var (
-	DEBUG_MODE, VERBOSE bool
 )
 
 // Make functions related to server configuration and permissions available
@@ -122,20 +119,26 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	L.SetGlobal("ServerInfo", L.NewFunction(func(L *lua.LState) int {
 		// Using a buffer is faster for gathering larger amounts
 		// of text but there is no need for optimization here.
-		s := "Server directory:\t" + SERVER_DIR + "\n"
-		s += "Server address:\t\t" + SERVER_ADDR + "\n"
-		s += "TLS certificate:\t" + SERVER_CERT + "\n"
-		s += "TLS key:\t\t" + SERVER_KEY + "\n"
-		s += "Redis address:\t\t" + REDIS_ADDR + "\n"
-		if REDIS_DB != 0 {
-			s += "Redis database index:\t" + strconv.Itoa(REDIS_DB) + "\n"
+		var buf bytes.Buffer
+		buf.WriteString("Server directory:\t" + SERVER_DIR + "\n")
+		if SERVE_PROD {
+			buf.WriteString("Production mode:\tEnabled\n")
+		} else {
+			buf.WriteString("Server address:\t\t" + SERVER_ADDR + "\n")
 		}
-		s += "Server configuration:\t" + SERVER_CONF_SCRIPT + "\n"
+		buf.WriteString("TLS certificate:\t" + SERVER_CERT + "\n")
+		buf.WriteString("TLS key:\t\t" + SERVER_KEY + "\n")
+		buf.WriteString("Redis address:\t\t" + REDIS_ADDR + "\n")
+		if REDIS_DB != 0 {
+			buf.WriteString("Redis database index:\t" + strconv.Itoa(REDIS_DB) + "\n")
+		}
+		buf.WriteString("Server configuration:\t" + SERVER_CONF_SCRIPT + "\n")
 		if SERVER_HTTP2_LOG != "/dev/null" {
-			s += "HTTP/2 log file:\t" + SERVER_HTTP2_LOG + "\n"
+			buf.WriteString("HTTP/2 log file:\t" + SERVER_HTTP2_LOG + "\n")
 		}
 		// Return the string, but drop the final newline
-		L.Push(lua.LString(s[:len(s)-1]))
+		L.Push(lua.LString(buf.String()[:len(buf.String())-1]))
 		return 1 // number of results
 	}))
+
 }
