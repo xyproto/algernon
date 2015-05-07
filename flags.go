@@ -43,24 +43,24 @@ func Usage() {
 Syntax:
   algernon [flags] [server dir] [server addr]
 
-Possible flags:
+Available flags:
   --dir=DIRECTORY              The server directory
-  --addr=[HOST][:PORT]         Host and port the server should listen at (ie :443)
-  --prod                       Serve HTTP/2+HTTPS on port 443, serve regular HTTP on port 80,
-                               use /srv/algernon as the server directory and disable debug mode.
+  --addr=[HOST][:PORT]         Server host and port (ie. ":443")
+  --prod                       Serve HTTP/2+HTTPS on port 443, serve regular
+                               HTTP on port 80, use /srv/algernon as the server
+							   directory and disable debug mode.
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  --redis=[HOST][:PORT]        Address for connecting to a remote Redis database (ie :6379)
-                               (uses port 6379 at localhost by default)
-  --dbindex=INDEX              Which Redis database index to use
+  --redis=[HOST][:PORT]        Connect to a remote Redis database (ie. ":6379")
+  --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
-  --http2log=FILENAME          Log the (verbose) HTTP/2 log to a file
+  --http2log=FILENAME          Save the verbose HTTP/2 log
   --httponly                   Serve plain HTTP
-  --http2only                  Serve HTTP/2, without HTTPS (unusual combination)
+  --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --debug                      Enable debug mode
-  --verbose                    More verbose logging
+  --verbose                    Slightly more verbose logging
   --version                    Show application name and version
-  --help                       This text
+  --help                       Application help
 `)
 }
 
