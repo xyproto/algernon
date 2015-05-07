@@ -93,6 +93,14 @@ func handleFlags() string {
 
 	flag.Parse()
 
+	// Change several defaults if production mode is enabled
+	if SERVE_PROD {
+		// Use system directories
+		SERVER_DIR = "/srv/algernon"
+		SERVER_CERT = "/etc/algernon/cert.pem"
+		SERVER_KEY = "/etc/algernon/key.pem"
+	}
+
 	// For backwards compatibility with earlier versions of algernon
 
 	if len(flag.Args()) >= 1 {
@@ -138,6 +146,7 @@ func FinalConfiguration(host string) bool {
 
 	// Turn off debug mode if production mode is enabled
 	if SERVE_PROD {
+		// Turn off debug mode
 		DEBUG_MODE = false
 	}
 
