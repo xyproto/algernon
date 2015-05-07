@@ -180,6 +180,9 @@ func markdownPage(w io.Writer, data []byte, filename string) {
 		}
 	}
 
+	// Load the default font in <head>
+	head.WriteString(defaultFont)
+
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmlPage := fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody)
 

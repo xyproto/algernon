@@ -22,16 +22,13 @@ const (
 
 var (
 	// The default font
-	// TODO: Make this configurable
-	font = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
+	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
 
 	// The default CSS style
 	// Will be used for directory listings and when rendering markdown pages
-	// TODO: Make style.gcss override this also for directory listings
-	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300; margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
+	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
 
 	// List of filenames that should be displayed instead of a directory listing
-	// TODO: Make this configurable
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 )
 
