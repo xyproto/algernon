@@ -11,29 +11,29 @@ h3
   font-size: 2em
 
 div
-  width: 40%
+  width: 50%
 
 ul
   list-style-type: none
-  margin: 0
   padding: 0
+  margin-bottom: 1em
 
 li 
   border-bottom: 1px solid #ccc
   text-decoration: none
   color: black
   display: block
-  transition: background-color 0.2s ease
+  transition: background-color 0.25s ease
 
 li:last-child 
   border: none
-  margin-bottom: 1em
  
 li:hover
-  background: #f6f6f6
+  background: #f8f8f8
 
 input
-  width: 20em
+  width: 22em
+  margin-right: 1em
 
 button:
   float: right
