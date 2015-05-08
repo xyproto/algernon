@@ -49,7 +49,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 
 		// Use the buffer as a template.
 		// Options are "Pretty printing, but without line numbers."
-		tpl, err := amber.Compile(buf.String(), amber.Options{true, false})
+		tpl, err := amber.Compile(buf.String(), amber.Options{PrettyPrint: true, LineNumbers: false})
 		if err != nil {
 			if debugMode {
 				// TODO: Use a similar error page as for Lua
@@ -205,7 +205,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	//amberdata = bytes.Replace(amberdata, []byte("html5\n"), []byte("doctype 5\nhtml\n"), 1)
 
 	// Compile the given amber template
-	tpl, err := amber.CompileData(amberdata, filename, amber.Options{true, false})
+	tpl, err := amber.CompileData(amberdata, filename, amber.Options{PrettyPrint: true, LineNumbers: false})
 	if err != nil {
 		if debugMode {
 			prettyError(w, filename, amberdata, err.Error(), "amber")
