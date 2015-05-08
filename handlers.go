@@ -219,7 +219,7 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	}
 	// Use the application title for the main page
 	//if title == "" {
-	//	title = version_string
+	//	title = versionString
 	//}
 	if buf.Len() > 0 {
 		fmt.Fprint(w, easyPage(title, buf.String()))
