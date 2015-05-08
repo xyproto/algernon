@@ -97,6 +97,7 @@ Authentication and authorization
 Lua
 ---
 
+- [ ] Add a function for sanitizing HTML, possibly with bluemonday
 - [X] Also support tables from Lua when iterating over values in Amber
 - [ ] A way to store and load functions to the database:
       register("namespace name", "function name", luafunction)
