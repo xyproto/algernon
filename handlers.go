@@ -33,7 +33,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/html")
 		b, err := read(filename)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 			} else {
 				log.Errorf("Unable to read %s: %s", filename, err)
@@ -49,7 +49,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/html")
 		amberdata, err := read(filename)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 			} else {
 				log.Errorf("Unable to read %s: %s", filename, err)
@@ -69,7 +69,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 			// There was Lua code available. Now make the functions available for the template.
 			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool)
 			if err != nil {
-				if DEBUG_MODE {
+				if debugMode {
 					// Set the title automatically, hence the ""
 					prettyError(w, luafilename, luadata, err.Error(), "lua")
 				} else {
@@ -77,11 +77,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				}
 				return
 			}
-			if DEBUG_MODE && VERBOSE {
+			if debugMode && verboseMode {
 				s := "The following functions from " + luafilename + "\n"
 				s += "are made available for use in " + filename + ":\n\t"
 				// Create a comma separated list of the available functions
-				for key, _ := range funcs {
+				for key := range funcs {
 					s += key + ", "
 				}
 				// Remove the final comma
@@ -103,7 +103,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/css")
 		gcssdata, err := read(filename)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 			} else {
 				log.Errorf("Unable to read %s: %s", filename, err)
@@ -121,7 +121,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		w.Header().Add("Content-Type", "text/javascript")
 		jsxdata, err := read(filename)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 			} else {
 				log.Errorf("Unable to read %s: %s", filename, err)
@@ -138,7 +138,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
-		if DEBUG_MODE {
+		if debugMode {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
 			// Run the lua script
@@ -174,7 +174,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 	file, err := os.Open(filename)
 	defer file.Close()
 	if err != nil {
-		if DEBUG_MODE {
+		if debugMode {
 			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
 		} else {
 			log.Errorf("Can't open %s: %s", filename, err)
@@ -191,21 +191,21 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	for _, filename := range getFilenames(dirname) {
 
 		// Find the full name
-		full_filename := dirname
+		fullFilename := dirname
 
 		// Add a "/" after the directory name, if missing
-		if !strings.HasSuffix(full_filename, pathsep) {
-			full_filename += pathsep
+		if !strings.HasSuffix(fullFilename, pathsep) {
+			fullFilename += pathsep
 		}
 
 		// Add the filename at the end
-		full_filename += filename
+		fullFilename += filename
 
 		// Remove the root directory from the link path
-		urlpath := full_filename[len(rootdir)+1:]
+		urlpath := fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(easyLink(filename, urlpath, isDir(full_filename)))
+		buf.WriteString(easyLink(filename, urlpath, isDir(fullFilename)))
 	}
 	title := dirname
 	// Strip the leading "./"
@@ -215,7 +215,7 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	// Strip double "/" at the end, just keep one
 	// Replace "//" with just "/"
 	if strings.Contains(title, pathsep+pathsep) {
-		title = strings.Replace(title, pathsep+pathsep, pathsep, ALL)
+		title = strings.Replace(title, pathsep+pathsep, pathsep, everyInstance)
 	}
 	// Use the application title for the main page
 	//if title == "" {

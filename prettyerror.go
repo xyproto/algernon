@@ -78,7 +78,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 		}
 
 		// Escape any HTML in the code, so that the pretty printer is not confused
-		filebytes = bytes.Replace(filebytes, []byte("<"), []byte("&lt;"), ALL)
+		filebytes = bytes.Replace(filebytes, []byte("<"), []byte("&lt;"), everyInstance)
 
 		// Modify the line that is to be highlighted
 		bytelines := bytes.Split(filebytes, []byte("\n"))
@@ -148,7 +148,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	  <pre><code style="color: #A00000;" class="`+errorclass+`">`+strings.TrimSpace(errormessage)+`</code></pre>
 	</div>
 	<div id="right">
-	`+version_string+`
+	`+versionString+`
 	</div>
   </body>
 </html>`)

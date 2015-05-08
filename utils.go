@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ALL = -1 // Used when replacing strings
+	everyInstance = -1 // Used when replacing strings
 )
 
 var (
@@ -40,9 +40,8 @@ func url2filename(dirname, urlpath string) string {
 	if strings.HasPrefix(urlpath, "/") {
 		if strings.HasSuffix(dirname, pathsep) {
 			return dirname + urlpath[1:]
-		} else {
-			return dirname + pathsep + urlpath[1:]
 		}
+		return dirname + pathsep + urlpath[1:]
 	}
 	return dirname + "/" + urlpath
 }
@@ -143,7 +142,7 @@ func linkToStyle(amberdata *[]byte, url string) {
 }
 
 // Filter []byte slices into two groups, depending on the given filter function
-func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
+func filterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
 	var special, regular [][]byte
 	for _, byteline := range bytelines {
 		if filterfunc(byteline) {
@@ -165,9 +164,9 @@ func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byt
 func extractKeywords(data []byte, special map[string]string) []byte {
 	bnl := []byte("\n")
 	// Find and separate the lines starting with one of the keywords in the special map
-	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
+	_, regular := filterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
 		// Check if the current line has one of the special keywords
-		for keyword, _ := range special {
+		for keyword := range special {
 			// Check for lines starting with the keyword and a ":"
 			if bytes.HasPrefix(byteline, []byte(keyword+":")) {
 				// Set (possibly overwrite) the value in the map, if the keyword is found.

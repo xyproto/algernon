@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	version_string = "Algernon 0.61"
-	description    = "HTTP/2 web server"
+	versionString = "Algernon 0.61"
+	description   = "HTTP/2 web server"
 )
 
 var (
@@ -35,7 +35,7 @@ var (
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 )
 
-func NewServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
+func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
 	// Server configuration
 	s := &http.Server{
 		Addr:           addr,
@@ -59,7 +59,7 @@ func main() {
 	fmt.Println(banner())
 
 	// Dividing line between the banner and output from any of the configuration scripts
-	if len(SERVER_CONFIGURATION_FILENAMES) > 0 {
+	if len(serverConfigurationFilenames) > 0 {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
@@ -67,24 +67,24 @@ func main() {
 	mux := http.NewServeMux()
 
 	// TODO: Run a Redis clone in RAM if no server is available.
-	if err := simpleredis.TestConnectionHost(REDIS_ADDR); err != nil {
+	if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
 		log.Info("A Redis database is required.")
 		log.Fatal(err)
 	}
 
 	// New permissions middleware
-	perm := permissions.NewWithRedisConf(REDIS_DB, REDIS_ADDR)
+	perm := permissions.NewWithRedisConf(redisDBindex, redisAddr)
 
 	// Lua LState pool
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	defer luapool.Shutdown()
 
 	// Register HTTP handler functions
-	registerHandlers(mux, SERVER_DIR, perm, luapool)
+	registerHandlers(mux, serverDir, perm, luapool)
 
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
-	for _, filename := range SERVER_CONFIGURATION_FILENAMES {
+	for _, filename := range serverConfigurationFilenames {
 		if exists(filename) {
 			if err := runConfiguration(filename, perm, luapool); err != nil {
 				log.Error("Could not use configuration script: " + filename)
@@ -94,7 +94,7 @@ func main() {
 	}
 
 	// Set the values that has not been set by flags nor scripts (and can be set by both)
-	ranServerReadyFunction := FinalConfiguration(host)
+	ranServerReadyFunction := finalConfiguration(host)
 
 	// Dividing line between the banner and output from any of the configuration scripts
 	if ranServerReadyFunction {
@@ -102,17 +102,17 @@ func main() {
 	}
 
 	// If we are not keeping the logs, reduce the verboseness
-	http2.VerboseLogs = (SERVER_HTTP2_LOG != "/dev/null")
+	http2.VerboseLogs = (serverHTTP2log != "/dev/null")
 
 	// Direct the logging from the http2 package elsewhere
-	f, err := os.Open(SERVER_HTTP2_LOG)
+	f, err := os.Open(serverHTTP2log)
 	defer f.Close()
 	if err != nil {
-		// Could not open the SERVER_HTTP2_LOG filename, try using another filename
+		// Could not open the serverHTTP2log filename, try using another filename
 		f, err := os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer f.Close()
 		if err != nil {
-			log.Fatalf("Could not write to %s nor %s.", SERVER_HTTP2_LOG, "http2.log")
+			log.Fatalf("Could not write to %s nor %s.", serverHTTP2log, "http2.log")
 		}
 		internallog.SetOutput(f)
 	} else {
@@ -121,34 +121,34 @@ func main() {
 
 	// Decide which protocol to listen to
 	switch {
-	case SERVE_PROD:
+	case productionMode:
 		go func() {
 			log.Info("Serving HTTPS + HTTP/2 on port 443")
-			HTTPS_server := NewServerConfiguration(mux, true, host+":443")
+			HTTPSserver := newServerConfiguration(mux, true, host+":443")
 			// Listen for HTTPS + HTTP/2 requests
-			err := HTTPS_server.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
+			err := HTTPSserver.ListenAndServeTLS(serverCert, serverKey)
 			if err != nil {
 				log.Error(err)
 			}
 		}()
 		log.Info("Serving HTTP on port 80")
-		HTTP_server := NewServerConfiguration(mux, false, host+":80")
-		if err := HTTP_server.ListenAndServe(); err != nil {
+		HTTPserver := newServerConfiguration(mux, false, host+":80")
+		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
 			log.Fatal(err)
 		}
-	case SERVE_JUST_HTTP2:
+	case serveJustHTTP2:
 		log.Info("Serving HTTP/2")
 		// Listen for HTTP/2 requests
-		HTTP2_server := NewServerConfiguration(mux, true, SERVER_ADDR)
-		if err := HTTP2_server.ListenAndServe(); err != nil {
+		HTTP2server := newServerConfiguration(mux, true, serverAddr)
+		if err := HTTP2server.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
-	case !(SERVE_JUST_HTTP2 || SERVE_JUST_HTTP):
+	case !(serveJustHTTP2 || serveJustHTTP):
 		log.Info("Serving HTTPS + HTTP/2")
 		// Listen for HTTPS + HTTP/2 requests
-		HTTPS2_server := NewServerConfiguration(mux, true, SERVER_ADDR)
-		err := HTTPS2_server.ListenAndServeTLS(SERVER_CERT, SERVER_KEY)
+		HTTPS2server := newServerConfiguration(mux, true, serverAddr)
+		err := HTTPS2server.ListenAndServeTLS(serverCert, serverKey)
 		if err != nil {
 			log.Error(err)
 			// If HTTPS failed (perhaps the key + cert are missing), serve
@@ -160,8 +160,8 @@ func main() {
 		fallthrough
 	default:
 		log.Info("Serving HTTP")
-		HTTP_server := NewServerConfiguration(mux, false, SERVER_ADDR)
-		if err := HTTP_server.ListenAndServe(); err != nil {
+		HTTPserver := newServerConfiguration(mux, false, serverAddr)
+		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP, give up
 			log.Fatal(err)
 		}

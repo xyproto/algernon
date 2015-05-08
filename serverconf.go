@@ -17,7 +17,7 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	// Registers a path prefix, for instance "/secret",
 	// as having *admin* rights.
 	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
-		SERVER_ADDR_LUA = L.ToString(1)
+		serverAddrLua = L.ToString(1)
 		return 0 // number of results
 	}))
 
@@ -71,7 +71,7 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 
 		// Custom handler for when permissions are denied.
 		// Put the *lua.LState in a closure.
-		SERVER_READY_FUNCTION_LUA = func() {
+		serverReadyFunctionLua = func() {
 			// Run the given Lua function
 			L.Push(luaReadyFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {
@@ -84,13 +84,13 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 
 	// Set debug mode to true or false
 	L.SetGlobal("SetDebug", L.NewFunction(func(L *lua.LState) int {
-		DEBUG_MODE = L.ToBool(1)
+		debugMode = L.ToBool(1)
 		return 0 // number of results
 	}))
 
 	// Set verbose to true or false
 	L.SetGlobal("SetVerbose", L.NewFunction(func(L *lua.LState) int {
-		VERBOSE = L.ToBool(1)
+		verboseMode = L.ToBool(1)
 		return 0 // number of results
 	}))
 
@@ -120,21 +120,21 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		// Using a buffer is faster for gathering larger amounts
 		// of text but there is no need for optimization here.
 		var buf bytes.Buffer
-		buf.WriteString("Server directory:\t" + SERVER_DIR + "\n")
-		if SERVE_PROD {
+		buf.WriteString("Server directory:\t" + serverDir + "\n")
+		if productionMode {
 			buf.WriteString("Production mode:\tEnabled\n")
 		} else {
-			buf.WriteString("Server address:\t\t" + SERVER_ADDR + "\n")
+			buf.WriteString("Server address:\t\t" + serverAddr + "\n")
 		}
-		buf.WriteString("TLS certificate:\t" + SERVER_CERT + "\n")
-		buf.WriteString("TLS key:\t\t" + SERVER_KEY + "\n")
-		buf.WriteString("Redis address:\t\t" + REDIS_ADDR + "\n")
-		if REDIS_DB != 0 {
-			buf.WriteString("Redis database index:\t" + strconv.Itoa(REDIS_DB) + "\n")
+		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
+		buf.WriteString("TLS key:\t\t" + serverKey + "\n")
+		buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
+		if redisDBindex != 0 {
+			buf.WriteString("Redis database index:\t" + strconv.Itoa(redisDBindex) + "\n")
 		}
-		buf.WriteString("Server configuration:\t" + SERVER_CONF_SCRIPT + "\n")
-		if SERVER_HTTP2_LOG != "/dev/null" {
-			buf.WriteString("HTTP/2 log file:\t" + SERVER_HTTP2_LOG + "\n")
+		buf.WriteString("Server configuration:\t" + serverConfScript + "\n")
+		if serverHTTP2log != "/dev/null" {
+			buf.WriteString("HTTP/2 log file:\t" + serverHTTP2log + "\n")
 		}
 		// Return the string, but drop the final newline
 		L.Push(lua.LString(buf.String()[:len(buf.String())-1]))

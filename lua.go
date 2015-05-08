@@ -199,48 +199,48 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 		} else if luaTable, ok := value.(*lua.LTable); ok {
 
 			// Set up the possible mappings
-			mss := make(map[string]string)
-			msi := make(map[string]int)
-			mis := make(map[int]string)
-			mii := make(map[int]int)
+			mapSS := make(map[string]string)
+			mapSI := make(map[string]int)
+			mapIS := make(map[int]string)
+			mapII := make(map[int]int)
 
 			var skey, svalue lua.LString
 			var ikey, ivalue lua.LNumber
-			var has_skey, has_ikey, has_svalue, has_ivalue bool
+			var hasSkey, hasIkey, hasSvalue, hasIvalue bool
 
 			luaTable.ForEach(func(tkey, tvalue lua.LValue) {
 
 				// Convert the keys and values to strings or ints
-				skey, has_skey = tkey.(lua.LString)
-				ikey, has_ikey = tkey.(lua.LNumber)
-				svalue, has_svalue = tvalue.(lua.LString)
-				ivalue, has_ivalue = tvalue.(lua.LNumber)
+				skey, hasSkey = tkey.(lua.LString)
+				ikey, hasIkey = tkey.(lua.LNumber)
+				svalue, hasSvalue = tvalue.(lua.LString)
+				ivalue, hasIvalue = tvalue.(lua.LNumber)
 
 				// Store the right keys and values in the right maps
-				if has_skey && has_svalue {
-					mss[skey.String()] = svalue.String()
-				} else if has_skey && has_ivalue {
-					msi[skey.String()] = int(ivalue)
-				} else if has_ikey && has_svalue {
-					mis[int(ikey)] = svalue.String()
-				} else if has_ikey && has_ivalue {
-					mii[int(ikey)] = int(ivalue)
+				if hasSkey && hasSvalue {
+					mapSS[skey.String()] = svalue.String()
+				} else if hasSkey && hasIvalue {
+					mapSI[skey.String()] = int(ivalue)
+				} else if hasIkey && hasSvalue {
+					mapIS[int(ikey)] = svalue.String()
+				} else if hasIkey && hasIvalue {
+					mapII[int(ikey)] = int(ivalue)
 				}
 			})
 
 			// Make the first map that has values available
-			if len(mss) > 0 {
+			if len(mapSS) > 0 {
 				//log.Println(key, "STRING -> STRING map")
-				funcs[key.String()] = mss
-			} else if len(msi) > 0 {
+				funcs[key.String()] = mapSS
+			} else if len(mapSI) > 0 {
 				//log.Println(key, "STRING -> INT map")
-				funcs[key.String()] = msi
-			} else if len(mis) > 0 {
+				funcs[key.String()] = mapSI
+			} else if len(mapIS) > 0 {
 				//log.Println(key, "STRING -> INT map")
-				funcs[key.String()] = mis
-			} else if len(mii) > 0 {
+				funcs[key.String()] = mapIS
+			} else if len(mapII) > 0 {
 				//log.Println(key, "INT -> INT map")
-				funcs[key.String()] = mii
+				funcs[key.String()] = mapII
 			}
 
 			// Check if the current value is a function
@@ -285,7 +285,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 						retval = L2.ToString(1)
 					}
 
-					if DEBUG_MODE && VERBOSE {
+					if debugMode && verboseMode {
 						log.Info(infostring(functionName, args) + " -> \"" + retval + "\"")
 					}
 

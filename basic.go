@@ -17,7 +17,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Return the version string
 	L.SetGlobal("version", L.NewFunction(func(L *lua.LState) int {
-		L.Push(lua.LString(version_string))
+		L.Push(lua.LString(versionString))
 		return 1 // number of results
 	}))
 
@@ -149,7 +149,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		}
 		if pathsep != "/" {
 			// For operating systems that use another path separator
-			scriptdir = strings.Replace(scriptdir, pathsep, "/", ALL)
+			scriptdir = strings.Replace(scriptdir, pathsep, "/", everyInstance)
 		}
 		L.Push(lua.LString(scriptdir))
 		return 1 // number of results
@@ -171,7 +171,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		}
 		if pathsep != "/" {
 			// For operating systems that use another path separator
-			serverdir = strings.Replace(serverdir, pathsep, "/", ALL)
+			serverdir = strings.Replace(serverdir, pathsep, "/", everyInstance)
 		}
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results

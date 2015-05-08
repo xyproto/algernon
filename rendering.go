@@ -51,7 +51,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := amber.Compile(buf.String(), amber.Options{true, false})
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -74,7 +74,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Ignoring the number of bytes written.
 		// TODO: Can use &buf instead of using NewReader and .Bytes()?
 		if _, err := gcss.Compile(w, bytes.NewReader(buf.Bytes())); err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -93,7 +93,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Transform JSX to JavaScript and output the result.
 		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not parse JSX:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -103,7 +103,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		}
 		gen, err := generator.Generate(prog)
 		if err != nil {
-			if DEBUG_MODE {
+			if debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -204,7 +204,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	// Compile the given amber template
 	tpl, err := amber.CompileData(amberdata, filename, amber.Options{true, false})
 	if err != nil {
-		if DEBUG_MODE {
+		if debugMode {
 			prettyError(w, filename, amberdata, err.Error(), "amber")
 		} else {
 			log.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
@@ -220,14 +220,14 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 		// message.
 		if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
 			errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
-			if DEBUG_MODE {
+			if debugMode {
 				prettyError(w, filename, amberdata, errortext, "amber")
 			} else {
 				errortext = strings.Replace(errortext, "<br>", "\n", 1)
 				log.Errorf("Could not execute Amber template:\n%s", errortext)
 			}
 		} else {
-			if DEBUG_MODE {
+			if debugMode {
 				prettyError(w, filename, amberdata, err.Error(), "amber")
 			} else {
 				log.Errorf("Could not execute Amber template:\n%s", err)
@@ -243,7 +243,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 // filename is only used if there are errors.
 func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
 	if _, err := gcss.Compile(w, bytes.NewReader(gcssdata)); err != nil {
-		if DEBUG_MODE {
+		if debugMode {
 			prettyError(w, filename, gcssdata, err.Error(), "gcss")
 		} else {
 			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
@@ -255,7 +255,7 @@ func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
 func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
 	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
-		if DEBUG_MODE {
+		if debugMode {
 			prettyError(w, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
@@ -264,7 +264,7 @@ func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
 	}
 	gen, err := generator.Generate(prog)
 	if err != nil {
-		if DEBUG_MODE {
+		if debugMode {
 			prettyError(w, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
