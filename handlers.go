@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	mimereader *mime.MimeReader
+	mimereader *mime.Reader
 )
 
 // When serving a file. The file must exist. Must be given a full filename.
