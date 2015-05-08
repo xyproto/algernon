@@ -4,6 +4,7 @@
 Priority
 --------
 - [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
+- [ ] Use a threadsafe mime package
 - [ ] A feature for automatically reloading the page whenever files change
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
