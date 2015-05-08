@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
@@ -71,7 +72,7 @@ func getFilenames(dirname string) []string {
 
 // Easy way to output a HTML page
 func easyPage(title, body string) string {
-	return "<!doctype html><html><head>" + font + "<title>" + title + "</title><style>" + defaultStyle + "</style><head><body><h1>" + title + "</h1>" + body + "</body></html>"
+	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, defaultFont, defaultStyle, title, body)
 }
 
 // Easy way to build links to directories
