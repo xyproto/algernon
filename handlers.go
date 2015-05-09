@@ -181,8 +181,16 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 
 			// Set up a background flusher
 			go func() {
-				flusher := w.(http.Flusher)
-				notifier := w.(http.CloseNotifier)
+				flusher, ok := w.(http.Flusher)
+				if !ok {
+					log.Error("ResponseWriter has no Flush()!")
+					return
+				}
+				notifier, ok := w.(http.CloseNotifier)
+				if !ok {
+					log.Error("ResponseWriter has no CloseNotify()!")
+					return
+				}
 				for {
 					select {
 					case <-flush:

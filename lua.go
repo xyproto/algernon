@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -88,6 +89,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 		for {
 			select {
 			case <-stopLua:
+				fmt.Println("CLOSING LUA WITH A CHANNEL")
 				L.Close()
 				// We are done
 				return
