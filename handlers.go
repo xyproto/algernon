@@ -26,10 +26,13 @@ var (
 
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) {
+
 	// Mimetypes
 	ext := path.Ext(filename)
+
 	// Markdown pages are handled differently
 	if ext == ".md" {
+
 		w.Header().Add("Content-Type", "text/html")
 		b, err := read(filename)
 		if err != nil {
@@ -45,7 +48,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		markdownPage(w, b, filename)
 
 		return
+
 	} else if ext == ".amber" {
+
 		w.Header().Add("Content-Type", "text/html")
 		amberdata, err := read(filename)
 		if err != nil {
@@ -66,11 +71,12 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		// Make functions from the given Lua data available
 		funcs := make(template.FuncMap)
 		if len(luadata) > 0 {
-			// There was Lua code available. Now make the functions available for the template.
+			// There was Lua code available. Now make the functions and
+			// variables available for the template.
 			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool)
 			if err != nil {
 				if debugMode {
-					// Set the title automatically, hence the ""
+					// Use the Lua filename as the title
 					prettyError(w, luafilename, luadata, err.Error(), "lua")
 				} else {
 					log.Error(err)
