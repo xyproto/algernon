@@ -4,7 +4,7 @@ description: HTTP/2 web server with built-in support for Lua, Markdown, Amber, G
 keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua
 -->
 
-<a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png"></a>
+<a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
 HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions.
 
