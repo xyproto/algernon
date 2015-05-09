@@ -200,9 +200,18 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 						flusher.Flush()
 						flushMutex.Unlock()
 					case <-notifier.CloseNotify():
+						// Client is done
 						fmt.Println("CLOSE NOTIFIER")
-						// Client is done. Stop the script.
+						flushMutex.Lock()
+
+						// Flush
+						flusher.Flush()
+						// Stop the script
 						stopLua <- true
+						// Flush
+						flusher.Flush()
+
+						flushMutex.Unlock()
 						// We are done
 						return
 					case <-flusherDone:
