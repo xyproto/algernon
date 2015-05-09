@@ -32,6 +32,7 @@ Design decisions
     * index.amber is rendered as HTML.
     * data.lua is interpreted as Lua code, where the functions are made available for index.amber in the same directory.
     * style.gcss is used as the style for index.amber or index.md, if present.
+    * stream.lua is never buffered and used as the handler function for the current directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.

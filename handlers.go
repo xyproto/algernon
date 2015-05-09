@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/xyproto/mime"
 	"github.com/xyproto/permissions2"
@@ -144,11 +145,13 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
-		if debugMode {
+
+		// If debug mode is enabled and the file can be buffered
+		if debugMode && (path.Base(filename) != "stream.lua") {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
 			// Run the lua script
-			if err := runLua(recorder, req, filename, perm, luapool); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, nil, nil); err != nil {
 				errortext := err.Error()
 				filedata, err := read(filename)
 				if err != nil {
@@ -163,8 +166,46 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				writeRecorder(w, recorder)
 			}
 		} else {
+
+			// Set up a mutex for flushing the http.ReaderWriter
+			var flushMutex sync.Mutex
+			// Set up a channel for flushing the ResponseWriter before
+			// the Lua script is done (useful for streaming)
+			flush := make(chan bool)
+			// Set up a channel for closing the background flusher
+			flusherDone := make(chan bool)
+			// Stop the flusher when this function returns
+			defer func() { flusherDone <- true }()
+			// Set up a channel for stopping the Lua script
+			stopLua := make(chan bool)
+
+			// Set up a background flusher
+			go func() {
+				flusher := w.(http.Flusher)
+				notifier := w.(http.CloseNotifier)
+				for {
+					select {
+					case <-flush:
+						fmt.Println("FLUSHING NOW")
+						// Flush what we've got, if we can
+						flushMutex.Lock()
+						flusher.Flush()
+						flushMutex.Unlock()
+					case <-notifier.CloseNotify():
+						fmt.Println("CLOSE NOTIFIER")
+						// Client is done. Stop the script.
+						stopLua <- true
+						// We are done
+						return
+					case <-flusherDone:
+						// We are done
+						return
+					}
+				}
+			}() // Call the goroutine
+
 			// Run the lua script
-			if err := runLua(w, req, filename, perm, luapool); err != nil {
+			if err := runLua(w, req, filename, perm, luapool, flush, stopLua); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}

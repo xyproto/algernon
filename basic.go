@@ -57,7 +57,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
-func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
+func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flush chan bool) {
 
 	// Print text to the webpage that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -73,6 +73,14 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		buf.WriteString("\n")
 		// Write the combined text to the http.ResponseWriter
 		w.Write(buf.Bytes())
+
+		// If the filename is stream.lua, flush as well
+		if path.Base(filename) == "stream.lua" {
+			if flush != nil {
+				flush <- true
+			}
+		}
+
 		return 0 // number of results
 	}))
 
