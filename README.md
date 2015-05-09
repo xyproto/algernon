@@ -125,6 +125,16 @@ Getting started
 * You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
 
 
+Basic Lua functions
+-------------------
+
+* `version()` return the version string for the server.
+* `sleep(number)` sleep the given number of seconds (can be a float).
+* `log(...)` log the given strings as information. Takes a variable number of strings.
+* `warn(...)` log the given strings as a warning. Takes a variable number of strings.
+* `error(...)` log the given strings as an error. Takes a variable number of strings.
+
+
 Lua functions for handling requests
 -----------------------------------
 
@@ -141,10 +151,6 @@ Lua functions for handling requests
 * `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 * `serve(string)` serve a file that exists in the same directory as the script.
 * `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
-* `version()` return the version string for the server.
-* `log(...)` log the given strings as information. Takes a variable number of strings.
-* `warn(...)` log the given strings as a warning. Takes a variable number of strings.
-* `error(...)` log the given strings as an error. Takes a variable number of strings.
 
 
 Lua functions for formatted output
