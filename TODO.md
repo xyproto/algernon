@@ -3,9 +3,7 @@
 
 Priority
 --------
-- [ ] Make cookies work when buffering http.RequestWriter in debug mode. Or disable buffering when cookies are involved. See if https://github.com/servemux/buffer handles cookies as well.
-- [ ] Use a threadsafe mime package
-- [ ] Add a badge for showing that it builds
+- [ ] Add CI for showing that it builds
 - [ ] A feature for automatically reloading the page whenever files change
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
@@ -98,7 +96,6 @@ Lua
 ---
 
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday
-- [X] Also support tables from Lua when iterating over values in Amber
 - [ ] A way to store and load functions to the database:
       register("namespace name", "function name", luafunction)
       luafunction = getfunction("namespace name", "function name")
@@ -143,8 +140,8 @@ Unusual features
 
 Various
 -------
+
 - [ ] Consider using the path/filepath package for walking directories
-- [X] .jsx together with React (https://facebook.github.io/react/)
 - [ ] Add editor syntax highlight files
 
 
