@@ -3,7 +3,6 @@
 
 Priority
 --------
-- [ ] Add CI for showing that it builds
 - [ ] A feature for automatically reloading the page whenever files change
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
@@ -119,6 +118,8 @@ Lua
 Performance
 -----------
 
+- [ ] Minify CSS, JS and HTML (on by default, can be disabled)
+- [ ] Compress pages
 - [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
 - [ ] A way to toggle which files and directories that should be cached, in Redis.
 - [ ] Three different cache settings: not cached, cached until file timestamp changes, always use cache.
