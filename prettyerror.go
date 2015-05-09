@@ -31,13 +31,13 @@ var read = ioutil.ReadFile
 
 // Write the contents of a ResponseRecorder to a ResponseWriter
 func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
-	w.WriteHeader(recorder.Code)
 	for key, values := range recorder.HeaderMap {
 		for _, value := range values {
-			w.Header().Add(key, value)
+			w.Header().Set(key, value)
 		}
 	}
 	recorder.Body.WriteTo(w)
+	recorder.Flush()
 }
 
 // Return an informative error page to the user
