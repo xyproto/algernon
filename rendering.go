@@ -31,7 +31,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, true)
 		// Convert the buffer to markdown and return the translated string
 		w.Write(blackfriday.MarkdownCommon([]byte(buf.String())))
 		return 0 // number of results
@@ -45,8 +45,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("aprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L)
-
+		buf := arguments2buffer(L, true)
 		// Use the buffer as a template.
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := amber.Compile(buf.String(), amber.Options{PrettyPrint: true, LineNumbers: false})
@@ -69,7 +68,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("gprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, true)
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
 		// TODO: Can use &buf instead of using NewReader and .Bytes()?
@@ -89,7 +88,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
 		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
 		if err != nil {

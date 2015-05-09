@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
@@ -23,7 +24,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Info" log type
 	L.SetGlobal("log", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, false)
 		// Log the combined text
 		log.Info(buf.String())
 		return 0 // number of results
@@ -31,7 +32,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Warn" log type
 	L.SetGlobal("warn", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, false)
 		// Log the combined text
 		log.Warn(buf.String())
 		return 0 // number of results
@@ -39,10 +40,17 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Error" log type
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L)
+		buf := arguments2buffer(L, false)
 		// Log the combined text
 		log.Error(buf.String())
 		return 0 // number of results
+	}))
+
+	// Sleep for the given number of seconds (can be a float)
+	L.SetGlobal("sleep", L.NewFunction(func(L *lua.LState) int {
+		seconds := float64(L.ToNumber(1))
+		time.Sleep(time.Second * time.Duration(seconds))
+		return 0
 	}))
 
 }
@@ -51,7 +59,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 // Filename can be an empty string.
 func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
 
-	// Print text to the webpage that is being served
+	// Print text to the webpage that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		var buf bytes.Buffer
 		top := L.GetTop()
@@ -61,6 +69,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 				buf.WriteString("\t")
 			}
 		}
+		// Final newline
 		buf.WriteString("\n")
 		// Write the combined text to the http.ResponseWriter
 		w.Write(buf.Bytes())
@@ -68,15 +77,11 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	}))
 
 	// Set the Content-Type for the page
-	setContentType := L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("content", L.NewFunction(func(L *lua.LState) int {
 		lv := L.ToString(1)
 		w.Header().Add("Content-Type", lv)
 		return 0 // number of results
-	})
-	// Register the function
-	L.SetGlobal("content", setContentType)
-	// Register an alias, for backwards compatibility
-	L.SetGlobal("setContentType", setContentType)
+	}))
 
 	// Return the current URL Path
 	L.SetGlobal("urlpath", L.NewFunction(func(L *lua.LState) int {

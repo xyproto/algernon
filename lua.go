@@ -12,7 +12,7 @@ import (
 
 // Retrieve all the arguments given to a lua function
 // and gather the strings in a buffer.
-func arguments2buffer(L *lua.LState) bytes.Buffer {
+func arguments2buffer(L *lua.LState, addNewline bool) bytes.Buffer {
 	var buf bytes.Buffer
 	top := L.GetTop()
 	// Add all the string arguments to the buffer
@@ -22,7 +22,9 @@ func arguments2buffer(L *lua.LState) bytes.Buffer {
 			buf.WriteString(" ")
 		}
 	}
-	buf.WriteString("\n")
+	if addNewline {
+		buf.WriteString("\n")
+	}
 	return buf
 }
 
