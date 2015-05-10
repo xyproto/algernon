@@ -6,15 +6,19 @@ function event(message)
   log("EVENT: " .. message)
   print("data: " .. message .. "\n")
   print("\n")
+  flush()
 end
 
 while true do
   event("style.gcss")
-  sleep(3.5)
+  sleep(1.5)
   event("main.html")
-  sleep(3.5)
+  sleep(1.5)
   event("main.js")
-  sleep(3.5)
+  sleep(1.5)
   event("index.lua")
-  sleep(3.5)
+  sleep(1.5)
+  log("LOOPING!")
 end
+
+error("IMPOSSIBRU")

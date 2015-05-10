@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/xyproto/permissions2"
@@ -78,27 +79,75 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool, flushChan, stopLua chan bool) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool, withFlusher bool) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
 
-	// Run the closer in the background
-	go func() {
-		for {
-			select {
-			case <-stopLua:
-				fmt.Println("CLOSING LUA WITH A CHANNEL")
-				L.Close()
-				// We are done
+	var (
+		// Set up a mutex for flushing the http.ReaderWriter
+		flushMutex sync.Mutex
+		// Set up a channel for flushing the ResponseWriter before
+		// the Lua script is done (useful for streaming)
+		flush chan bool
+		// Set up a channel for stopping the Lua script
+		done chan bool
+	)
+
+	if withFlusher {
+		done = make(chan bool)
+		flush = make(chan bool)
+
+		// Stop the background goroutine when this function returns
+		defer func() { done <- true }()
+
+		// Set up a background flusher
+		go func() {
+			wFlush, ok := w.(http.Flusher)
+			if !ok {
+				log.Error("ResponseWriter has no Flush()!")
 				return
 			}
-		}
-	}() // Call the goroutine
+			wCloseNotify, ok := w.(http.CloseNotifier)
+			if !ok {
+				log.Error("ResponseWriter has no CloseNotify()!")
+				return
+			}
+			for {
+				select {
+				case <-flush:
+					fmt.Println("FLUSHING NOW")
+					// Flush what we've got
+					flushMutex.Lock()
+					wFlush.Flush()
+					flushMutex.Unlock()
+				case <-wCloseNotify.CloseNotify():
+					// Client is done
+					fmt.Println("GOT CLOSE NOTIFIER + FLUSHING")
+					// Flush what we've got
+					flushMutex.Lock()
+					wFlush.Flush()
+					flushMutex.Unlock()
+					// Stop the script
+					done <- true
+				case <-done:
+					fmt.Println("CLOSING LUA")
+					// Close Lua, but not while flushing
+					flushMutex.Lock()
+					L.Close()
+					flushMutex.Unlock()
+					// We are done
+					return
+				}
+			}
+		}() // Call the goroutine
+
+	}
 
 	// Export functions to the Lua state
-	exportCommonFunctions(w, req, filename, perm, L, luapool, flushChan)
+	// Flush can be an uninitialized channel, it is handled in the function.
+	exportCommonFunctions(w, req, filename, perm, L, luapool, flush)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -117,6 +166,7 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 	L := luapool.Get()
 
 	// Give no filename (an empty string will be handled correctly by the function).
+	// Nil is the channel for sending flush requests. nil is checked for in the function.
 	exportCommonFunctions(w, req, "", perm, L, luapool, nil)
 
 	// Run the script
