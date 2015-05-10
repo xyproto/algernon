@@ -83,14 +83,9 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 	L := luapool.Get()
 	defer luapool.Put(L)
 
-	var (
-		// Set up a channel for stopping the Lua script
-		done chan bool
-	)
-
-	// Stop the Lua script from running if the connection should disappear
-	if timeoutCloser {
-		done = make(chan bool)
+	// Warn if the connection is closed before the script has finished
+	if verboseMode {
+		done := make(chan bool)
 
 		// Stop the background goroutine when this function returns
 		defer func() { done <- true }()
@@ -106,7 +101,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 				select {
 				case <-wCloseNotify.CloseNotify():
 					// Client is done
-					log.Warn("Closing connection (possibly server-side timeout)")
+					log.Warn("Connection closed on the server before the script has finished. Server timeout?")
 				case <-done:
 					// We are done
 					return
