@@ -75,16 +75,23 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		// Write the combined text to the http.ResponseWriter
 		w.Write(buf.Bytes())
 
+		// Flush the ResponseWriter, if the filename is "stream.lua".
+		if path.Base(filename) == "stream.lua" {
+			//if flush != nil {
+			flush <- true
+			//}
+		}
+
 		return 0 // number of results
 	}))
 
-	// Flush the ResponseWriter
-	L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
-		if flush != nil {
-			flush <- true
-		}
-		return 0 // number of results
-	}))
+	//L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
+	//	// Flush the ResponseWriter
+	//	if flush != nil {
+	//		flush <- true
+	//	}
+	//	return 0 // number of results
+	//}))
 
 	// Set the Content-Type for the page
 	L.SetGlobal("content", L.NewFunction(func(L *lua.LState) int {

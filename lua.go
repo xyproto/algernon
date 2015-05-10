@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"net/http"
 	"sync"
@@ -117,14 +116,14 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 			for {
 				select {
 				case <-flush:
-					fmt.Println("FLUSHING NOW")
+					log.Info("Flushing")
 					// Flush what we've got
 					flushMutex.Lock()
 					wFlush.Flush()
 					flushMutex.Unlock()
 				case <-wCloseNotify.CloseNotify():
 					// Client is done
-					fmt.Println("GOT CLOSE NOTIFIER + FLUSHING")
+					log.Warn("Close notification. Could be the server-side timeout.")
 					// Flush what we've got
 					flushMutex.Lock()
 					wFlush.Flush()
@@ -132,7 +131,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 					// Stop the script
 					done <- true
 				case <-done:
-					fmt.Println("CLOSING LUA")
+					log.Info("Closing Lua script")
 					// Close Lua, but not while flushing
 					flushMutex.Lock()
 					L.Close()

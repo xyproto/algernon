@@ -35,10 +35,14 @@ var (
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
 	// Server configuration
 	s := &http.Server{
-		Addr:           addr,
-		Handler:        mux,
-		ReadTimeout:    60 * time.Second,
-		WriteTimeout:   60 * time.Second,
+		Addr:    addr,
+		Handler: mux,
+
+		// The timeout values is also the maximum time it can take
+		// for a complete page of Server-Sent Events (SSE).
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+
 		MaxHeaderBytes: 1 << 20,
 	}
 	if http2support {
