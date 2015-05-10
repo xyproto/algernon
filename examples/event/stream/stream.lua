@@ -9,7 +9,7 @@ function event(message)
   flush()
 end
 
-while true do
+--while true do
   event("style.gcss")
   sleep(1.5)
   event("main.html")
@@ -18,7 +18,7 @@ while true do
   sleep(1.5)
   event("index.lua")
   sleep(1.5)
-  log("LOOPING!")
-end
+  --log("LOOPING!")
+--end
 
 error("IMPOSSIBRU")
