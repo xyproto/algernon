@@ -50,7 +50,7 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil)
+			exportCommonFunctions(w, req, filename, perm, L, luapool)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)

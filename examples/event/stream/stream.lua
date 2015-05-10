@@ -13,19 +13,18 @@ function done()
 end
 
 -- Must take < 10 seconds
-local x = 0
-while x < 4 do
-  log("LOOP #", x)
-  event("style.gcss")
-  sleep(0.2)
-  event("main.html")
-  sleep(0.2)
-  event("main.js")
-  sleep(0.2)
-  event("index.lua")
-  sleep(0.2)
-  x = x + 1
-end
+event("--- start ---")
+sleep(4.2)
+event("style.gcss")
+sleep(4.2)
+event("main.html")
+sleep(4.2)
+event("main.js")
+sleep(4.2)
+event("index.lua")
+sleep(4.2)
+event("--- end ---")
+sleep(4.2)
 
 done()
 log("DONE STREAMING")
