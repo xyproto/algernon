@@ -37,8 +37,8 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 	s := &http.Server{
 		Addr:           addr,
 		Handler:        mux,
-		ReadTimeout:    7 * time.Second,
-		WriteTimeout:   7 * time.Second,
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	if http2support {

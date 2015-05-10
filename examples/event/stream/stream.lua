@@ -5,11 +5,17 @@ setheader("connection", "keep-alive")
 function event(message)
   log("EVENT: " .. message)
   print("data: " .. message .. "\n")
+  flush()
+end
+
+function done()
   print("\n")
   flush()
 end
 
---while true do
+local x = 0
+while x < 4 do
+  log("LOOP #", x)
   event("style.gcss")
   sleep(1.5)
   event("main.html")
@@ -18,7 +24,8 @@ end
   sleep(1.5)
   event("index.lua")
   sleep(1.5)
-  --log("LOOPING!")
---end
+  x = x + 1
+end
 
-error("IMPOSSIBRU")
+done()
+log("DONE STREAMING")

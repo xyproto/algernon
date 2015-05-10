@@ -10,6 +10,7 @@ Priority
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 - [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
 - [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [ ] Add the option of starting another HTTP server with long timeout, for serving events whenever files change. Look into: https://github.com/antage/eventsource. Consider adding support for streaming lua scripts as well.
 
 
 Server configuration
