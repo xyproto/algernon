@@ -14,16 +14,19 @@ function finish()
   print("\n")
 end
 
--- Must take < 10 seconds, before the request times out
+log("Steaming events")
+
+-- The following must take < 10 seconds, before the request times out
 
 event("one event")
 sleep(2)
 event("a second event")
-sleep(2)
+sleep(1)
 event("a third event")
-sleep(2)
+sleep(0.2)
 event("yet another event")
-sleep(2)
+sleep(1)
 event("eventorama!")
-sleep(2)
+sleep(3)
+event("done")
 finish()

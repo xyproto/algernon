@@ -5,10 +5,22 @@
     <script>
 
     if (!!window.EventSource) {
-      var source = new EventSource('//localhost:5553/fs');
-    
+      var host = window.location.host;
+      if (host.indexOf(':') >= 0) {
+	host = host.split(':')[0]
+      }
+      var source = new EventSource('//' + host + ':5553/fs');
       source.addEventListener('message', function(e) {
-        console.log(e.data);
+	var l = window.location;
+	//var base_url = l.protocol + "//" + l.host + "/" + l.pathname.split('/')[1];
+	var full = '/' + e.data
+	if (full.indexOf(l.pathname) >= 0) {
+	  console.log(full)
+  	  console.log(l.pathname)
+	  console.log("yes, refresh!")
+	} else {
+	  console.log("no")
+	}
       }, false);
       
       source.addEventListener('open', function(e) {
