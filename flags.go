@@ -34,8 +34,9 @@ var (
 	// Server modes
 	debugMode, verboseMode, productionMode bool
 
-	// "Server-Sent Event" server
-	eventAddr string
+	// For the Server-Sent Event (SSE) server
+	eventAddr    string
+	eventRefresh string // Event server refresh, ie "300ms"
 )
 
 func usage() {
@@ -67,6 +68,8 @@ Available flags:
   --version                    Show application name and version
   --eventserver=[HOST][:PORT]  Start a Server-Sent Event (SSE) server for
                                pushing events whenever a file changes.
+  --eventrefresh=DURATION      How often the event server should refresh
+                               (ie. \"300ms\").
   --help                       Application help
 `)
 }
@@ -98,6 +101,7 @@ func handleFlags() string {
 	flag.BoolVar(&debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&verboseMode, "verbose", false, "Verbose logging")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \":5553\")")
+	flag.StringVar(&eventRefresh, "eventrefresh", "300ms", "Event refresh interval in milliseconds (ie \"300ms\")")
 
 	flag.Parse()
 

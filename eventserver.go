@@ -141,8 +141,12 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 	}
 }
 
-// Serve events on a dedicated port
-func EventServer(addr, urlPath, path string) {
+// Serve events on a dedicated port.
+// addr is the host address ([host][:port])
+// urlPath is the path to handle (ie /fs)
+// refresh is how often the event buffer should be checked and cleared.
+// The filesystem events are gathered independently of that.
+func EventServer(addr, urlPath, path string, refresh time.Duration) {
 	// Create a new filesystem watcher
 	rw, err := recwatch.NewRecursiveWatcher(path)
 	if err != nil {
@@ -152,12 +156,9 @@ func EventServer(addr, urlPath, path string) {
 	var mut sync.Mutex
 	events := make(TimeEventMap)
 
-	// How often should the event buffer be checked and cleared?
-	n := 150 * time.Millisecond
-
 	// Collect the events for the last n seconds, repeatedly
 	// Runs in the background
-	collectFileChangeEvents(rw, &mut, events, n)
+	collectFileChangeEvents(rw, &mut, events, refresh)
 
 	// Serve events
 	go func() {
@@ -167,7 +168,7 @@ func EventServer(addr, urlPath, path string) {
 		}
 		eventMux := http.NewServeMux()
 		// Fire off events whenever a file in the server directory changes
-		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, n))
+		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, refresh))
 		eventServer := &http.Server{
 			Addr:    addr,
 			Handler: eventMux,

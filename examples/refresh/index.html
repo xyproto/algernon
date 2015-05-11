@@ -9,17 +9,14 @@
       if (host.indexOf(':') >= 0) {
 	host = host.split(':')[0]
       }
-      var source = new EventSource('//' + host + ':5553/fs');
+      var source = new EventSource(window.location.protocol + '//' + host + ':5553/fs');
       source.addEventListener('message', function(e) {
-	var l = window.location;
-	//var base_url = l.protocol + "//" + l.host + "/" + l.pathname.split('/')[1];
-	var full = '/' + e.data
-	if (full.indexOf(l.pathname) >= 0) {
-	  console.log(full)
-  	  console.log(l.pathname)
-	  console.log("yes, refresh!")
+	var urlpath = window.location.pathname;
+	var path = '/' + e.data
+	if (path.indexOf(urlpath) >= 0) {
+	  location.reload()
 	} else {
-	  console.log("no")
+	  console.log("ignoring: " + full)
 	}
       }, false);
       
@@ -40,6 +37,8 @@
     </script>
   </head>
   <body>
-  hi there
+    hi there you<br>
+    imcrediblou!<br>
+    This is actually rather nice.<br>
   </body>
 </html>
