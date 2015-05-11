@@ -19,7 +19,7 @@ function finish()
   flush()
 end
 
-function stream()
+function main()
   log("Steaming events")
   log("Turn off buffering for this to work properly (turn off debug mode)")
 
@@ -38,4 +38,4 @@ function stream()
   finish()
 end
 
-stream()
+main()

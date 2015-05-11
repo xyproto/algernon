@@ -3,42 +3,18 @@
   <head>
     <title>Server Event</title>
     <script>
-
     if (!!window.EventSource) {
       var host = window.location.host;
-      if (host.indexOf(':') >= 0) {
-	host = host.split(':')[0]
-      }
+      if (host.indexOf(':') >= 0) { host = host.split(':')[0] }
       var source = new EventSource(window.location.protocol + '//' + host + ':5553/fs');
       source.addEventListener('message', function(e) {
-	var urlpath = window.location.pathname;
-	var path = '/' + e.data
-	if (path.indexOf(urlpath) >= 0) {
-	  location.reload()
-	} else {
-	  console.log("ignoring: " + full)
-	}
+        const path = '/' + e.data
+        if (path.indexOf(window.location.pathname) >= 0) { location.reload() }
       }, false);
-      
-      source.addEventListener('open', function(e) {
-        // Connection was opened.
-        console.log("Connection was opened!");
-      }, false);
-      
-      source.addEventListener('error', function(e) {
-        if (e.readyState == EventSource.CLOSED) {
-          // Connection was closed.
-          console.log("Connection was closed!");
-        }
-      }, false);
-    
     }
-
     </script>
   </head>
   <body>
-    hi there you<br>
-    imcrediblou!<br>
-    This is actually rather nice.<br>
+    try changing this text
   </body>
 </html>

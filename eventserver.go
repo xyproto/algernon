@@ -182,3 +182,26 @@ func EventServer(addr, urlPath, path string, refresh time.Duration) {
 		}
 	}()
 }
+
+// Insert JavaScript that refreshes the page when the source files changes.
+// Depends on the event server.
+func linkToAutoRefresh(htmldata []byte) []byte {
+	fullHost := eventAddr
+	if strings.HasPrefix(fullHost, ":") {
+		fullHost = "localhost" + eventAddr
+	}
+	if bytes.Contains(htmldata, []byte("<head>")) {
+		return bytes.Replace(htmldata, []byte("<head>"), []byte(`<head>
+	    <script>
+          if (!!window.EventSource) {
+            var source = new EventSource(window.location.protocol + '//`+fullHost+`/fs');
+            source.addEventListener('message', function(e) {
+              const path = '/' + e.data
+              if (path.indexOf(window.location.pathname) >= 0) { location.reload() }
+            }, false);
+          }
+	    </script>`), 1)
+	}
+	// If no <head> were found
+	return htmldata
+}

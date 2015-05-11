@@ -237,6 +237,13 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 		}
 		return
 	}
+
+	// Listen for changes to the source
+	if !noEventServer {
+		changedBuf := bytes.NewBuffer(linkToAutoRefresh(buf.Bytes()))
+		buf = *changedBuf
+	}
+
 	// Write the rendered template to the http.ResponseWriter
 	buf.WriteTo(w)
 }

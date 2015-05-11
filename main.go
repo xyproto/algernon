@@ -124,7 +124,7 @@ func main() {
 
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
-	if debugMode {
+	if !noEventServer {
 		refresh, err := time.ParseDuration(eventRefresh)
 		if err != nil {
 			log.Fatal(err)
