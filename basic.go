@@ -75,11 +75,9 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		// Write the combined text to the http.ResponseWriter
 		w.Write(buf.Bytes())
 
-		// Flush the ResponseWriter, if the filename is "stream.lua".
+		// Flush after each print, if we are streaming
 		if path.Base(filename) == "stream.lua" {
-			if flusher, ok := w.(http.Flusher); ok {
-				flusher.Flush()
-			}
+			Flush(w)
 		}
 
 		return 0 // number of results

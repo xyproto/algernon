@@ -10,6 +10,7 @@ import (
 const (
 	defaultWebColonPort   = ":3000"
 	defaultRedisColonPort = ":6379"
+	defaultEventColonPort = ":5553"
 )
 
 var (
@@ -32,6 +33,9 @@ var (
 
 	// Server modes
 	debugMode, verboseMode, productionMode bool
+
+	// "Server-Sent Event" server
+	eventAddr string
 )
 
 func usage() {
@@ -61,6 +65,8 @@ Available flags:
   --debug                      Enable debug mode
   --verbose                    Slightly more verbose logging
   --version                    Show application name and version
+  --eventserver=[HOST][:PORT]  Start a Server-Sent Event (SSE) server for
+                               pushing events whenever a file changes.
   --help                       Application help
 `)
 }
@@ -91,6 +97,7 @@ func handleFlags() string {
 	flag.BoolVar(&productionMode, "prod", false, "Production mode")
 	flag.BoolVar(&debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&verboseMode, "verbose", false, "Verbose logging")
+	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \":5553\")")
 
 	flag.Parse()
 
@@ -143,6 +150,10 @@ func finalConfiguration(host string) bool {
 		} else {
 			serverAddr = host + defaultWebColonPort
 		}
+	}
+
+	if eventAddr == "" {
+		eventAddr = host + defaultEventColonPort
 	}
 
 	// Turn off debug mode if production mode is enabled

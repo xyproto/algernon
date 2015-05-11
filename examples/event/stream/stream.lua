@@ -1,30 +1,29 @@
+-- Stream Server-Sent Events (SSE)
 content("text/event-stream;charset=utf-8")
-setheader("cache-control", "no-cache")
-setheader("connection", "keep-alive")
+setheader("Cache-Control", "no-cache")
+setheader("Connection", "keep-alive")
+setheader("Access-Control-Allow-Origin", "*")
 
 function event(message)
   log("EVENT: " .. message)
   print("data: " .. message .. "\n")
 end
 
-function done()
-  log("DONE")
+function finish()
+  log("Done streaming events")
   print("\n")
 end
 
--- Must take < 10 seconds
-event("--- start ---")
-sleep(4.2)
-event("style.gcss")
-sleep(4.2)
-event("main.html")
-sleep(4.2)
-event("main.js")
-sleep(4.2)
-event("index.lua")
-sleep(4.2)
-event("--- end ---")
-sleep(4.2)
+-- Must take < 10 seconds, before the request times out
 
-done()
-log("DONE STREAMING")
+event("one event")
+sleep(2)
+event("a second event")
+sleep(2)
+event("a third event")
+sleep(2)
+event("yet another event")
+sleep(2)
+event("eventorama!")
+sleep(2)
+finish()

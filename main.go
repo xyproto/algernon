@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.61"
+	versionString = "Algernon 0.62"
 	description   = "HTTP/2 web server"
 )
 
@@ -119,6 +119,9 @@ func main() {
 	} else {
 		internallog.SetOutput(f)
 	}
+
+	// Serve server-sent events (SSE) in the background
+	bgEventServer()
 
 	// Decide which protocol to listen to
 	switch {
