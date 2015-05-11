@@ -120,8 +120,10 @@ func main() {
 		internallog.SetOutput(f)
 	}
 
-	// Serve server-sent events (SSE) in the background
-	bgEventServer()
+	// Serve filesystem events in the background
+	if debugMode {
+		EventServer(eventAddr, "/fs")
+	}
 
 	// Decide which protocol to listen to
 	switch {

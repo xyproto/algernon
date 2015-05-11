@@ -5,7 +5,7 @@
     <script>
 
     if (!!window.EventSource) {
-      var source = new EventSource('stream');
+      var source = new EventSource('//localhost:5553/fs');
     
       source.addEventListener('message', function(e) {
         console.log(e.data);
