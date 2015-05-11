@@ -120,9 +120,10 @@ func main() {
 		internallog.SetOutput(f)
 	}
 
-	// Serve filesystem events in the background
+	// Serve filesystem events in the background.
+	// Used for reloading pages when the sources change.
 	if debugMode {
-		EventServer(eventAddr, "/fs")
+		EventServer(eventAddr, "/fs", serverDir)
 	}
 
 	// Decide which protocol to listen to

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/howeyc/fsnotify"
+	"github.com/xyproto/recwatch"
 )
 
 // TODO: Consider using channels in a more clever way, to avoid sleeping.
@@ -19,7 +19,7 @@ import (
 
 type (
 	// For buffering filesystem events
-	TimeEventMap map[time.Time]*fsnotify.FileEvent
+	TimeEventMap map[time.Time]recwatch.Event
 
 	// For being able to sort slices of time
 	timeKeys []time.Time
@@ -80,19 +80,19 @@ func removeOldEvents(events *TimeEventMap, maxAge time.Duration) {
 }
 
 // Gather filesystem events in a way that web handle functions can use
-func collectFileChangeEvents(watcher *fsnotify.Watcher, mut *sync.Mutex, events TimeEventMap, maxAge time.Duration) {
+func collectFileChangeEvents(watcher *recwatch.RecursiveWatcher, mut *sync.Mutex, events TimeEventMap, maxAge time.Duration) {
 	go func() {
 		for {
 			select {
-			case ev := <-watcher.Event:
+			case ev := <-watcher.Events:
 				mut.Lock()
 				// Remove old events
 				removeOldEvents(&events, maxAge)
 				// Save the event with the current time
-				events[time.Now()] = ev
+				events[time.Now()] = recwatch.Event(ev)
 				mut.Unlock()
 				//log.Info(ev)
-			case err := <-watcher.Error:
+			case err := <-watcher.Errors:
 				log.Error(err)
 			}
 		}
@@ -137,14 +137,9 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 }
 
 // Serve events on a dedicated port
-func EventServer(addr, urlPath, dir string) {
+func EventServer(addr, urlPath, path string) {
 	// Create a new filesystem watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Start watching the server directory for changes
-	err = watcher.Watch(dir)
+	rw, err := recwatch.NewRecursiveWatcher(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -155,7 +150,7 @@ func EventServer(addr, urlPath, dir string) {
 	n := 200 * time.Millisecond
 	// Collect the events for the last n seconds, repeatedly
 	// Runs in the background
-	collectFileChangeEvents(watcher, &mut, events, n)
+	collectFileChangeEvents(rw, &mut, events, n)
 
 	// Serve events
 	go func() {
