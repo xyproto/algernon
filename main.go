@@ -120,6 +120,8 @@ func main() {
 		internallog.SetOutput(f)
 	}
 
+	// TODO: Mutex for log.Info!
+
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
 	if debugMode {
