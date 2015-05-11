@@ -160,12 +160,13 @@ func EventServer(addr, urlPath, path string, refresh time.Duration) {
 	// Runs in the background
 	collectFileChangeEvents(rw, &mut, events, refresh)
 
+	if strings.Contains(addr, ":") {
+		fields := strings.Split(addr, ":")
+		log.Info("Serving filesystem events on port " + fields[1])
+	}
+
 	// Serve events
 	go func() {
-		if strings.Contains(addr, ":") {
-			fields := strings.Split(addr, ":")
-			log.Info("Serving filesystem events on port " + fields[1])
-		}
 		eventMux := http.NewServeMux()
 		// Fire off events whenever a file in the server directory changes
 		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, refresh))
