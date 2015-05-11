@@ -57,7 +57,8 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
-func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
+// realW is only used for flushing the buffer in debug mode, and is the underlying ResponseWriter.
+func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func()) {
 
 	// Print text to the webpage that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -75,11 +76,15 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		// Write the combined text to the http.ResponseWriter
 		w.Write(buf.Bytes())
 
-		// Flush after each print, if we are streaming
-		if path.Base(filename) == "stream.lua" {
-			Flush(w)
-		}
+		return 0 // number of results
+	}))
 
+	// Flush the ResponseWriter.
+	// Needed in debug mode, where ResponseWriter is buffered.
+	L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
+		if flushFunc != nil {
+			flushFunc()
+		}
 		return 0 // number of results
 	}))
 

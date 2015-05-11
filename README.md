@@ -428,6 +428,11 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
+Lua functions for streaming
+---------------------------
+
+* `flush()` sends what has been outputted so far to the client.
+
 
 Lua functions that are only available for the server configuration file
 -----------------------------------------------------------------------

@@ -29,7 +29,7 @@ var (
 	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
 
 	// List of filenames that should be displayed instead of a directory listing
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber", "stream.lua"}
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 )
 
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {

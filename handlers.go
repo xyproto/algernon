@@ -145,12 +145,17 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 
-		// If debug mode is enabled and the file can be buffered
-		if debugMode && (path.Base(filename) != "stream.lua") {
+		// If debug mode is enabled
+		if debugMode {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
+			// The flush function writes the ResponseRecorder to the ResponseWriter
+			flushFunc := func() {
+				writeRecorder(w, recorder)
+				Flush(w)
+			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, false); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, false, flushFunc); err != nil {
 				errortext := err.Error()
 				filedata, err := read(filename)
 				if err != nil {
@@ -165,9 +170,12 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				writeRecorder(w, recorder)
 			}
 		} else {
-
-			// Run the lua script, with the possibility to flush
-			if err := runLua(w, req, filename, perm, luapool, true); err != nil {
+			// The flush function just flushes the ResponseWriter
+			flushFunc := func() {
+				Flush(w)
+			}
+			// Run the lua script, with the flush feature
+			if err := runLua(w, req, filename, perm, luapool, true, flushFunc); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
