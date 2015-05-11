@@ -122,11 +122,16 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 					keys = append(keys, k)
 				}
 				sort.Sort(keys)
+				prevname := ""
 				for _, k := range keys {
 					ev := events[k]
-					// Send an event to the client
-					Event(w, &id, ev.Name, true)
-					id++
+					// Avoid sending several events for the same filename
+					if ev.Name != prevname {
+						// Send an event to the client
+						Event(w, &id, ev.Name, true)
+						id++
+						prevname = ev.Name
+					}
 				}
 			}
 			mut.Unlock()
@@ -147,7 +152,9 @@ func EventServer(addr, urlPath, path string) {
 	var mut sync.Mutex
 	events := make(TimeEventMap)
 
-	n := 200 * time.Millisecond
+	// How often should the event buffer be checked and cleared?
+	n := 150 * time.Millisecond
+
 	// Collect the events for the last n seconds, repeatedly
 	// Runs in the background
 	collectFileChangeEvents(rw, &mut, events, n)
