@@ -67,7 +67,7 @@ ASCII diagram
 
 The pillars of Algernon:
 
-~~~
+```
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
 |   Presentation                   |   Style                           |
@@ -96,7 +96,7 @@ The pillars of Algernon:
 |   * Can refresh when saving.     |                                   |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
-~~~ 
+```
 
 Redis offers good [data persistence](http://redis.io/topics/persistence).
 
