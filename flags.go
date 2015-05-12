@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -88,6 +90,8 @@ func handleFlags() string {
 	host := ""
 	if runtime.GOOS == "windows" {
 		host = "localhost"
+		// Disable colors when logging, for some systems
+		log.SetFormatter(&log.TextFormatter{DisableColors: true})
 	}
 
 	// Commandline flag configuration

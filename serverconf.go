@@ -110,6 +110,8 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	// Set a access log filename. If blank, the log will go to the console (or browser, if debug mode is set).
 	L.SetGlobal("LogTo", L.NewFunction(func(L *lua.LState) int {
 		filename := L.ToString(1)
+		// Log as JSON by default
+		log.SetFormatter(&log.JSONFormatter{})
 		// Log to stderr if an empty filename is given
 		if filename == "" {
 			log.SetOutput(os.Stderr)
