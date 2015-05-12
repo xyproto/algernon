@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/xyproto/logrus"
 	"github.com/yuin/gopher-lua"
 )
 

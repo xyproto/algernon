@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/xyproto/logrus"
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
 )

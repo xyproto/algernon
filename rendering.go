@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/eknkc/amber"
 	"github.com/mamaar/risotto/generator"
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
+	log "github.com/xyproto/logrus"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
