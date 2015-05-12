@@ -48,7 +48,8 @@ Design decisions
 Features and limitations
 ------------------------
 
-* Supports HTTP/2, with or without HTTPS. Also supports regular HTTP.
+* Supports HTTP.
+* Supports HTTP/2, with or without HTTPS.
 * Can use Lua scripts as handlers for HTTP requests.
 * Works on Linux, OS X and 64-bit Windows.
 * Algernon is compiled to native. It's reasonably fast.
