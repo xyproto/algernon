@@ -141,6 +141,11 @@ Getting started
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
 * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
 
+##### Configure the required ports for local use
+
+* You may need to change the firewall settings for port 3000, if you wish to use the default port for exploring the samples.
+* For the auto-refresh feature to work, port 5553 must be available (or another host/port of your choosing, if configured otherwise).
+
 ##### Prepare for running the samples
 
 * `cd $GOPATH/src/github.com/xyproto/algernon`
