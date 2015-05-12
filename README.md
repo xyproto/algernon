@@ -1,12 +1,12 @@
 <!--
 title: Algernon
-description: HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions
-keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua
+description: Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions
+keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-HTTP/2 web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions.
+Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 
@@ -49,8 +49,8 @@ Design decisions
 Features and limitations
 ------------------------
 
-* Supports HTTP.
 * Supports HTTP/2, with or without HTTPS.
+* Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * Works on Linux, OS X and 64-bit Windows.
 * Algernon is compiled to native. It's reasonably fast.
