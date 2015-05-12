@@ -66,7 +66,7 @@ Features and limitations
 The pillars of Algernon
 -----------------------
 
-Behold:
+ASCII diagram:
 
 ```
 +----------------------------------+-----------------------------------+
