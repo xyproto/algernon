@@ -63,10 +63,10 @@ Features and limitations
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*).
 
 
-ASCII diagram
--------------
+The pillars of Algernon
+-----------------------
 
-The pillars of Algernon:
+Behold:
 
 ```
 +----------------------------------+-----------------------------------+
