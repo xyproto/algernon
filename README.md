@@ -59,6 +59,7 @@ Features and limitations
 * Will not run without a Redis server to connect to.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No processes that listens for changes to files needs to be running in the background. Files are converted on the fly.
+* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and `data.lua`).
 
 
 ASCII diagram
@@ -91,11 +92,13 @@ The pillars of Algernon:
 |                                  |                                   |
 |   Markdown for static pages:     |   Redis for the database:         |
 |   * Easy content creation.       |   * Incredibly fast.              |
-|   * Easy to style with GCSS.     |   * Stable, proven technology.    |
+|   * Easy to style with GCSS.     |   * Proven technology.            |
 |   * Can refresh when saving.     |                                   |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 ~~~ 
+
+Redis offers good [data persistence](http://redis.io/topics/persistence).
 
 Screenshots
 -----------
