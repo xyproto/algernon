@@ -1,5 +1,5 @@
 --- Algernon Server Configuration
---- For use with the examples
+--- For use with the samples
 
 --- Default host and port
 SetAddr(":3000")
@@ -22,15 +22,15 @@ SetVerbose(false)
 ClearPermissions()
 
 --- For the "bob" example, when running from this directory
-AddAdminPrefix("/examples/bob/admin")
-AddUserPrefix("/examples/bob/data")
+AddAdminPrefix("/samples/bob/admin")
+AddUserPrefix("/samples/bob/data")
 
 --- For the "bob" example, when running from the "bob" directory
 AddAdminPrefix("/admin")
 AddUserPrefix("/data")
 
 --- For the "chat" example, when running from this directory
-AddUserPrefix("/examples/chat/chat")
+AddUserPrefix("/samples/chat/chat")
 
 --- For the "chat" example, when running from the "chat" directory
 AddUserPrefix("/chat")
