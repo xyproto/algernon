@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	log "github.com/xyproto/logrus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"strconv"

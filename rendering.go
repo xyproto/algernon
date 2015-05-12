@@ -7,7 +7,7 @@ import (
 	"github.com/mamaar/risotto/generator"
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
-	log "github.com/xyproto/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"

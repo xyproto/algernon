@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/xyproto/logrus"
+	log "github.com/sirupsen/logrus"
 	"html/template"
 	"io"
 	"net/http"
