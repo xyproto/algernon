@@ -42,7 +42,7 @@ Design decisions
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
-* The aim is to provide a comfortable environment for rapidly developing modern webpages, while not sacrificing structure and the separation between data and presentation.
+* The aim is to provide a comfortable environment for rapidly developing modern web applications, while not sacrificing structure and the separation between data and presentation.
 
 
 Features and limitations
