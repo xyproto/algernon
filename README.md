@@ -539,9 +539,9 @@ Lua functions that are only available for the server configuration file
 Releases
 --------
 
-* Unofficial [Arch Linux package](https://aur.archlinux.org/packages/algernon).
-* [Windows executable](https://github.com/xyproto/algernon/releases) (tested with Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases)).
-* Regular source releases are tagged in the repository.
+* [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
+* [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64). Includes the latest version of Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases).
+* Source releases are tagged with git.
 
 
 General information
