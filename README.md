@@ -37,6 +37,7 @@ Design decisions
     * .amber is interpreted as Amber and rendered as a HTML page.
     * .gcss is interpreted as GCSS and rendered as a CSS file.
     * .jsx is interpreted as JSX and rendered as a JavaScript file.
+    * .lua is interpreted as a Lua script that provides its own output and content type.
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * Redis is used for the database backend.
