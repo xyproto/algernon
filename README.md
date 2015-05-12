@@ -75,7 +75,7 @@ ASCII diagram:
 |   Presentation                   |   Style                           |
 |                                  |                                   |
 |   Amber instead of HTML:         |   GCSS instead of CSS:            |
-|   * Easier to read and write     |   * Easier to read and write.     |
+|   * Easier to read and write.    |   * Easier to read and write.     |
 |   * Easy to add structure.       |   * Easy to add more structure.   |
 |   * Can refresh when saving.     |   * Less repetition. DRY.         |
 |                                  |                                   |
@@ -84,9 +84,9 @@ ASCII diagram:
 |   Server side                    |   JavaScript                      |
 |                                  |                                   |
 |   Lua for providing data:        |   JSX instead of JavaScript:      |
-|   * Can use the Redis backend    |   * Can build a virtual DOM       |
+|   * Can use the Redis backend.   |   * Can build a virtual DOM.      |
 |   * Can easily provide data to   |   * Use together with React for   |
-|     Amber templates.             |     building single-page apps     |
+|     Amber templates.             |     building single-page apps.    |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
@@ -95,7 +95,7 @@ ASCII diagram:
 |   Markdown for static pages:     |   Redis for the database:         |
 |   * Easy content creation.       |   * Incredibly fast.              |
 |   * Easy to style with GCSS.     |   * Proven technology.            |
-|   * Can refresh when saving.     |                                   |
+|   * Can refresh when saving.     |   * Can scale up to 1000 nodes.   |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 ```
