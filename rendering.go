@@ -183,10 +183,16 @@ func markdownPage(w io.Writer, data []byte, filename string) {
 	head.WriteString(defaultFont)
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmlPage := fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody)
+	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
+
+	// If the auto-refresh feature has been enabled
+	if autoRefresh {
+		// Insert JavaScript for refreshing the page into the generated HTML
+		htmldata = insertAutoRefresh(htmldata)
+	}
 
 	// Write the rendered Markdown page to the http.ResponseWriter
-	w.Write([]byte(htmlPage))
+	w.Write(htmldata)
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
@@ -238,9 +244,10 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 		return
 	}
 
-	// Listen for changes to the source
-	if !noEventServer {
-		changedBuf := bytes.NewBuffer(linkToAutoRefresh(buf.Bytes()))
+	// If the auto-refresh feature has been enabled
+	if autoRefresh {
+		// Insert JavaScript for refreshing the page into the generated HTML
+		changedBuf := bytes.NewBuffer(insertAutoRefresh(buf.Bytes()))
 		buf = *changedBuf
 	}
 

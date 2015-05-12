@@ -234,15 +234,26 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	if strings.Contains(title, pathsep+pathsep) {
 		title = strings.Replace(title, pathsep+pathsep, pathsep, everyInstance)
 	}
+
 	// Use the application title for the main page
 	//if title == "" {
 	//	title = versionString
 	//}
+
+	var htmldata []byte
 	if buf.Len() > 0 {
-		fmt.Fprint(w, easyPage(title, buf.String()))
+		htmldata = []byte(easyPage(title, buf.String()))
 	} else {
-		fmt.Fprint(w, easyPage(title, "Empty directory"))
+		htmldata = []byte(easyPage(title, "Empty directory"))
 	}
+
+	// If the auto-refresh feature has been enabled
+	if autoRefresh {
+		// Insert JavaScript for refreshing the page into the generated HTML
+		htmldata = insertAutoRefresh(htmldata)
+	}
+
+	w.Write(htmldata)
 }
 
 // When serving a directory. The directory must exist. Must be given a full filename.

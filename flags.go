@@ -11,6 +11,8 @@ const (
 	defaultWebColonPort   = ":3000"
 	defaultRedisColonPort = ":6379"
 	defaultEventColonPort = ":5553"
+	defaultEventRefresh   = "350ms"
+	defaultEventPath      = "/fs"
 )
 
 var (
@@ -35,9 +37,11 @@ var (
 	debugMode, verboseMode, productionMode bool
 
 	// For the Server-Sent Event (SSE) server
-	noEventServer bool
-	eventAddr     string
-	eventRefresh  string // Event server refresh, ie "400ms"
+	eventAddr    string
+	eventRefresh string // Event server refresh, ie "350ms"
+
+	// Enable the event server and inject JavaScript to reload pages when sources change
+	autoRefresh bool
 )
 
 func usage() {
@@ -51,27 +55,27 @@ Syntax:
   algernon [flags] [server dir] [server addr]
 
 Available flags:
-  --dir=DIRECTORY              The server directory
-  --addr=[HOST][:PORT]         Server host and port (ie. ":443")
-  --prod                       Serve HTTP/2+HTTPS on port 443, serve regular
-                               HTTP on port 80, use /srv/algernon as the server
-							   directory and disable debug mode.
+  --help                       This help
+  --version                    Application name and version
+  --dir=DIRECTORY              Set the server directory
+  --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
+  --autorefresh                Enable the event server and auto-refresh feature
+  --prod                       Serve HTTP/2+HTTPS on port 443. Serve regular
+                               HTTP on port 80. Use /srv/algernon as the server
+                               directory. Disable debug mode and auto-refresh.
+  --debug                      Enable debug mode
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  --redis=[HOST][:PORT]        Connect to a remote Redis database (ie. ":6379")
+  --redis=[HOST][:PORT]        Connect to a remote Redis database ("` + defaultRedisColonPort + `")
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Save the verbose HTTP/2 log
   --httponly                   Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
-  --debug                      Enable debug mode
   --verbose                    Slightly more verbose logging
-  --version                    Show application name and version
-  --noeventserver              Disable the filesystem event server
-  --eventserver=[HOST][:PORT]  Serve the Server-Sent Event (SSE) server here
+  --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
-                               (ie. \"400ms\").
-  --help                       Application help
+                               (the default is "` + defaultEventRefresh + `").
 `)
 }
 
@@ -92,7 +96,7 @@ func handleFlags() string {
 	flag.StringVar(&serverAddr, "addr", "", "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&serverCert, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&serverKey, "key", "key.pem", "Server key")
-	flag.StringVar(&redisAddr, "redis", host+defaultRedisColonPort, "Redis [host][:port] (ie \":6379\")")
+	flag.StringVar(&redisAddr, "redis", host+defaultRedisColonPort, "Redis [host][:port] (ie \""+defaultRedisColonPort+"\")")
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&serverConfScript, "conf", "server.lua", "Server configuration")
 	flag.StringVar(&serverHTTP2log, "http2log", "/dev/null", "HTTP/2 log")
@@ -101,9 +105,9 @@ func handleFlags() string {
 	flag.BoolVar(&productionMode, "prod", false, "Production mode")
 	flag.BoolVar(&debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&verboseMode, "verbose", false, "Verbose logging")
-	flag.BoolVar(&noEventServer, "noeventserver", false, "Disable the event server")
-	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \":5553\")")
-	flag.StringVar(&eventRefresh, "eventrefresh", "400ms", "Event refresh interval in milliseconds (ie \"400ms\")")
+	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
+	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
+	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
 
 	flag.Parse()
 
@@ -149,6 +153,7 @@ func handleFlags() string {
 // Set the values that has not been set by flags nor scripts (and can be set by both)
 // Returns true if a "ready function" has been run.
 func finalConfiguration(host string) bool {
+
 	// Set the server host and port (commandline flags overrides Lua configuration)
 	if serverAddr == "" {
 		if serverAddrLua != "" {
@@ -158,6 +163,7 @@ func finalConfiguration(host string) bool {
 		}
 	}
 
+	// Set the event server host and port
 	if eventAddr == "" {
 		eventAddr = host + defaultEventColonPort
 	}

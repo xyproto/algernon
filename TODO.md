@@ -3,14 +3,13 @@
 
 Priority
 --------
-- [ ] A feature for automatically reloading the page whenever files change
+- [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
 - [ ] JSON templates
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 - [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
 - [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
-- [ ] Add the option of starting another HTTP server with long timeout, for serving events whenever files change. Look into: https://github.com/antage/eventsource. Consider adding support for streaming lua scripts as well.
 
 
 Server configuration
@@ -56,33 +55,29 @@ Logging
 Console output
 --------------
 
-- [ ] Check the terminal capabilities and the terminal width.
+- [ ] Check the terminal capabilities and terminal width. Display a smaller logo if the width is smaller. Or no logo.
 
 
-Documentation and examples
---------------------------
+Documentation and samples
+-------------------------
 
-- [ ] Create an example webpage where people can log in and chat.
-- [ ] Create a TODOMVC example application.
+- [ ] Create a sample webpage where people can log in and chat.
+- [ ] Create a TODOMVC sample application.
 - [ ] Document possible Markdown keywords somewhere (in a separate document).
 - [ ] Create a React application that uses Algernon as the backend as well.
 
 
 Screenshots and graphics
 ------------------------
-- [ ] Of the three.js example
-- [ ] Of one of the React examples
-- [ ] Add the .svg logo as well
+- [ ] The three.js sample
+- [ ] Of one of the React samples
 
 
 Debugging
 ---------
 
-- [ ] Automatic browser reload when served files are changed, for development.
 - [ ] Implement the debug and logging functionality.
-- [ ] Add a lua function that makes the page reload whenever the lua file is changed.
-- [ ] If pretty errors are turned on, the lua code together with the error message and line indicator should be shown in the browser.
-- [ ] If the server executable is named something with "debug", turn on debugging.
+- [ ] Add a lua function that adds a html header and footer, including auto-refresh (if enabled)
 
 
 Authentication and authorization

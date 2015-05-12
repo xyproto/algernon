@@ -11,6 +11,19 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+// Write a status message to a buffer, given a name and a bool
+func writeStatus(buf *bytes.Buffer, name string, enabled bool) {
+	extraTab := ""
+	if len(name) <= 14 { // Spartan way of lining up the columns
+		extraTab = "\t"
+	}
+	if enabled {
+		buf.WriteString(name + ":\t" + extraTab + "Enabled\n")
+	} else {
+		buf.WriteString(name + ":\t" + extraTab + "Disabled\n")
+	}
+}
+
 // Make functions related to server configuration and permissions available
 func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, filename string, luapool *lStatePool) {
 
@@ -121,14 +134,18 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		// of text but there is no need for optimization here.
 		var buf bytes.Buffer
 		buf.WriteString("Server directory:\t" + serverDir + "\n")
-		if productionMode {
-			buf.WriteString("Production mode:\tEnabled\n")
-		} else {
-			buf.WriteString("Server address:\t\t" + serverAddr + "\n")
-		}
+		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
+		writeStatus(&buf, "Debug mode", debugMode)
+		writeStatus(&buf, "Auto-refresh", autoRefresh)
+		writeStatus(&buf, "Production mode", productionMode)
 		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
 		buf.WriteString("TLS key:\t\t" + serverKey + "\n")
-		buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
+		if autoRefresh {
+			buf.WriteString("Event server:\t\t" + eventAddr + "\n")
+		}
+		if redisAddr != defaultRedisColonPort {
+			buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
+		}
 		if redisDBindex != 0 {
 			buf.WriteString("Redis database index:\t" + strconv.Itoa(redisDBindex) + "\n")
 		}

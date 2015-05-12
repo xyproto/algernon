@@ -100,41 +100,43 @@ func collectFileChangeEvents(watcher *recwatch.RecursiveWatcher, mut *sync.Mutex
 }
 
 // Create events whenever a file in the server directory changes
-func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration) http.HandlerFunc {
+func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration, allowed string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Content-Type", "text/event-stream;charset=utf-8")
 		w.Header().Add("Cache-Control", "no-cache")
 		w.Header().Add("Connection", "keep-alive")
-		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Origin", allowed)
 
-		// TODO: Check for CloseNotify, for more graceful timeouts (and mut unlocks?)
+		// TODO: Check for CloseNotify, for more graceful timeouts
 
 		var id uint64
 
 		for {
-			mut.Lock()
-			if len(events) > 0 {
-				// Remove old keys
-				removeOldEvents(&events, maxAge)
-				// Sort the events by the registered time
-				var keys timeKeys
-				for k := range events {
-					keys = append(keys, k)
-				}
-				sort.Sort(keys)
-				prevname := ""
-				for _, k := range keys {
-					ev := events[k]
-					// Avoid sending several events for the same filename
-					if ev.Name != prevname {
-						// Send an event to the client
-						Event(w, &id, ev.Name, true)
-						id++
-						prevname = ev.Name
+			func() { // Use an anonymous function, just for using "defer"
+				mut.Lock()
+				defer mut.Unlock()
+				if len(events) > 0 {
+					// Remove old keys
+					removeOldEvents(&events, maxAge)
+					// Sort the events by the registered time
+					var keys timeKeys
+					for k := range events {
+						keys = append(keys, k)
+					}
+					sort.Sort(keys)
+					prevname := ""
+					for _, k := range keys {
+						ev := events[k]
+						// Avoid sending several events for the same filename
+						if ev.Name != prevname {
+							// Send an event to the client
+							Event(w, &id, ev.Name, true)
+							id++
+							prevname = ev.Name
+						}
 					}
 				}
-			}
-			mut.Unlock()
+			}()
 			// Wait for old events to be gone, and new to appear
 			time.Sleep(maxAge)
 		}
@@ -146,7 +148,8 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 // urlPath is the path to handle (ie /fs)
 // refresh is how often the event buffer should be checked and cleared.
 // The filesystem events are gathered independently of that.
-func EventServer(addr, urlPath, path string, refresh time.Duration) {
+// Allowed can be "*" or a hostname and sets a header in the SSE stream.
+func EventServer(addr, urlPath, path string, refresh time.Duration, allowed string) {
 	// Create a new filesystem watcher
 	rw, err := recwatch.NewRecursiveWatcher(path)
 	if err != nil {
@@ -169,7 +172,7 @@ func EventServer(addr, urlPath, path string, refresh time.Duration) {
 	go func() {
 		eventMux := http.NewServeMux()
 		// Fire off events whenever a file in the server directory changes
-		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, refresh))
+		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, refresh, allowed))
 		eventServer := &http.Server{
 			Addr:    addr,
 			Handler: eventMux,
@@ -185,24 +188,48 @@ func EventServer(addr, urlPath, path string, refresh time.Duration) {
 }
 
 // Insert JavaScript that refreshes the page when the source files changes.
-// Depends on the event server.
-func linkToAutoRefresh(htmldata []byte) []byte {
+// The JavaScript depends on the event server being available.
+// If javascript can not be inserted, return the original data.
+func insertAutoRefresh(htmldata []byte) []byte {
 	fullHost := eventAddr
+	// If the host+port starts with ":", assume it's only the port number
 	if strings.HasPrefix(fullHost, ":") {
-		fullHost = "localhost" + eventAddr
+		// Add the hostname in front
+		if serverHost != "" {
+			fullHost = serverHost + eventAddr
+		} else {
+			fullHost = "localhost" + eventAddr
+		}
 	}
-	if bytes.Contains(htmldata, []byte("<head>")) {
-		return bytes.Replace(htmldata, []byte("<head>"), []byte(`<head>
-	    <script>
-          if (!!window.EventSource) {
-            var source = new EventSource(window.location.protocol + '//`+fullHost+`/fs');
-            source.addEventListener('message', function(e) {
-              const path = '/' + e.data
-              if (path.indexOf(window.location.pathname) >= 0) { location.reload() }
-            }, false);
-          }
-	    </script>`), 1)
+	js := `
+    <script>
+    if (!!window.EventSource) {
+      var source = new EventSource(window.location.protocol + '//` + fullHost + defaultEventPath + `');
+      source.addEventListener('message', function(e) {
+        const path = '/' + e.data;
+        if (path.indexOf(window.location.pathname) >= 0) {
+          location.reload()
+        }
+      }, false);
+    }
+    </script>`
+	// TODO: Use a regexp or a JavaScript minification package instead
+	// Reduce the size slightly
+	js = strings.TrimSpace(strings.Replace(js, "\n", "", everyInstance))
+	// Remove all whitespace that is more than one space
+	for strings.Contains(js, "  ") {
+		js = strings.Replace(js, "  ", " ", everyInstance)
 	}
-	// If no <head> were found
+	// Place the script at the end of the body, if there is a body
+	if bytes.Contains(htmldata, []byte("</body>")) {
+		return bytes.Replace(htmldata, []byte("</body>"), []byte(js+"</body>"), 1)
+		// If not, place the script in the <head>, if there is a head
+	} else if bytes.Contains(htmldata, []byte("<head>")) {
+		return bytes.Replace(htmldata, []byte("<head>"), []byte("<head>"+js), 1)
+		// If not, place the script in the <html> as a new <head>
+	} else if bytes.Contains(htmldata, []byte("<html>")) {
+		return bytes.Replace(htmldata, []byte("<html>"), []byte("<html><head>"+js+"</head>"), 1)
+	}
+	// If no place to insert the JavaScript was found
 	return htmldata
 }

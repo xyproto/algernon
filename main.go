@@ -25,11 +25,14 @@ var (
 	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
 
 	// The default CSS style
-	// Will be used for directory listings and when rendering markdown pages
+	// Will be used for directory listings and rendering unstyled markdown pages
 	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
 
 	// List of filenames that should be displayed instead of a directory listing
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
+
+	// For convenience. Set in the main function.
+	serverHost string
 )
 
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
@@ -54,7 +57,7 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 
 func main() {
 	// Set several configuration variables, based on the given flags and arguments
-	host := handleFlags()
+	serverHost = handleFlags()
 
 	// Console output
 	fmt.Println(banner())
@@ -95,7 +98,7 @@ func main() {
 	}
 
 	// Set the values that has not been set by flags nor scripts (and can be set by both)
-	ranServerReadyFunction := finalConfiguration(host)
+	ranServerReadyFunction := finalConfiguration(serverHost)
 
 	// Dividing line between the banner and output from any of the configuration scripts
 	if ranServerReadyFunction {
@@ -110,26 +113,25 @@ func main() {
 	defer f.Close()
 	if err != nil {
 		// Could not open the serverHTTP2log filename, try using another filename
-		f, err := os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		f, err = os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer f.Close()
 		if err != nil {
 			log.Fatalf("Could not write to %s nor %s.", serverHTTP2log, "http2.log")
 		}
-		internallog.SetOutput(f)
-	} else {
-		internallog.SetOutput(f)
 	}
-
-	// TODO: Mutex for log.Info!
+	internallog.SetOutput(f)
 
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
-	if !noEventServer {
+	if autoRefresh {
 		refresh, err := time.ParseDuration(eventRefresh)
 		if err != nil {
-			log.Fatal(err)
+			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead."))
+			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
+			refresh, _ = time.ParseDuration(defaultEventRefresh)
 		}
-		EventServer(eventAddr, "/fs", serverDir, refresh)
+		// TODO: Try using serverHost instead of "*". Test on localhost and a remote host.
+		EventServer(eventAddr, defaultEventPath, serverDir, refresh, "*")
 	}
 
 	// Decide which protocol to listen to
@@ -137,7 +139,7 @@ func main() {
 	case productionMode:
 		go func() {
 			log.Info("Serving HTTPS + HTTP/2 on port 443")
-			HTTPSserver := newServerConfiguration(mux, true, host+":443")
+			HTTPSserver := newServerConfiguration(mux, true, serverHost+":443")
 			// Listen for HTTPS + HTTP/2 requests
 			err := HTTPSserver.ListenAndServeTLS(serverCert, serverKey)
 			if err != nil {
@@ -145,7 +147,7 @@ func main() {
 			}
 		}()
 		log.Info("Serving HTTP on port 80")
-		HTTPserver := newServerConfiguration(mux, false, host+":80")
+		HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
 			log.Fatal(err)

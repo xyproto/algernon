@@ -42,6 +42,7 @@ Design decisions
 * Redis is used for the database backend.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
+* The aim is to provide a comfortable environment for rapidly developing modern webpages, while not sacrificing structure and the separation between data and presentation.
 
 
 Features and limitations
@@ -56,10 +57,45 @@ Features and limitations
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * No support for internal caching, yet.
 * Will not run without a Redis server to connect to.
-* Cookies currently does not work in debug mode, because responses are buffered.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No processes that listens for changes to files needs to be running in the background. Files are converted on the fly.
 
+
+ASCII diagram
+-------------
+
+The pillars of Algernon:
+
+~~~
++----------------------------------+-----------------------------------+
+|                                  |                                   |
+|   Presentation                   |   Style                           |
+|                                  |                                   |
+|   Amber instead of HTML:         |   GCSS instead of CSS:            |
+|   * Easier to read and write     |   * Easier to read and write.     |
+|   * Easy to add structure.       |   * Easy to add more structure.   |
+|   * Can refresh when saving.     |   * Less repetition. DRY.         |
+|                                  |                                   |
++----------------------------------+-----------------------------------+
+|                                  |                                   |
+|   Server side                    |   JavaScript                      |
+|                                  |                                   |
+|   Lua for providing data:        |   JSX instead of JavaScript:      |
+|   * Can use the Redis backend    |   * Can build a virtual DOM       |
+|   * Can easily provide data to   |   * Use together with React for   |
+|     Amber templates.             |     building single-page apps     |
+|                                  |                                   |
++----------------------------------+-----------------------------------+
+|                                  |                                   |
+|   Static documents               |   Database backend                |
+|                                  |                                   |
+|   Markdown for static pages:     |   Redis for the database:         |
+|   * Easy content creation.       |   * Incredibly fast.              |
+|   * Easy to style with GCSS.     |   * Stable, proven technology.    |
+|   * Can refresh when saving.     |                                   |
+|                                  |                                   |
++----------------------------------+-----------------------------------+
+~~~ 
 
 Screenshots
 -----------
@@ -100,29 +136,52 @@ Getting started
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
 * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
 
-##### Prepare for running the example
+##### Prepare for running the samples
 
 * `cd $GOPATH/src/github.com/xyproto/algernon`
 * `go build`
 
-##### Run the example
+##### Run the samples
 
 * Make sure Redis is running. On OS X, you can install `redis` with homebrew and start `redis-server`. On Linux, you can install `redis` and run `systemctl start redis`, depending on your distro.
-* Run the "bob" example: `./runexample.sh`
-* Visit `https://localhost:3000/`.
 
-##### Create your own Algernon application
+##### The "bob" sample, over https
+
+* Run `./servebob.sh` to start serving the "bob" sample.
+* Visit `https://localhost:3000/` (*note*: `https`)
+* Stop the script to stop serving.
+
+##### All the samples, over http, with auto-refresh enabled
+
+* Run `./samples.sh` to start serving the sample directory.
+* Visit `http://localhost:3000/` (*note*: `http`)
+* Stop the script to stop serving.
+
+##### Create your own Algernon application, for regular HTTP
 
 * `mkdir mypage`
 * `cd mypage`
-* Create a file named `index.lua`, with the following contents: `print("Hello, Algernon")`
+* Create a file named `index.lua`, with the following contents:
+  `print("Hello, Algernon")`
+* Start `algernon -httponly -autorefresh`.
+* Visit `http://localhost:3000/`.
+* Edit `index.lua` and refresh the browser to see the new result.
+* If there were errors, the page will automatically refresh when `index.lua` is changed.
+* Markdown and Amber pages will also refresh automatically, as long as `-autorefresh` is used.
+
+##### Create your own Algernon application, for HTTP/2 + HTTPS
+
+* `mkdir mypage`
+* `cd mypage`
+* Create a file named `index.lua`, with the following contents:
+  `print("Hello, Algernon")`
 * Create a self-signed certificate, just for testing:
  * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
  * Press return at all the prompts, but enter `localhost` at *Common Name*.
 * Start `algernon`.
 * Visit `https://localhost:3000/`.
 * If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
-* You can now edit and save the `index.lua` file and all you have to do is reload the browser page to see the new result (or error message, if the script had a problem).
+* Edit `index.lua` and refresh the browser to see the result (or a Lua error message, if the script had a problem).
 
 
 Basic Lua functions
@@ -428,8 +487,8 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
-Lua functions for streaming
----------------------------
+Lua functions for use when streaming
+------------------------------------
 
 * `flush()` sends what has been outputted so far to the client.
 

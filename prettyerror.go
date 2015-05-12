@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -111,10 +110,10 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	errorclass := "json" // "nohighlight"
 
 	// Inform the user of the error
-	fmt.Fprint(w, `<!doctype html>
+	htmldata := []byte(`<!doctype html>
 <html>
   <head>
-    <title>`+title+`</title>
+    <title>` + title + `</title>
 	<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
 	<style>
       body {
@@ -135,21 +134,28 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
         text-align:right;
 	  }
 	</style>
-	`+highlightHTML(errorTheme)+`
+	` + highlightHTML(errorTheme) + `
   </head>
   <body>
-    <div style="font-size: 3em; font-weight: bold;">`+title+`</div>
-    Contents of `+filename+`:
+    <div style="font-size: 3em; font-weight: bold;">` + title + `</div>
+    Contents of ` + filename + `:
     <div>
-	  <pre><code class="`+langclass+`">`+code+`</code></pre>
+	  <pre><code class="` + langclass + `">` + code + `</code></pre>
 	</div>
     Error message:
     <div>
-	  <pre><code style="color: #A00000;" class="`+errorclass+`">`+strings.TrimSpace(errormessage)+`</code></pre>
+	  <pre><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
 	</div>
 	<div id="right">
-	`+versionString+`
+	` + versionString + `
 	</div>
   </body>
 </html>`)
+
+	if autoRefresh {
+		// Insert JavaScript for refreshing the page into the generated HTML
+		htmldata = insertAutoRefresh(htmldata)
+	}
+
+	w.Write(htmldata)
 }
