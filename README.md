@@ -61,6 +61,7 @@ Features and limitations
 * Will not run without a Redis server to connect to.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No processes that listens for changes to files needs to be running in the background. Files are converted on the fly.
+* "/" must be added at the end of URLs that points to directories, for now. This is for scripts and templates to be able to correctly use the files that reside in the same directory.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now.
 
 
@@ -105,7 +106,7 @@ Redis offers good [data persistence](http://redis.io/topics/persistence).
 Screenshots
 -----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_057.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_062.png">
 
 *Screenshot of `algernon` and `redis` running in a terminal emulator.*
 
@@ -123,9 +124,23 @@ Screenshots
 
 --
 
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_threejs.png">
+
+*One of the poems of Algernon Charles Swinburne, with three rotating tori in the background.*
+*Uses CSS3 for the gaussian blur and [three.js](http://threejs.org) for the 3D graphics.*
+
+--
+
 <img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
 
-*Screenshot of the <strong>prettify</strong> example. Served from a single Lua script.*
+*Screenshot of the <strong>prettify</strong> sample. Served from a single Lua script.*
+
+--
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_react.png">
+
+*JSX transforms are built-in. Using [React](https://facebook.github.io/react/) with Algernon is pretty smooth.*
+
 
 
 Getting started
