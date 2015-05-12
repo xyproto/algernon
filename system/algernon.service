@@ -6,8 +6,8 @@ After=redis.service
 [Service]
 User=algernon
 Group=algernon
-ExecStart=/usr/bin/algernon --prod
-#ExecStart=/usr/bin/algernon --httponly --addr=:7000 /srv/algernon
+#ExecStart=/usr/bin/algernon --prod
+ExecStart=/usr/bin/algernon --httponly --addr=:7000 /srv/algernon
 CapabilityBoundingSet=
 PrivateTmp=true
 PrivateDevices=true
