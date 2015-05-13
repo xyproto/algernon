@@ -65,15 +65,15 @@ Features and limitations
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now.
 
 
-The pillars of Algernon
------------------------
+Several technologies, working together
+--------------------------------------
 
 ASCII diagram:
 
 ```
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
-|   Presentation                   |   Style                           |
+|   Web pages                      |   Styling                         |
 |                                  |                                   |
 |   Amber instead of HTML:         |   GCSS instead of CSS:            |
 |   * Easier to read and write.    |   * Easier to read and write.     |
@@ -91,9 +91,9 @@ ASCII diagram:
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
-|   Static documents               |   Database backend                |
+|   Markdown                       |   Database backend                |
 |                                  |                                   |
-|   Markdown for static pages:     |   Redis for the database:         |
+|   For static pages:              |   Redis for the database:         |
 |   * Easy content creation.       |   * Incredibly fast.              |
 |   * Easy to style with GCSS.     |   * Proven technology.            |
 |   * Can refresh when saving.     |   * Can scale up to 1000 nodes.   |
