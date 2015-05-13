@@ -70,7 +70,7 @@ Several technologies, working together
 
 ASCII diagram:
 
-```
+```text
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
 |   Web pages                      |   Styling                         |
