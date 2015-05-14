@@ -126,7 +126,7 @@ func main() {
 	if autoRefresh {
 		refresh, err := time.ParseDuration(eventRefresh)
 		if err != nil {
-			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead."))
+			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", eventRefresh, defaultEventRefresh))
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
 			refresh, _ = time.ParseDuration(defaultEventRefresh)
 		}
