@@ -18,7 +18,7 @@ import (
 //       Possibly by sending channels over channels.
 
 type (
-	// For buffering filesystem events
+	// TimeEventMap stores filesystem events
 	TimeEventMap map[time.Time]recwatch.Event
 
 	// For being able to sort slices of time
@@ -54,8 +54,8 @@ func Event(w http.ResponseWriter, id *uint64, message string, flush bool) {
 	}
 }
 
-// Attempt to flush the given ResponseWriter.
-// Return false if it wasn't a Flusher.
+// Flush can flush the given ResponseWriter.
+// Returns false if it wasn't an http.Flusher.
 func Flush(w http.ResponseWriter) bool {
 	flusher, ok := w.(http.Flusher)
 	if ok {
@@ -143,7 +143,7 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 	}
 }
 
-// Serve events on a dedicated port.
+// EventServer serves events on a dedicated port.
 // addr is the host address ([host][:port])
 // urlPath is the path to handle (ie /fs)
 // refresh is how often the event buffer should be checked and cleared.

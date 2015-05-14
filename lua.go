@@ -77,7 +77,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool, timeoutCloser bool, flushFunc func()) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool, flushFunc func()) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()

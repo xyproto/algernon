@@ -155,7 +155,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, false, flushFunc); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, flushFunc); err != nil {
 				errortext := err.Error()
 				filedata, err := read(filename)
 				if err != nil {
@@ -175,7 +175,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := runLua(w, req, filename, perm, luapool, true, flushFunc); err != nil {
+			if err := runLua(w, req, filename, perm, luapool, flushFunc); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
