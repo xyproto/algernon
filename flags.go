@@ -59,18 +59,18 @@ Available flags:
   --version                    Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
-  --autorefresh                Enable the event server and auto-refresh feature
+  -a, --autorefresh            Enable the event server and auto-refresh feature
   --prod                       Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Use /srv/algernon as the server
                                directory. Disable debug mode and auto-refresh.
-  --debug                      Enable debug mode
+  -d, --debug                  Enable debug mode
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
   --redis=[HOST][:PORT]        Connect to a remote Redis database ("` + defaultRedisColonPort + `")
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Save the verbose HTTP/2 log
-  --httponly                   Serve plain HTTP
+  -h, --httponly               Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --verbose                    Slightly more verbose logging
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
@@ -81,6 +81,10 @@ Available flags:
 
 // Parse the flags, return the default hostname
 func handleFlags() string {
+	// The short version of some flags
+	var serveJustHTTPShort, autoRefreshShort, debugModeShort bool
+
+	// The usage function that provides more help
 	flag.Usage = usage
 
 	// The default for running the redis server on Windows is to listen
@@ -111,7 +115,17 @@ func handleFlags() string {
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
 
+	// The short versions of some flags
+	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
+	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
+	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
+
 	flag.Parse()
+
+	// Consider the long and short versions of some flags
+	serveJustHTTP = serveJustHTTP || serveJustHTTPShort
+	autoRefresh = autoRefresh || autoRefreshShort
+	debugMode = debugMode || debugModeShort
 
 	// Change several defaults if production mode is enabled
 	if productionMode {

@@ -6,22 +6,29 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/xyproto/permissions2"
 	"github.com/yuin/gopher-lua"
 )
 
 // Write a status message to a buffer, given a name and a bool
-func writeStatus(buf *bytes.Buffer, name string, enabled bool) {
-	extraTab := ""
-	if len(name) <= 14 { // Spartan way of lining up the columns
-		extraTab = "\t"
+func writeStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
+	buf.WriteString(title + ":")
+	// Spartan way of lining up the columns
+	if len(title) <= 14 {
+		buf.WriteString("\t")
 	}
-	if enabled {
-		buf.WriteString(name + ":\t" + extraTab + "Enabled\n")
-	} else {
-		buf.WriteString(name + ":\t" + extraTab + "Disabled\n")
+	buf.WriteString("\t\t[")
+	var enabledFlags []string
+	// Add all enabled flags to the list
+	for name, enabled := range flags {
+		if enabled {
+			enabledFlags = append(enabledFlags, name)
+		}
 	}
+	buf.WriteString(strings.Join(enabledFlags, ", "))
+	buf.WriteString("]\n")
 }
 
 // Make functions related to server configuration and permissions available
@@ -95,15 +102,25 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 		return 0 // number of results
 	}))
 
-	// Set debug mode to true or false
+	// Set debug mode to true
+	// Can only be used to turn debug mode on, not off
+	// Deprecated
 	L.SetGlobal("SetDebug", L.NewFunction(func(L *lua.LState) int {
-		debugMode = L.ToBool(1)
+		log.Info("SetDebug has been deprecated")
+		if (!debugMode) && L.ToBool(1) {
+			debugMode = true
+		}
 		return 0 // number of results
 	}))
 
-	// Set verbose to true or false
+	// Set verbose to true
+	// Can only be used to turn verbose on, not off
+	// Deprecated
 	L.SetGlobal("SetVerbose", L.NewFunction(func(L *lua.LState) int {
-		verboseMode = L.ToBool(1)
+		log.Info("SetVerbose has been deprecated")
+		if (!verboseMode) && L.ToBool(1) {
+			verboseMode = true
+		}
 		return 0 // number of results
 	}))
 
@@ -132,14 +149,18 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	}))
 
 	L.SetGlobal("ServerInfo", L.NewFunction(func(L *lua.LState) int {
-		// Using a buffer is faster for gathering larger amounts
-		// of text but there is no need for optimization here.
 		var buf bytes.Buffer
+
 		buf.WriteString("Server directory:\t" + serverDir + "\n")
 		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
-		writeStatus(&buf, "Debug mode", debugMode)
-		writeStatus(&buf, "Auto-refresh", autoRefresh)
-		writeStatus(&buf, "Production mode", productionMode)
+
+		// Write the status of flags that can be toggled
+		writeStatus(&buf, "Flags", map[string]bool{
+			"Debug mode":      debugMode,
+			"Production mode": productionMode,
+			"Auto-refresh":    autoRefresh,
+		})
+
 		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
 		buf.WriteString("TLS key:\t\t" + serverKey + "\n")
 		if autoRefresh {

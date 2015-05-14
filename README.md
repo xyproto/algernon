@@ -530,8 +530,6 @@ Lua functions that are only available for the server configuration file
 * `AddUserPrefix(string)` add an URL prefix that will have *user* rights.
 * `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
 * `ServerInfo() -> string` return a string with various server information.
-* `SetDebug(bool)` enables or disables debug mode, where debug information is exposed to the client.
-* `SetVerbose(bool)` enables or disables additional log messages.
 * `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
 * `version()` returns the version string for the server.
 * `log(...)` logs the given strings as INFO. Takes a variable number of strings.
