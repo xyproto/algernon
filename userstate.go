@@ -86,6 +86,11 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		L.Push(lua.LBool(nil == userstate.SetUsernameCookie(w, username)))
 		return 1 // number of results
 	}))
+	// Clear the user cookie. The result depends on the browser.
+	L.SetGlobal("ClearCookie", L.NewFunction(func(L *lua.LState) int {
+		userstate.ClearCookie(w)
+		return 0 // number of results
+	}))
 	// Get the username stored in a cookie, or an empty string
 	// Takes no arguments
 	L.SetGlobal("AllUsernames", L.NewFunction(func(L *lua.LState) int {
