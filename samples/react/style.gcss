@@ -1,0 +1,14 @@
+// Common style for the tutorials
+
+body
+  background-color: #d0d0d0
+  color: black
+  margin: 3em 0 0 4em
+  font-family: monaco, consolas, monospace
+  font-size: 1.2em
+
+a
+  color: darkblue
+
+a:hover
+  color: blue
