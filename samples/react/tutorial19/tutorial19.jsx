@@ -107,6 +107,6 @@ var Comment = React.createClass({
 
 // Render the CommentBox element
 React.render(
-  <CommentBox url="comments.lua" pollInterval={2000} />,
+  <CommentBox url="comments/" pollInterval={2000} />,
   document.getElementById('content')
 );
