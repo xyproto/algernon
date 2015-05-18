@@ -91,7 +91,8 @@ Authentication and authorization
 Lua
 ---
 
-- [ ] Add a Lua function for priting Lua tables
+- [ ] Add a function for priting Lua tables
+- [ ] Add a function for fetching a value from a table, or a blank string
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday
 - [ ] A way to store and load functions to the database:
       register("namespace name", "function name", luafunction)
