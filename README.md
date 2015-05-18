@@ -68,6 +68,12 @@ Features and limitations
 Several technologies, working together
 --------------------------------------
 
+Running Algernon:
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_062.png">
+
+---
+
 ASCII diagram:
 
 ```text
@@ -106,40 +112,34 @@ Redis offers good [data persistence](http://redis.io/topics/persistence).
 Screenshots
 -----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_062.png">
-
-*Screenshot of `algernon` and `redis` running in a terminal emulator.*
-
---
-
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_markdown.png">
 
 *Markdown can easily be styled with GCSS.*
 
---
+---
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_lua_error.png">
 
 *This is how errors in Lua scripts are handled, when Debug mode is enabled.*
 
---
+---
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_threejs.png">
 
 *One of the poems of Algernon Charles Swinburne, with three rotating tori in the background.*
 *Uses CSS3 for the gaussian blur and [three.js](http://threejs.org) for the 3D graphics.*
 
---
+---
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
 
 *Screenshot of the <strong>prettify</strong> sample. Served from a single Lua script.*
 
---
+---
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_react.png">
 
-*JSX transforms are built-in. Using [React](https://facebook.github.io/react/) with Algernon is pretty smooth.*
+*JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is a breeze.*
 
 
 
