@@ -398,7 +398,7 @@ UsernameCookie() -> string
 // Store the username in a cookie, returns true if successful
 SetUsernameCookie(string) -> bool
 
-// Clear the user cookie
+// Clear the login cookie
 ClearCookie()
 
 // Get a table containing all usernames
