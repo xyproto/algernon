@@ -60,8 +60,7 @@ Features and limitations
 * No support for internal caching, yet.
 * Will not run without a Redis server to connect to.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
-* No processes that listens for changes to files needs to be running in the background. Files are converted on the fly.
-* "/" must be added at the end of URLs that points to directories, for now. This is for scripts and templates to be able to correctly use the files that reside in the same directory.
+* No processes that listens for file changes and converts files needs to be running in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now.
 
 

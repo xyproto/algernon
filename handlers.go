@@ -256,8 +256,14 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	w.Write(htmldata)
 }
 
-// When serving a directory. The directory must exist. Must be given a full filename.
+// When serving a directory.
+// The directory must exist. Must be given a full filename.
 func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm *permissions.Permissions, luapool *lStatePool) {
+	// If the URL does not end with a slash, redirect to an URL that does
+	if !strings.HasSuffix(req.URL.Path, "/") {
+		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
+		return
+	}
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := path.Join(dirname, indexfile)
