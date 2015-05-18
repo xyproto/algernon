@@ -1,0 +1,2 @@
+div[class="item"]
+  img[class="item-content"][src="svg/lines.svg"]

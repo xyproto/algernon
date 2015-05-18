@@ -1,0 +1,22 @@
+doctype 5
+html
+  head
+    title Tiles
+    script[type="text/javascript"][src="js/masonry.pkgd.min.js"]
+    script[type="text/javascript"][src="js/classie.js"]
+  body
+    h1 Clickable tiles
+    div[class="masonry"]
+      div[class="grid-sizer"]
+      import templates/samurai
+      import templates/highlights
+      import templates/palm
+      import templates/lines
+      import templates/samurai
+      import templates/highlights
+      import templates/palm
+      import templates/lines
+      import templates/samurai
+      import templates/highlights
+    script[type="text/javascript"][src="js/main.js"]
+
