@@ -4,5 +4,5 @@ html
     title React example
     script[src="//cdnjs.cloudflare.com/ajax/libs/react/0.13.2/react.js"]
   body
-    div[id="example"]
+    div[id="content"]
     script[src="hello.jsx"]
