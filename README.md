@@ -58,10 +58,10 @@ Features and limitations
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * No support for internal caching, yet.
-* Will not run without a Redis server to connect to.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
-* No processes that listens for file changes and converts files needs to be running in the background (like for SASS). Files are converted on the fly.
-* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now.
+* No file converters needs to run in the background (like for SASS). Files are converted on the fly.
+* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
+* Will not run without a Redis server to connect to.
 
 
 Several technologies, working together
@@ -223,7 +223,7 @@ Lua functions for handling requests
 
 * `content(string)` set the Content-Type for a page.
 * `method()` return the requested HTTP method (GET, POST etc).
-* `print(...)` output data to the browser/client. Takes a variable number of strings.
+* `print(...)` output text to the browser/client. Takes a variable number of strings.
 * `urlpath()` return the requested URL path.
 * `header(string)` return the HTTP header in the request, for a given key, or an empty string.
 * `setheader(string, string)` set an HTTP header given a key and a value.
@@ -281,14 +281,14 @@ List(string) -> userdata
 list:add(string)
 
 // Get all members of the list
-list::getall() -> table
+list:getall() -> table
 
 // Get the last element of the list
 // The returned value can be empty
-list::getlast() -> string
+list:getlast() -> string
 
 // Get the N last elements of the list
-list::getlastn(number) -> table
+list:getlastn(number) -> table
 
 // Remove the list itself. Returns true if successful.
 list:remove() -> bool
@@ -320,7 +320,7 @@ hash:has(string, string) -> bool
 hash:exists(string) -> bool
 
 // Get all keys of the hash map
-hash::getall() -> table
+hash:getall() -> table
 
 // Remove a key for an entry in a hash map
 // (for instance the email field for a user)
@@ -530,7 +530,7 @@ Lua functions that are only available for the server configuration file
 * `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
 * `ServerInfo() -> string` return a string with various server information.
 * `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
-* `version()` returns the version string for the server.
+* `version() -> string` returns the version string for the server.
 * `log(...)` logs the given strings as INFO. Takes a variable number of strings.
 * `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
 * `OnReady(function)` provide a lua function that will be run once, when the server is ready to start serving.
