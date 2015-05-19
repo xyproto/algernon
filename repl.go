@@ -122,13 +122,13 @@ func pprint(value lua.LValue) {
 		}
 		switch m := mapinterface.(type) {
 		case map[string]string:
-			fmt.Printf("%v", map[string]string(m))
+			fmt.Printf("%v\n", map[string]string(m))
 		case map[string]int:
-			fmt.Printf("%v", map[string]int(m))
+			fmt.Printf("%v\n", map[string]int(m))
 		case map[int]string:
-			fmt.Printf("%v", map[int]string(m))
+			fmt.Printf("%v\n", map[int]string(m))
 		case map[int]int:
-			fmt.Printf("%v", map[int]int(m))
+			fmt.Printf("%v\n", map[int]int(m))
 		default:
 			fmt.Println(v)
 		}

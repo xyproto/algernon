@@ -137,6 +137,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 	// For handling JSON data
 	exportJSONFunctions(L)
+
+	// pprint
+	exportREPL(L)
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
