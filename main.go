@@ -134,6 +134,10 @@ func main() {
 		EventServer(eventAddr, defaultEventPath, serverDir, refresh, "*")
 	}
 
+	if interactiveMode {
+		go REPL(perm, luapool)
+	}
+
 	// Decide which protocol to listen to
 	switch {
 	case productionMode:

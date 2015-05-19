@@ -34,7 +34,7 @@ var (
 	redisDBindex int
 
 	// Server modes
-	debugMode, verboseMode, productionMode bool
+	debugMode, verboseMode, productionMode, interactiveMode bool
 
 	// For the Server-Sent Event (SSE) server
 	eventAddr    string
@@ -59,7 +59,7 @@ Available flags:
   --version                    Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
-  -a, --autorefresh            Enable the event server and auto-refresh feature
+  -a, --autorefresh            Enable the event server and auto-refresh feature.
   --prod                       Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Use /srv/algernon as the server
                                directory. Disable debug mode and auto-refresh.
@@ -76,6 +76,7 @@ Available flags:
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
+  -i                           Interactive mode
 `)
 }
 
@@ -114,6 +115,7 @@ func handleFlags() string {
 	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
+	flag.BoolVar(&interactiveMode, "i", false, "Interactive mode")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")

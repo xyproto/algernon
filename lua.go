@@ -46,6 +46,67 @@ func map2table(L *lua.LState, m map[string]string) *lua.LTable {
 	return table
 }
 
+// Convert a Lua table to one of the following types, depending on the content:
+// map[string]string, map[string]int, map[int]string, map[int]int
+// If no suitable keys and values are found, a nil interface is returned.
+// If several different types are found, multiple is set to true.
+func table2map(luaTable *lua.LTable) (interface{}, bool) {
+
+	// Initialize possible maps we want to convert to
+	mapSS := make(map[string]string)
+	mapSI := make(map[string]int)
+	mapIS := make(map[int]string)
+	mapII := make(map[int]int)
+
+	var skey, svalue lua.LString
+	var ikey, ivalue lua.LNumber
+	var hasSkey, hasIkey, hasSvalue, hasIvalue bool
+
+	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
+
+		// Convert the keys and values to strings or ints
+		skey, hasSkey = tkey.(lua.LString)
+		ikey, hasIkey = tkey.(lua.LNumber)
+		svalue, hasSvalue = tvalue.(lua.LString)
+		ivalue, hasIvalue = tvalue.(lua.LNumber)
+
+		// Store the right keys and values in the right maps
+		if hasSkey && hasSvalue {
+			mapSS[skey.String()] = svalue.String()
+		} else if hasSkey && hasIvalue {
+			mapSI[skey.String()] = int(ivalue)
+		} else if hasIkey && hasSvalue {
+			mapIS[int(ikey)] = svalue.String()
+		} else if hasIkey && hasIvalue {
+			mapII[int(ikey)] = int(ivalue)
+		}
+	})
+
+	lss := len(mapSS)
+	lsi := len(mapSI)
+	lis := len(mapIS)
+	lii := len(mapII)
+
+	total := lss + lsi + lis + lii
+
+	// Return the first map that has values
+	if lss > 0 {
+		//log.Println(key, "STRING -> STRING map")
+		return interface{}(mapSS), lss < total
+	} else if lsi > 0 {
+		//log.Println(key, "STRING -> INT map")
+		return interface{}(mapSI), lsi < total
+	} else if lis > 0 {
+		//log.Println(key, "INT -> STRING map")
+		return interface{}(mapIS), lis < total
+	} else if lii > 0 {
+		//log.Println(key, "INT -> INT map")
+		return interface{}(mapII), lii < total
+	}
+
+	return nil, false
+}
+
 // Return a *lua.LState object that contains several exposed functions
 func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState, luapool *lStatePool, flushFunc func()) {
 
@@ -73,6 +134,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	exportSet(L, userstate)
 	exportHash(L, userstate)
 	exportKeyValue(L, userstate)
+
+	// For handling JSON data
+	exportJSONFunctions(L)
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
@@ -172,6 +236,9 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
 	exportHash(L, userstate)
 	exportKeyValue(L, userstate)
 
+	// For handling JSON data
+	exportJSONFunctions(L)
+
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
 		// Close the Lua state
@@ -229,49 +296,18 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 
 		} else if luaTable, ok := value.(*lua.LTable); ok {
 
-			// Set up the possible mappings
-			mapSS := make(map[string]string)
-			mapSI := make(map[string]int)
-			mapIS := make(map[int]string)
-			mapII := make(map[int]int)
-
-			var skey, svalue lua.LString
-			var ikey, ivalue lua.LNumber
-			var hasSkey, hasIkey, hasSvalue, hasIvalue bool
-
-			luaTable.ForEach(func(tkey, tvalue lua.LValue) {
-
-				// Convert the keys and values to strings or ints
-				skey, hasSkey = tkey.(lua.LString)
-				ikey, hasIkey = tkey.(lua.LNumber)
-				svalue, hasSvalue = tvalue.(lua.LString)
-				ivalue, hasIvalue = tvalue.(lua.LNumber)
-
-				// Store the right keys and values in the right maps
-				if hasSkey && hasSvalue {
-					mapSS[skey.String()] = svalue.String()
-				} else if hasSkey && hasIvalue {
-					mapSI[skey.String()] = int(ivalue)
-				} else if hasIkey && hasSvalue {
-					mapIS[int(ikey)] = svalue.String()
-				} else if hasIkey && hasIvalue {
-					mapII[int(ikey)] = int(ivalue)
-				}
-			})
-
-			// Make the first map that has values available
-			if len(mapSS) > 0 {
-				//log.Println(key, "STRING -> STRING map")
-				funcs[key.String()] = mapSS
-			} else if len(mapSI) > 0 {
-				//log.Println(key, "STRING -> INT map")
-				funcs[key.String()] = mapSI
-			} else if len(mapIS) > 0 {
-				//log.Println(key, "STRING -> INT map")
-				funcs[key.String()] = mapIS
-			} else if len(mapII) > 0 {
-				//log.Println(key, "INT -> INT map")
-				funcs[key.String()] = mapII
+			// Convert the table to a map and save it.
+			// Ignore values of a different type.
+			mapinterface, _ := table2map(luaTable)
+			switch m := mapinterface.(type) {
+			case map[string]string:
+				funcs[key.String()] = map[string]string(m)
+			case map[string]int:
+				funcs[key.String()] = map[string]int(m)
+			case map[int]string:
+				funcs[key.String()] = map[int]string(m)
+			case map[int]int:
+				funcs[key.String()] = map[int]int(m)
 			}
 
 			// Check if the current value is a function
