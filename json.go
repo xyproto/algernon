@@ -19,6 +19,7 @@ func exportJSONFunctions(L *lua.LState) {
 		b, err := json.Marshal(mapinterface)
 		if err != nil {
 			log.Error(err)
+			return 0 // number of results
 		}
 		L.Push(lua.LString(string(b)))
 		return 1 // number of results

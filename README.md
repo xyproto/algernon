@@ -243,7 +243,7 @@ Lua functions for formatted output
 * `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 * `jprint(...)` output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 * `JSON(table)` return a JSON string, given a Lua table with ints or strings.
-* `pprint(value)` tries to extract more information about a given Lua value. Returns a string.
+* `pprint(value)` tries to extract and print the contents of a Lua value.
 
 
 Lua functions for Redis data structures

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bobappleyard/readline"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/term"
@@ -104,41 +105,42 @@ ServerInfo() -> string
 version() -> string
 // Marshall a table to JSON
 JSON(table) -> string
-// Try to extract the contents of a Lua value
-pprint(value) -> string
+// Try to extract and print the contents of a Lua value
+pprint(value)
 // Sleep the given number of seconds (can be a float)
 sleep(number)
 `
 )
 
-// Attempt to return a more informative text than the memory location
-func pprint(value lua.LValue) string {
+// Attempt to output a more informative text than the memory location
+func pprint(value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:
 		mapinterface, multiple := table2map(v)
 		if multiple {
-			return v.String()
+			fmt.Println(v)
 		}
 		switch m := mapinterface.(type) {
 		case map[string]string:
-			return fmt.Sprintf("%v", map[string]string(m))
+			fmt.Printf("%v", map[string]string(m))
 		case map[string]int:
-			return fmt.Sprintf("%v", map[string]int(m))
+			fmt.Printf("%v", map[string]int(m))
 		case map[int]string:
-			return fmt.Sprintf("%v", map[int]string(m))
+			fmt.Printf("%v", map[int]string(m))
 		case map[int]int:
-			return fmt.Sprintf("%v", map[int]int(m))
+			fmt.Printf("%v", map[int]int(m))
 		default:
-			return v.String()
+			fmt.Println(v)
 		}
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function
-			return v.Proto.String()
+			fmt.Println(v.Proto)
+		} else {
+			fmt.Println(v)
 		}
-		return v.String()
 	default:
-		return v.String()
+		fmt.Println(v)
 	}
 }
 
@@ -147,8 +149,8 @@ func exportREPL(L *lua.LState) {
 
 	// Attempt to return a more informative text than the memory location
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
-		L.Push(lua.LString(pprint(L.Get(1))))
-		return 1 // number of results
+		pprint(L.Get(1))
+		return 0 // number of results
 	}))
 
 }
@@ -231,17 +233,40 @@ func REPL(perm *permissions.Permissions, luapool *lStatePool) error {
 	// Colors and input
 	o := term.NewTextOutput(true, true)
 
-	o.Println(o.LightGreen(versionString))
+	o.Println(o.LightBlue(versionString))
 	o.Println(o.LightGreen("Ready"))
 
 	var (
 		line        string
 		err         error
 		printWorked bool
+		prompt      = o.LightGreen("lua> ")
+		EOF         bool
 	)
 	for {
 		// Retrieve user input
-		line = strings.TrimSpace(term.Ask(o.LightGreen("lua> ")))
+		EOF = false
+		if line, err = readline.String(prompt); err != nil {
+			if err.Error() == "EOF" {
+				if debugMode {
+					o.Println(o.LightPurple(err.Error()))
+				}
+				EOF = true
+			} else {
+				log.Error("Error reading line(" + err.Error() + ").")
+				continue
+			}
+		} else {
+			readline.AddHistory(line)
+		}
+
+		if EOF {
+			o.Err("EOF")
+			return nil
+		}
+
+		//line = term.Ask(prompt)
+		line = strings.TrimSpace(line)
 
 		switch line {
 		case "help":
@@ -258,7 +283,7 @@ func REPL(perm *permissions.Permissions, luapool *lStatePool) error {
 		// If the line doesn't start with print, try adding it
 		printWorked = false
 		if !strings.HasPrefix(line, "print(") {
-			printWorked = nil == L.DoString("print(pprint("+line+"))")
+			printWorked = nil == L.DoString("pprint("+line+")")
 		}
 		if !printWorked {
 			if err = L.DoString(line); err != nil {
