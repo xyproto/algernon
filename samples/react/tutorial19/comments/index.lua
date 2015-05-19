@@ -1,19 +1,13 @@
 content("application/javascript")
 setheader("Cache-Control", "no-cache")
 
+-- Make the comment List in Redis available for use
+comments = List("comments")
+
 if method() == "POST" then
-  local data = formdata()
-
-  -- To be implemented
-  -- See https://github.com/reactjs/react-tutorial/blob/master/server.go
-
-  data={author=data["author"], text=data["text"]}
-  log(JSON(data))
+  -- Add the form data to the comment list, as JSON
+  comments:add(JSON(formdata()))
 else
-  print([[
-  [
-    {"author": "Pete Hunt", "text": "This is one comment"},
-    {"author": "Jordan Walke", "text": "This is *another* comment"}
-  ]
-  ]])
+  -- Combine all the JSON comments to a JSON document
+  print("["..table.concat(comments:getall(), ",").."]")
 end
