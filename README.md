@@ -62,6 +62,7 @@ Features and limitations
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Will not run without a Redis server to connect to.
+* Includes an interactive REPL.
 
 
 Several technologies, working together
