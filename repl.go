@@ -72,10 +72,8 @@ kv:del(string) -> bool
 // Remove the KeyValue itself. Returns true if successful.
 kv:remove() -> bool
 
-Server configuration
+Live server configuration
 
-// Set the default address for the server on the form [host][:port].
-SetAddr(string)
 // Reset the URL prefixes and make everything *public*.
 ClearPermissions()
 // Add an URL prefix that will have *admin* rights.
@@ -86,8 +84,6 @@ AddUserPrefix(string)
 DenyHandler(function)
 // Log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
 LogTo(string) -> bool
-// Provide a lua function that will be run once, when the server is ready to start serving.
-OnReady(function)
 
 Output
 
