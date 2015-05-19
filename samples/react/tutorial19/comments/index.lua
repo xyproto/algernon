@@ -6,9 +6,9 @@ if method() == "POST" then
 
   -- To be implemented
   -- See https://github.com/reactjs/react-tutorial/blob/master/server.go
-  log("author: "..data["author"])
-  log("text: "..data["text"])
-  print("ok")
+
+  data={author=data["author"], text=data["text"]}
+  log(JSON(data))
 else
   print([[
   [
