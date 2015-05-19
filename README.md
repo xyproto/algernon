@@ -235,7 +235,6 @@ Lua functions for handling requests
 * `serve(string)` serve a file that exists in the same directory as the script.
 * `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 
-
 Lua functions for formatted output
 ----------------------------------
 
@@ -243,6 +242,8 @@ Lua functions for formatted output
 * `aprint(...)` output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
 * `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 * `jprint(...)` output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
+* `JSON(table)` return a JSON string, given a Lua table with ints or strings.
+* `pprint(value)` tries to extract more information about a given Lua value. Returns a string.
 
 
 Lua functions for Redis data structures
@@ -460,7 +461,7 @@ Login(string)
 // Takes a username. Returns true if the cookie was set successfully.
 CookieLogin(string) -> bool
 
-// Logs out a user, on the server (which is enough)
+// Log out a user, on the server (which is enough)
 // Takes a username
 Logout(string)
 
