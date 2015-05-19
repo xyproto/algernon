@@ -17,7 +17,7 @@ const (
 
 var (
 	// List of configuration filenames to check
-	serverConfigurationFilenames = []string{"/etc/algernon/server.lua"}
+	serverConfigurationFilenames = []string{"/etc/algernon/serverconf.lua"}
 
 	// Configuration that is exposed to the server configuration script(s)
 	serverDir, serverAddr, serverCert, serverKey, serverConfScript, serverHTTP2log string
@@ -104,7 +104,7 @@ func handleFlags() string {
 	flag.StringVar(&serverKey, "key", "key.pem", "Server key")
 	flag.StringVar(&redisAddr, "redis", host+defaultRedisColonPort, "Redis [host][:port] (ie \""+defaultRedisColonPort+"\")")
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
-	flag.StringVar(&serverConfScript, "conf", "server.lua", "Server configuration")
+	flag.StringVar(&serverConfScript, "conf", "serverconf.lua", "Server configuration")
 	flag.StringVar(&serverHTTP2log, "http2log", "/dev/null", "HTTP/2 log")
 	flag.BoolVar(&serveJustHTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 	flag.BoolVar(&serveJustHTTP, "httponly", false, "Serve plain old HTTP")
