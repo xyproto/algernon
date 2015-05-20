@@ -20,7 +20,6 @@ end
 
 function main()
   log("Streaming events")
-  log("Turn off buffering for this to work properly (turn off debug mode)")
 
   -- The following must take < 10 seconds, before the request times out
   event("one event")
