@@ -17,18 +17,18 @@ var (
 	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 )
 
-// Check if a given filename is a directory
-func isDir(filename string) bool {
-	fs, err := os.Stat(filename)
+// Check if a given path is a directory
+func isDir(path string) bool {
+	fs, err := os.Stat(path)
 	if err != nil {
 		return false
 	}
 	return fs.IsDir()
 }
 
-// Check if the given filename exists
-func exists(filename string) bool {
-	_, err := os.Stat(filename)
+// Check if a given path exists
+func exists(path string) bool {
+	_, err := os.Stat(path)
 	return err == nil
 }
 
