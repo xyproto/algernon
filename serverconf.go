@@ -151,7 +151,11 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 	L.SetGlobal("ServerInfo", L.NewFunction(func(L *lua.LState) int {
 		var buf bytes.Buffer
 
-		buf.WriteString("Server directory:\t" + serverDir + "\n")
+		if !singleFileMode {
+			buf.WriteString("Server directory:\t" + serverDir + "\n")
+		} else {
+			buf.WriteString("Filename:\t\t" + serverDir + "\n")
+		}
 		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
 
 		// Write the status of flags that can be toggled

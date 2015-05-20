@@ -7,6 +7,7 @@ import (
 	internallog "log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bradfitz/http2"
@@ -79,12 +80,21 @@ func main() {
 		filename := serverDir
 		// Check if the file exists
 		if exists(filename) {
-			// Serve the given Markdown file as a static HTTP server
-			serveStaticFile(filename, defaultWebColonPort)
-			return
+			if strings.HasSuffix(filename, ".md") {
+				// Serve the given Markdown file as a static HTTP server
+				serveStaticFile(filename, defaultWebColonPort)
+				return
+			}
+			singleFileMode = true
 		} else {
 			log.Fatal("File does not exist: ", filename)
 		}
+	}
+
+	// Make a few changes to the defaults if we are serving a single file
+	if singleFileMode {
+		debugMode = true
+		serveJustHTTP = true
 	}
 
 	// TODO: Run a Redis clone in RAM if no server is available.

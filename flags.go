@@ -42,6 +42,9 @@ var (
 
 	// Enable the event server and inject JavaScript to reload pages when sources change
 	autoRefresh bool
+
+	// If serving a single file, like a lua script
+	singleFileMode bool
 )
 
 func usage() {
