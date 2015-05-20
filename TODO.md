@@ -4,6 +4,8 @@
 Priority
 --------
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
+- [ ] A way to extend Algernon with Go
+- [ ] Use the JSON code from https://github.com/layeh/gopher-json
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
