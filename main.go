@@ -70,6 +70,9 @@ func main() {
 	// Request handlers
 	mux := http.NewServeMux()
 
+	// Read mime data from the system, if available
+	initializeMime()
+
 	// Check if the given directory really is a directory
 	if !isDir(serverDir) {
 		// Possibly a file

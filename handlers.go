@@ -186,7 +186,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *p
 	}
 
 	// Set the correct Content-Type
-	mimereader.SetHeader(w, ext)
+	if mimereader != nil {
+		mimereader.SetHeader(w, ext)
+	} else {
+		log.Error("Uninitialized mimereader!")
+	}
 	// Write to the ResponseWriter, from the File
 	file, err := os.Open(filename)
 	defer file.Close()
@@ -281,10 +285,13 @@ func noPage(filename string) string {
 	return easyPage("Not found", "File not found: "+filename)
 }
 
-// Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions, luapool *lStatePool) {
+func initializeMime() {
 	// Read in the mimetype information from the system. Set UTF-8 when setting Content-Type.
 	mimereader = mime.New("/etc/mime.types", true)
+}
+
+// Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
+func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions, luapool *lStatePool) {
 	rootdir := servedir
 
 	// Handle all requests with this function
