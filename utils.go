@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
 )
@@ -77,13 +77,12 @@ func easyPage(title, body string) string {
 
 // Easy way to build links to directories
 func easyLink(text, url string, isDirectory bool) string {
+	// Add a final slash, if needed
 	if isDirectory {
 		text += "/"
+		url += "/"
 	}
-	// NOTE: If the directory only contains one index.* file, adding "/" to
-	// the URL is not needed, because no other files will be needed to be
-	// accessed from that directory by the index file in question.
-	return "<a href=\"/" + url + "/\">" + text + "</a><br>"
+	return "<a href=\"/" + url + "\">" + text + "</a><br>"
 }
 
 // Build up a string on the form "functionname(arg1, arg2, arg3)"
