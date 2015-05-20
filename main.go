@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.63"
-	description   = "Web Server"
+	versionString = "Algernon 0.64"
+	description   = "HTTP/2 Web Server"
 )
 
 var (
