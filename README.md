@@ -30,8 +30,8 @@ Design decisions
     * index.html is outputted as it is, with the correct Content-Type.
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML.
-    * data.lua is interpreted as Lua code, where the functions are made available for index.amber in the same directory.
-    * style.gcss is used as the style for index.amber or index.md, if present.
+    * data.lua is interpreted as Lua code, where the functions and variables are made available for Amber and Markdown pages in the same directory.
+    * style.gcss is used as the style for Amber and Markdown pages in the same directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
     * .amber is interpreted as Amber and rendered as a HTML page.
@@ -63,6 +63,7 @@ Features and limitations
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Will not run without a Redis server to connect to.
 * Includes an interactive REPL.
+* If only given a Markdown filename as the first argument, it will be served on port 3000, without using Redis, as regular HTTP. Handy for viewing `README.md` files locally.
 
 
 Several technologies, working together
@@ -139,7 +140,7 @@ Screenshots
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_react.png">
 
-*JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is a breeze.*
+*JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
 
 
 
