@@ -70,6 +70,20 @@ func main() {
 	// Request handlers
 	mux := http.NewServeMux()
 
+	// Check if the given directory really is a directory
+	if !isDir(serverDir) {
+		// Possibly a file
+		filename := serverDir
+		// Check if the file exists
+		if exists(filename) {
+			// Serve the given Markdown file as a static HTTP server
+			serveStaticFile(filename, defaultWebColonPort)
+			return
+		} else {
+			log.Fatal("File does not exist: ", filename)
+		}
+	}
+
 	// TODO: Run a Redis clone in RAM if no server is available.
 	if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
 		log.Info("A Redis database is required.")
@@ -123,6 +137,7 @@ func main() {
 
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
+	// Can also be used when serving a single file.
 	if autoRefresh {
 		refresh, err := time.ParseDuration(eventRefresh)
 		if err != nil {
@@ -142,7 +157,7 @@ func main() {
 	switch {
 	case productionMode:
 		go func() {
-			log.Info("Serving HTTPS + HTTP/2 on port 443")
+			log.Info("Serving HTTPS + HTTP/2 on " + serverHost + ":443")
 			HTTPSserver := newServerConfiguration(mux, true, serverHost+":443")
 			// Listen for HTTPS + HTTP/2 requests
 			err := HTTPSserver.ListenAndServeTLS(serverCert, serverKey)
@@ -150,21 +165,21 @@ func main() {
 				log.Error(err)
 			}
 		}()
-		log.Info("Serving HTTP on port 80")
+		log.Info("Serving HTTP on " + serverHost + ":80")
 		HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
 			log.Fatal(err)
 		}
 	case serveJustHTTP2:
-		log.Info("Serving HTTP/2")
+		log.Info("Serving HTTP/2 on " + serverAddr)
 		// Listen for HTTP/2 requests
 		HTTP2server := newServerConfiguration(mux, true, serverAddr)
 		if err := HTTP2server.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	case !(serveJustHTTP2 || serveJustHTTP):
-		log.Info("Serving HTTPS + HTTP/2")
+		log.Info("Serving HTTPS + HTTP/2 on " + serverAddr)
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newServerConfiguration(mux, true, serverAddr)
 		err := HTTPS2server.ListenAndServeTLS(serverCert, serverKey)
@@ -178,7 +193,7 @@ func main() {
 		}
 		fallthrough
 	default:
-		log.Info("Serving HTTP")
+		log.Info("Serving HTTP on " + serverAddr)
 		HTTPserver := newServerConfiguration(mux, false, serverAddr)
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP, give up
