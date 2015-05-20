@@ -173,13 +173,13 @@ Getting started
 
 ##### The "bob" sample, over https
 
-* Run `./servebob.sh` to start serving the "bob" sample.
+* Run `./bob.sh` to start serving the "bob" sample.
 * Visit `https://localhost:3000/` (*note*: `https`)
 * Stop the script to stop serving.
 
 ##### All the samples, over http, with auto-refresh enabled
 
-* Run `./samples.sh` to start serving the sample directory.
+* Run `./runsamples.sh` to start serving the sample directory.
 * Visit `http://localhost:3000/` (*note*: `http`)
 * Stop the script to stop serving.
 
