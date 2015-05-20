@@ -48,8 +48,10 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Sleep for the given number of seconds (can be a float)
 	L.SetGlobal("sleep", L.NewFunction(func(L *lua.LState) int {
-		seconds := float64(L.ToNumber(1))
-		time.Sleep(time.Second * time.Duration(seconds))
+		// Extract the correct number of nanoseconds
+		duration := time.Duration(float64(L.ToNumber(1)) * 1000000000.0)
+		// Wait and block the current thread of execution.
+		time.Sleep(duration)
 		return 0
 	}))
 
