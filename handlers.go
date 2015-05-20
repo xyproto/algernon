@@ -308,10 +308,8 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Per
 		hasdir := exists(filename) && isDir(filename)
 		hasfile := exists(noslash)
 
-		// TODO: Only set the server header if configured to do so
-
 		// Set the server header.
-		w.Header().Set("Server", "Algernon")
+		w.Header().Set("Server", versionString)
 
 		// Share the directory or file
 		if hasdir {
