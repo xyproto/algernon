@@ -220,14 +220,14 @@ func insertAutoRefresh(htmldata []byte) []byte {
 	for strings.Contains(js, "  ") {
 		js = strings.Replace(js, "  ", " ", everyInstance)
 	}
-	// Place the script at the end of the body, if there is a body
-	if bytes.Contains(htmldata, []byte("</body>")) {
-		return bytes.Replace(htmldata, []byte("</body>"), []byte(js+"</body>"), 1)
-		// If not, place the script in the <head>, if there is a head
-	} else if bytes.Contains(htmldata, []byte("<head>")) {
+	// Place the script in the <head>, if there is a head
+	if bytes.Contains(htmldata, []byte("<head>")) {
 		return bytes.Replace(htmldata, []byte("<head>"), []byte("<head>"+js), 1)
-		// If not, place the script in the <html> as a new <head>
+	} else if bytes.Contains(htmldata, []byte("</body>")) {
+		// If not, Place the script at the end of the body, if there is a body
+		return bytes.Replace(htmldata, []byte("</body>"), []byte(js+"</body>"), 1)
 	} else if bytes.Contains(htmldata, []byte("<html>")) {
+		// If not, place the script in the <html> as a new <head>
 		return bytes.Replace(htmldata, []byte("<html>"), []byte("<html><head>"+js+"</head>"), 1)
 	}
 	// If no place to insert the JavaScript was found
