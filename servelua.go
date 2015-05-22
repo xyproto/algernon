@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissionbolt"
 	"github.com/yuin/gopher-lua"
 	"net/http"
 	"path"

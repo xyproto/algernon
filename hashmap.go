@@ -3,8 +3,9 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -12,7 +13,7 @@ import (
 const lHashClass = "HASH"
 
 // Get the first argument, "self", and cast it from userdata to a hash map.
-func checkHash(L *lua.LState) *simpleredis.HashMap {
+func checkHash(L *lua.LState) pinterface.IHashMap {
 	ud := L.CheckUserData(1)
 	if hash, ok := ud.Value.(*simpleredis.HashMap); ok {
 		return hash
@@ -161,10 +162,19 @@ var hashMethods = map[string]lua.LGFunction{
 	"remove":     hashRemove,
 }
 
+// TODO: Use an interface to discover if the userstate has a Pool and DatabaseIndex method or not
+type Pool interface
+
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportHash(L *lua.LState, userstate *permissions.UserState) {
-	pool := userstate.Pool()
-	dbindex := userstate.DatabaseIndex()
+func exportHash(L *lua.LState, userstate pinterface.IUserState, usesRedis bool) {
+	switch userstate.(type) {
+		case *permissions.UserState
+	}
+	if usesRedis {
+		redisUserstate := (*permissions.UserState)(userstate)
+		pool := userstate.Pool()
+		dbindex := userstate.DatabaseIndex()
+	}
 
 	// Register the hash map class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lHashClass)

@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
 )

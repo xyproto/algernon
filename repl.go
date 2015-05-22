@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/bobappleyard/readline"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
 	"strings"

@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/mime"
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissionbolt"
 )
 
 const (
