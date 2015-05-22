@@ -230,7 +230,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 	// Takes a username
 	L.SetGlobal("Login", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
-		L.Push(lua.LBool(nil == userstate.CookieLogin(w, username)))
+		L.Push(lua.LBool(nil == userstate.Login(w, username)))
 		return 1 // number of results
 	}))
 	// Logs out a user, on the server (which is enough). Returns nothing
