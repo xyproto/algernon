@@ -37,16 +37,6 @@ var (
 	serverHost string
 )
 
-// Build time dependency check
-func versionCheck() {
-	if permissions.Version != 2.1 {
-		log.Fatalln("Needs permissions2 2.1 to build.")
-	}
-	if simpleredis.Version != 1.0 {
-		log.Fatalln("Needs simpleredis 1.0 to build.")
-	}
-}
-
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
 	// Server configuration
 	s := &http.Server{
@@ -68,8 +58,6 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 }
 
 func main() {
-	versionCheck()
-
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Set several configuration variables, based on the given flags and arguments
