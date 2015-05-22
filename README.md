@@ -66,8 +66,8 @@ Features and limitations
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using Redis, as regular HTTP. Handy for viewing `README.md` files locally.
 
 
-Several technologies, working together
---------------------------------------
+Overview
+--------
 
 Running Algernon:
 
