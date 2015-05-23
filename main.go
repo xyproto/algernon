@@ -121,7 +121,10 @@ func main() {
 	} else {
 		// New permissions middleware, using a Redis database
 		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
-			log.Warn("Could not connect to Redis, using Bolt")
+			// Only warn when not in single file mode (too verbose)
+			if !singleFileMode {
+				log.Warn("Could not connect to Redis, using Bolt")
+			}
 			perm = bolt.NewWithConf(defaultBoltFilename)
 			dbName = "Bolt (" + defaultBoltFilename + ")"
 		} else {
