@@ -1,8 +1,9 @@
 # Plans
 
 
-Priority
---------
+Various
+-------
+- [ ] Use https://github.com/sbinet/igo instead of readline.
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
 - [ ] A way to extend Algernon with Go
 - [ ] Use the JSON code from https://github.com/layeh/gopher-json
@@ -14,6 +15,9 @@ Priority
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 - [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
 - [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [ ] MSI installer
+- [ ] OS X package + homebrew
+- [ ] deb/ppa
 
 
 Server configuration
