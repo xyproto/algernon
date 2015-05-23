@@ -114,6 +114,7 @@ func main() {
 		perm = bolt.NewWithConf(boltFilename)
 		dbName = "Bolt (" + boltFilename + ")"
 	} else if mariadbConnectionString != "" {
+		// TODO: Add MariaDB (and PostgreSQL) support
 		// New permissions middleware, using a MariaDB/MySQL database
 		perm = mariadb.NewWithConf(mariadbConnectionString)
 		dbName = "MariaDB/MySQL"

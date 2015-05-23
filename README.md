@@ -1,19 +1,19 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions
-keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React
+description: Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, Bolt, users and permissions
+keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React, Bolt, Three.js
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, users and permissions.
+Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, Bolt, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge)
 
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Redis](http://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging and [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) or [Redis](http://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging and [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript.
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
 
@@ -40,7 +40,6 @@ Design decisions
     * .lua is interpreted as a Lua script that provides its own output and content type.
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
-* Redis is used for the database backend.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
 * The aim is to provide a comfortable environment for rapidly developing modern web applications, while not sacrificing structure and the separation between data and presentation.
@@ -57,13 +56,14 @@ Features and limitations
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
+* Redis is used for the database backend, by default.
+* The Bolt database is also supported, and is built-in.
 * No support for internal caching, yet.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
-* Will not run without a Redis server to connect to.
 * Includes an interactive REPL.
-* If only given a Markdown filename as the first argument, it will be served on port 3000, without using Redis, as regular HTTP. Handy for viewing `README.md` files locally.
+* If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
 
 
 Overview
@@ -92,23 +92,24 @@ ASCII diagram:
 |   Server side                    |   JavaScript                      |
 |                                  |                                   |
 |   Lua for providing data:        |   JSX instead of JavaScript:      |
-|   * Can use the Redis backend.   |   * Can build a virtual DOM.      |
+|   * Uses the database backend.   |   * Can build a virtual DOM.      |
 |   * Can easily provide data to   |   * Use together with React for   |
 |     Amber templates.             |     building single-page apps.    |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 |                                  |                                   |
-|   Markdown                       |   Database backend                |
+|   Markdown                       |   Database backends               |
 |                                  |                                   |
-|   For static pages:              |   Redis for the database:         |
-|   * Easy content creation.       |   * Incredibly fast.              |
-|   * Easy to style with GCSS.     |   * Proven technology.            |
-|   * Can refresh when saving.     |   * Can scale up to 1000 nodes.   |
+|   For static pages:              |   Redis or Bolt for the backend:  |
+|   * Easy content creation.       |   * Both are pretty fast.         |
+|   * Easy to style with GCSS.     |   * Bolt is included.             |
+|   * Can refresh when saving.     |   * Redis is better at scaling.   |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 ```
 
-Redis offers good [data persistence](http://redis.io/topics/persistence).
+* Redis offers good [data persistence](http://redis.io/topics/persistence).
+* Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go.
 
 Screenshots
 -----------
@@ -166,10 +167,6 @@ Getting started
 
 * `cd $GOPATH/src/github.com/xyproto/algernon`
 * `go build`
-
-##### Run the samples
-
-* Make sure Redis is running. On OS X, you can install `redis` with homebrew and start `redis-server`. On Linux, you can install `redis` and run `systemctl start redis`, depending on your distro.
 
 ##### The "bob" sample, over https
 
@@ -248,13 +245,13 @@ Lua functions for formatted output
 * `pprint(value)` tries to extract and print the contents of a Lua value.
 
 
-Lua functions for Redis data structures
----------------------------------------
+Lua functions for data structures
+---------------------------------
 
 ##### Set
 
 ~~~c
-// Get or create Redis-backed Set (takes a name, returns a set object)
+// Get or create a database-backed Set (takes a name, returns a set object)
 Set(string) -> userdata
 
 // Add an element to the set
@@ -277,7 +274,7 @@ set:remove() -> bool
 ##### List
 
 ~~~c
-// Get or create a Redis-backed List (takes a name, returns a list object)
+// Get or create a database-backed List (takes a name, returns a list object)
 List(string) -> userdata
 
 // Add an element to the list
@@ -300,7 +297,7 @@ list:remove() -> bool
 ##### HashMap
 
 ~~~c
-// Get or create a Redis-backed HashMap (takes a name, returns a hash map object)
+// Get or create a database-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
 
 // For a given element id (for instance a user id), set a key
@@ -341,7 +338,7 @@ hash:remove() -> bool
 ##### KeyValue
 
 ~~~c
-// Get or create a Redis-backed KeyValue collection (takes a name, returns a key/value object)
+// Get or create a database-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
 // Set a key and value. Returns true if successful.
@@ -550,7 +547,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.66
+* Version: 0.67
 * License: MIT
 * Alexander F Rødseth
 
