@@ -3,8 +3,6 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/simpleredis"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
@@ -15,7 +13,7 @@ const lHashClass = "HASH"
 // Get the first argument, "self", and cast it from userdata to a hash map.
 func checkHash(L *lua.LState) pinterface.IHashMap {
 	ud := L.CheckUserData(1)
-	if hash, ok := ud.Value.(*simpleredis.HashMap); ok {
+	if hash, ok := ud.Value.(pinterface.IHashMap); ok {
 		return hash
 	}
 	L.ArgError(1, "hash map expected")
@@ -25,10 +23,9 @@ func checkHash(L *lua.LState) pinterface.IHashMap {
 // Create a new hash map.
 // id is the name of the hash map.
 // dbindex is the Redis database index (typically 0).
-func newHashMap(L *lua.LState, pool *simpleredis.ConnectionPool, id string, dbindex int) (*lua.LUserData, error) {
-	// Create a new simpleredis hash map
-	hash := simpleredis.NewHashMap(pool, id)
-	hash.SelectDatabase(dbindex)
+func newHashMap(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
+	// Create a new hash map
+	hash := creator.NewHashMap(id)
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = hash
@@ -162,19 +159,9 @@ var hashMethods = map[string]lua.LGFunction{
 	"remove":     hashRemove,
 }
 
-// TODO: Use an interface to discover if the userstate has a Pool and DatabaseIndex method or not
-type Pool interface
-
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportHash(L *lua.LState, userstate pinterface.IUserState, usesRedis bool) {
-	switch userstate.(type) {
-		case *permissions.UserState
-	}
-	if usesRedis {
-		redisUserstate := (*permissions.UserState)(userstate)
-		pool := userstate.Pool()
-		dbindex := userstate.DatabaseIndex()
-	}
+func exportHash(L *lua.LState, userstate pinterface.IUserState) {
+	creator := userstate.Creator()
 
 	// Register the hash map class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lHashClass)
@@ -186,13 +173,18 @@ func exportHash(L *lua.LState, userstate pinterface.IUserState, usesRedis bool) 
 		name := L.ToString(1)
 
 		// Check if the optional argument is given
-		localDBIndex := dbindex
 		if L.GetTop() == 2 {
-			localDBIndex = L.ToInt(2)
+			localDBIndex := L.ToInt(2)
+
+			// Set the DB index, if possible
+			switch rh := creator.(type) {
+			case pinterface.IRedisCreator:
+				rh.SelectDatabase(localDBIndex)
+			}
 		}
 
 		// Create a new hash map in Lua
-		userdata, err := newHashMap(L, pool, name, localDBIndex)
+		userdata, err := newHashMap(L, creator, name)
 		if err != nil {
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))

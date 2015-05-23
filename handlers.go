@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/mime"
-	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/pinterface"
 )
 
 const (
@@ -25,7 +25,7 @@ var (
 )
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool) {
 
 	// Mimetypes
 	ext := path.Ext(filename)
@@ -262,7 +262,7 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 
 // When serving a directory.
 // The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm *permissions.Permissions, luapool *lStatePool) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool) {
 	// If the URL does not end with a slash, redirect to an URL that does
 	if !strings.HasSuffix(req.URL.Path, "/") {
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
@@ -291,7 +291,7 @@ func initializeMime() {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, perm *permissions.Permissions, luapool *lStatePool) {
+func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPermissions, luapool *lStatePool) {
 	rootdir := servedir
 
 	// Handle all requests with this function

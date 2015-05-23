@@ -3,8 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -12,9 +11,9 @@ import (
 const lListClass = "LIST"
 
 // Get the first argument, "self", and cast it from userdata to a list.
-func checkList(L *lua.LState) *simpleredis.List {
+func checkList(L *lua.LState) pinterface.IList {
 	ud := L.CheckUserData(1)
-	if list, ok := ud.Value.(*simpleredis.List); ok {
+	if list, ok := ud.Value.(pinterface.IList); ok {
 		return list
 	}
 	L.ArgError(1, "list expected")
@@ -24,10 +23,9 @@ func checkList(L *lua.LState) *simpleredis.List {
 // Create a new list.
 // id is the name of the list.
 // dbindex is the Redis database index (typically 0).
-func newList(L *lua.LState, pool *simpleredis.ConnectionPool, id string, dbindex int) (*lua.LUserData, error) {
-	// Create a new simpleredis set
-	list := simpleredis.NewList(pool, id)
-	list.SelectDatabase(dbindex)
+func newList(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
+	// Create a new list
+	list := creator.NewList(id)
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = list
@@ -119,9 +117,8 @@ var listMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportList(L *lua.LState, userstate *permissions.UserState) {
-	pool := userstate.Pool()
-	dbindex := userstate.DatabaseIndex()
+func exportList(L *lua.LState, userstate pinterface.IUserState) {
+	creator := userstate.Creator()
 
 	// Register the list class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lListClass)
@@ -133,13 +130,18 @@ func exportList(L *lua.LState, userstate *permissions.UserState) {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given
-		localDBIndex := dbindex
 		if L.GetTop() == 2 {
-			localDBIndex = L.ToInt(2)
+			localDBIndex := L.ToInt(2)
+
+			// Set the DB index, if possible
+			switch rh := creator.(type) {
+			case pinterface.IRedisCreator:
+				rh.SelectDatabase(localDBIndex)
+			}
 		}
 
 		// Create a new list in Lua
-		userdata, err := newList(L, pool, name, localDBIndex)
+		userdata, err := newList(L, creator, name)
 		if err != nil {
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))

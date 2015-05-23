@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -108,7 +108,7 @@ func table2map(luaTable *lua.LTable) (interface{}, bool) {
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, L *lua.LState, luapool *lStatePool, flushFunc func()) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func()) {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -144,7 +144,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *permissions.Permissions, luapool *lStatePool, flushFunc func()) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func()) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -192,7 +192,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm *per
 
 // Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm *permissions.Permissions, luapool *lStatePool) error {
+func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm pinterface.IPermissions, luapool *lStatePool) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -219,7 +219,7 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runConfiguration(filename string, perm *permissions.Permissions, luapool *lStatePool) error {
+func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -265,7 +265,7 @@ func runConfiguration(filename string, perm *permissions.Permissions, luapool *l
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm *permissions.Permissions, luapool *lStatePool) (template.FuncMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool) (template.FuncMap, error) {
 
 	// Retrieve a Lua state
 	L := luapool.Get()

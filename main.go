@@ -12,13 +12,16 @@ import (
 	"time"
 
 	"github.com/bradfitz/http2"
-	"github.com/xyproto/permissionbolt"
+	bolt "github.com/xyproto/permissionbolt"
+	redis "github.com/xyproto/permissions2"
+	mariadb "github.com/xyproto/permissionsql"
+	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
 )
 
 const (
-	versionString = "Algernon 0.66"
+	versionString = "Algernon 0.67"
 	description   = "HTTP/2 Web Server"
 )
 
@@ -35,6 +38,7 @@ var (
 
 	// For convenience. Set in the main function.
 	serverHost string
+	dbName     string
 )
 
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
@@ -100,14 +104,30 @@ func main() {
 		serveJustHTTP = true
 	}
 
-	// TODO: Run a Redis clone in RAM if no server is available.
-	if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
-		log.Info("A Redis database is required.")
-		log.Fatal(err)
+	if useBolt {
+		boltFilename = defaultBoltFilename
 	}
 
-	// New permissions middleware
-	perm := permissions.NewWithRedisConf(redisDBindex, redisAddr)
+	var perm pinterface.IPermissions
+	if boltFilename != "" {
+		// New permissions middleware, using a Bolt database
+		perm = bolt.NewWithConf(boltFilename)
+		dbName = "Bolt (" + boltFilename + ")"
+	} else if mariadbConnectionString != "" {
+		// New permissions middleware, using a MariaDB/MySQL database
+		perm = mariadb.NewWithConf(mariadbConnectionString)
+		dbName = "MariaDB/MySQL"
+	} else {
+		// New permissions middleware, using a Redis database
+		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
+			log.Warn("Can not connect to Redis, using Bolt")
+			perm = bolt.NewWithConf(defaultBoltFilename)
+			dbName = "Bolt (" + defaultBoltFilename + ")"
+		} else {
+			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
+			dbName = "Redis"
+		}
+	}
 
 	// Lua LState pool
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}

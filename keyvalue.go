@@ -1,18 +1,17 @@
 package main
 
 import (
-	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
 // Identifier for the Set class in Lua
 const lKeyValueClass = "KEYVALUE"
 
-// Get the first argument, "self", and cast it from userdata to a set.
-func checkKeyValue(L *lua.LState) *simpleredis.KeyValue {
+// Get the first argument, "self", and cast it from userdata to a key/value
+func checkKeyValue(L *lua.LState) pinterface.IKeyValue {
 	ud := L.CheckUserData(1)
-	if kv, ok := ud.Value.(*simpleredis.KeyValue); ok {
+	if kv, ok := ud.Value.(pinterface.IKeyValue); ok {
 		return kv
 	}
 	L.ArgError(1, "keyvalue expected")
@@ -22,10 +21,9 @@ func checkKeyValue(L *lua.LState) *simpleredis.KeyValue {
 // Create a new KeyValue collection.
 // id is the name of the KeyValue colleciton.
 // dbindex is the Redis database index (typically 0).
-func newKeyValue(L *lua.LState, pool *simpleredis.ConnectionPool, id string, dbindex int) (*lua.LUserData, error) {
-	// Create a new simpleredis set
-	kv := simpleredis.NewKeyValue(pool, id)
-	kv.SelectDatabase(dbindex)
+func newKeyValue(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
+	// Create a new key/value
+	kv := creator.NewKeyValue(id)
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = kv
@@ -108,9 +106,8 @@ var kvMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportKeyValue(L *lua.LState, userstate *permissions.UserState) {
-	pool := userstate.Pool()
-	dbindex := userstate.DatabaseIndex()
+func exportKeyValue(L *lua.LState, userstate pinterface.IUserState) {
+	creator := userstate.Creator()
 
 	// Register the KeyValue class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lKeyValueClass)
@@ -122,13 +119,18 @@ func exportKeyValue(L *lua.LState, userstate *permissions.UserState) {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given
-		localDBIndex := dbindex
 		if L.GetTop() == 2 {
-			localDBIndex = L.ToInt(2)
+			localDBIndex := L.ToInt(2)
+
+			// Set the DB index, if possible
+			switch rh := creator.(type) {
+			case pinterface.IRedisCreator:
+				rh.SelectDatabase(localDBIndex)
+			}
 		}
 
 		// Create a new keyvalue in Lua
-		userdata, err := newKeyValue(L, pool, name, localDBIndex)
+		userdata, err := newKeyValue(L, creator, name)
 		if err != nil {
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))

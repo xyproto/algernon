@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/permissions2"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -32,7 +33,7 @@ func writeStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 }
 
 // Make functions related to server configuration and permissions available
-func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, filename string, luapool *lStatePool) {
+func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, filename string, luapool *lStatePool) {
 
 	// Registers a path prefix, for instance "/secret",
 	// as having *admin* rights.
@@ -157,6 +158,7 @@ func exportServerConfigFunctions(L *lua.LState, perm *permissions.Permissions, f
 			buf.WriteString("Filename:\t\t" + serverDir + "\n")
 		}
 		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
+		buf.WriteString("Database:\t\t" + dbName + "\n")
 
 		// Write the status of flags that can be toggled
 		writeStatus(&buf, "Flags", map[string]bool{

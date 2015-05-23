@@ -3,8 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -12,9 +11,9 @@ import (
 const lSetClass = "SET"
 
 // Get the first argument, "self", and cast it from userdata to a set.
-func checkSet(L *lua.LState) *simpleredis.Set {
+func checkSet(L *lua.LState) pinterface.ISet {
 	ud := L.CheckUserData(1)
-	if set, ok := ud.Value.(*simpleredis.Set); ok {
+	if set, ok := ud.Value.(pinterface.ISet); ok {
 		return set
 	}
 	L.ArgError(1, "set expected")
@@ -24,10 +23,9 @@ func checkSet(L *lua.LState) *simpleredis.Set {
 // Create a new set.
 // id is the name of the set.
 // dbindex is the Redis database index (typically 0).
-func newSet(L *lua.LState, pool *simpleredis.ConnectionPool, id string, dbindex int) (*lua.LUserData, error) {
-	// Create a new simpleredis set
-	set := simpleredis.NewSet(pool, id)
-	set.SelectDatabase(dbindex)
+func newSet(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
+	// Create a new set
+	set := creator.NewSet(id)
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = set
@@ -114,9 +112,8 @@ var setMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportSet(L *lua.LState, userstate *permissions.UserState) {
-	pool := userstate.Pool()
-	dbindex := userstate.DatabaseIndex()
+func exportSet(L *lua.LState, userstate pinterface.IUserState) {
+	creator := userstate.Creator()
 
 	// Register the set class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lSetClass)
@@ -128,13 +125,18 @@ func exportSet(L *lua.LState, userstate *permissions.UserState) {
 		name := L.ToString(1)
 
 		// Check if the optional argument is given
-		localDBIndex := dbindex
 		if L.GetTop() == 2 {
-			localDBIndex = L.ToInt(2)
+			localDBIndex := L.ToInt(2)
+
+			// Set the DB index, if possible
+			switch rh := creator.(type) {
+			case pinterface.IRedisCreator:
+				rh.SelectDatabase(localDBIndex)
+			}
 		}
 
 		// Create a new set in Lua
-		userdata, err := newSet(L, pool, name, localDBIndex)
+		userdata, err := newSet(L, creator, name)
 		if err != nil {
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))

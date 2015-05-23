@@ -13,6 +13,7 @@ const (
 	defaultEventColonPort = ":5553"
 	defaultEventRefresh   = "350ms"
 	defaultEventPath      = "/fs"
+	defaultBoltFilename   = "bolt.db"
 )
 
 var (
@@ -29,10 +30,6 @@ var (
 	serverAddrLua          string
 	serverReadyFunctionLua func()
 
-	// Redis configuration
-	redisAddr    string
-	redisDBindex int
-
 	// Server modes
 	debugMode, verboseMode, productionMode, interactiveMode bool
 
@@ -45,6 +42,13 @@ var (
 
 	// If serving a single file, like a lua script
 	singleFileMode bool
+
+	// Databases
+	boltFilename            string
+	useBolt                 bool
+	mariadbConnectionString string
+	redisAddr               string
+	redisDBindex            int
 )
 
 func usage() {
@@ -69,6 +73,8 @@ Available flags:
   -d, --debug                  Enable debug mode
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
+  -b                           Use ` + defaultBoltFilename + ` as the Bolt database
+  --bolt=FILENAME              Use a specific file as the Bolt database
   --redis=[HOST][:PORT]        Connect to a remote Redis database ("` + defaultRedisColonPort + `")
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
@@ -124,6 +130,9 @@ func handleFlags() string {
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
+
+	flag.StringVar(&boltFilename, "bolt", "", "Bolt database filename")
+	flag.BoolVar(&useBolt, "b", false, "Use the default Bolt filename")
 
 	flag.Parse()
 

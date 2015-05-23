@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/bobappleyard/readline"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
 	"strings"
@@ -201,8 +201,7 @@ func highlight(o *term.TextOutput, line string) string {
 }
 
 // The REPL
-// TODO: Use readline
-func REPL(perm *permissions.Permissions, luapool *lStatePool) error {
+func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
