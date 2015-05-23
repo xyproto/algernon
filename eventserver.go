@@ -14,8 +14,13 @@ import (
 	"github.com/xyproto/recwatch"
 )
 
+// TODO: A better 404 page not found page for users visiting "/"
+
 // TODO: Consider using channels in a more clever way, to avoid sleeping.
 //       Possibly by sending channels over channels.
+
+// TODO: Consider only listening for changes after a file has been visited, the
+//       stop watching it after a while.
 
 type (
 	// TimeEventMap stores filesystem events
