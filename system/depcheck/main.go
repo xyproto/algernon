@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xyproto/permissions2"
+	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simpleredis"
 )
+
+// Over engineered version number check!
 
 type VersionInfo struct {
 	name    string
@@ -19,13 +22,14 @@ func New(name string, current, target float64) *VersionInfo {
 
 func (v *VersionInfo) Check() error {
 	if v.current != v.target {
-		return errors.New(fmt.Sprintf("needs version %.1f", v.target))
+		return errors.New(fmt.Sprintf("is %.1f, needs version %.1f",
+			v.current, v.target))
 	}
 	return nil
 }
 
 func (v *VersionInfo) Status() {
-	fmt.Print(v.name + "...")
+	fmt.Print("\t" + v.name + "...")
 	if err := v.Check(); err != nil {
 		fmt.Println(err)
 	} else {
@@ -34,6 +38,8 @@ func (v *VersionInfo) Status() {
 }
 
 func main() {
-	New("permissions2", permissions.Version, 2.1).Status()
-	New("simpleredis", simpleredis.Version, 1.1).Status()
+	fmt.Println("Dependency check")
+	New("permissions2", permissions.Version, 2.2).Status()
+	New("simpleredis", simpleredis.Version, 1.2).Status()
+	New("simplebolt", simplebolt.Version, 1.0).Status()
 }
