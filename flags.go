@@ -73,26 +73,27 @@ Available flags:
   -d, --debug                  Enable debug mode
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  -b                           Use ` + defaultBoltFilename + ` as the Bolt database
-  --bolt=FILENAME              Use a specific file as the Bolt database
-  --redis=[HOST][:PORT]        Connect to a remote Redis database ("` + defaultRedisColonPort + `")
+  -b, --bolt                   Use ` + defaultBoltFilename + ` as the Bolt database
+  --boltdb=FILENAME            Use a specific file as the Bolt database
+  --redis=[HOST][:PORT]        Use the given Redis database ("` + defaultRedisColonPort + `")
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
   --http2log=FILENAME          Save the verbose HTTP/2 log
   -h, --httponly               Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
+  --mariadb=DSN                Use the given MariaDB or MySQL database
   --verbose                    Slightly more verbose logging
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
-  -i                           Interactive mode
+  -i, --interactive            Interactive mode
 `)
 }
 
 // Parse the flags, return the default hostname
 func handleFlags() string {
 	// The short version of some flags
-	var serveJustHTTPShort, autoRefreshShort, debugModeShort bool
+	var serveJustHTTPShort, autoRefreshShort, debugModeShort, interactiveModeShort, useBoltShort bool
 
 	// The usage function that provides more help
 	flag.Usage = usage
@@ -124,22 +125,26 @@ func handleFlags() string {
 	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
-	flag.BoolVar(&interactiveMode, "i", false, "Interactive mode")
+	flag.BoolVar(&interactiveMode, "interative", false, "Interactive mode")
+	flag.StringVar(&mariadbConnectionString, "mariadb", "", "MariaDB/MySQL connection string")
+	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
+	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
-
-	flag.StringVar(&boltFilename, "bolt", "", "Bolt database filename")
-	flag.BoolVar(&useBolt, "b", false, "Use the default Bolt filename")
+	flag.BoolVar(&interactiveModeShort, "i", false, "Interactive mode")
+	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
 
 	flag.Parse()
 
-	// Consider the long and short versions of some flags
+	// Accept both long and short versions of some flags
 	serveJustHTTP = serveJustHTTP || serveJustHTTPShort
 	autoRefresh = autoRefresh || autoRefreshShort
 	debugMode = debugMode || debugModeShort
+	interactiveMode = interactiveMode || interactiveModeShort
+	useBolt = useBolt || useBoltShort
 
 	// Change several defaults if production mode is enabled
 	if productionMode {

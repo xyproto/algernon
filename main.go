@@ -14,7 +14,7 @@ import (
 	"github.com/bradfitz/http2"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
-	//mariadb "github.com/xyproto/permissionsql"
+	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
@@ -104,7 +104,8 @@ func main() {
 		serveJustHTTP = true
 	}
 
-	if useBolt {
+	// If Bolt is to be used and no filename is given
+	if useBolt && (boltFilename == "") {
 		boltFilename = defaultBoltFilename
 	}
 
@@ -113,11 +114,11 @@ func main() {
 		// New permissions middleware, using a Bolt database
 		perm = bolt.NewWithConf(boltFilename)
 		dbName = "Bolt (" + boltFilename + ")"
-		//} else if mariadbConnectionString != "" {
-		//	// TODO: Add MariaDB (and PostgreSQL) support
+	} else if mariadbConnectionString != "" {
 		//	// New permissions middleware, using a MariaDB/MySQL database
-		//	perm = mariadb.NewWithConf(mariadbConnectionString)
-		//	dbName = "MariaDB/MySQL"
+		perm = mariadb.NewWithConf(mariadbConnectionString)
+		// The connection string may contain a password, so don't include it in the dbName
+		dbName = "MariaDB/MySQL"
 	} else {
 		// New permissions middleware, using a Redis database
 		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
