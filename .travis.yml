@@ -1,8 +1,5 @@
 language: go
 
-services:
-    - redis-server
-
 install:
     - go get -d
 
