@@ -67,7 +67,7 @@ Available flags:
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
   -a, --autorefresh            Enable the event server and auto-refresh feature.
-  --prod                       Serve HTTP/2+HTTPS on port 443. Serve regular
+  -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Use /srv/algernon as the server
                                directory. Disable debug mode and auto-refresh.
   -d, --debug                  Enable debug mode
@@ -93,7 +93,7 @@ Available flags:
 // Parse the flags, return the default hostname
 func handleFlags() string {
 	// The short version of some flags
-	var serveJustHTTPShort, autoRefreshShort, debugModeShort, interactiveModeShort, useBoltShort bool
+	var serveJustHTTPShort, autoRefreshShort, productionModeShort, debugModeShort, interactiveModeShort, useBoltShort bool
 
 	// The usage function that provides more help
 	flag.Usage = usage
@@ -136,6 +136,7 @@ func handleFlags() string {
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
 	flag.BoolVar(&interactiveModeShort, "i", false, "Interactive mode")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
+	flag.BoolVar(&productionModeShort, "p", false, "Production mode")
 
 	flag.Parse()
 
@@ -145,6 +146,7 @@ func handleFlags() string {
 	debugMode = debugMode || debugModeShort
 	interactiveMode = interactiveMode || interactiveModeShort
 	useBolt = useBolt || useBoltShort
+	productionMode = productionMode || productionModeShort
 
 	// Change several defaults if production mode is enabled
 	if productionMode {
