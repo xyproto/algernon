@@ -137,7 +137,7 @@ func handleFlags() string {
 	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
-	flag.Int64Var(&limitRequests, "limit", 0, "Limit clients to a number of requests per second")
+	flag.Int64Var(&limitRequests, "limit", 1, "Limit clients to a number of requests per second")
 	flag.BoolVar(&disableRateLimiting, "no-limit", false, "Disable rate limiting")
 
 	// The short versions of some flags
