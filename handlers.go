@@ -337,6 +337,8 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 	if disableRateLimiting {
 		mux.HandleFunc("/", allRequests)
 	} else {
-		mux.Handle("/", tollbooth.LimitFuncHandler(tollbooth.NewLimiter(limitRequests, time.Second), allRequests))
+		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
+		limiter.Message = easyPage("Rate limit", "You have reached maximum request limit.")
+		mux.Handle("/", tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }
