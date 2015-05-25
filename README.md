@@ -67,6 +67,7 @@ Features and limitations
 * Full multithreading. All available CPUs will be used.
 <!--* Can be used for converting Amber to HTML. Just run Algernon like this: `algernon index.amber` and download the rendered result with curl: `curl -o rendered.html http://localhost:3000/`-->
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
+* Go 1.4 or later is required.
 
 
 Overview
