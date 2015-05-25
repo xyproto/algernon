@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didip/tollbooth"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
+	"github.com/xyproto/tollbooth"
 )
 
 const (
@@ -35,7 +35,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	// Markdown pages are handled differently
 	if ext == ".md" {
 
-		w.Header().Add("Content-Type", "text/html")
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		b, err := read(filename)
 		if err != nil {
 			if debugMode {
@@ -53,7 +53,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 	} else if ext == ".amber" {
 
-		w.Header().Add("Content-Type", "text/html")
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		amberdata, err := read(filename)
 		if err != nil {
 			if debugMode {
@@ -108,7 +108,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 	} else if ext == ".gcss" {
 
-		w.Header().Add("Content-Type", "text/css")
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
 		gcssdata, err := read(filename)
 		if err != nil {
 			if debugMode {
@@ -126,7 +126,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 	} else if ext == ".jsx" {
 
-		w.Header().Add("Content-Type", "text/javascript")
+		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 		jsxdata, err := read(filename)
 		if err != nil {
 			if debugMode {
