@@ -21,18 +21,11 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.67"
+	versionString = "Algernon 0.68"
 	description   = "HTTP/2 Web Server"
 )
 
 var (
-	// The default font
-	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
-
-	// The default CSS style
-	// Will be used for directory listings and rendering unstyled markdown pages
-	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 3.5em; font-size: 1.3em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
-
 	// List of filenames that should be displayed instead of a directory listing
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 
