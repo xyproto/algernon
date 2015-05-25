@@ -65,6 +65,8 @@ Features and limitations
 * Includes an interactive REPL.
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
 * Full multithreading. All available CPUs will be used.
+<!--* Can be used for converting Amber to HTML. Just run Algernon like this: `algernon index.amber` and download the rendered result with curl: `curl -o rendered.html http://localhost:3000/`-->
+* Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
 
 
 Overview

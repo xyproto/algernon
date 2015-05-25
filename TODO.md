@@ -3,6 +3,9 @@
 
 Various
 -------
+- [ ] Add a Lua function for shutting down the server gracefully.
+- [ ] Adding an option for exiting after a file has been downloaded once.
+- [ ] Make sure requests are closed properly after being served.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
 - [ ] A way to extend Algernon with Go
