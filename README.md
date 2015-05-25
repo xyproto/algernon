@@ -541,7 +541,7 @@ Releases
 --------
 
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
-* [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64). Includes the latest version of Redis from [MSOpenTech](https://github.com/MSOpenTech/redis/releases).
+* [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64).
 * Source releases are tagged with git.
 
 
