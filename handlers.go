@@ -11,7 +11,9 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
+	"github.com/didip/tollbooth"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 )
@@ -295,15 +297,13 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 	rootdir := servedir
 
 	// Handle all requests with this function
-	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+	allRequests := func(w http.ResponseWriter, req *http.Request) {
 		if perm.Rejected(w, req) {
 			// Get and call the Permission Denied function
 			perm.DenyFunction()(w, req)
 			// Reject the request by returning
 			return
 		}
-
-		// TODO: HTTP Basic Auth check goes here, see "scoreserver"
 
 		urlpath := req.URL.Path
 		filename := url2filename(servedir, urlpath)
@@ -331,5 +331,12 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, noPage(filename))
-	})
+	}
+
+	// Handle requests differently depending on if rate limiting is enabled or not
+	if disableRateLimiting {
+		mux.HandleFunc("/", allRequests)
+	} else {
+		mux.Handle("/", tollbooth.LimitFuncHandler(tollbooth.NewLimiter(limitRequests, time.Second), allRequests))
+	}
 }

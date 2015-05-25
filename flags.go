@@ -13,7 +13,7 @@ const (
 	defaultEventColonPort = ":5553"
 	defaultEventRefresh   = "350ms"
 	defaultEventPath      = "/fs"
-	defaultBoltFilename   = "bolt.db"
+	defaultBoltFilename   = "/tmp/algernon.db"
 )
 
 var (
@@ -50,6 +50,9 @@ var (
 	mariadbDatabase string // database name
 	redisAddr       string
 	redisDBindex    int
+
+	limitRequests       int64 // rate limit to this many requests per client per second
+	disableRateLimiting bool
 )
 
 func usage() {
@@ -89,6 +92,8 @@ Available flags:
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
   -i, --interactive            Interactive mode
+  --limit=N                    Rate limit clients to a number of requests per second
+  --no-limit                   Disable rate limiting
 `)
 }
 
@@ -132,6 +137,8 @@ func handleFlags() string {
 	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
+	flag.Int64Var(&limitRequests, "limit", 0, "Limit clients to a number of requests per second")
+	flag.BoolVar(&disableRateLimiting, "no-limit", false, "Disable rate limiting")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
