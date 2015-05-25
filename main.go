@@ -114,9 +114,15 @@ func main() {
 		// New permissions middleware, using a Bolt database
 		perm = bolt.NewWithConf(boltFilename)
 		dbName = "Bolt (" + boltFilename + ")"
-	} else if mariadbConnectionString != "" {
-		//	// New permissions middleware, using a MariaDB/MySQL database
-		perm = mariadb.NewWithConf(mariadbConnectionString)
+	} else if mariadbDSN != "" {
+		// New permissions middleware, using a MariaDB/MySQL database
+		perm = mariadb.NewWithDSN(mariadbDSN, mariadbDatabase)
+		// The connection string may contain a password, so don't include it in the dbName
+		dbName = "MariaDB/MySQL"
+	} else if mariadbDatabase != "" {
+		// Given a database, but not a host, connect to localhost
+		// New permissions middleware, using a MariaDB/MySQL database
+		perm = mariadb.NewWithConf("test:@127.0.0.1/" + mariadbDatabase)
 		// The connection string may contain a password, so don't include it in the dbName
 		dbName = "MariaDB/MySQL"
 	} else {

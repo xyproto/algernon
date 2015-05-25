@@ -44,11 +44,12 @@ var (
 	singleFileMode bool
 
 	// Databases
-	boltFilename            string
-	useBolt                 bool
-	mariadbConnectionString string
-	redisAddr               string
-	redisDBindex            int
+	boltFilename    string
+	useBolt         bool
+	mariadbDSN      string // connection string
+	mariadbDatabase string // database name
+	redisAddr       string
+	redisDBindex    int
 )
 
 func usage() {
@@ -81,7 +82,8 @@ Available flags:
   --http2log=FILENAME          Save the verbose HTTP/2 log
   -h, --httponly               Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
-  --mariadb=DSN                Use the given MariaDB or MySQL database
+  --maria=DSN                  Use the given MariaDB or MySQL host
+  --mariadb=NAME               Use the given MariaDB or MySQL database
   --verbose                    Slightly more verbose logging
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
@@ -126,7 +128,8 @@ func handleFlags() string {
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
 	flag.BoolVar(&interactiveMode, "interative", false, "Interactive mode")
-	flag.StringVar(&mariadbConnectionString, "mariadb", "", "MariaDB/MySQL connection string")
+	flag.StringVar(&mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
+	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
 
