@@ -25,7 +25,10 @@ func checkSet(L *lua.LState) pinterface.ISet {
 // dbindex is the Redis database index (typically 0).
 func newSet(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new set
-	set := creator.NewSet(id)
+	set, err := creator.NewSet(id)
+	if err != nil {
+		return nil, err
+	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = set

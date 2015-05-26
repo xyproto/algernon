@@ -25,7 +25,10 @@ func checkHash(L *lua.LState) pinterface.IHashMap {
 // dbindex is the Redis database index (typically 0).
 func newHashMap(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new hash map
-	hash := creator.NewHashMap(id)
+	hash, err := creator.NewHashMap(id)
+	if err != nil {
+		return nil, err
+	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = hash

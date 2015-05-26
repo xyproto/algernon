@@ -102,35 +102,57 @@ func main() {
 		boltFilename = defaultBoltFilename
 	}
 
-	var perm pinterface.IPermissions
+	// Use one of the databases for the permission middleware,
+	// then assign a name to dbName (used for the status output)
+	dbName = ""
+	var (
+		perm pinterface.IPermissions
+		err  error
+	)
 	if boltFilename != "" {
 		// New permissions middleware, using a Bolt database
-		perm = bolt.NewWithConf(boltFilename)
-		dbName = "Bolt (" + boltFilename + ")"
-	} else if mariadbDSN != "" {
+		perm, err = bolt.NewWithConf(boltFilename)
+		if err == nil {
+			dbName = "Bolt (" + boltFilename + ")"
+		}
+	}
+	if (dbName == "") && (mariadbDSN != "") {
 		// New permissions middleware, using a MariaDB/MySQL database
-		perm = mariadb.NewWithDSN(mariadbDSN, mariadbDatabase)
-		// The connection string may contain a password, so don't include it in the dbName
-		dbName = "MariaDB/MySQL"
-	} else if mariadbDatabase != "" {
+		perm, err = mariadb.NewWithDSN(mariadbDSN, mariadbDatabase)
+		if err == nil {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "MariaDB/MySQL"
+		}
+	}
+	if (dbName == "") && (mariadbDatabase != "") {
 		// Given a database, but not a host, connect to localhost
 		// New permissions middleware, using a MariaDB/MySQL database
-		perm = mariadb.NewWithConf("test:@127.0.0.1/" + mariadbDatabase)
-		// The connection string may contain a password, so don't include it in the dbName
-		dbName = "MariaDB/MySQL"
-	} else {
+		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + mariadbDatabase)
+		if err == nil {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "MariaDB/MySQL"
+		}
+	}
+	if dbName == "" {
 		// New permissions middleware, using a Redis database
 		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
 			// Only warn when not in single file mode (too verbose)
 			if !singleFileMode {
-				log.Warn("Could not connect to Redis, using Bolt")
+				log.Warn("Could not connect to Redis!")
 			}
-			perm = bolt.NewWithConf(defaultBoltFilename)
-			dbName = "Bolt (" + defaultBoltFilename + ")"
 		} else {
 			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
 			dbName = "Redis"
 		}
+	}
+	if dbName == "" {
+		perm, err = bolt.NewWithConf(defaultBoltFilename)
+		if err == nil {
+			dbName = "Bolt (" + defaultBoltFilename + ")"
+		}
+	}
+	if dbName == "" {
+		log.Error("Could not use any database")
 	}
 
 	// Lua LState pool

@@ -23,7 +23,10 @@ func checkKeyValue(L *lua.LState) pinterface.IKeyValue {
 // dbindex is the Redis database index (typically 0).
 func newKeyValue(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new key/value
-	kv := creator.NewKeyValue(id)
+	kv, err := creator.NewKeyValue(id)
+	if err != nil {
+		return nil, err
+	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = kv

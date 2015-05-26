@@ -25,7 +25,10 @@ func checkList(L *lua.LState) pinterface.IList {
 // dbindex is the Redis database index (typically 0).
 func newList(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new list
-	list := creator.NewList(id)
+	list, err := creator.NewList(id)
+	if err != nil {
+		return nil, err
+	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = list
