@@ -8,7 +8,6 @@ body
   margin: 3em 0 0 4em
   font-family: Helvetica, Verdana, Veranda, sans-serif
   font-size: 1.2em
-  height: 100%
   background: linear-gradient(to bottom, #c9de96 0%,#8ab66b 44%,#398235 100%)
 
 h1
