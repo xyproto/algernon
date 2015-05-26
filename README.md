@@ -75,7 +75,7 @@ Overview
 
 Running Algernon:
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_062.png">
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
 ---
 
