@@ -15,7 +15,7 @@ Technologies
 
 Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) or [Redis](http://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript and [tollbooth](https://github.com/didip/tollbooth) for rate limiting.
 
-[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/draft-ietf-httpbis-http2-16).
+[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/rfc7540).
 
 
 Design decisions
