@@ -15,7 +15,7 @@ import (
 
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
-	"github.com/xyproto/tollbooth"
+	"github.com/didip/tollbooth"
 )
 
 const (
