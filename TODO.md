@@ -3,10 +3,10 @@
 
 Various
 -------
-- [ ] Close open file handles at shutdown
-- [ ] Add a Lua function for shutting down the server gracefully.
-- [ ] Adding an option for exiting after a file has been downloaded once.
-- [ ] Make sure requests are closed properly after being served.
+- [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
+- [ ] Add a Lua function for shutting down the server gracefully. Close open file handles at shutdown.
+- [ ] Add an option for exiting after any page has been visited once.
+- [ ] Find a tool for viewing stats over open file handles while running.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
 - [ ] A way to extend Algernon with Go
