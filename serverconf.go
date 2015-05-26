@@ -146,6 +146,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		// Set the file to log to and return
 		log.SetOutput(f)
 		L.Push(lua.LBool(true))
+		// TODO: Close the log file when the server shuts down
 		return 1 // number of results
 	}))
 
@@ -166,6 +167,10 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 			"Production mode": productionMode,
 			"Auto-refresh":    autoRefresh,
 		})
+
+		if serverLogFile != "" {
+			buf.WriteString("Log file:\t\t" + serverLogFile + "\n")
+		}
 
 		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
 		buf.WriteString("TLS key:\t\t" + serverKey + "\n")

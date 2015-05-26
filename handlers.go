@@ -327,7 +327,6 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 			filePage(w, req, noslash, perm, luapool)
 			return
 		}
-
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, noPage(filename))
@@ -338,7 +337,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 		mux.HandleFunc("/", allRequests)
 	} else {
 		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
-		limiter.Message = easyPage("Rate limit", "You have reached maximum request limit.")
+		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
 		mux.Handle("/", tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

@@ -140,6 +140,17 @@ func main() {
 	// Register HTTP handler functions
 	registerHandlers(mux, serverDir, perm, luapool)
 
+	if serverLogFile != "" {
+		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Error("Could not log to", serverLogFile)
+			log.Fatal(err)
+		}
+		log.SetFormatter(&log.JSONFormatter{})
+		log.SetOutput(f)
+		// TODO: Close the log file when the server shuts down
+	}
+
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
 	for _, filename := range serverConfigurationFilenames {

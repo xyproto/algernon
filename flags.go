@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"path"
 	"runtime"
 	"strconv"
 )
@@ -13,15 +15,20 @@ const (
 	defaultEventColonPort = ":5553"
 	defaultEventRefresh   = "350ms"
 	defaultEventPath      = "/fs"
-	defaultBoltFilename   = "/tmp/algernon.db"
 )
 
 var (
+	// Default Bolt database file, for some operating systems
+	defaultBoltFilename = "/tmp/algernon.db"
+
+	// Default log file, for some operating systems
+	defaultLogFile = "/tmp/algernon.log"
+
 	// List of configuration filenames to check
 	serverConfigurationFilenames = []string{"/etc/algernon/serverconf.lua"}
 
 	// Configuration that is exposed to the server configuration script(s)
-	serverDir, serverAddr, serverCert, serverKey, serverConfScript, serverHTTP2log string
+	serverDir, serverAddr, serverCert, serverKey, serverConfScript, serverHTTP2log, serverLogFile string
 
 	// If only HTTP/2 or HTTP
 	serveJustHTTP2, serveJustHTTP bool
@@ -43,6 +50,9 @@ var (
 	// If serving a single file, like a lua script
 	singleFileMode bool
 
+	// Development mode aims to make it easy to get started
+	devMode bool
+
 	// Databases
 	boltFilename    string
 	useBolt         bool
@@ -63,7 +73,7 @@ func usage() {
 	fmt.Println(`
 
 Syntax:
-  algernon [flags] [server dir] [server addr]
+  algernon [flags] [file or directory to serve]
 
 Available flags:
   --help                       This help
@@ -74,15 +84,16 @@ Available flags:
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Use /srv/algernon as the server
                                directory. Disable debug mode and auto-refresh.
-  -d, --debug                  Enable debug mode
+  --debug                      Enable debug mode (shows errors in the browser).
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
-  -b, --bolt                   Use ` + defaultBoltFilename + ` as the Bolt database
+  -b, --bolt                   Use "` + defaultBoltFilename + `" as the Bolt database
   --boltdb=FILENAME            Use a specific file as the Bolt database
   --redis=[HOST][:PORT]        Use the given Redis database ("` + defaultRedisColonPort + `")
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
-  --http2log=FILENAME          Save the verbose HTTP/2 log
+  --log=FILENAME               Log to a file instead of to the console
+  --http2log=FILENAME          Additional HTTP/2 log (quite verbose)
   -h, --httponly               Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --maria=DSN                  Use the given MariaDB or MySQL host
@@ -91,7 +102,9 @@ Available flags:
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
-  --limit=N                    Limit clients to a number of requests per second
+  -d, --dev                    Development mode: Enable Debug mode, enables
+                               interactive mode, uses regular HTTP, uses Bolt.
+  --limit=N                    Limit clients to N requests per second
   --no-limit                   Disable rate limiting
   -i, --interactive            Interactive mode
 `)
@@ -100,7 +113,8 @@ Available flags:
 // Parse the flags, return the default hostname
 func handleFlags() string {
 	// The short version of some flags
-	var serveJustHTTPShort, autoRefreshShort, productionModeShort, debugModeShort, interactiveModeShort, useBoltShort bool
+	var serveJustHTTPShort, autoRefreshShort, productionModeShort,
+		debugModeShort, interactiveModeShort, useBoltShort, devModeShort bool
 
 	// The usage function that provides more help
 	flag.Usage = usage
@@ -112,6 +126,11 @@ func handleFlags() string {
 		host = "localhost"
 		// Disable colors when logging, for some systems
 		//log.SetFormatter(&log.TextFormatter{DisableColors: true})
+
+		// Default Bolt database file
+		defaultBoltFilename = path.Join(os.TempDir(), "algernon.db")
+		// Default log file
+		defaultLogFile = path.Join(os.TempDir(), "algernon.log")
 	}
 
 	// Commandline flag configuration
@@ -123,6 +142,7 @@ func handleFlags() string {
 	flag.StringVar(&redisAddr, "redis", host+defaultRedisColonPort, "Redis [host][:port] (ie \""+defaultRedisColonPort+"\")")
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&serverConfScript, "conf", "serverconf.lua", "Server configuration")
+	flag.StringVar(&serverLogFile, "log", "", "Server log file")
 	flag.StringVar(&serverHTTP2log, "http2log", "/dev/null", "HTTP/2 log")
 	flag.BoolVar(&serveJustHTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 	flag.BoolVar(&serveJustHTTP, "httponly", false, "Serve plain old HTTP")
@@ -139,14 +159,16 @@ func handleFlags() string {
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
 	flag.Int64Var(&limitRequests, "limit", 1, "Limit clients to a number of requests per second")
 	flag.BoolVar(&disableRateLimiting, "no-limit", false, "Disable rate limiting")
+	flag.BoolVar(&devMode, "dev", false, "Development mode")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
-	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
 	flag.BoolVar(&interactiveModeShort, "i", false, "Interactive mode")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
 	flag.BoolVar(&productionModeShort, "p", false, "Production mode")
+	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
+	flag.BoolVar(&devModeShort, "e", false, "Development mode")
 
 	flag.Parse()
 
@@ -157,6 +179,7 @@ func handleFlags() string {
 	interactiveMode = interactiveMode || interactiveModeShort
 	useBolt = useBolt || useBoltShort
 	productionMode = productionMode || productionModeShort
+	devMode = devMode || devModeShort
 
 	// Change several defaults if production mode is enabled
 	if productionMode {
@@ -164,9 +187,16 @@ func handleFlags() string {
 		serverDir = "/srv/algernon"
 		serverCert = "/etc/algernon/cert.pem"
 		serverKey = "/etc/algernon/key.pem"
+	} else if devMode {
+		// Change several defaults if development mode is enabled
+		useBolt = true
+		serveJustHTTP = true
+		serverLogFile = defaultLogFile
+		debugMode = true
+		interactiveMode = true
 	}
 
-	// For backwards compatibility with earlier versions of algernon
+	// For backwards compatibility with previous versions of algernon
 
 	if len(flag.Args()) >= 1 {
 		serverDir = flag.Args()[0]
