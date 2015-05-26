@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/didip/tollbooth"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
-	"github.com/didip/tollbooth"
 )
 
 const (

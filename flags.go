@@ -91,9 +91,9 @@ Available flags:
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
-  -i, --interactive            Interactive mode
-  --limit=N                    Rate limit clients to a number of requests per second
+  --limit=N                    Limit clients to a number of requests per second
   --no-limit                   Disable rate limiting
+  -i, --interactive            Interactive mode
 `)
 }
 
