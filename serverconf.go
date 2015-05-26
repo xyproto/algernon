@@ -17,7 +17,7 @@ import (
 func writeStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 	buf.WriteString(title + ":")
 	// Spartan way of lining up the columns
-	if len(title) <= 14 {
+	if len(title) < 7 {
 		buf.WriteString("\t")
 	}
 	buf.WriteString("\t\t[")
@@ -162,7 +162,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		buf.WriteString("Database:\t\t" + dbName + "\n")
 
 		// Write the status of flags that can be toggled
-		writeStatus(&buf, "Flags", map[string]bool{
+		writeStatus(&buf, "Options", map[string]bool{
 			"Debug mode":      debugMode,
 			"Production mode": productionMode,
 			"Auto-refresh":    autoRefresh,
