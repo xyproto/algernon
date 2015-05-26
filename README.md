@@ -298,7 +298,7 @@ list:getlastn(number) -> table
 // Remove the list itself. Returns true if successful.
 list:remove() -> bool
 
-// Clear the list
+// Clear the list. Returns true if successful.
 list:clear() -> bool
 ~~~
 
@@ -342,7 +342,7 @@ hash:del(string) -> bool
 // Remove the hash map itself. Returns true if successful.
 hash:remove() -> bool
 
-// Clear the hash map
+// Clear the hash map. Returns true if successful.
 hash:clear() -> bool
 ~~~
 
@@ -370,7 +370,7 @@ kv:del(string) -> bool
 // Remove the KeyValue itself. Returns true if successful.
 kv:remove() -> bool
 
-// Clear the KeyValue
+// Clear the KeyValue. Returns true if successful.
 kv:clear() -> bool
 ~~~
 

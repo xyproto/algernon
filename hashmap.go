@@ -149,6 +149,14 @@ func hashRemove(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Clear the hash map. Returns true if successful.
+// hash:clear() -> bool
+func hashClear(L *lua.LState) int {
+	hash := checkHash(L) // arg 1
+	L.Push(lua.LBool(nil == hash.Clear()))
+	return 1 // Number of returned values
+}
+
 // The hash map methods that are to be registered
 var hashMethods = map[string]lua.LGFunction{
 	"__tostring": hashToString,
@@ -160,6 +168,7 @@ var hashMethods = map[string]lua.LGFunction{
 	"delkey":     hashDelKey,
 	"del":        hashDel,
 	"remove":     hashRemove,
+	"clear":      hashClear,
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts

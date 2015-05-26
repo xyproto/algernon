@@ -98,6 +98,14 @@ func kvRemove(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Clear the keyvalue. Returns true if successful.
+// kv:clear() -> bool
+func kvClear(L *lua.LState) int {
+	kv := checkKeyValue(L) // arg 1
+	L.Push(lua.LBool(nil == kv.Clear()))
+	return 1 // Number of returned values
+}
+
 // The keyvalue methods that are to be registered
 var kvMethods = map[string]lua.LGFunction{
 	"__tostring": kvToString,
@@ -106,6 +114,7 @@ var kvMethods = map[string]lua.LGFunction{
 	"inc":        kvInc,
 	"del":        kvDel,
 	"remove":     kvRemove,
+	"clear":      kvClear,
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts

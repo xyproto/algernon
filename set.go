@@ -104,6 +104,14 @@ func setRemove(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Clear the set. Returns true if successful.
+// set:clear() -> bool
+func setClear(L *lua.LState) int {
+	set := checkSet(L) // arg 1
+	L.Push(lua.LBool(nil == set.Clear()))
+	return 1 // Number of returned values
+}
+
 // The set methods that are to be registered
 var setMethods = map[string]lua.LGFunction{
 	"__tostring": setToString,
@@ -112,6 +120,7 @@ var setMethods = map[string]lua.LGFunction{
 	"has":        setHas,
 	"getall":     setGetAll,
 	"remove":     setRemove,
+	"clear":      setClear,
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts

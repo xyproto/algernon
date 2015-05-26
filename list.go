@@ -109,6 +109,14 @@ func listRemove(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Clear the list. Returns true if successful.
+// list:clear() -> bool
+func listClear(L *lua.LState) int {
+	list := checkList(L) // arg 1
+	L.Push(lua.LBool(nil == list.Clear()))
+	return 1 // Number of returned values
+}
+
 // The list methods that are to be registered
 var listMethods = map[string]lua.LGFunction{
 	"__tostring": listToString,
@@ -117,6 +125,7 @@ var listMethods = map[string]lua.LGFunction{
 	"getlast":    listGetLast,
 	"getlastn":   listGetLastN,
 	"remove":     listRemove,
+	"clear":      listClear,
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts

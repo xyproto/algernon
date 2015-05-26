@@ -27,6 +27,8 @@ set:has(string) -> bool
 set:getall() -> table
 // Remove the set itself. Returns true if successful.
 set:remove() -> bool
+// Clear the set. Returns true if successful.
+set:clear() -> bool
 
 // Get or create a Redis-backed List (takes a name, returns a list object)
 List(string) -> userdata
@@ -40,6 +42,8 @@ list:getlast() -> string
 list:getlastn(number) -> table
 // Remove the list itself. Returns true if successful.
 list:remove() -> bool
+// Clear the list. Returns true if successful.
+list:clear() -> bool
 
 // Get or create a Redis-backed HashMap (takes a name, returns a hash map object)
 HashMap(string) -> userdata
@@ -59,6 +63,8 @@ hash:delkey(string, string) -> bool
 hash:del(string) -> bool
 // Remove the hash map itself. Returns true if successful.
 hash:remove() -> bool
+// Clear the hash map. Returns true if successful.
+hash:clear() -> bool
 
 // Get or create a Redis-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
@@ -72,6 +78,8 @@ kv:inc(string) -> string
 kv:del(string) -> bool
 // Remove the KeyValue itself. Returns true if successful.
 kv:remove() -> bool
+// Clear the KeyValue. Returns true if successful.
+kv:clear() -> bool
 
 Live server configuration
 
@@ -103,9 +111,9 @@ Various
 ServerInfo() -> string
 // Return the version string for the server
 version() -> string
-// Marshall a table to JSON
+// Convert a table to JSON
 JSON(table) -> string
-// Try to extract and print the contents of a Lua value
+// Tries to extract and print the contents of a Lua value
 pprint(value)
 // Sleep the given number of seconds (can be a float)
 sleep(number)
