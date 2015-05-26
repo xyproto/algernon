@@ -73,7 +73,7 @@ Features and limitations
 Overview
 --------
 
-Running Algernon:
+Running Algernon (screenshot from an earlier version):
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
