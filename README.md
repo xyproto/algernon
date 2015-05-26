@@ -6,7 +6,7 @@ keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, ma
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, Bolt, users and permissions.
+Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bolt, rate limiting, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://img.shields.io/badge/gitter-chat-green.svg?style=flat)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE)
 
@@ -42,7 +42,7 @@ Design decisions
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
-* The aim is to provide a comfortable environment for rapidly developing modern web applications, while not sacrificing structure and the separation between data and presentation.
+* The aim is to provide an environment for comfortably developing web applications, while not sacrificing structure and the separation between data and presentation.
 
 
 Features and limitations
@@ -67,7 +67,7 @@ Features and limitations
 * Full multithreading. All available CPUs will be used.
 <!--* Can be used for converting Amber to HTML. Just run Algernon like this: `algernon index.amber` and download the rendered result with curl: `curl -o rendered.html http://localhost:3000/`-->
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
-* Go 1.4 or later is required.
+* The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 
 
 Overview
@@ -107,7 +107,7 @@ ASCII diagram:
 |   For static pages:              |   Redis or Bolt for the backend:  |
 |   * Easy content creation.       |   * Both are pretty fast.         |
 |   * Easy to style with GCSS.     |   * Bolt is included.             |
-|   * Can refresh when saving.     |   * Redis is better at scaling.   |
+|   * Can refresh when saving.     |   * Redis scales easily.          |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 ```
@@ -271,6 +271,9 @@ set:getall() -> table
 
 // Remove the set itself. Returns true if successful.
 set:remove() -> bool
+
+// Clear the set
+set:clear() -> bool
 ~~~
 
 ##### List
@@ -294,6 +297,9 @@ list:getlastn(number) -> table
 
 // Remove the list itself. Returns true if successful.
 list:remove() -> bool
+
+// Clear the list
+list:clear() -> bool
 ~~~
 
 ##### HashMap
@@ -335,6 +341,9 @@ hash:del(string) -> bool
 
 // Remove the hash map itself. Returns true if successful.
 hash:remove() -> bool
+
+// Clear the hash map
+hash:clear() -> bool
 ~~~
 
 ##### KeyValue
@@ -360,6 +369,9 @@ kv:del(string) -> bool
 
 // Remove the KeyValue itself. Returns true if successful.
 kv:remove() -> bool
+
+// Clear the KeyValue
+kv:clear() -> bool
 ~~~
 
 
@@ -549,7 +561,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.68
+* Version: 0.7
 * License: MIT
 * Alexander F Rødseth
 
