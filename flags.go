@@ -152,7 +152,7 @@ func handleFlags() string {
 	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
-	flag.BoolVar(&interactiveMode, "interative", false, "Interactive mode")
+	flag.BoolVar(&interactiveMode, "interactive", false, "Interactive mode")
 	flag.StringVar(&mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
 	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")

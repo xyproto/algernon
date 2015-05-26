@@ -175,14 +175,12 @@ Getting started
 ##### The "bob" sample, over https
 
 * Run `./bob.sh` to start serving the "bob" sample.
-* Visit `https://localhost:3000/` (*note*: `https`)
-* Stop the script to stop serving.
+* Visit `https://localhost:3000/` (*note*: it's `https`)
 
 ##### All the samples, over http, with auto-refresh enabled
 
-* Run `./runsamples.sh` to start serving the sample directory.
-* Visit `http://localhost:3000/` (*note*: `http`)
-* Stop the script to stop serving.
+* Run `./samples.sh` to start serving the sample directory.
+* Visit `http://localhost:3000/` (*note*: it's `http`)
 
 ##### Create your own Algernon application, for regular HTTP
 
