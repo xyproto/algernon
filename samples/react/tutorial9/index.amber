@@ -11,3 +11,5 @@ html
     script[src="tutorial9.jsx"]
     p
       a[href="../tutorial10"] Next
+      ||
+      a[href=".."] Home

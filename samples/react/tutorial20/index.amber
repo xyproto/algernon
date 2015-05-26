@@ -10,4 +10,4 @@ html
     div[id="content"]
     script[src="tutorial20.jsx"]
     p
-      a[href=".."] Overview
+      a[href=".."] Home

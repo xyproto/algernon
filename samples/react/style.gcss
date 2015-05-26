@@ -1,14 +1,58 @@
 // Common style for the tutorials
 
+html
+  height: 100%
+
 body
-  background-color: #d0d0d0
   color: black
   margin: 3em 0 0 4em
-  font-family: monaco, consolas, monospace
+  font-family: Helvetica, Verdana, Veranda, sans-serif
   font-size: 1.2em
+  background: linear-gradient(to bottom, #c9de96 0%,#8ab66b 44%,#398235 100%)
+
+h1
+  font-size: 2.7em
+  background-color: black
+  color: white
+  margin: -1.2em 0 1.2em -1.5em
+  padding: 1.2em 0 0.1em 1em
+
+p
+  margin: 2em 0 2em 0
 
 a
-  color: darkblue
+  color: #030
+  text-decoration: none
 
 a:hover
-  color: blue
+  color: white
+  background-color: #1a1a1a
+
+ul
+  font-size: 1.2em
+  list-style: none
+  clear: left
+  margin-right: 33.33%
+
+ul li
+  clear: none
+  float: left
+  width: 8em
+
+ul li a
+  display: block
+  text-decoration: none
+  line-height: 30px
+  text-align: center
+  padding: 0.7em
+  cursor: pointer
+  margin-right: 1em
+  margin-bottom: 1.5em
+  color: white
+  background-color: #1a1a1a
+  border: solid 2px #1a1a1a
+
+ul li a:hover
+  color: #1f1f1f
+  background-color: #beefca
+  border: solid 2px black
