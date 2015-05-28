@@ -14,6 +14,7 @@ Priority
 
 Various
 -------
+- [ ] pprint should output text to the browser when not running in the repl
 - [ ] A way to make new Lua functions available with a standalone server
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
