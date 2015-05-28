@@ -201,3 +201,17 @@ func addMetaKeywords(keywords map[string]string) {
 		keywords[keyword] = ""
 	}
 }
+
+// Fatal exit
+func fatalExit(err error) {
+	// Log to file, if a log file is used
+	if serverLogFile != "" {
+		log.Error(err)
+	}
+	// Then switch to stderr and log the message there as well
+	log.SetOutput(os.Stderr)
+	// Use the standard formatter
+	log.SetFormatter(&log.TextFormatter{})
+	// Log and exit
+	log.Fatalln(err)
+}

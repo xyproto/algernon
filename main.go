@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	internallog "log"
@@ -87,7 +88,7 @@ func main() {
 			}
 			singleFileMode = true
 		} else {
-			log.Fatal("File does not exist: ", filename)
+			fatalExit(errors.New("File does not exist: " + filename))
 		}
 	}
 
@@ -166,7 +167,7 @@ func main() {
 		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Error("Could not log to", serverLogFile)
-			log.Fatal(err)
+			fatalExit(err)
 		}
 		log.SetFormatter(&log.JSONFormatter{})
 		log.SetOutput(f)
@@ -179,7 +180,7 @@ func main() {
 		if exists(filename) {
 			if err := runConfiguration(filename, perm, luapool); err != nil {
 				log.Error("Could not use configuration script: " + filename)
-				log.Fatal(err)
+				fatalExit(err)
 			}
 		}
 	}
@@ -203,7 +204,7 @@ func main() {
 		f, err = os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer f.Close()
 		if err != nil {
-			log.Fatalf("Could not write to %s nor %s.", serverHTTP2log, "http2.log")
+			fatalExit(errors.New(fmt.Sprintf("Could not write to %s nor %s.", serverHTTP2log, "http2.log")))
 		}
 	}
 	internallog.SetOutput(f)
@@ -242,14 +243,14 @@ func main() {
 		HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
-			log.Fatal(err)
+			fatalExit(err)
 		}
 	case serveJustHTTP2:
 		log.Info("Serving HTTP/2 on " + serverAddr)
 		// Listen for HTTP/2 requests
 		HTTP2server := newServerConfiguration(mux, true, serverAddr)
 		if err := HTTP2server.ListenAndServe(); err != nil {
-			log.Fatal(err)
+			fatalExit(err)
 		}
 	case !(serveJustHTTP2 || serveJustHTTP):
 		log.Info("Serving HTTPS + HTTP/2 on " + serverAddr)
@@ -270,7 +271,7 @@ func main() {
 		HTTPserver := newServerConfiguration(mux, false, serverAddr)
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP, give up
-			log.Fatal(err)
+			fatalExit(err)
 		}
 	}
 }

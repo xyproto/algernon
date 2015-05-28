@@ -128,18 +128,19 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 	// Set a access log filename. If blank, the log will go to the console (or browser, if debug mode is set).
 	L.SetGlobal("LogTo", L.NewFunction(func(L *lua.LState) int {
 		filename := L.ToString(1)
+		serverLogFile = filename
 		// Log as JSON by default
 		log.SetFormatter(&log.JSONFormatter{})
 		// Log to stderr if an empty filename is given
 		if filename == "" {
 			log.SetOutput(os.Stderr)
 			L.Push(lua.LBool(true))
-			return 1
+			return 1 // number of results
 		}
 		// Try opening/creating the given filename, for appending
 		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}

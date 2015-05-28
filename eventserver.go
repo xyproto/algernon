@@ -158,7 +158,7 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 	// Create a new filesystem watcher
 	rw, err := recwatch.NewRecursiveWatcher(path)
 	if err != nil {
-		log.Fatal(err)
+		fatalExit(err)
 	}
 
 	var mut sync.Mutex
@@ -187,7 +187,7 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 		}
 		if err := eventServer.ListenAndServe(); err != nil {
 			// If we can't serve HTTP on this port, give up
-			log.Fatal(err)
+			fatalExit(err)
 		}
 	}()
 }
