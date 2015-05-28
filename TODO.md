@@ -3,6 +3,7 @@
 
 Various
 -------
+- [ ] In the autorefresh js snippet, avoid refreshing twice in a short timespan
 - [ ] Use some of the tricks from go-bootstrap.io
 - [ ] Add an interface for managing users
 - [ ] Downloading and uploading files
