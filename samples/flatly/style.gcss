@@ -1,0 +1,5 @@
+body
+  background-color: #203040
+  color: lightgray
+  margin: 4em
+  font-family: sans-serif

@@ -1,0 +1,49 @@
+$title = "Bootstrap"
+$menubar = "Questions"
+html
+  head
+    title #{$title}
+    meta[name="viewport"][content="width=device-width,initial-scale=1"]
+    link[rel="stylesheet"][href="flatly/theme/bootstrap.css"][media="screen"]
+    link[rel="stylesheet"][href="flatly/theme/usebootstrap.css"]
+  body
+    div.navbar.navbar-default.navbar-fixed-top
+      div.container
+        div.navbar-header
+          a.navbar-brand[href="#"] #{$menubar}
+    div.container
+      div.row
+        div.jumbotron
+          h1 #{$title}
+          p 
+            |Bootstrap can be used to style and structure web pages. 
+          p 
+            |This page is using the Flatly theme.
+        div.jumbotron
+          p User feedback
+          form.form-horizontal[action="lucky.lua"][method="POST"][role="form"]
+            fieldset
+              div.form-group
+                label[for="select"].col-lg-2.control-label The answer to this question is "No"
+                div.col-lg-10
+                  div.radio
+                    label
+                      input#optionsRadios1[type="radio"][name="optionsRadios"][value="yes"]
+                      Option Yes
+                    label
+                      input#optionsRadios2[type="radio"][name="optionsRadios"][value="no"][checked="yes"]
+                      Option No
+                    label
+                      input#optionsRadios3[type="radio"][name="optionsRadios"][value="maybe"]
+                      Option Maybe
+              div.form-group
+                label.col-lg-2.control-label[for="comment1"] Are you sure?
+                input.form-control#comment1[type="text"][placeholder="no"]
+                label.col-lg-2.control-label[for="comment2"] Are you positive?
+                input.form-control#comment2[type="text"][placeholder="maybe"]
+              div.form-group
+                div.col-lg-10.col-lg-offset-2
+                  button.btn.btn-primary[type="submit"] I feel lucky
+        div.jumbotron
+          p
+            |See a full overview of the Flatly theme <a href="flatly">here</a>.
