@@ -215,3 +215,19 @@ func fatalExit(err error) {
 	// Log and exit
 	log.Fatalln(err)
 }
+
+// Insert doctype in HTML, if missing
+func insertDoctype(htmldata []byte) []byte {
+	// If there are more than two lines
+	if bytes.Count(htmldata, []byte("\n")) > 2 {
+		fields := bytes.SplitN(htmldata, []byte("\n"), 3)
+		line1 := strings.ToLower(string(fields[0]))
+		line2 := strings.ToLower(string(fields[1]))
+		if strings.Contains(line1, "doctype") || strings.Contains(line2, "doctype") {
+			return htmldata
+		}
+		// Doctype is missing from the first two lines, add it
+		return []byte("<!doctype html>" + string(htmldata))
+	}
+	return htmldata
+}

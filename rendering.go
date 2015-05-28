@@ -126,7 +126,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w io.Writer, data []byte, filename string) {
+func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 	// Prepare for receiving title and code_theme information
 	given := map[string]string{"title": "", "code_theme": defaultTheme}
 
@@ -165,10 +165,20 @@ func markdownPage(w io.Writer, data []byte, filename string) {
 		}
 	}
 
-	// If style.gcss is present, use that style in <head>
 	var head bytes.Buffer
 
-	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
+	// If style.gcss is present, use that style in <head>
+	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
+	if exists(GCSSfilename) {
+		if debugMode {
+			// Try compiling the GCSS file first
+			if gcssdata, err := validGCSS(GCSSfilename); err != nil {
+				// Invalid GCSS, return an error page
+				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
+				return
+			}
+		}
+		// Link to stylesheet (without checking if the GCSS file is valid first)
 		head.WriteString(`<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the default style in <head>
@@ -223,7 +233,6 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
-
 	if exists(GCSSfilename) {
 		if debugMode {
 			// Try compiling the GCSS file before the Amber file
@@ -233,12 +242,9 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 				return
 			}
 		}
-		// Link to stylesheet (could be valid, could be invalid)
+		// Link to stylesheet (without checking if the GCSS file is valid first)
 		linkToStyle(&amberdata, defaultStyleFilename)
 	}
-
-	// If the file starts with "html5\n", replace it with "doctype 5\nhtml\n"
-	//amberdata = bytes.Replace(amberdata, []byte("html5\n"), []byte("doctype 5\nhtml\n"), 1)
 
 	// Compile the given amber template
 	tpl, err := amber.CompileData(amberdata, filename, amber.Options{PrettyPrint: true, LineNumbers: false})
@@ -281,6 +287,10 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 		changedBuf := bytes.NewBuffer(insertAutoRefresh(buf.Bytes()))
 		buf = *changedBuf
 	}
+
+	// If doctype is missing, add doctype for HTML5 at the top
+	changedBuf := bytes.NewBuffer(insertDoctype(buf.Bytes()))
+	buf = *changedBuf
 
 	// Write the rendered template to the http.ResponseWriter
 	buf.WriteTo(w)
