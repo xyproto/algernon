@@ -221,23 +221,25 @@ func insertAutoRefresh(htmldata []byte) []byte {
       }, false);
     }
     </script>`
-	// TODO: Use a regexp or a JavaScript minification package instead
+
+	// TODO: Use a regexp or a JavaScript minification package instead of replacing strings
+
 	// Reduce the size slightly
 	js = strings.TrimSpace(strings.Replace(js, "\n", "", everyInstance))
 	// Remove all whitespace that is more than one space
 	for strings.Contains(js, "  ") {
 		js = strings.Replace(js, "  ", " ", everyInstance)
 	}
-	// Place the script in the <head>, if there is a head
-	if bytes.Contains(htmldata, []byte("<head>")) {
-		return bytes.Replace(htmldata, []byte("<head>"), []byte("<head>"+js), 1)
-	} else if bytes.Contains(htmldata, []byte("</body>")) {
-		// If not, Place the script at the end of the body, if there is a body
+	// Place the script at the end of the body, if there is a body
+	if bytes.Contains(htmldata, []byte("</body>")) {
 		return bytes.Replace(htmldata, []byte("</body>"), []byte(js+"</body>"), 1)
+	} else if bytes.Contains(htmldata, []byte("<head>")) {
+		// If not, place the script in the <head>, if there is a head
+		return bytes.Replace(htmldata, []byte("<head>"), []byte("<head>"+js), 1)
 	} else if bytes.Contains(htmldata, []byte("<html>")) {
 		// If not, place the script in the <html> as a new <head>
 		return bytes.Replace(htmldata, []byte("<html>"), []byte("<html><head>"+js+"</head>"), 1)
 	}
-	// If no place to insert the JavaScript was found
+	// In the unlikely event that no place to insert the JavaScript was found
 	return htmldata
 }
