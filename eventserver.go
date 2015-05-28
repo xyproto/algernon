@@ -132,6 +132,9 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 					prevname := ""
 					for _, k := range keys {
 						ev := events[k]
+						if verboseMode {
+							log.Info("EVENT " + ev.String())
+						}
 						// Avoid sending several events for the same filename
 						if ev.Name != prevname {
 							// Send an event to the client

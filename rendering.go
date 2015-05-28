@@ -202,6 +202,19 @@ func markdownPage(w io.Writer, data []byte, filename string) {
 	w.Write(htmldata)
 }
 
+// Check if the given filename is valid GCSS
+// Reads the given filename
+func validGCSS(filename string) ([]byte, error) {
+	gcssdata, err := read(filename)
+	if err != nil {
+		return []byte{}, err
+	}
+	buf := bytes.NewBuffer(gcssdata)
+	var w bytes.Buffer
+	_, err = gcss.Compile(&w, buf)
+	return gcssdata, err
+}
+
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
 func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs template.FuncMap) {
@@ -209,7 +222,18 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	if exists(path.Join(path.Dir(filename), defaultStyleFilename)) {
+	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
+
+	if exists(GCSSfilename) {
+		if debugMode {
+			// Try compiling the GCSS file before the Amber file
+			if gcssdata, err := validGCSS(GCSSfilename); err != nil {
+				// Invalid GCSS, return an error page
+				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
+				return
+			}
+		}
+		// Link to stylesheet (could be valid, could be invalid)
 		linkToStyle(&amberdata, defaultStyleFilename)
 	}
 
@@ -267,7 +291,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
 	if _, err := gcss.Compile(w, bytes.NewReader(gcssdata)); err != nil {
 		if debugMode {
-			prettyError(w, filename, gcssdata, err.Error(), "gcss")
+			fmt.Fprintf(w, "Could not compile GCSS:\n\n%s\n%s", err, string(gcssdata))
 		} else {
 			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
 		}

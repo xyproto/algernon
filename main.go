@@ -220,7 +220,13 @@ func main() {
 			refresh, _ = time.ParseDuration(defaultEventRefresh)
 		}
 		// TODO: Try using serverHost instead of "*". Test on localhost and a remote host.
-		EventServer(eventAddr, defaultEventPath, serverDir, refresh, "*")
+		if autoRefreshDir != "" {
+			// Only watch the autoRefreshDir, recursively
+			EventServer(eventAddr, defaultEventPath, autoRefreshDir, refresh, "*")
+		} else {
+			// Watch everything in the server directory, recursively
+			EventServer(eventAddr, defaultEventPath, serverDir, refresh, "*")
+		}
 	}
 
 	if interactiveMode {

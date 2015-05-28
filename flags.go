@@ -47,6 +47,9 @@ var (
 	// Enable the event server and inject JavaScript to reload pages when sources change
 	autoRefresh bool
 
+	// If only watching a single directory recursively
+	autoRefreshDir string
+
 	// If serving a single file, like a lua script
 	singleFileMode bool
 
@@ -80,13 +83,16 @@ Available flags:
   --version                    Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
-  -a, --autorefresh            Enable the event server and auto-refresh feature.
+  -e, --dev                    Development mode: Enable Debug mode, enables
+                               interactive mode, uses regular HTTP, uses Bolt.
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Use /srv/algernon as the server
                                directory. Disable debug mode and auto-refresh.
-  --debug                      Enable debug mode (shows errors in the browser).
+  -a, --autorefresh            Enable the event server and auto-refresh feature.
+  --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS
   --key=FILENAME               TLS key, if using HTTPS
+  --debug                      Enable debug mode (shows errors in the browser).
   -b, --bolt                   Use "` + defaultBoltFilename + `" as the Bolt database
   --boltdb=FILENAME            Use a specific file as the Bolt database
   --redis=[HOST][:PORT]        Use the given Redis database ("` + defaultRedisColonPort + `")
@@ -102,8 +108,6 @@ Available flags:
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
-  -d, --dev                    Development mode: Enable Debug mode, enables
-                               interactive mode, uses regular HTTP, uses Bolt.
   --limit=N                    Limit clients to N requests per second
   --no-limit                   Disable rate limiting
   -i, --interactive            Interactive mode
@@ -150,6 +154,7 @@ func handleFlags() string {
 	flag.BoolVar(&debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&verboseMode, "verbose", false, "Verbose logging")
 	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
+	flag.StringVar(&autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
 	flag.BoolVar(&interactiveMode, "interactive", false, "Interactive mode")
@@ -194,6 +199,12 @@ func handleFlags() string {
 		serverLogFile = defaultLogFile
 		debugMode = true
 		interactiveMode = true
+		limitRequests = 1000 // Increase the rate limit considerably
+	}
+
+	// If a watch directory is given, enable the auto refresh feature
+	if autoRefreshDir != "" {
+		autoRefresh = true
 	}
 
 	// For backwards compatibility with previous versions of algernon

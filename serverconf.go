@@ -178,6 +178,9 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		if autoRefresh {
 			buf.WriteString("Event server:\t\t" + eventAddr + "\n")
 		}
+		if autoRefreshDir != "" {
+			buf.WriteString("Only watching:\t\t" + autoRefreshDir + "\n")
+		}
 		if redisAddr != defaultRedisColonPort {
 			buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
 		}

@@ -49,7 +49,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	w.WriteHeader(http.StatusOK)
 
 	// HTTP content type
-	w.Header().Add("Content-Type", "text/html; encoding=UTF-8")
+	w.Header().Set("Content-Type", "text/html; encoding=UTF-8")
 
 	// The line that the error refers to, for the case of Lua
 	linenr := -1
