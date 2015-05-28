@@ -121,7 +121,6 @@ sleep(number)
 )
 
 // Attempt to output a more informative text than the memory location
-// TODO: See if a package related to gopher-lua can already do this
 func pprint(value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -230,4 +232,9 @@ func insertDoctype(htmldata []byte) []byte {
 		return []byte("<!doctype html>" + string(htmldata))
 	}
 	return htmldata
+}
+
+// Convert time.Duration to milliseconds, as a string (without "ms")
+func durationToMS(d time.Duration, multiplier float64) string {
+	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
 }

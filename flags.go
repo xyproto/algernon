@@ -41,8 +41,8 @@ var (
 	debugMode, verboseMode, productionMode, interactiveMode bool
 
 	// For the Server-Sent Event (SSE) server
-	eventAddr    string
-	eventRefresh string // Event server refresh, ie "350ms"
+	eventAddr    string // Host and port to serve Server-Sent Events on
+	eventRefresh string // The duration of an event cycle
 
 	// Enable the event server and inject JavaScript to reload pages when sources change
 	autoRefresh bool
@@ -156,7 +156,7 @@ func handleFlags() string {
 	flag.BoolVar(&autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
-	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval in milliseconds (ie \""+defaultEventRefresh+"\")")
+	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval (ie \""+defaultEventRefresh+"\")")
 	flag.BoolVar(&interactiveMode, "interactive", false, "Interactive mode")
 	flag.StringVar(&mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
 	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")

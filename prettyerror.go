@@ -54,7 +54,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	var (
 		// If there is code to be displayed
 		code string
-		err error
+		err  error
 	)
 
 	// The line that the error refers to, for the case of Lua
@@ -85,6 +85,8 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 				if strings.Contains(fields[1], ",") {
 					numberfields := strings.SplitN(fields[1], ",", 2)
 					linenr, err = strconv.Atoi(strings.TrimSpace(numberfields[0]))
+					// Subtract one to make it a slice index instead of human-friendly line number
+					linenr--
 					// Set linenumber to -1 if the conversion failed
 					if err != nil {
 						linenr = -1

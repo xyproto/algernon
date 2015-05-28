@@ -31,8 +31,9 @@ var (
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 
 	// For convenience. Set in the main function.
-	serverHost string
-	dbName     string
+	serverHost      string
+	dbName          string
+	refreshDuration time.Duration
 )
 
 func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) *http.Server {
@@ -171,7 +172,6 @@ func main() {
 		}
 		log.SetFormatter(&log.JSONFormatter{})
 		log.SetOutput(f)
-		// TODO: Close the log file when the server shuts down
 	}
 
 	// Read server configuration script, if present.
@@ -213,19 +213,18 @@ func main() {
 	// Used for reloading pages when the sources change.
 	// Can also be used when serving a single file.
 	if autoRefresh {
-		refresh, err := time.ParseDuration(eventRefresh)
+		refreshDuration, err = time.ParseDuration(eventRefresh)
 		if err != nil {
 			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", eventRefresh, defaultEventRefresh))
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
-			refresh, _ = time.ParseDuration(defaultEventRefresh)
+			refreshDuration, _ = time.ParseDuration(defaultEventRefresh)
 		}
-		// TODO: Try using serverHost instead of "*". Test on localhost and a remote host.
 		if autoRefreshDir != "" {
 			// Only watch the autoRefreshDir, recursively
-			EventServer(eventAddr, defaultEventPath, autoRefreshDir, refresh, "*")
+			EventServer(eventAddr, defaultEventPath, autoRefreshDir, refreshDuration, "*")
 		} else {
 			// Watch everything in the server directory, recursively
-			EventServer(eventAddr, defaultEventPath, serverDir, refresh, "*")
+			EventServer(eventAddr, defaultEventPath, serverDir, refreshDuration, "*")
 		}
 	}
 

@@ -210,7 +210,6 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 		return err
 	}
 
-	// TODO Find out if the Lua state should rather be put back in either case
 	// Only put the Lua state back if there were no errors
 	luapool.Put(L)
 

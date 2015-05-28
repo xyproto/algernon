@@ -44,12 +44,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		return 0 // number of results
 	}))
 
-	// TODO: Add two functions. One to compile amber templates and
-	// store the result by filename and one to render data by using
-	// compiled templates.
-
 	// Output text as rendered amber.
-	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("aprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L, true)
@@ -58,7 +53,6 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		tpl, err := amber.Compile(buf.String(), amber.Options{PrettyPrint: true, LineNumbers: false})
 		if err != nil {
 			if debugMode {
-				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
@@ -71,17 +65,14 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		return 0 // number of results
 	}))
 
-	// Output text as rendered GCSS
-	// TODO: Add caching, compilation and reuse
+	// DEPRECATED
 	L.SetGlobal("gprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L, true)
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
-		// TODO: Can use &buf instead of using NewReader and .Bytes()?
-		if _, err := gcss.Compile(w, bytes.NewReader(buf.Bytes())); err != nil {
+		if _, err := gcss.Compile(w, &buf); err != nil {
 			if debugMode {
-				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
@@ -92,7 +83,6 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	}))
 
 	// Output text as rendered JSX
-	// TODO: Add caching, compilation and reuse
 	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L, true)
@@ -166,7 +156,6 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 	}
 
 	var head bytes.Buffer
-
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {

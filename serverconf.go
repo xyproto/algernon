@@ -147,7 +147,6 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		// Set the file to log to and return
 		log.SetOutput(f)
 		L.Push(lua.LBool(true))
-		// TODO: Close the log file when the server shuts down
 		return 1 // number of results
 	}))
 
@@ -164,17 +163,19 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 
 		// Write the status of flags that can be toggled
 		writeStatus(&buf, "Options", map[string]bool{
-			"Debug mode":      debugMode,
-			"Production mode": productionMode,
-			"Auto-refresh":    autoRefresh,
+			"Debug":        debugMode,
+			"Production":   productionMode,
+			"Auto-refresh": autoRefresh,
+			"Dev":          devMode,
 		})
 
 		if serverLogFile != "" {
 			buf.WriteString("Log file:\t\t" + serverLogFile + "\n")
 		}
-
-		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
-		buf.WriteString("TLS key:\t\t" + serverKey + "\n")
+		if !(serveJustHTTP2 || serveJustHTTP) {
+			buf.WriteString("TLS certificate:\t" + serverCert + "\n")
+			buf.WriteString("TLS key:\t\t" + serverKey + "\n")
+		}
 		if autoRefresh {
 			buf.WriteString("Event server:\t\t" + eventAddr + "\n")
 		}
