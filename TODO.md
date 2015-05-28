@@ -1,32 +1,51 @@
 # Plans
 
+Priority
+--------
+- [ ] Caching
+- [ ] User management interface
+- [ ] Graceful shutdown
+- [ ] Functions for dealing with JSON in Lua (megajson?)
+- [ ] A way to offer HTTP handle functions in another executable
+- [ ] JSON templates that can use data.lua
+- [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [ ] OS X package + homebrew
+
 
 Various
 -------
-- [ ] In the autorefresh js snippet, avoid refreshing twice in a short timespan
+- [ ] A way to make new Lua functions available with a standalone server
+- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
+- [ ] Support for pretty URLs (/position/x/2/y/4)
 - [ ] Use some of the tricks from go-bootstrap.io
-- [ ] Add an interface for managing users
 - [ ] Downloading and uploading files
 - [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
 - [ ] Add a Lua function for shutting down the server gracefully. Close open file handles at shutdown.
 - [ ] Add an option for exiting after any page has been visited once.
-- [ ] Find a tool for viewing stats over open file handles while running.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
-- [ ] A way to extend Algernon with Go, perhaps with pie on github
 - [ ] Use the JSON code from https://github.com/layeh/gopher-json
 - [ ] Consider using MegaJSON
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
-- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
-- [ ] Support for pretty URLs (/position/x/2/y/4)
 - [ ] JSON templates
 - [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
 - [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
-- [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [ ] A way to extend Algernon with Go, perhaps with pie on github
 - [ ] MSI installer
-- [ ] OS X package + homebrew
 - [ ] deb/ppa
+
+
+Events
+------
+
+- [ ] A better 404 page not found page for users visiting "/"
+- [ ] Consider using channels in a more clever way, to avoid sleeping.
+      Possibly by sending channels over channels.
+- [ ] Consider only listening for changes after a file has been visited, then
+      stop watching it after a while.
+- [ ] Use a regexp or a JavaScript minification package instead of replacing strings in insertAutoRefresh
+- [ ] In genFileChangeEvents, check for CloseNotify, for more graceful timeouts
 
 
 Server configuration
@@ -41,18 +60,22 @@ Server configuration
 - [ ] A way to recompile templates on command while the server is running.
 - [ ] If no Redis server is found, start an internal Ledis database that runs in RAM (see https://github.com/siddontang/ledisdb/blob/master/cmd/ledis-server/main.go)
 
+REPL
+----
+- [ ] See if a package related to gopher-lua can do the same as the pprint function
 
 Additional security
 -------------------
 
-- [ ] Rate limiting
+- [X] Rate limiting
 - [ ] Option to disable directory listings
 - [ ] Option to only allow whitelisted URL prefixes
 - [ ] Functions for adding URL prefixes to the whitelist
 - [ ] OAuth 1
 - [ ] OAuth 2
-- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver ".
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver".
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
+- [ ] Check if "*" or the server host should be used as parameter to the EventServer function
 
 
 Examples
@@ -67,6 +90,7 @@ Logging
 - [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
 - [ ] A separate debug webserver / control panel running on a different port.
       For displaying stats, access logs, break-in attempts and errors in the code.
+- [ ] Make sure to close the log file when the server shuts down
 
 
 Console output
@@ -128,6 +152,7 @@ Lua
       the Lua State object by sending it packed over the network and
       then receiving the modified Lua State.
 - [ ] Modules, Lua libraries, plugins and reuse of code.
+- [ ] In runLuaString, check if L.Close() really is needed instead of luapool.Put(L)
 
 
 Performance
