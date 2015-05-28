@@ -14,14 +14,6 @@ import (
 	"github.com/xyproto/recwatch"
 )
 
-// TODO: A better 404 page not found page for users visiting "/"
-
-// TODO: Consider using channels in a more clever way, to avoid sleeping.
-//       Possibly by sending channels over channels.
-
-// TODO: Consider only listening for changes after a file has been visited, the
-//       stop watching it after a while.
-
 type (
 	// TimeEventMap stores filesystem events
 	TimeEventMap map[time.Time]recwatch.Event
@@ -107,12 +99,10 @@ func collectFileChangeEvents(watcher *recwatch.RecursiveWatcher, mut *sync.Mutex
 // Create events whenever a file in the server directory changes
 func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration, allowed string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Add("Content-Type", "text/event-stream;charset=utf-8")
-		w.Header().Add("Cache-Control", "no-cache")
-		w.Header().Add("Connection", "keep-alive")
-		w.Header().Add("Access-Control-Allow-Origin", allowed)
-
-		// TODO: Check for CloseNotify, for more graceful timeouts
+		w.Header().Set("Content-Type", "text/event-stream;charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", allowed)
 
 		var id uint64
 
@@ -209,20 +199,22 @@ func insertAutoRefresh(htmldata []byte) []byte {
 			fullHost = "localhost" + eventAddr
 		}
 	}
+	// Wait 70% of an event duration before starting to listen for events
+	multiplier := 0.7
 	js := `
     <script>
     if (!!window.EventSource) {
-      var source = new EventSource(window.location.protocol + '//` + fullHost + defaultEventPath + `');
-      source.addEventListener('message', function(e) {
-        const path = '/' + e.data;
-        if (path.indexOf(window.location.pathname) >= 0) {
-          location.reload()
-        }
-      }, false);
-    }
+	  window.setTimeout(function() {
+        var source = new EventSource(window.location.protocol + '//` + fullHost + defaultEventPath + `');
+        source.addEventListener('message', function(e) {
+          const path = '/' + e.data;
+          if (path.indexOf(window.location.pathname) >= 0) {
+            location.reload()
+          }
+        }, false);
+	  }, ` + durationToMS(refreshDuration, multiplier) + `);
+	}
     </script>`
-
-	// TODO: Use a regexp or a JavaScript minification package instead of replacing strings
 
 	// Reduce the size slightly
 	js = strings.TrimSpace(strings.Replace(js, "\n", "", everyInstance))
