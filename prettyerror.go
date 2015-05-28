@@ -51,11 +51,15 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	// HTTP content type
 	w.Header().Set("Content-Type", "text/html; encoding=UTF-8")
 
+	var (
+		// If there is code to be displayed
+		code string
+		err error
+	)
+
 	// The line that the error refers to, for the case of Lua
 	linenr := -1
 
-	// If there is code to be displayed
-	var code string
 	if len(filebytes) > 0 {
 		if lang == "lua" {
 			// If the first line of the error message has two colons, see if the second field is a number
@@ -66,12 +70,27 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 				if strings.Contains(numberfield, "(") {
 					numberfield = strings.Split(numberfield, "(")[0]
 				}
-				linenr, err := strconv.Atoi(numberfield)
+				linenr, err = strconv.Atoi(numberfield)
 				// Subtract one to make it a slice index instead of human-friendly line number
 				linenr--
 				// Set linenumber to -1 if the conversion failed
 				if err != nil {
 					linenr = -1
+				}
+			}
+		} else if lang == "amber" {
+			// If the error contains "- Line: ", extract the line number
+			if strings.Contains(errormessage, "- Line: ") {
+				fields := strings.SplitN(errormessage, "- Line: ", 2)
+				if strings.Contains(fields[1], ",") {
+					numberfields := strings.SplitN(fields[1], ",", 2)
+					linenr, err = strconv.Atoi(strings.TrimSpace(numberfields[0]))
+					// Subtract one to make it a slice index instead of human-friendly line number
+					linenr--
+					// Set linenumber to -1 if the conversion failed
+					if err != nil {
+						linenr = -1
+					}
 				}
 			}
 		}
@@ -133,6 +152,9 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	  #right {
         text-align:right;
 	  }
+	  #wrap {
+	    white-space: pre-wrap;
+	  }
 	</style>
 	` + highlightHTML(errorTheme) + `
   </head>
@@ -144,7 +166,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 	</div>
     Error message:
     <div>
-	  <pre><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
+	  <pre id="wrap"><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
 	</div>
 	<div id="right">
 	` + versionString + `
