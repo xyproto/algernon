@@ -18,6 +18,8 @@ Priority
 
 Various
 -------
+- [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
+      Let Lua provide a callback function.
 - [ ] pprint should output text to the browser when not running in the repl
 - [ ] A way to make new Lua functions available with a standalone server
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
@@ -68,6 +70,10 @@ Server configuration
 REPL
 ----
 - [ ] See if a package related to gopher-lua can do the same as the pprint function
+
+Plugins
+-------
+- [ ] Unmarshal the CallPlugin reply into appropriate Lua structures instead of returning a JSON string
 
 Additional security
 -------------------

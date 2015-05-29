@@ -7,6 +7,7 @@ import (
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
+	"runtime"
 	"strings"
 )
 
@@ -208,7 +209,8 @@ func highlight(o *term.TextOutput, line string) string {
 	return module + function + unprocessed + typed + comment
 }
 
-// The REPL
+// REPL provides a "Read Eveal Print" loop for interacting with Lua.
+// A variatey of functions are exposed to the Lua state.
 func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
 
 	// Retrieve the userstate
@@ -238,17 +240,20 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
 	exportREPL(L)
 
 	// Colors and input
-	o := term.NewTextOutput(true, true)
+	enableColors := runtime.GOOS != "windows"
+	o := term.NewTextOutput(enableColors, true)
+
+	// Plugin functionality
+	exportPluginFunctions(L, o)
 
 	o.Println(o.LightBlue(versionString))
 	o.Println(o.LightGreen("Ready"))
 
 	var (
-		line        string
-		err         error
-		printWorked bool
-		prompt      = o.LightGreen("lua> ")
-		EOF         bool
+		line   string
+		err    error
+		prompt = o.LightGreen("lua> ")
+		EOF    bool
 	)
 	for {
 		// Retrieve user input
@@ -287,15 +292,26 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
 			return nil
 		}
 
-		// If the line doesn't start with print, try adding it
-		printWorked = false
-		if !strings.HasPrefix(line, "print(") {
-			printWorked = nil == L.DoString("pprint("+line+")")
-		}
-		if !printWorked {
+		// If the line starts with print, don't touch it
+		if strings.HasPrefix(line, "print(") {
 			if err = L.DoString(line); err != nil {
-				// Output the original error message
-				log.Error(err)
+				// Output the error message
+				o.Err(err.Error())
+			}
+		} else {
+			// Wrap the line in "pprint"
+			if err = L.DoString("pprint(" + line + ")"); err != nil {
+				// If there was a syntax error, try again without pprint
+				if strings.Contains(err.Error(), "syntax error") {
+					if err = L.DoString(line); err != nil {
+						// Output the error message
+						o.Err(err.Error())
+					}
+					// For other kinds of errors, output the error
+				} else {
+					// Output the error message
+					o.Err(err.Error())
+				}
 			}
 		}
 	}

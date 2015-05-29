@@ -35,3 +35,6 @@ http2.log
 .DS_Store
 dump.rdb
 bolt.db
+
+# Plugin executables
+plugins/add3/add3
