@@ -204,7 +204,7 @@ func main() {
 		f, err = os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		defer f.Close()
 		if err != nil {
-			fatalExit(errors.New(fmt.Sprintf("Could not write to %s nor %s.", serverHTTP2log, "http2.log")))
+			fatalExit(fmt.Errorf("Could not write to %s nor %s.", serverHTTP2log, "http2.log"))
 		}
 	}
 	internallog.SetOutput(f)
