@@ -2,15 +2,19 @@
 
 Priority
 --------
+- [ ] A way to package Algernon applications as self-contained archives
+- [ ] Make new Lua functions available with plugins
+- [ ] Make HTTP handle functions available with plugins
+- [ ] Make it easy to host Algernon applications
 - [ ] Caching
 - [ ] User management interface
 - [ ] Graceful shutdown
 - [ ] Functions for dealing with JSON in Lua (megajson?)
-- [ ] A way to offer HTTP handle functions in another executable
 - [ ] JSON templates that can use data.lua
 - [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
 - [ ] OS X package + homebrew
-
+- [ ] Dockerfile
+- [ ] Vagrantfile
 
 Various
 -------
