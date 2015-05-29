@@ -16,7 +16,7 @@ type luaPlugin struct {
 	client *rpc.Client
 }
 
-const namespace = "Algernon"
+const namespace = "Lua"
 
 func (lp *luaPlugin) LuaCode(pluginPath string) (luacode string, err error) {
 	return luacode, lp.client.Call(namespace+".LuaCode", pluginPath, &luacode)

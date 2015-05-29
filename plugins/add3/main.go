@@ -12,7 +12,7 @@ import (
 
 type LuaPlugin struct{}
 
-const namespace = "Algernon"
+const namespace = "Lua"
 
 // --- Plugin functionality ---
 
