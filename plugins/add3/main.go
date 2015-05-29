@@ -14,6 +14,12 @@ type LuaPlugin struct{}
 
 const namespace = "Algernon"
 
+// --- Plugin functionality ---
+
+func add3(a, b int) int {
+	return a + b + 3
+}
+
 // --- Lua wrapper code ($0 is replaced with the plugin path) ---
 
 const luacode = `
@@ -28,31 +34,18 @@ const luahelp = `
 add3(number, number) -> number // Adds two numbers and then the number 3
 `
 
-// --- Plugin functionality ---
-
-func add3(a, b int) int {
-	return a + b + 3
-}
-
 // --- Plugin wrapper functions ---
 
-func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) error {
+func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) (err error) {
 	var args []int
-	err := json.Unmarshal(jsonargs, &args)
-	if err != nil {
-		return err
-	}
-	// The arguments will already be checked if calling via
-	// the Lua function provided by LuaCode.
-	if len(args) < 2 {
-		return errors.New("add3 requires two arguments")
+	err = json.Unmarshal(jsonargs, &args)
+	if err != nil || len(args) < 2 {
+		// Could not unmarshal the given arguments, or too few arguments
+		return errors.New("add3 requires two integer arguments")
 	}
 	result := add3(args[0], args[1])
 	*response, err = json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // --- Plugin functions that must be present ---
