@@ -17,6 +17,7 @@ const namespace = "Lua"
 // --- Plugin functionality ---
 
 func add3(a, b int) int {
+	// Functionality not otherwise available in Lua goes here
 	return a + b + 3
 }
 
