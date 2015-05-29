@@ -139,7 +139,10 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	exportJSONFunctions(L)
 
 	// pprint
-	exportREPL(L)
+	//exportREPL(L)
+
+	// Plugins
+	exportPluginFunctions(L, nil)
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.

@@ -106,6 +106,11 @@ error(...)
 // Output text. Takes a variable number of strings.
 print(...)
 
+Plugins
+
+Plugin(string) -> bool // Load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
+CallPlugin(string, string, ...) -> string // Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+
 Various
 
 // Return a string with various server information

@@ -102,7 +102,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			if o != nil {
 				o.Err("[CallPlugin] Needs at least 2 arguments")
 			}
-			return 0 // number of results
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
 		}
 
 		path := L.Get(1).String()
@@ -126,7 +127,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 				o.Err("[CallPlugin] Could not run plugin!")
 				o.Err("Error: " + err.Error())
 			}
-			return 0 // number of results
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
 		}
 		defer client.Close()
 
@@ -136,7 +138,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 				o.Err("[CallPlugin] Error when marshalling arguments to JSON")
 				o.Err("Error: " + err.Error())
 			}
-			return 0 // number of results
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
 		}
 
 		// Attempt to call the given function name
@@ -148,7 +151,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 				o.Err("JSON Arguments: " + string(jsonargs))
 				o.Err("Error: " + err.Error())
 			}
-			return 0 // number of results
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
 		}
 
 		L.Push(lua.LString(jsonreply)) // Resulting string

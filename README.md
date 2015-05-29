@@ -243,7 +243,13 @@ Lua functions for formatted output
 * `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 * `jprint(...)` output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 * `JSON(table)` return a JSON string, given a Lua table with ints or strings.
-* `pprint(value)` tries to extract and print the contents of a Lua value.
+
+
+Lua functions for plugins
+-------------------------
+
+* `Plugin(string)` load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
+* `CallPlugin(string, string, ...)` takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
 
 
 Lua functions for data structures
@@ -560,7 +566,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.7
+* Version: 0.71
 * License: MIT
 * Alexander F Rødseth
 
