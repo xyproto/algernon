@@ -57,10 +57,17 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 }
 
 func main() {
+	// Use all CPUs. Soon to be the default for Go.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Set several configuration variables, based on the given flags and arguments
 	serverHost = handleFlags()
+
+	// Version
+	if showVersion {
+		fmt.Println(versionString)
+		os.Exit(0)
+	}
 
 	// Console output
 	fmt.Println(banner())

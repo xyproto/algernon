@@ -66,6 +66,9 @@ var (
 
 	limitRequests       int64 // rate limit to this many requests per client per second
 	disableRateLimiting bool
+
+	// For the version flag
+	showVersion bool
 )
 
 func usage() {
@@ -80,7 +83,7 @@ Syntax:
 
 Available flags:
   --help                       This help
-  --version                    Application name and version
+  -v, --version                    Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
   -e, --dev                    Development mode: Enable Debug mode, enables
@@ -118,7 +121,8 @@ Available flags:
 func handleFlags() string {
 	// The short version of some flags
 	var serveJustHTTPShort, autoRefreshShort, productionModeShort,
-		debugModeShort, interactiveModeShort, useBoltShort, devModeShort bool
+		debugModeShort, interactiveModeShort, useBoltShort, devModeShort,
+		showVersionShort bool
 
 	// The usage function that provides more help
 	flag.Usage = usage
@@ -165,6 +169,7 @@ func handleFlags() string {
 	flag.Int64Var(&limitRequests, "limit", 1, "Limit clients to a number of requests per second")
 	flag.BoolVar(&disableRateLimiting, "no-limit", false, "Disable rate limiting")
 	flag.BoolVar(&devMode, "dev", false, "Development mode")
+	flag.BoolVar(&showVersion, "version", false, "Version")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
@@ -174,6 +179,7 @@ func handleFlags() string {
 	flag.BoolVar(&productionModeShort, "p", false, "Production mode")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
 	flag.BoolVar(&devModeShort, "e", false, "Development mode")
+	flag.BoolVar(&showVersionShort, "v", false, "Version")
 
 	flag.Parse()
 
@@ -185,6 +191,7 @@ func handleFlags() string {
 	useBolt = useBolt || useBoltShort
 	productionMode = productionMode || productionModeShort
 	devMode = devMode || devModeShort
+	showVersion = showVersion || showVersionShort
 
 	// Change several defaults if production mode is enabled
 	if productionMode {
