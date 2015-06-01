@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -159,7 +159,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// If no filename is given, the directory where the script lies
 	// is returned.
 	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
-		scriptdir := path.Dir(filename)
+		scriptdir := filepath.Dir(filename)
 		top := L.GetTop()
 		if top == 1 {
 			// Also include a separator and a filename
