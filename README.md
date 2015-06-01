@@ -6,7 +6,7 @@ keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, ma
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bolt, rate limiting, users and permissions.
+Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bolt, rate limiting, graceful shutdown, plugins, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://img.shields.io/badge/gitter-chat-green.svg?style=flat)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE)
 
