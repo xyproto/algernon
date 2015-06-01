@@ -128,6 +128,13 @@ func main() {
 						serverDir = fullPath
 					}
 				}
+				// If there are server configuration files in the extracted directory, register them
+				for _, filename := range serverConfigurationFilenames {
+					configFilename := filepath.Join(serverDir, filename)
+					if exists(configFilename) {
+						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
+					}
+				}
 			default:
 				singleFileMode = true
 			}
