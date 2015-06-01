@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 )
@@ -118,7 +117,7 @@ Available flags:
 }
 
 // Parse the flags, return the default hostname
-func handleFlags() string {
+func handleFlags(serverTempDir string) string {
 	// The short version of some flags
 	var serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, interactiveModeShort, useBoltShort, devModeShort,
@@ -136,9 +135,9 @@ func handleFlags() string {
 		//log.SetFormatter(&log.TextFormatter{DisableColors: true})
 
 		// Default Bolt database file
-		defaultBoltFilename = path.Join(os.TempDir(), "algernon.db")
+		defaultBoltFilename = filepath.Join(serverTempDir, "algernon.db")
 		// Default log file
-		defaultLogFile = path.Join(os.TempDir(), "algernon.log")
+		defaultLogFile = filepath.Join(serverTempDir, "algernon.log")
 	}
 
 	// Commandline flag configuration

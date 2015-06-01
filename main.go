@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	internallog "log"
 	"net/http"
 	"os"
@@ -14,13 +15,13 @@ import (
 	"time"
 
 	"github.com/bradfitz/http2"
-	"github.com/c4milo/unzipit"
 	"github.com/tylerb/graceful"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/unzip"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -60,11 +61,23 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 }
 
 func main() {
+	var (
+		err  error
+		perm pinterface.IPermissions
+	)
+
 	// Use all CPUs. Soon to be the default for Go.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	// Temporary directory that might be used for logging, databases or file extraction
+	serverTempDir, err := ioutil.TempDir("", "algernon")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer os.RemoveAll(serverTempDir)
+
 	// Set several configuration variables, based on the given flags and arguments
-	serverHost = handleFlags()
+	serverHost = handleFlags(serverTempDir)
 
 	// Version
 	if showVersion {
@@ -92,23 +105,27 @@ func main() {
 		filename := serverDir
 		// Check if the file exists
 		if exists(filename) {
-			log.Info("SWITCHING on EXT " + strings.ToLower(filepath.Ext(filename)))
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(filename)) {
 			case ".md":
 				// Serve the given Markdown file as a static HTTP server
 				serveStaticFile(filename, defaultWebColonPort)
 				return
-			case ".zip", ".tar.gz", ".tar.bz2", ".tgz", ".tar", ".tbz2":
+			case ".zip":
 				// It might be a compressed Algernon application
-				if file, err := os.Open(filename); err != nil {
-					// Could not open!
-					fatalExit(err)
-				} else {
-					// Extract the given archive and set the new server directory
-					serverDir, err = unzipit.Unpack(file, os.TempDir())
-					if err != nil {
-						fatalExit(err)
+				err := unzip.Extract(filename, serverTempDir)
+				if err != nil {
+					log.Fatalln(err)
+				}
+				// Use the directory where the file was extracted as the server directory
+				serverDir = serverTempDir
+				// If there is only one directory there, assume it's the directory of
+				// the newly extracted ZIP file.
+				if filenames := getFilenames(serverDir); len(filenames) == 1 {
+					fullPath := filepath.Join(serverDir, filenames[0])
+					if isDir(fullPath) {
+						// Use this as the server directory instead
+						serverDir = fullPath
 					}
 				}
 			default:
@@ -133,11 +150,6 @@ func main() {
 	// Use one of the databases for the permission middleware,
 	// then assign a name to dbName (used for the status output)
 	dbName = ""
-	var (
-		perm pinterface.IPermissions
-		err  error
-	)
-
 	if boltFilename != "" {
 		// New permissions middleware, using a Bolt database
 		perm, err = bolt.NewWithConf(boltFilename)
