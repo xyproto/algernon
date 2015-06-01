@@ -42,7 +42,6 @@ Design decisions
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
-* The aim is to provide an environment for comfortable development web applications, while not sacrificing the separation between data and presentation.
 
 
 Features and limitations
