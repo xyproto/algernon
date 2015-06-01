@@ -1,7 +1,7 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, Bolt, users and permissions
-keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React, Bolt, Three.js
+description: Web server with built-in support for Lua, Markdown, Amber, GCSS, JSX, Bolt, Tollbooth, Pie, Graceful, Permissions2, users and permissions
+keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React, Bolt, Three.js, graceful, pie, tollbooth
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
@@ -13,7 +13,7 @@ Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bo
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) or [Redis](http://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript and [tollbooth](https://github.com/didip/tollbooth) for rate limiting.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) or [Redis](http://redis.io) as the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 [http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/rfc7540).
 
@@ -42,7 +42,7 @@ Design decisions
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
-* The aim is to provide an environment for comfortably developing web applications, while not sacrificing structure and the separation between data and presentation.
+* The aim is to provide an environment for comfortable development web applications, while not sacrificing the separation between data and presentation.
 
 
 Features and limitations
@@ -67,6 +67,7 @@ Features and limitations
 * Full multithreading. All available CPUs will be used.
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
+* Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information.
 
 
 Overview
@@ -104,7 +105,7 @@ ASCII diagram:
 |   Markdown                       |   Database backends               |
 |                                  |                                   |
 |   For static pages:              |   Redis or Bolt for the backend:  |
-|   * Easy content creation.       |   * Both are pretty fast.         |
+|   * Easy content creation.       |   * Both are fast.                |
 |   * Easy to style with GCSS.     |   * Bolt is included.             |
 |   * Can refresh when saving.     |   * Redis scales easily.          |
 |                                  |                                   |
