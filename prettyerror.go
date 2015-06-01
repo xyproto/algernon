@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -24,9 +23,6 @@ func highlightHTML(theme string) string {
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>`
 }
-
-// Shorthand function for reading a file
-var read = ioutil.ReadFile
 
 // Write the contents of a ResponseRecorder to a ResponseWriter
 func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
