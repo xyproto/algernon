@@ -19,11 +19,11 @@ type luaPlugin struct {
 const namespace = "Lua"
 
 func (lp *luaPlugin) LuaCode(pluginPath string) (luacode string, err error) {
-	return luacode, lp.client.Call(namespace+".LuaCode", pluginPath, &luacode)
+	return luacode, lp.client.Call(namespace+".Code", pluginPath, &luacode)
 }
 
 func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
-	return luahelp, lp.client.Call(namespace+".LuaHelp", "", &luahelp)
+	return luahelp, lp.client.Call(namespace+".Help", "", &luahelp)
 }
 
 // Takes a Lua state and a term Output (should be nil if not in a REPL)

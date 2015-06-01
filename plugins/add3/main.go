@@ -52,13 +52,13 @@ func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) (err error) {
 // --- Plugin functions that must be present ---
 
 // Called once when the Plugin function is used in Algernon
-func (LuaPlugin) LuaCode(pluginPath string, response *string) error {
+func (LuaPlugin) Code(pluginPath string, response *string) error {
 	*response = strings.Replace(luacode, "$0", pluginPath, -1)
 	return nil
 }
 
 // Called once when the Plugin function is used in Algernon
-func (LuaPlugin) LuaHelp(_ string, response *string) error {
+func (LuaPlugin) Help(_ string, response *string) error {
 	*response = luahelp
 	return nil
 }
