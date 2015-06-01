@@ -198,6 +198,7 @@ Various
 Maybe
 -----
 
+- [ ] A flag to store the Bolt database inside the given zip file?
 - [ ] Keep all configuration settings in Redis. Use an external package for handling configuration.
 - [ ] Add a flag for acting like a static file server, over HTTP, without using Redis. Perhaps --static.
 - [ ] The first argument should be a directory or a .alg file, the rest should be regular flags.
