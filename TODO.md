@@ -2,33 +2,33 @@
 
 Priority
 --------
-- [ ] A way to package Algernon applications as self-contained archives
-- [ ] Make new Lua functions available with plugins
-- [ ] Make HTTP handle functions available with plugins
-- [ ] Make it easy to host Algernon applications
+- [ ] JSON templates that can use data.lua
+- [/] A way to package Algernon applications as self-contained archives
+- [X] Make new Lua functions available with plugins
+- [/] Make HTTP handle functions available with plugins
+- [/] Make it easy to host Algernon applications
 - [ ] Caching
 - [ ] User management interface
-- [ ] Graceful shutdown
+- [X] Graceful shutdown
 - [ ] Functions for dealing with JSON in Lua (megajson?)
-- [ ] JSON templates that can use data.lua
-- [ ] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
-- [ ] OS X package + homebrew
+- [/] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [/] OS X package + homebrew
 - [ ] Dockerfile
 - [ ] Vagrantfile
 
 Various
 -------
+- [ ] Read zip files directly instead of decompressing when given as the first and only argument
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
       Let Lua provide a callback function.
 - [ ] pprint should output text to the browser when not running in the repl
-- [ ] A way to make new Lua functions available with a standalone server
+- [X] A way to make new Lua functions available with a standalone server
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs (/position/x/2/y/4)
-- [ ] Use some of the tricks from go-bootstrap.io
+- [/] Use some of the tricks from go-bootstrap.io
 - [ ] Downloading and uploading files
 - [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
-- [ ] Add a Lua function for shutting down the server gracefully. Close open file handles at shutdown.
-- [ ] Add an option for exiting after any page has been visited once.
+- [/] Add a Lua function for shutting down the server gracefully. Close open file handles at shutdown.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
 - [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
 - [ ] Use the JSON code from https://github.com/layeh/gopher-json
@@ -36,9 +36,8 @@ Various
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
 - [ ] JSON templates
-- [ ] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
-- [ ] Support for key/values in PostgreSQL as an alternative to Redis. Create dbp and permissiongres.
-- [ ] A way to extend Algernon with Go, perhaps with pie on github
+- [/] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
+- [X] A way to extend Algernon with Go, perhaps with pie on github
 - [ ] MSI installer
 - [ ] deb/ppa
 
@@ -180,7 +179,7 @@ Performance
 Packaging
 ---------
 
-- [ ] Homewbrew / OS X.
+- [/] Homewbrew / OS X.
 
 
 Unusual features
@@ -221,3 +220,5 @@ Maybe
 - [ ] Re-run `server.lua` if it is changed. Restart the server if the addr or port is changed.
 - [ ] Support SASS.
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
+- [ ] Add an option for exiting after any page has been visited once.
+- [ ] simplegres and permissiongres, for PostgreSQL.
