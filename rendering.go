@@ -13,7 +13,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -151,13 +151,13 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 			title = h1title
 		} else {
 			// If no title has been provided, use the filename
-			title = path.Base(filename)
+			title = filepath.Base(filename)
 		}
 	}
 
 	var head bytes.Buffer
 	// If style.gcss is present, use that style in <head>
-	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
 			// Try compiling the GCSS file first
@@ -221,7 +221,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSfilename := path.Join(path.Dir(filename), defaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
 			// Try compiling the GCSS file before the Amber file

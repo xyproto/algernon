@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,10 +30,11 @@ var (
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool) {
 
 	// Mimetypes
-	ext := path.Ext(filename)
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
 
 	// Markdown pages are handled differently
-	if ext == ".md" {
+	case ".md":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		b, err := read(filename)
@@ -51,7 +52,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
-	} else if ext == ".amber" {
+	case ".amber":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		amberdata, err := read(filename)
@@ -64,7 +65,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			return
 		}
 		// Try reading data.lua as well, if possible
-		luafilename := path.Join(path.Dir(filename), "data.lua")
+		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
 		luadata, err := read(luafilename)
 		if err != nil {
 			// Could not find and/or read data.lua
@@ -106,7 +107,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
-	} else if ext == ".gcss" {
+	case ".gcss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
 		gcssdata, err := read(filename)
@@ -124,7 +125,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
-	} else if ext == ".jsx" {
+	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 		jsxdata, err := read(filename)
@@ -142,7 +143,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
-	} else if ext == ".lua" {
+	case ".lua":
 
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
@@ -184,7 +185,6 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		return
-
 	}
 
 	// Set the correct Content-Type
@@ -272,7 +272,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	}
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
-		filename := path.Join(dirname, indexfile)
+		filename := filepath.Join(dirname, indexfile)
 		if exists(filename) {
 			filePage(w, req, filename, perm, luapool)
 			return
