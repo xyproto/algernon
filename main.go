@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bradfitz/http2"
+	"github.com/tylerb/graceful"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
@@ -239,49 +240,57 @@ func main() {
 		go REPL(perm, luapool)
 	}
 
+	// Timeout when closing down the server
+	shutdownTimeout := 30 * time.Second
+
 	// Decide which protocol to listen to
 	switch {
 	case productionMode:
+		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
 		go func() {
 			log.Info("Serving HTTPS + HTTP/2 on " + serverHost + ":443")
-			HTTPSserver := newServerConfiguration(mux, true, serverHost+":443")
+			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
-			err := HTTPSserver.ListenAndServeTLS(serverCert, serverKey)
-			if err != nil {
+			HTTPS2server := newServerConfiguration(mux, true, serverHost+":443")
+			// Start serving. Shut down gracefully at exit.
+			if err := graceful.ListenAndServeTLS(HTTPS2server, serverCert, serverKey, shutdownTimeout); err != nil {
 				log.Error(err)
 			}
 		}()
 		log.Info("Serving HTTP on " + serverHost + ":80")
 		HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
-		if err := HTTPserver.ListenAndServe(); err != nil {
+		if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
 			fatalExit(err)
 		}
-	case serveJustHTTP2:
+	case serveJustHTTP2: // It's unusual to serve HTTP/2 withoutHTTPS
 		log.Info("Serving HTTP/2 on " + serverAddr)
 		// Listen for HTTP/2 requests
 		HTTP2server := newServerConfiguration(mux, true, serverAddr)
-		if err := HTTP2server.ListenAndServe(); err != nil {
+		// Start serving. Shut down gracefully at exit.
+		if err := graceful.ListenAndServe(HTTP2server, shutdownTimeout); err != nil {
 			fatalExit(err)
 		}
 	case !(serveJustHTTP2 || serveJustHTTP):
 		log.Info("Serving HTTPS + HTTP/2 on " + serverAddr)
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newServerConfiguration(mux, true, serverAddr)
-		err := HTTPS2server.ListenAndServeTLS(serverCert, serverKey)
-		if err != nil {
+		// Start serving. Shut down gracefully at exit.
+		if err := graceful.ListenAndServeTLS(HTTPS2server, serverCert, serverKey, shutdownTimeout); err != nil {
 			log.Error(err)
 			// If HTTPS failed (perhaps the key + cert are missing), serve
 			// plain HTTP instead, by falling through to the next case.
 		} else {
-			// Don't fall through to serve regular HTTP
+			// Don't fall through
 			break
 		}
+		// Serve regular HTTP instead
 		fallthrough
 	default:
 		log.Info("Serving HTTP on " + serverAddr)
 		HTTPserver := newServerConfiguration(mux, false, serverAddr)
-		if err := HTTPserver.ListenAndServe(); err != nil {
+		// Start serving. Shut down gracefully at exit.
+		if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
 			// If we can't serve regular HTTP, give up
 			fatalExit(err)
 		}
