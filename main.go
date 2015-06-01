@@ -8,11 +8,13 @@ import (
 	internallog "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/bradfitz/http2"
+	"github.com/c4milo/unzipit"
 	"github.com/tylerb/graceful"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
@@ -90,12 +92,28 @@ func main() {
 		filename := serverDir
 		// Check if the file exists
 		if exists(filename) {
-			if strings.HasSuffix(filename, ".md") {
+			log.Info("SWITCHING on EXT " + strings.ToLower(filepath.Ext(filename)))
+			// Switch based on the lowercase filename extension
+			switch strings.ToLower(filepath.Ext(filename)) {
+			case ".md":
 				// Serve the given Markdown file as a static HTTP server
 				serveStaticFile(filename, defaultWebColonPort)
 				return
+			case ".zip", ".tar.gz", ".tar.bz2", ".tgz", ".tar", ".tbz2":
+				// It might be a compressed Algernon application
+				if file, err := os.Open(filename); err != nil {
+					// Could not open!
+					fatalExit(err)
+				} else {
+					// Extract the given archive and set the new server directory
+					serverDir, err = unzipit.Unpack(file, os.TempDir())
+					if err != nil {
+						fatalExit(err)
+					}
+				}
+			default:
+				singleFileMode = true
 			}
-			singleFileMode = true
 		} else {
 			fatalExit(errors.New("File does not exist: " + filename))
 		}
@@ -119,26 +137,33 @@ func main() {
 		perm pinterface.IPermissions
 		err  error
 	)
+
 	if boltFilename != "" {
 		// New permissions middleware, using a Bolt database
 		perm, err = bolt.NewWithConf(boltFilename)
-		if err == nil {
+		if err != nil {
+			log.Errorf("Could not use Bolt as database backend: %s", err)
+		} else {
 			dbName = "Bolt (" + boltFilename + ")"
 		}
 	}
-	if (dbName == "") && (mariadbDSN != "") {
+	if dbName == "" && mariadbDSN != "" {
 		// New permissions middleware, using a MariaDB/MySQL database
 		perm, err = mariadb.NewWithDSN(mariadbDSN, mariadbDatabase)
-		if err == nil {
+		if err != nil {
+			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			dbName = "MariaDB/MySQL"
 		}
 	}
-	if (dbName == "") && (mariadbDatabase != "") {
+	if dbName == "" && mariadbDatabase != "" {
 		// Given a database, but not a host, connect to localhost
 		// New permissions middleware, using a MariaDB/MySQL database
 		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + mariadbDatabase)
-		if err == nil {
+		if err != nil {
+			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			dbName = "MariaDB/MySQL"
 		}
@@ -148,21 +173,24 @@ func main() {
 		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
 			// Only warn when not in single file mode (too verbose)
 			if !singleFileMode {
-				log.Warn("Could not connect to Redis!")
+				log.Errorf("Could not use Redis as database backend: %s", err)
 			}
 		} else {
 			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
 			dbName = "Redis"
 		}
 	}
-	if dbName == "" {
+	if dbName == "" && boltFilename == "" {
 		perm, err = bolt.NewWithConf(defaultBoltFilename)
-		if err == nil {
+		if err != nil {
+			log.Errorf("Could not use Bolt as database backend: %s", err)
+		} else {
 			dbName = "Bolt (" + defaultBoltFilename + ")"
 		}
 	}
 	if dbName == "" {
-		log.Error("Could not use any database")
+		// This may typically happen if Algernon is already running
+		log.Fatalln("Could not find a usable database backend.")
 	}
 
 	// Lua LState pool
