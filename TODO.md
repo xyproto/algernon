@@ -11,14 +11,13 @@ Priority
 - [ ] User management interface
 - [X] Graceful shutdown
 - [ ] Functions for dealing with JSON in Lua (megajson?)
-- [/] Create a simple way for people that wish to host Algernon applications for other people. Applications as zip-files?
+- [ ] Write a document that outlines a simple way to host Algernon applications for others
 - [/] OS X package + homebrew
 - [ ] Dockerfile
 - [ ] Vagrantfile
 
 Various
 -------
-- [ ] Read zip files directly instead of decompressing when given as the first and only argument
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
       Let Lua provide a callback function.
 - [ ] pprint should output text to the browser when not running in the repl
@@ -222,3 +221,4 @@ Maybe
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
+- [ ] Read zip files directly instead of decompressing when given as the first argument
