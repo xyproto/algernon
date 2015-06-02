@@ -22,7 +22,7 @@ var (
 
 // For reading files, with caching
 func read(filename string) ([]byte, error) {
-	log.Info("READING " + filename)
+	println("READING " + filename)
 	return ioutil.ReadFile(filename)
 }
 
