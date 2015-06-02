@@ -2,8 +2,9 @@
 
 Priority
 --------
+- [ ] Function for registering a route and a lua function as a HTTP handler
 - [ ] JSON templates that can use data.lua
-- [/] A way to package Algernon applications as self-contained archives
+- [X] A way to package Algernon applications as self-contained archives
 - [X] Make new Lua functions available with plugins
 - [/] Make HTTP handle functions available with plugins
 - [/] Make it easy to host Algernon applications
@@ -15,6 +16,7 @@ Priority
 - [/] OS X package + homebrew
 - [ ] Dockerfile
 - [ ] Vagrantfile
+- [ ] Utilities to lint and package .alg archives
 
 Various
 -------
