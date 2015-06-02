@@ -38,3 +38,7 @@ bolt.db
 
 # Plugin executables
 plugins/add3/add3
+plugins/cpp/main
+
+# Extracted zip files
+apps/first
