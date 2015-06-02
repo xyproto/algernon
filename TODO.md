@@ -2,7 +2,7 @@
 
 Priority
 --------
-- [ ] Look into `print` from serverconf.lua when running with -e
+- [ ] Versioning of the Plugin API and app bundles
 - [ ] Function for registering a route and a lua function as a HTTP handler
 - [ ] JSON templates that can use data.lua
 - [X] A way to package Algernon applications as self-contained archives
