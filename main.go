@@ -128,6 +128,14 @@ func main() {
 						serverDir = fullPath
 					}
 				}
+				// Disregard all configuration files from the current directory
+				// (filenames without a path separator), since we are serving a ZIP file.
+				for i, filename := range serverConfigurationFilenames {
+					if strings.Count(filepath.ToSlash(filename), "/") == 0 {
+						// Remove the filename from the slice
+						serverConfigurationFilenames = append(serverConfigurationFilenames[:i], serverConfigurationFilenames[i+1:]...)
+					}
+				}
 				// If there are server configuration files in the extracted directory, register them
 				for _, filename := range serverConfigurationFilenames {
 					configFilename := filepath.Join(serverDir, filename)
@@ -220,7 +228,7 @@ func main() {
 	registerHandlers(mux, serverDir, perm, luapool)
 
 	if serverLogFile != "" {
-		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 		if err != nil {
 			log.Error("Could not log to", serverLogFile)
 			fatalExit(err)
