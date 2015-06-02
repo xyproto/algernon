@@ -82,7 +82,7 @@ Syntax:
 
 Available flags:
   --help                       This help
-  -v, --version                    Application name and version
+  -v, --version                Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
   -e, --dev                    Development mode: Enable Debug mode, enables

@@ -125,19 +125,19 @@ func main() {
 						serverDir = fullPath
 					}
 				}
+				// If there are server configuration files in the extracted directory, register them
+				for _, filename := range serverConfigurationFilenames {
+					configFilename := filepath.Join(serverDir, filename)
+					if exists(configFilename) {
+						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
+					}
+				}
 				// Disregard all configuration files from the current directory
 				// (filenames without a path separator), since we are serving a ZIP file.
 				for i, filename := range serverConfigurationFilenames {
 					if strings.Count(filepath.ToSlash(filename), "/") == 0 {
 						// Remove the filename from the slice
 						serverConfigurationFilenames = append(serverConfigurationFilenames[:i], serverConfigurationFilenames[i+1:]...)
-					}
-				}
-				// If there are server configuration files in the extracted directory, register them
-				for _, filename := range serverConfigurationFilenames {
-					configFilename := filepath.Join(serverDir, filename)
-					if exists(configFilename) {
-						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
 					}
 				}
 			default:
@@ -238,6 +238,9 @@ func main() {
 	// The scripts may change global variables.
 	for _, filename := range serverConfigurationFilenames {
 		if exists(filename) {
+			if verboseMode {
+				fmt.Println("Running configuration file: " + filename)
+			}
 			if err := runConfiguration(filename, perm, luapool); err != nil {
 				log.Error("Could not use configuration script: " + filename)
 				fatalExit(err)
