@@ -27,7 +27,7 @@ var (
 	serverConfigurationFilenames = []string{"/etc/algernon/serverconf.lua"}
 
 	// Configuration that is exposed to the server configuration script(s)
-	serverDir, serverAddr, serverCert, serverKey, serverConfScript, serverHTTP2log, serverLogFile string
+	serverDir, serverAddr, serverCert, serverKey, serverConfScript, internalLogFilename, serverLogFile string
 
 	// If only HTTP/2 or HTTP
 	serveJustHTTP2, serveJustHTTP bool
@@ -101,7 +101,7 @@ Available flags:
   --dbindex=INDEX              Redis database index (0 is default)
   --conf=FILENAME              Lua script with additional configuration
   --log=FILENAME               Log to a file instead of to the console
-  --http2log=FILENAME          Additional HTTP/2 log (quite verbose)
+  --internal=FILENAME          Internal log file (verbose when HTTP/2 is enabled)
   -h, --httponly               Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --maria=DSN                  Use the given MariaDB or MySQL host
@@ -150,7 +150,7 @@ func handleFlags(serverTempDir string) string {
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&serverConfScript, "conf", "serverconf.lua", "Server configuration")
 	flag.StringVar(&serverLogFile, "log", "", "Server log file")
-	flag.StringVar(&serverHTTP2log, "http2log", "/dev/null", "HTTP/2 log")
+	flag.StringVar(&internalLogFilename, "internal", "/dev/null", "Internal log file")
 	flag.BoolVar(&serveJustHTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 	flag.BoolVar(&serveJustHTTP, "httponly", false, "Serve plain old HTTP")
 	flag.BoolVar(&productionMode, "prod", false, "Production mode")

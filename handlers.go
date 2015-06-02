@@ -23,6 +23,9 @@ const (
 )
 
 var (
+	// List of filenames that should be displayed instead of a directory listing
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
+
 	mimereader *mime.Reader
 )
 

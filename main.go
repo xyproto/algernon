@@ -31,9 +31,6 @@ const (
 )
 
 var (
-	// List of filenames that should be displayed instead of a directory listing
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
-
 	// For convenience. Set in the main function.
 	serverHost      string
 	dbName          string
@@ -256,21 +253,21 @@ func main() {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
-	// If we are not keeping the logs, reduce the verboseness
-	http2.VerboseLogs = (serverHTTP2log != "/dev/null")
+	// If we are not writing internal logs to a file, reduce the verboseness
+	http2.VerboseLogs = (internalLogFilename != "/dev/null")
 
-	// Direct the logging from the http2 package elsewhere
-	f, err := os.Open(serverHTTP2log)
-	defer f.Close()
+	// Direct internal logging elsewhere
+	internalLogFile, err := os.Open(internalLogFilename)
+	defer internalLogFile.Close()
 	if err != nil {
-		// Could not open the serverHTTP2log filename, try using another filename
-		f, err = os.OpenFile("http2.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-		defer f.Close()
+		// Could not open the internalLogFilename filename, try using another filename
+		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		defer internalLogFile.Close()
 		if err != nil {
-			fatalExit(fmt.Errorf("Could not write to %s nor %s.", serverHTTP2log, "http2.log"))
+			fatalExit(fmt.Errorf("Could not write to %s nor %s.", internalLogFilename, "internal.log"))
 		}
 	}
-	internallog.SetOutput(f)
+	internallog.SetOutput(internalLogFile)
 
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
