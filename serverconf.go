@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/xyproto/permissions2"
@@ -70,8 +70,8 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
-			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil)
+			// Set up a new Lua state with the current http.ResponseWriter and *http.Request, without caching
+			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, nil)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)
@@ -99,28 +99,6 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 				// Non-fatal error
 				log.Error("The OnReady function failed:", err)
 			}
-		}
-		return 0 // number of results
-	}))
-
-	// Set debug mode to true
-	// Can only be used to turn debug mode on, not off
-	// Deprecated
-	L.SetGlobal("SetDebug", L.NewFunction(func(L *lua.LState) int {
-		log.Info("SetDebug has been deprecated")
-		if (!debugMode) && L.ToBool(1) {
-			debugMode = true
-		}
-		return 0 // number of results
-	}))
-
-	// Set verbose to true
-	// Can only be used to turn verbose on, not off
-	// Deprecated
-	L.SetGlobal("SetVerbose", L.NewFunction(func(L *lua.LState) int {
-		log.Info("SetVerbose has been deprecated")
-		if (!verboseMode) && L.ToBool(1) {
-			verboseMode = true
 		}
 		return 0 // number of results
 	}))
@@ -165,9 +143,14 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		writeStatus(&buf, "Options", map[string]bool{
 			"Debug":        debugMode,
 			"Production":   productionMode,
-			"Auto-refresh": autoRefresh,
+			"Auto-refresh": autoRefreshMode,
 			"Dev":          devMode,
 		})
+
+		buf.WriteString("Cache mode:\t\t" + cacheMode.String() + "\n")
+		if cacheSize != 0 {
+			buf.WriteString(fmt.Sprintf("Cache size:\t\t%d bytes\n", cacheSize))
+		}
 
 		if serverLogFile != "" {
 			buf.WriteString("Log file:\t\t" + serverLogFile + "\n")
@@ -176,7 +159,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 			buf.WriteString("TLS certificate:\t" + serverCert + "\n")
 			buf.WriteString("TLS key:\t\t" + serverKey + "\n")
 		}
-		if autoRefresh {
+		if autoRefreshMode {
 			buf.WriteString("Event server:\t\t" + eventAddr + "\n")
 		}
 		if autoRefreshDir != "" {
@@ -185,8 +168,9 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		if redisAddr != defaultRedisColonPort {
 			buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
 		}
+		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", limitRequests))
 		if redisDBindex != 0 {
-			buf.WriteString("Redis database index:\t" + strconv.Itoa(redisDBindex) + "\n")
+			buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", redisDBindex))
 		}
 		buf.WriteString("Server configuration:\t" + serverConfScript + "\n")
 		if internalLogFilename != "/dev/null" {

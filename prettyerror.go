@@ -170,7 +170,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
   </body>
 </html>`)
 
-	if autoRefresh {
+	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = insertAutoRefresh(htmldata)
 	}

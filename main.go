@@ -221,8 +221,11 @@ func main() {
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	defer luapool.Shutdown()
 
+	// Create a cache struct for reading files, regardless of if cache is enabled
+	cache := newFileCache(cacheSize)
+
 	// Register HTTP handler functions
-	registerHandlers(mux, serverDir, perm, luapool)
+	registerHandlers(mux, serverDir, perm, luapool, cache)
 
 	if serverLogFile != "" {
 		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
@@ -275,7 +278,7 @@ func main() {
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
 	// Can also be used when serving a single file.
-	if autoRefresh {
+	if autoRefreshMode {
 		refreshDuration, err = time.ParseDuration(eventRefresh)
 		if err != nil {
 			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", eventRefresh, defaultEventRefresh))
@@ -292,7 +295,7 @@ func main() {
 	}
 
 	if interactiveMode {
-		go REPL(perm, luapool)
+		go REPL(perm, luapool, cache)
 	}
 
 	// Timeout when closing down the server
@@ -344,6 +347,9 @@ func main() {
 	default:
 		log.Info("Serving HTTP on " + serverAddr)
 		HTTPserver := newServerConfiguration(mux, false, serverAddr)
+
+		//if err := HTTPserver.ListenAndServe(); err != nil {
+
 		// Start serving. Shut down gracefully at exit.
 		if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
 			// If we can't serve regular HTTP, give up

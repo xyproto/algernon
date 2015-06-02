@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"html/template"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,9 +17,7 @@ import (
 	"github.com/xyproto/pinterface"
 )
 
-const (
-	pathsep = string(os.PathSeparator)
-)
+const pathsep = string(os.PathSeparator)
 
 var (
 	// List of filenames that should be displayed instead of a directory listing
@@ -30,7 +27,7 @@ var (
 )
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
 	// Mimetypes
 	ext := strings.ToLower(filepath.Ext(filename))
@@ -40,7 +37,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	case ".md":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		b, err := read(filename)
+		var markdowndata []byte
+		var err error
+		markdowndata, err = cache.read(filename, cacheMode.ShouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -51,14 +50,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the markdown page
-		markdownPage(w, b, filename)
+		markdownPage(w, markdowndata, filename, cache)
 
 		return
 
 	case ".amber":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		amberdata, err := read(filename)
+		amberdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -69,7 +68,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 		// Try reading data.lua as well, if possible
 		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
-		luadata, err := read(luafilename)
+		luadata, err := cache.read(luafilename, cacheMode.ShouldCache(ext))
 		if err != nil {
 			// Could not find and/or read data.lua
 			luadata = []byte{}
@@ -79,7 +78,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		if len(luadata) > 0 {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool)
+			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool, cache)
 			if err != nil {
 				if debugMode {
 					// Use the Lua filename as the title
@@ -90,8 +89,8 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				return
 			}
 			if debugMode && verboseMode {
-				s := "The following functions from " + luafilename + "\n"
-				s += "are made available for use in " + filename + ":\n\t"
+				s := "These functions from " + luafilename
+				s += " areselable for " + filename + ": "
 				// Create a comma separated list of the available functions
 				for key := range funcs {
 					s += key + ", "
@@ -106,14 +105,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the Amber page, using functions from data.lua, if available
-		amberPage(w, filename, luafilename, amberdata, funcs)
+		amberPage(w, filename, luafilename, amberdata, funcs, cache)
 
 		return
 
 	case ".gcss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		gcssdata, err := read(filename)
+		gcssdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -131,7 +130,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-		jsxdata, err := read(filename)
+		jsxdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -161,9 +160,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, flushFunc); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache); err != nil {
 				errortext := err.Error()
-				filedata, err := read(filename)
+				filedata, err := cache.read(filename, cacheMode.ShouldCache(ext))
 				if err != nil {
 					// Use the error as the file contents when displaying the error message
 					// if reading the file failed.
@@ -181,7 +180,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := runLua(w, req, filename, perm, luapool, flushFunc); err != nil {
+			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
@@ -196,9 +195,8 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	} else {
 		log.Error("Uninitialized mimereader!")
 	}
-	// Write to the ResponseWriter, from the File
-	file, err := os.Open(filename)
-	defer file.Close()
+	// Read the file
+	fileData, err := cache.read(filename, cacheMode.ShouldCache(ext))
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
@@ -207,7 +205,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 	}
 	// Serve the file
-	io.Copy(w, file)
+	w.Write(fileData)
 	return
 }
 
@@ -257,7 +255,7 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	}
 
 	// If the auto-refresh feature has been enabled
-	if autoRefresh {
+	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = insertAutoRefresh(htmldata)
 	}
@@ -267,7 +265,8 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 
 // When serving a directory.
 // The directory must exist. Must be given a full filename.
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+
 	// If the URL does not end with a slash, redirect to an URL that does
 	if !strings.HasSuffix(req.URL.Path, "/") {
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
@@ -277,7 +276,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
 		if exists(filename) {
-			filePage(w, req, filename, perm, luapool)
+			filePage(w, req, filename, perm, luapool, cache)
 			return
 		}
 	}
@@ -296,7 +295,7 @@ func initializeMime() {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPermissions, luapool *lStatePool) {
+func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 	rootdir := servedir
 
 	// Handle all requests with this function
@@ -323,11 +322,11 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, filename, perm, luapool)
+			dirPage(w, req, rootdir, filename, perm, luapool, cache)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm, luapool)
+			filePage(w, req, noslash, perm, luapool, cache)
 			return
 		}
 		// Not found
@@ -340,6 +339,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 		mux.HandleFunc("/", allRequests)
 	} else {
 		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
+		limiter.MessageContentType = "text/html; charset=utf-8"
 		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
 		mux.Handle("/", tollbooth.LimitFuncHandler(limiter, allRequests))
 	}

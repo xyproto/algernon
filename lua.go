@@ -108,7 +108,7 @@ func table2map(luaTable *lua.LTable) (interface{}, bool) {
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func()) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache) {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -118,7 +118,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	exportBasicWeb(w, req, L, filename, flushFunc)
 
 	// Functions for serving files in the same directory as a script
-	exportServeFile(w, req, L, filename, perm, luapool)
+	exportServeFile(w, req, L, filename, perm, luapool, cache)
 
 	// Make other basic functions available
 	exportBasicSystemFunctions(L)
@@ -143,35 +143,48 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 	// Plugins
 	exportPluginFunctions(L, nil)
+
+	// Cache
+	exportCacheFunctions(L, cache)
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func()) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 	defer luapool.Put(L)
 
-	// Warn if the connection is closed before the script has finished
+	// Warn if the connection is closed before the script has finished.
+	// Requires that the requestWriter has CloseNotify.
 	if verboseMode {
+
 		done := make(chan bool)
 
 		// Stop the background goroutine when this function returns
-		defer func() { done <- true }()
+		// There must be a receiver for the done channel,
+		// or else this will hang everything!
+		defer func() {
+			_, ok := w.(http.CloseNotifier)
+			if ok {
+				// Only do this is the select case below is sure to be running!
+				done <- true
+			}
+		}()
 
 		// Set up a background notifier
 		go func() {
 			wCloseNotify, ok := w.(http.CloseNotifier)
 			if !ok {
-				log.Error("ResponseWriter has no CloseNotify()!")
+				//log.Error("ResponseWriter has no CloseNotify()!")
 				return
 			}
 			for {
 				select {
 				case <-wCloseNotify.CloseNotify():
 					// Client is done
-					log.Warn("Connection closed on the server before the script has finished. Server timeout?")
+					log.Warn("Connection to client closed")
 				case <-done:
 					// We are done
 					return
@@ -182,7 +195,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 	// Export functions to the Lua state
 	// Flush can be an uninitialized channel, it is handled in the function.
-	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -195,14 +208,14 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 // Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm pinterface.IPermissions, luapool *lStatePool) error {
+func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 
 	// Give no filename (an empty string will be handled correctly by the function).
 	// Nil is the channel for sending flush requests. nil is checked for in the function.
-	exportCommonFunctions(w, req, "", perm, L, luapool, nil)
+	exportCommonFunctions(w, req, "", perm, L, luapool, nil, cache)
 
 	// Run the script
 	if err := L.DoString(script); err != nil {
@@ -267,7 +280,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool) (template.FuncMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) (template.FuncMap, error) {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -277,7 +290,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, filename, perm, L, luapool, nil)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -333,7 +346,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil)
+					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)

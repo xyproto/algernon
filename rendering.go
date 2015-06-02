@@ -65,7 +65,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		return 0 // number of results
 	}))
 
-	// DEPRECATED
+	// Output text as rendered GCSS
 	L.SetGlobal("gprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L, true)
@@ -116,7 +116,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w http.ResponseWriter, data []byte, filename string) {
+func markdownPage(w http.ResponseWriter, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and code_theme information
 	given := map[string]string{"title": "", "code_theme": defaultTheme}
 
@@ -160,8 +160,13 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
+			gcssdata, err := cache.read(GCSSfilename, cacheMode.ShouldCache(".gcss"))
+			if err != nil {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+				return
+			}
 			// Try compiling the GCSS file first
-			if gcssdata, err := validGCSS(GCSSfilename); err != nil {
+			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
 				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
@@ -192,7 +197,7 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
 
 	// If the auto-refresh feature has been enabled
-	if autoRefresh {
+	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = insertAutoRefresh(htmldata)
 	}
@@ -201,22 +206,17 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string) {
 	w.Write(htmldata)
 }
 
-// Check if the given filename is valid GCSS
-// Reads the given filename
-func validGCSS(filename string) ([]byte, error) {
-	gcssdata, err := read(filename)
-	if err != nil {
-		return []byte{}, err
-	}
+// Check if the given data is valid GCSS
+func validGCSS(gcssdata []byte) error {
 	buf := bytes.NewBuffer(gcssdata)
 	var w bytes.Buffer
-	_, err = gcss.Compile(&w, buf)
-	return gcssdata, err
+	_, err := gcss.Compile(&w, buf)
+	return err
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
-func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs template.FuncMap) {
+func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
 
@@ -224,8 +224,13 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
+			gcssdata, err := cache.read(GCSSfilename, cacheMode.ShouldCache(".gcss"))
+			if err != nil {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+				return
+			}
 			// Try compiling the GCSS file before the Amber file
-			if gcssdata, err := validGCSS(GCSSfilename); err != nil {
+			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
 				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
@@ -271,7 +276,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	}
 
 	// If the auto-refresh feature has been enabled
-	if autoRefresh {
+	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		changedBuf := bytes.NewBuffer(insertAutoRefresh(buf.Bytes()))
 		buf = *changedBuf

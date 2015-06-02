@@ -253,6 +253,13 @@ Lua functions for plugins
 * `CallPlugin(string, string, ...)` takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
 
 
+Lua functions for the file cache
+--------------------------------
+
+* `CacheStats() -> string` return stats about the file cache.
+* `ClearCache()` clear the file cache.
+
+
 Lua functions for data structures
 ---------------------------------
 

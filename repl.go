@@ -9,6 +9,7 @@ import (
 	"github.com/yuin/gopher-lua"
 	"runtime"
 	"strings"
+	"time"
 )
 
 const (
@@ -105,6 +106,13 @@ warn(...)
 error(...)
 // Output text. Takes a variable number of strings.
 print(...)
+
+Cache
+
+// Return stats about the file cache
+CacheStats() -> string
+// Clear the file cache
+ClearCache()
 
 Plugins
 
@@ -216,7 +224,7 @@ func highlight(o *term.TextOutput, line string) string {
 
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
 // A variatey of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
+func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
 
 	// Retrieve the userstate
 	userstate := perm.UserState()
@@ -251,9 +259,22 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool) error {
 	// Plugin functionality
 	exportPluginFunctions(L, o)
 
+	// Cache
+	exportCacheFunctions(L, cache)
+
 	o.Println(o.LightBlue(versionString))
 	o.Println(o.LightGreen("Ready"))
 
+	// Add a newline after the prompt to prepare for logging, if in verbose mode
+	go func() {
+		if verboseMode {
+			// TODO Consider using a channel instead of sleep for outputting the newline...
+			time.Sleep(200 * time.Millisecond)
+			fmt.Println()
+		}
+	}()
+
+	// Start the read, eval, print loop
 	var (
 		line   string
 		err    error

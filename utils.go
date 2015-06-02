@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -19,12 +18,6 @@ var (
 	// A selection of allowed keywords for the HTML meta tag
 	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 )
-
-// For reading files, with caching
-func read(filename string) ([]byte, error) {
-	println("READING " + filename)
-	return ioutil.ReadFile(filename)
-}
 
 // Check if a given path is a directory
 func isDir(path string) bool {

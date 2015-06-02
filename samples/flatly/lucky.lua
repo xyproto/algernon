@@ -2,10 +2,8 @@
 
 -- Set Content-Type and begin HTML
 content("text/html; charset=utf-8")
-print([[<!doctype html><html><head><title>Lucky</title><style>
-body { margin: 4em; background-color: #234; color: #eee; font-family: sans-serif; }
-#green { color: #bfb; } hr { border: 1px dotted #345; }
-</style></head><body>]])
+print[[<!doctype html><html><head><title>Lucky</title><style>
+body { margin: 4em; background-color: #234; color: #eee; font-family: sans-serif; } #green { color: #bfb; } #yellow { color: yellow; } hr { border: 1px dotted #345; } </style></head><body>]]
 
 mprint("# Lucky?")
 print("<hr />")
@@ -20,9 +18,9 @@ print("<hr />")
 require 'math'
 mprint("#### Are you lucky?")
 if math.random(10) == 7 then
-  print("Yes, you are lucky.")
+  print[[<strong id="yellow">Yes, you are lucky.</strong>]]
 else
-  print("Not yet.")
+  print[[<strong id="yellow">Not yet.</strong>]]
 end
 
 -- End HTML

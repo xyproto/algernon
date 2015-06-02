@@ -2,6 +2,8 @@
 
 Priority
 --------
+- [ ] Add cache modes/flags. See modes.txt. See handlers.go.
+- [ ] Add caching of compiled templates.
 - [ ] Homebrew package for OS X
 - [ ] Installation instructions for installing from source
 - [ ] Caching
@@ -11,8 +13,14 @@ Priority
 - [ ] User management interface
 - [ ] Installation instructions for installing from binary
 
+Go / go vet / go lint
+---------------------
+- [ ] Two identical lines that are assignments should be an error
+
 Various
 -------
+- [ ] Consider adding a whitelist and blacklist for caching file extensions
+- [ ] Find a better way to determine which binary files should be cached or not
 - [ ] Installer for OS X (pkg)
 - [ ] Installer for Windows (MSI)
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
