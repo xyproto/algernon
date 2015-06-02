@@ -189,8 +189,8 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 			buf.WriteString("Redis database index:\t" + strconv.Itoa(redisDBindex) + "\n")
 		}
 		buf.WriteString("Server configuration:\t" + serverConfScript + "\n")
-		if serverHTTP2log != "/dev/null" {
-			buf.WriteString("HTTP/2 log file:\t" + serverHTTP2log + "\n")
+		if internalLogFilename != "/dev/null" {
+			buf.WriteString("Internal log file:\t" + internalLogFilename + "\n")
 		}
 		// Return the string, but drop the final newline
 		L.Push(lua.LString(buf.String()[:len(buf.String())-1]))
