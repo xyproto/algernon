@@ -2,46 +2,35 @@
 
 Priority
 --------
-- [ ] Versioning of the Plugin API and app bundles
-- [ ] Function for registering a route and a lua function as a HTTP handler
-- [ ] JSON templates that can use data.lua
-- [X] A way to package Algernon applications as self-contained archives
-- [X] Make new Lua functions available with plugins
-- [/] Make HTTP handle functions available with plugins
-- [/] Make it easy to host Algernon applications
+- [ ] Homebrew package for OS X
+- [ ] Installation instructions for installing from source
 - [ ] Caching
+- [ ] Function for registering a route and a lua function as a HTTP handler (in serverconf.lua)
+- [ ] Dockerfile + Vagrantfile
+- [ ] Make it easy to host Algernon applications for other people
 - [ ] User management interface
-- [X] Graceful shutdown
-- [ ] Functions for dealing with JSON in Lua (megajson?)
-- [ ] Write a document that outlines a simple way to host Algernon applications for others
-- [/] OS X package + homebrew
-- [ ] Dockerfile
-- [ ] Vagrantfile
-- [ ] Utilities to lint and package .alg archives
+- [ ] Installation instructions for installing from binary
 
 Various
 -------
+- [ ] Installer for OS X (pkg)
+- [ ] Installer for Windows (MSI)
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
       Let Lua provide a callback function.
 - [ ] pprint should output text to the browser when not running in the repl
-- [X] A way to make new Lua functions available with a standalone server
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
-- [ ] Support for pretty URLs (/position/x/2/y/4)
+- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4)
 - [/] Use some of the tricks from go-bootstrap.io
 - [ ] Downloading and uploading files
 - [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
-- [/] Add a Lua function for shutting down the server gracefully. Close open file handles at shutdown.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
-- [ ] A way to load Lua libraries that are available online, like http://json.luaforge.net/
 - [ ] Use the JSON code from https://github.com/layeh/gopher-json
 - [ ] Consider using MegaJSON
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
-- [ ] JSON templates
-- [/] A way to make new Lua functions available while the server is running, over the network. Perhaps by using microservices that can serve Lua code.
-- [X] A way to extend Algernon with Go, perhaps with pie on github
 - [ ] MSI installer
 - [ ] deb/ppa
+- [ ] Marshalling and unmarshalling from Lua tables to and from JSON, regardless of LValue
 
 
 Events
@@ -59,18 +48,17 @@ Events
 Server configuration
 --------------------
 
+- [ ] Add a "quiet" flag.
 - [ ] Prefer environment variables and flags over lua server configuration.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.
 - [ ] Server setting for enabling caching.
-- [ ] Add a "quiet" flag.
-- [ ] Add a way to run several configuration scripts at start.
 - [ ] A way to recompile templates on command while the server is running.
-- [ ] If no Redis server is found, start an internal Ledis database that runs in RAM (see https://github.com/siddontang/ledisdb/blob/master/cmd/ledis-server/main.go)
 
 REPL
 ----
 - [ ] See if a package related to gopher-lua can do the same as the pprint function
+- [ ] If so, use the same functionality when converting from Lua tables to JSON
 
 Plugins
 -------
@@ -188,7 +176,6 @@ Unusual features
 ----------------
 
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon. Update: Someone else has made a format for this! https://github.com/cparnot/ASCIImage
-- [ ] Find a way to set up a server that can add functions to remote LState objects on the fly, in a safe way. Perhaps by using the gob format.
 
 
 Various
@@ -226,3 +213,4 @@ Maybe
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
 - [ ] Read zip files directly instead of decompressing when given as the first argument
+- [ ] Utilities to lint and package .alg archives
