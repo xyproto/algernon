@@ -68,6 +68,7 @@ Features and limitations
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information.
 * An `.zip` file can be a self-contained Algernon application with a `serverconf.lua` file and all files needed to serve a web page.
+* Thread-safe caching is built-in.
 
 
 Overview
@@ -574,7 +575,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.72
+* Version: 0.73
 * License: MIT
 * Alexander F Rødseth
 
