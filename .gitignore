@@ -37,7 +37,7 @@ dump.rdb
 bolt.db
 
 # Plugin executables
-plugins/add3/add3
+plugins/go/go
 plugins/cpp/main
 
 # Extracted zip files
