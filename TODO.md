@@ -21,6 +21,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
 - [ ] Add a cache mode for caching binary files only
 - [ ] Installer for OS X (pkg)
 - [ ] Installer for Windows (MSI)
