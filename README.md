@@ -67,7 +67,7 @@ Features and limitations
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
 * Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
-* An `.zip` or `.alg` file can be a self-contained Algernon application that contains a `serverconf.lua` file and everything needed to serve a dynamic web page.
+* An `.alg` file (or `.zip`) can be a self-contained Algernon application that contains a `serverconf.lua` file and everything needed to serve a web application.
 
 
 Overview
@@ -152,7 +152,8 @@ Installation instructions
 -------------------------
 
 ##### OS X, latest release from source
-  * Install [Homebrew](https://brew.sh): `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+  * Install [Homebrew](https://brew.sh):
+    `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
   * Install the latest version of Algernon: `brew install https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb`
 
 ##### Arch Linux, latest release from source
