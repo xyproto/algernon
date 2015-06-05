@@ -151,20 +151,18 @@ Screenshots
 Installation instructions
 -------------------------
 
-##### OS X, latest release from source
+##### OS X, latest release, built from source:
   * Install [Homebrew](https://brew.sh):
     `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-  * Install the latest version of Algernon: `brew install https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb`
+  * Install the latest version of Algernon:
+  `brew install https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb`
 
-##### Arch Linux, latest release from source
+##### Arch Linux, latest release, built from source:
   * Install `algernon` from AUR, using your favorite AUR helper
 
 ##### Any system where go has been installed (and $GOPATH has been set), from source (master branch)
   * `go get github.com/xyproto/algernon`
   * Optionally, add `$GOPATH/bin` to the PATH
-
-##### Windows
-  * See the binary downloads [below](#Releases).
 
 
 Getting started
@@ -581,7 +579,8 @@ Releases
 
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
 * [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64).
-* Source releases are tagged with git.
+* [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb)
+* Source releases are tagged as such.
 
 
 General information
