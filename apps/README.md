@@ -1,4 +1,6 @@
 Self-contained sample applications for Algernon
 ===============================================
 
-Give the zip filename as the first non-flag argument to Algernon to run.
+Give the `first.alg` filename as the first non-flag argument to Algernon to run it.
+
+`.alg` files are `.zip` files
