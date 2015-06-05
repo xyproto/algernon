@@ -152,11 +152,11 @@ Screenshots
 Installation instructions
 -------------------------
 
-##### OS X, version 0.73, from source
+##### OS X, latest release from source
   * Install [Homebrew](https://brew.sh): `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-  * Install Algernon 0.73: `brew install https://raw.githubusercontent.com/xyproto/algernon/0.73/system/homebrew/algernon.rb
+  * Install the latest version of Algernon: `brew install https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb`
 
-##### Arch Linux, version 0.73, from source
+##### Arch Linux, latest release from source
   * Install `algernon` from AUR, using your favorite AUR helper
 
 ##### Any system where go has been installed (and $GOPATH has been set), from source (master branch)
