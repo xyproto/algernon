@@ -10,9 +10,10 @@ import (
 func serveStaticFile(filename, colonPort string) {
 	log.Info("Serving " + filename + " on " + serverHost + colonPort)
 	mux := http.NewServeMux()
+	cache := newFileCache(defaultCacheSize)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
-		filePage(w, req, filename, nil, nil, nil)
+		filePage(w, req, filename, nil, nil, cache)
 	})
 	HTTPserver := newServerConfiguration(mux, false, serverHost+colonPort)
 	if err := HTTPserver.ListenAndServe(); err != nil {

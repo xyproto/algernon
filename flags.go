@@ -16,6 +16,7 @@ const (
 	defaultEventPath      = "/fs"
 	defaultLimit          = 10
 	defaultPermissions    = 0600
+	defaultCacheSize      = 1024 * 1024 // 1 MiB
 )
 
 var (
@@ -197,7 +198,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&devMode, "dev", false, "Development mode")
 	flag.BoolVar(&showVersion, "version", false, "Version")
 	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
-	flag.Uint64Var(&cacheSize, "cachesize", 1024*1024, "Cache size, in bytes") // 1 MiB by default
+	flag.Uint64Var(&cacheSize, "cachesize", defaultCacheSize, "Cache size, in bytes")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
