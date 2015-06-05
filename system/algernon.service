@@ -7,7 +7,7 @@ Description=Algernon web server
 User=algernon
 Group=algernon
 #ExecStart=/usr/bin/algernon --prod
-ExecStart=/usr/bin/algernon --httponly --addr=:7000 --log /var/log/algernon.log /srv/algernon
+ExecStart=/usr/bin/algernon --server --httponly --addr=:7000 --log /var/log/algernon.log /srv/algernon
 CapabilityBoundingSet=
 PrivateTmp=true
 PrivateDevices=true

@@ -13,6 +13,7 @@ Priority
 - [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
 - [ ] Make it easy to host Algernon applications for other people
 - [ ] User management interface
+- [ ] Use a struct for the configuration variables
 
 Go / go vet / go lint
 ---------------------

@@ -43,7 +43,7 @@ var (
 	serverReadyFunctionLua func()
 
 	// Server modes
-	debugMode, verboseMode, productionMode, interactiveMode bool
+	debugMode, verboseMode, productionMode, serverMode bool
 
 	// For the Server-Sent Event (SSE) server
 	eventAddr    string // Host and port to serve Server-Sent Events on
@@ -62,12 +62,13 @@ var (
 	devMode bool
 
 	// Databases
-	boltFilename    string
-	useBolt         bool
-	mariadbDSN      string // connection string
-	mariadbDatabase string // database name
-	redisAddr       string
-	redisDBindex    int
+	boltFilename       string
+	useBolt            bool
+	mariadbDSN         string // connection string
+	mariaDatabase      string // database name
+	redisAddr          string
+	redisDBindex       int
+	redisAddrSpecified bool
 
 	limitRequests       int64 // rate limit to this many requests per client per second
 	disableRateLimiting bool
@@ -95,13 +96,12 @@ Available flags:
   -v, --version                Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
-  -e, --dev                    Development mode: Enables Debug mode, enables
-                               interactive mode, uses regular HTTP, uses Bolt.
-                               Keeps the cache mode at "normal".
+  -e, --dev                    Development mode: Enables Debug mode, uses
+                               regular HTTP, Bolt and sets cache to "normal".
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
-                               Disables debug mode, disables auto-refresh.
-                               Sets cache mode to "production".
+                               Disables debug mode. Disables auto-refresh.
+                               Enables server mode. Sets cache to "production".
   -a, --autorefresh            Enable the event server and auto-refresh feature.
                                Sets cache mode to "images".
   --cache=MODE                 Sets a cache mode. The default is "on".
@@ -135,8 +135,8 @@ Available flags:
                                (the default is "` + defaultEventRefresh + `").
   --limit=N                    Limit clients to N requests per second
                                (the default is ` + defaultLimitString + `).
-  --no-limit                   Disable rate limiting
-  -i, --interactive            Interactive mode
+  --nolimit                    Disable rate limiting.
+  -s, --server                 Server mode (disable interactive mode).
 `)
 }
 
@@ -145,7 +145,7 @@ func handleFlags(serverTempDir string) string {
 	var (
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
-		debugModeShort, interactiveModeShort, useBoltShort, devModeShort,
+		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort bool
 		// Used when setting the cache mode
 		cacheModeString string
@@ -174,7 +174,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&serverAddr, "addr", "", "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&serverCert, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&serverKey, "key", "key.pem", "Server key")
-	flag.StringVar(&redisAddr, "redis", host+defaultRedisColonPort, "Redis [host][:port] (ie \""+defaultRedisColonPort+"\")")
+	flag.StringVar(&redisAddr, "redis", "", "Redis [host][:port] (ie \""+defaultRedisColonPort+"\")")
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&serverConfScript, "conf", "serverconf.lua", "Server configuration")
 	flag.StringVar(&serverLogFile, "log", "", "Server log file")
@@ -188,13 +188,13 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+defaultEventColonPort+"\")")
 	flag.StringVar(&eventRefresh, "eventrefresh", defaultEventRefresh, "Event refresh interval (ie \""+defaultEventRefresh+"\")")
-	flag.BoolVar(&interactiveMode, "interactive", false, "Interactive mode")
+	flag.BoolVar(&serverMode, "server", false, "Server mode (disable interactive mode)")
 	flag.StringVar(&mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
-	flag.StringVar(&mariadbDatabase, "mariadb", "", "MariaDB/MySQL database name")
+	flag.StringVar(&mariaDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
 	flag.Int64Var(&limitRequests, "limit", defaultLimit, "Limit clients to a number of requests per second")
-	flag.BoolVar(&disableRateLimiting, "no-limit", false, "Disable rate limiting")
+	flag.BoolVar(&disableRateLimiting, "nolimit", false, "Disable rate limiting")
 	flag.BoolVar(&devMode, "dev", false, "Development mode")
 	flag.BoolVar(&showVersion, "version", false, "Version")
 	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
@@ -203,7 +203,7 @@ func handleFlags(serverTempDir string) string {
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
-	flag.BoolVar(&interactiveModeShort, "i", false, "Interactive mode")
+	flag.BoolVar(&serverModeShort, "s", false, "Server mode (disable interactive mode)")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
 	flag.BoolVar(&productionModeShort, "p", false, "Production mode")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
@@ -216,11 +216,17 @@ func handleFlags(serverTempDir string) string {
 	serveJustHTTP = serveJustHTTP || serveJustHTTPShort
 	autoRefreshMode = autoRefreshMode || autoRefreshShort
 	debugMode = debugMode || debugModeShort
-	interactiveMode = interactiveMode || interactiveModeShort
+	serverMode = serverMode || serverModeShort
 	useBolt = useBolt || useBoltShort
 	productionMode = productionMode || productionModeShort
 	devMode = devMode || devModeShort
 	showVersion = showVersion || showVersionShort
+
+	redisAddrSpecified = redisAddr != ""
+	if redisAddr == "" {
+		// The default host and port
+		redisAddr = host + defaultRedisColonPort
+	}
 
 	// TODO: If flags are set in addition to -p or -e, don't override those
 	//       when -p or -e is set.
@@ -232,13 +238,13 @@ func handleFlags(serverTempDir string) string {
 		serverCert = "/etc/algernon/cert.pem"
 		serverKey = "/etc/algernon/key.pem"
 		cacheMode = cacheModeProduction
+		serverMode = true
 	} else if devMode {
 		// Change several defaults if development mode is enabled
 		useBolt = true
 		serveJustHTTP = true
 		//serverLogFile = defaultLogFile
 		debugMode = true
-		interactiveMode = true
 		// TODO: Make it possible to set --limit to the default limit also when -e is used
 		if limitRequests == defaultLimit {
 			limitRequests = 1000 // Increase the rate limit considerably
@@ -294,6 +300,7 @@ func handleFlags(serverTempDir string) string {
 	}
 	if len(flag.Args()) >= 5 {
 		redisAddr = flag.Args()[4]
+		redisAddrSpecified = true
 	}
 	if len(flag.Args()) >= 6 {
 		// Convert the dbindex from string to int

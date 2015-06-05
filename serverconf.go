@@ -15,6 +15,22 @@ import (
 
 // Write a status message to a buffer, given a name and a bool
 func writeStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
+
+	// Check that at least one of the bools are true
+
+	found := false
+	for _, value := range flags {
+		if value {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return
+	}
+
+	// Write the overview to the buffer
+
 	buf.WriteString(title + ":")
 	// Spartan way of lining up the columns
 	if len(title) < 7 {
@@ -30,6 +46,62 @@ func writeStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 	}
 	buf.WriteString(strings.Join(enabledFlags, ", "))
 	buf.WriteString("]\n")
+}
+
+func serverInfo() string {
+	var buf bytes.Buffer
+
+	if !singleFileMode {
+		buf.WriteString("Server directory:\t" + serverDir + "\n")
+	} else {
+		buf.WriteString("Filename:\t\t" + serverDir + "\n")
+	}
+	buf.WriteString("Server address:\t\t" + serverAddr + "\n")
+	buf.WriteString("Database:\t\t" + dbName + "\n")
+
+	// Write the status of flags that can be toggled
+	writeStatus(&buf, "Options", map[string]bool{
+		"Debug":        debugMode,
+		"Production":   productionMode,
+		"Auto-refresh": autoRefreshMode,
+		"Dev":          devMode,
+		"Server":       serverMode,
+	})
+
+	buf.WriteString("Cache mode:\t\t" + cacheMode.String() + "\n")
+	if cacheSize != 0 {
+		buf.WriteString(fmt.Sprintf("Cache size:\t\t%d bytes\n", cacheSize))
+	}
+
+	if serverLogFile != "" {
+		buf.WriteString("Log file:\t\t" + serverLogFile + "\n")
+	}
+	if !(serveJustHTTP2 || serveJustHTTP) {
+		buf.WriteString("TLS certificate:\t" + serverCert + "\n")
+		buf.WriteString("TLS key:\t\t" + serverKey + "\n")
+	}
+	if autoRefreshMode {
+		buf.WriteString("Event server:\t\t" + eventAddr + "\n")
+	}
+	if autoRefreshDir != "" {
+		buf.WriteString("Only watching:\t\t" + autoRefreshDir + "\n")
+	}
+	if redisAddr != defaultRedisColonPort {
+		buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
+	}
+	buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", limitRequests))
+	if redisDBindex != 0 {
+		buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", redisDBindex))
+	}
+	if len(serverConfigurationFilenames) > 0 {
+		buf.WriteString(fmt.Sprintf("Server configuration:\t%v\n", serverConfigurationFilenames))
+	}
+	if internalLogFilename != "/dev/null" {
+		buf.WriteString("Internal log file:\t" + internalLogFilename + "\n")
+	}
+	infoString := buf.String()
+	// Return without the final newline
+	return infoString[:len(infoString)-1]
 }
 
 // Make functions related to server configuration and permissions available
@@ -129,55 +201,8 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 	}))
 
 	L.SetGlobal("ServerInfo", L.NewFunction(func(L *lua.LState) int {
-		var buf bytes.Buffer
-
-		if !singleFileMode {
-			buf.WriteString("Server directory:\t" + serverDir + "\n")
-		} else {
-			buf.WriteString("Filename:\t\t" + serverDir + "\n")
-		}
-		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
-		buf.WriteString("Database:\t\t" + dbName + "\n")
-
-		// Write the status of flags that can be toggled
-		writeStatus(&buf, "Options", map[string]bool{
-			"Debug":        debugMode,
-			"Production":   productionMode,
-			"Auto-refresh": autoRefreshMode,
-			"Dev":          devMode,
-		})
-
-		buf.WriteString("Cache mode:\t\t" + cacheMode.String() + "\n")
-		if cacheSize != 0 {
-			buf.WriteString(fmt.Sprintf("Cache size:\t\t%d bytes\n", cacheSize))
-		}
-
-		if serverLogFile != "" {
-			buf.WriteString("Log file:\t\t" + serverLogFile + "\n")
-		}
-		if !(serveJustHTTP2 || serveJustHTTP) {
-			buf.WriteString("TLS certificate:\t" + serverCert + "\n")
-			buf.WriteString("TLS key:\t\t" + serverKey + "\n")
-		}
-		if autoRefreshMode {
-			buf.WriteString("Event server:\t\t" + eventAddr + "\n")
-		}
-		if autoRefreshDir != "" {
-			buf.WriteString("Only watching:\t\t" + autoRefreshDir + "\n")
-		}
-		if redisAddr != defaultRedisColonPort {
-			buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
-		}
-		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", limitRequests))
-		if redisDBindex != 0 {
-			buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", redisDBindex))
-		}
-		buf.WriteString("Server configuration:\t" + serverConfScript + "\n")
-		if internalLogFilename != "/dev/null" {
-			buf.WriteString("Internal log file:\t" + internalLogFilename + "\n")
-		}
 		// Return the string, but drop the final newline
-		L.Push(lua.LString(buf.String()[:len(buf.String())-1]))
+		L.Push(lua.LString(serverInfo()))
 		return 1 // number of results
 	}))
 

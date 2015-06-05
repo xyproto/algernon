@@ -176,7 +176,7 @@ func main() {
 	}
 	if dbName == "" && mariadbDSN != "" {
 		// New permissions middleware, using a MariaDB/MySQL database
-		perm, err = mariadb.NewWithDSN(mariadbDSN, mariadbDatabase)
+		perm, err = mariadb.NewWithDSN(mariadbDSN, mariaDatabase)
 		if err != nil {
 			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
 		} else {
@@ -184,12 +184,16 @@ func main() {
 			dbName = "MariaDB/MySQL"
 		}
 	}
-	if dbName == "" && mariadbDatabase != "" {
+	if dbName == "" && mariaDatabase != "" {
 		// Given a database, but not a host, connect to localhost
 		// New permissions middleware, using a MariaDB/MySQL database
-		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + mariadbDatabase)
+		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + mariaDatabase)
 		if err != nil {
-			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+			if mariaDatabase != "" {
+				log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+			} else {
+				log.Warnf("Could not use MariaDB/MySQL as database backend: %s", err)
+			}
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			dbName = "MariaDB/MySQL"
@@ -198,9 +202,13 @@ func main() {
 	if dbName == "" {
 		// New permissions middleware, using a Redis database
 		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
-			// Only warn when not in single file mode (too verbose)
-			if !singleFileMode {
-				log.Errorf("Could not use Redis as database backend: %s", err)
+			// Only output an error when a Redis host other than the default host+port was specified
+			if redisAddrSpecified {
+				if singleFileMode {
+					log.Warnf("Could not use Redis as database backend: %s", err)
+				} else {
+					log.Errorf("Could not use Redis as database backend: %s", err)
+				}
 			}
 		} else {
 			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
@@ -244,6 +252,7 @@ func main() {
 
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
+	var ranConfigurationFilenames []string
 	for _, filename := range serverConfigurationFilenames {
 		if exists(filename) {
 			if verboseMode {
@@ -253,12 +262,22 @@ func main() {
 				log.Error("Could not use configuration script: " + filename)
 				fatalExit(err)
 			}
+			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
 		}
 	}
+	// Only keep the active ones. Used when outputting server information.
+	serverConfigurationFilenames = ranConfigurationFilenames
 
 	// Set the values that has not been set by flags nor scripts
 	// (and can be set by both)
 	ranServerReadyFunction := finalConfiguration(serverHost)
+
+	// If no configuration files were being ran succesfully,
+	// output basic server information.
+	if len(serverConfigurationFilenames) == 0 {
+		fmt.Println(serverInfo())
+		ranServerReadyFunction = true
+	}
 
 	// Dividing line between the banner and output from any of the
 	// configuration scripts. Marks the end of the configuration output.
@@ -301,7 +320,7 @@ func main() {
 		}
 	}
 
-	if interactiveMode {
+	if !serverMode {
 		go REPL(perm, luapool, cache)
 	}
 
@@ -342,9 +361,10 @@ func main() {
 		HTTPS2server := newServerConfiguration(mux, true, serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		if err := graceful.ListenAndServeTLS(HTTPS2server, serverCert, serverKey, shutdownTimeout); err != nil {
-			log.Error(err)
+			log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
+			log.Info("Use the -h flag to serve HTTP only")
 			// If HTTPS failed (perhaps the key + cert are missing), serve
-			// plain HTTP instead, by falling through to the next case.
+			// plain HTTP instead, by falling through to the next case, below.
 		} else {
 			// Don't fall through
 			break
