@@ -2,25 +2,25 @@
 
 Priority
 --------
-- [ ] Add cache modes/flags. See modes.txt. See handlers.go.
-- [ ] Add caching of compiled templates.
+- [ ] Python plugin example
+- [ ] Dockerfile
+- [ ] Installation instructions when installing with docker
+- [ ] Add a lua function for removing all entries without a hit in the cache
+- [ ] Add a lua function for running a lua function periodically
 - [ ] Homebrew package for OS X
-- [ ] Installation instructions for installing from source
-- [ ] Caching
-- [ ] Function for registering a route and a lua function as a HTTP handler (in serverconf.lua)
-- [ ] Dockerfile + Vagrantfile
+- [ ] Installation instructions when installing from source
+- [ ] Installation instructions when installing from binary
+- [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
 - [ ] Make it easy to host Algernon applications for other people
 - [ ] User management interface
-- [ ] Installation instructions for installing from binary
 
 Go / go vet / go lint
 ---------------------
-- [ ] Two identical lines that are assignments should be an error
+- [ ] Two identical lines in a row that is the same assignment should be an error
 
 Various
 -------
-- [ ] Consider adding a whitelist and blacklist for caching file extensions
-- [ ] Find a better way to determine which binary files should be cached or not
+- [ ] Add a cache mode for caching binary files only
 - [ ] Installer for OS X (pkg)
 - [ ] Installer for Windows (MSI)
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
@@ -220,5 +220,9 @@ Maybe
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
-- [ ] Read zip files directly instead of decompressing when given as the first argument
-- [ ] Utilities to lint and package .alg archives
+- [ ] Read zip files directly instead of decompressing when given as the first argument (downside: some Amber functions look for files in the same directory).
+- [ ] Utilities to lint and package .alg archives.
+- [ ] Add caching of compiled templates, before data is inserted.
+- [ ] Vagrantfile
+- [ ] Add a maximum file size limit when caching
+- [ ] Whitelist and blacklist for which file extensions to cache
