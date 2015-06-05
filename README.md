@@ -57,7 +57,6 @@ Features and limitations
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * Redis is used for the database backend, by default.
 * The Bolt database is also supported, and is built-in.
-* No support for internal caching, yet.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
@@ -67,8 +66,8 @@ Features and limitations
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
-* An `.zip` file can be a self-contained Algernon application with a `serverconf.lua` file and all files needed to serve a web page.
-* Thread-safe caching is built-in.
+* Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
+* An `.zip` or `.alg` file can be a self-contained Algernon application that contains a `serverconf.lua` file and everything needed to serve a dynamic web page.
 
 
 Overview
