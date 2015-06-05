@@ -1,5 +1,3 @@
-require "formula"
-
 class Algernon < Formula
   desc "HTTP/2 web server with Lua support"
   homepage "http://algernon.roboticoverlords.org/"
