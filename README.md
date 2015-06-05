@@ -587,7 +587,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.73
+* Version: 0.74
 * License: MIT
 * Alexander F Rødseth
 
