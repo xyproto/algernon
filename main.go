@@ -108,16 +108,16 @@ func main() {
 				// Serve the given Markdown file as a static HTTP server
 				serveStaticFile(filename, defaultWebColonPort)
 				return
-			case ".zip":
-				// It might be a compressed Algernon application
+			case ".zip", ".alg":
+				// Assume this to be a compressed Algernon application
 				err := unzip.Extract(filename, serverTempDir)
 				if err != nil {
 					log.Fatalln(err)
 				}
 				// Use the directory where the file was extracted as the server directory
 				serverDir = serverTempDir
-				// If there is only one directory there, assume it's the directory of
-				// the newly extracted ZIP file.
+				// If there is only one directory there, assume it's the
+				// directory of the newly extracted ZIP file.
 				if filenames := getFilenames(serverDir); len(filenames) == 1 {
 					fullPath := filepath.Join(serverDir, filenames[0])
 					if isDir(fullPath) {
@@ -125,7 +125,8 @@ func main() {
 						serverDir = fullPath
 					}
 				}
-				// If there are server configuration files in the extracted directory, register them
+				// If there are server configuration files in the extracted
+				// directory, register them.
 				for _, filename := range serverConfigurationFilenames {
 					configFilename := filepath.Join(serverDir, filename)
 					if exists(configFilename) {
@@ -133,7 +134,8 @@ func main() {
 					}
 				}
 				// Disregard all configuration files from the current directory
-				// (filenames without a path separator), since we are serving a ZIP file.
+				// (filenames without a path separator), since we are serving a
+				// ZIP file.
 				for i, filename := range serverConfigurationFilenames {
 					if strings.Count(filepath.ToSlash(filename), "/") == 0 {
 						// Remove the filename from the slice
@@ -161,6 +163,7 @@ func main() {
 
 	// Use one of the databases for the permission middleware,
 	// then assign a name to dbName (used for the status output)
+	// TODO Refactor into functions
 	dbName = ""
 	if boltFilename != "" {
 		// New permissions middleware, using a Bolt database
@@ -221,14 +224,16 @@ func main() {
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	defer luapool.Shutdown()
 
-	// Create a cache struct for reading files, regardless of if cache is enabled
+	// Create a cache struct for reading files (contains functions that can
+	// be used for reading files, also when caching is disabled).
 	cache := newFileCache(cacheSize)
 
 	// Register HTTP handler functions
 	registerHandlers(mux, serverDir, perm, luapool, cache)
 
+	// Log to a file as JSON, if a log file has been specified
 	if serverLogFile != "" {
-		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
 		if err != nil {
 			log.Error("Could not log to", serverLogFile)
 			fatalExit(err)
@@ -251,10 +256,12 @@ func main() {
 		}
 	}
 
-	// Set the values that has not been set by flags nor scripts (and can be set by both)
+	// Set the values that has not been set by flags nor scripts
+	// (and can be set by both)
 	ranServerReadyFunction := finalConfiguration(serverHost)
 
-	// Dividing line between the banner and output from any of the configuration scripts
+	// Dividing line between the banner and output from any of the
+	// configuration scripts. Marks the end of the configuration output.
 	if ranServerReadyFunction {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
@@ -267,7 +274,7 @@ func main() {
 	defer internalLogFile.Close()
 	if err != nil {
 		// Could not open the internalLogFilename filename, try using another filename
-		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, defaultPermissions)
 		defer internalLogFile.Close()
 		if err != nil {
 			fatalExit(fmt.Errorf("Could not write to %s nor %s.", internalLogFilename, "internal.log"))

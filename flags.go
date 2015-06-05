@@ -15,6 +15,7 @@ const (
 	defaultEventRefresh   = "350ms"
 	defaultEventPath      = "/fs"
 	defaultLimit          = 10
+	defaultPermissions    = 0600
 )
 
 var (

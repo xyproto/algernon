@@ -116,7 +116,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 			return 1 // number of results
 		}
 		// Try opening/creating the given filename, for appending
-		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
 		if err != nil {
 			log.Error(err)
 			L.Push(lua.LBool(false))
