@@ -149,14 +149,26 @@ Screenshots
 *JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
 
 
+Installation instructions
+-------------------------
+
+##### OS X, version 0.73, from source
+  # Install [Homebrew](https://brew.sh): `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+  # Install Algernon 0.73: `brew install https://raw.githubusercontent.com/xyproto/algernon/0.73/system/homebrew/algernon.rb
+
+##### Arch Linux, version 0.73, from source
+  # Install `algernon` from AUR, using your favorite AUR helper
+
+##### Any system where go has been installed (and $GOPATH has been set), from source (master branch)
+  # `go get github.com/xyproto/algernon`
+  # Optionally, add `$GOPATH/bin` to the PATH
+
+##### Windows
+  * See the binary downloads [below](#Releases).
+
 
 Getting started
 ---------------
-
-##### Install Algernon
-
-* Install [go](https://golang.org), set `$GOPATH` and add `$GOPATH/bin` to the PATH (optional).
-* `go get github.com/xyproto/algernon`
 
 ##### Enable HTTP/2 in the browser
 
