@@ -43,7 +43,6 @@ Design decisions
 * UTF-8 is used whenever possible.
 * The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
 
-
 Features and limitations
 ------------------------
 
@@ -53,10 +52,11 @@ Features and limitations
 * Works on Linux, OS X and 64-bit Windows.
 * Algernon is compiled to native. It's reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
-* The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed.
+* The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (there is an auto-refresh feature).
+* Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * Redis is used for the database backend, by default.
-* The Bolt database is also supported, and is built-in.
+* Algernon will fall back to the built-in Bolt database if no Redis server is available.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
@@ -67,7 +67,6 @@ Features and limitations
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
 * Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
-* An `.alg` file (or `.zip`) can be a self-contained Algernon application that contains a `serverconf.lua` file and everything needed to serve a web application.
 
 
 Overview
