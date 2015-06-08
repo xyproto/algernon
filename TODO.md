@@ -2,15 +2,11 @@
 
 Priority
 --------
-- [ ] Python plugin example
+- [/] Homebrew package for OS X
+- [ ] Make a sample for loading plugins and use them without reloading plugins.
 - [ ] Dockerfile
-- [ ] Installation instructions when installing with docker
-- [ ] Add a lua function for removing all entries without a hit in the cache
-- [ ] Add a lua function for running a lua function periodically
-- [ ] Homebrew package for OS X
-- [ ] Installation instructions when installing from source
-- [ ] Installation instructions when installing from binary
 - [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
+- [ ] Make an application (and way) to upload .alg applications and host them.
 - [ ] Make it easy to host Algernon applications for other people
 - [ ] User management interface
 - [ ] Use a struct for the configuration variables
@@ -21,12 +17,12 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Add a lua function for removing all entries without a hit in the cache
+- [ ] Add a lua function for running a lua function periodically
 - [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
 - [ ] Add a cache mode for caching binary files only
 - [ ] Installer for OS X (pkg)
-- [ ] Installer for Windows (MSI)
-- [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously.
-      Let Lua provide a callback function.
+- [ ] Installer for Windows (msi)
 - [ ] pprint should output text to the browser when not running in the repl
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4)
@@ -47,7 +43,7 @@ Events
 ------
 
 - [ ] A better 404 page not found page for users visiting "/"
-- [ ] Consider using channels in a more clever way, to avoid sleeping.
+- [ ] Consider using channels in a more clever way, to avoid sleeping.
       Possibly by sending channels over channels.
 - [ ] Consider only listening for changes after a file has been visited, then
       stop watching it after a while.
@@ -77,7 +73,6 @@ Plugins
 Additional security
 -------------------
 
-- [X] Rate limiting
 - [ ] Option to disable directory listings
 - [ ] Option to only allow whitelisted URL prefixes
 - [ ] Functions for adding URL prefixes to the whitelist
@@ -107,6 +102,7 @@ Console output
 --------------
 
 - [ ] Check the terminal capabilities and terminal width. Display a smaller logo if the width is smaller. Or no logo.
+- [ ] Check if go-rl is a better alternative than the readline bindings (may crash at terminal resize).
 
 
 Documentation and samples
@@ -115,19 +111,11 @@ Documentation and samples
 - [ ] Create a sample webpage where people can log in and chat.
 - [ ] Create a TODOMVC sample application.
 - [ ] Document possible Markdown keywords somewhere (in a separate document).
-- [ ] Create a React application that uses Algernon as the backend as well.
-
-
-Screenshots and graphics
-------------------------
-- [ ] The three.js sample
-- [ ] Of one of the React samples
 
 
 Debugging
 ---------
 
-- [ ] Implement the debug and logging functionality.
 - [ ] Add a lua function that adds a html header and footer, including auto-refresh (if enabled)
 
 
@@ -156,7 +144,7 @@ Lua
 - [ ] Lua function for checking if a file exists.
 - [ ] A way to make an interactive session in the browser.
 - [ ] A way to load parts of a page asynchronously.
-- [_] Lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
+- [ ] Lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
 - [ ] A way to have external projects written in Go that can extend
       the Lua state by adding functions. Perhaps adding functions to
       the Lua State object by sending it packed over the network and
@@ -170,16 +158,7 @@ Performance
 
 - [ ] Minify CSS, JS and HTML (on by default, can be disabled)
 - [ ] Compress pages
-- [ ] Caching. This can be configured in the server configuration. Or in Redis. Must be possible to specify the cache size.
-- [ ] A way to toggle which files and directories that should be cached, in Redis.
-- [ ] Three different cache settings: not cached, cached until file timestamp changes, always use cache.
 - [ ] Find a reliable way to measure serving speed and emulate users.
-
-
-Packaging
----------
-
-- [/] Homewbrew / OS X.
 
 
 Unusual features
@@ -222,9 +201,10 @@ Maybe
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
-- [ ] Read zip files directly instead of decompressing when given as the first argument (downside: some Amber functions look for files in the same directory).
+- [ ] Read zip files directly instead of decompressing when given as the first argument (downside: some Amber functions look for files in the same directory).
 - [ ] Utilities to lint and package .alg archives.
 - [ ] Add caching of compiled templates, before data is inserted.
 - [ ] Vagrantfile
 - [ ] Add a maximum file size limit when caching
 - [ ] Whitelist and blacklist for which file extensions to cache
+- [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously. Let Lua provide a callback function.
