@@ -35,10 +35,13 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 	// Returns true of successful.
 	L.SetGlobal("Plugin", L.NewFunction(func(L *lua.LState) int {
 		path := L.ToString(1)
+		givenPath := path
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		path = filepath.Join(serverDir, path)
+		if !exists(path) {
+			path = filepath.Join(serverDir, path)
+		}
 
 		// Connect with the Plugin
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
@@ -55,7 +58,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		p := &luaPlugin{client}
 
 		// Retrieve the Lua code
-		luacode, err := p.LuaCode(path)
+		luacode, err := p.LuaCode(givenPath)
 		if err != nil {
 			if o != nil {
 				o.Err("[Plugin] Could not call the LuaCode function!")
@@ -101,10 +104,13 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 	// Retrieve the code from the Lua.Code function of the plugin
 	L.SetGlobal("PluginCode", L.NewFunction(func(L *lua.LState) int {
 		path := L.ToString(1)
+		givenPath := path
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		path = filepath.Join(serverDir, path)
+		if !exists(path) {
+			path = filepath.Join(serverDir, path)
+		}
 
 		// Connect with the Plugin
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
@@ -121,7 +127,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		p := &luaPlugin{client}
 
 		// Retrieve the Lua code
-		luacode, err := p.LuaCode(path)
+		luacode, err := p.LuaCode(givenPath)
 		if err != nil {
 			if o != nil {
 				o.Err("[PluginCode] Could not call the LuaCode function!")
@@ -150,7 +156,9 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		path = filepath.Join(serverDir, path)
+		if !exists(path) {
+			path = filepath.Join(serverDir, path)
+		}
 
 		fn := L.ToString(2)
 
