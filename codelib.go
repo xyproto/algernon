@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
@@ -17,51 +16,67 @@ const (
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
-func checkLibrary(L *lua.LState) pinterface.IHashMap {
+func checkLibrary(L *lua.LState) pinterface.IKeyValue {
 	ud := L.CheckUserData(1)
-	if hash, ok := ud.Value.(pinterface.IHashMap); ok {
+	if hash, ok := ud.Value.(pinterface.IKeyValue); ok {
 		return hash
 	}
 	L.ArgError(1, "code library expected")
 	return nil
 }
 
-// Given a namespace and an id, register Lua code.
-// Takes three strings, returns a true if it is successful.
-func libRegister(L *lua.LState) int {
+// Given a namespace, register Lua code.
+// Takes two strings, returns a true if it is successful.
+func libAdd(L *lua.LState) int {
 	lualib := checkLibrary(L) // arg 1
 	namespace := L.ToString(2)
 	if namespace == "" {
 		L.ArgError(2, "namespace expected")
 	}
-	id := L.ToString(3)
-	if id == "" {
-		L.ArgError(3, "id expected")
+	code := L.ToString(3)
+	if code == "" {
+		log.Warn("Empty Lua code given to codelib:add")
+		L.Push(lua.LBool(false))
+		return 1
 	}
-	code := L.ToString(4)
+	// Append the new code to the old code, if any
+	oldcode, err := lualib.Get(namespace)
+	if err != nil {
+		oldcode = ""
+	} else {
+		oldcode += "\n"
+	}
+	L.Push(lua.LBool(nil == lualib.Set(namespace, oldcode+code)))
+	return 1 // number of results
+}
+
+// Given a namespace, register Lua code as the only code.
+// Takes two strings, returns a true if it is successful.
+func libSet(L *lua.LState) int {
+	lualib := checkLibrary(L) // arg 1
+	namespace := L.ToString(2)
+	if namespace == "" {
+		L.ArgError(2, "namespace expected")
+	}
+	code := L.ToString(3)
 	if code == "" {
 		log.Warn("Empty Lua code given to codelib:set")
 		L.Push(lua.LBool(false))
 		return 1
 	}
-	// Return true if there were no problems
-	L.Push(lua.LBool(nil == lualib.Set(namespace, id, code)))
+	L.Push(lua.LBool(nil == lualib.Set(namespace, code)))
 	return 1 // number of results
 }
 
-// Given a namespace and an id, return Lua code, or an empty string.
-func libGetFunction(L *lua.LState) int {
+// Given a namespace, return Lua code, or an empty string.
+func libGet(L *lua.LState) int {
 	lualib := checkLibrary(L) // arg 1
 	namespace := L.ToString(2)
 	if namespace == "" {
 		L.ArgError(2, "namespace expected")
 	}
-	id := L.ToString(3)
-	if id == "" {
-		L.ArgError(3, "id expected")
-	}
 	// Retrieve the Lua code from the HashMap
-	code, err := lualib.Get(namespace, id)
+	code, err := lualib.Get(namespace)
 	if err != nil {
 		// Return an empty string if there was an error
 		L.Push(lua.LString(""))
@@ -71,35 +86,33 @@ func libGetFunction(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// Given a namespace, return all registered Lua code as a string.
-// May return an empty string.
+// Given a namespace, fetch all registered Lua code as a string.
+// Then run the Lua code for this LState.
+// Returns true of successful.
 func libImport(L *lua.LState) int {
-	var (
-		allcode bytes.Buffer
-		code    string
-		err     error
-	)
 	lualib := checkLibrary(L) // arg 1
 	namespace := L.ToString(2)
 	if namespace == "" {
 		L.ArgError(2, "namespace expected")
 	}
-	keys, err := lualib.GetAll()
+
+	code, err := lualib.Get(namespace)
 	if err != nil {
-		// Return an empty string if there was an error
-		L.Push(lua.LString(""))
+		// Return false if there was an error
+		L.Push(lua.LBool(false)) // error
+		return 1
 	}
-	// Retrieve the code from all the keys in the given namespace
-	for _, key := range keys {
-		code, err = lualib.Get(namespace, key)
-		if err != nil {
-			continue
-		}
-		allcode.WriteString(code + "\n\n")
+
+	if err := L.DoString(code); err != nil {
+		L.Close()
+
+		log.Errorf("Error when importing Lua code:\n%s", err)
+		L.Push(lua.LBool(false)) // error
+		return 1                 // number of results
 	}
-	// Returned all the requested Lua code, joined with double newlines
-	L.Push(lua.LString(allcode.String()))
-	return 1 // number of results
+
+	L.Push(lua.LBool(true)) // ok
+	return 1                // number of results
 }
 
 // String representation
@@ -119,7 +132,7 @@ func libClear(L *lua.LState) int {
 // id is the name of the hash map.
 func newCodeLibrary(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new Lua Library (hash map)
-	lualib, err := creator.NewHashMap(id)
+	lualib, err := creator.NewKeyValue(id)
 	if err != nil {
 		return nil, err
 	}
@@ -133,8 +146,9 @@ func newCodeLibrary(L *lua.LState, creator pinterface.ICreator, id string) (*lua
 // The hash map methods that are to be registered
 var libMethods = map[string]lua.LGFunction{
 	"__tostring": libToString,
-	"set":        libRegister,
-	"get":        libGetFunction,
+	"add":        libAdd,
+	"set":        libSet,
+	"get":        libGet,
 	"import":     libImport,
 	"clear":      libClear,
 }
