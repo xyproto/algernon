@@ -17,6 +17,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases
 - [ ] Add a lua function for removing all entries without a hit in the cache
 - [ ] Add a lua function for running a lua function periodically
 - [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
