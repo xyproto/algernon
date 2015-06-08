@@ -48,7 +48,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			L.Push(lua.LBool(false)) // Fail
 			return 1                 // number of results
 		}
-		defer client.Close()
+		// May cause a data race
+		//defer client.Close()
 		p := &luaPlugin{client}
 
 		// Retrieve the Lua code
@@ -130,7 +131,8 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			L.Push(lua.LString("")) // Fail
 			return 1                // number of results
 		}
-		defer client.Close()
+		// May cause a data race
+		//defer client.Close()
 
 		jsonargs, err := json.Marshal(args)
 		if err != nil {
