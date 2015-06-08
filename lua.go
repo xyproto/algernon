@@ -263,6 +263,12 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
 
+	// Plugins
+	exportPluginFunctions(L, nil)
+
+	// Cache
+	//exportCacheFunctions(L, cache)
+
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
 		// Close the Lua state

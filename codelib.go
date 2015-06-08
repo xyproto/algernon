@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
@@ -39,7 +40,9 @@ func libRegister(L *lua.LState) int {
 	}
 	code := L.ToString(4)
 	if code == "" {
-		L.ArgError(4, "Lua code expected")
+		log.Warn("Empty Lua code given to codelib:set")
+		L.Push(lua.LBool(false))
+		return 1
 	}
 	// Return true if there were no problems
 	L.Push(lua.LBool(nil == lualib.Set(namespace, id, code)))

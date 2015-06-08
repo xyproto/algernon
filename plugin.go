@@ -8,6 +8,7 @@ import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -37,6 +38,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
+		path = filepath.Join(serverDir, path)
 
 		// Connect with the Plugin
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
@@ -96,6 +98,43 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		return 1                // number of results
 	}))
 
+	// Retrieve the code from the Lua.Code function of the plugin
+	L.SetGlobal("PluginCode", L.NewFunction(func(L *lua.LState) int {
+		path := L.ToString(1)
+		if runtime.GOOS == "windows" {
+			path = path + ".exe"
+		}
+		path = filepath.Join(serverDir, path)
+
+		// Connect with the Plugin
+		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
+		if err != nil {
+			if o != nil {
+				o.Err("[PluginCode] Could not run plugin!")
+				o.Err("Error: " + err.Error())
+			}
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
+		}
+		// May cause a data race
+		//defer client.Close()
+		p := &luaPlugin{client}
+
+		// Retrieve the Lua code
+		luacode, err := p.LuaCode(path)
+		if err != nil {
+			if o != nil {
+				o.Err("[PluginCode] Could not call the LuaCode function!")
+				o.Err("Error: " + err.Error())
+			}
+			L.Push(lua.LString("")) // Fail
+			return 1                // number of results
+		}
+
+		L.Push(lua.LString(luacode))
+		return 1 // number of results
+	}))
+
 	// Call a function exposed by a plugin (executable file)
 	// Returns either nil (fail) or a string (success)
 	L.SetGlobal("CallPlugin", L.NewFunction(func(L *lua.LState) int {
@@ -107,8 +146,13 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			return 1                // number of results
 		}
 
-		path := L.Get(1).String()
-		fn := L.Get(2).String()
+		path := L.ToString(1)
+		if runtime.GOOS == "windows" {
+			path = path + ".exe"
+		}
+		path = filepath.Join(serverDir, path)
+
+		fn := L.ToString(2)
 
 		var args []lua.LValue
 		if L.GetTop() > 2 {
