@@ -12,23 +12,22 @@ class Algernon < Formula
   def install
     ENV["GOPATH"] = buildpath
 
-    # Fetch Go dependencies
     system "go", "get", "-d"
-
-    # Build and install the executable
     system "go", "build", "-o", "algernon"
+
     bin.install "algernon"
   end
 
   test do
     begin
-      # Start serving HTTP on port 3000
+      tempdb = "/tmp/_brew_test.db"
+      cport = ":45678"
+
+      # Start the server in a detached process
       fork_pid = fork do
-        spawn("#{bin}/algernon", "--httponly", "--server", "--addr", ":45678",
-              "--boltdb", "/tmp/_brew_test.db", :out=>"/dev/null", :err=>"/dev/null")
+        `#{bin}/algernon --httponly --server --addr #{cport} --boltdb #{tempdb}`
       end
       child_pid = fork_pid + 1
-      # Detach the fork
       Process.detach fork_pid
 
       # Wait for the server to start serving
@@ -41,7 +40,7 @@ class Algernon < Formula
       algernon_pid = child_pid
 
       # Check that the server is responding correctly
-      output = `curl -sIm3 -o- http://localhost:45678`
+      output = `curl -sIm3 -o- http://localhost#{cport}`
       assert output.include?("Server: Algernon")
       assert_equal 0, $?.exitstatus
     ensure
@@ -49,7 +48,7 @@ class Algernon < Formula
       Process.kill("HUP", algernon_pid)
 
       # Remove temporary Bolt database
-      `rm -f /tmp/_brew_test.db`
+      `rm -f #{tempdb}`
     end
   end
 end
