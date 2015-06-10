@@ -15,7 +15,7 @@ const (
 	lLibraryClass = "CODELIB"
 )
 
-// Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
+// Get the first argument, "self", and cast it from userdata to a library (which is really a key/value).
 func checkLibrary(L *lua.LState) pinterface.IKeyValue {
 	ud := L.CheckUserData(1)
 	if hash, ok := ud.Value.(pinterface.IKeyValue); ok {
@@ -26,7 +26,7 @@ func checkLibrary(L *lua.LState) pinterface.IKeyValue {
 }
 
 // Given a namespace, register Lua code.
-// Takes two strings, returns a true if it is successful.
+// Takes two strings, returns true if successful.
 func libAdd(L *lua.LState) int {
 	lualib := checkLibrary(L) // arg 1
 	namespace := L.ToString(2)
@@ -51,7 +51,7 @@ func libAdd(L *lua.LState) int {
 }
 
 // Given a namespace, register Lua code as the only code.
-// Takes two strings, returns a true if it is successful.
+// Takes two strings, returns true if successful.
 func libSet(L *lua.LState) int {
 	lualib := checkLibrary(L) // arg 1
 	namespace := L.ToString(2)
