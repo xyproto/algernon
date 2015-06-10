@@ -24,6 +24,11 @@ func (j *JSONDB) Add(data string) error {
 	return nil
 }
 
+func (j *JSONDB) GetAll() (data, error) {
+	println("TO IMPLEMENT: GET ALL FROM", j.filename)
+	return "", nil
+}
+
 func newJSONDB(filename string, schema *lua.LTable) (*JSONDB, error) {
 	if err := touch(filename); err != nil {
 		return nil, err
@@ -53,6 +58,19 @@ func jsondbAdd(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Given a JSONDB, return the JSON document.
+// May return an empty string.
+func jsondbGetAll(L *lua.LState) int {
+	jsondb := checkJSONDB(L) // arg 1
+	data, err := jsondb.GetAll()
+	retval := ""
+	if err == nil { // ok
+		retval = data
+	}
+	L.Push(lua.LString(retval))
+	return 1 // number of results
+}
+
 // String representation
 func jsondbToString(L *lua.LState) int {
 	L.Push(lua.LString("JSON DB"))
@@ -78,6 +96,7 @@ func constructJSONDB(L *lua.LState, filename string, schema *lua.LTable) (*lua.L
 var jsondbMethods = map[string]lua.LGFunction{
 	"__tostring": jsondbToString,
 	"add":        jsondbAdd,
+	"getall":     jsondbGetAll,
 }
 
 // Make functions related to building a library of Lua code available
