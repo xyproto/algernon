@@ -34,6 +34,15 @@ func exists(path string) bool {
 	return err == nil
 }
 
+// Create an empty file if it doesn't exist
+func touch(filename string) error {
+	if !exists(filename) {
+		_, err := os.Create(filename)
+		return err
+	}
+	return nil
+}
+
 // Translate a given URL path to a probable full filename
 func url2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
