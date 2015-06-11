@@ -2,9 +2,12 @@
 
 Priority
 --------
-- [/] Homebrew package for OS X
-- [ ] Make a sample for loading plugins and use them without reloading plugins.
+- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run".
+- [/] Homebrew package for OS X, https://github.com/Homebrew/homebrew/pull/40415
 - [ ] Dockerfile
+- [ ] File upload
+- [ ] Be able to provide all the functionality that go-json-rest can provide, possibly by wrapping it.
+      https://github.com/ant0ine/go-json-rest
 - [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
 - [ ] Make an application (and way) to upload .alg applications and host them.
 - [ ] Make it easy to host Algernon applications for other people
@@ -13,7 +16,7 @@ Priority
 
 Go / go vet / go lint
 ---------------------
-- [ ] Two identical lines in a row that is the same assignment should be an error
+- [ ] Two identical lines in a row that is the same assignment should result in an error
 
 Various
 -------
@@ -178,6 +181,7 @@ Various
 Maybe
 -----
 
+- [ ] Support for plugins written in BF
 - [ ] A flag to store the Bolt database inside the given zip file?
 - [ ] Keep all configuration settings in Redis. Use an external package for handling configuration.
 - [ ] Add a flag for acting like a static file server, over HTTP, without using Redis. Perhaps --static.
