@@ -8,12 +8,12 @@ import (
 )
 
 func TestID(t *testing.T) {
-	cache := newFileCache(1)
+	cache := newFileCache(1, false)
 	_ = cache.normalize("test.filename")
 }
 
 func TestHas(t *testing.T) {
-	cache := newFileCache(1)
+	cache := newFileCache(1, false)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	readmeID := cache.normalize("README.md")
 	has := cache.hasFile(readmeID)
@@ -23,7 +23,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	cache := newFileCache(100000)
+	cache := newFileCache(100000, true)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -39,7 +39,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	cache := newFileCache(100000)
+	cache := newFileCache(100000, true)
 	readmeData, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -82,7 +82,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestOverflow(t *testing.T) {
-	cache := newFileCache(100000)
+	cache := newFileCache(100000, false)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -108,7 +108,7 @@ func differs(a, b []byte) bool {
 }
 
 func TestRemovalAddition(t *testing.T) {
-	cache := newFileCache(8)
+	cache := newFileCache(8, false)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	adata := []byte{1, 1, 1, 1}
 	bdata := []byte{2, 2, 2, 2}
@@ -162,7 +162,7 @@ func TestRemovalAddition(t *testing.T) {
 
 func TestRandomStoreGet(t *testing.T) {
 	const cacheSize = 5
-	cache := newFileCache(5)
+	cache := newFileCache(5, false)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	filenames := []string{"a", "b", "c"}
 	datasets := [][]byte{[]byte{0, 1, 2}, []byte{3, 4, 5, 6}, []byte{7}}
