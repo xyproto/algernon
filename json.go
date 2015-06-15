@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 
+	"github.com/bitly/go-simplejson"
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
+	"io/ioutil"
 )
 
 // For dealing with JSON documents and strings
@@ -16,7 +18,8 @@ const (
 
 type JSONDB struct {
 	filename string
-	schema   *lua.LTable
+	js       *simplejson.Json
+	//schema   *lua.LTable
 }
 
 func (j *JSONDB) Add(data string) error {
@@ -24,16 +27,24 @@ func (j *JSONDB) Add(data string) error {
 	return nil
 }
 
-func (j *JSONDB) GetAll() (data, error) {
+func (j *JSONDB) GetAll() (string, error) {
 	println("TO IMPLEMENT: GET ALL FROM", j.filename)
 	return "", nil
 }
 
-func newJSONDB(filename string, schema *lua.LTable) (*JSONDB, error) {
+func NewJSONDB(filename string, schema *lua.LTable) (*JSONDB, error) {
 	if err := touch(filename); err != nil {
 		return nil, err
 	}
-	return &JSONDB{filename, schema}, nil
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	js, err := simplejson.NewJson(data)
+	if err != nil {
+		return nil, err
+	}
+	return &JSONDB{filename, js}, nil
 }
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
@@ -81,7 +92,7 @@ func jsondbToString(L *lua.LState) int {
 // id is the name of the hash map.
 func constructJSONDB(L *lua.LState, filename string, schema *lua.LTable) (*lua.LUserData, error) {
 	// Create a new JSONDB
-	jsondb, err := newJSONDB(filename, schema)
+	jsondb, err := NewJSONDB(filename, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -111,10 +122,9 @@ func exportJSONDB(L *lua.LState) {
 	L.SetGlobal("JSONDB", L.NewFunction(func(L *lua.LState) int {
 		// Get the filename and schema
 		filename := L.ToString(1)
-		schema := L.ToTable(2)
 
 		// Construct a new JSONDB
-		userdata, err := constructJSONDB(L, filename, schema)
+		userdata, err := constructJSONDB(L, filename)
 		if err != nil {
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))
@@ -131,12 +141,12 @@ func exportJSONDB(L *lua.LState) {
 
 func exportJSONFunctions(L *lua.LState) {
 
-	// Convert a table to JSON
-	L.SetGlobal("JSON", L.NewFunction(func(L *lua.LState) int {
+	// Lua function for converting a table to JSON (string or int)
+	toJSON := L.NewFunction(func(L *lua.LState) int {
 		table := L.ToTable(1)
 		mapinterface, multiple := table2map(table)
 		if multiple {
-			log.Warn("JSON: Ignoring table values with different types")
+			log.Warn("ToJSON: Ignoring table values with different types")
 		}
 		b, err := json.Marshal(mapinterface)
 		if err != nil {
@@ -145,6 +155,12 @@ func exportJSONFunctions(L *lua.LState) {
 		}
 		L.Push(lua.LString(string(b)))
 		return 1 // number of results
-	}))
+	})
+
+	// Convert a table to JSON
+	L.SetGlobal("ToJSON", toJSON)
+
+	// Only for backward compatibility
+	L.SetGlobal("JSON", toJSON)
 
 }

@@ -253,7 +253,7 @@ Lua functions for formatted output
 * `aprint(...)` output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
 * `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 * `jprint(...)` output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
-* `JSON(table)` return a JSON string, given a Lua table with ints or strings.
+* `ToJSON(table)` return a JSON string, given a Lua table with ints or strings.
 
 
 Lua functions for plugins

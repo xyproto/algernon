@@ -138,7 +138,7 @@ ServerInfo() -> string
 // Return the version string for the server
 version() -> string
 // Convert a table to JSON
-JSON(table) -> string
+ToJSON(table) -> string
 // Tries to extract and print the contents of a Lua value
 pprint(value)
 // Sleep the given number of seconds (can be a float)

@@ -5,4 +5,4 @@ content("application/json; charset=utf-8")
 data = {greeting="Hello", location="there"}
 
 -- Output the JSON document
-print(JSON(data))
+print(ToJSON(data))
