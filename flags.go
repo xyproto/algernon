@@ -77,8 +77,9 @@ var (
 	showVersion bool
 
 	// Caching
-	cacheSize uint64
-	cacheMode cacheModeSetting
+	cacheSize       uint64
+	cacheMode       cacheModeSetting
+	cacheCompressed bool
 )
 
 func usage() {
@@ -92,7 +93,7 @@ Syntax:
   algernon [flags] [file or directory to serve]
 
 Available flags:
-  --help                       This help
+  -h, --help                       This help
   -v, --version                Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
@@ -125,7 +126,7 @@ Available flags:
   --conf=FILENAME              Lua script with additional configuration.
   --log=FILENAME               Log to a file instead of to the console.
   --internal=FILENAME          Internal log file (verbose when HTTP/2 is enabled)
-  -h, --httponly               Serve plain HTTP
+  --http, --httponly           Serve plain HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --maria=DSN                  Use the given MariaDB or MySQL host
   --mariadb=NAME               Use the given MariaDB or MySQL database
@@ -151,7 +152,7 @@ func handleFlags(serverTempDir string) string {
 		cacheModeString string
 	)
 
-	// The usage function that provides more help
+	// The usage function that provides more help (for --help or -h)
 	flag.Usage = usage
 
 	// The default for running the redis server on Windows is to listen
@@ -201,7 +202,7 @@ func handleFlags(serverTempDir string) string {
 	flag.Uint64Var(&cacheSize, "cachesize", defaultCacheSize, "Cache size, in bytes")
 
 	// The short versions of some flags
-	flag.BoolVar(&serveJustHTTPShort, "h", false, "Serve plain old HTTP")
+	flag.BoolVar(&serveJustHTTPShort, "http", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
 	flag.BoolVar(&serverModeShort, "s", false, "Server mode (disable interactive mode)")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")

@@ -16,6 +16,7 @@ type fileID string
 
 const emptyFileID = fileID("")
 
+// FileCache manages a set of bytes as a cache
 type FileCache struct {
 	size              uint64            // Total size of the cache
 	blob              []byte            // The cache storage
@@ -24,23 +25,31 @@ type FileCache struct {
 	offset            uint64            // The current position in the cache storage (end of data)
 	rw                *sync.RWMutex     // Used for avoiding data races and other issues
 	cacheWarningGiven bool              // Used to only warn once if the cache is full
+	compressed        bool
 }
 
 var (
-	ErrTooLarge        = errors.New("File is larger than the cache, not storing")
-	ErrRemoval         = errors.New("Can't remove a file ID that does not exist")
-	ErrNoData          = errors.New("No data")
-	ErrAlreadyStored   = errors.New("That file ID is already stored")
+	// ErrRemoval is used if a filename that does not exist is attempted to be removed
+	ErrRemoval = errors.New("Can't remove a file ID that does not exist")
+
+	// ErrNoData is used if no data is attempted to be stored in the cache
+	ErrNoData = errors.New("No data")
+
+	// ErrAlreadyStores is used if a given filename has already been stored in the cache
+	ErrAlreadyStored = errors.New("That file ID is already stored")
+
+	// ErrLargerThanCache is used if the given data is larger than the total cache size
 	ErrLargerThanCache = errors.New("Data is larger than the the total cache size")
 )
 
-func newFileCache(cacheSize uint64) *FileCache {
+func newFileCache(cacheSize uint64, compressed bool) *FileCache {
 	var cache FileCache
 	cache.size = cacheSize
 	cache.blob = make([]byte, cacheSize) // The cache storage
 	cache.index = make(map[fileID]uint64)
 	cache.hits = make(map[fileID]uint64)
 	cache.rw = &sync.RWMutex{}
+	cache.compressed = compressed
 	return &cache
 }
 
@@ -373,7 +382,7 @@ func (cache *FileCache) clear() {
 	cache.rw.Lock()
 	defer cache.rw.Unlock()
 
-	cache = newFileCache(cache.size)
+	cache = newFileCache(cache.size, cache.compressed)
 
 	// Allow one warning if the cache should fill up
 	cache.cacheWarningGiven = false

@@ -32,7 +32,7 @@ func (j *JSONDB) GetAll() (string, error) {
 	return "", nil
 }
 
-func NewJSONDB(filename string, schema *lua.LTable) (*JSONDB, error) {
+func NewJSONDB(filename string) (*JSONDB, error) {
 	if err := touch(filename); err != nil {
 		return nil, err
 	}
@@ -90,9 +90,9 @@ func jsondbToString(L *lua.LState) int {
 
 // Create a new code library.
 // id is the name of the hash map.
-func constructJSONDB(L *lua.LState, filename string, schema *lua.LTable) (*lua.LUserData, error) {
+func constructJSONDB(L *lua.LState, filename string) (*lua.LUserData, error) {
 	// Create a new JSONDB
-	jsondb, err := NewJSONDB(filename, schema)
+	jsondb, err := NewJSONDB(filename)
 	if err != nil {
 		return nil, err
 	}
