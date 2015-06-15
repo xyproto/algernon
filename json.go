@@ -3,10 +3,9 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/bitly/go-simplejson"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/lookup"
 	"github.com/yuin/gopher-lua"
-	"io/ioutil"
 )
 
 // For dealing with JSON documents and strings
@@ -16,41 +15,10 @@ const (
 	lJSONDBClass = "JSONDB"
 )
 
-type JSONDB struct {
-	filename string
-	js       *simplejson.Json
-	//schema   *lua.LTable
-}
-
-func (j *JSONDB) Add(data string) error {
-	println("TO IMPLEMENT: ADD", data, "TO", j.filename)
-	return nil
-}
-
-func (j *JSONDB) GetAll() (string, error) {
-	println("TO IMPLEMENT: GET ALL FROM", j.filename)
-	return "", nil
-}
-
-func NewJSONDB(filename string) (*JSONDB, error) {
-	if err := touch(filename); err != nil {
-		return nil, err
-	}
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	js, err := simplejson.NewJson(data)
-	if err != nil {
-		return nil, err
-	}
-	return &JSONDB{filename, js}, nil
-}
-
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
-func checkJSONDB(L *lua.LState) *JSONDB {
+func checkJSONDB(L *lua.LState) *lookup.JSONFile {
 	ud := L.CheckUserData(1)
-	if jsondb, ok := ud.Value.(*JSONDB); ok {
+	if jsondb, ok := ud.Value.(*lookup.JSONFile); ok {
 		return jsondb
 	}
 	L.ArgError(1, "JSON DB expected")
@@ -60,20 +28,27 @@ func checkJSONDB(L *lua.LState) *JSONDB {
 // Given a JSONDB, store JSON to the document.
 // Takes one string, returns true if successful.
 func jsondbAdd(L *lua.LState) int {
-	jsondb := checkJSONDB(L) // arg 1
+	//jsondb := checkJSONDB(L) // arg 1
+	_ = checkJSONDB(L) // arg 1
 	jsondata := L.ToString(2)
 	if jsondata == "" {
 		L.ArgError(2, "JSON data expected")
 	}
-	L.Push(lua.LBool(jsondb.Add(jsondata) == nil))
+	//L.Push(lua.LBool(jsondb.Add(jsondata) == nil))
+	L.Push(lua.LBool(true))
 	return 1 // number of results
 }
 
 // Given a JSONDB, return the JSON document.
 // May return an empty string.
 func jsondbGetAll(L *lua.LState) int {
-	jsondb := checkJSONDB(L) // arg 1
-	data, err := jsondb.GetAll()
+	//jsondb := checkJSONDB(L) // arg 1
+	_ = checkJSONDB(L) // arg 1
+
+	//data, err := jsondb.GetAll()
+	data := ""
+	var err error = nil
+
 	retval := ""
 	if err == nil { // ok
 		retval = data
@@ -92,7 +67,7 @@ func jsondbToString(L *lua.LState) int {
 // id is the name of the hash map.
 func constructJSONDB(L *lua.LState, filename string) (*lua.LUserData, error) {
 	// Create a new JSONDB
-	jsondb, err := NewJSONDB(filename)
+	jsondb, err := lookup.NewJSONFile(filename)
 	if err != nil {
 		return nil, err
 	}
