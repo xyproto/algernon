@@ -10,13 +10,13 @@ content("application/javascript")
 setheader("Cache-Control", "no-cache")
 
 -- Use a JSON file for the comments
-comments = JSONDB("comments.json", {{"author", "text"}})
+comments = JFile("comments.json")
 
 -- Handle requests
 if method() == "POST" then
-  -- Open the file, read the contents, add the data, write the contents, close the file
-  comments:add(comments:toJSON(formdata()))
+  -- Add the form data table to the root node of the JSON document
+  comments:add("x", ToJSON(formdata()))
 else
-  -- Open the file, read the contents, close the file, output the contents
-  print(comments:getall())
+  -- Return the contents of the JSON file
+  print(comments:string())
 end
