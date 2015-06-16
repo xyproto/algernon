@@ -3,7 +3,7 @@ content("application/javascript")
 setheader("Cache-Control", "no-cache")
 
 -- Use a JSON file for the comments
-comments = JFile("comments.json")
+comments = JFile(scriptdir("comments.json"))
 
 -- Handle requests
 if method() == "POST" then

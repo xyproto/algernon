@@ -35,6 +35,7 @@ http2.log
 .DS_Store
 dump.rdb
 bolt.db
+comments.json
 
 # Plugin executables
 plugins/go/go
@@ -42,3 +43,4 @@ plugins/cpp/main
 
 # Extracted zip files
 apps/first
+apps/withplugins
