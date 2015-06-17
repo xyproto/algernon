@@ -147,19 +147,19 @@ Screenshots
 *JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
 
 
-Installation instructions
--------------------------
+Quick Installation
+------------------
 
-##### OS X, latest release, built from source:
-  * Install [Homebrew](https://brew.sh):
+##### OS X, latest release:
+  * Install [Homebrew](https://brew.sh), if needed:
     `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
   * Install the latest version of Algernon:
-  `brew install https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb`
+    `brew install algernon`
 
-##### Arch Linux, latest release, built from source:
-  * Install `algernon` from AUR, using your favorite AUR helper
+##### Arch Linux, latest release:
+  * Install `algernon` from AUR, using your favorite AUR helper.
 
-##### Any system where go has been installed (and $GOPATH has been set), from source (master branch)
+##### Any system where go has been installed (and $GOPATH has been set), master branch:
   * `go get github.com/xyproto/algernon`
   * Optionally, add `$GOPATH/bin` to the PATH
 
@@ -222,46 +222,122 @@ Getting started
 Basic Lua functions
 -------------------
 
-* `version()` return the version string for the server.
-* `sleep(number)` sleep the given number of seconds (can be a float).
-* `log(...)` log the given strings as information. Takes a variable number of strings.
-* `warn(...)` log the given strings as a warning. Takes a variable number of strings.
-* `error(...)` log the given strings as an error. Takes a variable number of strings.
+~~~c
+return the version string for the server.
+version()
+sleep the given number of seconds (can be a float).
+sleep(number)
+log the given strings as information. Takes a variable number of strings.
+log(...)
+log the given strings as a warning. Takes a variable number of strings.
+warn(...)
+log the given strings as an error. Takes a variable number of strings.
+error(...)
+~~~
 
 
 Lua functions for handling requests
 -----------------------------------
 
-* `content(string)` set the Content-Type for a page.
-* `method()` return the requested HTTP method (GET, POST etc).
-* `print(...)` output text to the browser/client. Takes a variable number of strings.
-* `urlpath()` return the requested URL path.
-* `header(string)` return the HTTP header in the request, for a given key, or an empty string.
-* `setheader(string, string)` set an HTTP header given a key and a value.
-* `body()` return the HTTP body in the request (will only read the body once, since it's streamed).
-* `status(number)` set a HTTP status code (like 200 or 404). Must come before other output.
-* `error(string, number)` output a message and set a HTTP status code.
-* `scriptdir(...)` return the directory where the script is running. If a filename is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
-* `serverdir(...)` return the directory where the server is running. If a filename is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
-* `serve(string)` serve a file that exists in the same directory as the script.
-* `formdata()` return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
+~~~c
+// Set the Content-Type for a page.
+content(string)
+
+// Return the requested HTTP method (GET, POST etc).
+method() -> string
+
+// Output text to the browser/client. Takes a variable number of strings.
+print(...)
+
+// Return the requested URL path.
+urlpath() -> string
+
+// Return the HTTP header in the request, for a given key, or an empty string.
+header(string) -> string
+
+// Set an HTTP header given a key and a value.
+setheader(string, string)
+
+// Return the HTTP body in the request (will only read the body once, since it's streamed).
+body() -> string
+
+// Set a HTTP status code (like 200 or 404). Must come before other output.
+status(number)
+
+// Output a message and set a HTTP status code.
+error(string, number)
+
+// Return the directory where the script is running. If a filename is given (optional), then the path to where the script is running, joined with a path separator and the given filename, is returned.
+scriptdir([string]) -> string
+
+// Return the directory where the server is running. If a filename is given (optional), then the path to where the server is running, joined with a path separator and the given filename, is returned.
+serverdir([string]) -> string
+
+// Serve a file that exists in the same directory as the script.
+serve(string)
+
+// Return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
+formdata() -> table
+~~~
 
 Lua functions for formatted output
 ----------------------------------
 
-* `mprint(...)` output Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
-* `aprint(...)` output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
-* `gprint(...)` output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
-* `jprint(...)` output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
-* `ToJSON(table)` return a JSON string, given a Lua table with ints or strings.
+~~~c
+// Output Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
+mprint(...)
+
+// Output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
+aprint(...)
+
+// Output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
+gprint(...)
+
+// Output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
+jprint(...)
+~~~
+
+Lua functions related to JSON
+-----------------------------
+
+Tips:
+* Use `JFile(scriptdir(`*filename*`))` to use or store a JSON document in the same directory as the Lua script.
+* The default string value of a `JFile` object is the formatted JSON text.
+* A JSON path is on the form `x.mapkey.listname[2].mapkey`. `[`, `]` and `.` have special meaning. It's like a really lightweight version of XPath, but for JSON.
+
+~~~c
+// Use, or create, a JSON document/file.
+JFile(filename) -> userdata
+
+// Takes a JSON path. Returns a string value, or an empty string.
+jfile:get(string) -> string
+
+// Takes a JSON path (optional) and JSON data to be added to the list.
+// The JSON path must point to a list, if given, unless the JSON file is empty.
+// Returns true if successful.
+jfile:add([string, ]string) -> bool
+
+// Removes a key in a map. Takes a JSON path, returns true if successful.
+jfile:del(string) -> bool
+
+// Return a JSON string, given a Lua table with ints or strings.
+ToJSON(table) -> string
+~~~
 
 
 Lua functions for plugins
 -------------------------
 
-* `Plugin(string)` load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
-* `PluginCode(string) -> string` returns the Lua code as returned by the Lua.Code function in the plugin, given a plugin path. May return an empty string.
-* `CallPlugin(string, string, ...) -> string` takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+~~~c
+// Load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
+Plugin(string)
+
+// Returns the Lua code as returned by the Lua.Code function in the plugin, given a plugin path. May return an empty string.
+PluginCode(string) -> string
+
+// Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+CallPlugin(string, string, ...) -> string
+~~~
 
 
 Lua functions for code libraries
@@ -269,20 +345,37 @@ Lua functions for code libraries
 
 These functions can be used in combination with the plugin functions for storing Lua code returned by plugins when serverconf.lua is loaded, then retrieve the Lua code later, when handling requests.
 
-* `CodeLib() -> userdata` creates a code library object. Optionally takes a data structure name as the first parameter.
-* `codelib:add(string, string) -> bool` given a namespace and Lua code, add the given code to the namespace. Returns true if successful.
-* `codelib:set(string, string) -> bool` given a namespace and Lua code, set the given code as the only code in the namespace. Returns true if successful.
-* `codelib:get(string) -> string` given a namespace, return Lua code or an empty string.
-* `codelib:import(string) -> bool` import (eval) code from the given namespace into the current Lua state. Returns true on success.
-* `codelib:clear() -> bool` completely clear the code library. Returns true of successful.
+~~~c
+// Creates a code library object. Optionally takes a data structure name as the first parameter.
+CodeLib() -> userdata
+
+// Given a namespace and Lua code, add the given code to the namespace. Returns true if successful.
+codelib:add(string, string) -> bool
+
+// Given a namespace and Lua code, set the given code as the only code in the namespace. Returns true if successful.
+codelib:set(string, string) -> bool
+
+// Given a namespace, return Lua code or an empty string.
+codelib:get(string) -> string
+
+// Import (eval) code from the given namespace into the current Lua state. Returns true on success.
+codelib:import(string) -> bool
+
+// Completely clear the code library. Returns true if successful.
+codelib:clear() -> bool
+~~~
 
 
 Lua functions for the file cache
 --------------------------------
 
-* `CacheStats() -> string` return stats about the file cache.
-* `ClearCache()` clear the file cache.
+~~~c
+// Return stats about the file cache.
+CacheStats() -> string
 
+// Clear the file cache.
+ClearCache()
+~~~
 
 Lua functions for data structures
 ---------------------------------
@@ -568,23 +661,49 @@ GenerateUniqueConfirmationCode() -> string
 Lua functions for use when streaming
 ------------------------------------
 
-* `flush()` sends what has been outputted so far to the client.
+~~~c
+// Transmit what has been outputted so far to the client.
+flush()
+~~~
 
 
 Lua functions that are only available for the server configuration file
 -----------------------------------------------------------------------
 
-* `SetAddr(string)` set the default address for the server on the form [host][:port].
-* `ClearPermissions()` reset the URL prefixes and make everything *public*.
-* `AddAdminPrefix(string)` add an URL prefix that will have *admin* rights.
-* `AddUserPrefix(string)` add an URL prefix that will have *user* rights.
-* `DenyHandler(function)` provide a lua function that will be used as the permission denied handler.
-* `ServerInfo() -> string` return a string with various server information.
-* `LogTo(string) -> bool` log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
-* `version() -> string` returns the version string for the server.
-* `log(...)` logs the given strings as INFO. Takes a variable number of strings.
-* `warn(...)` logs the given strings as WARN. Takes a variable number of strings.
-* `OnReady(function)` provide a lua function that will be run once, when the server is ready to start serving.
+~~~c
+// Set the default address for the server on the form [host][:port].
+SetAddr(string)
+
+// Reset the URL prefixes and make everything *public*.
+ClearPermissions()
+
+// Add an URL prefix that will have *admin* rights.
+AddAdminPrefix(string)
+
+// Add an URL prefix that will have *user* rights.
+AddUserPrefix(string)
+
+// Provide a lua function that will be used as the permission denied handler.
+DenyHandler(function)
+
+// Return a string with various server information.
+ServerInfo() -> string
+
+// Log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
+LogTo(string) -> bool
+
+// Returns the version string for the server.
+version() -> string
+
+// Logs the given strings as INFO. Takes a variable number of strings.
+log(...)
+
+// Logs the given strings as WARN. Takes a variable number of strings.
+warn(...)
+
+// Provide a lua function that will be run once, when the server is ready to start serving.
+OnReady(function)
+~~~
 
 
 Releases

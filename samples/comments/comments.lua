@@ -8,8 +8,8 @@ comments = JFile(scriptdir("comments.json"))
 -- Handle requests
 if method() == "POST" then
   -- Add the form data table to the JSON document
-  comments:add("x", ToJSON(formdata()))
+  comments:add(ToJSON(formdata()))
 else
   -- Return the contents of the JSON file
-  print(comments:string())
+  print(tostring(comments))
 end

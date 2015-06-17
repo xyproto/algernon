@@ -8,6 +8,7 @@ import (
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 )
 
 // For dealing with JSON documents and strings
@@ -27,19 +28,30 @@ func checkJFile(L *lua.LState) *jman.JFile {
 	return nil
 }
 
-// Given a JFile, store JSON to the document.
-// Takes one string, returns true if successful.
+// Takes a JFile, a JSON path (optional) and JSON data.
+// Stores the JSON data. Returns true if successful.
 func jfileAdd(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
-	jsonpath := L.ToString(2)
-	if jsonpath == "" {
-		L.ArgError(2, "JSON path expected")
+	top := L.GetTop()
+	jsonpath := "x"
+	jsondata := ""
+	if top == 2 {
+		jsondata = L.ToString(2)
+		if jsondata == "" {
+			L.ArgError(2, "JSON data expected")
+		}
+	} else if top == 3 {
+		jsonpath = L.ToString(2)
+		// Check for { to help avoid allowing JSON data as a JSON path
+		if jsonpath == "" || strings.Contains(jsonpath, "{") {
+			L.ArgError(2, "JSON path expected")
+		}
+		jsondata = L.ToString(3)
+		if jsondata == "" {
+			L.ArgError(3, "JSON data expected")
+		}
 	}
-	jsondata := L.ToString(3)
-	if jsondata == "" {
-		L.ArgError(3, "JSON data expected")
-	}
-	err := jfile.AddJSON(jsonpath, []byte(jsondata), true)
+	err := jfile.AddJSON(jsonpath, []byte(jsondata))
 	if err != nil {
 		log.Error(err)
 	}
@@ -47,8 +59,8 @@ func jfileAdd(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// Given a JFile, store JSON to the document.
-// Takes one string, returns true if successful.
+// Takes a JFile and a JSON path.
+// Returns a value or an empty string.
 func jfileGet(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
 	jsonpath := L.ToString(2)
@@ -57,10 +69,25 @@ func jfileGet(L *lua.LState) int {
 	}
 	val, err := jfile.GetString(jsonpath)
 	if err != nil {
-		L.Push(lua.LString(err.Error()))
-		return 1 // number of results
+		log.Error(err)
 	}
 	L.Push(lua.LString(val))
+	return 1 // number of results
+}
+
+// Takes a JFile and a JSON path.
+// Removes a key from a map. Returns true if successful.
+func jfileDelKey(L *lua.LState) int {
+	jfile := checkJFile(L) // arg 1
+	jsonpath := L.ToString(2)
+	if jsonpath == "" {
+		L.ArgError(2, "JSON path expected")
+	}
+	err := jfile.DelKey(jsonpath)
+	if err != nil {
+		log.Error(err)
+	}
+	L.Push(lua.LBool(nil == err))
 	return 1 // number of results
 }
 
@@ -78,11 +105,11 @@ func jfileJSON(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// String representation
-func jfileToString(L *lua.LState) int {
-	L.Push(lua.LString("JSON file"))
-	return 1 // number of results
-}
+//// String representation
+//func jfileToString(L *lua.LState) int {
+//	L.Push(lua.LString("JSON file"))
+//	return 1 // number of results
+//}
 
 // Create a new JSON file
 func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
@@ -109,10 +136,11 @@ func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
 
 // The hash map methods that are to be registered
 var jfileMethods = map[string]lua.LGFunction{
-	"__tostring": jfileToString,
+	"__tostring": jfileJSON,
 	"add":        jfileAdd,
 	"get":        jfileGet,
-	"string":     jfileJSON,
+	"del":        jfileDelKey,
+	"string":     jfileJSON, // undocumented
 }
 
 // Make functions related to building a library of Lua code available
@@ -165,6 +193,6 @@ func exportJSONFunctions(L *lua.LState) {
 	L.SetGlobal("ToJSON", toJSON)
 
 	// Only for backward compatibility
-	L.SetGlobal("JSON", toJSON)
+	L.SetGlobal("JSON", toJSON) // undocumented
 
 }
