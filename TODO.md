@@ -21,6 +21,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Mention the `jman` package in the README.
 - [ ] Use a struct for the configuration variables.
 - [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases
