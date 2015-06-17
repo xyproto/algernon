@@ -1,0 +1,15 @@
+body
+  font-family: courier
+  margin: 5em
+  margin-left: 6em
+  background-color: #ccc
+
+h1
+  font-family: sans-serif
+  font-size: 3em
+  margin-bottom: 1em
+  color: steelblue
+
+div
+  margin-left: 1em
+  color: #333
