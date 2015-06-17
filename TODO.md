@@ -2,24 +2,26 @@
 
 Priority
 --------
-- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run".
-- [/] Homebrew package for OS X, https://github.com/Homebrew/homebrew/pull/40415
-- [ ] Dockerfile
-- [ ] File upload
-- [ ] Be able to provide all the functionality that go-json-rest can provide, possibly by wrapping it.
-      https://github.com/ant0ine/go-json-rest
+- [ ] Add the JSON Set function.
+- [ ] Add a "quiet" flag.
+- [ ] Dockerfile.
+- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
+- [ ] File upload.
 - [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
+- [ ] Add a function for loading all plugins in a "plugins" directory.
 - [ ] Make an application (and way) to upload .alg applications and host them.
-- [ ] Make it easy to host Algernon applications for other people
-- [ ] User management interface
-- [ ] Use a struct for the configuration variables
+- [ ] Make it easy to host Algernon applications for other people.
+- [ ] User management interface.
 
 Go / go vet / go lint
 ---------------------
-- [ ] Two identical lines in a row that is the same assignment should result in an error
+- [ ] Two identical lines in a row that is the same assignment should result in an error.
+- [ ] Constant byte slices should be allowed.
 
 Various
 -------
+- [ ] Use a struct for the configuration variables.
+- [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases
 - [ ] Add a lua function for removing all entries without a hit in the cache
 - [ ] Add a lua function for running a lua function periodically
@@ -34,8 +36,6 @@ Various
 - [ ] Downloading and uploading files
 - [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
 - [ ] Use https://github.com/sbinet/igo instead of readline.
-- [ ] Use the JSON code from https://github.com/layeh/gopher-json
-- [ ] Consider using MegaJSON
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
 - [ ] MSI installer
@@ -58,7 +58,6 @@ Events
 Server configuration
 --------------------
 
-- [ ] Add a "quiet" flag.
 - [ ] Prefer environment variables and flags over lua server configuration.
 - [ ] Server setting for making pages reload automatically whenever a source file changes.
 - [ ] Server setting for enable the compilation of templates.

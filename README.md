@@ -67,6 +67,7 @@ Features and limitations
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
 * Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
+* Can read from and save to JSON documents. Supports simple JSON path expressions (like a very simple version of XPath, but for JSON).
 
 
 Overview
