@@ -39,7 +39,7 @@ func jfileAdd(L *lua.LState) int {
 	if jsondata == "" {
 		L.ArgError(3, "JSON data expected")
 	}
-	err := jfile.AddJSON(jsonpath, jsondata)
+	err := jfile.AddJSON(jsonpath, []byte(jsondata), true)
 	if err != nil {
 		log.Error(err)
 	}
@@ -66,10 +66,10 @@ func jfileGet(L *lua.LState) int {
 
 // Given a JFile, return the JSON document.
 // May return an empty string.
-func jfileGetAll(L *lua.LState) int {
+func jfileJSON(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
 
-	data, err := jfile.GetAll()
+	data, err := jfile.JSON()
 	retval := ""
 	if err == nil { // ok
 		retval = string(data)
@@ -112,7 +112,7 @@ var jfileMethods = map[string]lua.LGFunction{
 	"__tostring": jfileToString,
 	"add":        jfileAdd,
 	"get":        jfileGet,
-	"string":     jfileGetAll,
+	"string":     jfileJSON,
 }
 
 // Make functions related to building a library of Lua code available
