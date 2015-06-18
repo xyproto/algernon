@@ -7,6 +7,7 @@ import (
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -145,6 +146,7 @@ pprint(value)
 // Sleep the given number of seconds (can be a float)
 sleep(number)
 `
+	exitMessage = "bye!"
 )
 
 // Attempt to output a more informative text than the memory location
@@ -236,6 +238,15 @@ func highlight(o *term.TextOutput, line string) string {
 	return module + function + unprocessed + typed + comment
 }
 
+func mustSaveHistory(o *term.TextOutput, historyFilename string) {
+	fmt.Printf(o.LightBlue("Saving history to %s... "), historyFilename)
+	if err := saveHistory(historyFilename); err != nil {
+		fmt.Println(o.DarkRed("failed: " + err.Error()))
+	} else {
+		fmt.Println(o.LightGreen("ok"))
+	}
+}
+
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
 // A variatey of functions are exposed to the Lua state.
 func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
@@ -301,7 +312,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 	// Add a newline after the prompt to prepare for logging, if in verbose mode
 	go func() {
 		if verboseMode {
-			// TODO Consider using a channel instead of sleep for outputting the newline...
+			// TODO Consider using a channel instead of sleep for outputting the cosmetic newline...
 			time.Sleep(200 * time.Millisecond)
 			fmt.Println()
 		}
@@ -334,18 +345,17 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 			addHistory(line)
 		}
 
-		if EOF && EOFcount == 0 {
-			o.Err("Press Ctrl-D again to quit.")
-			EOFcount++
-			continue
-		} else if EOF && EOFcount > 0 {
-			fmt.Printf("Saving history to %s...", historyFilename)
-			if err := saveHistory(historyFilename); err != nil {
-				fmt.Println("failed:", err)
-			} else {
-				fmt.Println("ok")
+		if EOF {
+			switch EOFcount {
+			case 0:
+				o.Err("Press Ctrl-d again to quit.")
+				EOFcount++
+				continue
+			default:
+				mustSaveHistory(o, historyFilename)
+				o.Println(o.LightGreen(exitMessage))
+				os.Exit(0)
 			}
-			o.ErrExit("QUIT")
 		}
 
 		line = strings.TrimSpace(line)
@@ -357,13 +367,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 			}
 			continue
 		case "quit", "exit", "shutdown":
-			fmt.Printf("Saving history to %s...", historyFilename)
-			if err := saveHistory(historyFilename); err != nil {
-				fmt.Println("failed:", err)
-			} else {
-				fmt.Println("ok")
-			}
-			o.ErrExit(line)
+			mustSaveHistory(o, historyFilename)
+			o.Println(o.LightGreen(exitMessage))
+			os.Exit(0)
 		case "zalgo":
 			// Easter egg
 			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑̈ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
