@@ -2,6 +2,8 @@
 
 Priority
 --------
+- [ ] Add Lua functions for serving files and directories for given routes. Lookup routes in the handler function.
+      Must also be available from the application configuration file.
 - [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
       This allows gzipped data to be sent directly from the cache.
 - [ ] Dockerfile.
