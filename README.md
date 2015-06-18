@@ -104,15 +104,15 @@ ASCII diagram:
 |                                  |                                   |
 |   Markdown                       |   Database backends               |
 |                                  |                                   |
-|   For static pages:              |   Redis or Bolt for the backend:  |
-|   * Easy content creation.       |   * Both are fast.                |
-|   * Easy to style with GCSS.     |   * Bolt is included.             |
-|   * Can refresh when saving.     |   * Redis scales easily.          |
+|   For static pages:              |   Supported:                      |
+|   * Easy content creation.       |   * Redis (the prefered choice)   |
+|   * Easy to style with GCSS.     |   * Bolt (included)               |
+|   * Can refresh when saving.     |   * MySQL                         |
 |                                  |                                   |
 +----------------------------------+-----------------------------------+
 ```
 
-* Redis offers good [data persistence](http://redis.io/topics/persistence).
+* Redis is fast and offers good [data persistence](http://redis.io/topics/persistence).
 * Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go.
 
 Screenshots
@@ -199,7 +199,7 @@ Getting started
 * `cd mypage`
 * Create a file named `index.lua`, with the following contents:
   `print("Hello, Algernon")`
-* Start `algernon -httponly -autorefresh`.
+* Start `algernon --httponly --autorefresh`.
 * Visit `http://localhost:3000/`.
 * Edit `index.lua` and refresh the browser to see the new result.
 * If there were errors, the page will automatically refresh when `index.lua` is changed.
@@ -318,8 +318,11 @@ jfile:get(string) -> string
 // Returns true if successful.
 jfile:add([string, ]string) -> bool
 
+// Takes a JSON path and a string value. Changes the entry. Returns true if successful.
+jfile:set(string, string) -> bool
+
 // Removes a key in a map. Takes a JSON path, returns true if successful.
-jfile:del(string) -> bool
+jfile:delkey(string) -> bool
 
 // Return a JSON string, given a Lua table with ints or strings.
 ToJSON(table) -> string

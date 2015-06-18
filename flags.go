@@ -3,10 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 )
+
+// TODO: Find a good external package for handling configuration and
+//       another one for handling long and short flags.
 
 const (
 	defaultWebColonPort   = ":3000"
@@ -80,6 +84,9 @@ var (
 	cacheSize       uint64
 	cacheMode       cacheModeSetting
 	cacheCompressed bool
+
+	// Output
+	quietMode bool
 )
 
 func usage() {
@@ -93,7 +100,7 @@ Syntax:
   algernon [flags] [file or directory to serve]
 
 Available flags:
-  -h, --help                       This help
+  -h, --help                   This help text
   -v, --version                Application name and version
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
@@ -126,7 +133,7 @@ Available flags:
   --conf=FILENAME              Lua script with additional configuration.
   --log=FILENAME               Log to a file instead of to the console.
   --internal=FILENAME          Internal log file (verbose when HTTP/2 is enabled)
-  --http, --httponly           Serve plain HTTP
+  -t, --httponly               Serve regular HTTP
   --http2only                  Serve HTTP/2, without HTTPS (not recommended)
   --maria=DSN                  Use the given MariaDB or MySQL host
   --mariadb=NAME               Use the given MariaDB or MySQL database
@@ -138,6 +145,7 @@ Available flags:
                                (the default is ` + defaultLimitString + `).
   --nolimit                    Disable rate limiting.
   -s, --server                 Server mode (disable interactive mode).
+  -q, --quiet                  Don't output anything to stdout or stderr.
 `)
 }
 
@@ -147,7 +155,7 @@ func handleFlags(serverTempDir string) string {
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
-		showVersionShort bool
+		showVersionShort, quietModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 	)
@@ -160,9 +168,6 @@ func handleFlags(serverTempDir string) string {
 	host := ""
 	if runtime.GOOS == "windows" {
 		host = "localhost"
-		// Disable colors when logging, for some systems
-		//log.SetFormatter(&log.TextFormatter{DisableColors: true})
-
 		// Default Bolt database file
 		defaultBoltFilename = filepath.Join(serverTempDir, "algernon.db")
 		// Default log file
@@ -179,7 +184,7 @@ func handleFlags(serverTempDir string) string {
 	flag.IntVar(&redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&serverConfScript, "conf", "serverconf.lua", "Server configuration")
 	flag.StringVar(&serverLogFile, "log", "", "Server log file")
-	flag.StringVar(&internalLogFilename, "internal", "/dev/null", "Internal log file")
+	flag.StringVar(&internalLogFilename, "internal", os.DevNull, "Internal log file")
 	flag.BoolVar(&serveJustHTTP2, "http2only", false, "Serve HTTP/2, not HTTPS + HTTP/2")
 	flag.BoolVar(&serveJustHTTP, "httponly", false, "Serve plain old HTTP")
 	flag.BoolVar(&productionMode, "prod", false, "Production mode")
@@ -200,9 +205,10 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&showVersion, "version", false, "Version")
 	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
 	flag.Uint64Var(&cacheSize, "cachesize", defaultCacheSize, "Cache size, in bytes")
+	flag.BoolVar(&quietMode, "quiet", false, "Quiet")
 
 	// The short versions of some flags
-	flag.BoolVar(&serveJustHTTPShort, "http", false, "Serve plain old HTTP")
+	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
 	flag.BoolVar(&serverModeShort, "s", false, "Server mode (disable interactive mode)")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
@@ -210,6 +216,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
 	flag.BoolVar(&devModeShort, "e", false, "Development mode")
 	flag.BoolVar(&showVersionShort, "v", false, "Version")
+	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
 
 	flag.Parse()
 
@@ -222,6 +229,11 @@ func handleFlags(serverTempDir string) string {
 	productionMode = productionMode || productionModeShort
 	devMode = devMode || devModeShort
 	showVersion = showVersion || showVersionShort
+	quietMode = quietMode || quietModeShort
+
+	if quietMode {
+		verboseMode = false
+	}
 
 	redisAddrSpecified = redisAddr != ""
 	if redisAddr == "" {

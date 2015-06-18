@@ -9,7 +9,7 @@ const (
 	cacheModeDevelopment        // cache everything, except Amber, Lua, GCSS and Markdown
 	cacheModeProduction         // cache everything, except Amber and Lua
 	cacheModeImages             // cache images (png, jpg, gif, svg)
-	cacheModeBinary             // cache all binary files (zip, png etc. but not svg)
+	cacheModeSmall              // only cache small files (<=64KB) // 64 * 1024
 	cacheModeOff                // cache nothing
 )
 
@@ -23,25 +23,25 @@ var (
 		cacheModeDevelopment: "Development",
 		cacheModeProduction:  "Production",
 		cacheModeImages:      "Images",
-		cacheModeBinary:      "Binary",
+		cacheModeSmall:       "Small",
 		cacheModeOff:         "Off",
 	}
 )
 
-// Create a new cache mode setting
+// NewCacheModeSetting creates a cacheModeSetting based on a variety of string options, like "on" and "off".
 func NewCacheModeSetting(cacheModeString string) cacheModeSetting {
 	switch cacheModeString {
-	case "everything", "all", "on", "1", "enabled", "yes", "enable": //- Cache everything.
+	case "everything", "all", "on", "1", "enabled", "yes", "enable": // Cache everything.
 		return cacheModeOn
-	case "production", "prod": // - Cache everything, except: Amber and Lua.
+	case "production", "prod": // Cache everything, except: Amber and Lua.
 		return cacheModeProduction
-	case "images", "image": // - Cache images (png, jpg, gif, svg).
+	case "images", "image": // Cache images (png, jpg, gif, svg).
 		return cacheModeImages
-	case "binary", "bin": // - Cache all binary files.
-		return cacheModeBinary
-	case "off", "disabled", "0", "no", "disable": // - Disable caching.
+	case "small", "64k", "64KB": // Cache only small files (<=64KB), but not Amber and Lua
+		return cacheModeSmall
+	case "off", "disabled", "0", "no", "disable": // Disable caching entirely.
 		return cacheModeOff
-	case "dev", "default", "unset": //- Cache everything, except: Amber, Lua, GCSS and Markdown.
+	case "dev", "default", "unset": // Cache everything, except: Amber, Lua, GCSS and Markdown.
 		fallthrough
 	default:
 		return cacheModeDefault
@@ -64,7 +64,7 @@ func (cmd cacheModeSetting) ShouldCache(ext string) bool {
 	switch cacheMode {
 	case cacheModeOn:
 		return true
-	case cacheModeProduction:
+	case cacheModeProduction, cacheModeSmall:
 		switch ext {
 		case ".amber", ".lua":
 			return false
@@ -77,14 +77,6 @@ func (cmd cacheModeSetting) ShouldCache(ext string) bool {
 			return true
 		default:
 			return false
-		}
-	case cacheModeBinary:
-		// TODO: This test should be rewritten to take the file data into consideration instead.
-		switch ext {
-		case ".txt", ".html", ".css", ".js", ".xml", ".htm", ".gcss", ".amber", ".lua", ".md", ".text", ".nfo", ".jsx":
-			return false
-		default:
-			return true
 		}
 	case cacheModeOff:
 		return false

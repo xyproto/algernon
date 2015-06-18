@@ -35,7 +35,7 @@ var (
 	// ErrNoData is used if no data is attempted to be stored in the cache
 	ErrNoData = errors.New("No data")
 
-	// ErrAlreadyStores is used if a given filename has already been stored in the cache
+	// ErrAlreadyStored is used if a given filename has already been stored in the cache
 	ErrAlreadyStored = errors.New("That file ID is already stored")
 
 	// ErrLargerThanCache is used if the given data is larger than the total cache size
@@ -121,10 +121,10 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 	}
 
 	// Loop through all the data and return the first with no cache hits
-	for id, _ := range cache.index {
+	for id := range cache.index {
 		// If there are no cache hits, return this id
 		foundHit := false
-		for hitID, _ := range cache.hits {
+		for hitID := range cache.hits {
 			if hitID == id {
 				foundHit = true
 				break
@@ -138,11 +138,11 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 	var (
 		leastHits   uint64
 		leastHitsID fileID
-		firstRound  bool = true
+		firstRound  = true
 	)
 
 	// Loop through all the data and find the one with the least cache hits
-	for id, _ := range cache.index {
+	for id := range cache.index {
 		// If there is a cache hit, check if it is the first round
 		if firstRound {
 			// First candidate
@@ -166,9 +166,10 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 // Store a file in the cache
 // Returns true when the cache has reached the maximum (and also removed data to make space)
 func (cache *FileCache) storeData(filename string, data []byte) error {
-	var fileSize uint64 = uint64(len(data))
-
-	id := cache.normalize(filename)
+	var (
+		fileSize = uint64(len(data))
+		id       = cache.normalize(filename)
+	)
 
 	if cache.hasFile(id) {
 		return ErrAlreadyStored
@@ -236,7 +237,7 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 
 // Check if the given filename exists in the cache
 func (cache *FileCache) hasFile(id fileID) bool {
-	for key, _ := range cache.index {
+	for key := range cache.index {
 		if key == id {
 			return true
 		}
@@ -279,14 +280,14 @@ func (cache *FileCache) dataSize(id fileID) uint64 {
 
 // Store a file in the cache
 // Returns true if we got the data from the file, regardless of cache errors.
-func (cache *FileCache) storeFile(filename string) ([]byte, error, bool) {
+func (cache *FileCache) storeFile(filename string) ([]byte, bool, error) {
 	// Read the file
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err, false
+		return nil, false, err
 	}
 	// Store in cache, log a warning if the cache has filled up and needs to make space every time
-	return data, cache.storeData(filename, data), true
+	return data, true, cache.storeData(filename, data)
 }
 
 // Retrieve a file from the cache, or from disk
@@ -305,7 +306,7 @@ func (cache *FileCache) fetchData(filename string) ([]byte, error) {
 			log.Info("Reading from disk: " + string(id))
 			log.Info("Storing in cache: " + string(id))
 		}
-		data, err, gotTheData := cache.storeFile(string(id))
+		data, gotTheData, err := cache.storeFile(string(id))
 		// Cache errors are logged as warnings, and not being returned
 		if err != nil {
 			// Log cache errors as warnings (could be that the file is too large)

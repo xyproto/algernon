@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/jman"
+	"github.com/xyproto/jpath"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"path/filepath"
@@ -19,9 +19,9 @@ const (
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
-func checkJFile(L *lua.LState) *jman.JFile {
+func checkJFile(L *lua.LState) *jpath.JFile {
 	ud := L.CheckUserData(1)
-	if jfile, ok := ud.Value.(*jman.JFile); ok {
+	if jfile, ok := ud.Value.(*jpath.JFile); ok {
 		return jfile
 	}
 	L.ArgError(1, "JSON file expected")
@@ -75,6 +75,26 @@ func jfileGet(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Takes a JFile, a JSON path and a string.
+// Returns a value or an empty string.
+func jfileSet(L *lua.LState) int {
+	jfile := checkJFile(L) // arg 1
+	jsonpath := L.ToString(2)
+	if jsonpath == "" {
+		L.ArgError(2, "JSON path expected")
+	}
+	sval := L.ToString(3)
+	if sval == "" {
+		L.ArgError(3, "String value expected")
+	}
+	err := jfile.SetString(jsonpath, sval)
+	if err != nil {
+		log.Error(err)
+	}
+	L.Push(lua.LBool(err == nil))
+	return 1 // number of results
+}
+
 // Takes a JFile and a JSON path.
 // Removes a key from a map. Returns true if successful.
 func jfileDelKey(L *lua.LState) int {
@@ -122,7 +142,7 @@ func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
 		}
 	}
 	// Create a new JFile
-	jfile, err := jman.NewFile(fullFilename)
+	jfile, err := jpath.NewFile(fullFilename)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -139,7 +159,8 @@ var jfileMethods = map[string]lua.LGFunction{
 	"__tostring": jfileJSON,
 	"add":        jfileAdd,
 	"get":        jfileGet,
-	"del":        jfileDelKey,
+	"set":        jfileSet,
+	"delkey":     jfileDelKey,
 	"string":     jfileJSON, // undocumented
 }
 

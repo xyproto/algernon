@@ -82,15 +82,19 @@ func main() {
 
 	// Version
 	if showVersion {
-		fmt.Println(versionString)
+		if !quietMode {
+			fmt.Println(versionString)
+		}
 		os.Exit(0)
 	}
 
 	// Console output
-	fmt.Println(banner())
+	if !quietMode {
+		fmt.Println(banner())
+	}
 
 	// Dividing line between the banner and output from any of the configuration scripts
-	if len(serverConfigurationFilenames) > 0 {
+	if len(serverConfigurationFilenames) > 0 && !quietMode {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
@@ -252,6 +256,9 @@ func main() {
 		}
 		log.SetFormatter(&log.JSONFormatter{})
 		log.SetOutput(f)
+	} else if quietMode {
+		// If quiet mode is enabled and no log file has been specified, disable logging
+		log.SetOutput(ioutil.Discard)
 	}
 
 	// Read server configuration script, if present.
@@ -279,18 +286,20 @@ func main() {
 	// If no configuration files were being ran succesfully,
 	// output basic server information.
 	if len(serverConfigurationFilenames) == 0 {
-		fmt.Println(serverInfo())
+		if !quietMode {
+			fmt.Println(serverInfo())
+		}
 		ranServerReadyFunction = true
 	}
 
 	// Dividing line between the banner and output from any of the
 	// configuration scripts. Marks the end of the configuration output.
-	if ranServerReadyFunction {
+	if ranServerReadyFunction && !quietMode {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
 	// If we are not writing internal logs to a file, reduce the verboseness
-	http2.VerboseLogs = (internalLogFilename != "/dev/null")
+	http2.VerboseLogs = (internalLogFilename != os.DevNull)
 
 	// Direct internal logging elsewhere
 	internalLogFile, err := os.Open(internalLogFilename)
