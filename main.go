@@ -173,7 +173,11 @@ func main() {
 		// New permissions middleware, using a Bolt database
 		perm, err = bolt.NewWithConf(boltFilename)
 		if err != nil {
-			log.Errorf("Could not use Bolt as database backend: %s", err)
+			if err.Error() == "timeout" {
+				log.Error("The Bolt database timed out. The file is probably already in use.")
+			} else {
+				log.Errorf("Could not use Bolt as database backend: %s", err)
+			}
 		} else {
 			dbName = "Bolt (" + boltFilename + ")"
 		}
@@ -222,7 +226,11 @@ func main() {
 	if dbName == "" && boltFilename == "" {
 		perm, err = bolt.NewWithConf(defaultBoltFilename)
 		if err != nil {
-			log.Errorf("Could not use Bolt as database backend: %s", err)
+			if err.Error() == "timeout" {
+				log.Error("The Bolt database timed out. The file is probably already in use.")
+			} else {
+				log.Errorf("Could not use Bolt as database backend: %s", err)
+			}
 		} else {
 			dbName = "Bolt (" + defaultBoltFilename + ")"
 		}
