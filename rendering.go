@@ -160,7 +160,7 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string, cache *Fi
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
-			gcssdata, err := cache.read(GCSSfilename, cacheMode.ShouldCache(".gcss"))
+			gcssdata, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -224,7 +224,7 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
-			gcssdata, err := cache.read(GCSSfilename, cacheMode.ShouldCache(".gcss"))
+			gcssdata, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return

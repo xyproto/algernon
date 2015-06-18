@@ -84,7 +84,7 @@ var (
 	// Caching
 	cacheSize          uint64
 	cacheMode          cacheModeSetting
-	cacheCompressed    bool
+	cacheCompression   bool
 	cacheMaxEntitySize uint64
 
 	// Output
@@ -107,7 +107,7 @@ Available flags:
   --dir=DIRECTORY              Set the server directory
   --addr=[HOST][:PORT]         Server host and port ("` + defaultWebColonPort + `" is default)
   -e, --dev                    Development mode: Enables Debug mode, uses
-                               regular HTTP, Bolt and sets cache to "normal".
+                               regular HTTP, Bolt and sets cache mode "dev".
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
@@ -119,9 +119,11 @@ Available flags:
                                "dev"     - Everything, except Amber,
                                            Lua, GCSS, Markdown and JSX.
                                "prod"    - Everything, except Amber and Lua.
+                               "small"   - Like "prod", but only files <= 64KB.
                                "images"  - Only images (png, jpg, gif, svg).
                                "off"     - Disable caching.
-  --cachesize=N                Set a cache size, in bytes. Default is (1 MiB).
+  --cachesize=N                Set the total cache size, in bytes.
+  --rawcache                   Disable cache compression.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
   --key=FILENAME               TLS key, if using HTTPS.
@@ -160,6 +162,8 @@ func handleFlags(serverTempDir string) string {
 		showVersionShort, quietModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
+		// Used if disabling cache compression
+		rawCache bool
 	)
 
 	// The usage function that provides more help (for --help or -h)
@@ -208,6 +212,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
 	flag.Uint64Var(&cacheSize, "cachesize", defaultCacheSize, "Cache size, in bytes")
 	flag.BoolVar(&quietMode, "quiet", false, "Quiet")
+	flag.BoolVar(&rawCache, "rawcache", false, "Disable cache compression")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -233,9 +238,13 @@ func handleFlags(serverTempDir string) string {
 	showVersion = showVersion || showVersionShort
 	quietMode = quietMode || quietModeShort
 
+	// Disable verbose mode if quiet mode has been enabled
 	if quietMode {
 		verboseMode = false
 	}
+
+	// Enable cache compression unless raw cache is specified
+	cacheCompression = !rawCache
 
 	redisAddrSpecified = redisAddr != ""
 	if redisAddr == "" {
@@ -282,7 +291,7 @@ func handleFlags(serverTempDir string) string {
 
 	// The cache flag overrides the settings from the other modes
 	if cacheModeString != "" {
-		cacheMode = NewCacheModeSetting(cacheModeString)
+		cacheMode = newCacheModeSetting(cacheModeString)
 	}
 
 	// Disable cache entirely if cacheSize is set to 0

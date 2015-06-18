@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bmizerany/assert"
 	"github.com/xyproto/cookie"
 	"io/ioutil"
 	"math/rand"
@@ -16,42 +17,42 @@ func TestHas(t *testing.T) {
 	cache := newFileCache(1, false, 0)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	readmeID := cache.normalize("README.md")
-	has := cache.hasFile(readmeID)
-	if has {
+	if cache.hasFile(readmeID) {
 		t.Error("Should not have any file in cache right now")
 	}
 }
 
 func TestStore(t *testing.T) {
-	cache := newFileCache(100000, true, 0)
+	cache := newFileCache(100000, false, 0)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
 	}
-	if err := cache.storeData("README.md", data); err != nil {
+	if _, err := cache.storeData("README.md", data); err != nil {
 		t.Errorf("Could not store README.md in the cache: %s", err)
 	}
 	readmeID := cache.normalize("README.md")
-	has := cache.hasFile(readmeID)
-	if !has {
+	if !cache.hasFile(readmeID) {
 		t.Error("Should have a file in cache right now")
 	}
 }
 
 func TestLoad(t *testing.T) {
-	cache := newFileCache(100000, true, 0)
+	cache := newFileCache(100000, false, 0)
 	readmeData, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
 	}
-	if err := cache.storeData("README.md", readmeData); err != nil {
+	_, err = cache.storeData("README.md", readmeData)
+	if err != nil {
 		t.Errorf("Could not store README.md in the cache: %s", err)
 	}
 	licenseData, err := ioutil.ReadFile("LICENSE")
 	if err != nil {
 		t.Error(err)
 	}
-	if err := cache.storeData("LICENSE", licenseData); err != nil {
+	_, err = cache.storeData("LICENSE", licenseData)
+	if err != nil {
 		t.Errorf("Could not store LICENSE in the cache: %s", err)
 	}
 	readmeData2, err := cache.fetchAndCache("README.md")
@@ -78,18 +79,15 @@ func TestLoad(t *testing.T) {
 			t.Error("Data from cache differs!")
 		}
 	}
-
 }
 
 func TestOverflow(t *testing.T) {
 	cache := newFileCache(100000, false, 0)
 	data, err := ioutil.ReadFile("README.md")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Equal(t, err, nil)
 	// Repeatedly store a file until the cache is full
 	for err == nil {
-		err = cache.storeData("README.md", data)
+		_, err = cache.storeData("README.md", data)
 	}
 	if err == nil {
 		t.Error("Cache should be full, but is not.")
@@ -176,7 +174,7 @@ func TestRandomStoreGet(t *testing.T) {
 			id := cache.normalize(filename)
 			if !cache.hasFile(id) {
 				//fmt.Printf("adding %s (%v)\n", filename, id)
-				err := cache.storeData(filename, data)
+				_, err := cache.storeData(filename, data)
 				if err != nil {
 					t.Errorf("Could not add %s: %s\n", filename, err)
 					//} else {
@@ -187,7 +185,7 @@ func TestRandomStoreGet(t *testing.T) {
 		case 2: // Add, get and remove data
 			filename := cookie.RandomHumanFriendlyString(rand.Intn(20))
 			data := []byte(cookie.RandomString(rand.Intn(cacheSize + 1)))
-			err := cache.storeData(filename, data)
+			_, err := cache.storeData(filename, data)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -228,6 +226,49 @@ func TestRandomStoreGet(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+func TestCompression(t *testing.T) {
+	cache := newFileCache(100000, true, 0)
+	assert.Equal(t, true, cache.IsEmpty())
+	readmeData, err := ioutil.ReadFile("README.md")
+	assert.Equal(t, err, nil)
+	compressedREADME, err := cache.storeData("README.md", readmeData)
+	if err != nil {
+		t.Errorf("Could not store README.md in the cache: %s", err)
+	}
+	assert.NotEqual(t, 0, len(compressedREADME))
+	licenseData, err := ioutil.ReadFile("LICENSE")
+	assert.Equal(t, err, nil)
+	compressedLICENSE, err := cache.storeData("LICENSE", licenseData)
+	if err != nil {
+		t.Errorf("Could not store LICENSE in the cache: %s", err)
+	}
+	assert.NotEqual(t, 0, len(compressedLICENSE))
+	readmeData2, err := cache.fetchAndCache("README.md")
+	if err != nil {
+		t.Errorf("Could not read file from cache: %s", err)
+	}
+	if len(readmeData) != len(readmeData2) {
+		t.Errorf("Different length of data in cache: %d vs %d", len(readmeData), len(readmeData2))
+	}
+	for i := range readmeData {
+		if readmeData[i] != readmeData2[i] {
+			t.Error("Data from cache differs!")
+		}
+	}
+	licenseData2, err := cache.fetchAndCache("LICENSE")
+	if err != nil {
+		t.Errorf("Could not read file from cache: %s", err)
+	}
+	if len(licenseData) != len(licenseData2) {
+		t.Errorf("Different length of data in cache: %d vs %d", len(licenseData), len(licenseData2))
+	}
+	for i := range licenseData {
+		if licenseData[i] != licenseData2[i] {
+			t.Error("Data from cache differs!")
 		}
 	}
 }

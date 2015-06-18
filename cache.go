@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	//"github.com/bkaradzic/go-lz4"
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
@@ -63,11 +62,6 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCa
 	return &cache
 }
 
-// Set a maximum size per cache entity. Set to 0 to disable.
-func (cache *FileCache) SetMaxEntitySize(maxEntitySize uint64) {
-	cache.maxEntitySize = maxEntitySize
-}
-
 // Normalize the filename
 func (cache *FileCache) normalize(filename string) fileID {
 	// If the filename begins with "./", remove it
@@ -83,6 +77,11 @@ func (cache *FileCache) removeBytes(i, n uint64) {
 	cache.blob = append(cache.blob[:i], cache.blob[i+n:]...)
 	// Extend to the original capacity after removing bytes
 	cache.blob = cache.blob[:cap(cache.blob)]
+}
+
+// IsEmpty checks if the cache is empty
+func (cache *FileCache) IsEmpty() bool {
+	return 0 == len(cache.index)
 }
 
 // Shuffle all indices that refers to position after removedpos, offset to the left
@@ -171,23 +170,30 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 }
 
 // Store a file in the cache
-// Returns true when the cache has reached the maximum (and also removed data to make space)
-func (cache *FileCache) storeData(filename string, data []byte) error {
-	var (
-		fileSize = uint64(len(data))
-		id       = cache.normalize(filename)
-	)
+// Returns the data (it may be compressed) and an error
+func (cache *FileCache) storeData(filename string, data []byte) (storedData []byte, err error) {
+	// Compress the data, if compression is enabled
+	if cache.compress {
+		compressed, err := compress(data)
+		if err != nil {
+			return nil, fmt.Errorf("Compression error: %s", err)
+		}
+		data = compressed
+	}
+
+	fileSize := uint64(len(data))
+	id := cache.normalize(filename)
 
 	if cache.hasFile(id) {
-		return ErrAlreadyStored
+		return nil, ErrAlreadyStored
 	}
 
 	if fileSize > cache.size {
-		return ErrLargerThanCache
+		return nil, ErrLargerThanCache
 	}
 
 	if cache.maxEntitySize != 0 && fileSize > cache.maxEntitySize {
-		return ErrEntityTooLarge
+		return nil, ErrEntityTooLarge
 	}
 
 	// Warn once that the cache is now full
@@ -202,7 +208,7 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 		// Find the least popular data
 		removeID, err := cache.leastPopular()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Remove it
@@ -213,7 +219,7 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 		spaceBefore := cache.freeSpace()
 		err = cache.remove(removeID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		spaceAfter := cache.freeSpace()
 
@@ -239,7 +245,7 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 	// Move the offset to the end of the data (the next free location)
 	cache.offset += uint64(fileSize)
 
-	return nil
+	return data, nil
 }
 
 // Check if the given filename exists in the cache
@@ -286,19 +292,16 @@ func (cache *FileCache) dataSize(id fileID) uint64 {
 }
 
 // Store a file in the cache
-// Returns true if we got the data from the file, regardless of cache errors.
+// Return true if we got the data from the file, regardless of cache errors.
 func (cache *FileCache) storeFile(filename string) ([]byte, bool, error) {
 	// Read the file
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, false, err
 	}
-	// Compress the data, if compression is enabled
-	if cache.compress {
-
-	}
 	// Store in cache, log a warning if the cache has filled up and needs to make space every time
-	return data, true, cache.storeData(filename, data)
+	_, err = cache.storeData(filename, data)
+	return data, true, err
 }
 
 // Retrieve a file from the cache, or from disk
@@ -333,6 +336,10 @@ func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 		return data, nil
 	}
 
+	if verboseMode {
+		log.Info("Retrieving from cache: " + string(id))
+	}
+
 	// Find the start of the data
 	startpos := cache.index[id]
 
@@ -349,8 +356,13 @@ func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 	// Mark a cache hit
 	cache.hits[id]++
 
-	if verboseMode {
-		log.Info("Retrieving from cache: " + string(id))
+	// Decompress
+	if cache.compress {
+		decompressed, err := decompress(data)
+		if err != nil {
+			return nil, err
+		}
+		return decompressed, nil
 	}
 
 	// Return the data
@@ -367,10 +379,11 @@ func (cache *FileCache) stats() string {
 	defer cache.rw.Unlock()
 
 	var buf bytes.Buffer
-	buf.WriteString("Cache stats:\n")
-	buf.WriteString(fmt.Sprintf("\tTotal cache\t%d bytes\n", cache.size))
+	buf.WriteString("Cache information:\n")
+	buf.WriteString(fmt.Sprintf("\tCompression:\t%s\n", enabledStatus(cache.compress)))
+	buf.WriteString(fmt.Sprintf("\tTotal cache:\t%d bytes\n", cache.size))
 	buf.WriteString(fmt.Sprintf("\tFree cache:\t%d bytes\n", cache.freeSpace()))
-	buf.WriteString(fmt.Sprintf("\tEnd of data\t%d\n", cache.offset))
+	buf.WriteString(fmt.Sprintf("\tEnd of data:\tat %d\n", cache.offset))
 	if len(cache.index) > 0 {
 		buf.WriteString("\tData in cache:\n")
 		for id, pos := range cache.index {
@@ -406,8 +419,7 @@ func exportCacheFunctions(L *lua.LState, cache *FileCache) {
 	const disabledMessage = "Caching is disabled"
 	const clearedMessage = "Cache cleared"
 
-	// Return information about the cache use
-	L.SetGlobal("CacheStats", L.NewFunction(func(L *lua.LState) int {
+	luaCacheStatsFunc := L.NewFunction(func(L *lua.LState) int {
 		if cache == nil {
 			L.Push(lua.LString(disabledMessage))
 			return 1 // number of results
@@ -416,7 +428,11 @@ func exportCacheFunctions(L *lua.LState, cache *FileCache) {
 		// Return the string, but drop the final newline
 		L.Push(lua.LString(info[:len(info)-1]))
 		return 1 // number of results
-	}))
+	})
+
+	// Return information about the cache use
+	L.SetGlobal("CacheInfo", luaCacheStatsFunc)
+	L.SetGlobal("CacheStats", luaCacheStatsFunc) // undocumented alias
 
 	// Clear the cache
 	L.SetGlobal("ClearCache", L.NewFunction(func(L *lua.LState) int {

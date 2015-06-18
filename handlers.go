@@ -39,7 +39,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		var markdowndata []byte
 		var err error
-		markdowndata, err = cache.read(filename, cacheMode.ShouldCache(ext))
+		markdowndata, err = cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -57,7 +57,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	case ".amber":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		amberdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
+		amberdata, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -68,7 +68,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 		// Try reading data.lua as well, if possible
 		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
-		luadata, err := cache.read(luafilename, cacheMode.ShouldCache(ext))
+		luadata, err := cache.read(luafilename, shouldCache(ext))
 		if err != nil {
 			// Could not find and/or read data.lua
 			luadata = []byte{}
@@ -112,7 +112,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	case ".gcss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		gcssdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
+		gcssdata, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -130,7 +130,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-		jsxdata, err := cache.read(filename, cacheMode.ShouldCache(ext))
+		jsxdata, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -162,7 +162,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			// Run the lua script, without the possibility to flush
 			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache); err != nil {
 				errortext := err.Error()
-				filedata, err := cache.read(filename, cacheMode.ShouldCache(ext))
+				filedata, err := cache.read(filename, shouldCache(ext))
 				if err != nil {
 					// Use the error as the file contents when displaying the error message
 					// if reading the file failed.
@@ -196,7 +196,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		log.Error("Uninitialized mimereader!")
 	}
 	// Read the file
-	fileData, err := cache.read(filename, cacheMode.ShouldCache(ext))
+	fileData, err := cache.read(filename, shouldCache(ext))
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Can't open %s: %s", filename, err)

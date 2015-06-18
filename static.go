@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	defaultStaticCacheSize = 1024 * 1024 * 10 // 10 MiB
+	defaultStaticCacheSize = 1024 * 1024 * 64 // 64 MiB
 )
 
 // Convenience function for serving only a single file
@@ -14,7 +14,7 @@ const (
 func serveStaticFile(filename, colonPort string) {
 	log.Info("Serving " + filename + " on " + serverHost + colonPort)
 	mux := http.NewServeMux()
-	cache := newFileCache(defaultStaticCacheSize, cacheCompressed, 0) // 10 MiB cache, no per-file size limit
+	cache := newFileCache(defaultStaticCacheSize, false, 0) // 64 MiB cache, no cache compression, no per-file size limit
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
 		filePage(w, req, filename, nil, nil, cache)

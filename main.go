@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.75"
+	versionString = "Algernon 0.8"
 	description   = "HTTP/2 Web Server"
 )
 
@@ -58,10 +58,6 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 }
 
 func main() {
-	// Not compressing files in cache.
-	// TODO: Implement and set to true
-	cacheCompressed = false
-
 	var (
 		err  error
 		perm pinterface.IPermissions
@@ -242,7 +238,7 @@ func main() {
 
 	// Create a cache struct for reading files (contains functions that can
 	// be used for reading files, also when caching is disabled).
-	cache := newFileCache(cacheSize, cacheCompressed, cacheMaxEntitySize)
+	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
 
 	// Register HTTP handler functions
 	registerHandlers(mux, serverDir, perm, luapool, cache)

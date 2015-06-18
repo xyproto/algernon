@@ -107,8 +107,8 @@ print(...) // Output text. Takes a variable number of strings.
 
 Cache
 
-CacheStats() -> string // Return stats about the file cache
-ClearCache() // Clear the file cache
+CacheInfo() -> string // Return information about the file cache.
+ClearCache() // Clear the file cache.
 
 JSON
 
@@ -124,7 +124,7 @@ Plugins
 
 Plugin(string) -> bool // Load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
 PluginCode(string) -> string // Returns the Lua code as returned by the Lua.Code function in the plugin, given a plugin path. May return an empty string.
-CallPlugin(string, string, ...) -> string // Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
+CallPlugin(string, string, ...) -> string// Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
 
 Code libraries
 
@@ -239,10 +239,16 @@ func highlight(o *term.TextOutput, line string) string {
 }
 
 func mustSaveHistory(o *term.TextOutput, historyFilename string) {
-	fmt.Printf(o.LightBlue("Saving history to %s... "), historyFilename)
+	if verboseMode {
+		fmt.Printf(o.LightBlue("Saving history to %s... "), historyFilename)
+	}
 	if err := saveHistory(historyFilename); err != nil {
-		fmt.Println(o.DarkRed("failed: " + err.Error()))
-	} else {
+		if verboseMode {
+			fmt.Println(o.DarkRed("failed: " + err.Error()))
+		} else {
+			fmt.Printf(o.DarkRed("Failed to store REPL history to %s: %s\n"), historyFilename, err)
+		}
+	} else if verboseMode {
 		fmt.Println(o.LightGreen("ok"))
 	}
 }
@@ -348,7 +354,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 		if EOF {
 			switch EOFcount {
 			case 0:
-				o.Err("Press Ctrl-d again to quit.")
+				o.Err("Press ctrl-d again to exit.")
 				EOFcount++
 				continue
 			default:
@@ -366,7 +372,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 				o.Println(highlight(o, line))
 			}
 			continue
-		case "quit", "exit", "shutdown":
+		case "quit", "exit", "shutdown", "halt":
 			mustSaveHistory(o, historyFilename)
 			o.Println(o.LightGreen(exitMessage))
 			os.Exit(0)

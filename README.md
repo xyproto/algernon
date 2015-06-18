@@ -168,6 +168,12 @@ Quick Installation
 Getting started
 ---------------
 
+##### Run Algernon in "dev" mode
+
+This enables debug mode, uses the internal Bolt database, uses regular HTTP instead of HTTPS+HTTP/2 and enables caching for all files except: Amber, Lua, GCSS, Markdown and JSX.
+
+* `algernon -e`
+
 ##### Enable HTTP/2 in the browser
 
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
@@ -374,8 +380,8 @@ Lua functions for the file cache
 --------------------------------
 
 ~~~c
-// Return stats about the file cache.
-CacheStats() -> string
+// Return information about the file cache.
+CacheInfo() -> string
 
 // Clear the file cache.
 ClearCache()
@@ -722,7 +728,7 @@ Releases
 General information
 -------------------
 
-* Version: 0.75
+* Version: 0.8
 * License: MIT
 * Alexander F Rødseth
 

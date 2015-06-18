@@ -3,16 +3,16 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/simpleredis"
 	"github.com/xyproto/permissions2"
-	"github.com/xyproto/simplemaria"
 	"github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
+	"github.com/xyproto/simplebolt"
+	"github.com/xyproto/simplemaria"
+	"github.com/xyproto/simpleredis"
 )
 
-// Over engineered version number check!
+// API version number check
 
 type VersionInfo struct {
 	name    string
@@ -42,8 +42,8 @@ func (v *VersionInfo) Status() {
 }
 
 func main() {
-	fmt.Println("Dependency check")
-	New("simplebolt", simplebolt.Version, 2.0).Status()
+	fmt.Println("API dependency check")
+	New("simplebolt", simplebolt.Version, 3.0).Status()
 	New("permissionbolt", permissionbolt.Version, 2.0).Status()
 	New("simpleredis", simpleredis.Version, 2.0).Status()
 	New("permissions", permissions.Version, 2.2).Status()

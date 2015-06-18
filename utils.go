@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/bkaradzic/go-lz4"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
@@ -246,4 +247,28 @@ func insertDoctype(htmldata []byte) []byte {
 // Convert time.Duration to milliseconds, as a string (without "ms")
 func durationToMS(d time.Duration, multiplier float64) string {
 	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
+}
+
+// Compress data using LZ4
+func compress(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return []byte{}, nil
+	}
+	return lz4.Encode(nil, data)
+}
+
+// Decompress data using LZ4
+func decompress(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return []byte{}, nil
+	}
+	return lz4.Decode(nil, data)
+}
+
+// Return "enabled" or "disabled" depending on the given bool
+func enabledStatus(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
 }

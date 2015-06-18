@@ -28,8 +28,8 @@ var (
 	}
 )
 
-// NewCacheModeSetting creates a cacheModeSetting based on a variety of string options, like "on" and "off".
-func NewCacheModeSetting(cacheModeString string) cacheModeSetting {
+// newCacheModeSetting creates a cacheModeSetting based on a variety of string options, like "on" and "off".
+func newCacheModeSetting(cacheModeString string) cacheModeSetting {
 	switch cacheModeString {
 	case "everything", "all", "on", "1", "enabled", "yes", "enable": // Cache everything.
 		return cacheModeOn
@@ -60,7 +60,7 @@ func (cms cacheModeSetting) String() string {
 }
 
 // Return true of the given file type (extension) should be cached
-func (cmd cacheModeSetting) ShouldCache(ext string) bool {
+func shouldCache(ext string) bool {
 	switch cacheMode {
 	case cacheModeOn:
 		return true
