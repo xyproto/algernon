@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	//"github.com/bkaradzic/go-lz4"
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
@@ -25,7 +26,8 @@ type FileCache struct {
 	offset            uint64            // The current position in the cache storage (end of data)
 	rw                *sync.RWMutex     // Used for avoiding data races and other issues
 	cacheWarningGiven bool              // Used to only warn once if the cache is full
-	compressed        bool
+	compress          bool              // Enable data compression
+	maxEntitySize     uint64            // Maximum size per entity in cache
 }
 
 var (
@@ -40,17 +42,30 @@ var (
 
 	// ErrLargerThanCache is used if the given data is larger than the total cache size
 	ErrLargerThanCache = errors.New("Data is larger than the the total cache size")
+
+	// ErrEntityTooLarge is used if a maximum size per entity has been set
+	ErrEntityTooLarge = errors.New("Data is larger than the allowed size.")
 )
 
-func newFileCache(cacheSize uint64, compressed bool) *FileCache {
+// Creates a new FileCache struct.
+// cacheSize is the total cache size, in bytes.
+// compress is for enabling compression of cache data.
+// maxEntitySize is for setting a per-file maximum size.
+func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCache {
 	var cache FileCache
 	cache.size = cacheSize
 	cache.blob = make([]byte, cacheSize) // The cache storage
 	cache.index = make(map[fileID]uint64)
 	cache.hits = make(map[fileID]uint64)
 	cache.rw = &sync.RWMutex{}
-	cache.compressed = compressed
+	cache.compress = compress
+	cache.maxEntitySize = maxEntitySize
 	return &cache
+}
+
+// Set a maximum size per cache entity. Set to 0 to disable.
+func (cache *FileCache) SetMaxEntitySize(maxEntitySize uint64) {
+	cache.maxEntitySize = maxEntitySize
 }
 
 // Normalize the filename
@@ -97,18 +112,10 @@ func (cache *FileCache) remove(id fileID) error {
 	pos := cache.index[id]
 	size := cache.dataSize(id)
 
-	//if cache.offset < 0 || cache.offset > cache.size {
-	//	panic(fmt.Sprintln("Offset out of bounds! end of data:", cache.offset, "size of cache:", cache.size))
-	//}
-
 	cache.removeIndex(id)
 	cache.shuffleIndicesLeft(pos, size)
 	cache.removeBytes(pos, size)
 	cache.offset -= uint64(size)
-
-	//if cache.offset < 0 || cache.offset > cache.size {
-	//	panic(fmt.Sprintln("Offset out of bounds! end of data:", cache.offset, "size of cache:", cache.size))
-	//}
 
 	return nil
 }
@@ -179,6 +186,10 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 		return ErrLargerThanCache
 	}
 
+	if cache.maxEntitySize != 0 && fileSize > cache.maxEntitySize {
+		return ErrEntityTooLarge
+	}
+
 	// Warn once that the cache is now full
 	if !cache.cacheWarningGiven && fileSize > cache.freeSpace() {
 		log.Warn("Cache is full. You may want to increase the cache size.")
@@ -211,10 +222,6 @@ func (cache *FileCache) storeData(filename string, data []byte) error {
 			panic(fmt.Sprintf("Removed %v, but the free space is the same! Still %d bytes.", removeID, spaceAfter))
 		}
 	}
-
-	//if cache.offset < 0 || cache.offset > cache.size {
-	//	panic(fmt.Sprintln("Offset out of bounds! end of data:", cache.offset, "size of cache:", cache.size))
-	//}
 
 	if verboseMode {
 		log.Info(fmt.Sprintf("Storing in cache: %v", id))
@@ -286,12 +293,16 @@ func (cache *FileCache) storeFile(filename string) ([]byte, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
+	// Compress the data, if compression is enabled
+	if cache.compress {
+
+	}
 	// Store in cache, log a warning if the cache has filled up and needs to make space every time
 	return data, true, cache.storeData(filename, data)
 }
 
 // Retrieve a file from the cache, or from disk
-func (cache *FileCache) fetchData(filename string) ([]byte, error) {
+func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 	// RWMutex locks
 	cache.rw.Lock()
 	defer cache.rw.Unlock()
@@ -383,7 +394,7 @@ func (cache *FileCache) clear() {
 	cache.rw.Lock()
 	defer cache.rw.Unlock()
 
-	cache = newFileCache(cache.size, cache.compressed)
+	cache = newFileCache(cache.size, cache.compress, cache.maxEntitySize)
 
 	// Allow one warning if the cache should fill up
 	cache.cacheWarningGiven = false
@@ -424,16 +435,13 @@ func exportCacheFunctions(L *lua.LState, cache *FileCache) {
 func (cache *FileCache) read(filename string, cacheEnabled bool) ([]byte, error) {
 	if cacheEnabled {
 		// Read the file from cache (or disk, if not cached)
-		return cache.fetchData(filename)
+		return cache.fetchAndCache(filename)
 	}
 	// Normalize the filename
 	filename = string(cache.normalize(filename))
 	if verboseMode {
 		log.Info("Reading from disk: " + filename)
 	}
-	// RWMutex locks
-	//cache.rw.Lock()
-	//defer cache.rw.Unlock()
 	// Read the file
 	return ioutil.ReadFile(filename)
 }

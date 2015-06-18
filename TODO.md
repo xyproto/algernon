@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] cache: compression
 - [ ] smallCache support
 - [ ] Dockerfile.
 - [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).

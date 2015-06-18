@@ -8,12 +8,12 @@ import (
 )
 
 func TestID(t *testing.T) {
-	cache := newFileCache(1, false)
+	cache := newFileCache(1, false, 0)
 	_ = cache.normalize("test.filename")
 }
 
 func TestHas(t *testing.T) {
-	cache := newFileCache(1, false)
+	cache := newFileCache(1, false, 0)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	readmeID := cache.normalize("README.md")
 	has := cache.hasFile(readmeID)
@@ -23,7 +23,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	cache := newFileCache(100000, true)
+	cache := newFileCache(100000, true, 0)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -39,7 +39,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	cache := newFileCache(100000, true)
+	cache := newFileCache(100000, true, 0)
 	readmeData, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -54,7 +54,7 @@ func TestLoad(t *testing.T) {
 	if err := cache.storeData("LICENSE", licenseData); err != nil {
 		t.Errorf("Could not store LICENSE in the cache: %s", err)
 	}
-	readmeData2, err := cache.fetchData("README.md")
+	readmeData2, err := cache.fetchAndCache("README.md")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
@@ -66,7 +66,7 @@ func TestLoad(t *testing.T) {
 			t.Error("Data from cache differs!")
 		}
 	}
-	licenseData2, err := cache.fetchData("LICENSE")
+	licenseData2, err := cache.fetchAndCache("LICENSE")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
@@ -82,7 +82,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestOverflow(t *testing.T) {
-	cache := newFileCache(100000, false)
+	cache := newFileCache(100000, false, 0)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -108,7 +108,7 @@ func differs(a, b []byte) bool {
 }
 
 func TestRemovalAddition(t *testing.T) {
-	cache := newFileCache(8, false)
+	cache := newFileCache(8, false, 0)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	adata := []byte{1, 1, 1, 1}
 	bdata := []byte{2, 2, 2, 2}
@@ -130,7 +130,7 @@ func TestRemovalAddition(t *testing.T) {
 		t.Error("Cache offset is supposed to be 8, but is", cache.offset)
 	}
 	// Make b the most popular data
-	cache.fetchData("b")
+	cache.fetchAndCache("b")
 	// Remove a and store c at the end
 	cache.storeData("c", cdata)
 	if differs(cache.blob, []byte{2, 2, 2, 2, 3, 3}) {
@@ -162,7 +162,7 @@ func TestRemovalAddition(t *testing.T) {
 
 func TestRandomStoreGet(t *testing.T) {
 	const cacheSize = 5
-	cache := newFileCache(5, false)
+	cache := newFileCache(5, false, 0)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	filenames := []string{"a", "b", "c"}
 	datasets := [][]byte{[]byte{0, 1, 2}, []byte{3, 4, 5, 6}, []byte{7}}
@@ -191,7 +191,7 @@ func TestRandomStoreGet(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data2, err := cache.fetchData(filename)
+			data2, err := cache.fetchAndCache(filename)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -215,7 +215,7 @@ func TestRandomStoreGet(t *testing.T) {
 			data := datasets[n]
 			//id := cache.normalize(filename)
 			//fmt.Printf("retrieving %s (%v)\n", filename, id)
-			retData, err := cache.fetchData(filename)
+			retData, err := cache.fetchAndCache(filename)
 			if err == nil {
 				//fmt.Printf("retrieved %s (%v)\n", filename, id)
 				//fmt.Println(cache.stats())

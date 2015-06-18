@@ -14,7 +14,7 @@ const (
 func serveStaticFile(filename, colonPort string) {
 	log.Info("Serving " + filename + " on " + serverHost + colonPort)
 	mux := http.NewServeMux()
-	cache := newFileCache(defaultStaticCacheSize, cacheCompressed) // 10 MiB cache
+	cache := newFileCache(defaultStaticCacheSize, cacheCompressed, 0) // 10 MiB cache, no per-file size limit
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
 		filePage(w, req, filename, nil, nil, cache)

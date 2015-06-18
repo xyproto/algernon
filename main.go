@@ -242,7 +242,7 @@ func main() {
 
 	// Create a cache struct for reading files (contains functions that can
 	// be used for reading files, also when caching is disabled).
-	cache := newFileCache(cacheSize, cacheCompressed)
+	cache := newFileCache(cacheSize, cacheCompressed, cacheMaxEntitySize)
 
 	// Register HTTP handler functions
 	registerHandlers(mux, serverDir, perm, luapool, cache)

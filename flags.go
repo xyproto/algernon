@@ -13,14 +13,15 @@ import (
 //       another one for handling long and short flags.
 
 const (
-	defaultWebColonPort   = ":3000"
-	defaultRedisColonPort = ":6379"
-	defaultEventColonPort = ":5553"
-	defaultEventRefresh   = "350ms"
-	defaultEventPath      = "/fs"
-	defaultLimit          = 10
-	defaultPermissions    = 0600
-	defaultCacheSize      = 1024 * 1024 // 1 MiB
+	defaultWebColonPort       = ":3000"
+	defaultRedisColonPort     = ":6379"
+	defaultEventColonPort     = ":5553"
+	defaultEventRefresh       = "350ms"
+	defaultEventPath          = "/fs"
+	defaultLimit              = 10
+	defaultPermissions        = 0600
+	defaultCacheSize          = 1024 * 1024 // 1 MiB
+	defaultCacheMaxEntitySize = 64 * 1024   // 64 KB
 )
 
 var (
@@ -81,9 +82,10 @@ var (
 	showVersion bool
 
 	// Caching
-	cacheSize       uint64
-	cacheMode       cacheModeSetting
-	cacheCompressed bool
+	cacheSize          uint64
+	cacheMode          cacheModeSetting
+	cacheCompressed    bool
+	cacheMaxEntitySize uint64
 
 	// Output
 	quietMode bool
@@ -287,6 +289,7 @@ func handleFlags(serverTempDir string) string {
 	if cacheSize == 0 {
 		cacheMode = cacheModeOff
 	}
+
 	// Set cacheSize to 0 if the cache is disabled
 	if cacheMode == cacheModeOff {
 		cacheSize = 0
@@ -295,6 +298,10 @@ func handleFlags(serverTempDir string) string {
 	// If cache mode is unset, use the dev mode
 	if cacheMode == cacheModeUnset {
 		cacheMode = cacheModeDefault
+	}
+
+	if cacheMode == cacheModeSmall {
+		cacheMaxEntitySize = defaultCacheMaxEntitySize
 	}
 
 	// For backwards compatibility with previous versions of algernon
