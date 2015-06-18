@@ -274,10 +274,10 @@ status(number)
 // Output a message and set a HTTP status code.
 error(string, number)
 
-// Return the directory where the script is running. If a filename is given (optional), then the path to where the script is running, joined with a path separator and the given filename, is returned.
+// Return the directory where the script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 scriptdir([string]) -> string
 
-// Return the directory where the server is running. If a filename is given (optional), then the path to where the server is running, joined with a path separator and the given filename, is returned.
+// Return the directory where the server is running. If a filename (optional) is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
 serverdir([string]) -> string
 
 // Serve a file that exists in the same directory as the script.
@@ -285,6 +285,9 @@ serve(string)
 
 // Return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 formdata() -> table
+
+// Transmit what has been outputted so far, to the client.
+flush()
 ~~~
 
 Lua functions for formatted output
@@ -365,10 +368,10 @@ codelib:add(string, string) -> bool
 // Given a namespace and Lua code, set the given code as the only code in the namespace. Returns true if successful.
 codelib:set(string, string) -> bool
 
-// Given a namespace, return Lua code or an empty string.
+// Given a namespace, return Lua code, or an empty string.
 codelib:get(string) -> string
 
-// Import (eval) code from the given namespace into the current Lua state. Returns true on success.
+// Import (eval) code from the given namespace into the current Lua state. Returns true if successful.
 codelib:import(string) -> bool
 
 // Completely clear the code library. Returns true if successful.
@@ -668,20 +671,13 @@ SetMinimumConfirmationCodeLength(number)
 GenerateUniqueConfirmationCode() -> string
 ~~~
 
-Lua functions for use when streaming
-------------------------------------
 
-~~~c
-// Transmit what has been outputted so far to the client.
-flush()
-~~~
-
-
-Lua functions that are only available for the server configuration file
------------------------------------------------------------------------
+Lua functions that are available for the server configuration file
+------------------------------------------------------------------
 
 ~~~c
 // Set the default address for the server on the form [host][:port].
+// May be useful in Algernon application bundles (.alg or .zip files).
 SetAddr(string)
 
 // Reset the URL prefixes and make everything *public*.
@@ -699,7 +695,8 @@ DenyHandler(function)
 // Return a string with various server information.
 ServerInfo() -> string
 
-// Log to the given filename. If the filename is an empty string, log to stderr. Returns true if successful.
+// Direct the logging to the given filename. If the filename is an empty
+// string, direct logging to stderr. Returns true if successful.
 LogTo(string) -> bool
 
 // Returns the version string for the server.
