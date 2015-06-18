@@ -2,6 +2,8 @@
 
 Priority
 --------
+- [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
+      This allows gzipped data to be sent directly from the cache.
 - [ ] Dockerfile.
 - [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
 - [ ] File upload.
