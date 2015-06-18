@@ -3,7 +3,7 @@ require "language/go"
 class Algernon < Formula
   desc "HTTP/2 web server with Lua support"
   homepage "http://algernon.roboticoverlords.org/"
-  url "https://github.com/xyproto/algernon/archive/0.74.tar.gz"
+  url "https://github.com/xyproto/algernon/archive/0.8.tar.gz"
   sha256 "1341af6864643a968d85bfa63ca231604b6d1123919c6826ae179908c6c4a176"
   head "https://github.com/xyproto/algernon.git"
 
