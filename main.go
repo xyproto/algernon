@@ -174,12 +174,30 @@ func main() {
 		perm, err = bolt.NewWithConf(boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				log.Error("The Bolt database timed out. The file is probably already in use.")
+				tempFile, err := ioutil.TempFile("", "algernon")
+				if err != nil {
+					log.Fatal("Unable to find a temporary file to use:", err)
+				} else {
+					boltFilename = tempFile.Name() + ".db"
+				}
 			} else {
 				log.Errorf("Could not use Bolt as database backend: %s", err)
 			}
 		} else {
 			dbName = "Bolt (" + boltFilename + ")"
+		}
+		// Try the new database filename if there was a timeout
+		if boltFilename != defaultBoltFilename {
+			perm, err = bolt.NewWithConf(boltFilename)
+			if err != nil {
+				if err.Error() == "timeout" {
+					log.Error("The Bolt database timed out!")
+				} else {
+					log.Errorf("Could not use Bolt as database backend: %s", err)
+				}
+			} else {
+				dbName = "Bolt, temporary"
+			}
 		}
 	}
 	if dbName == "" && mariadbDSN != "" {
@@ -224,15 +242,34 @@ func main() {
 		}
 	}
 	if dbName == "" && boltFilename == "" {
-		perm, err = bolt.NewWithConf(defaultBoltFilename)
+		boltFilename = defaultBoltFilename
+		perm, err = bolt.NewWithConf(boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				log.Error("The Bolt database timed out. The file is probably already in use.")
+				tempFile, err := ioutil.TempFile("", "algernon")
+				if err != nil {
+					log.Fatal("Unable to find a temporary file to use:", err)
+				} else {
+					boltFilename = tempFile.Name() + ".db"
+				}
 			} else {
 				log.Errorf("Could not use Bolt as database backend: %s", err)
 			}
 		} else {
-			dbName = "Bolt (" + defaultBoltFilename + ")"
+			dbName = "Bolt (" + boltFilename + ")"
+		}
+		// Try the new database filename if there was a timeout
+		if boltFilename != defaultBoltFilename {
+			perm, err = bolt.NewWithConf(boltFilename)
+			if err != nil {
+				if err.Error() == "timeout" {
+					log.Error("The Bolt database timed out!")
+				} else {
+					log.Errorf("Could not use Bolt as database backend: %s", err)
+				}
+			} else {
+				dbName = "Bolt, temporary"
+			}
 		}
 	}
 	if dbName == "" {
@@ -336,6 +373,8 @@ func main() {
 			EventServer(eventAddr, defaultEventPath, serverDir, refreshDuration, "*")
 		}
 	}
+
+	// Channel for sending an OK the moment we are serving something
 
 	if !serverMode {
 		go REPL(perm, luapool, cache)

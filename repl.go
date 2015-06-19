@@ -183,7 +183,6 @@ Type "webhelp" for an overview of functions that are available when
 handling requests. Or "confighelp" for an overview of functions that are
 available when configuring an Algernon application.
 `
-	exitMessage = "bye"
 	webHelpText = `Available functions:
 
 Handling users and permissions
@@ -339,6 +338,7 @@ DenyHandler(function)
 // when the server is ready to start serving.
 OnReady(function)
 `
+	exitMessage = "bye"
 )
 
 // Attempt to output a more informative text than the memory location
@@ -505,16 +505,23 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 	exportCacheFunctions(L, cache)
 
 	o.Println(o.LightBlue(versionString))
-	o.Println(o.LightGreen("Ready"))
 
 	// Add a newline after the prompt to prepare for logging, if in verbose mode
 	go func() {
+		// TODO Consider using a channel instead of sleep, even
+		//      if the following output is purely cosmetic.
 		if verboseMode {
-			// TODO Consider using a channel instead of sleep for outputting the cosmetic newline...
 			time.Sleep(200 * time.Millisecond)
 			fmt.Println()
 		}
 	}()
+
+	// TODO: Send a pull request to the graceful shutdown package to add the ability to
+	//       get information on if the server is serving something or not.
+
+	// Wait to give the server some time to start serving before saying "Ready"
+	time.Sleep(100 * time.Millisecond)
+	o.Println(o.LightGreen("Ready"))
 
 	// Start the read, eval, print loop
 	var (
@@ -551,7 +558,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 				continue
 			default:
 				mustSaveHistory(o, historyFilename)
-				o.Println(o.LightGreen(exitMessage))
+				o.Println(o.LightBlue(exitMessage))
 				os.Exit(0)
 			}
 		}
@@ -577,7 +584,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 			continue
 		case "quit", "exit", "shutdown", "halt":
 			mustSaveHistory(o, historyFilename)
-			o.Println(o.LightGreen(exitMessage))
+			o.Println(o.LightBlue(exitMessage))
 			os.Exit(0)
 		case "zalgo":
 			// Easter egg
