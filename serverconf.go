@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
+	bolt "github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
+	redis "github.com/xyproto/permissions2"
+	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
+	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -206,4 +211,129 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		return 1 // number of results
 	}))
 
+}
+
+// Use one of the databases for the permission middleware,
+// assign a name to dbName (used for the status output) and
+// return a Permissions struct.
+func mustAquirePermissions() pinterface.IPermissions {
+	var (
+		err  error
+		perm pinterface.IPermissions
+	)
+
+	// If Bolt is to be used and no filename is given
+	if useBolt && (boltFilename == "") {
+		boltFilename = defaultBoltFilename
+	}
+
+	if boltFilename != "" {
+		// New permissions middleware, using a Bolt database
+		perm, err = bolt.NewWithConf(boltFilename)
+		if err != nil {
+			if err.Error() == "timeout" {
+				tempFile, err := ioutil.TempFile("", "algernon")
+				if err != nil {
+					log.Fatal("Unable to find a temporary file to use:", err)
+				} else {
+					boltFilename = tempFile.Name() + ".db"
+				}
+			} else {
+				log.Errorf("Could not use Bolt as database backend: %s", err)
+			}
+		} else {
+			dbName = "Bolt (" + boltFilename + ")"
+		}
+		// Try the new database filename if there was a timeout
+		if boltFilename != defaultBoltFilename {
+			perm, err = bolt.NewWithConf(boltFilename)
+			if err != nil {
+				if err.Error() == "timeout" {
+					log.Error("The Bolt database timed out!")
+				} else {
+					log.Errorf("Could not use Bolt as database backend: %s", err)
+				}
+			} else {
+				dbName = "Bolt, temporary"
+			}
+		}
+	}
+	if dbName == "" && mariadbDSN != "" {
+		// New permissions middleware, using a MariaDB/MySQL database
+		perm, err = mariadb.NewWithDSN(mariadbDSN, mariaDatabase)
+		if err != nil {
+			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+		} else {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "MariaDB/MySQL"
+		}
+	}
+	if dbName == "" && mariaDatabase != "" {
+		// Given a database, but not a host, connect to localhost
+		// New permissions middleware, using a MariaDB/MySQL database
+		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + mariaDatabase)
+		if err != nil {
+			if mariaDatabase != "" {
+				log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+			} else {
+				log.Warnf("Could not use MariaDB/MySQL as database backend: %s", err)
+			}
+		} else {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "MariaDB/MySQL"
+		}
+	}
+	if dbName == "" {
+		// New permissions middleware, using a Redis database
+		if err := simpleredis.TestConnectionHost(redisAddr); err != nil {
+			// Only output an error when a Redis host other than the default host+port was specified
+			if redisAddrSpecified {
+				if singleFileMode {
+					log.Warnf("Could not use Redis as database backend: %s", err)
+				} else {
+					log.Errorf("Could not use Redis as database backend: %s", err)
+				}
+			}
+		} else {
+			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
+			dbName = "Redis"
+		}
+	}
+	if dbName == "" && boltFilename == "" {
+		boltFilename = defaultBoltFilename
+		perm, err = bolt.NewWithConf(boltFilename)
+		if err != nil {
+			if err.Error() == "timeout" {
+				tempFile, err := ioutil.TempFile("", "algernon")
+				if err != nil {
+					log.Fatal("Unable to find a temporary file to use:", err)
+				} else {
+					boltFilename = tempFile.Name() + ".db"
+				}
+			} else {
+				log.Errorf("Could not use Bolt as database backend: %s", err)
+			}
+		} else {
+			dbName = "Bolt (" + boltFilename + ")"
+		}
+		// Try the new database filename if there was a timeout
+		if boltFilename != defaultBoltFilename {
+			perm, err = bolt.NewWithConf(boltFilename)
+			if err != nil {
+				if err.Error() == "timeout" {
+					log.Error("The Bolt database timed out!")
+				} else {
+					log.Errorf("Could not use Bolt as database backend: %s", err)
+				}
+			} else {
+				dbName = "Bolt, temporary"
+			}
+		}
+	}
+	if dbName == "" {
+		// This may typically happen if Algernon is already running
+		log.Fatalln("Could not find a usable database backend.")
+	}
+
+	return perm
 }

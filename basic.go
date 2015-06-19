@@ -109,6 +109,16 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 1 // number of results
 	}))
 
+	// Return the HTTP headers as a table
+	L.SetGlobal("headers", L.NewFunction(func(L *lua.LState) int {
+		luaTable := L.NewTable()
+		for key := range req.Header {
+			L.RawSet(luaTable, lua.LString(key), lua.LString(req.Header.Get(key)))
+		}
+		L.Push(luaTable)
+		return 1 // number of results
+	}))
+
 	// Return the HTTP header in the request, for a given key/string
 	L.SetGlobal("header", L.NewFunction(func(L *lua.LState) int {
 		key := L.ToString(1)

@@ -297,6 +297,8 @@ urlpath() -> string
 header(string) -> string
 // Set an HTTP header given a key and a value.
 setheader(string, string)
+// Return the HTTP headers, as a table.
+headers() -> table
 // Return the HTTP body in the request
 // (will only read the body once, since it's streamed).
 body() -> string
