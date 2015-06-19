@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
+	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
 	"os"
 	"path/filepath"
@@ -343,26 +345,68 @@ OnReady(function)
 	exitMessage = "bye"
 )
 
-// Attempt to output a more informative text than the memory location
+// Convert a Lua table to a map by using gluamapper.
+// If the map really is an array (all the keys are indices), return true.
+func table2mapinterface(luaTable *lua.LTable) (map[interface{}]interface{}, bool) {
+	var (
+		m         = make(map[interface{}]interface{})
+		opt       = gluamapper.Option{}
+		indices   []uint64
+		i, length uint64
+	)
+	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
+		if i, isNum := tkey.(lua.LNumber); isNum {
+			indices = append(indices, uint64(i))
+		}
+		m[gluamapper.ToGoValue(tkey, opt)] = gluamapper.ToGoValue(tvalue, opt)
+		length++
+	})
+	// Report back as a map, not an array, if there are no elements
+	if length == 0 {
+		return m, false
+	}
+	// Loop through every index that must be present in an array
+	isAnArray := true
+	for i = 1; i <= length; i++ {
+		// The map must have this index in order to be an array
+		hasIt := false
+		for _, val := range indices {
+			if val == i {
+				hasIt = true
+				break
+			}
+		}
+		if !hasIt {
+			isAnArray = false
+			break
+		}
+	}
+	return m, isAnArray
+}
+
+// Output more informative information than the memory location.
+// Attempt to extract and print the values of the given lua.LValue.
 func pprint(value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:
-		mapinterface, multiple := table2map(v)
-		if multiple {
-			fmt.Println(v)
-		}
-		// TODO: Use reflect
-		switch m := mapinterface.(type) {
-		case map[string]string:
-			fmt.Printf("%#v\n", map[string]string(m))
-		case map[string]int:
-			fmt.Printf("%#v\n", map[string]int(m))
-		case map[int]string:
-			fmt.Printf("%#v\n", map[int]string(m))
-		case map[int]int:
-			fmt.Printf("%#v\n", map[int]int(m))
-		default:
-			fmt.Println(v)
+		m, isAnArray := table2mapinterface(v)
+		if isAnArray {
+			var buf bytes.Buffer
+			buf.WriteString("{")
+			// Order the map
+			length := len(m)
+			for i := 1; i <= length; i++ {
+				val := m[float64(i)] // gluamapper uses float64 for all numbers
+				buf.WriteString(fmt.Sprintf("%#v", val))
+				if i != length {
+					// Output a comma for every element except the last one
+					buf.WriteString(", ")
+				}
+			}
+			buf.WriteString("}")
+			fmt.Println(buf.String())
+		} else {
+			fmt.Println(fmt.Sprintf("%#v", m)[29:])
 		}
 	case *lua.LFunction:
 		if v.Proto != nil {
