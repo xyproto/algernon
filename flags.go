@@ -89,6 +89,9 @@ var (
 
 	// Output
 	quietMode bool
+
+	// If a single "server.lua" file is provided, or Server() is used.
+	luaServerFilename string
 )
 
 func usage() {

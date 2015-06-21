@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	bolt "github.com/xyproto/permissionbolt"
@@ -64,6 +65,10 @@ func serverInfo() string {
 	buf.WriteString("Server address:\t\t" + serverAddr + "\n")
 	buf.WriteString("Database:\t\t" + dbName + "\n")
 
+	if luaServerFilename != "" {
+		buf.WriteString("Server filename:\t" + luaServerFilename + "\n")
+	}
+
 	// Write the status of flags that can be toggled
 	writeStatus(&buf, "Options", map[string]bool{
 		"Debug":        debugMode,
@@ -112,8 +117,7 @@ func serverInfo() string {
 // Make functions related to server configuration and permissions available
 func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, filename string, luapool *lStatePool) {
 
-	// Registers a path prefix, for instance "/secret",
-	// as having *admin* rights.
+	// Set a default host and port. Maybe useful for alg applications.
 	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
 		serverAddrLua = L.ToString(1)
 		return 0 // number of results
@@ -201,6 +205,20 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		}
 		// Set the file to log to and return
 		log.SetOutput(f)
+		L.Push(lua.LBool(true))
+		return 1 // number of results
+	}))
+
+	// Use a single Lua file as the server, instead of directory structure
+	L.SetGlobal("ServerFile", L.NewFunction(func(L *lua.LState) int {
+		givenFilename := L.ToString(1)
+		serverfilename := filepath.Join(filepath.Dir(filename), givenFilename)
+		if !exists(filename) {
+			log.Error("Could not find", serverfilename)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		luaServerFilename = serverfilename
 		L.Push(lua.LBool(true))
 		return 1 // number of results
 	}))

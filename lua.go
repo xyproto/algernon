@@ -238,7 +238,7 @@ func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm 
 
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool) error {
+func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, singleFileMode bool) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -269,7 +269,12 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 	exportPluginFunctions(L, nil)
 
 	// Cache
-	//exportCacheFunctions(L, cache)
+	exportCacheFunctions(L, cache)
+
+	if singleFileMode {
+		// Lua HTTP handlers
+		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux)
+	}
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {

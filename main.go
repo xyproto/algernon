@@ -55,8 +55,8 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 func main() {
 	var err error
 
-	// Use all CPUs. Soon to be the default for Go.
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	// Use all CPUs times 4, for performance. Needs more benchmarking.
+	runtime.GOMAXPROCS(runtime.NumCPU() * 4)
 
 	// Temporary directory that might be used for logging, databases or file extraction
 	serverTempDir, err := ioutil.TempDir("", "algernon")
@@ -163,8 +163,10 @@ func main() {
 	// be used for reading files, also when caching is disabled).
 	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
 
-	// Register HTTP handler functions
-	registerHandlers(mux, serverDir, perm, luapool, cache)
+	if singleFileMode && filepath.Base(serverDir) == "server.lua" {
+		log.Info("Lua Server File")
+		luaServerFilename = serverDir
+	}
 
 	// Log to a file as JSON, if a log file has been specified
 	if serverLogFile != "" {
@@ -188,7 +190,7 @@ func main() {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
-			if err := runConfiguration(filename, perm, luapool); err != nil {
+			if err := runConfiguration(filename, perm, luapool, cache, mux, false); err != nil {
 				log.Error("Could not use configuration script: " + filename)
 				fatalExit(err)
 			}
@@ -197,6 +199,15 @@ func main() {
 	}
 	// Only keep the active ones. Used when outputting server information.
 	serverConfigurationFilenames = ranConfigurationFilenames
+
+	// Run the standalone Lua server, if specified
+	if luaServerFilename != "" {
+		// Run the Lua server file and set up handlers
+		runConfiguration(luaServerFilename, perm, luapool, cache, mux, true)
+	} else {
+		// Register HTTP handler functions
+		registerHandlers(mux, serverDir, perm, luapool, cache)
+	}
 
 	// Set the values that has not been set by flags nor scripts
 	// (and can be set by both)
