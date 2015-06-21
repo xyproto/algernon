@@ -675,8 +675,8 @@ GenerateUniqueConfirmationCode() -> string
 ~~~
 
 
-Lua functions that are available for the server configuration file
-------------------------------------------------------------------
+Lua functions that are available for server configuration files
+---------------------------------------------------------------
 
 ~~~c
 // Set the default address for the server on the form [host][:port].
@@ -713,6 +713,20 @@ warn(...)
 
 // Provide a lua function that will be run once, when the server is ready to start serving.
 OnReady(function)
+
+// Use a Lua file for setting up HTTP handlers instead of using the directory structure.
+ServerFile(string) -> bool
+~~~
+
+Functions that are available for Lua server files
+-------------------------------------------------
+
+This function is only available from `server.lua`, or from Lua files that are specified with the `ServerFile` function.
+
+~~~c
+// Given an URL path prefix (like "/") and a Lua function, set up an HTTP handler.
+// The given Lua function should take no arguments, but can use all the Lua functions for handling requests, like `content` and `print`.
+handle(string, function)
 ~~~
 
 
@@ -723,6 +737,13 @@ Releases
 * [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64).
 * [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb)
 * Source releases are tagged as such.
+
+
+Requirements
+------------
+
+* go >= 1.4
+* readline, for UNIX-like systems
 
 
 General information
