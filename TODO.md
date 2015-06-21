@@ -2,31 +2,32 @@
 
 Priority
 --------
-- [ ] Add Lua functions for serving files and directories for given routes. Lookup routes in the handler function.
-      Must also be available from the application configuration file.
 - [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
       This allows gzipped data to be sent directly from the cache.
 - [ ] Dockerfile.
 - [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
 - [ ] File upload.
-- [ ] Functions for registering a route and a lua function as a HTTP handler (in serverconf.lua)
 - [ ] Add a function for loading all plugins in a "plugins" directory.
 - [ ] Make an application (and way) to upload .alg applications and host them.
 - [ ] Make it easy to host Algernon applications for other people.
 - [ ] User management interface.
+
 
 Go / go vet / go lint
 ---------------------
 - [ ] Two identical lines in a row that is the same assignment should result in an error.
 - [ ] Constant byte slices should be allowed.
 
+
 Various
 -------
-- [ ] Mention the `jman` package in the README.
+- [ ] Consider using the path/filepath package for walking directories
+- [ ] Add editor syntax highlight files
+- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4)
 - [ ] Use a struct for the configuration variables.
 - [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases
-- [ ] Add a lua function for removing all entries without a hit in the cache
+- [ ] Add a lua function for removing all cache entries without a hit
 - [ ] Add a lua function for running a lua function periodically
 - [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
 - [ ] Add a cache mode for caching binary files only
@@ -34,16 +35,14 @@ Various
 - [ ] Installer for Windows (msi)
 - [ ] pprint should output text to the browser when not running in the repl
 - [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
-- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4)
 - [/] Use some of the tricks from go-bootstrap.io
 - [ ] Downloading and uploading files
 - [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
-- [ ] Use https://github.com/sbinet/igo instead of readline.
+- [ ] Consider using https://github.com/sbinet/igo instead of readline.
 - [ ] Create a utility for creating and running new projects, ala Meteor
 - [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
 - [ ] MSI installer
 - [ ] deb/ppa
-- [ ] Marshalling and unmarshalling from Lua tables to and from JSON, regardless of LValue
 
 
 Events
@@ -67,14 +66,17 @@ Server configuration
 - [ ] Server setting for enabling caching.
 - [ ] A way to recompile templates on command while the server is running.
 
+
 REPL
 ----
 - [ ] See if a package related to gopher-lua can do the same as the pprint function
 - [ ] If so, use the same functionality when converting from Lua tables to JSON
 
+
 Plugins
 -------
 - [ ] Unmarshal the CallPlugin reply into appropriate Lua structures instead of returning a JSON string
+
 
 Additional security
 -------------------
@@ -173,16 +175,11 @@ Unusual features
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon. Update: Someone else has made a format for this! https://github.com/cparnot/ASCIImage
 
 
-Various
--------
-
-- [ ] Consider using the path/filepath package for walking directories
-- [ ] Add editor syntax highlight files
-
 
 Maybe
 -----
 
+- [ ] Mention the `jpath` package in the README.
 - [ ] Support for plugins written in BF
 - [ ] A flag to store the Bolt database inside the given zip file?
 - [ ] Keep all configuration settings in Redis. Use an external package for handling configuration.
