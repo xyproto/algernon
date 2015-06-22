@@ -218,7 +218,7 @@ func main() {
 		}
 	} else {
 		// Register HTTP handler functions
-		registerHandlers(mux, serverDir, perm, luapool, cache)
+		registerHandlers(mux, "/", serverDir, perm, luapool, cache)
 	}
 
 	// Set the values that has not been set by flags nor scripts

@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"github.com/bkaradzic/go-lz4"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -271,4 +273,13 @@ func enabledStatus(enabled bool) string {
 		return "enabled"
 	}
 	return "disabled"
+}
+
+// Write gzipped data to a Writer
+func gzipWrite(w io.Writer, data []byte) error {
+	// Write gzipped data to the client
+	gw, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+	defer gw.Close()
+	gw.Write(data)
+	return err
 }

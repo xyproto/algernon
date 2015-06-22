@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/yuin/gopher-lua"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,13 +18,23 @@ import (
 	"github.com/xyproto/pinterface"
 )
 
-const pathsep = string(os.PathSeparator)
+const (
+	// Path separator
+	pathsep = string(filepath.Separator)
+
+	// Gzip content over this size
+	gzipThreshold = 4096
+)
 
 var (
 	// List of filenames that should be displayed instead of a directory listing
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
 
+	// Used for setting mime types
 	mimereader *mime.Reader
+
+	// Placed in the header when responding
+	luaVersionString = lua.PackageName + "/" + lua.PackageVersion
 )
 
 // When serving a file. The file must exist. Must be given a full filename.
@@ -50,7 +61,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the markdown page
-		markdownPage(w, markdowndata, filename, cache)
+		markdownPage(w, req, markdowndata, filename, cache)
 
 		return
 
@@ -105,7 +116,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the Amber page, using functions from data.lua, if available
-		amberPage(w, filename, luafilename, amberdata, funcs, cache)
+		amberPage(w, req, filename, luafilename, amberdata, funcs, cache)
 
 		return
 
@@ -123,7 +134,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the GCSS page as CSS
-		gcssPage(w, filename, gcssdata)
+		gcssPage(w, req, filename, gcssdata)
 
 		return
 
@@ -141,11 +152,13 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the JSX page as JavaScript
-		jsxPage(w, filename, jsxdata)
+		jsxPage(w, req, filename, jsxdata)
 
 		return
 
 	case ".lua":
+
+		luaHeader(w)
 
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
@@ -204,13 +217,25 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			log.Errorf("Can't open %s: %s", filename, err)
 		}
 	}
+
 	// Serve the file
-	w.Write(fileData)
-	return
+	dataToClient(w, req, fileData)
+}
+
+// Credit gopher-lua
+func luaHeader(w http.ResponseWriter) {
+	w.Header().Set("X-Powered-By", lua.PackageName+" "+lua.PackageVersion+" by "+lua.PackageAuthors)
+}
+
+// Server headers that are set before anything else
+func serverHeaders(w http.ResponseWriter) {
+	w.Header().Set("Server", versionString)
+	w.Header().Set("X-XSS-Protection", "1; mode=block")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
 
 // Directory listing
-func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
+func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname string) {
 	var buf bytes.Buffer
 	for _, filename := range getFilenames(dirname) {
 
@@ -260,7 +285,31 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 		htmldata = insertAutoRefresh(htmldata)
 	}
 
-	w.Write(htmldata)
+	dataToClient(w, req, htmldata)
+}
+
+// Write the data to the client. Gzip if suitable.
+func dataToClient(w http.ResponseWriter, req *http.Request, data []byte) {
+	datalen := len(data)
+	canGzip := strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
+
+	// Set the content length. It's important that this value always is correct.
+	w.Header().Set("Content-Length", strconv.Itoa(datalen))
+
+	// Use gzip if the client supports it and the data is over the gzipThreshold
+	if canGzip && datalen > gzipThreshold {
+		// Set gzip headers
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Add("Vary", "Accept-Encoding")
+		if err := gzipWrite(w, data); err != nil {
+			log.Error(err)
+			// Write uncompressed data if gzip should fail
+			w.Header().Set("Content-Encoding", "identity")
+			w.Write(data)
+		}
+	} else {
+		w.Write(data)
+	}
 }
 
 // Serve a directory. The directory must exist.
@@ -282,7 +331,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 		}
 	}
 	// Serve a directory listing of no index file is found
-	directoryListing(w, rootdir, dirname)
+	directoryListing(w, req, rootdir, dirname)
 }
 
 // When a file is not found
@@ -296,7 +345,7 @@ func initializeMime() {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 	rootdir := servedir
 
 	// Handle all requests with this function
@@ -320,7 +369,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 		hasfile := exists(noslash)
 
 		// Set the server header.
-		w.Header().Set("Server", versionString)
+		serverHeaders(w)
 
 		// Share the directory or file
 		if hasdir {
@@ -338,11 +387,11 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 
 	// Handle requests differently depending on if rate limiting is enabled or not
 	if disableRateLimiting {
-		mux.HandleFunc("/", allRequests)
+		mux.HandleFunc(handlePath, allRequests)
 	} else {
 		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
 		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
-		mux.Handle("/", tollbooth.LimitFuncHandler(limiter, allRequests))
+		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

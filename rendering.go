@@ -12,6 +12,7 @@ import (
 	"github.com/yuin/gopher-lua"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -116,7 +117,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w http.ResponseWriter, data []byte, filename string, cache *FileCache) {
+func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and code_theme information
 	given := map[string]string{"title": "", "code_theme": defaultTheme}
 
@@ -156,6 +157,7 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string, cache *Fi
 	}
 
 	var head bytes.Buffer
+
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
@@ -202,8 +204,8 @@ func markdownPage(w http.ResponseWriter, data []byte, filename string, cache *Fi
 		htmldata = insertAutoRefresh(htmldata)
 	}
 
-	// Write the rendered Markdown page to the http.ResponseWriter
-	w.Write(htmldata)
+	// Write the rendered Markdown page to the client
+	dataToClient(w, req, htmldata)
 }
 
 // Check if the given data is valid GCSS
@@ -216,7 +218,7 @@ func validGCSS(gcssdata []byte) error {
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
-func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
+func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
 
@@ -286,14 +288,15 @@ func amberPage(w http.ResponseWriter, filename, luafilename string, amberdata []
 	changedBuf := bytes.NewBuffer(insertDoctype(buf.Bytes()))
 	buf = *changedBuf
 
-	// Write the rendered template to the http.ResponseWriter
-	buf.WriteTo(w)
+	// Write the rendered template to the client
+	dataToClient(w, req, buf.Bytes())
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
 // filename is only used if there are errors.
-func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
-	if _, err := gcss.Compile(w, bytes.NewReader(gcssdata)); err != nil {
+func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdata []byte) {
+	var buf bytes.Buffer
+	if _, err := gcss.Compile(&buf, bytes.NewReader(gcssdata)); err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Could not compile GCSS:\n\n%s\n%s", err, string(gcssdata))
 		} else {
@@ -301,9 +304,11 @@ func gcssPage(w http.ResponseWriter, filename string, gcssdata []byte) {
 		}
 		return
 	}
+	// Write the resulting GCSS to the client
+	dataToClient(w, req, buf.Bytes())
 }
 
-func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
+func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
 	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
 		if debugMode {
@@ -323,6 +328,12 @@ func jsxPage(w http.ResponseWriter, filename string, jsxdata []byte) {
 		return
 	}
 	if gen != nil {
-		io.Copy(w, gen)
+		data, err := ioutil.ReadAll(gen)
+		if err != nil {
+			log.Error("Could not read bytes from JSX generator:", err)
+			return
+		}
+		// Write the generated data to the client
+		dataToClient(w, req, data)
 	}
 }
