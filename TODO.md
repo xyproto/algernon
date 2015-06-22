@@ -13,6 +13,15 @@ Priority
 - [ ] User management interface.
 
 
+Routing
+-------
+- [ ] Server("host:port", "/srv/http/somedirectory", "/var/log/algernon/logfile.log")
+- [ ] Redirect("host/path:port", ":port/path")
+- [ ] Rewrite("host:port", "host:port/path")
+- [ ] RewritePrefix("www.", "")
+- [ ] RewritePort("host", 443, 80)
+
+
 Go / go vet / go lint
 ---------------------
 - [ ] Two identical lines in a row that is the same assignment should result in an error.
