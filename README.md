@@ -753,7 +753,7 @@ Requirements
 General information
 -------------------
 
-* Version: 0.8
+* Version: 0.81
 * License: MIT
 * Alexander F Rødseth
 
