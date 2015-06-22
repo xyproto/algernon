@@ -44,10 +44,21 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 	}))
 
 	L.SetGlobal("servedir", L.NewFunction(func(L *lua.LState) int {
-		dirname := L.ToString(1) // serve as (ie. "/")
+		handlePath := L.ToString(1) // serve as (ie. "/")
 		rootdir := L.ToString(2) // filesystem directory (ie. "./public")
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
-		mux.Handle(dirname, http.FileServer(http.Dir(rootdir)))
+		handler := http.FileServer(http.Dir(rootdir))
+
+		// Handle requests differently depending on if rate limiting is enabled or not
+		if disableRateLimiting {
+			mux.Handle(handlePath, handler)
+		} else {
+			limiter := tollbooth.NewLimiter(limitRequests, time.Second)
+			limiter.MessageContentType = "text/html; charset=utf-8"
+			limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
+			mux.Handle(handlePath, tollbooth.LimitHandler(limiter, handler))
+		}
+
 		return 0 // number of results
 	}))
 

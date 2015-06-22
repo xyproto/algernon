@@ -727,6 +727,10 @@ This function is only available from `server.lua`, or from Lua files that are sp
 // Given an URL path prefix (like "/") and a Lua function, set up an HTTP handler.
 // The given Lua function should take no arguments, but can use all the Lua functions for handling requests, like `content` and `print`.
 handle(string, function)
+
+// Given an URL prefix like "/" and a directory, serve the files and directories.
+// Offers rate-limiting, but not permission handling.
+servedir(string, string)
 ~~~
 
 
