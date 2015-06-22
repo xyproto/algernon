@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/didip/tollbooth"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -39,6 +40,14 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 			mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, wrappedHandleFunc))
 		}
 
+		return 0 // number of results
+	}))
+
+	L.SetGlobal("servedir", L.NewFunction(func(L *lua.LState) int {
+		dirname := L.ToString(1) // serve as (ie. "/")
+		rootdir := L.ToString(2) // filesystem directory (ie. "./public")
+		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
+		mux.Handle(dirname, http.FileServer(http.Dir(rootdir)))
 		return 0 // number of results
 	}))
 

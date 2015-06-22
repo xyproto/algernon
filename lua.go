@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
@@ -137,7 +138,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	exportJFile(L)
+	exportJFile(L, filepath.Dir(filename))
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
@@ -260,7 +261,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	exportJFile(L)
+	exportJFile(L, filepath.Dir(filename))
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)

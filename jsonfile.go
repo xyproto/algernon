@@ -7,6 +7,7 @@ import (
 	"github.com/xyproto/jpath"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
@@ -164,7 +165,7 @@ var jfileMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to building a library of Lua code available
-func exportJFile(L *lua.LState) {
+func exportJFile(L *lua.LState, scriptdir string) {
 
 	// Register the JFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lJFileClass)
@@ -177,7 +178,7 @@ func exportJFile(L *lua.LState) {
 		filename := L.ToString(1)
 
 		// Construct a new JFile
-		userdata, err := constructJFile(L, filename)
+		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename))
 		if err != nil {
 			log.Error(err)
 			L.Push(lua.LString(err.Error()))

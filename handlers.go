@@ -263,8 +263,9 @@ func directoryListing(w http.ResponseWriter, rootdir, dirname string) {
 	w.Write(htmldata)
 }
 
-// When serving a directory.
-// The directory must exist. Must be given a full filename.
+// Serve a directory. The directory must exist.
+// rootdir is the base directory (can be ".")
+// dirname is the specific directory that is to be served (should never be ".")
 func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
 	// If the URL does not end with a slash, redirect to an URL that does
@@ -315,6 +316,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 			noslash = filename[:len(filename)-1]
 		}
 		hasdir := exists(filename) && isDir(filename)
+		dirname := filename
 		hasfile := exists(noslash)
 
 		// Set the server header.
@@ -322,7 +324,7 @@ func registerHandlers(mux *http.ServeMux, servedir string, perm pinterface.IPerm
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, filename, perm, luapool, cache)
+			dirPage(w, req, rootdir, dirname, perm, luapool, cache)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
