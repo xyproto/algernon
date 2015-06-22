@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -196,7 +197,8 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 			// For operating systems that use another path separator for files than for URLs
 			targetpath = strings.Replace(targetpath, pathsep, "/", everyInstance)
 		}
-		L.Push(lua.LString(targetpath))
+		withSlashPrefix := path.Join("/", targetpath)
+		L.Push(lua.LString(withSlashPrefix))
 		return 1 // number of results
 	}))
 
