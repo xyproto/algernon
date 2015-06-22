@@ -7,7 +7,6 @@ import (
 	"github.com/xyproto/jpath"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 )
 
@@ -133,7 +132,7 @@ func jfileJSON(L *lua.LState) int {
 
 // Create a new JSON file
 func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
-	fullFilename := filepath.Join(filepath.Dir(serverDir), filename)
+	fullFilename := filename
 	// Check if the file exists
 	if !exists(fullFilename) {
 		// Create an empty JSON document/file

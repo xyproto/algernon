@@ -164,8 +164,9 @@ func main() {
 	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
 
 	if singleFileMode && filepath.Base(serverDir) == "server.lua" {
-		log.Info("Lua Server File")
 		luaServerFilename = serverDir
+		serverDir = filepath.Dir(serverDir)
+		singleFileMode = false
 	}
 
 	// Log to a file as JSON, if a log file has been specified
@@ -180,6 +181,11 @@ func main() {
 	} else if quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
 		log.SetOutput(ioutil.Discard)
+	}
+
+	if quietMode {
+		os.Stdout.Close()
+		os.Stderr.Close()
 	}
 
 	// Read server configuration script, if present.
@@ -203,7 +209,13 @@ func main() {
 	// Run the standalone Lua server, if specified
 	if luaServerFilename != "" {
 		// Run the Lua server file and set up handlers
-		runConfiguration(luaServerFilename, perm, luapool, cache, mux, true)
+		if verboseMode {
+			fmt.Println("Running Lua Server File")
+		}
+		if err := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true); err != nil {
+			log.Error("Error in Lua server script: " + luaServerFilename)
+			fatalExit(err)
+		}
 	} else {
 		// Register HTTP handler functions
 		registerHandlers(mux, serverDir, perm, luapool, cache)

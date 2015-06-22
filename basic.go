@@ -165,22 +165,38 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	}))
 
 	// Get the full filename of a given file that is in the directory
-	// of the script that is about to be run.
-	// If no filename is given, the directory where the script lies
-	// is returned.
+	// of the script that is about to be run. If no filename is given,
+	// the directory of the script is returned.
 	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
-		scriptdir := filepath.Dir(filename)
+		scriptpath, err := filepath.Abs(filename)
+		if err != nil {
+			scriptpath = filename
+		}
+		scriptdir := filepath.Dir(scriptpath)
+		scriptpath = scriptdir
 		top := L.GetTop()
 		if top == 1 {
 			// Also include a separator and a filename
 			fn := L.ToString(1)
-			scriptdir += pathsep + fn
+			scriptpath = filepath.Join(scriptdir, fn)
+		}
+		// Now have the correct absolute scriptpath
+		L.Push(lua.LString(scriptpath))
+		return 1 // number of results
+	}))
+
+	// Given a filename, return the URL path
+	L.SetGlobal("file2url", L.NewFunction(func(L *lua.LState) int {
+		fn := L.ToString(1)
+		targetpath := filepath.Join(filepath.Dir(filename), fn)
+		if strings.HasPrefix(targetpath, serverDir) {
+			targetpath = targetpath[len(serverDir):]
 		}
 		if pathsep != "/" {
-			// For operating systems that use another path separator
-			scriptdir = strings.Replace(scriptdir, pathsep, "/", everyInstance)
+			// For operating systems that use another path separator for files than for URLs
+			targetpath = strings.Replace(targetpath, pathsep, "/", everyInstance)
 		}
-		L.Push(lua.LString(scriptdir))
+		L.Push(lua.LString(targetpath))
 		return 1 // number of results
 	}))
 
@@ -196,11 +212,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		} else if L.GetTop() == 1 {
 			// Also include a separator and a filename
 			fn := L.ToString(1)
-			serverdir += pathsep + fn
-		}
-		if pathsep != "/" {
-			// For operating systems that use another path separator
-			serverdir = strings.Replace(serverdir, pathsep, "/", everyInstance)
+			serverdir = filepath.Join(serverdir, fn)
 		}
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results

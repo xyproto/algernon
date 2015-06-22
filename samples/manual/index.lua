@@ -1,6 +1,6 @@
 aprint([[
 
-$css = "]] .. "/" .. scriptdir("css/style.css") .. [["
+$css = "]] .. file2url("css/style.css") .. [["
 $user = "]] .. Username() .. [["
 
 doctype 5
