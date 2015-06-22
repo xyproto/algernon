@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.81"
+	versionString = "Algernon 0.82"
 	description   = "HTTP/2 Web Server"
 )
 
