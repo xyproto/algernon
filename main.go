@@ -55,8 +55,8 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 func main() {
 	var err error
 
-	// Use all CPUs times 4, for performance. Needs more benchmarking.
-	runtime.GOMAXPROCS(runtime.NumCPU() * 4)
+	// TODO: Benchmark to see if runtime.NumCPU() * 4 scales better.
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Temporary directory that might be used for logging, databases or file extraction
 	serverTempDir, err := ioutil.TempDir("", "algernon")
