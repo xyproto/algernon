@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -55,7 +56,7 @@ func newServerConfiguration(mux *http.ServeMux, http2support bool, addr string) 
 func main() {
 	var err error
 
-	// TODO: Benchmark to see if runtime.NumCPU() * 4 scales better.
+	// TODO: Benchmark to see if runtime.NumCPU() * X scales better.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Temporary directory that might be used for logging, databases or file extraction
@@ -79,6 +80,22 @@ func main() {
 	// Console output
 	if !quietMode {
 		fmt.Println(banner())
+	}
+
+	// CPU profiling
+	if profileCPU != "" {
+		f, err := os.Create(profileCPU)
+		if err != nil {
+			log.Fatal(err)
+		}
+		go func() {
+			log.Info("Profiling")
+			pprof.StartCPUProfile(f)
+		}()
+		defer func() {
+			pprof.StopCPUProfile()
+			log.Info("Done profiling")
+		}()
 	}
 
 	// Dividing line between the banner and output from any of the configuration scripts
@@ -275,9 +292,24 @@ func main() {
 		}
 	}
 
+	// For communicating to and from the REPL
+	ready := make(chan bool) // for when the server is up and running
+	done := make(chan bool)  // for when the user wish to quit the server
+
+	// Handle ctrl-c
+	handleCtrlC(func(os.Signal) {
+		// TODO: Save repl history file, stop cpu profiling and close files at ctrl-c.
+		// No time to stop CPUProfile before the signal is handled somewhere else (graceful?)
+		// and the application is terminated. :/
+		println("ctrl-c")
+		//if profileCPU != "" {
+		//	pprof.StopCPUProfile()
+		//}
+	})
+
 	// The Lua REPL
 	if !serverMode {
-		go REPL(perm, luapool, cache)
+		go REPL(perm, luapool, cache, ready, done)
 	}
 
 	// Timeout when closing down the server
@@ -287,8 +319,8 @@ func main() {
 	switch {
 	case productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
+		log.Info("Serving HTTPS + HTTP/2 on " + serverHost + ":443")
 		go func() {
-			log.Info("Serving HTTPS + HTTP/2 on " + serverHost + ":443")
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
 			HTTPS2server := newServerConfiguration(mux, true, serverHost+":443")
@@ -298,45 +330,59 @@ func main() {
 			}
 		}()
 		log.Info("Serving HTTP on " + serverHost + ":80")
-		HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
-		if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
-			// If we can't serve regular HTTP on port 80, give up
-			fatalExit(err)
-		}
+		go func() {
+			HTTPserver := newServerConfiguration(mux, false, serverHost+":80")
+			if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
+				// If we can't serve regular HTTP on port 80, give up
+				fatalExit(err)
+			}
+		}()
 	case serveJustHTTP2: // It's unusual to serve HTTP/2 withoutHTTPS
 		log.Info("Serving HTTP/2 on " + serverAddr)
-		// Listen for HTTP/2 requests
-		HTTP2server := newServerConfiguration(mux, true, serverAddr)
-		// Start serving. Shut down gracefully at exit.
-		if err := graceful.ListenAndServe(HTTP2server, shutdownTimeout); err != nil {
-			fatalExit(err)
-		}
+		go func() {
+			// Listen for HTTP/2 requests
+			HTTP2server := newServerConfiguration(mux, true, serverAddr)
+			// Start serving. Shut down gracefully at exit.
+			if err := graceful.ListenAndServe(HTTP2server, shutdownTimeout); err != nil {
+				fatalExit(err)
+			}
+		}()
 	case !(serveJustHTTP2 || serveJustHTTP):
+		tryPlainHTTP := false
 		log.Info("Serving HTTPS + HTTP/2 on " + serverAddr)
-		// Listen for HTTPS + HTTP/2 requests
-		HTTPS2server := newServerConfiguration(mux, true, serverAddr)
-		// Start serving. Shut down gracefully at exit.
-		if err := graceful.ListenAndServeTLS(HTTPS2server, serverCert, serverKey, shutdownTimeout); err != nil {
-			log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
-			log.Info("Use the -h flag to serve HTTP only")
-			// If HTTPS failed (perhaps the key + cert are missing), serve
-			// plain HTTP instead, by falling through to the next case, below.
-		} else {
-			// Don't fall through
+		go func() {
+			// Listen for HTTPS + HTTP/2 requests
+			HTTPS2server := newServerConfiguration(mux, true, serverAddr)
+			// Start serving. Shut down gracefully at exit.
+			if err := graceful.ListenAndServeTLS(HTTPS2server, serverCert, serverKey, shutdownTimeout); err != nil {
+				log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
+				log.Info("Use the -h flag to serve HTTP only")
+				// If HTTPS failed (perhaps the key + cert are missing), serve
+				// plain HTTP instead
+				tryPlainHTTP = true
+			}
+		}()
+		if !tryPlainHTTP {
 			break
 		}
-		// Serve regular HTTP instead
 		fallthrough
 	default:
 		log.Info("Serving HTTP on " + serverAddr)
-		HTTPserver := newServerConfiguration(mux, false, serverAddr)
+		go func() {
+			HTTPserver := newServerConfiguration(mux, false, serverAddr)
 
-		//if err := HTTPserver.ListenAndServe(); err != nil {
-
-		// Start serving. Shut down gracefully at exit.
-		if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
-			// If we can't serve regular HTTP, give up
-			fatalExit(err)
-		}
+			// Start serving. Shut down gracefully at exit.
+			if err := graceful.ListenAndServe(HTTPserver, shutdownTimeout); err != nil {
+				// If we can't serve regular HTTP, give up
+				fatalExit(err)
+			}
+		}()
 	}
+
+	ready <- true // Send a "ready" message to the REPL
+	<-done        // Wait for a "done" message from the REPL (or just keep waiting)
+
+	// Quit
+	// TODO: Remove this line, add -race, find out the problem with the graceful shutdown race condition at exit.
+	os.Exit(0)
 }

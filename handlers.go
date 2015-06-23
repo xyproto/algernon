@@ -229,7 +229,7 @@ func luaHeader(w http.ResponseWriter) {
 
 // Server headers that are set before anything else
 func serverHeaders(w http.ResponseWriter) {
-	w.Header().Set("Server", versionString)
+	w.Header().Set("Server", serverHeaderName)
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 }

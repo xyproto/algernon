@@ -92,6 +92,12 @@ var (
 
 	// If a single "server.lua" file is provided, or Server() is used.
 	luaServerFilename string
+
+	// Used in the HTTP headers as "Server"
+	serverHeaderName string
+
+	// CPU profile filename
+	profileCPU string
 )
 
 func usage() {
@@ -153,6 +159,8 @@ Available flags:
   --nolimit                    Disable rate limiting.
   -s, --server                 Server mode (disable interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
+  --servername                 Custom HTTP header for the server field.
+  --cpuprofile                 Write CPU profile to file.
 `)
 }
 
@@ -216,6 +224,8 @@ func handleFlags(serverTempDir string) string {
 	flag.Uint64Var(&cacheSize, "cachesize", defaultCacheSize, "Cache size, in bytes")
 	flag.BoolVar(&quietMode, "quiet", false, "Quiet")
 	flag.BoolVar(&rawCache, "rawcache", false, "Disable cache compression")
+	flag.StringVar(&serverHeaderName, "servername", versionString, "Server header name")
+	flag.StringVar(&profileCPU, "cpuprofile", "", "Write CPU profile to file")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

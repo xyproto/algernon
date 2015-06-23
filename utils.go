@@ -8,8 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -282,4 +284,16 @@ func gzipWrite(w io.Writer, data []byte) error {
 	defer gw.Close()
 	gw.Write(data)
 	return err
+}
+
+// Handle a single os.Interrupt with the given function
+func handleCtrlC(handle func(os.Signal)) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+	go func() {
+		for sig := range c {
+			handle(sig)
+		}
+	}()
 }

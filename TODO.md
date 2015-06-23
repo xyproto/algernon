@@ -2,11 +2,13 @@
 
 Priority
 --------
-- [ ] Dockerfile.
 - [ ] File upload.
+- [ ] Dockerfile.
+- [ ] Stress test with -race + profiling.
+- [ ] The "graceful" package sometimes shows up in a data race at shutdown. Figure out why.
+- [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
 - [ ] Use a struct for the configuration variables.
 - [ ] Compress files in the cache with gzip, then serve the compressed data directly when requested.
-- [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
 
 
 Go / go vet / go lint

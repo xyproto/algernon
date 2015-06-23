@@ -10,7 +10,6 @@ import (
 	"github.com/xyproto/term"
 	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -18,7 +17,7 @@ import (
 )
 
 const (
-	helpText = `Available functions:
+	generalHelpText = `Available functions:
 
 Data structures
 
@@ -508,9 +507,16 @@ func mustSaveHistory(o *term.TextOutput, historyFilename string) {
 	}
 }
 
+func outputHelp(o *term.TextOutput, helpText string) {
+	for _, line := range strings.Split(helpText, "\n") {
+		o.Println(highlight(o, line))
+	}
+	o.Println(usageMessage)
+}
+
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
 // A variatey of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
+func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, ready, done chan bool) error {
 	var (
 		historyFilename string
 		err             error
@@ -570,20 +576,18 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 	o.Println(o.LightBlue(versionString))
 
 	// Add a newline after the prompt to prepare for logging, if in verbose mode
-	go func() {
-		// TODO Consider using a channel instead of sleep, even
-		//      if the following output is purely cosmetic.
-		if verboseMode {
+	if verboseMode {
+		go func() {
+			// Using sleep instead of channels because using channels requires
+			// the getInput function to signal after the prompt is outputted, but
+			// before waiting for user input. Outputting a newline is purely cosmetic
+			// in any case, so using sleep works fine.
 			time.Sleep(200 * time.Millisecond)
 			fmt.Println()
-		}
-	}()
+		}()
+	}
 
-	// TODO: Send a pull request to the graceful shutdown package to add the ability to
-	//       get information on if the server is serving something or not.
-
-	// Wait to give the server some time to start serving before saying "Ready"
-	time.Sleep(100 * time.Millisecond)
+	<-ready // Wait for a "ready" message
 	o.Println(o.LightGreen("Ready"))
 
 	// Start the read, eval, print loop
@@ -622,7 +626,8 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 			default:
 				mustSaveHistory(o, historyFilename)
 				o.Println(o.LightBlue(exitMessage))
-				os.Exit(0)
+				done <- true
+				return nil
 			}
 		}
 
@@ -630,25 +635,20 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) e
 
 		switch line {
 		case "help":
-			for _, line := range strings.Split(helpText, "\n") {
-				o.Println(highlight(o, line))
-			}
+			outputHelp(o, generalHelpText)
 			o.Println(usageMessage)
 			continue
 		case "webhelp":
-			for _, line := range strings.Split(webHelpText, "\n") {
-				o.Println(highlight(o, line))
-			}
+			outputHelp(o, webHelpText)
 			continue
 		case "confighelp":
-			for _, line := range strings.Split(configHelpText, "\n") {
-				o.Println(highlight(o, line))
-			}
+			outputHelp(o, configHelpText)
 			continue
 		case "quit", "exit", "shutdown", "halt":
 			mustSaveHistory(o, historyFilename)
 			o.Println(o.LightBlue(exitMessage))
-			os.Exit(0)
+			done <- true
+			return nil
 		case "zalgo":
 			// Easter egg
 			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑̈ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
