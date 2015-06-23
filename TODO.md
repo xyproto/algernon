@@ -17,14 +17,13 @@ Go / go vet / go lint
 
 Various
 -------
-- [ ] Commandline flags for disabling gzip and extra HTTP headers.
-- [ ] Consider using the path/filepath package for walking directories.
+- [ ] Flag for removing the temporary Bolt database at exit.
+- [ ] Flag for disabling extra/secure HTTP headers.
 - [ ] Add editor syntax highlight files.
 - [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
-- [ ] Add a lua function for removing all cache entries without a hit
-- [ ] Add a lua function for running a lua function periodically
-- [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
+- [ ] Add a lua function for removing all cache entries without a hit.
+- [ ] Add a lua function for running a lua function periodically.
 - [ ] Add a cache mode for caching binary files only
 - [ ] Installer for OS X (pkg)
 - [ ] MSI installer.
@@ -57,10 +56,6 @@ Events
 Server configuration
 --------------------
 - [ ] Prefer environment variables and flags over lua server configuration.
-- [ ] Server setting for making pages reload automatically whenever a source file changes.
-- [ ] Server setting for enable the compilation of templates.
-- [ ] Server setting for enabling caching.
-- [ ] A way to recompile templates on command while the server is running.
 
 
 Routing
@@ -87,6 +82,7 @@ Plugins
 
 Additional security
 -------------------
+- [ ] Consider using https://github.com/unrolled/secure
 - [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes.
       Use code from "scoreserver".
 - [ ] Check that HTTP reads not only times out, but has a deadline.
@@ -102,7 +98,6 @@ Logging
 - [ ] A separate debug webserver / control panel running on a different port.
       For displaying stats, access logs, break-in attempts, errors in the code.
       Should also include an interactive REPL.
-- [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
 
 
 Console output
@@ -120,33 +115,21 @@ Documentation and samples
 - [ ] Make an application where .alg files can be uploaded and then hosted.
 
 
-Authentication and authorization
---------------------------------
-
-
 Lua
 ---
 - [ ] Wrap JNode in the same way as JFile.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries. (Like `require`, but over http)
-- [ ] A way to use Lua libraries for adding SQLite support.
-- [ ] A way to load parts of a page asynchronously.
-- [ ] Lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
-- [ ] A way to have external projects written in Go that can extend
-      the Lua state by adding functions. Perhaps adding functions to
-      the Lua State object by sending it packed over the network and
-      then receiving the modified Lua State.
 - [ ] In runLuaString, check if L.Close() really is needed instead of luapool.Put(L)
+- [ ] Way to load parts of a page asynchronously (with gopher-lua channels?)
+- [ ] Way to use Lua libraries for adding ie. SQLite support.
 
 
 Performance
 -----------
 - [ ] Minify CSS, JS and HTML (enabled by default, can be disabled)
-- [ ] Compress pages
 - [ ] Find a reliable way of measuring speed and emulating users. gor? https://github.com/buger/gor
 - [ ] Cache complied templates, not only the final result.
-- [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
-      This allows gzipped data to be sent directly from the cache.
 
 
 Unusual features
@@ -156,6 +139,8 @@ Unusual features
 
 Maybe
 -----
+- [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
+- [ ] Use the path/filepath package for walking directories.
 - [ ] Add a Lua function for outputting Lua tables to the client.
 - [ ] Add a Lua function for fetching a value from a table, or a blank string.
 - [ ] Add a Lua function for checking if a file exists.
@@ -189,3 +174,5 @@ Maybe
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously. Let Lua provide a callback function.
 - [ ] Configuration function for whitelisting URL prefixes.
 - [ ] Functions for adding URL prefixes to the whitelist
+- [ ] Lua function for reading the contents of a file in the script dir, but in a cached way.
+      Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
