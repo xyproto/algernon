@@ -263,7 +263,7 @@ func mustAquirePermissions() pinterface.IPermissions {
 			dbName = "Bolt (" + boltFilename + ")"
 		}
 		// Try the new database filename if there was a timeout
-		if boltFilename != defaultBoltFilename {
+		if dbName == "" && boltFilename != defaultBoltFilename {
 			perm, err = bolt.NewWithConf(boltFilename)
 			if err != nil {
 				if err.Error() == "timeout" {
