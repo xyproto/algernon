@@ -224,7 +224,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 // Credit gopher-lua
 func luaHeader(w http.ResponseWriter) {
-	w.Header().Set("X-Powered-By", lua.PackageName+" "+lua.PackageVersion+" by "+lua.PackageAuthors)
+	w.Header().Set("X-Powered-By", lua.PackageName+"/"+lua.PackageVersion+" by "+lua.PackageAuthors)
 }
 
 // Server headers that are set before anything else
