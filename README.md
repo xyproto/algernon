@@ -72,6 +72,21 @@ Features and limitations
 * Files that are sent to the client are seamlessly compressed with [gzip.BestSpeed](https://golang.org/pkg/compress/gzip/#BestSpeed) unless they are under 4096 bytes.
 
 
+Quick Installation
+------------------
+
+##### OS X
+  * `brew install algernon`
+  * Install [Homebrew](https://brew.sh), if needed.
+
+##### Arch Linux
+  * Install `algernon` from AUR, using your favorite AUR helper.
+
+##### Any system where go has been installed (and $GOPATH has been set)
+  * `go get github.com/xyproto/algernon`
+  * Optionally, add `$GOPATH/bin` to the PATH
+
+
 Overview
 --------
 
@@ -117,6 +132,7 @@ ASCII diagram:
 * Redis is fast and offers good [data persistence](http://redis.io/topics/persistence).
 * Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go.
 
+
 Screenshots
 -----------
 
@@ -148,23 +164,6 @@ Screenshots
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_react.png">
 
 *JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
-
-
-Quick Installation
-------------------
-
-##### OS X, latest release:
-  * Install [Homebrew](https://brew.sh), if needed:
-    `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-  * Install the latest version of Algernon:
-    `brew install algernon`
-
-##### Arch Linux, latest release:
-  * Install `algernon` from AUR, using your favorite AUR helper.
-
-##### Any system where go has been installed (and $GOPATH has been set), master branch:
-  * `go get github.com/xyproto/algernon`
-  * Optionally, add `$GOPATH/bin` to the PATH
 
 
 Getting started
@@ -311,6 +310,7 @@ gprint(...)
 // Output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 jprint(...)
 ~~~
+
 
 Lua functions related to JSON
 -----------------------------
@@ -720,8 +720,8 @@ OnReady(function)
 ServerFile(string) -> bool
 ~~~
 
-Functions that are available for Lua server files
--------------------------------------------------
+Functions that are only available for Lua server files
+------------------------------------------------------
 
 This function is only available from `server.lua`, or from Lua files that are specified with the `ServerFile` function in the server configuration.
 
@@ -733,6 +733,14 @@ handle(string, function)
 // Given an URL prefix (like "/") and a directory, serve the files and directories.
 servedir(string, string)
 ~~~
+
+Commands that are only available in the REPL
+--------------------------------------------
+
+* `help` displays a syntax highlighted overview of most functions.
+* `webhelp` displays a syntax highlighted overview of functions related to handling requests.
+* `confighelp` displays a syntax highlighted overview of functions related to server configuration.
+* `pprint` can be used for displaying a description, or contents, of Lua values.
 
 
 Releases
@@ -756,5 +764,4 @@ General information
 
 * Version: 0.82
 * License: MIT
-* Alexander F Rødseth
-
+* Alexander F Rødseth <xyproto@archlinux.org>
