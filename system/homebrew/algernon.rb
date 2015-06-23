@@ -83,7 +83,7 @@ class Algernon < Formula
 
       # Start the server in a fork
       algernon_pid = fork do
-        exec "#{bin}/algernon", "--quiet", "--httponly", "--server", "--addr", cport
+        exec "#{bin}/algernon", "--quiet", "--httponly", "--server", "--boltdb", tempdb, "--addr", cport
       end
 
       # Give the server some time to start serving
