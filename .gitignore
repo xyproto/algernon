@@ -44,3 +44,6 @@ plugins/cpp/main
 # Extracted zip files
 apps/first
 apps/withplugins
+
+# Debugging
+algernon.debug
