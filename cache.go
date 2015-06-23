@@ -407,7 +407,13 @@ func (cache *FileCache) clear() {
 	cache.rw.Lock()
 	defer cache.rw.Unlock()
 
-	cache = newFileCache(cache.size, cache.compress, cache.maxEntitySize)
+	cache.offset = 0
+	cache.index = make(map[fileID]uint64)
+	cache.hits = make(map[fileID]uint64)
+
+	// No need to clear the actual bytes, unless perhaps if there should be
+	// changes to the caching algorithm in the future.
+	//cache.blob = make([]byte, cache.size)
 
 	// Allow one warning if the cache should fill up
 	cache.cacheWarningGiven = false
