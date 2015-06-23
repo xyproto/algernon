@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -347,23 +348,32 @@ OnReady(function)
 
 // Convert a Lua table to a map by using gluamapper.
 // If the map really is an array (all the keys are indices), return true.
-func table2mapinterface(luaTable *lua.LTable) (map[interface{}]interface{}, bool) {
+func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
 	var (
 		m         = make(map[interface{}]interface{})
 		opt       = gluamapper.Option{}
 		indices   []uint64
 		i, length uint64
 	)
+	// Catch a problem that may occur when converting the map value with gluamapper.ToGoValue
+	defer func() {
+		if r := recover(); r != nil {
+			retmap = m
+			err = errors.New("Could not represent Lua structure table as a map")
+			return
+		}
+	}()
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
 		if i, isNum := tkey.(lua.LNumber); isNum {
 			indices = append(indices, uint64(i))
 		}
+		// If tkey or tvalue is an LTable, give up
 		m[gluamapper.ToGoValue(tkey, opt)] = gluamapper.ToGoValue(tvalue, opt)
 		length++
 	})
 	// Report back as a map, not an array, if there are no elements
 	if length == 0 {
-		return m, false
+		return m, false, nil
 	}
 	// Loop through every index that must be present in an array
 	isAnArray := true
@@ -381,7 +391,7 @@ func table2mapinterface(luaTable *lua.LTable) (map[interface{}]interface{}, bool
 			break
 		}
 	}
-	return m, isAnArray
+	return m, isAnArray, nil
 }
 
 // Output more informative information than the memory location.
@@ -389,8 +399,14 @@ func table2mapinterface(luaTable *lua.LTable) (map[interface{}]interface{}, bool
 func pprint(value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:
-		m, isAnArray := table2mapinterface(v)
+		m, isAnArray, err := table2mapinterface(v)
+		if err != nil {
+			// Could not convert to a map
+			fmt.Println(v)
+			return
+		}
 		if isAnArray {
+			// A map which is really an array (arrays in Lua are maps)
 			var buf bytes.Buffer
 			buf.WriteString("{")
 			// Order the map
@@ -405,9 +421,10 @@ func pprint(value lua.LValue) {
 			}
 			buf.WriteString("}")
 			fmt.Println(buf.String())
-		} else {
-			fmt.Println(fmt.Sprintf("%#v", m)[29:])
+			return
 		}
+		// A go map
+		fmt.Println(fmt.Sprintf("%#v", m)[29:])
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function
