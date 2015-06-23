@@ -31,6 +31,7 @@ Design decisions
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML.
     * data.lua is interpreted as Lua code, where the functions and variables are made available for Amber and Markdown pages in the same directory.
+    * If a file named server.lua is given as a commandline argument, it can be used as a standalone server, setting up handlers or serving files and directories for specific URL prefixes.
     * style.gcss is used as the style for Amber and Markdown pages in the same directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
@@ -67,7 +68,8 @@ Features and limitations
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
 * Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
-* Can read from and save to JSON documents. Supports simple JSON path expressions (like a very simple version of XPath, but for JSON).
+* Can read from and save to JSON documents. Supports simple JSON path expressions (like a simple version of XPath, but for JSON).
+* Files that are sent to the client are seamlessly compressed with [gzip.BestSpeed](https://golang.org/pkg/compress/gzip/#BestSpeed) unless they are under 4096 bytes.
 
 
 Overview
@@ -721,15 +723,14 @@ ServerFile(string) -> bool
 Functions that are available for Lua server files
 -------------------------------------------------
 
-This function is only available from `server.lua`, or from Lua files that are specified with the `ServerFile` function.
+This function is only available from `server.lua`, or from Lua files that are specified with the `ServerFile` function in the server configuration.
 
 ~~~c
 // Given an URL path prefix (like "/") and a Lua function, set up an HTTP handler.
 // The given Lua function should take no arguments, but can use all the Lua functions for handling requests, like `content` and `print`.
 handle(string, function)
 
-// Given an URL prefix like "/" and a directory, serve the files and directories.
-// Offers rate-limiting, but not permission handling.
+// Given an URL prefix (like "/") and a directory, serve the files and directories.
 servedir(string, string)
 ~~~
 

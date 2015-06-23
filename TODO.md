@@ -2,15 +2,64 @@
 
 Priority
 --------
-- [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
-      This allows gzipped data to be sent directly from the cache.
 - [ ] Dockerfile.
-- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
 - [ ] File upload.
-- [ ] Add a function for loading all plugins in a "plugins" directory.
-- [ ] Make an application (and way) to upload .alg applications and host them.
-- [ ] Make it easy to host Algernon applications for other people.
-- [ ] User management interface.
+- [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
+- [ ] Use a struct for the configuration variables.
+
+
+Go / go vet / go lint
+---------------------
+- [ ] Two identical lines in a row that is the same assignment should result in an error.
+- [ ] Constant byte slices should be allowed.
+
+
+Various
+-------
+- [ ] Commandline flags for disabling gzip and extra HTTP headers.
+- [ ] Consider using the path/filepath package for walking directories.
+- [ ] Add editor syntax highlight files.
+- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
+- [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
+- [ ] Add a lua function for removing all cache entries without a hit
+- [ ] Add a lua function for running a lua function periodically
+- [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
+- [ ] Add a cache mode for caching binary files only
+- [ ] Installer for OS X (pkg)
+- [ ] MSI installer.
+- [ ] deb/ppa
+- [ ] pprint should output text to the browser when not running in the repl
+- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
+- [/] Use some of the tricks from go-bootstrap.io
+- [ ] Downloading and uploading files
+- [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
+- [ ] Consider using https://github.com/sbinet/igo instead of readline.
+- [ ] Create a utility for creating and running new projects, ala Meteor.
+- [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled.
+
+
+Data control
+------------
+- [ ] Add simpleredis/simplebolt/simplemaria functions for exporting/importing data to JSON and offer these.
+
+
+Events
+------
+- [ ] Better 404 page not found page for users visiting "/".
+- [ ] Consider using channels in a more clever way, to completely avoid sleeping.
+      Possibly by sending channels over channels.
+- [ ] Consider only listening for changes after a file has been visited, then stop watching it after a while.
+- [ ] Use a regexp or a JavaScript minification package instead of replacing strings in insertAutoRefresh.
+- [ ] In genFileChangeEvents, check for CloseNotify, for more graceful timeouts.
+
+
+Server configuration
+--------------------
+- [ ] Prefer environment variables and flags over lua server configuration.
+- [ ] Server setting for making pages reload automatically whenever a source file changes.
+- [ ] Server setting for enable the compilation of templates.
+- [ ] Server setting for enabling caching.
+- [ ] A way to recompile templates on command while the server is running.
 
 
 Routing
@@ -22,181 +71,97 @@ Routing
 - [ ] RewritePort("host", 443, 80)
 
 
-Go / go vet / go lint
----------------------
-- [ ] Two identical lines in a row that is the same assignment should result in an error.
-- [ ] Constant byte slices should be allowed.
-
-
-Various
--------
-- [ ] Consider using the path/filepath package for walking directories
-- [ ] Add editor syntax highlight files
-- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4)
-- [ ] Use a struct for the configuration variables.
-- [ ] Check that HTTP reads not only times out, but has a deadline.
-- [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases
-- [ ] Add a lua function for removing all cache entries without a hit
-- [ ] Add a lua function for running a lua function periodically
-- [ ] Look at https://github.com/natefinch/pie/blob/master/examples/python/master.go
-- [ ] Add a cache mode for caching binary files only
-- [ ] Installer for OS X (pkg)
-- [ ] Installer for Windows (msi)
-- [ ] pprint should output text to the browser when not running in the repl
-- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
-- [/] Use some of the tricks from go-bootstrap.io
-- [ ] Downloading and uploading files
-- [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
-- [ ] Consider using https://github.com/sbinet/igo instead of readline.
-- [ ] Create a utility for creating and running new projects, ala Meteor
-- [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled
-- [ ] MSI installer
-- [ ] deb/ppa
-
-
-Events
-------
-
-- [ ] A better 404 page not found page for users visiting "/"
-- [ ] Consider using channels in a more clever way, to avoid sleeping.
-      Possibly by sending channels over channels.
-- [ ] Consider only listening for changes after a file has been visited, then
-      stop watching it after a while.
-- [ ] Use a regexp or a JavaScript minification package instead of replacing strings in insertAutoRefresh
-- [ ] In genFileChangeEvents, check for CloseNotify, for more graceful timeouts
-
-
-Server configuration
---------------------
-
-- [ ] Prefer environment variables and flags over lua server configuration.
-- [ ] Server setting for making pages reload automatically whenever a source file changes.
-- [ ] Server setting for enable the compilation of templates.
-- [ ] Server setting for enabling caching.
-- [ ] A way to recompile templates on command while the server is running.
-
-
 REPL
 ----
-- [ ] See if a package related to gopher-lua can do the same as the pprint function
-- [ ] If so, use the same functionality when converting from Lua tables to JSON
+- [ ] Make `help` and `dir` work a bit like in Python.
+- [ ] Web REPL.
 
 
 Plugins
 -------
 - [ ] Unmarshal the CallPlugin reply into appropriate Lua structures instead of returning a JSON string
+- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
+- [ ] Add a function for loading all plugins in a "plugins" directory.
 
 
 Additional security
 -------------------
-
-- [ ] Option to disable directory listings
-- [ ] Option to only allow whitelisted URL prefixes
-- [ ] Functions for adding URL prefixes to the whitelist
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes.
+      Use code from "scoreserver".
+- [ ] Check that HTTP reads not only times out, but has a deadline.
+- [ ] Flag for disabling directory listings entirely.
 - [ ] OAuth 1
 - [ ] OAuth 2
-- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver".
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
 - [ ] Check if "*" or the server host should be used as parameter to the EventServer function
 
 
-Examples
---------
-
-- [ ] Port [niltalk](https://github.com/knadh/niltalk) to Algernon, in a separate repository.
-
-
 Logging
 -------
-
-- [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
 - [ ] A separate debug webserver / control panel running on a different port.
-      For displaying stats, access logs, break-in attempts and errors in the code.
-- [ ] Make sure to close the log file when the server shuts down
+      For displaying stats, access logs, break-in attempts, errors in the code.
+      Should also include an interactive REPL.
+- [ ] Add configurable log hooks for the systems logrus supports. See: https://github.com/Sirupsen/logrus
 
 
 Console output
 --------------
-
 - [ ] Check the terminal capabilities and terminal width. Display a smaller logo if the width is smaller. Or no logo.
-- [ ] Check if go-rl is a better alternative than the readline bindings (may crash at terminal resize).
 
 
 Documentation and samples
 -------------------------
-
-- [ ] Create a sample webpage where people can log in and chat.
-- [ ] Create a TODOMVC sample application.
+- [ ] Port [niltalk](https://github.com/knadh/niltalk) to Algernon, in a separate repository.
+- [ ] Create a sample chat application.
+- [ ] Create a sample TODOMVC application.
 - [ ] Document possible Markdown keywords somewhere (in a separate document).
-
-
-Debugging
----------
-
-- [ ] Add a lua function that adds a html header and footer, including auto-refresh (if enabled)
+- [ ] Write a Lua library and use it in several web handlers.
+- [ ] Make an application where .alg files can be uploaded and then hosted.
 
 
 Authentication and authorization
 --------------------------------
 
-- [ ] Support HTTP basic auth.
-- [ ] Support OAuth 1.
-
 
 Lua
 ---
-
-- [ ] Add a function for priting Lua tables
-- [ ] Add a function for fetching a value from a table, or a blank string
-- [ ] Add a function for sanitizing HTML, possibly with bluemonday
-- [ ] A way to store and load functions to the database:
-      register("namespace name", "function name", luafunction)
-      luafunction = getfunction("namespace name", "function name")
-      import("namespace name")
-- [ ] A way to have several webhandlers in one Lua script. Look for a function name in index.lua if a subdirectory is not found.
-- [ ] Find a good way to create a personal collection of Lua functions.
-- [ ] Support the re-use of templates by introducing functions for compiling templates and executing, saving and loading compiled templates.
-- [ ] Create an import function for importing online lua libraries.
-- [ ] A way to use Lua libraries, for SQLite and PostgreSQL, for insance.
-- [ ] Lua function for checking if a file exists.
-- [ ] A way to make an interactive session in the browser.
+- [ ] Wrap JNode in the same way as JFile.
+- [ ] Add a function for sanitizing HTML, possibly with bluemonday.
+- [ ] Create an import function for importing online lua libraries. (Like `require`, but over http)
+- [ ] A way to use Lua libraries for adding SQLite support.
 - [ ] A way to load parts of a page asynchronously.
 - [ ] Lua function for reading the contents of a file in the script dir, but in a cached way. Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
 - [ ] A way to have external projects written in Go that can extend
       the Lua state by adding functions. Perhaps adding functions to
       the Lua State object by sending it packed over the network and
       then receiving the modified Lua State.
-- [ ] Modules, Lua libraries, plugins and reuse of code.
 - [ ] In runLuaString, check if L.Close() really is needed instead of luapool.Put(L)
 
 
 Performance
 -----------
-
-- [ ] Minify CSS, JS and HTML (on by default, can be disabled)
+- [ ] Minify CSS, JS and HTML (enabled by default, can be disabled)
 - [ ] Compress pages
-- [ ] Find a reliable way to measure serving speed and emulate users.
+- [ ] Find a reliable way of measuring speed and emulating users. gor? https://github.com/buger/gor
+- [ ] Cache complied templates, not only the final result.
+- [ ] If gzip is enabled when sending data to clients, use gzip for compressing the cache as well.
+      This allows gzipped data to be sent directly from the cache.
 
 
 Unusual features
 ----------------
-
 - [ ] A function for specifying png images by using ` `, `-` and `*` for pixels inside a `[[``]]` block, while specifying a main color. This can be used as an alternative way to serve favicon.ico files or specify icon graphics. Same thing could be used for svg, but by specifying numbered vertices in a polygon. Update: Someone else has made a format for this! https://github.com/cparnot/ASCIImage
-
 
 
 Maybe
 -----
-
+- [ ] Add a Lua function for outputting Lua tables to the client.
+- [ ] Add a Lua function for fetching a value from a table, or a blank string.
+- [ ] Add a Lua function for checking if a file exists.
 - [ ] Mention the `jpath` package in the README.
 - [ ] Support for plugins written in BF
 - [ ] A flag to store the Bolt database inside the given zip file?
 - [ ] Keep all configuration settings in Redis. Use an external package for handling configuration.
-- [ ] Add a flag for acting like a static file server, over HTTP, without using Redis. Perhaps --static.
-- [ ] The first argument should be a directory or a .alg file, the rest should be regular flags.
-      An alg file can be a zipped or tar xz-ed directory with a server.lua file and all needed files. A bit like a .war file.
-- [ ] Support OAuth 2, as a client.
-- [ ] Support OAuth 2, as a server.
 - [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package, as a virtual DOM.
 - [ ] Websockets? WebRTC? Three.js? Web components?
 - [ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
@@ -221,3 +186,5 @@ Maybe
 - [ ] Add a maximum file size limit when caching
 - [ ] Whitelist and blacklist for which file extensions to cache
 - [ ] Use golang/pkg/net/rpc/#Client.Go for calling plugins asynchronously. Let Lua provide a callback function.
+- [ ] Configuration function for whitelisting URL prefixes.
+- [ ] Functions for adding URL prefixes to the whitelist
