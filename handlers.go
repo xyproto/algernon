@@ -289,6 +289,8 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 		htmldata = insertAutoRefresh(htmldata)
 	}
 
+	// Serve the page
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	NewDataBlock(htmldata).ToClient(w, req)
 }
 
