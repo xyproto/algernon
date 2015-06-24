@@ -8,7 +8,6 @@ Priority
 - [ ] The "graceful" package sometimes shows up in a data race at shutdown. Figure out why.
 - [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
 - [ ] Use a struct for the configuration variables.
-- [ ] Compress files in the cache with gzip, then serve the compressed data directly when requested.
 
 
 Go / go vet / go lint
@@ -19,8 +18,10 @@ Go / go vet / go lint
 
 Various
 -------
-- [ ] Flag for removing the temporary Bolt database at exit.
-- [ ] Flag for disabling extra/secure HTTP headers.
+- [ ] pprint should output text to the browser when not running in the repl
+- [ ] Visitor graph
+- [ ] See if the HTTP headers from the client + country of origin + mouse movement patterns can become some sort of pseudo ID.
+      Combine with a neural net. Can be used for storing non-critical data like prefered themes, font sizes etc.
 - [ ] Add editor syntax highlight files.
 - [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
@@ -30,14 +31,9 @@ Various
 - [ ] Installer for OS X (pkg)
 - [ ] MSI installer.
 - [ ] deb/ppa
-- [ ] pprint should output text to the browser when not running in the repl
-- [ ] Chat example with websockets, modeled after https://github.com/knadh/niltalk.git
 - [/] Use some of the tricks from go-bootstrap.io
-- [ ] Downloading and uploading files
-- [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
 - [ ] Consider using https://github.com/sbinet/igo instead of readline.
 - [ ] Create a utility for creating and running new projects, ala Meteor.
-- [ ] Caching for GCSS, Amber templates, JSX/Javascript and Markdown when production mode is enabled.
 
 
 Data control
@@ -120,6 +116,7 @@ Documentation and samples
 Lua
 ---
 - [ ] Wrap JNode in the same way as JFile.
+- [ ] Add a Lua function ForEach that takes a data structure and a function that takes a key and a value.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries. (Like `require`, but over http)
 - [ ] In runLuaString, check if L.Close() really is needed instead of luapool.Put(L)
