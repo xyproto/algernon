@@ -157,7 +157,7 @@ func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request) {
 	w.Write(b.data)
 }
 
-// Compress data using pgzip. Returns the data, bytes written and an error.
+// Compress data using pgzip. Returns the data, data length and an error.
 func compress(data []byte, speed bool) ([]byte, int, error) {
 	if len(data) == 0 {
 		return []byte{}, 0, nil
@@ -171,7 +171,7 @@ func compress(data []byte, speed bool) ([]byte, int, error) {
 	return data, len(data), nil
 }
 
-// Decompress data using pgzip. Returns the data, bytes written and an error.
+// Decompress data using pgzip. Returns the data, data length and an error.
 func decompress(data []byte) ([]byte, int, error) {
 	if len(data) == 0 {
 		return []byte{}, 0, nil

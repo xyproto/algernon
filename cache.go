@@ -51,8 +51,7 @@ var (
 // cacheSize is the total cache size, in bytes.
 // compress is for enabling compression of cache data.
 // maxEntitySize is for setting a per-file maximum size.
-// speed is for selecting better compression speed or better compression.
-func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64, speed bool) *FileCache {
+func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCache {
 	var cache FileCache
 	cache.size = cacheSize
 	cache.blob = make([]byte, cacheSize) // The cache storage
@@ -61,7 +60,7 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64, speed b
 	cache.rw = &sync.RWMutex{}
 	cache.compress = compress
 	cache.maxEntitySize = maxEntitySize
-	cache.compressionSpeed = speed // Prioritize compression speed over better compression?
+	cache.compressionSpeed = preferSpeed // Prioritize compression speed over better compression? set in datablock.go
 	return &cache
 }
 

@@ -175,7 +175,7 @@ func main() {
 	// Create a cache struct for reading files (contains functions that can
 	// be used for reading files, also when caching is disabled).
 	// The final argument is for compressing with "fast" instead of "best".
-	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize, true)
+	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
 
 	if singleFileMode && filepath.Base(serverDir) == specialServerFilename {
 		luaServerFilename = serverDir

@@ -55,25 +55,27 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not store LICENSE in the cache: %s", err)
 	}
-	readmeData2, err := cache.fetchAndCache("README.md")
+	readmeDataBlock2, err := cache.fetchAndCache("README.md")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
-	if len(readmeData) != len(readmeData2) {
-		t.Errorf("Different length of data in cache: %d vs %d", len(readmeData), len(readmeData2))
+	if len(readmeData) != readmeDataBlock2.Length() {
+		t.Errorf("Different length of data in cache: %d vs %d", len(readmeData), readmeDataBlock2.Length())
 	}
+	readmeData2 := readmeDataBlock2.MustData()
 	for i := range readmeData {
 		if readmeData[i] != readmeData2[i] {
 			t.Error("Data from cache differs!")
 		}
 	}
-	licenseData2, err := cache.fetchAndCache("LICENSE")
+	licenseDataBlock2, err := cache.fetchAndCache("LICENSE")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
-	if len(licenseData) != len(licenseData2) {
-		t.Errorf("Different length of data in cache: %d vs %d", len(licenseData), len(licenseData2))
+	if len(licenseData) != licenseDataBlock2.Length() {
+		t.Errorf("Different length of data in cache: %d vs %d", len(licenseData), licenseDataBlock2.Length())
 	}
+	licenseData2 := licenseDataBlock2.MustData()
 	for i := range licenseData {
 		if licenseData[i] != licenseData2[i] {
 			t.Error("Data from cache differs!")
@@ -189,7 +191,7 @@ func TestRandomStoreGet(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data2, err := cache.fetchAndCache(filename)
+			datablock2, err := cache.fetchAndCache(filename)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -198,9 +200,10 @@ func TestRandomStoreGet(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(data) != len(data2) {
+			if len(data) != datablock2.Length() {
 				t.Fatal("WRONG LENGTH!")
 			}
+			data2 := datablock2.MustData()
 			for i := 0; i < len(data); i++ {
 				if data[i] != data2[i] {
 					t.Fatal("WRONG BYTE!")
@@ -213,13 +216,14 @@ func TestRandomStoreGet(t *testing.T) {
 			data := datasets[n]
 			//id := cache.normalize(filename)
 			//fmt.Printf("retrieving %s (%v)\n", filename, id)
-			retData, err := cache.fetchAndCache(filename)
+			retDataBlock, err := cache.fetchAndCache(filename)
 			if err == nil {
 				//fmt.Printf("retrieved %s (%v)\n", filename, id)
 				//fmt.Println(cache.stats())
-				if len(retData) != len(data) {
-					t.Errorf("Wrong length of data: %d vs %d\n", len(retData), len(data))
+				if retDataBlock.Length() != len(data) {
+					t.Errorf("Wrong length of data: %d vs %d\n", retDataBlock.Length(), len(data))
 				}
+				retData := retDataBlock.MustData()
 				for x := 0; x < len(data); x++ {
 					if retData[x] != data[x] {
 						t.Error("Wrong contents in cache!")
@@ -235,37 +239,39 @@ func TestCompression(t *testing.T) {
 	assert.Equal(t, true, cache.IsEmpty())
 	readmeData, err := ioutil.ReadFile("README.md")
 	assert.Equal(t, err, nil)
-	compressedREADME, err := cache.storeData("README.md", readmeData)
+	compressedREADMEblock, err := cache.storeData("README.md", readmeData)
 	if err != nil {
 		t.Errorf("Could not store README.md in the cache: %s", err)
 	}
-	assert.NotEqual(t, 0, len(compressedREADME))
+	assert.NotEqual(t, 0, compressedREADMEblock.Length())
 	licenseData, err := ioutil.ReadFile("LICENSE")
 	assert.Equal(t, err, nil)
-	compressedLICENSE, err := cache.storeData("LICENSE", licenseData)
+	compressedLICENSEblock, err := cache.storeData("LICENSE", licenseData)
 	if err != nil {
 		t.Errorf("Could not store LICENSE in the cache: %s", err)
 	}
-	assert.NotEqual(t, 0, len(compressedLICENSE))
-	readmeData2, err := cache.fetchAndCache("README.md")
+	assert.NotEqual(t, 0, compressedLICENSEblock.Length())
+	readmeDataBlock2, err := cache.fetchAndCache("README.md")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
-	if len(readmeData) != len(readmeData2) {
-		t.Errorf("Different length of data in cache: %d vs %d", len(readmeData), len(readmeData2))
+	if len(readmeData) != len(readmeDataBlock2.MustData()) {
+		t.Errorf("Different length of data in cache: %d vs %d", len(readmeData), len(readmeDataBlock2.MustData()))
 	}
+	readmeData2 := readmeDataBlock2.MustData()
 	for i := range readmeData {
 		if readmeData[i] != readmeData2[i] {
 			t.Error("Data from cache differs!")
 		}
 	}
-	licenseData2, err := cache.fetchAndCache("LICENSE")
+	licenseDataBlock2, err := cache.fetchAndCache("LICENSE")
 	if err != nil {
 		t.Errorf("Could not read file from cache: %s", err)
 	}
-	if len(licenseData) != len(licenseData2) {
-		t.Errorf("Different length of data in cache: %d vs %d", len(licenseData), len(licenseData2))
+	if len(licenseData) != len(licenseDataBlock2.MustData()) {
+		t.Errorf("Different length of data in cache: %d vs %d", len(licenseData), len(licenseDataBlock2.MustData()))
 	}
+	licenseData2 := licenseDataBlock2.MustData()
 	for i := range licenseData {
 		if licenseData[i] != licenseData2[i] {
 			t.Error("Data from cache differs!")
