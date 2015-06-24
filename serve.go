@@ -39,13 +39,21 @@ func atShutdown(shutdownFunction func()) {
 
 // Run the shutdown functions
 func runShutdown() {
+	mut.Lock()
+	defer mut.Unlock()
+
 	fmt.Println()
-	log.Info("Initating shutdown")
+	//log.Info("Initating shutdown")
+
+	// Call the shutdown functions in cronological order (FIFO)
 	for _, shutdownFunction := range shutdownFunctions {
 		shutdownFunction()
 	}
+
 	// TODO: Figure out why this sometimes does not happen, while the above lines do happen
-	log.Info("Shutdown complete")
+	//log.Info("Shutdown complete")
+
+	// A final flush doesn't hurt
 	os.Stdout.Sync()
 }
 

@@ -24,7 +24,7 @@ var (
 	EmptyDataBlock = &DataBlock{[]byte{}, false, 0}
 )
 
-// Create a new uncompressed data block.
+// NewDataBlock creates a new uncompressed data block.
 func NewDataBlock(data []byte) *DataBlock {
 	return &DataBlock{data, false, len(data)}
 }
@@ -34,8 +34,8 @@ func newDataBlockSpecified(data []byte, compressed bool) *DataBlock {
 	return &DataBlock{data, compressed, len(data)}
 }
 
-// Return the original, uncompressed data, length and an error.
-// Will decompress if needed.
+// UncompressedData returns the the original, uncompressed data,
+// the length of the data and an error. Will decompress if needed.
 func (b *DataBlock) UncompressedData() ([]byte, int, error) {
 	if b.compressed {
 		return decompress(b.data)
@@ -43,7 +43,7 @@ func (b *DataBlock) UncompressedData() ([]byte, int, error) {
 	return b.data, b.length, nil
 }
 
-// Return the uncompressed data or an empty byte slice
+// MustData returns the uncompressed data or an empty byte slice
 func (b *DataBlock) MustData() []byte {
 	if b.compressed {
 		data, _, err := decompress(b.data)
@@ -56,8 +56,8 @@ func (b *DataBlock) MustData() []byte {
 	return b.data
 }
 
-// Return the compressed data, length and an error. Will compress if needed.
-// If speed is true, speed is preferred over the compression ratio.
+// Gzipped returns the compressed data, length and an error.
+// Will compress if needed.
 func (b *DataBlock) Gzipped() ([]byte, int, error) {
 	if !b.compressed {
 		return compress(b.data, preferSpeed)
@@ -65,8 +65,7 @@ func (b *DataBlock) Gzipped() ([]byte, int, error) {
 	return b.data, b.length, nil
 }
 
-// Compress this data block.
-// If speed is set, speed is favored over compression ratio.
+// Compress this data block
 func (b *DataBlock) Compress() error {
 	if b.compressed {
 		return nil
@@ -81,7 +80,7 @@ func (b *DataBlock) Compress() error {
 	return nil
 }
 
-// Decompress this data block.
+// Decompress this data block
 func (b *DataBlock) Decompress() error {
 	if !b.compressed {
 		return nil
@@ -96,22 +95,23 @@ func (b *DataBlock) Decompress() error {
 	return nil
 }
 
-// Check if the data block is compressed
+// IsCompressed checks if this data block is compressed
 func (b *DataBlock) IsCompressed() bool {
 	return b.compressed
 }
 
-// Return the length of the data, as a string
+// StringLength returns the length of the data, represented as a string
 func (b *DataBlock) StringLength() string {
 	return strconv.Itoa(b.length)
 }
 
-// Return the size of this data block
+// Length returns the lentgth of the current data
+// (not the length of the original data, but in the current state)
 func (b *DataBlock) Length() int {
 	return b.length
 }
 
-// Check if there is data present
+// HasData returns true if there is data present
 func (b *DataBlock) HasData() bool {
 	return 0 != b.length
 }
@@ -122,11 +122,11 @@ func errorToDataBlock(err error) *DataBlock {
 	return NewDataBlock([]byte(err.Error()))
 }
 
-// Write the data to the client. Gzip if suitable.
-// gzipped must be set if the given data is already compressed.
-// "speed" should be set to true if speed is prefered over compression ratio.
+// ToClient writes the data to the client.
+// Also sets the right headers and compresses the data with gzip if needed.
 func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request) {
-	canGzip := clientCanGzip(req)
+	canGzip := clientCanGzip(req)               // Has the client announced that it can handle gzipped data?
+	overThreshold := b.Length() > gzipThreshold // Is there enough data that it makes sense to compress it?
 
 	// Compress or decompress the data as needed. Add headers if compression is used.
 	if !canGzip {
@@ -135,21 +135,23 @@ func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request) {
 			// Unable to decompress gzipped data!
 			log.Fatal(err)
 		}
-	} else if b.compressed { // If the given data is already compressed, serve it as such
+	} else if b.compressed || overThreshold {
+		// If the given data is already compressed, or we are planning to compress,
+		// set the gzip headers and serve it as compressed data.
+
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Add("Vary", "Accept-Encoding")
-	} else if b.Length() > gzipThreshold { // If the data is over a certain size, compress and serve
-		// Set gzip headers
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Add("Vary", "Accept-Encoding")
-		// Compress
-		if err := b.Compress(); err != nil {
-			// Write uncompressed data if gzip should fail
-			log.Error(err)
-			w.Header().Set("Content-Encoding", "identity")
+
+		// If the data is over a certain size, compress and serve
+		if overThreshold {
+			// Compress
+			if err := b.Compress(); err != nil {
+				// Write uncompressed data if gzip should fail
+				log.Error(err)
+				w.Header().Set("Content-Encoding", "identity")
+			}
 		}
 	}
-
 	// Set the length and write the data to the client
 	w.Header().Set("Content-Length", b.StringLength())
 	w.Write(b.data)
