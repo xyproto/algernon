@@ -98,6 +98,9 @@ var (
 
 	// CPU profile filename
 	profileCPU string
+
+	// Memory profile filename
+	profileMem string
 )
 
 func usage() {
@@ -161,6 +164,7 @@ Available flags:
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername                 Custom HTTP header for the server field.
   --cpuprofile                 Write CPU profile to file.
+  --memprofile                 Write memory profile to file.
 `)
 }
 
@@ -226,6 +230,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&rawCache, "rawcache", false, "Disable cache compression")
 	flag.StringVar(&serverHeaderName, "servername", versionString, "Server header name")
 	flag.StringVar(&profileCPU, "cpuprofile", "", "Write CPU profile to file")
+	flag.StringVar(&profileMem, "memprofile", "", "Write memory profile to file")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

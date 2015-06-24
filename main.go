@@ -68,12 +68,25 @@ func main() {
 			log.Fatal(err)
 		}
 		go func() {
-			log.Info("Profiling")
+			log.Info("Profiling CPU")
 			pprof.StartCPUProfile(f)
 		}()
 		atShutdown(func() {
 			pprof.StopCPUProfile()
 			log.Info("Done profiling")
+		})
+	}
+
+	// Memory profiling at server shutdown
+	if profileMem != "" {
+		atShutdown(func() {
+			f, err := os.Create(profileMem)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Info("Writing heap profile to ", profileMem)
+			pprof.WriteHeapProfile(f)
+			f.Close()
 		})
 	}
 
@@ -243,9 +256,7 @@ func main() {
 
 	// Direct internal logging elsewhere
 	internalLogFile, err := os.Open(internalLogFilename)
-	atShutdown(func() {
-		internalLogFile.Close()
-	})
+	defer internalLogFile.Close()
 
 	if err != nil {
 		// Could not open the internalLogFilename filename, try using another filename

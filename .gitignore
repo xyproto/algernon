@@ -47,3 +47,6 @@ apps/withplugins
 
 # Debugging
 algernon.debug
+
+# Profiling
+*.prof
