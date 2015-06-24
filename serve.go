@@ -137,20 +137,18 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			return exitErr
 		}
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
-		tryPlainHTTP := false
 		log.Info("Serving HTTPS + HTTP/2 on " + conf.serverAddr)
-		go func() {
-			// Listen for HTTPS + HTTP/2 requests
-			HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
-			// Start serving. Shut down gracefully at exit.
-			if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
-				log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
-				log.Info("Use the -h flag to serve HTTP only")
-				// If HTTPS failed (perhaps the key + cert are missing), serve
-				// plain HTTP instead
-				tryPlainHTTP = true
-			}
-		}()
+		// Listen for HTTPS + HTTP/2 requests
+		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
+		// Start serving. Shut down gracefully at exit.
+		tryPlainHTTP := false
+		if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
+			log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
+			log.Info("Use the -t flag to serve HTTP only")
+			// If HTTPS failed (perhaps the key + cert are missing), serve
+			// plain HTTP instead
+			tryPlainHTTP = true
+		}
 		if !tryPlainHTTP {
 			break
 		}
