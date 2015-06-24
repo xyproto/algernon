@@ -50,7 +50,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	switch ext {
 
 	// Markdown pages are handled differently
-	case ".md":
+	case ".md", ".markdown":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		markdownblock, err := cache.read(filename, shouldCache(ext))
