@@ -139,7 +139,7 @@ Available flags:
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
   --key=FILENAME               TLS key, if using HTTPS.
-  -d, --debug                  Enable debug mode (view errors in the browser).
+  -d, --debug                  Enable debug mode (display errors in the browser).
   -b, --bolt                   Use "` + defaultBoltFilename + `"
                                as the Bolt database.
   --boltdb=FILENAME            Use a specific file as the Bolt database
@@ -162,7 +162,7 @@ Available flags:
   --nolimit                    Disable rate limiting.
   -s, --server                 Server mode (disable interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
-  --servername                 Custom HTTP header for the server field.
+  --servername                 Custom HTTP header value for the Server field.
 `)
 }
 
