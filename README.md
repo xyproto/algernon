@@ -69,6 +69,7 @@ Features and limitations
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
 * Thread-safe file caching is built-in, with several available cache modes (for only caching images, for example).
 * Can read from and save to JSON documents. Supports simple JSON path expressions (like a simple version of XPath, but for JSON).
+* If cache compression is enabled, files that are stored in the cache as gzip can be sent directly from the cache to the client, without decompressing.
 * Files that are sent to the client are seamlessly compressed with [gzip.BestSpeed](https://golang.org/pkg/compress/gzip/#BestSpeed) unless they are under 4096 bytes.
 
 
