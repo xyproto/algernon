@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/bradfitz/http2"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
@@ -28,6 +27,7 @@ type algernonServerConfig struct {
 var (
 	shutdownFunctions [](func())
 	mut               sync.Mutex
+	completed         bool
 )
 
 // Add a function to the list of functions that will be ran at shutdown
@@ -42,18 +42,27 @@ func runShutdown() {
 	mut.Lock()
 	defer mut.Unlock()
 
-	fmt.Println()
-	//log.Info("Initating shutdown")
+	if completed {
+		// The shutdown functions have already been called
+		return
+	}
+
+	if verboseMode {
+		log.Info("Initating shutdown")
+	}
 
 	// Call the shutdown functions in cronological order (FIFO)
 	for _, shutdownFunction := range shutdownFunctions {
 		shutdownFunction()
 	}
+	completed = true
 
 	// TODO: Figure out why this sometimes does not happen, while the above lines do happen
-	//log.Info("Shutdown complete")
+	if verboseMode {
+		log.Info("Shutdown complete")
+	}
 
-	// A final flush doesn't hurt
+	// One final flush
 	os.Stdout.Sync()
 }
 

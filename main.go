@@ -299,6 +299,9 @@ func main() {
 		internalLogFilename: internalLogFilename,
 	}
 
+	// Run the shutdown functions if graceful does not
+	defer runShutdown()
+
 	// Serve HTTP, HTTP/2 and/or HTTPS
 	if err := serve(conf, mux, done, ready); err != nil {
 		fatalExit(err)

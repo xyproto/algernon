@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 )
 
 const (
@@ -494,7 +493,7 @@ func highlight(o *term.TextOutput, line string) string {
 
 func mustSaveHistory(o *term.TextOutput, historyFilename string) {
 	if verboseMode {
-		fmt.Printf(o.LightBlue("Saving history to %s... "), historyFilename)
+		fmt.Printf(o.LightBlue("Saving REPL history to %s... "), historyFilename)
 	}
 	if err := saveHistory(historyFilename); err != nil {
 		if verboseMode {
@@ -573,20 +572,8 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	// Cache
 	exportCacheFunctions(L, cache)
 
+	// Getting ready
 	o.Println(o.LightBlue(versionString))
-
-	// Add a newline after the prompt to prepare for logging, if in verbose mode
-	if verboseMode {
-		go func() {
-			// Using sleep instead of channels because using channels requires
-			// the getInput function to signal after the prompt is outputted, but
-			// before waiting for user input. Outputting a newline is purely cosmetic
-			// in any case, so using sleep works fine.
-			time.Sleep(200 * time.Millisecond)
-			fmt.Println()
-		}()
-	}
-
 	<-ready // Wait for a "ready" message
 	o.Println(o.LightGreen("Ready"))
 
@@ -600,6 +587,16 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	if loadHistory(historyFilename) != nil && exists(historyFilename) {
 		log.Error("Could not load REPL history:", historyFilename)
 	}
+	// To be run at server shutdown
+	atShutdown(func() {
+		// No need to save the history. It's saved at every line.
+		if verboseMode {
+			//	mustSaveHistory(o, historyFilename)
+		} else {
+			//	saveHistory(historyFilename)
+			o.Println(o.LightBlue(exitMessage))
+		}
+	})
 	for {
 		// Retrieve user input
 		EOF = false
@@ -615,9 +612,12 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 			}
 		} else {
 			addHistory(line)
-			// Saving the history at ctrl-c does not work, perhaps since readline is interrupted then.
-			// Saveing history at every new line.
-			mustSaveHistory(o, historyFilename)
+			// Save the REPL history at every line.
+			// Tried saving the history at shutdown, but ctrl-c shuts down Algernon before being able to save.
+			// Handling interrupts to intercept ctrl-c is also problematic, since graceful also handles this interrupt.
+			// Using the shutdown function in the graceful config also does not work. The shutdown happens before
+			// being able to save the history file. Perhaps this is an issue on OS X only?
+			saveHistory(historyFilename)
 		}
 
 		if EOF {
@@ -627,8 +627,6 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 				EOFcount++
 				continue
 			default:
-				//mustSaveHistory(o, historyFilename)
-				o.Println(o.LightBlue(exitMessage))
 				done <- true
 				return nil
 			}
@@ -648,8 +646,6 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 			outputHelp(o, configHelpText)
 			continue
 		case "quit", "exit", "shutdown", "halt":
-			//mustSaveHistory(o, historyFilename)
-			o.Println(o.LightBlue(exitMessage))
 			done <- true
 			return nil
 		case "zalgo":

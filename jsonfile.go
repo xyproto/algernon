@@ -75,7 +75,7 @@ func jfileGet(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// Takes a JFile, a JSON path and a string.
+// Take a JFile, a JSON path and a string.
 // Returns a value or an empty string.
 func jfileSet(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
@@ -95,8 +95,8 @@ func jfileSet(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// Takes a JFile and a JSON path.
-// Removes a key from a map. Returns true if successful.
+// Take a JFile and a JSON path.
+// Remove a key from a map. Return true if successful.
 func jfileDelKey(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
 	jsonpath := L.ToString(2)
