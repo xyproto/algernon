@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/jpath"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gluamapper"
@@ -427,6 +428,16 @@ func pprint(value lua.LValue) {
 		if v.Proto != nil {
 			// Extended information about the function
 			fmt.Println(v.Proto)
+		} else {
+			fmt.Println(v)
+		}
+	case *lua.LUserData:
+		if jfile, ok := v.Value.(*jpath.JFile); ok {
+			fmt.Println(v)
+			fmt.Printf("filename: %s\n", jfile.GetFilename())
+			if data, err := jfile.JSON(); err == nil { // success
+				fmt.Printf("JSON data:\n%s\n", string(data))
+			}
 		} else {
 			fmt.Println(v)
 		}

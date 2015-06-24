@@ -53,7 +53,11 @@ func jfileAdd(L *lua.LState) int {
 	}
 	err := jfile.AddJSON(jsonpath, []byte(jsondata))
 	if err != nil {
-		log.Error(err)
+		if top == 2 || strings.HasPrefix(err.Error(), "invalid character") {
+			log.Error("JSON data: ", err)
+		} else {
+			log.Error(err)
+		}
 	}
 	L.Push(lua.LBool(err == nil))
 	return 1 // number of results
