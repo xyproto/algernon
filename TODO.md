@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Handle .avi and other multimedia files better. Show a page for playing and downloading.
 - [ ] File upload.
 - [ ] Dockerfile.
 - [ ] Stress test with -race + profiling.
