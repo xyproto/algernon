@@ -615,6 +615,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 			}
 		} else {
 			addHistory(line)
+			// Saving the history at ctrl-c does not work, perhaps since readline is interrupted then.
+			// Saveing history at every new line.
+			mustSaveHistory(o, historyFilename)
 		}
 
 		if EOF {
@@ -624,7 +627,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 				EOFcount++
 				continue
 			default:
-				mustSaveHistory(o, historyFilename)
+				//mustSaveHistory(o, historyFilename)
 				o.Println(o.LightBlue(exitMessage))
 				done <- true
 				return nil
@@ -645,7 +648,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 			outputHelp(o, configHelpText)
 			continue
 		case "quit", "exit", "shutdown", "halt":
-			mustSaveHistory(o, historyFilename)
+			//mustSaveHistory(o, historyFilename)
 			o.Println(o.LightBlue(exitMessage))
 			done <- true
 			return nil

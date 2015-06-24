@@ -284,7 +284,7 @@ func handleFlags(serverTempDir string) string {
 		debugMode = true
 		// TODO: Make it possible to set --limit to the default limit also when -e is used
 		if limitRequests == defaultLimit {
-			limitRequests = 1000 // Increase the rate limit considerably
+			limitRequests = 700 // Increase the rate limit considerably
 		}
 		cacheMode = cacheModeDevelopment
 	}

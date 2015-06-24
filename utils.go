@@ -2,16 +2,11 @@ package main
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
-	"github.com/bkaradzic/go-lz4"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -253,47 +248,10 @@ func durationToMS(d time.Duration, multiplier float64) string {
 	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
 }
 
-// Compress data using LZ4
-func compress(data []byte) ([]byte, error) {
-	if len(data) == 0 {
-		return []byte{}, nil
-	}
-	return lz4.Encode(nil, data)
-}
-
-// Decompress data using LZ4
-func decompress(data []byte) ([]byte, error) {
-	if len(data) == 0 {
-		return []byte{}, nil
-	}
-	return lz4.Decode(nil, data)
-}
-
 // Return "enabled" or "disabled" depending on the given bool
 func enabledStatus(enabled bool) string {
 	if enabled {
 		return "enabled"
 	}
 	return "disabled"
-}
-
-// Write gzipped data to a Writer
-func gzipWrite(w io.Writer, data []byte) error {
-	// Write gzipped data to the client
-	gw, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-	defer gw.Close()
-	gw.Write(data)
-	return err
-}
-
-// Handle a single os.Interrupt with the given function
-func handleCtrlC(handle func(os.Signal)) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	go func() {
-		for sig := range c {
-			handle(sig)
-		}
-	}()
 }

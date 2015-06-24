@@ -162,11 +162,12 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
-			gcssdata, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
+			gcssdata := gcssblock.MustData()
 			// Try compiling the GCSS file first
 			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
@@ -205,7 +206,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Write the rendered Markdown page to the client
-	dataToClient(w, req, htmldata)
+	NewDataBlock(htmldata).ToClient(w, req)
 }
 
 // Check if the given data is valid GCSS
@@ -226,11 +227,12 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if exists(GCSSfilename) {
 		if debugMode {
-			gcssdata, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
+			gcssdata := gcssblock.MustData()
 			// Try compiling the GCSS file before the Amber file
 			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
@@ -289,7 +291,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	buf = *changedBuf
 
 	// Write the rendered template to the client
-	dataToClient(w, req, buf.Bytes())
+	NewDataBlock(buf.Bytes()).ToClient(w, req)
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
@@ -305,7 +307,7 @@ func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdat
 		return
 	}
 	// Write the resulting GCSS to the client
-	dataToClient(w, req, buf.Bytes())
+	NewDataBlock(buf.Bytes()).ToClient(w, req)
 }
 
 func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
@@ -334,6 +336,6 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 			return
 		}
 		// Write the generated data to the client
-		dataToClient(w, req, data)
+		NewDataBlock(data).ToClient(w, req)
 	}
 }

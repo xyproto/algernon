@@ -3,6 +3,7 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 const (
@@ -14,12 +15,13 @@ const (
 func serveStaticFile(filename, colonPort string) {
 	log.Info("Serving " + filename + " on " + serverHost + colonPort)
 	mux := http.NewServeMux()
-	cache := newFileCache(defaultStaticCacheSize, false, 0) // 64 MiB cache, no cache compression, no per-file size limit
+	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression
+	cache := newFileCache(defaultStaticCacheSize, true, 0, false)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
 		filePage(w, req, filename, nil, nil, cache)
 	})
-	HTTPserver := newServerConfiguration(mux, false, serverHost+colonPort)
+	HTTPserver := newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
 	if err := HTTPserver.ListenAndServe(); err != nil {
 		// Can't serve HTTP, give up
 		fatalExit(err)

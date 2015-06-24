@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -37,20 +36,24 @@ var (
 	luaVersionString = lua.PackageName + "/" + lua.PackageVersion
 )
 
+// Check if the client supports gzip compressed responses
+func clientCanGzip(req *http.Request) bool {
+	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
+}
+
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
 	// Mimetypes
 	ext := strings.ToLower(filepath.Ext(filename))
+
 	switch ext {
 
 	// Markdown pages are handled differently
 	case ".md":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		var markdowndata []byte
-		var err error
-		markdowndata, err = cache.read(filename, shouldCache(ext))
+		markdownblock, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -61,14 +64,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the markdown page
-		markdownPage(w, req, markdowndata, filename, cache)
+		markdownPage(w, req, markdownblock.MustData(), filename, cache)
 
 		return
 
 	case ".amber":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		amberdata, err := cache.read(filename, shouldCache(ext))
+		amberblock, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -79,21 +82,22 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 		// Try reading data.lua as well, if possible
 		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
-		luadata, err := cache.read(luafilename, shouldCache(ext))
+		luablock, err := cache.read(luafilename, shouldCache(ext))
 		if err != nil {
 			// Could not find and/or read data.lua
-			luadata = []byte{}
+			luablock = EmptyDataBlock
 		}
 		// Make functions from the given Lua data available
 		funcs := make(template.FuncMap)
-		if len(luadata) > 0 {
+		// luablock can be empty if there was an error or if the file was empty
+		if luablock.HasData() {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = luaFunctionMap(w, req, luadata, luafilename, perm, luapool, cache)
+			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache)
 			if err != nil {
 				if debugMode {
 					// Use the Lua filename as the title
-					prettyError(w, luafilename, luadata, err.Error(), "lua")
+					prettyError(w, luafilename, luablock.MustData(), err.Error(), "lua")
 				} else {
 					log.Error(err)
 				}
@@ -116,14 +120,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the Amber page, using functions from data.lua, if available
-		amberPage(w, req, filename, luafilename, amberdata, funcs, cache)
+		amberPage(w, req, filename, luafilename, amberblock.MustData(), funcs, cache)
 
 		return
 
 	case ".gcss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		gcssdata, err := cache.read(filename, shouldCache(ext))
+		gcssblock, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -134,14 +138,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the GCSS page as CSS
-		gcssPage(w, req, filename, gcssdata)
+		gcssPage(w, req, filename, gcssblock.MustData())
 
 		return
 
 	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-		jsxdata, err := cache.read(filename, shouldCache(ext))
+		jsxblock, err := cache.read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -152,13 +156,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the JSX page as JavaScript
-		jsxPage(w, req, filename, jsxdata)
+		jsxPage(w, req, filename, jsxblock.MustData())
 
 		return
 
 	case ".lua":
-
-		luaHeader(w)
 
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
@@ -175,14 +177,15 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			// Run the lua script, without the possibility to flush
 			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache); err != nil {
 				errortext := err.Error()
-				filedata, err := cache.read(filename, shouldCache(ext))
+				fileblock, err := cache.read(filename, shouldCache(ext))
 				if err != nil {
+					// If the file could not be read, use the error message as the data
 					// Use the error as the file contents when displaying the error message
 					// if reading the file failed.
-					filedata = []byte(err.Error())
+					fileblock = errorToDataBlock(err)
 				}
 				// If there were errors, display an error page
-				prettyError(w, filename, filedata, errortext, "lua")
+				prettyError(w, filename, fileblock.MustData(), errortext, "lua")
 			} else {
 				// If things went well, write to the ResponseWriter
 				writeRecorder(w, recorder)
@@ -208,8 +211,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	} else {
 		log.Error("Uninitialized mimereader!")
 	}
-	// Read the file
-	fileData, err := cache.read(filename, shouldCache(ext))
+
+	// Read the file (possibly in compressed format, straight from the cache)
+	dataBlock, err := cache.read(filename, shouldCache(ext))
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
@@ -219,12 +223,12 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	}
 
 	// Serve the file
-	dataToClient(w, req, fileData)
+	dataBlock.ToClient(w, req)
 }
 
-// Credit gopher-lua
-func luaHeader(w http.ResponseWriter) {
-	w.Header().Set("X-Powered-By", lua.PackageName+"/"+lua.PackageVersion+" by "+lua.PackageAuthors)
+// For communicating information about the underlying software
+func powerHeader(w http.ResponseWriter, name, version string) {
+	w.Header().Set("X-Powered-By", name+"/"+version)
 }
 
 // Server headers that are set before anything else
@@ -285,31 +289,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 		htmldata = insertAutoRefresh(htmldata)
 	}
 
-	dataToClient(w, req, htmldata)
-}
-
-// Write the data to the client. Gzip if suitable.
-func dataToClient(w http.ResponseWriter, req *http.Request, data []byte) {
-	datalen := len(data)
-	canGzip := strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
-
-	// Set the content length. It's important that this value always is correct.
-	w.Header().Set("Content-Length", strconv.Itoa(datalen))
-
-	// Use gzip if the client supports it and the data is over the gzipThreshold
-	if canGzip && datalen > gzipThreshold {
-		// Set gzip headers
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Add("Vary", "Accept-Encoding")
-		if err := gzipWrite(w, data); err != nil {
-			log.Error(err)
-			// Write uncompressed data if gzip should fail
-			w.Header().Set("Content-Encoding", "identity")
-			w.Write(data)
-		}
-	} else {
-		w.Write(data)
-	}
+	NewDataBlock(htmldata).ToClient(w, req)
 }
 
 // Serve a directory. The directory must exist.

@@ -27,6 +27,7 @@ type FileCache struct {
 	cacheWarningGiven bool              // Used to only warn once if the cache is full
 	compress          bool              // Enable data compression
 	maxEntitySize     uint64            // Maximum size per entity in cache
+	compressionSpeed  bool              // Prioritize faster or better compression?
 }
 
 var (
@@ -50,7 +51,8 @@ var (
 // cacheSize is the total cache size, in bytes.
 // compress is for enabling compression of cache data.
 // maxEntitySize is for setting a per-file maximum size.
-func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCache {
+// speed is for selecting better compression speed or better compression.
+func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64, speed bool) *FileCache {
 	var cache FileCache
 	cache.size = cacheSize
 	cache.blob = make([]byte, cacheSize) // The cache storage
@@ -59,6 +61,7 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCa
 	cache.rw = &sync.RWMutex{}
 	cache.compress = compress
 	cache.maxEntitySize = maxEntitySize
+	cache.compressionSpeed = speed // Prioritize compression speed over better compression?
 	return &cache
 }
 
@@ -171,17 +174,20 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 
 // Store a file in the cache
 // Returns the data (it may be compressed) and an error
-func (cache *FileCache) storeData(filename string, data []byte) (storedData []byte, err error) {
+func (cache *FileCache) storeData(filename string, data []byte) (storedDataBlock *DataBlock, err error) {
 	// Compress the data, if compression is enabled
+	var fileSize uint64
 	if cache.compress {
-		compressed, err := compress(data)
+		compressedData, dataLength, err := compress(data, cache.compressionSpeed)
 		if err != nil {
 			return nil, fmt.Errorf("Compression error: %s", err)
 		}
-		data = compressed
+		data = compressedData
+		fileSize = uint64(dataLength)
+	} else {
+		fileSize = uint64(len(data))
 	}
 
-	fileSize := uint64(len(data))
 	id := cache.normalize(filename)
 
 	if cache.hasFile(id) {
@@ -245,7 +251,7 @@ func (cache *FileCache) storeData(filename string, data []byte) (storedData []by
 	// Move the offset to the end of the data (the next free location)
 	cache.offset += uint64(fileSize)
 
-	return data, nil
+	return newDataBlockSpecified(data, cache.compress), nil
 }
 
 // Check if the given filename exists in the cache
@@ -293,7 +299,7 @@ func (cache *FileCache) dataSize(id fileID) uint64 {
 
 // Store a file in the cache
 // Return true if we got the data from the file, regardless of cache errors.
-func (cache *FileCache) storeFile(filename string) ([]byte, bool, error) {
+func (cache *FileCache) storeFile(filename string) (*DataBlock, bool, error) {
 	// Read the file
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -301,11 +307,13 @@ func (cache *FileCache) storeFile(filename string) ([]byte, bool, error) {
 	}
 	// Store in cache, log a warning if the cache has filled up and needs to make space every time
 	_, err = cache.storeData(filename, data)
-	return data, true, err
+
+	// Return the uncompressed data
+	return NewDataBlock(data), true, err
 }
 
 // Retrieve a file from the cache, or from disk
-func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
+func (cache *FileCache) fetchAndCache(filename string) (*DataBlock, error) {
 	// RWMutex locks
 	cache.rw.Lock()
 	defer cache.rw.Unlock()
@@ -320,7 +328,7 @@ func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 			log.Info("Reading from disk: " + string(id))
 			log.Info("Storing in cache: " + string(id))
 		}
-		data, gotTheData, err := cache.storeFile(string(id))
+		block, gotTheData, err := cache.storeFile(string(id))
 		// Cache errors are logged as warnings, and not being returned
 		if err != nil {
 			// Log cache errors as warnings (could be that the file is too large)
@@ -333,7 +341,7 @@ func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 			return nil, err
 		}
 		// Return the data, with no errors to report
-		return data, nil
+		return block, nil
 	}
 
 	if verboseMode {
@@ -356,17 +364,8 @@ func (cache *FileCache) fetchAndCache(filename string) ([]byte, error) {
 	// Mark a cache hit
 	cache.hits[id]++
 
-	// Decompress
-	if cache.compress {
-		decompressed, err := decompress(data)
-		if err != nil {
-			return nil, err
-		}
-		return decompressed, nil
-	}
-
-	// Return the data
-	return data, nil
+	// Return the data block
+	return newDataBlockSpecified(data, cache.compress), nil
 }
 
 func (cache *FileCache) freeSpace() uint64 {
@@ -453,9 +452,9 @@ func exportCacheFunctions(L *lua.LState, cache *FileCache) {
 
 }
 
-// For reading files, with optional caching
-func (cache *FileCache) read(filename string, cacheEnabled bool) ([]byte, error) {
-	if cacheEnabled {
+// For reading files, with optional caching.
+func (cache *FileCache) read(filename string, cached bool) (*DataBlock, error) {
+	if cached {
 		// Read the file from cache (or disk, if not cached)
 		return cache.fetchAndCache(filename)
 	}
@@ -465,5 +464,10 @@ func (cache *FileCache) read(filename string, cacheEnabled bool) ([]byte, error)
 		log.Info("Reading from disk: " + filename)
 	}
 	// Read the file
-	return ioutil.ReadFile(filename)
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	// Return the uncompressed data
+	return NewDataBlock(data), nil
 }
