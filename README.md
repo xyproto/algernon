@@ -50,8 +50,9 @@ Features and limitations
 * Supports HTTP/2, with or without HTTPS.
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
+* Compiled to native.
 * Works on Linux, OS X and 64-bit Windows.
-* Algernon is compiled to native. It's reasonably fast.
+* Is reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (there is an auto-refresh feature).
 * Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
