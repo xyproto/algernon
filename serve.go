@@ -106,6 +106,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	http2.VerboseLogs = (conf.internalLogFilename != os.DevNull)
 
 	// Decide which protocol to listen to
+	justServeRegularHTTP := false
 	switch {
 	case conf.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
@@ -129,42 +130,37 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 		}()
 	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 withoutHTTPS
 		log.Info("Serving HTTP/2 on " + conf.serverAddr)
-		var exitErr error
 		go func() {
 			// Listen for HTTP/2 requests
 			HTTP2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
-				exitErr = err
-				return
+				justServeRegularHTTP = true
 			}
 		}()
-		if exitErr != nil {
-			return exitErr
-		}
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
 		log.Info("Serving HTTPS + HTTP/2 on " + conf.serverAddr)
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
 		// Start serving. Shut down gracefully at exit.
-		tryPlainHTTP := false
-		if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
-			log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
-			log.Info("Use the -t flag to serve HTTP only")
-			// If HTTPS failed (perhaps the key + cert are missing), serve
-			// plain HTTP instead
-			tryPlainHTTP = true
-		}
-		if !tryPlainHTTP {
-			break
-		}
-		fallthrough
+		go func() {
+			if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
+				log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
+				log.Info("Use the -t flag to serve HTTP only")
+				// If HTTPS failed (perhaps the key + cert are missing),
+				// serve plain HTTP instead
+				justServeRegularHTTP = true
+			}
+		}()
 	default:
+		justServeRegularHTTP = true
+	}
+
+	if justServeRegularHTTP {
 		log.Info("Serving HTTP on " + conf.serverAddr)
 		var exitErr error
 		go func() {
 			HTTPserver := newGracefulServer(mux, false, conf.serverAddr, conf.shutdownTimeout)
-
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTPserver.ListenAndServe(); err != nil {
 				// If we can't serve regular HTTP, give up
