@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	versionString         = "Algernon 0.83"
+	versionString         = "Algernon 0.84"
 	description           = "HTTP/2 Web Server"
 	specialServerFilename = "server.lua"
 )
