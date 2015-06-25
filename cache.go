@@ -10,17 +10,14 @@ import (
 	"sync"
 )
 
-// fileID identifies a filename
-type fileID string
-
-const emptyFileID = fileID("")
+const emptyFileID = ""
 
 // FileCache manages a set of bytes as a cache
 type FileCache struct {
 	size              uint64            // Total size of the cache
 	blob              []byte            // The cache storage
-	index             map[fileID]uint64 // Overview of where the data is placed in the cache
-	hits              map[fileID]uint64 // Keeping track of data popularity
+	index             map[string]uint64 // Overview of where the data is placed in the cache
+	hits              map[string]uint64 // Keeping track of data popularity
 	offset            uint64            // The current position in the cache storage (end of data)
 	rw                *sync.RWMutex     // Used for avoiding data races and other issues
 	cacheWarningGiven bool              // Used to only warn once if the cache is full
@@ -54,8 +51,8 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCa
 	var cache FileCache
 	cache.size = cacheSize
 	cache.blob = make([]byte, cacheSize) // The cache storage
-	cache.index = make(map[fileID]uint64)
-	cache.hits = make(map[fileID]uint64)
+	cache.index = make(map[string]uint64)
+	cache.hits = make(map[string]uint64)
 	cache.rw = &sync.RWMutex{}
 	cache.compress = compress
 	cache.maxEntitySize = maxEntitySize
@@ -64,8 +61,8 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCa
 }
 
 // Normalize the filename
-func (cache *FileCache) normalize(filename string) fileID {
-	return fileID(normalize(filename))
+func (cache *FileCache) normalize(filename string) string {
+	return normalize(filename)
 }
 
 // Remove bytes from the cache blob
@@ -92,14 +89,14 @@ func (cache *FileCache) shuffleIndicesLeft(removedpos, offset uint64) {
 }
 
 // Remove a data index
-func (cache *FileCache) removeIndex(id fileID) {
+func (cache *FileCache) removeIndex(id string) {
 	delete(cache.index, id)
 }
 
 // Remove data from the cache and shuffle the rest of the data to the left
 // Also adjusts all index pointers to indexes larger than the current position
 // Also adjusts the cache.offset
-func (cache *FileCache) remove(id fileID) error {
+func (cache *FileCache) remove(id string) error {
 	if !cache.hasFile(id) {
 		return ErrRemoval
 	}
@@ -117,7 +114,7 @@ func (cache *FileCache) remove(id fileID) error {
 }
 
 // Find the data with the least hits, that is currently in the cache
-func (cache *FileCache) leastPopular() (fileID, error) {
+func (cache *FileCache) leastPopular() (string, error) {
 	// If there is no data, return an error
 	if len(cache.index) == 0 {
 		return emptyFileID, ErrNoData
@@ -140,7 +137,7 @@ func (cache *FileCache) leastPopular() (fileID, error) {
 
 	var (
 		leastHits   uint64
-		leastHitsID fileID
+		leastHitsID string
 		firstRound  = true
 	)
 
@@ -249,7 +246,7 @@ func (cache *FileCache) storeData(filename string, data []byte) (storedDataBlock
 }
 
 // Check if the given filename exists in the cache
-func (cache *FileCache) hasFile(id fileID) bool {
+func (cache *FileCache) hasFile(id string) bool {
 	for key := range cache.index {
 		if key == id {
 			return true
@@ -277,7 +274,7 @@ func (cache *FileCache) nextData(startpos uint64) (uint64, bool) {
 }
 
 // Find the size of a cached data block. id must exist.
-func (cache *FileCache) dataSize(id fileID) uint64 {
+func (cache *FileCache) dataSize(id string) uint64 {
 	startpos := cache.index[id]
 
 	// Find the next data block
@@ -401,8 +398,8 @@ func (cache *FileCache) clear() {
 	defer cache.rw.Unlock()
 
 	cache.offset = 0
-	cache.index = make(map[fileID]uint64)
-	cache.hits = make(map[fileID]uint64)
+	cache.index = make(map[string]uint64)
+	cache.hits = make(map[string]uint64)
 
 	// No need to clear the actual bytes, unless perhaps if there should be
 	// changes to the caching algorithm in the future.
