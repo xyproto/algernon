@@ -19,7 +19,9 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Look into github.com/jessevdk/go-flags/
 - [ ] pprint should output text to the browser when not running in the repl
+- [ ] web handlers should have access to setting up additional web handlers
 - [ ] Visitor graph
 - [ ] See if the HTTP headers from the client + country of origin + mouse movement patterns can become some sort of pseudo ID.
       Combine with a neural net. Can be used for storing non-critical data like prefered themes, font sizes etc.
