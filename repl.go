@@ -644,6 +644,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		}
 
 		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 
 		switch line {
 		case "help":
