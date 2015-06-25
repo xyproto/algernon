@@ -39,7 +39,9 @@ func (pl *lStatePool) Put(L *lua.LState) {
 }
 
 func (pl *lStatePool) Shutdown() {
-	for _, L := range pl.saved {
-		L.Close()
-	}
+	// The following line causes a race condition with the
+	// graceful shutdown package at server shutdown:
+	//for _, L := range pl.saved {
+	//	L.Close()
+	//}
 }
