@@ -68,12 +68,12 @@ func main() {
 			log.Fatal(err)
 		}
 		go func() {
-			log.Info("Profiling CPU")
+			log.Info("Profiling CPU usage")
 			pprof.StartCPUProfile(f)
 		}()
 		atShutdown(func() {
 			pprof.StopCPUProfile()
-			log.Info("Done profiling")
+			log.Info("Done profiling CPU usage")
 		})
 	}
 
@@ -81,12 +81,12 @@ func main() {
 	if profileMem != "" {
 		atShutdown(func() {
 			f, err := os.Create(profileMem)
+			defer f.Close()
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Info("Writing heap profile to ", profileMem)
+			log.Info("Saving heap profile to ", profileMem)
 			pprof.WriteHeapProfile(f)
-			f.Close()
 		})
 	}
 
