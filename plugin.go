@@ -39,7 +39,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !exists(path) {
+		if !fs.exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 
@@ -108,7 +108,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !exists(path) {
+		if !fs.exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 
@@ -156,7 +156,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !exists(path) {
+		if !fs.exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 

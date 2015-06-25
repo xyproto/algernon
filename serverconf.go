@@ -76,6 +76,7 @@ func serverInfo() string {
 		"Auto-refresh": autoRefreshMode,
 		"Dev":          devMode,
 		"Server":       serverMode,
+		"StatCache":    cacheFileStat,
 	})
 
 	buf.WriteString("Cache mode:\t\t" + cacheMode.String() + "\n")
@@ -99,7 +100,11 @@ func serverInfo() string {
 	if redisAddr != defaultRedisColonPort {
 		buf.WriteString("Redis address:\t\t" + redisAddr + "\n")
 	}
-	buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", limitRequests))
+	if disableRateLimiting {
+		buf.WriteString("Request limit:\t\tOff\n")
+	} else {
+		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", limitRequests))
+	}
 	if redisDBindex != 0 {
 		buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", redisDBindex))
 	}
@@ -213,7 +218,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 	L.SetGlobal("ServerFile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
 		serverfilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !exists(filename) {
+		if !fs.exists(filename) {
 			log.Error("Could not find", serverfilename)
 			L.Push(lua.LBool(false))
 			return 1 // number of results

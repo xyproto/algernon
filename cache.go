@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 	"io/ioutil"
-	"strings"
 	"sync"
 )
 
@@ -66,11 +65,7 @@ func newFileCache(cacheSize uint64, compress bool, maxEntitySize uint64) *FileCa
 
 // Normalize the filename
 func (cache *FileCache) normalize(filename string) fileID {
-	// If the filename begins with "./", remove it
-	if strings.HasPrefix(filename, "./") {
-		return fileID(filename[2:])
-	}
-	return fileID(filename)
+	return fileID(normalize(filename))
 }
 
 // Remove bytes from the cache blob

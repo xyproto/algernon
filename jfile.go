@@ -139,7 +139,7 @@ func jfileJSON(L *lua.LState) int {
 func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
 	fullFilename := filename
 	// Check if the file exists
-	if !exists(fullFilename) {
+	if !fs.exists(fullFilename) {
 		// Create an empty JSON document/file
 		if err := ioutil.WriteFile(fullFilename, []byte("[]\n"), 0666); err != nil {
 			return nil, err

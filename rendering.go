@@ -160,7 +160,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
-	if exists(GCSSfilename) {
+	if fs.exists(GCSSfilename) {
 		if debugMode {
 			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
@@ -225,7 +225,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
-	if exists(GCSSfilename) {
+	if fs.exists(GCSSfilename) {
 		if debugMode {
 			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {

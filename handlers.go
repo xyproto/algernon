@@ -258,7 +258,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 		urlpath := fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(easyLink(filename, urlpath, isDir(fullFilename)))
+		buf.WriteString(easyLink(filename, urlpath, fs.isDir(fullFilename)))
 	}
 	title := dirname
 	// Strip the leading "./"
@@ -307,7 +307,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
-		if exists(filename) {
+		if fs.exists(filename) {
 			filePage(w, req, filename, perm, luapool, cache)
 			return
 		}
@@ -346,9 +346,9 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		if strings.HasSuffix(filename, pathsep) {
 			noslash = filename[:len(filename)-1]
 		}
-		hasdir := exists(filename) && isDir(filename)
+		hasdir := fs.exists(filename) && fs.isDir(filename)
 		dirname := filename
-		hasfile := exists(noslash)
+		hasfile := fs.exists(noslash)
 
 		// Set the server header.
 		serverHeaders(w)

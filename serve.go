@@ -51,10 +51,16 @@ func runShutdown() {
 		log.Info("Initating shutdown")
 	}
 
-	// Call the shutdown functions in cronological order (FIFO)
+	// Call the shutdown functions in chronological order (FIFO)
 	for _, shutdownFunction := range shutdownFunctions {
 		shutdownFunction()
 	}
+
+	// Call the shutdown functions in reverse chronological order (LIFO)
+	//for i := len(shutdownFunctions) - 1; i >= 0; i-- {
+	//	shutdownFunctions[i]()
+	//}
+
 	completed = true
 
 	// TODO: Figure out why this sometimes does not happen, while the above lines do happen

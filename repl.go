@@ -595,7 +595,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		EOF      bool
 		EOFcount int
 	)
-	if loadHistory(historyFilename) != nil && exists(historyFilename) {
+	if loadHistory(historyFilename) != nil && fs.exists(historyFilename) {
 		log.Error("Could not load REPL history:", historyFilename)
 	}
 	// To be run at server shutdown

@@ -30,12 +30,13 @@ var (
 	serverHost      string
 	dbName          string
 	refreshDuration time.Duration
+	fs              *FileStat
 )
 
 func main() {
 	var err error
 
-	// TODO: Benchmark to see if runtime.NumCPU() * X scales better.
+	// Will be default in Go 1.5
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Temporary directory that might be used for logging, databases or file extraction
@@ -101,12 +102,16 @@ func main() {
 	// Read mime data from the system, if available
 	initializeMime()
 
+	// Create a new FileStat struct, with optional caching (for speed).
+	// Clear the cache every 10 minutes.
+	fs = NewFileStat(cacheFileStat, time.Minute*10)
+
 	// Check if the given directory really is a directory
-	if !isDir(serverDir) {
+	if !fs.isDir(serverDir) {
 		// Possibly a file
 		filename := serverDir
 		// Check if the file exists
-		if exists(filename) {
+		if fs.exists(filename) {
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(filename)) {
 			case ".md", ".markdown":
@@ -125,7 +130,7 @@ func main() {
 				// directory of the newly extracted ZIP file.
 				if filenames := getFilenames(serverDir); len(filenames) == 1 {
 					fullPath := filepath.Join(serverDir, filenames[0])
-					if isDir(fullPath) {
+					if fs.isDir(fullPath) {
 						// Use this as the server directory instead
 						serverDir = fullPath
 					}
@@ -134,7 +139,7 @@ func main() {
 				// directory, register them.
 				for _, filename := range serverConfigurationFilenames {
 					configFilename := filepath.Join(serverDir, filename)
-					if exists(configFilename) {
+					if fs.exists(configFilename) {
 						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
 					}
 				}
@@ -206,7 +211,7 @@ func main() {
 	// The scripts may change global variables.
 	var ranConfigurationFilenames []string
 	for _, filename := range serverConfigurationFilenames {
-		if exists(filename) {
+		if fs.exists(filename) {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
@@ -262,6 +267,9 @@ func main() {
 		// Could not open the internalLogFilename filename, try using another filename
 		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, defaultPermissions)
 		atShutdown(func() {
+			// TODO This one is is special and should be closed after the other shutdown functions.
+			//      Set up a "done" channel instead of sleeping.
+			time.Sleep(100 * time.Millisecond)
 			internalLogFile.Close()
 		})
 		if err != nil {

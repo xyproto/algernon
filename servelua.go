@@ -15,11 +15,11 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 		serveFilename := filepath.Join(scriptdir, L.ToString(1))
-		if !exists(serveFilename) {
+		if !fs.exists(serveFilename) {
 			log.Error("Could not serve " + serveFilename + ". File not found.")
 			return 0 // Number of results
 		}
-		if isDir(serveFilename) {
+		if fs.isDir(serveFilename) {
 			log.Error("Could not serve " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}

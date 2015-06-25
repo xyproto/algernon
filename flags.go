@@ -101,6 +101,10 @@ var (
 
 	// Memory profile filename
 	profileMem string
+
+	// Assume files will not be removed from the server directory while
+	// Algernon is running. This allows caching of costly os.Stat calls.
+	cacheFileStat bool
 )
 
 func usage() {
@@ -163,6 +167,8 @@ Available flags:
   -s, --server                 Server mode (disable interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername                 Custom HTTP header value for the Server field.
+  -c, --statcache              Speed up responses by caching os.Stat.
+                               Only use if served files will not be removed.
 `)
 }
 
@@ -172,7 +178,7 @@ func handleFlags(serverTempDir string) string {
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
-		showVersionShort, quietModeShort bool
+		showVersionShort, quietModeShort, cacheFileStatShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -229,6 +235,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&serverHeaderName, "servername", versionString, "Server header name")
 	flag.StringVar(&profileCPU, "cpuprofile", "", "Write CPU profile to file")
 	flag.StringVar(&profileMem, "memprofile", "", "Write memory profile to file")
+	flag.BoolVar(&cacheFileStat, "statcache", false, "Cache os.Stat")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -240,6 +247,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&devModeShort, "e", false, "Development mode")
 	flag.BoolVar(&showVersionShort, "v", false, "Version")
 	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
+	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
 
 	flag.Parse()
 
@@ -253,6 +261,7 @@ func handleFlags(serverTempDir string) string {
 	devMode = devMode || devModeShort
 	showVersion = showVersion || showVersionShort
 	quietMode = quietMode || quietModeShort
+	cacheFileStat = cacheFileStat || cacheFileStatShort
 
 	// Disable verbose mode if quiet mode has been enabled
 	if quietMode {
