@@ -749,7 +749,7 @@ Releases
 --------
 
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
-* [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.62-win8-64).
+* [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.84-win8-64).
 * [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb)
 * Source releases are tagged as such.
 
