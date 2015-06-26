@@ -105,8 +105,22 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	// If we are not writing internal logs to a file, reduce the verboseness
 	http2.VerboseLogs = (conf.internalLogFilename != os.DevNull)
 
+	// Channel to wait and see if we should just serve regular HTTP instead
+	justServeRegularHTTP := make(chan bool)
+
+	// Goroutine that wait for a message to just serve regular HTTP, if needed
+	go func() {
+		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
+		log.Info("Serving HTTP on " + conf.serverAddr)
+		HTTPserver := newGracefulServer(mux, false, conf.serverAddr, conf.shutdownTimeout)
+		// Start serving. Shut down gracefully at exit.
+		if err := HTTPserver.ListenAndServe(); err != nil {
+			// If we can't serve regular HTTP on port 80, give up
+			fatalExit(err)
+		}
+	}()
+
 	// Decide which protocol to listen to
-	justServeRegularHTTP := false
 	switch {
 	case conf.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
@@ -135,7 +149,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			HTTP2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
-				justServeRegularHTTP = true
+				justServeRegularHTTP <- true
 			}
 		}()
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
@@ -145,35 +159,19 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
-				log.Warn("Could not serve HTTPS + HTTP/2 (" + err.Error() + ")")
-				log.Info("Use the -t flag to serve HTTP only")
+				log.Error("Not serving HTTPS: ", err)
+				log.Info("Use the -t flag for serving regular HTTP")
 				// If HTTPS failed (perhaps the key + cert are missing),
 				// serve plain HTTP instead
-				justServeRegularHTTP = true
+				justServeRegularHTTP <- true
 			}
 		}()
 	default:
-		justServeRegularHTTP = true
-	}
-
-	if justServeRegularHTTP {
-		log.Info("Serving HTTP on " + conf.serverAddr)
-		var exitErr error
-		go func() {
-			HTTPserver := newGracefulServer(mux, false, conf.serverAddr, conf.shutdownTimeout)
-			// Start serving. Shut down gracefully at exit.
-			if err := HTTPserver.ListenAndServe(); err != nil {
-				// If we can't serve regular HTTP, give up
-				exitErr = err
-				return
-			}
-		}()
-		if exitErr != nil {
-			return exitErr
-		}
+		justServeRegularHTTP <- true
 	}
 
 	ready <- true // Send a "ready" message to the REPL
 	<-done        // Wait for a "done" message from the REPL (or just keep waiting)
-	return nil    // Done serving
+
+	return nil // Done serving
 }
