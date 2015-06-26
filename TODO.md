@@ -2,13 +2,12 @@
 
 Priority
 --------
-- [ ] Handle .avi and other multimedia files better. Show a page for playing and downloading.
 - [ ] File upload.
-- [ ] Dockerfile.
-- [ ] Stress test with -race + profiling.
-- [ ] The "graceful" package sometimes shows up in a data race at shutdown. Figure out why.
 - [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
+- [ ] Dockerfile / containers.
+- [ ] Access log that does not have to be written manually in Lua.
 - [ ] Use a struct for the configuration variables.
+- [ ] Handle .avi and other multimedia files better. Show a page for playing and downloading.
 
 
 Go / go vet / go lint
@@ -19,6 +18,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Look into github.com/jessevdk/go-flags/
 - [ ] pprint should output text to the browser when not running in the repl
 - [ ] web handlers should have access to setting up additional web handlers
