@@ -4,7 +4,7 @@ class Algernon < Formula
   desc "HTTP/2 web server with Lua support"
   homepage "http://algernon.roboticoverlords.org/"
   url "https://github.com/xyproto/algernon/archive/0.84.tar.gz"
-  sha256 "b64a6367445b707ae272ff917d971133777f62893f75a3dbaa0a19018d02a51c"
+  sha256 "bc6c9899744ae50736dee1cea1e6c3228d89f8ccf436eb22694664b828e927fc"
   head "https://github.com/xyproto/algernon.git"
 
   depends_on "readline"
