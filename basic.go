@@ -233,4 +233,11 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 1 // number of results
 	}))
 
+	// Redirect a request
+	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
+		newurl := L.ToString(1)
+		http.Redirect(w, req, newurl, http.StatusMovedPermanently)
+		return 0 // number of results
+	}))
+
 }
