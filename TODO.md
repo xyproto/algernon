@@ -18,6 +18,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Implement smooth reload + restart for systemd
 - [ ] A way to serve different directories for different subdomains
 - [ ] Cache os.Stat also when serving directory listings
 - [ ] Create a screencast
