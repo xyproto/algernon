@@ -1,14 +1,11 @@
 [Unit]
 Description=Algernon web server
-#Requires=redis.service
-#After=redis.service
+Requires=redis.service
+After=redis.service
 
 [Service]
-User=algernon
 Group=algernon
-#ExecStart=/usr/bin/algernon --prod
-ExecStart=/usr/bin/algernon --server --httponly --addr=:7000 --log /var/log/algernon.log /srv/algernon
-CapabilityBoundingSet=
+ExecStart=/usr/bin/algernon -c --domain --server --cachesize 67108864 --addr=:80 --httponly /srv
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
