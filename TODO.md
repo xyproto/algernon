@@ -18,8 +18,9 @@ Go / go vet / go lint
 
 Various
 -------
-- [ ] Use a better router than the default ServeMux
-- [ ] Screencast
+- [ ] If a directories in serverdir contains two dots, only allow a matching host name
+- [ ] Cache os.Stat also when serving directory listings
+- [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Look into github.com/jessevdk/go-flags/
