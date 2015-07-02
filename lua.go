@@ -274,7 +274,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	if singleFileMode {
 		// Lua HTTP handlers
-		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux)
+		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false)
 	}
 
 	// Run the script

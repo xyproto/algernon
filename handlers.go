@@ -326,9 +326,18 @@ func initializeMime() {
 	mimereader = mime.New("/etc/mime.types", true)
 }
 
+// Return the domain of a request (up to ":", if any)
+func getDomain(req *http.Request) string {
+	for i, r := range req.Host {
+		if r == ':' {
+			return req.Host[:i]
+		}
+	}
+	return req.Host
+}
+
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
-	rootdir := servedir
+func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
@@ -337,6 +346,14 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 			perm.DenyFunction()(w, req)
 			// Reject the request by returning
 			return
+		}
+
+		// Local to this function
+		servedir := servedir
+
+		// Look for the directory that is named the same as the host
+		if addDomain {
+			servedir = filepath.Join(servedir, getDomain(req))
 		}
 
 		urlpath := req.URL.Path
@@ -355,7 +372,7 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, rootdir, dirname, perm, luapool, cache)
+			dirPage(w, req, servedir, dirname, perm, luapool, cache)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory

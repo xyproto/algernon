@@ -105,6 +105,9 @@ var (
 	// Assume files will not be removed from the server directory while
 	// Algernon is running. This allows caching of costly os.Stat calls.
 	cacheFileStat bool
+
+	// Look for files in the directory with the same name as the requested hostname
+	serverAddDomain bool
 )
 
 func usage() {
@@ -164,11 +167,13 @@ Available flags:
   --limit=N                    Limit clients to N requests per second
                                (the default is ` + defaultLimitString + `).
   --nolimit                    Disable rate limiting.
-  -s, --server                 Server mode (disable interactive mode).
+  -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername                 Custom HTTP header value for the Server field.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
+  --domain                     Serve files from the subdirectory with the same
+                               name as the requested domain.
 `)
 }
 
@@ -236,6 +241,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&profileCPU, "cpuprofile", "", "Write CPU profile to file")
 	flag.StringVar(&profileMem, "memprofile", "", "Write memory profile to file")
 	flag.BoolVar(&cacheFileStat, "statcache", false, "Cache os.Stat")
+	flag.BoolVar(&serverAddDomain, "domain", false, "Look for files in the directory named the same as the hostname")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -275,6 +281,11 @@ func handleFlags(serverTempDir string) string {
 	if redisAddr == "" {
 		// The default host and port
 		redisAddr = host + defaultRedisColonPort
+	}
+
+	// May be overriden by devMode
+	if serverMode {
+		debugMode = false
 	}
 
 	// TODO: If flags are set in addition to -p or -e, don't override those

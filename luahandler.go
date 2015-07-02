@@ -12,7 +12,7 @@ import (
 )
 
 // Make functions related to handling HTTP requests available to Lua scripts
-func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux) {
+func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool) {
 
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1)
@@ -48,7 +48,7 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
 
-		registerHandlers(mux, handlePath, rootdir, perm, luapool, cache)
+		registerHandlers(mux, handlePath, rootdir, perm, luapool, cache, addDomain)
 
 		return 0 // number of results
 	}))
