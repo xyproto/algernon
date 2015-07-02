@@ -18,7 +18,7 @@ Go / go vet / go lint
 
 Various
 -------
-- [ ] If a directories in serverdir contains two dots, only allow a matching host name
+- [ ] A way to serve different directories for different subdomains
 - [ ] Cache os.Stat also when serving directory listings
 - [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
