@@ -18,6 +18,9 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Use a better router than the default ServeMux
+- [ ] Screencast
+- [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Look into github.com/jessevdk/go-flags/
 - [ ] pprint should output text to the browser when not running in the repl
