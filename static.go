@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultStaticCacheSize = 1024 * 1024 * 64 // 64 MiB
+	defaultStaticCacheSize = 64 * MiB
 )
 
 // Convenience function for serving only a single file

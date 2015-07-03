@@ -151,6 +151,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 	// Cache
 	exportCacheFunctions(L, cache)
+
+	// File uploads
+	exportUploadedFile(L, w, req, filepath.Dir(filename))
 }
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.

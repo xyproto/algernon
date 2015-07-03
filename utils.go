@@ -9,10 +9,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"math"
 )
 
 const (
 	everyInstance = -1 // Used when replacing strings
+
+	// KiB is a kilobyte
+	KiB = 1024
+	// MiB is a megabyte
+	MiB = 1024 * 1024
 )
 
 var (
@@ -378,3 +384,20 @@ func enabledStatus(enabled bool) string {
 	}
 	return "disabled"
 }
+
+// Convert byte to KiB or MiB
+func describeBytes(size int64) string {
+	if (size < MiB) {
+      return strconv.Itoa(int(round(float64(size) * 100.0 / KiB) / 100)) + " KiB"
+    }
+    return strconv.Itoa(int(round(float64(size) * 100.0 / MiB) / 100)) + " MiB"
+}
+
+func roundf(x float64) float64 {
+	return math.Floor(0.5 + x)
+}
+
+func round(x float64) int64 {
+	return int64(roundf(x))
+}
+

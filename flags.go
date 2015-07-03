@@ -19,9 +19,9 @@ const (
 	defaultEventRefresh       = "350ms"
 	defaultEventPath          = "/fs"
 	defaultLimit              = 10
-	defaultPermissions        = 0600
-	defaultCacheSize          = 1024 * 1024 // 1 MiB
-	defaultCacheMaxEntitySize = 64 * 1024   // 64 KB
+	defaultPermissions        = 0660
+	defaultCacheSize          = MiB      // 1 MiB
+	defaultCacheMaxEntitySize = 64 * KiB // 64 KB
 )
 
 var (

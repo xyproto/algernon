@@ -114,7 +114,7 @@ log(...)
 // Log the given strings as a warning. Takes a variable number of strings.
 warn(...)
 // Log the given strings as an error. Takes a variable number of strings.
-error(...)
+err(...)
 // Output text. Takes a variable number of strings.
 print(...)
 
@@ -306,8 +306,8 @@ headers() -> table
 body() -> string
 // Set a HTTP status code (like 200 or 404). Must come before other output.
 status(number)
-// Output a message and set a HTTP status code.
-error(string, number)
+// Set a HTTP status code and output a message (optional).
+error(number[, string])
 // Return the directory where the script is running. If a filename (optional)
 // is given, then the path to where the script is running, joined with a path
 // separator and the given filename, is returned.

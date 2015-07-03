@@ -1,0 +1,18 @@
+$fieldID = "fileToUpload"
+doctype 5
+html
+  head
+    title Upload Files using XMLHttpRequest - Minimal
+    script[src="js/upload.js"]
+  body
+    form#upload[enctype="multipart/form-data"][method="post"][action="upload.lua"]
+      div.row
+        label[for=$fieldID] Select a file to upload
+        br
+        input#fileToUpload[type="file"][name=$fieldID][onchange="fileSelected($fieldID)"]
+      div#fileName
+      div#fileSize
+      div#fileType
+      div.row
+        input[type="button"][onclick="uploadFile()"][value="Upload"]
+      div#progressNumber

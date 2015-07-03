@@ -40,7 +40,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 	}))
 
 	// Log text with the "Error" log type
-	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("err", L.NewFunction(func(L *lua.LState) int {
 		buf := arguments2buffer(L, false)
 		// Log the combined text
 		log.Error(buf.String())
@@ -156,12 +156,14 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 0 // number of results
 	}))
 
-	// Print a message and set the HTTP status code
+	// Set a HTTP status code and print a message (optional)
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
-		message := L.ToString(1)
-		code := int(L.ToNumber(2))
+		code := int(L.ToNumber(1))
 		w.WriteHeader(code)
-		fmt.Fprint(w, message)
+		if L.GetTop() == 2 {
+			message := L.ToString(2)
+			fmt.Fprint(w, message)
+		}
 		return 0 // number of results
 	}))
 
