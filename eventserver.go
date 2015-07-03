@@ -188,7 +188,7 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 // Insert JavaScript that refreshes the page when the source files changes.
 // The JavaScript depends on the event server being available.
 // If javascript can not be inserted, return the original data.
-func insertAutoRefresh(htmldata []byte) []byte {
+func insertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	fullHost := eventAddr
 	// If the host+port starts with ":", assume it's only the port number
 	if strings.HasPrefix(fullHost, ":") {
@@ -196,7 +196,7 @@ func insertAutoRefresh(htmldata []byte) []byte {
 		if serverHost != "" {
 			fullHost = serverHost + eventAddr
 		} else {
-			fullHost = "localhost" + eventAddr
+			fullHost = getDomain(req) + eventAddr
 		}
 	}
 	// Wait 70% of an event duration before starting to listen for events

@@ -97,7 +97,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			if err != nil {
 				if debugMode {
 					// Use the Lua filename as the title
-					prettyError(w, luafilename, luablock.MustData(), err.Error(), "lua")
+					prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
 				} else {
 					log.Error(err)
 				}
@@ -185,7 +185,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 					fileblock = errorToDataBlock(err)
 				}
 				// If there were errors, display an error page
-				prettyError(w, filename, fileblock.MustData(), errortext, "lua")
+				prettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
 			} else {
 				// If things went well, write to the ResponseWriter
 				writeRecorder(w, recorder)
@@ -286,7 +286,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 	// If the auto-refresh feature has been enabled
 	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(htmldata)
+		htmldata = insertAutoRefresh(req, htmldata)
 	}
 
 	// Serve the page

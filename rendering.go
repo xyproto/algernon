@@ -171,7 +171,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 			// Try compiling the GCSS file first
 			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
-				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
+				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -202,7 +202,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	// If the auto-refresh feature has been enabled
 	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(htmldata)
+		htmldata = insertAutoRefresh(req, htmldata)
 	}
 
 	// Write the rendered Markdown page to the client
@@ -236,7 +236,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 			// Try compiling the GCSS file before the Amber file
 			if err := validGCSS(gcssdata); err != nil {
 				// Invalid GCSS, return an error page
-				prettyError(w, GCSSfilename, gcssdata, err.Error(), "gcss")
+				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -248,7 +248,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	tpl, err := amber.CompileData(amberdata, filename, amber.Options{PrettyPrint: true, LineNumbers: false})
 	if err != nil {
 		if debugMode {
-			prettyError(w, filename, amberdata, err.Error(), "amber")
+			prettyError(w, req, filename, amberdata, err.Error(), "amber")
 		} else {
 			log.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
 		}
@@ -264,14 +264,14 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 		if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
 			errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
 			if debugMode {
-				prettyError(w, filename, amberdata, errortext, "amber")
+				prettyError(w, req, filename, amberdata, errortext, "amber")
 			} else {
 				errortext = strings.Replace(errortext, "<br>", "\n", 1)
 				log.Errorf("Could not execute Amber template:\n%s", errortext)
 			}
 		} else {
 			if debugMode {
-				prettyError(w, filename, amberdata, err.Error(), "amber")
+				prettyError(w, req, filename, amberdata, err.Error(), "amber")
 			} else {
 				log.Errorf("Could not execute Amber template:\n%s", err)
 			}
@@ -282,7 +282,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	// If the auto-refresh feature has been enabled
 	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		changedBuf := bytes.NewBuffer(insertAutoRefresh(buf.Bytes()))
+		changedBuf := bytes.NewBuffer(insertAutoRefresh(req, buf.Bytes()))
 		buf = *changedBuf
 	}
 
@@ -314,7 +314,7 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
 		if debugMode {
-			prettyError(w, filename, jsxdata, err.Error(), "jsx")
+			prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
 		}
@@ -323,7 +323,7 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 	gen, err := generator.Generate(prog)
 	if err != nil {
 		if debugMode {
-			prettyError(w, filename, jsxdata, err.Error(), "jsx")
+			prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
 		}

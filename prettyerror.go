@@ -38,7 +38,7 @@ func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 // Return an informative error page to the user
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
-func prettyError(w http.ResponseWriter, filename string, filebytes []byte, errormessage, lang string) {
+func prettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
 
 	// HTTP status
 	//w.WriteHeader(http.StatusInternalServerError)
@@ -172,7 +172,7 @@ func prettyError(w http.ResponseWriter, filename string, filebytes []byte, error
 
 	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(htmldata)
+		htmldata = insertAutoRefresh(req, htmldata)
 	}
 
 	w.Write(htmldata)
