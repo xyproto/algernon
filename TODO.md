@@ -2,8 +2,9 @@
 
 Priority
 --------
+- [ ] Document the file upload functionality.
 - [ ] Tool to easily pack an .alg application as a docker container.
-- [ ] Optional access log to the database. + page to view the logs
+- [ ] Optional access log to the database. + page to view the logs.
 - [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
 - [ ] Dockerfile / containers.
 - [ ] Use a struct for the configuration variables.
@@ -20,7 +21,6 @@ Various
 -------
 - [ ] Create a tool that pretends to upload a file of size 128 bytes (Content-Length), but continues to stream data. Test with Algernon.
 - [ ] File upload while handling gzip
-- [ ] Document the file upload functionality
 - [ ] HTTP/2 + HTTPS + certificates per subdomain
 - [ ] Automatic redirect from http to https, or the other way around
 - [ ] Lua plugin
