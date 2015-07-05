@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"math"
 )
 
 const (
@@ -387,10 +387,10 @@ func enabledStatus(enabled bool) string {
 
 // Convert byte to KiB or MiB
 func describeBytes(size int64) string {
-	if (size < MiB) {
-      return strconv.Itoa(int(round(float64(size) * 100.0 / KiB) / 100)) + " KiB"
-    }
-    return strconv.Itoa(int(round(float64(size) * 100.0 / MiB) / 100)) + " MiB"
+	if size < MiB {
+		return strconv.Itoa(int(round(float64(size)*100.0/KiB)/100)) + " KiB"
+	}
+	return strconv.Itoa(int(round(float64(size)*100.0/MiB)/100)) + " MiB"
 }
 
 func roundf(x float64) float64 {
@@ -400,4 +400,3 @@ func roundf(x float64) float64 {
 func round(x float64) int64 {
 	return int64(roundf(x))
 }
-
