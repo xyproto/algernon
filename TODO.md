@@ -3,10 +3,13 @@
 Priority
 --------
 - [ ] Document the file upload functionality.
+- [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
+- [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
+      subdomain, when using the --domain parameter. Then only serve
+      that directory with HTTPS for :443).
 - [ ] Optional access log to the database. + page to view the logs.
 - [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
-- [ ] Dockerfile / containers.
 - [ ] Use a struct for the configuration variables.
 - [ ] Handle .avi and other multimedia files better. Show a page for playing and downloading.
 
@@ -21,7 +24,6 @@ Various
 -------
 - [ ] Create a tool that pretends to upload a file of size 128 bytes (Content-Length), but continues to stream data. Test with Algernon.
 - [ ] File upload while handling gzip
-- [ ] HTTP/2 + HTTPS + certificates per subdomain
 - [ ] Automatic redirect from http to https, or the other way around
 - [ ] Lua plugin
 - [ ] C plugin
