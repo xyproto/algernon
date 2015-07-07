@@ -98,42 +98,19 @@ Running Algernon (screenshot from an earlier version):
 
 ---
 
-ASCII diagram:
+The idea is that webpages can be written in Markdown, Amber, HTML or JSX (+React), depending on the need, and styled with CSS or GCSS, while data can be provided by a Lua script that talks to Redis, Bolt or MySQL.
 
-```text
-+----------------------------------+-----------------------------------+
-|                                  |                                   |
-|   Web pages                      |   Styling                         |
-|                                  |                                   |
-|   Amber instead of HTML:         |   GCSS instead of CSS:            |
-|   * Easier to read and write.    |   * Easier to read and write.     |
-|   * Easy to add structure.       |   * Easy to add more structure.   |
-|   * Can refresh when saving.     |   * Less repetition. DRY.         |
-|                                  |                                   |
-+----------------------------------+-----------------------------------+
-|                                  |                                   |
-|   Server side                    |   JavaScript                      |
-|                                  |                                   |
-|   Lua for providing data:        |   JSX instead of JavaScript:      |
-|   * Uses the database backend.   |   * Can build a virtual DOM.      |
-|   * Can easily provide data to   |   * Use together with React for   |
-|     Amber templates.             |     building single-page apps.    |
-|                                  |                                   |
-+----------------------------------+-----------------------------------+
-|                                  |                                   |
-|   Markdown                       |   Database backends               |
-|                                  |                                   |
-|   For static pages:              |   Supported:                      |
-|   * Easy content creation.       |   * Redis (the prefered choice)   |
-|   * Easy to style with GCSS.     |   * Bolt (included)               |
-|   * Can refresh when saving.     |   * MySQL                         |
-|                                  |                                   |
-+----------------------------------+-----------------------------------+
-```
+Amber and GCSS is a good combination, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
-* Redis is fast and offers good [data persistence](http://redis.io/topics/persistence).
-* Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go.
+The auto-refresh feature is supported when using Markdown or Amber, and is useful to get an instant preview when developing.
 
+The JSX to JavaScript (ECMAscript) transpiler is built-in.
+
+Redis is fast, scalable and offers good [data persistence](http://redis.io/topics/persistence). This should be the prefered backend.
+
+Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go. It makes it easy to run Algernon without having to set up a database host first.
+
+MySQL support is included because it is pretty common.
 
 Screenshots
 -----------
@@ -321,6 +298,7 @@ Lua functions related to JSON
 -----------------------------
 
 Tips:
+
 * Use `JFile(scriptdir(`*filename*`))` to use or store a JSON document in the same directory as the Lua script.
 * The default string value of a `JFile` object is the formatted JSON text.
 * A JSON path is on the form `x.mapkey.listname[2].mapkey`. `[`, `]` and `.` have special meaning. It's like a really lightweight version of XPath, but for JSON.
