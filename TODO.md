@@ -2,7 +2,6 @@
 
 Priority
 --------
-- [ ] Document the file upload functionality.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
