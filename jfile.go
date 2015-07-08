@@ -203,7 +203,7 @@ func exportJSONFunctions(L *lua.LState) {
 		table := L.ToTable(1)
 		mapinterface, multiple := table2map(table)
 		if multiple {
-			log.Warn("ToJSON: Ignoring table values with different types")
+			log.Warn("toJSON: Ignoring table values with different types")
 		}
 		b, err := json.Marshal(mapinterface)
 		if err != nil {
@@ -215,9 +215,12 @@ func exportJSONFunctions(L *lua.LState) {
 	})
 
 	// Convert a table to JSON
-	L.SetGlobal("ToJSON", toJSON)
+	L.SetGlobal("toJSON", toJSON)
+	// For added comfort
+	L.SetGlobal("tojson", toJSON) // undocumented
 
-	// Only for backward compatibility
-	L.SetGlobal("JSON", toJSON) // undocumented
+	// For backward compatibility
+	L.SetGlobal("ToJSON", toJSON) // undocumented
+	L.SetGlobal("JSON", toJSON)   // undocumented
 
 }

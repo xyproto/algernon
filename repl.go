@@ -137,7 +137,7 @@ jfile:add([string, ]string) -> bool
 // Removes a key in a map in a JSON document. Returns true if successful.
 jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
-ToJSON(table) -> string
+toJSON(table) -> string
 
 Plugins
 
@@ -153,8 +153,8 @@ CallPlugin(string, string, ...) -> string
 
 Code libraries
 
-// Creates a code library object.
-CodeLib() -> userdata
+// Creates a code library object. Takes an optional data structure name.
+CodeLib([string]) -> userdata
 // Given a namespace and Lua code, add the given code to the namespace.
 // Returns true if successful.
 codelib:add(string, string) -> bool
@@ -284,6 +284,25 @@ ConfirmUserByConfirmationCode(string) -> bool
 SetMinimumConfirmationCodeLength(number)
 // Generates a unique confirmation code, or an empty string
 GenerateUniqueConfirmationCode() -> string
+
+File uploads
+
+// Creates a file upload object. Takes a form ID (from a POST request) as the
+// first parameter. Takes an optional maximum upload size (in MiB) as the
+// second parameter. Returns nil and an error string on failure, or userdata
+// and an empty string on success.
+UploadedFile(string[, number]) -> userdata, string
+// Return the uploaded filename, as specified by the client
+uploadedfile:filename() -> string
+// Return the size of the data that has been recevied
+uploadedfile:size() -> number
+// Return the mime type of the uploaded file, as specified by the client
+uploadedfile:mimetype() -> string
+// Save the uploaded data locally. Takes an optional filename.
+uploadedfile:save([string]) -> bool
+// Save the uploaded data as the client-provided filename, in the specified
+// directory. Takes a relative or absolute path. Returns true on success.
+uploadedfile:savein(string)  -> bool
 
 Handling requests
 

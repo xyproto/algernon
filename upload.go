@@ -210,7 +210,7 @@ func uploadedfileSave(L *lua.LState) int {
 // Save the file locally, to a given directory
 func uploadedfileSaveIn(L *lua.LState) int {
 	ulf := checkUploadedFile(L)     // arg 1
-	givenDirectory := L.ToString(2) // optional argument
+	givenDirectory := L.ToString(2) // required argument
 
 	// Get the full path
 	var writeFilename string

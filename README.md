@@ -210,15 +210,19 @@ Basic Lua functions
 -------------------
 
 ~~~c
-return the version string for the server.
-version()
-sleep the given number of seconds (can be a float).
+// Return the version string for the server.
+version() -> string
+
+// Sleep the given number of seconds (can be a float).
 sleep(number)
-log the given strings as information. Takes a variable number of strings.
+
+// Log the given strings as information. Takes a variable number of strings.
 log(...)
-log the given strings as a warning. Takes a variable number of strings.
+
+// Log the given strings as a warning. Takes a variable number of strings.
 warn(...)
-log the given strings as an error. Takes a variable number of strings.
+
+// Log the given strings as an error. Takes a variable number of strings.
 err(...)
 ~~~
 
@@ -299,9 +303,10 @@ Lua functions related to JSON
 
 Tips:
 
-* Use `JFile(scriptdir(`*filename*`))` to use or store a JSON document in the same directory as the Lua script.
+* Use `JFile(`*filename*`)` to use or store a JSON document in the same directory as the Lua script.
 * The default string value of a `JFile` object is the formatted JSON text.
-* A JSON path is on the form `x.mapkey.listname[2].mapkey`. `[`, `]` and `.` have special meaning. It's like a really lightweight version of XPath, but for JSON.
+* A JSON path is on the form `x.mapkey.listname[2].mapkey`, where `[`, `]` and `.` have special meaning. It's like a really lightweight version of XPath, but for JSON.
+* Use `tostring(userdata)` to fetch the JSON string from the JFile object.
 
 ~~~c
 // Use, or create, a JSON document/file.
@@ -312,17 +317,17 @@ jfile:get(string) -> string
 
 // Takes a JSON path (optional) and JSON data to be added to the list.
 // The JSON path must point to a list, if given, unless the JSON file is empty.
-// Returns true if successful.
+// Returns true on success.
 jfile:add([string, ]string) -> bool
 
-// Takes a JSON path and a string value. Changes the entry. Returns true if successful.
+// Takes a JSON path and a string value. Changes the entry. Returns true on success.
 jfile:set(string, string) -> bool
 
-// Removes a key in a map. Takes a JSON path, returns true if successful.
+// Removes a key in a map. Takes a JSON path, returns true on success.
 jfile:delkey(string) -> bool
 
 // Return a JSON string, given a Lua table with ints or strings.
-ToJSON(table) -> string
+toJSON(table) -> string
 ~~~
 
 
@@ -330,7 +335,7 @@ Lua functions for plugins
 -------------------------
 
 ~~~c
-// Load a plugin given the path to an executable. Returns true if successful. Will return the plugin help text if called on the Lua prompt.
+// Load a plugin given the path to an executable. Returns true on success. Will return the plugin help text if called on the Lua prompt.
 Plugin(string)
 
 // Returns the Lua code as returned by the Lua.Code function in the plugin, given a plugin path. May return an empty string.
@@ -348,22 +353,48 @@ These functions can be used in combination with the plugin functions for storing
 
 ~~~c
 // Creates a code library object. Optionally takes a data structure name as the first parameter.
-CodeLib() -> userdata
+CodeLib([string]) -> userdata
 
-// Given a namespace and Lua code, add the given code to the namespace. Returns true if successful.
+// Given a namespace and Lua code, add the given code to the namespace. Returns true on success.
 codelib:add(string, string) -> bool
 
-// Given a namespace and Lua code, set the given code as the only code in the namespace. Returns true if successful.
+// Given a namespace and Lua code, set the given code as the only code in the namespace. Returns true on success.
 codelib:set(string, string) -> bool
 
 // Given a namespace, return Lua code, or an empty string.
 codelib:get(string) -> string
 
-// Import (eval) code from the given namespace into the current Lua state. Returns true if successful.
+// Import (eval) code from the given namespace into the current Lua state. Returns true on success.
 codelib:import(string) -> bool
 
-// Completely clear the code library. Returns true if successful.
+// Completely clear the code library. Returns true on success.
 codelib:clear() -> bool
+~~~
+
+Lua functions for file uploads
+------------------------------
+
+~~~c
+// Creates a file upload object. Takes a form ID (from a POST request) as the first parameter.
+// Takes an optional maximum upload size (in MiB) as the second parameter.
+// Returns nil and an error string on failure, or userdata and an empty string on success.
+UploadedFile(string[, number]) -> userdata, string
+
+// Return the uploaded filename, as specified by the client
+uploadedfile:filename() -> string
+
+// Return the size of the data that has been recevied
+uploadedfile:size() -> number
+
+// Return the mime type of the uploaded file, as specified by the client
+uploadedfile:mimetype() -> string
+
+// Save the uploaded data locally. Takes an optional filename. Returns true on success.
+uploadedfile:save([string]) -> bool
+
+// Save the uploaded data as the client-provided filename, in the specified directory.
+// Takes a relative or absolute path. Returns true on success.
+uploadedfile:savein(string)  -> bool
 ~~~
 
 
@@ -400,7 +431,7 @@ set:has(string) -> bool
 // Get all members of the set
 set:getall() -> table
 
-// Remove the set itself. Returns true if successful.
+// Remove the set itself. Returns true on success.
 set:remove() -> bool
 
 // Clear the set
@@ -426,10 +457,10 @@ list:getlast() -> string
 // Get the N last elements of the list
 list:getlastn(number) -> table
 
-// Remove the list itself. Returns true if successful.
+// Remove the list itself. Returns true on success.
 list:remove() -> bool
 
-// Clear the list. Returns true if successful.
+// Clear the list. Returns true on success.
 list:clear() -> bool
 ~~~
 
@@ -441,7 +472,7 @@ HashMap(string) -> userdata
 
 // For a given element id (for instance a user id), set a key
 // (for instance "password") and a value.
-// Returns true if successful.
+// Returns true on success.
 hash:set(string, string, string) -> bool
 
 // For a given element id (for instance a user id), and a key
@@ -463,17 +494,17 @@ hash:getall() -> table
 
 // Remove a key for an entry in a hash map
 // (for instance the email field for a user)
-// Returns true if successful
+// Returns true on success
 hash:delkey(string, string) -> bool
 
 // Remove an element (for instance a user)
-// Returns true if successful
+// Returns true on success
 hash:del(string) -> bool
 
-// Remove the hash map itself. Returns true if successful.
+// Remove the hash map itself. Returns true on success.
 hash:remove() -> bool
 
-// Clear the hash map. Returns true if successful.
+// Clear the hash map. Returns true on success.
 hash:clear() -> bool
 ~~~
 
@@ -483,7 +514,7 @@ hash:clear() -> bool
 // Get or create a database-backed KeyValue collection (takes a name, returns a key/value object)
 KeyValue(string) -> userdata
 
-// Set a key and value. Returns true if successful.
+// Set a key and value. Returns true on success.
 kv:set(string, string) -> bool
 
 // Takes a key, returns a value.
@@ -495,13 +526,13 @@ kv:get(string) -> string
 // Returns an empty string if the function fails.
 kv:inc(string) -> string
 
-// Remove a key. Returns true if successful.
+// Remove a key. Returns true on success.
 kv:del(string) -> bool
 
-// Remove the KeyValue itself. Returns true if successful.
+// Remove the KeyValue itself. Returns true on success.
 kv:remove() -> bool
 
-// Clear the KeyValue. Returns true if successful.
+// Clear the KeyValue. Returns true on success.
 kv:clear() -> bool
 ~~~
 
@@ -539,7 +570,7 @@ IsAdmin(string) -> bool
 // Get the username stored in a cookie, or an empty string
 UsernameCookie() -> string
 
-// Store the username in a cookie, returns true if successful
+// Store the username in a cookie, returns true on success
 SetUsernameCookie(string) -> bool
 
 // Clear the login cookie
@@ -647,7 +678,7 @@ FindUserByConfirmationCode(string) -> string
 // Takes a username
 Confirm(string)
 
-// Mark a user as confirmed, returns true if successful
+// Mark a user as confirmed, returns true on success
 // Takes a confirmation code
 ConfirmUserByConfirmationCode(string) -> bool
 
@@ -684,7 +715,7 @@ DenyHandler(function)
 ServerInfo() -> string
 
 // Direct the logging to the given filename. If the filename is an empty
-// string, direct logging to stderr. Returns true if successful.
+// string, direct logging to stderr. Returns true on success.
 LogTo(string) -> bool
 
 // Returns the version string for the server.
@@ -695,6 +726,9 @@ log(...)
 
 // Logs the given strings as WARN. Takes a variable number of strings.
 warn(...)
+
+// Logs the given string as ERROR. Takes a variable number of strings.
+err(...)
 
 // Provide a lua function that will be run once, when the server is ready to start serving.
 OnReady(function)
