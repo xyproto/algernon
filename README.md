@@ -304,8 +304,7 @@ Lua functions related to JSON
 Tips:
 
 * Use `JFile(`*filename*`)` to use or store a JSON document in the same directory as the Lua script.
-* The default string value of a `JFile` object is the formatted JSON text.
-* A JSON path is on the form `x.mapkey.listname[2].mapkey`, where `[`, `]` and `.` have special meaning. It's like a really lightweight version of XPath, but for JSON.
+* A JSON path is on the form `x.mapkey.listname[2].mapkey`, where `[`, `]` and `.` have special meaning. It can be used for pinpointing a specific place within a JSON document. It's a bit like a simple version of XPath, but for JSON.
 * Use `tostring(userdata)` to fetch the JSON string from the JFile object.
 
 ~~~c
