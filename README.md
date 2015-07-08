@@ -654,11 +654,12 @@ SetCookieTimeout(number)
 PasswordAlgo() -> string
 
 // Set the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
-// Takes a string
+// ‘bcrypt+‘ accepts bcrypt or sha256 for old passwords, but will only use
+// bcrypt for new passwords.
 SetPasswordAlgo(string)
 
 // Hash the password
-// Takes a username and password (username can be used for salting)
+// Takes a username and password (username can be used for salting sha256)
 HashPassword(string, string) -> string
 
 // Check if a given username and password is correct
