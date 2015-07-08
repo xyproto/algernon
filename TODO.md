@@ -167,7 +167,7 @@ Maybe
 - [ ] Websockets? WebRTC? Three.js? Web components?
 - [ ] Use the goroutine functionality provided by gopher-lua to provide "trigger functions" that sends 1 on a channel when the function triggers, perhaps when a file is changed. Combine this with javascript somehow to make it possible to change the parts of a page when a happens.
 - [ ] User functions shared by many lua pages should not be placed in `app.lua`, nor in a place related to the server, but be imported where they are needed. Either by importing a lua file, by importing a lua file by url or by connecting to a Lua Function Server.
-- [ ] Make it possible to toggle the pretty error view on or off in `server.lua`.
+- [ ] Make it possible to toggle the pretty error view on or off in `serverconf.lua`, for temporary debugging.
 - [ ] Find a good way to store errors.
 - [ ] Implement a page, with admin rights, that displays the last error together with the sourcecode, in a pretty way.
 - [ ] Add a flag for specifying a different default set of URL prefixes with admin, user or public rights.
@@ -175,7 +175,7 @@ Maybe
 - [ ] If a symbolic link to a directory is made, for instance /chat -> /data, then algernon should also apply user permissions to the symbolic link.
 - [ ] Consider creating an alternative version that users permissionsql instead of permissions2
 - [ ] Add a function for calling EVAL on the redis server, while sending Lua code to the server for evaluation.
-- [ ] Re-run `server.lua` if it is changed. Restart the server if the addr or port is changed.
+- [ ] Re-run the Lua server script if changed. Restart the server if the addr or port is changed.
 - [ ] Support SASS.
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.

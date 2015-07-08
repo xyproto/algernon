@@ -31,7 +31,7 @@ Design decisions
     * index.txt is outputted as it is, with the correct Content-Type.
     * index.amber is rendered as HTML.
     * data.lua is interpreted as Lua code, where the functions and variables are made available for Amber and Markdown pages in the same directory.
-    * If a file named server.lua is given as a commandline argument, it can be used as a standalone server, setting up handlers or serving files and directories for specific URL prefixes.
+    * If a single Lua script is given as a commandline argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
     * style.gcss is used as the style for Amber and Markdown pages in the same directory.
 * The following filename extensions are handled by Algernon:
     * .md is interpreted as Markdown and rendered as a HTML page.
@@ -740,7 +740,7 @@ ServerFile(string) -> bool
 Functions that are only available for Lua server files
 ------------------------------------------------------
 
-This function is only available from `server.lua`, or from Lua files that are specified with the `ServerFile` function in the server configuration.
+This function is only available when a Lua script is used instead of a server directory, or from Lua files that are specified with the `ServerFile` function in the server configuration.
 
 ~~~c
 // Given an URL path prefix (like "/") and a Lua function, set up an HTTP handler.

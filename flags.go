@@ -90,7 +90,7 @@ var (
 	// Output
 	quietMode bool
 
-	// If a single "server.lua" file is provided, or Server() is used.
+	// If a single Lua file is provided, or Server() is used.
 	luaServerFilename string
 
 	// Used in the HTTP headers as "Server"
@@ -157,7 +157,7 @@ Available flags:
   --log=FILENAME               Log to a file instead of to the console.
   --internal=FILENAME          Internal log file (verbose when HTTP/2 is enabled)
   -t, --httponly               Serve regular HTTP
-  --http2only                  Serve HTTP/2, without HTTPS (not recommended)
+  --http2only                  Serve HTTP/2, without HTTPS
   --maria=DSN                  Use the given MariaDB or MySQL host
   --mariadb=NAME               Use the given MariaDB or MySQL database
   --verbose                    Slightly more verbose logging

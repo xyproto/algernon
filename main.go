@@ -20,9 +20,8 @@ import (
 )
 
 const (
-	versionString         = "Algernon 0.84"
-	description           = "HTTP/2 Web Server"
-	specialServerFilename = "server.lua"
+	versionString = "Algernon 0.84"
+	description   = "HTTP/2 Web Server"
 )
 
 var (
@@ -182,7 +181,7 @@ func main() {
 	// The final argument is for compressing with "fast" instead of "best".
 	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
 
-	if singleFileMode && filepath.Base(serverDir) == specialServerFilename {
+	if singleFileMode && filepath.Ext(serverDir) == ".lua" {
 		luaServerFilename = serverDir
 		serverDir = filepath.Dir(serverDir)
 		singleFileMode = false
