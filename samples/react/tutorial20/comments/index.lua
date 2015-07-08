@@ -6,7 +6,7 @@ comments = List("comments")
 
 if method() == "POST" then
   -- Add the form data to the comment list, as JSON
-  comments:add(ToJSON(formdata()))
+  comments:add(toJSON(formdata()))
 else
   -- Combine all the JSON comments to a JSON document
   print("["..table.concat(comments:getall(), ",").."]")
