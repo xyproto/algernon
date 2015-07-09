@@ -183,6 +183,9 @@ func main() {
 
 	if singleFileMode && filepath.Ext(serverDir) == ".lua" {
 		luaServerFilename = serverDir
+		if luaServerFilename == "index.lua" || luaServerFilename == "data.lua" {
+			log.Warn("Using " + luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
+		}
 		serverDir = filepath.Dir(serverDir)
 		singleFileMode = false
 	}
