@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] toJSON should take an optional argument for the number of spaces when indenting.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
