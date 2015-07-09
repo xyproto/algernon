@@ -539,6 +539,7 @@ func mustSaveHistory(o *term.TextOutput, historyFilename string) {
 	}
 }
 
+// Output syntax highlighted help text, with an additional usage message
 func outputHelp(o *term.TextOutput, helpText string) {
 	for _, line := range strings.Split(helpText, "\n") {
 		o.Println(highlight(o, line))
@@ -547,7 +548,7 @@ func outputHelp(o *term.TextOutput, helpText string) {
 }
 
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
-// A variatey of functions are exposed to the Lua state.
+// A variety of functions are exposed to the Lua state.
 func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, ready, done chan bool) error {
 	var (
 		historyFilename string
@@ -607,7 +608,10 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 
 	// Getting ready
 	o.Println(o.LightBlue(versionString))
-	<-ready // Wait for a "ready" message
+
+	<-ready // Wait for the server to be ready
+
+	// Tell the user that the server is ready
 	o.Println(o.LightGreen("Ready"))
 
 	// Start the read, eval, print loop
@@ -622,11 +626,8 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	}
 	// To be run at server shutdown
 	atShutdown(func() {
-		// No need to save the history. It's saved at every line.
-		if verboseMode {
-			//	mustSaveHistory(o, historyFilename)
-		} else {
-			//	saveHistory(historyFilename)
+		// Verbose mode has different log output at shutdown
+		if !verboseMode {
 			o.Println(o.LightBlue(exitMessage))
 		}
 	})
@@ -646,10 +647,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		} else {
 			addHistory(line)
 			// Save the REPL history at every line.
-			// Tried saving the history at shutdown, but ctrl-c shuts down Algernon before being able to save.
-			// Handling interrupts to intercept ctrl-c is also problematic, since graceful also handles this interrupt.
-			// Using the shutdown function in the graceful config also does not work. The shutdown happens before
-			// being able to save the history file. Perhaps this is an issue on OS X only?
+			// This proved to be safer than only saving the history at shutdown
+			// (due to how ctrl-c was handled on some systems)
+			// and it's hard to imagine performance issues with this.
 			saveHistory(historyFilename)
 		}
 
@@ -673,7 +673,6 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		switch line {
 		case "help":
 			outputHelp(o, generalHelpText)
-			o.Println(usageMessage)
 			continue
 		case "webhelp":
 			outputHelp(o, webHelpText)

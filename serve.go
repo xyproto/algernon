@@ -170,6 +170,9 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 		justServeRegularHTTP <- true
 	}
 
+	// Wait just a tiny bit
+	time.Sleep(20 * time.Millisecond)
+
 	ready <- true // Send a "ready" message to the REPL
 	<-done        // Wait for a "done" message from the REPL (or just keep waiting)
 
