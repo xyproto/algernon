@@ -216,11 +216,6 @@ func exportJSONFunctions(L *lua.LState) {
 
 	// Convert a table to JSON
 	L.SetGlobal("toJSON", toJSON)
-	// For added comfort
-	L.SetGlobal("tojson", toJSON) // undocumented
-
-	// For backward compatibility
-	L.SetGlobal("ToJSON", toJSON) // undocumented
-	L.SetGlobal("JSON", toJSON)   // undocumented
+	L.SetGlobal("ToJSON", toJSON) // For backward compatibility
 
 }
