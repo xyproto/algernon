@@ -330,6 +330,8 @@ jfile:delkey(string) -> bool
 toJSON(table[, number]) -> string
 ~~~
 
+* `ToJSON` was renamed to `toJSON`, but `ToJSON` is kept as a valid alias, for backward compatibility.
+
 
 Lua functions for plugins
 -------------------------

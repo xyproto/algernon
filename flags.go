@@ -349,7 +349,7 @@ func handleFlags(serverTempDir string) string {
 		cacheMaxEntitySize = defaultCacheMaxEntitySize
 	}
 
-	// For backwards compatibility with previous versions of algernon
+	// For backward compatibility with previous versions of Algernon
 
 	if len(flag.Args()) >= 1 {
 		serverDir = flag.Args()[0]
