@@ -2,7 +2,7 @@
 
 Priority
 --------
-- [ ] toJSON should take an optional argument for the number of spaces when indenting.
+- [ ] Add support for systemd reload.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
@@ -22,11 +22,12 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Document the case sensitivity or add case insensitivity support.
 - [ ] Create a tool that pretends to upload a file of size 128 bytes (Content-Length), but continues to stream data. Test with Algernon.
-- [ ] File upload while handling gzip
 - [ ] Automatic redirect from http to https, or the other way around
 - [ ] Lua plugin
 - [ ] C plugin
+- [ ] File upload while handling gzip
 - [ ] Implement smooth reload + restart for systemd
 - [ ] A way to serve different directories for different subdomains
 - [ ] Cache os.Stat also when serving directory listings
