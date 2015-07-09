@@ -16,6 +16,9 @@ import (
 const (
 	// Identifier for the JFile class in Lua
 	lJFileClass = "JFile"
+
+	// Prefix when indenting JSON
+	indentPrefix = ""
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
@@ -200,12 +203,26 @@ func exportJSONFunctions(L *lua.LState) {
 
 	// Lua function for converting a table to JSON (string or int)
 	toJSON := L.NewFunction(func(L *lua.LState) int {
+		var (
+			b   []byte
+			err error
+		)
 		table := L.ToTable(1)
 		mapinterface, multiple := table2map(table)
 		if multiple {
 			log.Warn("toJSON: Ignoring table values with different types")
 		}
-		b, err := json.Marshal(mapinterface)
+		// If an optional argument is supplied, indent the given number of spaces
+		if L.GetTop() == 2 {
+			indentLevel := L.ToInt(2)
+			indentString := ""
+			for i := 0; i < indentLevel; i++ {
+				indentString += " "
+			}
+			b, err = json.MarshalIndent(mapinterface, indentPrefix, indentString)
+		} else {
+			b, err = json.Marshal(mapinterface)
+		}
 		if err != nil {
 			log.Error(err)
 			return 0 // number of results

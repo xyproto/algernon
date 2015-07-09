@@ -137,7 +137,8 @@ jfile:add([string, ]string) -> bool
 // Removes a key in a map in a JSON document. Returns true if successful.
 jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
-toJSON(table) -> string
+// Takes an optional number of spaces to indent the JSON data.
+toJSON(table[, number]) -> string
 
 Plugins
 
@@ -153,7 +154,7 @@ CallPlugin(string, string, ...) -> string
 
 Code libraries
 
-// Creates a code library object. Takes an optional data structure name.
+// Create or use a code library object. Takes an optional data structure name.
 CodeLib([string]) -> userdata
 // Given a namespace and Lua code, add the given code to the namespace.
 // Returns true if successful.

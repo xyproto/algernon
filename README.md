@@ -319,14 +319,15 @@ jfile:get(string) -> string
 // Returns true on success.
 jfile:add([string, ]string) -> bool
 
-// Takes a JSON path and a string value. Changes the entry. Returns true on success.
+// Take a JSON path and a string value. Changes the entry. Returns true on success.
 jfile:set(string, string) -> bool
 
-// Removes a key in a map. Takes a JSON path, returns true on success.
+// Remove a key in a map. Takes a JSON path, returns true on success.
 jfile:delkey(string) -> bool
 
-// Return a JSON string, given a Lua table with ints or strings.
-toJSON(table) -> string
+// Convert a Lua table with strings or ints to JSON.
+// Takes an optional number of spaces to indent the JSON data.
+toJSON(table[, number]) -> string
 ~~~
 
 
@@ -348,10 +349,10 @@ CallPlugin(string, string, ...) -> string
 Lua functions for code libraries
 --------------------------------
 
-These functions can be used in combination with the plugin functions for storing Lua code returned by plugins when serverconf.lua is loaded, then retrieve the Lua code later, when handling requests.
+These functions can be used in combination with the plugin functions for storing Lua code returned by plugins when serverconf.lua is loaded, then retrieve the Lua code later, when handling requests. The code is stored in the database.
 
 ~~~c
-// Creates a code library object. Optionally takes a data structure name as the first parameter.
+// Create or uses a code library object. Optionally takes a data structure name as the first parameter.
 CodeLib([string]) -> userdata
 
 // Given a namespace and Lua code, add the given code to the namespace. Returns true on success.
