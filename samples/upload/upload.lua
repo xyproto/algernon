@@ -14,6 +14,7 @@ end
 
 -- Handle and save the uploaded file
 function handleUpload()
+  -- Receive the file
   u, err = UploadedFile(formID)
   if err ~= "" then
     print([[<font style="color: red">]] .. err .. [[</font>]])
@@ -21,12 +22,17 @@ function handleUpload()
     return
   end
 
+  -- Save the file locally, in the "incoming" directory
+  local saved = u:savein("incoming")
+
+  -- Output various info about the uploaded file
   print("Filename: " .. u:filename() .. [[<br>]])
-  print("Size: " .. u:size() .. [[<br>]])
+  print("Size: " .. u:size() .. [[ bytes<br>]])
   print("Content type: " .. u:mimetype() .. [[<br>]])
-  print("Saved: " .. tostring(u:savein("incoming")) .. [[<br>]])
+  print("Saved: " .. tostring(saved) .. [[<br>]])
 end
 
+-- Output the contents in a HTML document
 function main()
   head()
   handleUpload()
