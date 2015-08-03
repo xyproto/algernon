@@ -176,7 +176,9 @@ func (ulf *UploadedFile) write(fullFilename string) error {
 		log.Error("Error when creating ", fullFilename)
 		return err
 	}
-	if _, err := io.Copy(f, ulf.buf); err != nil {
+	// Copy the data to a new buffer, to keep the data and the length
+	fileDataBuffer := bytes.NewBuffer(ulf.buf.Bytes())
+	if _, err := io.Copy(f, fileDataBuffer); err != nil {
 		log.Error("Error when writing: " + err.Error())
 		return err
 	}
