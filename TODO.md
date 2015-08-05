@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Add support for systemd reload.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
@@ -22,6 +23,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Web application for browsing the database
 - [ ] Document the case sensitivity or add case insensitivity support.
 - [ ] Create a tool that pretends to upload a file of size 128 bytes (Content-Length), but continues to stream data. Test with Algernon.
 - [ ] Automatic redirect from http to https, or the other way around
@@ -33,13 +35,14 @@ Various
 - [ ] Cache os.Stat also when serving directory listings
 - [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
-- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Look into github.com/jessevdk/go-flags/
 - [ ] pprint should output text to the browser when not running in the repl
 - [ ] web handlers should have access to setting up additional web handlers
 - [ ] Visitor graph
-- [ ] See if the HTTP headers from the client + country of origin + mouse movement patterns can become some sort of pseudo ID.
-      Combine with a neural net. Can be used for storing non-critical data like prefered themes, font sizes etc.
+- [ ] See if the HTTP headers from the client + country of origin + mouse
+      movement patterns can become some sort of pseudo ID. Combine with a neural net.
+      Can be used for storing non-critical data like prefered themes, font sizes etc.
+      Time of day may also be an input.
 - [ ] Add editor syntax highlight files.
 - [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
