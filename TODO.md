@@ -2,17 +2,17 @@
 
 Priority
 --------
+- [ ] Feature for sending the access log to the database + provide a page to view the logs.
+- [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
+      subdomain, when using the --domain parameter. Then only serve
+      that directory with HTTPS for :443).
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Add support for systemd reload.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
-- [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
-      subdomain, when using the --domain parameter. Then only serve
-      that directory with HTTPS for :443).
-- [ ] Optional access log to the database. + page to view the logs.
-- [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
-- [ ] Use a struct for the configuration variables.
 - [ ] Handle .avi and other multimedia files better. Show a page for playing and downloading.
+- [ ] Support for websockets.
+- [ ] User management interface + web REPL + stats + logs + import/export data + .alg launcher.
 
 
 Go / go vet / go lint
@@ -23,6 +23,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Use a struct for the configuration variables.
 - [ ] Web application for browsing the database
 - [ ] Document the case sensitivity or add case insensitivity support.
 - [ ] Create a tool that pretends to upload a file of size 128 bytes (Content-Length), but continues to stream data. Test with Algernon.
@@ -31,14 +32,12 @@ Various
 - [ ] C plugin
 - [ ] File upload while handling gzip
 - [ ] Implement smooth reload + restart for systemd
-- [ ] A way to serve different directories for different subdomains
 - [ ] Cache os.Stat also when serving directory listings
 - [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
 - [ ] Look into github.com/jessevdk/go-flags/
-- [ ] pprint should output text to the browser when not running in the repl
-- [ ] web handlers should have access to setting up additional web handlers
-- [ ] Visitor graph
+- [ ] pprint should output text to the browser when not running in the repl (or be disabled)
+- [ ] Graph of visitors over time
 - [ ] See if the HTTP headers from the client + country of origin + mouse
       movement patterns can become some sort of pseudo ID. Combine with a neural net.
       Can be used for storing non-critical data like prefered themes, font sizes etc.
@@ -46,10 +45,8 @@ Various
 - [ ] Add editor syntax highlight files.
 - [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
 - [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
-- [ ] Add a lua function for removing all cache entries without a hit.
 - [ ] Add a lua function for running a lua function periodically.
 - [ ] Add a cache mode for caching binary files only
-- [ ] Installer for OS X (pkg)
 - [ ] MSI installer.
 - [ ] deb/ppa
 - [/] Use some of the tricks from go-bootstrap.io
@@ -196,3 +193,6 @@ Maybe
 - [ ] Functions for adding URL prefixes to the whitelist
 - [ ] Lua function for reading the contents of a file in the script dir, but in a cached way.
       Timestamp, filename and data are stored in redis, if timestamp changes, data is re-read.
+- [ ] web handlers should have access to setting up additional web handlers
+- [ ] Add a lua function for removing all cache entries without a hit.
+- [ ] Installer for OS X (pkg)
