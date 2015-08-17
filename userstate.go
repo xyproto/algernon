@@ -1,4 +1,4 @@
-package main
+package algernon
 
 import (
 	"net/http"

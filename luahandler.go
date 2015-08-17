@@ -1,4 +1,4 @@
-package main
+package algernon
 
 import (
 	"github.com/didip/tollbooth"

@@ -1,5 +1,5 @@
 // HTTP/2 web server with built-in support for Lua, Markdown, GCSS, Amber and JSX.
-package main
+package algernon
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ var (
 	fs              *FileStat
 )
 
-func main() {
+func runserver(args []string) {
 	var err error
 
 	// Will be default in Go 1.5
@@ -46,7 +46,7 @@ func main() {
 	defer os.RemoveAll(serverTempDir)
 
 	// Set several configuration variables, based on the given flags and arguments
-	serverHost = handleFlags(serverTempDir)
+	serverHost = handleFlags(serverTempDir, args)
 
 	// Version
 	if showVersion {

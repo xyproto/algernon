@@ -1,6 +1,6 @@
 // +build !darwin,!dragonfly,!freebsd,!linux,!nacl,!netbsd,!openbsd,!solaris
 
-package main
+package algernon
 
 // UNIX-like systems uses logo_unix.go instead.
 

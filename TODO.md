@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Support for installing luarocks packages for Algernon
 - [ ] Feature for sending the access log to the database + provide a page to view the logs.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
       subdomain, when using the --domain parameter. Then only serve

@@ -1,4 +1,4 @@
-package main
+package algernon
 
 import (
 	"flag"
@@ -178,7 +178,7 @@ Available flags:
 }
 
 // Parse the flags, return the default hostname
-func handleFlags(serverTempDir string) string {
+func handleFlags(serverTempDir string, args []string) string {
 	var (
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
@@ -255,7 +255,13 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
 	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
 
-	flag.Parse()
+	// Use the custom args, if given
+	if len(args) > 0 {
+		flag.CommandLine = flag.NewFlagSet(args[0], flag.ExitOnError)
+		flag.CommandLine.Parse(args[1:])
+	} else {
+		flag.Parse()
+	}
 
 	// Accept both long and short versions of some flags
 	serveJustHTTP = serveJustHTTP || serveJustHTTPShort
