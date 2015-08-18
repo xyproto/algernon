@@ -32,7 +32,7 @@ var (
 	fs              *FileStat
 )
 
-func runserver(args []string) {
+func Runserver(args []string) {
 	var err error
 
 	// Will be default in Go 1.5
