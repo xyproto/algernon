@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Make it possible to stream music or video without the connection timing out before the playback is finished.
 - [ ] Feature for sending the access log to the database + provide a page to view the logs.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
       subdomain, when using the --domain parameter. Then only serve
@@ -23,6 +24,8 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Add a lua function for presenting an executable as a web application,
+      like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
 - [ ] Web application for browsing the database
 - [ ] Document the case sensitivity or add case insensitivity support.
