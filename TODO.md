@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Make it possible to stream music or video without the connection timing out before the playback is finished.
 - [ ] Feature for sending the access log to the database + provide a page to view the logs.
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
       subdomain, when using the --domain parameter. Then only serve
