@@ -24,6 +24,8 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Add a lua function for presenting an executable as a web application,
+      like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
 - [ ] Web application for browsing the database
 - [ ] Document the case sensitivity or add case insensitivity support.
