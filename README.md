@@ -769,6 +769,7 @@ Releases
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
 * [Windows executable](https://github.com/xyproto/algernon/releases/tag/v0.84-win8-64).
 * [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb)
+* [Algernon Tray Launcher for OS X, in App Store](https://itunes.apple.com/no/app/algernon-server/id1030394926?l=nb&mt=12)
 * Source releases are tagged as such.
 
 
