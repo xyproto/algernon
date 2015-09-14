@@ -1,0 +1,46 @@
+@import url(//fonts.googleapis.com/css?family=Montserrat|Merriweather)
+
+body
+  color: #1d1d1d
+  background-color: #eeeeee
+  font-family: Merriweather, sans-serif
+  margin: 7em
+  margin-top: 10em
+
+h1
+  font-family: Montserrat, sans-serif
+  font-size: 2em
+  margin-bottom: 1.2em
+  background-color: #202020
+  color: #e7e7e7
+  position: fixed
+  margin: 0
+  top: 0
+  left: 0
+  width: 100%
+  height: 2em
+  padding-top: 1em
+  padding-left: 2em
+
+h2
+  font-family: Montserrat, sans-serif
+  font-size: 1.7em
+  color: #1a1a1a
+  padding-top: 1em
+
+code
+  font-weight: 700
+  font-size: 1.3em
+
+ul
+  padding-left: 0
+
+li
+  list-style: none
+
+a
+  color: #1a5179
+  font-family: Montserrat, sans-serif
+
+a:hover
+  color: #9f2129
