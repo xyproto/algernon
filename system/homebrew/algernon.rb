@@ -56,8 +56,6 @@ class Algernon < Formula
     github.com/yosssi/gcss 39677598ea4f3ec1da5568173b4d43611f307edb
     github.com/yuin/gluamapper d836955830e75240d46ce9f0e6d148d94f2e1d3a
     github.com/yuin/gopher-lua abbdcf090159c9ef292a99e8049fb2567bc24c31
-    golang.org/x/crypto aedad9a179ec1ea11b7064c57cbc6dc30d7724ec
-    golang.org/x/net db8e4de5b2d6653f66aea53094624468caad15d2
   ].each_slice(2) do |resurl, rev|
     go_resource resurl do
       url "https://#{resurl}.git", :revision => rev
@@ -66,12 +64,12 @@ class Algernon < Formula
 
   go_resource "golang.org/x/crypto" do
     url "https://go.googlesource.com/crypto.git",
-      :revision => "4ed45ec682102c643324fae5dff8dab085b6c300"
+      :revision => "aedad9a179ec1ea11b7064c57cbc6dc30d7724ec"
   end
 
   go_resource "golang.org/x/net" do
     url "https://go.googlesource.com/net.git",
-      :revision => "dfe268fd2bb5c793f4c083803609fce9806c6f80"
+      :revision => "db8e4de5b2d6653f66aea53094624468caad15d2"
   end
 
   def install
@@ -97,7 +95,7 @@ class Algernon < Formula
 
       # Check that the server is responding correctly
       output = `curl -sIm3 -o- http://localhost#{cport}`
-      assert output.include?("Server: Algernon")
+      assert_match /^Server: Algernon/
       assert_equal 0, $?.exitstatus
 
     ensure
