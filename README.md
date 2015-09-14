@@ -783,6 +783,6 @@ Requirements
 General information
 -------------------
 
-* Version: 0.84
+* Version: 0.85
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
