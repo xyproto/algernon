@@ -7,7 +7,7 @@ class Algernon < Formula
   sha256 "c30380d9781166a6cc6297210e70c742c5a6c91bbbbdbf223783db1ffa1aa7e6"
   head "https://github.com/xyproto/algernon.git"
 
-  # Updated by the Homebrew bots. Don't remove.
+  # Updated by the brew bots
   bottle do
     cellar :any
     sha256 "4ebddb2a0305b89d5b266412f4b25174ad60fff9032a97f64d45e9f2aad86bb7" => :yosemite
@@ -103,7 +103,7 @@ class Algernon < Formula
 
       # Check that the server is responding correctly
       output = `curl -sIm3 -o- http://localhost#{cport}`
-      assert_match /^Server: Algernon/
+      assert_match /^Server: Algernon/, output
       assert_equal 0, $?.exitstatus
 
     ensure
