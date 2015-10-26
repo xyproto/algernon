@@ -49,6 +49,33 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 	switch ext {
 
+	// HTML pages are handled differently, if auto-refresh has been enabled
+	case ".html", ".htm":
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+
+		// Read the file (possibly in compressed format, straight from the cache)
+		dataBlock, err := cache.read(filename, shouldCache(ext))
+		if err != nil {
+			if debugMode {
+				fmt.Fprintf(w, "Can't open %s: %s", filename, err)
+			} else {
+				log.Errorf("Can't open %s: %s", filename, err)
+			}
+		}
+
+		// If the auto-refresh feature has been enabled
+		if autoRefreshMode {
+			// Get the bytes from the datablock
+			htmldata := dataBlock.MustData()
+			// Insert JavaScript for refreshing the page, into the HTML
+			htmldata = insertAutoRefresh(req, htmldata)
+			// Write the data to the client
+			NewDataBlock(htmldata).ToClient(w, req)
+		} else {
+			// Serve the file
+			dataBlock.ToClient(w, req)
+		}
+
 	// Markdown pages are handled differently
 	case ".md", ".markdown":
 
