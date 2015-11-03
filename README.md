@@ -273,7 +273,7 @@ serve(string)
 // Return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 formdata() -> table
 
-// Redirect to a different URL
+// Redirect to a relative URL
 redirect(string)
 
 // Transmit what has been outputted so far, to the client.
