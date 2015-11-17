@@ -208,10 +208,11 @@ func exportJSONFunctions(L *lua.LState) {
 			err error
 		)
 		table := L.ToTable(1)
-		mapinterface, multiple := table2map(table)
-		if multiple {
-			log.Warn("toJSON: Ignoring table values with different types")
-		}
+
+		// Convert the Lua table to a map that can be used when converting
+		// to JSON (map[string]interface{})
+		mapinterface := table2interfacemap(table)
+
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {
 			indentLevel := L.ToInt(2)

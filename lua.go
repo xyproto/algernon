@@ -53,6 +53,37 @@ func map2table(L *lua.LState, m map[string]string) *lua.LTable {
 // If several different types are found, multiple is set to true.
 func table2map(luaTable *lua.LTable) (interface{}, bool) {
 
+	mapSS, mapSI, mapIS, mapII := table2maps(luaTable)
+
+	lss := len(mapSS)
+	lsi := len(mapSI)
+	lis := len(mapIS)
+	lii := len(mapII)
+
+	total := lss + lsi + lis + lii
+
+	// Return the first map that has values
+	if lss > 0 {
+		//log.Println(key, "STRING -> STRING map")
+		return interface{}(mapSS), lss < total
+	} else if lsi > 0 {
+		//log.Println(key, "STRING -> INT map")
+		return interface{}(mapSI), lsi < total
+	} else if lis > 0 {
+		//log.Println(key, "INT -> STRING map")
+		return interface{}(mapIS), lis < total
+	} else if lii > 0 {
+		//log.Println(key, "INT -> INT map")
+		return interface{}(mapII), lii < total
+	}
+
+	return nil, false
+}
+
+// Convert a Lua table to all of the following types, depending on the content:
+// map[string]string, map[string]int, map[int]string, map[int]int
+func table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[int]string, map[int]int) {
+
 	// Initialize possible maps we want to convert to
 	mapSS := make(map[string]string)
 	mapSI := make(map[string]int)
@@ -83,29 +114,44 @@ func table2map(luaTable *lua.LTable) (interface{}, bool) {
 		}
 	})
 
-	lss := len(mapSS)
-	lsi := len(mapSI)
-	lis := len(mapIS)
-	lii := len(mapII)
+	return mapSS, mapSI, mapIS, mapII
+}
 
-	total := lss + lsi + lis + lii
+// Convert a Lua table to a map[string]interface{}
+func table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 
-	// Return the first map that has values
-	if lss > 0 {
-		//log.Println(key, "STRING -> STRING map")
-		return interface{}(mapSS), lss < total
-	} else if lsi > 0 {
-		//log.Println(key, "STRING -> INT map")
-		return interface{}(mapSI), lsi < total
-	} else if lis > 0 {
-		//log.Println(key, "INT -> STRING map")
-		return interface{}(mapIS), lis < total
-	} else if lii > 0 {
-		//log.Println(key, "INT -> INT map")
-		return interface{}(mapII), lii < total
-	}
+	// Initialize possible maps we want to convert to
+	everything := make(map[string]interface{})
 
-	return nil, false
+	var skey, svalue lua.LString
+	var nvalue lua.LNumber
+	var hasSkey, hasSvalue, hasNvalue bool
+
+	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
+
+		// Convert the keys and values to strings or ints
+		skey, hasSkey = tkey.(lua.LString)
+		svalue, hasSvalue = tvalue.(lua.LString)
+		nvalue, hasNvalue = tvalue.(lua.LNumber)
+
+		// Store the right keys and values in the right maps
+		if hasSkey && hasSvalue {
+			everything[skey.String()] = svalue.String()
+		} else if hasSkey && hasNvalue {
+			floatVal := float64(nvalue)
+			intVal := int(nvalue)
+			// Use the int value if it's the same as the float representation
+			if floatVal == float64(intVal) {
+				everything[skey.String()] = intVal
+			} else {
+				everything[skey.String()] = floatVal
+			}
+		} else {
+			log.Warn("table2interfacemap: Unsupported type for map key. Value:", tvalue)
+		}
+	})
+
+	return everything
 }
 
 // Return a *lua.LState object that contains several exposed functions
