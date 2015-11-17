@@ -118,7 +118,7 @@ html
         |Nor days nor things diurnal;<br>
         |Only the sleep eternal<br>
         |&nbsp;&nbsp;In an eternal night. <br>
-      i - Charles Algernon Swinburne
+      i - Algernon Charles Swinburne
       p
         button[onClick="history.go(-1)"] Back
       script[src="js/three.min.js"][type="text/javascript"]
