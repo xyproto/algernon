@@ -325,12 +325,10 @@ jfile:set(string, string) -> bool
 // Remove a key in a map. Takes a JSON path, returns true on success.
 jfile:delkey(string) -> bool
 
-// Convert a Lua table with strings or ints to JSON.
+// Convert a Lua table, where keys are strings and values are strings or numbers, to JSON.
 // Takes an optional number of spaces to indent the JSON data.
 toJSON(table[, number]) -> string
 ~~~
-
-* `ToJSON` was renamed to `toJSON`, but `ToJSON` is kept as a valid alias, for backward compatibility.
 
 
 Lua functions for plugins
