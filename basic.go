@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 )
@@ -54,6 +55,23 @@ func exportBasicSystemFunctions(L *lua.LState) {
 		// Wait and block the current thread of execution.
 		time.Sleep(duration)
 		return 0
+	}))
+
+	// Convert Markdown to HTML
+	L.SetGlobal("markdown", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := arguments2buffer(L, true)
+		// Convert the buffer to markdown and output the translated string
+		html := strings.TrimSpace(string(blackfriday.MarkdownCommon([]byte(buf.String()))))
+		L.Push(lua.LString(html))
+		return 1 // number of results
+	}))
+
+	// Return the current unixtime, with an attempt at nanosecond resolution
+	L.SetGlobal("unixnano", L.NewFunction(func(L *lua.LState) int {
+		// Extract the correct number of nanoseconds
+		L.Push(lua.LNumber(time.Now().UnixNano()))
+		return 1 // number of results
 	}))
 
 }
