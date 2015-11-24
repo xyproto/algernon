@@ -40,7 +40,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := arguments2buffer(L, true)
-		// Convert the buffer to markdown and return the translated string
+		// Convert the buffer to markdown and output the translated string
 		w.Write(blackfriday.MarkdownCommon([]byte(buf.String())))
 		return 0 // number of results
 	}))
