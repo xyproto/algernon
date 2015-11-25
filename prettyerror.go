@@ -35,6 +35,14 @@ func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 	recorder.Flush()
 }
 
+// Discards the HTTP headers and returns the recorder body as a string
+func recorderToString(recorder *httptest.ResponseRecorder) string {
+	var buf bytes.Buffer
+	recorder.Body.WriteTo(&buf)
+	recorder.Flush()
+	return buf.String()
+}
+
 // Return an informative error page to the user
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
