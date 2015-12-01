@@ -1,0 +1,42 @@
+mixin description($text)
+  meta[name="description"][content=$text]
+
+mixin author($text)
+  meta[name="author"][content=$text]
+
+mixin keywords($text)
+  meta[name="keywords"][content=$text]
+
+mixin style($url)
+  link[rel="stylesheet"][href=$url]
+
+doctype 5
+html
+  head
+
+    title
+      block title
+        | Default title
+
+    block meta
+      +description("")
+      +author("")
+
+    meta[name="viewport"][content="width=device-width,initial-scale=1"]
+
+    link[href="//fonts.googleapis.com/css?family=Raleway:400,300,600"][rel="stylesheet"]
+
+    block style
+      +style("css/normalize.css")
+      +style("css/skeleton.css")
+
+    link[type=image/png][href="images/favicon.png"][rel="icon"]
+body
+  block content
+    div.container
+      div.row
+        div.one-half.column[style="margin-top: 25%"]
+          block contentTitle
+            h4 Default page title
+          block contentText
+            p Default page text
