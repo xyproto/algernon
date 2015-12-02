@@ -225,10 +225,10 @@ warn(...)
 // Log the given strings as an error. Takes a variable number of strings.
 err(...)
 
-// Return the number of nanoseconds from 1970 ("Unix time")
+// Return the number of nanoseconds from 1970 ("Unix time") [master branch only]
 unixnano() -> number
 
-// Convert Markdown to HTML
+// Convert Markdown to HTML [master branch only]
 markdown(string) -> string
 ~~~
 
@@ -276,7 +276,7 @@ serverdir([string]) -> string
 // Serve a file that exists in the same directory as the script.
 serve(string)
 
-// Return the rendered contents of a file that exists in the same directory as the script.
+// Return the rendered contents of a file that exists in the same directory as the script. [master branch only]
 render(string)
 
 // Return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
