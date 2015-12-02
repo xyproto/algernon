@@ -15,7 +15,7 @@ Priority
 - [ ] Add support for systemd reload.
 - [ ] Document how to run Algernon in a docker container.
 - [ ] Tool to easily pack an .alg application as a docker container.
-- [ ] Handle .avi and other multimedia files better. Dislplay a pretty page
+- [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
 - [ ] Support for websockets.
 - [ ] User management interface + web REPL + stats + logs + import/export data 
@@ -30,6 +30,8 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] An option for using brotly compression instead of gzip
+- [ ] Integrate fasthttp: https://github.com/valyala/fasthttp
 - [ ] Add a lua function for presenting an executable as a web application,
       like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
@@ -175,6 +177,7 @@ Unusual features
 
 Maybe
 -----
+- [ ] Integrate C6: https://github.com/c9s/c6
 - [ ] Add configurable log hooks for the systems logrus supports.
       See: https://github.com/Sirupsen/logrus
 - [ ] Use the path/filepath package for walking directories.
