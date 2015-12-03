@@ -57,7 +57,7 @@ func (LuaPlugin) Code(pluginPath string, response *string) error {
 	return nil
 }
 
-// Called once when the Plugin function is used in Algernon
+// Called once when the help function is used in Algernon
 func (LuaPlugin) Help(_ string, response *string) error {
 	*response = luahelp
 	return nil
