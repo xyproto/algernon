@@ -10,7 +10,7 @@ Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bo
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://img.shields.io/badge/gitter-chat-green.svg?style=flat)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE)
 
-GitBook: [Creating Web Applications with Algernon](https://xyproto.gitbooks.io/creating-web-applications-with-algernon/content/)
+GitBook: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 
 Technologies
 ------------
