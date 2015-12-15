@@ -34,5 +34,4 @@ WORKDIR /srv/algernon
 #
 CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/keys/cert.pem", "--key", "/keys/key.pem"]
 
-EXPOSE 443
-EXPOSE 80
+EXPOSE 80 443
