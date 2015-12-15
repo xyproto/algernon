@@ -12,6 +12,8 @@ Web server with built-in support for HTTP/2, Lua, Markdown, Amber, GCSS, JSX, Bo
 
 GitBook: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 
+Running within Docker: [xyproto/algernon](https://hub.docker.com/r/xyproto/algernon/)
+
 Technologies
 ------------
 
