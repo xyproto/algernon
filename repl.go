@@ -180,8 +180,12 @@ version() -> string
 pprint(value)
 // Sleep the given number of seconds (can be a float)
 sleep(number)
+// Return the number of nanoseconds from 1970 ("Unix time")
+unixnano() -> number
+// Convert Markdown to HTML
+markdown(string) -> string
 `
-	usageMessage = ` 
+	usageMessage = `
 Type "webhelp" for an overview of functions that are available when
 handling requests. Or "confighelp" for an overview of functions that are
 available when configuring an Algernon application.
