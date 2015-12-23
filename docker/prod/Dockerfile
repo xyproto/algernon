@@ -32,6 +32,6 @@ WORKDIR /srv/algernon
 #
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
-CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/keys/cert.pem", "--key", "/keys/key.pem"]
+CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem"]
 
 EXPOSE 80 443
