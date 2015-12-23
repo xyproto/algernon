@@ -148,6 +148,11 @@ Screenshots
 
 *JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
 
+Samples
+-------
+
+The sample collection can be downloaded from the `samples` directory in this repository, or here: [samplepack.zip](http://algernon.roboticoverlords.org/samplepack.zip).
+
 
 Getting started
 ---------------
