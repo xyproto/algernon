@@ -1,0 +1,72 @@
+#!/bin/bash
+
+filename='hello.alg'
+newfile='Dockerfile'
+name='John Bob'
+email='john@thebobs.cx'
+
+if [[ $1 != "" ]]; then
+  filename="$1"
+else
+  echo 'alg2docker v.0.1'
+  echo
+  echo 'Usage: alg2docker (.alg file) (new Dockerfile) (Name) (Email)'
+  echo
+  echo "Example: alg2docker hello.alg Dockerfile 'John Bob' 'john@thebobs.cx'"
+  echo
+  exit 1
+fi
+
+if [[ $2 != "" ]]; then
+  newfile="$2"
+fi
+
+if [[ -e $newfile ]]; then
+  echo "$newfile already exists!"
+  exit 1
+fi
+
+if [[ $3 != "" ]]; then
+  name="$3"
+fi
+
+if [[ $4 != "" ]]; then
+  email="$4"
+fi
+
+echo "Generating Dockerfile: $newfile"
+echo "Using this .alg file: $filename"
+echo "For $name <$email>"
+
+cat <<EOF > "$newfile"
+# Dockerfile for serving an Algernon application as
+# * HTTP on port 80
+# * HTTPS+HTTP/2 on port 443
+
+FROM golang:alpine
+MAINTAINER !NAME <!EMAIL>
+
+RUN apk update && apk add bash curl git mercurial go && rm -rf /var/cache/apk/*
+RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
+ENV GOPATH /go
+ENV PATH /go/bin/:$PATH
+ENV CGO_ENABLED=0
+RUN go get github.com/xyproto/algernon
+
+# Add the .alg file
+ADD !FILENAME !FILENAME
+
+# Add the configuration directory
+# Should contain the HTTPS keys (cert.pem and key.pem)
+VOLUME /etc/algernon
+
+# Serve the .alg application, in a static, but fast, way
+CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "!FILENAME"]
+EXPOSE 80 443
+
+EOF
+
+# Configure the Dockerfile
+sed "s/\!NAME/$name/g" -i "$newfile"
+sed "s/\!EMAIL/$email/g" -i "$newfile"
+sed "s/\!FILENAME/$filename/g" -i "$newfile"
