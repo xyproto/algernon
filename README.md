@@ -19,7 +19,7 @@ Technologies
 
 Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
-[http2check](https://github.com/xyproto/http2check) can be used to confirm that the server is in fact serving [HTTP/2](https://tools.ietf.org/html/rfc7540).
+[http2check](https://github.com/xyproto/http2check) is a utility that can be used to confirm that a server is serving [HTTP/2](https://tools.ietf.org/html/rfc7540).
 
 
 Design decisions
