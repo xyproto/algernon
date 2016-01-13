@@ -6,3 +6,6 @@ if method() == "GET" then
 elseif method() == "POST" then
   serve("POST.amber")
 end
+
+-- Also possible
+-- serve(method() .. ".amber")

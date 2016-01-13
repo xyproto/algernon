@@ -18,16 +18,16 @@ ul
   padding: 0
   margin-bottom: 1em
 
-li 
+li
   border-bottom: 1px solid #ccc
   text-decoration: none
   color: black
   display: block
   transition: background-color 0.25s ease
 
-li:last-child 
+li:last-child
   border: none
- 
+
 li:hover
   background: #f8f8f8
 

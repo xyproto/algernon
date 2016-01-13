@@ -26,7 +26,8 @@ function head()
 <html>
   <head>
     <title>prettify</title>
-    <script src="//google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
+    <!--<script src="//google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>-->
+    <script src="sunburst.js"></script>
   </head>
   <body style="background: gray; color: black; font-family: sans-serif; margin: 5em;">]]
 end

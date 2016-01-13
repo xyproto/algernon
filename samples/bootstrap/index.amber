@@ -15,9 +15,9 @@ html
       div.row
         div.jumbotron
           h1 #{$title}
-          p 
-            |Bootstrap can be used to style and structure web pages. 
-          p 
+          p
+            |Bootstrap can be used to style and structure web pages.
+          p
             |This page is using the Flatly theme.
         div.jumbotron
           p User feedback

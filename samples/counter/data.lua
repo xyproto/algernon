@@ -1,5 +1,5 @@
 --
--- Functions in this file are available to call from 
+-- Functions in this file are available to call from
 -- the amber.index file in the same directory.
 --
 -- The functions may take any number of strings and
