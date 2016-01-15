@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Incorporate a better template system.
 - [ ] Video tutorials.
 - [ ] Make it possible to stream music or video without the connection timing
       out before the playback is finished.
@@ -18,9 +19,10 @@ Priority
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
 - [ ] Support for websockets.
-- [ ] User management interface + web REPL + stats + logs + import/export data 
+- [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
 - [ ] Built in support for running the Lua REPL in gotty.
+- [ ] Document how to read XML or JSON from one place and output processed data somewhere else.
 
 Go / go vet / go lint
 ---------------------
