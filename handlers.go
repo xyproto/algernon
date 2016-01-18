@@ -27,7 +27,7 @@ const (
 
 var (
 	// List of filenames that should be displayed instead of a directory listing
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.amber"}
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.amber", "index.tmpl", "index.po2"}
 
 	// Used for setting mime types
 	mimereader *mime.Reader
@@ -95,7 +95,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
-	case ".amber":
+	case ".amber", ".amb":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		amberblock, err := cache.read(filename, shouldCache(ext))
@@ -132,7 +132,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			}
 			if debugMode && verboseMode {
 				s := "These functions from " + luafilename
-				s += " areselable for " + filename + ": "
+				s += " are useable for " + filename + ": "
 				// Create a comma separated list of the available functions
 				for key := range funcs {
 					s += key + ", "
@@ -148,6 +148,62 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		// Render the Amber page, using functions from data.lua, if available
 		amberPage(w, req, filename, luafilename, amberblock.MustData(), funcs, cache)
+
+		return
+
+	case ".tmpl", ".pongo2", ".po2":
+
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		pongoblock, err := cache.read(filename, shouldCache(ext))
+		if err != nil {
+			if debugMode {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
+			return
+		}
+		// Try reading data.lua as well, if possible
+		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
+		luablock, err := cache.read(luafilename, shouldCache(ext))
+		if err != nil {
+			// Could not find and/or read data.lua
+			luablock = EmptyDataBlock
+		}
+		// Make functions from the given Lua data available
+		funcs := make(template.FuncMap)
+		// luablock can be empty if there was an error or if the file was empty
+		if luablock.HasData() {
+			// There was Lua code available. Now make the functions and
+			// variables available for the template.
+			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache)
+			if err != nil {
+				if debugMode {
+					// Use the Lua filename as the title
+					prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+				} else {
+					log.Error(err)
+				}
+				return
+			}
+			if debugMode && verboseMode {
+				s := "These functions from " + luafilename
+				s += " are useable for " + filename + ": "
+				// Create a comma separated list of the available functions
+				for key := range funcs {
+					s += key + ", "
+				}
+				// Remove the final comma
+				if strings.HasSuffix(s, ", ") {
+					s = s[:len(s)-2]
+				}
+				// Output the message
+				log.Info(s)
+			}
+		}
+
+		// Render the Pongo2 page, using functions from data.lua, if available
+		pongoPage(w, req, filename, luafilename, pongoblock.MustData(), funcs, cache)
 
 		return
 

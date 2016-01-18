@@ -281,6 +281,18 @@ func linkToStyle(amberdata *[]byte, url string) {
 	}
 }
 
+// Add a link to a stylesheet in the given HTML code
+func linkToStyleHTML(htmldata *[]byte, url string) {
+	// If the given url is not already mentioned and the data contains "body"
+	if !bytes.Contains(*htmldata, []byte(url)) && bytes.Contains(*htmldata, []byte("body")) {
+		if bytes.Contains(*htmldata, []byte("</head>")) {
+			*htmldata = bytes.Replace(*htmldata, []byte("</head>"), []byte("  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>"), 1)
+		} else if bytes.Contains(*htmldata, []byte("<body>")) {
+			*htmldata = bytes.Replace(*htmldata, []byte("<body>"), []byte("  <head>\n  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>\n  <body>"), 1)
+		}
+	}
+}
+
 // Filter []byte slices into two groups, depending on the given filter function
 func filterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
 	var special, regular [][]byte
@@ -357,6 +369,7 @@ func fatalExit(err error) {
 }
 
 // Insert doctype in HTML, if missing
+// Does not check if the given data is HTML. Assumes it to be HTML.
 func insertDoctype(htmldata []byte) []byte {
 	// If there are more than two lines
 	if bytes.Count(htmldata, []byte("\n")) > 2 {
@@ -367,7 +380,7 @@ func insertDoctype(htmldata []byte) []byte {
 			return htmldata
 		}
 		// Doctype is missing from the first two lines, add it
-		return []byte("<!doctype html>" + string(htmldata))
+		return []byte("<!doctype html>\n" + string(htmldata))
 	}
 	return htmldata
 }

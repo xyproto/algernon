@@ -66,7 +66,7 @@ func shouldCache(ext string) bool {
 		return true
 	case cacheModeProduction, cacheModeSmall:
 		switch ext {
-		case ".amber", ".lua":
+		case ".amber", ".lua", ".po2", ".tpl", ".pongo2":
 			return false
 		default:
 			return true
@@ -84,7 +84,7 @@ func shouldCache(ext string) bool {
 		fallthrough
 	default:
 		switch ext {
-		case ".amber", ".lua", ".md", ".gcss", ".jsx":
+		case ".amber", ".lua", ".md", ".gcss", ".jsx", ".po2", ".tpl", ".pongo2":
 			return false
 		default:
 			return true

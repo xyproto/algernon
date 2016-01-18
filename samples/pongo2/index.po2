@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <p>Welcome to pongo2, version: {{ pongo2.version }}</p>
+    <p>2*3*7 is {{ 2*3*7 }}</p>
+    <p>{{ combine("bob", "hob") }}</p>
+    <p>{{ times(3, 47) }}</p>
+    <p>{{ moose() }}</p>
+    <p>done</p>
+  </body>
+</html>

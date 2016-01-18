@@ -116,6 +116,8 @@ func prettyError(w http.ResponseWriter, req *http.Request, filename string, file
 	title := "Error"
 	if lang == "gcss" {
 		title = "GCSS Error"
+	} else if lang == "html" {
+		title = "HTML Error"
 	} else if lang != "" {
 		title = strings.Title(lang) + " Error"
 	}

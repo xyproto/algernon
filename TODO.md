@@ -32,6 +32,7 @@ Go / go vet / go lint
 
 Various
 -------
+- [ ] Add config Function for adding a directory listing title to a certain path regex
 - [ ] An option for using brotly compression instead of gzip
 - [ ] Integrate fasthttp: https://github.com/valyala/fasthttp
 - [ ] Add a lua function for presenting an executable as a web application,

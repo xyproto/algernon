@@ -8,6 +8,7 @@ import (
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/pongo2" // fork of flosch/pongo2, while waiting for pull request to go through
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
@@ -63,6 +64,32 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Using "MISSING" instead of nil for a slightly better error message
 		// if the values in the template should not be found.
 		tpl.Execute(w, "MISSING")
+		return 0 // number of results
+	}))
+
+	// Output text as rendered Pongo2
+	L.SetGlobal("poprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := arguments2buffer(L, true)
+		// Use the buffer as a template.
+		// Options are "Pretty printing, but without line numbers."
+		tpl, err := pongo2.FromBytes(buf.Bytes())
+		if err != nil {
+			if debugMode {
+				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		// nil is the template context (variables etc in a map)
+		if err := tpl.ExecuteWriter(nil, w); err != nil {
+			if debugMode {
+				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
+			}
+		}
 		return 0 // number of results
 	}))
 
@@ -219,6 +246,130 @@ func validGCSS(gcssdata []byte) error {
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
+func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
+
+	var buf bytes.Buffer
+
+	linkInGCSS := false
+	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
+	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
+	if fs.exists(GCSSfilename) {
+		if debugMode {
+			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			if err != nil {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+				return
+			}
+			gcssdata := gcssblock.MustData()
+			// Try compiling the GCSS file before the Amber file
+			if err := validGCSS(gcssdata); err != nil {
+				// Invalid GCSS, return an error page
+				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				return
+			}
+		}
+		linkInGCSS = true
+	}
+
+	// Prepare a Pongo2 template
+	tpl, err := pongo2.DefaultSet.FromBytes(pongodata)
+	if err != nil {
+		if debugMode {
+			prettyError(w, req, filename, pongodata, err.Error(), "html")
+		} else {
+			log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, string(pongodata))
+		}
+		return
+	}
+
+	// TODO: Double check that all sorts of Lua functions are handled
+
+	// Go through the global Lua scope
+	for k, v := range funcs {
+
+		// Check if the name in question is a function
+		if f, ok := v.(func(...string) (string, error)); ok {
+
+			// Wrap the Lua functions as Pongo2 functions
+			funcs[k] = func(vals ...*pongo2.Value) *pongo2.Value {
+				// Convert the Pongo2 arguments to string arguments
+				strs := make([]string, len(vals))
+				for i, sv := range vals {
+					strs[i] = sv.String()
+				}
+				// Call the Lua function
+				retval, err := f(strs...)
+				// Return the error if things go wrong
+				if err != nil {
+					return pongo2.AsValue(err)
+				}
+				// Return the returned value if things went well
+				return pongo2.AsValue(retval)
+			}
+
+		}
+	}
+
+	// Make the Lua functions available to Pongo
+	pongo2.Globals.Update(pongo2.Context(funcs))
+
+	// Render the Pongo2 template to the buffer
+	if err := tpl.ExecuteWriter(pongo2.Globals, &buf); err != nil {
+		if debugMode {
+			prettyError(w, req, filename, pongodata, err.Error(), "html")
+		} else {
+			log.Errorf("Could not execute Pongo2 template:\n%s", err)
+		}
+		return
+	}
+
+	// Check if we are dealing with HTML
+	if bytes.Contains(buf.Bytes(), []byte("<html>")) {
+
+		if linkInGCSS {
+			// Link in stylesheet
+			htmldata := buf.Bytes()
+			linkToStyleHTML(&htmldata, defaultStyleFilename)
+			buf.Reset()
+			_, err := buf.Write(htmldata)
+			if err != nil {
+				if debugMode {
+					prettyError(w, req, filename, pongodata, err.Error(), "html")
+				} else {
+					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+				}
+			}
+		}
+
+		// If the auto-refresh feature has been enabled
+		if autoRefreshMode {
+			// Insert JavaScript for refreshing the page into the generated HTML
+			changedBytes := insertAutoRefresh(req, buf.Bytes())
+
+			buf.Reset()
+			_, err := buf.Write(changedBytes)
+			if err != nil {
+				if debugMode {
+					prettyError(w, req, filename, pongodata, err.Error(), "html")
+				} else {
+					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+				}
+			}
+		}
+
+		// If doctype is missing, add doctype for HTML5 at the top
+		changedBytes := insertDoctype(buf.Bytes())
+		buf.Reset()
+		buf.Write(changedBytes)
+
+	}
+
+	// Write the rendered template to the client
+	NewDataBlock(buf.Bytes()).ToClient(w, req)
+}
+
+// Write the given source bytes as Amber converted to HTML, to a writer.
+// filename and luafilename are only used if there are errors.
 func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
@@ -282,8 +433,17 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	// If the auto-refresh feature has been enabled
 	if autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		changedBuf := bytes.NewBuffer(insertAutoRefresh(req, buf.Bytes()))
-		buf = *changedBuf
+		changedBytes := insertAutoRefresh(req, buf.Bytes())
+
+		buf.Reset()
+		_, err := buf.Write(changedBytes)
+		if err != nil {
+			if debugMode {
+				prettyError(w, req, filename, amberdata, err.Error(), "amber")
+			} else {
+				log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+			}
+		}
 	}
 
 	// If doctype is missing, add doctype for HTML5 at the top
