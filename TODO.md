@@ -2,7 +2,7 @@
 
 Priority
 --------
-- [ ] Incorporate a better template system.
+- [X] Incorporate a better template system.
 - [ ] Video tutorials.
 - [ ] Make it possible to stream music or video without the connection timing
       out before the playback is finished.
@@ -11,11 +11,9 @@ Priority
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
       subdomain, when using the --domain parameter. Then only serve that
       directory with HTTPS for :443).
-- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for
-      Lua code)
 - [ ] Add support for systemd reload.
-- [ ] Document how to run Algernon in a docker container.
-- [ ] Tool to easily pack an .alg application as a docker container.
+- [X] Document how to run Algernon in a docker container.
+- [X] Tool to easily pack an .alg application as a docker container.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
 - [ ] Support for websockets.
@@ -23,6 +21,7 @@ Priority
       + .alg launcher.
 - [ ] Built in support for running the Lua REPL in gotty.
 - [ ] Document how to read XML or JSON from one place and output processed data somewhere else.
+- [ ] Also support a configuration file using github.com/alyu/configparser, for port, host, keys etc.
 
 Go / go vet / go lint
 ---------------------
@@ -43,10 +42,9 @@ Various
 - [ ] Create a tool that pretends to upload a file of size 128 bytes
       (Content-Length), but continues to stream data. Test with Algernon.
 - [ ] Automatic redirect from http to https, or the other way around.
-- [ ] Lua plugin
+- [ ] Lua plugin that is not via the database
 - [ ] C plugin
 - [ ] File upload while handling gzip
-- [ ] Implement smooth reload + restart for systemd
 - [ ] Cache os.Stat also when serving directory listings
 - [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as
@@ -239,3 +237,4 @@ Maybe
 - [ ] web handlers should have access to setting up additional web handlers
 - [ ] Add a Lua function for removing all cache entries without a hit.
 - [X] Installer for OS X (now on App Store).
+- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
