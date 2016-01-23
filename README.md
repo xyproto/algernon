@@ -27,22 +27,22 @@ Design decisions
   * If not, regular HTTP is used.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
-    * index.lua is interpreted as a handler function for the current directory.
-    * index.md is rendered as HTML.
-    * index.html is outputted as it is, with the correct Content-Type.
-    * index.txt is outputted as it is, with the correct Content-Type.
-    * index.po2 is rendered as HTML.
-    * index.amber is rendered as HTML.
-    * data.lua is interpreted as Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
+    * index.lua is Lua code that is interpreted as a handler function for the current directory.
+    * index.md is Markdown code that is rendered as HTML.
+    * index.html is HTML that is outputted with the correct Content-Type.
+    * index.txt is plain text that is outputted with the correct Content-Type.
+    * index.po2 is Pongo2 code that is rendered as HTML.
+    * index.amber is Amber code that is rendered as HTML.
+    * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
     * If a single Lua script is given as a commandline argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
-    * style.gcss is used as the style for Pongo2, Amber and Markdown pages in the same directory.
+    * style.gcss is GCSS code that is used as the style for all Pongo2, Amber and Markdown pages in the same directory.
 * The following filename extensions are handled by Algernon:
-    * .md is interpreted as Markdown and rendered as an HTML page.
-    * .po2 is interpreted as Pongo2 and rendered as an HTML page.
-    * .amber is interpreted as Amber and rendered as an HTML page.
-    * .gcss is interpreted as GCSS and rendered as a CSS file.
-    * .jsx is interpreted as JSX and rendered as a JavaScript file.
-    * .lua is interpreted as a Lua script that provides its own output and content type.
+    * Markdown: .md (rendered as HTML)
+    * Pongo2: .po2, .pongo2 or .tpl (rendered as any text, typically HTML)
+    * Amber: .amber (rendered as HTML)
+    * GCSS: .gcss (rendered as CSS)
+    * JSX: .jsx (rendered as JavaScript/ECMAScript)
+    * Lua: .lua (a script that provides its own output and content type)
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * UTF-8 is used whenever possible.
@@ -54,9 +54,8 @@ Features and limitations
 * Supports HTTP/2, with or without HTTPS.
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
-* Compiled to native.
+* The Algernon executable is compiled to native and is reasonably fast.
 * Works on Linux, OS X and 64-bit Windows.
-* Is reasonably fast.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (there is an auto-refresh feature).
 * Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
@@ -109,9 +108,9 @@ Running Algernon (screenshot from an earlier version):
 
 The idea is that webpages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS or GCSS, while data can be provided by a Lua script that talks to Redis, Bolt or MySQL.
 
-Amber and GCSS is a good combination, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
+Amber and GCSS is a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
-Pongo2, GCSS and Lua also combines well.
+Pongo2, GCSS and Lua also combines well. Pongo2 is more flexible than Amber.
 
 The auto-refresh feature is supported when using Markdown, Pongo2 or Amber, and is useful to get an instant preview when developing.
 

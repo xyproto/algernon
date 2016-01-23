@@ -2,36 +2,35 @@
 
 Priority
 --------
-- [X] Incorporate a better template system.
-- [ ] Video tutorials.
+- [ ] Video tutorials and screencasts.
 - [ ] Make it possible to stream music or video without the connection timing
-      out before the playback is finished.
+      out before the playback has finished.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
-- [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
-      subdomain, when using the --domain parameter. Then only serve that
-      directory with HTTPS for :443).
 - [ ] Add support for systemd reload.
-- [X] Document how to run Algernon in a docker container.
-- [X] Tool to easily pack an .alg application as a docker container.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
 - [ ] Support for websockets.
 - [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
-- [ ] Built in support for running the Lua REPL in gotty.
-- [ ] Document how to read XML or JSON from one place and output processed data somewhere else.
-- [ ] Also support a configuration file using github.com/alyu/configparser, for port, host, keys etc.
+- [ ] Built in support for running the Lua REPL in the browser
+      (possibly by using "gotty").
+- [ ] Document how to read XML or JSON from one place and output processed
+      data somewhere else.
+- [ ] Also support a configuration file using github.com/alyu/configparser,
+      for port, host, keys etc.
 
-Go / go vet / go lint
----------------------
+Report issues for Go / go vet / go lint
+---------------------------------------
 - [ ] Two identical lines in a row that is the same assignment should result
       in an error.
 - [ ] Constant byte slices should be allowed.
 
 Various
 -------
+- [ ] Lua functions that return tables that can be iterated over in Pongo2 templates
 - [ ] Add config Function for adding a directory listing title to a certain path regex
+      (and/or a title.txt or common.md file).
 - [ ] An option for using brotly compression instead of gzip
 - [ ] Integrate fasthttp: https://github.com/valyala/fasthttp
 - [ ] Add a lua function for presenting an executable as a web application,
@@ -46,7 +45,6 @@ Various
 - [ ] C plugin
 - [ ] File upload while handling gzip
 - [ ] Cache os.Stat also when serving directory listings
-- [ ] Create a screencast
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as
       Algernon applications
 - [ ] Look into github.com/jessevdk/go-flags/
@@ -175,6 +173,13 @@ Unusual features
       graphics. Same thing could be used for svg, but by specifying numbered
       vertices in a polygon. Update: Someone else has made a format for this!
       https://github.com/cparnot/ASCIImage
+
+Serving several domains
+-----------------------
+- [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
+      subdomain, when using the --domain parameter. Then only serve that
+      directory with HTTPS for :443). (Can be solved by starting several
+      instances of Algernon istead).
 
 Maybe
 -----
