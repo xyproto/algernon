@@ -1,0 +1,12 @@
+doctype 5
+html
+  head
+    title #{title}
+  body
+    h1 #{header}
+    div
+      each $index, $color in colors
+        div[style="color:"+$color] #{$index} #{$color}
+    p
+      a[href="index.md"] Back
+
