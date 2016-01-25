@@ -10,6 +10,7 @@ import (
 	"github.com/natefinch/pie"
 )
 
+// LuaPlugin represents a plugin for Algernon (for Lua)
 type LuaPlugin struct{}
 
 const namespace = "Lua"
@@ -37,6 +38,7 @@ add3(number, number) -> number // Adds two numbers and then the number 3
 
 // --- Plugin wrapper functions ---
 
+// Add3 is exposed to Algernon
 func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) (err error) {
 	var args []int
 	err = json.Unmarshal(jsonargs, &args)
@@ -51,13 +53,13 @@ func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) (err error) {
 
 // --- Plugin functions that must be present ---
 
-// Called once when the Plugin function is used in Algernon
+// Code is called once when the Plugin function is used in Algernon
 func (LuaPlugin) Code(pluginPath string, response *string) error {
 	*response = strings.Replace(luacode, "$0", pluginPath, -1)
 	return nil
 }
 
-// Called once when the help function is used in Algernon
+// Help is called once when the help function is used in Algernon
 func (LuaPlugin) Help(_ string, response *string) error {
 	*response = luahelp
 	return nil
