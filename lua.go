@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -124,13 +125,14 @@ func table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 	everything := make(map[string]interface{})
 
 	var skey, svalue lua.LString
-	var nvalue lua.LNumber
-	var hasSkey, hasSvalue, hasNvalue bool
+	var nkey, nvalue lua.LNumber
+	var hasSkey, hasSvalue, hasNkey, hasNvalue bool
 
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
 
 		// Convert the keys and values to strings or ints
 		skey, hasSkey = tkey.(lua.LString)
+		nkey, hasNkey = tkey.(lua.LNumber)
 		svalue, hasSvalue = tvalue.(lua.LString)
 		nvalue, hasNvalue = tvalue.(lua.LNumber)
 
@@ -146,6 +148,34 @@ func table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 			} else {
 				everything[skey.String()] = floatVal
 			}
+		} else if hasNkey && hasSvalue {
+			floatKey := float64(nkey)
+			intKey := int(nkey)
+			// Use the int key if it's the same as the float representation
+			if floatKey == float64(intKey) {
+				everything[fmt.Sprintf("%d", intKey)] = svalue.String()
+			} else {
+				everything[fmt.Sprintf("%f", floatKey)] = svalue.String()
+			}
+		} else if hasNkey && hasNvalue {
+			var sk, sv string
+			floatKey := float64(nkey)
+			intKey := int(nkey)
+			floatVal := float64(nvalue)
+			intVal := int(nvalue)
+			// Use the int key if it's the same as the float representation
+			if floatKey == float64(intKey) {
+				sk = fmt.Sprintf("%d", intKey)
+			} else {
+				sk = fmt.Sprintf("%f", floatKey)
+			}
+			// Use the int value if it's the same as the float representation
+			if floatVal == float64(intVal) {
+				sv = fmt.Sprintf("%d", intVal)
+			} else {
+				sv = fmt.Sprintf("%f", floatVal)
+			}
+			everything[sk] = sv
 		} else {
 			log.Warn("table2interfacemap: Unsupported type for map key. Value:", tvalue)
 		}
@@ -408,7 +438,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 
 				// Register the function, with a variable number of string arguments
 				// Functions returning (string, error) are supported by html.template
-				funcs[functionName] = func(args ...string) (string, error) {
+				funcs[functionName] = func(args ...string) (interface{}, error) {
 
 					// Create a brand new Lua state
 					L2 := luapool.New()
@@ -432,15 +462,28 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					}
 
 					// Empty return value if no values were returned
-					retval := ""
+					var retval interface{}
 
 					// Return the first of the returned arguments, as a string
 					if L2.GetTop() >= 1 {
-						retval = L2.ToString(1)
-					}
-
-					if debugMode && verboseMode {
-						log.Info(infostring(functionName, args) + " -> \"" + retval + "\"")
+						lv := L2.Get(-1)
+						if tbl, ok := lv.(*lua.LTable); ok {
+							// lv was a Lua Table
+							retval = table2interfacemap(tbl)
+							if debugMode && verboseMode {
+								log.Info(infostring(functionName, args) + " -> (map)")
+							}
+						} else if lv.Type() == lua.LTString {
+							// lv is a Lua String
+							retstr := L2.ToString(1)
+							retval = retstr
+							if debugMode && verboseMode {
+								log.Info(infostring(functionName, args) + " -> \"" + retstr + "\"")
+							}
+						} else {
+							retval = ""
+							log.Warn("The return type of " + infostring(functionName, args) + " can't be converted")
+						}
 					}
 
 					// No return value, return an empty string and nil

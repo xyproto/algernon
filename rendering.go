@@ -275,23 +275,32 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	tpl, err := pongo2.DefaultSet.FromBytes(pongodata)
 	if err != nil {
 		if debugMode {
-			prettyError(w, req, filename, pongodata, err.Error(), "html")
+			prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
 			log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, string(pongodata))
 		}
 		return
 	}
 
-	// TODO: Double check that all sorts of Lua functions are handled
+	okfuncs := make(pongo2.Context)
 
 	// Go through the global Lua scope
 	for k, v := range funcs {
 
+		// Skip the ones starting with an underscore
+		//if strings.HasPrefix(k, "_") {
+		//	continue
+		//}
+
 		// Check if the name in question is a function
-		if f, ok := v.(func(...string) (string, error)); ok {
+		if f, ok := v.(func(...string) (interface{}, error)); ok {
+
+			// For the closure to correctly wrap the key value
+			k := k
 
 			// Wrap the Lua functions as Pongo2 functions
-			funcs[k] = func(vals ...*pongo2.Value) *pongo2.Value {
+			wrapfunc := func(vals ...*pongo2.Value) *pongo2.Value {
+
 				// Convert the Pongo2 arguments to string arguments
 				strs := make([]string, len(vals))
 				for i, sv := range vals {
@@ -299,6 +308,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				}
 				// Call the Lua function
 				retval, err := f(strs...)
+
 				// Return the error if things go wrong
 				if err != nil {
 					return pongo2.AsValue(err)
@@ -306,17 +316,39 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				// Return the returned value if things went well
 				return pongo2.AsValue(retval)
 			}
+			// Save the wrapped function for the pongo2 template execution
+			okfuncs[k] = wrapfunc
 
+		} else if s, ok := v.(string); ok {
+			// String variables
+			okfuncs[k] = s
+		} else {
+			if debugMode && verboseMode {
+				log.Info(fmt.Sprintf("Not exposing %s (type %T) from Lua script.", k, k))
+			}
 		}
 	}
 
 	// Make the Lua functions available to Pongo
-	pongo2.Globals.Update(pongo2.Context(funcs))
+	pongo2.Globals.Update(okfuncs)
+
+	defer func() {
+		if r := recover(); r != nil {
+			errmsg := fmt.Sprintf("Pongo2 error: %s", r)
+			if debugMode {
+				prettyError(w, req, filename, pongodata, errmsg, "pongo2")
+			} else {
+				log.Errorf("Could not execute Pongo2 template:\n%s", errmsg)
+			}
+		}
+		return
+	}()
 
 	// Render the Pongo2 template to the buffer
 	if err := tpl.ExecuteWriter(pongo2.Globals, &buf); err != nil {
+		//if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
 		if debugMode {
-			prettyError(w, req, filename, pongodata, err.Error(), "html")
+			prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
 			log.Errorf("Could not execute Pongo2 template:\n%s", err)
 		}
@@ -334,10 +366,11 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 			_, err := buf.Write(htmldata)
 			if err != nil {
 				if debugMode {
-					prettyError(w, req, filename, pongodata, err.Error(), "html")
+					prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
 					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
+				return
 			}
 		}
 
@@ -350,10 +383,11 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 			_, err := buf.Write(changedBytes)
 			if err != nil {
 				if debugMode {
-					prettyError(w, req, filename, pongodata, err.Error(), "html")
+					prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
 					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
+				return
 			}
 		}
 
@@ -443,6 +477,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 			} else {
 				log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 			}
+			return
 		}
 	}
 
