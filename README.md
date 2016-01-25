@@ -808,6 +808,6 @@ Requirements
 General information
 -------------------
 
-* Version: 0.86
+* Version: 0.87
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
