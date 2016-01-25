@@ -7,7 +7,7 @@
     <h1>{{ header }}</h1>
     <div>
       {% for index, color in colors sorted %}
-        <div style="color: {{ color }}"> {{ index }} {{ color }}</div>
+        <div style="color: {{ color }}">{{ index }} {{ color }}</div>
       {% endfor %}
     </div>
     <p>
