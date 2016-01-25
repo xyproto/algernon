@@ -5,7 +5,7 @@ function combine(a, b)
 end
 
 function times(a, b)
-  return a * b
+  return tostring(a * b)
 end
 
 function moose()
