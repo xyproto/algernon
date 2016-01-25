@@ -8,7 +8,7 @@ keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, ma
 
 Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, GCSS, JSX, Bolt, Redis, MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
-[![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://img.shields.io/badge/gitter-chat-green.svg?style=flat)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE)
+[![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![Gitter](https://img.shields.io/badge/gitter-chat-green.svg?style=flat)](https://gitter.im/xyproto/algernon?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
 GitBook: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 
