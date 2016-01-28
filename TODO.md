@@ -19,6 +19,7 @@ Priority
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
+- [ ] Document and test the jnode.go code
 
 Report issues for Go / go vet / go lint
 ---------------------------------------

@@ -215,6 +215,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, filepath.Dir(filename))
+	exportJNode(L)
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
@@ -341,6 +342,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, filepath.Dir(filename))
+	exportJNode(L)
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)

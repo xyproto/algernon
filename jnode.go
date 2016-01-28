@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http" // For sending JSON requests
 	"strings"
 
@@ -141,6 +142,21 @@ func jnodeJSON(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Given a JNode, return the JSON document.
+// May return an empty string.
+// Not prettily formatted.
+func jnodeJSONcompact(L *lua.LState) int {
+	jnode := checkJNode(L) // arg 1
+
+	data, err := jnode.JSON()
+	retval := ""
+	if err == nil { // ok
+		retval = string(data)
+	}
+	L.Push(lua.LString(retval))
+	return 1 // number of results
+}
+
 // Send JSON to host. First argument: URL
 // Second argument (optional) Auth token.
 // Returns a string that starts with FAIL if it fails.
@@ -173,18 +189,67 @@ func jnodeSendToURL(L *lua.LState) int {
 
 	// Set up request
 	client := &http.Client{}
-	r, _ := http.NewRequest("POST", posturl, bytes.NewReader(jsonData))
-	if authtoken != "" {
-		r.Header.Add("Authorization", "auth_token=\""+authtoken+"\"")
+	req, err := http.NewRequest("POST", posturl, bytes.NewReader(jsonData))
+	if err != nil {
+		L.Push(lua.LString("FAIL: " + err.Error()))
+		return 1 // number of results
 	}
-	r.Header.Add("Content-Type", "application/json")
+	if authtoken != "" {
+		req.Header.Add("Authorization", "auth_token=\""+authtoken+"\"")
+	}
+	req.Header.Add("Content-Type", "application/json")
 
 	// Send request and return result
-	resp, err := client.Do(r)
+	resp, err := client.Do(req)
 	if err != nil || resp.Status != "200 OK" {
 		L.Push(lua.LString("FAIL: " + resp.Status))
 		return 1 // number of results
 	}
+
+	L.Push(lua.LString(resp.Status))
+	return 1 // number of results
+}
+
+// Receive JSON from host. First argument: URL
+// Returns a string that starts with FAIL if it fails.
+// Fills the current JSON node if it works out.
+func jnodeReceiveFromURL(L *lua.LState) int {
+	jnode := checkJNode(L) // arg 1
+
+	posturl := L.ToString(2)
+	if posturl == "" {
+		L.ArgError(2, "URL for sending a JSON POST requests to expected")
+	}
+
+	if !strings.HasPrefix(posturl, "http") {
+		L.ArgError(2, "URL must start with http or https")
+	}
+
+	// Send request
+	resp, err := http.Get(posturl)
+	if err != nil {
+		L.Push(lua.LString("FAIL: " + err.Error()))
+		return 1 // number of results
+	}
+	if resp.Status != "200 OK" {
+		L.Push(lua.LString("FAIL: " + resp.Status))
+		return 1 // number of results
+	}
+
+	bodyData, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		L.Push(lua.LString("FAIL: " + resp.Status))
+		return 1 // number of results
+	}
+
+	new_jnode, err := jpath.New(bodyData)
+	if err != nil {
+		L.Push(lua.LString("FAIL: " + resp.Status))
+		return 1 // number of results
+	}
+
+	*jnode = *new_jnode
 
 	L.Push(lua.LString(resp.Status))
 	return 1 // number of results
@@ -196,10 +261,26 @@ func jnodeSendToURL(L *lua.LState) int {
 //	return 1 // number of results
 //}
 
-// Create a new JSON node
+// Create a new JSON node. JSON data as the first argument is optional.
+// Logs an error if the given JSON can't be parsed.
+// Always returns a JSON Node.
 func constructJNode(L *lua.LState) (*lua.LUserData, error) {
 	// Create a new JNode
-	jnode := jpath.NewNode()
+	var jnode *jpath.Node
+
+	top := L.GetTop()
+	if top == 1 {
+		// Optional
+		jsondata := []byte(L.ToString(1))
+		var err error
+		jnode, err = jpath.New(jsondata)
+		if err != nil {
+			log.Error(err)
+			jnode = jpath.NewNode()
+		}
+	} else {
+		jnode = jpath.NewNode()
+	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = jnode
@@ -215,8 +296,10 @@ var jnodeMethods = map[string]lua.LGFunction{
 	"get":        jnodeGetNode,
 	"set":        jnodeSet,
 	"delkey":     jnodeDelKey,
-	"string":     jnodeJSON, // undocumented
+	"pretty":     jnodeJSON,
+	"compact":    jnodeJSONcompact,
 	"send":       jnodeSendToURL,
+	"receive":    jnodeReceiveFromURL,
 }
 
 // Make functions related JSON nodes

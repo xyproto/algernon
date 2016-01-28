@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/jpath"
 	"github.com/yuin/gopher-lua"
@@ -16,9 +14,6 @@ import (
 const (
 	// Identifier for the JFile class in Lua
 	lJFileClass = "JFile"
-
-	// Prefix when indenting JSON
-	indentPrefix = ""
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
@@ -196,45 +191,5 @@ func exportJFile(L *lua.LState, scriptdir string) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
-
-}
-
-func exportJSONFunctions(L *lua.LState) {
-
-	// Lua function for converting a table to JSON (string or int)
-	toJSON := L.NewFunction(func(L *lua.LState) int {
-		var (
-			b   []byte
-			err error
-		)
-		table := L.ToTable(1)
-
-		// Convert the Lua table to a map that can be used when converting
-		// to JSON (map[string]interface{})
-		mapinterface := table2interfacemap(table)
-
-		// If an optional argument is supplied, indent the given number of spaces
-		if L.GetTop() == 2 {
-			indentLevel := L.ToInt(2)
-			indentString := ""
-			for i := 0; i < indentLevel; i++ {
-				indentString += " "
-			}
-			b, err = json.MarshalIndent(mapinterface, indentPrefix, indentString)
-		} else {
-			b, err = json.Marshal(mapinterface)
-		}
-		if err != nil {
-			log.Error(err)
-			return 0 // number of results
-		}
-		L.Push(lua.LString(string(b)))
-		return 1 // number of results
-	})
-
-	// Convert a table to JSON
-	L.SetGlobal("toJSON", toJSON)
-	L.SetGlobal("ToJSON", toJSON) // Alias for backward compatibility
-	L.SetGlobal("JSON", toJSON)   // Alias for backward compatibility
 
 }

@@ -593,6 +593,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, serverDir)
+	exportJNode(L)
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
