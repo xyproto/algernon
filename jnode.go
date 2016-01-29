@@ -228,24 +228,24 @@ func jnodeReceiveFromURL(L *lua.LState) int {
 	// Send request
 	resp, err := http.Get(posturl)
 	if err != nil {
-		L.Push(lua.LString("FAIL: " + err.Error()))
-		return 1 // number of results
+		log.Error(err.Error())
+		return 0 // number of results
 	}
 	if resp.Status != "200 OK" {
-		L.Push(lua.LString("FAIL: " + resp.Status))
+		L.Push(lua.LString(resp.Status))
 		return 1 // number of results
 	}
 
 	bodyData, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		L.Push(lua.LString("FAIL: " + resp.Status))
-		return 1 // number of results
+		log.Error(err)
+		return 0 // number of results
 	}
 
 	new_jnode, err := jpath.New(bodyData)
 	if err != nil {
-		L.Push(lua.LString("FAIL: " + resp.Status))
+		L.Push(lua.LString(resp.Status))
 		return 1 // number of results
 	}
 
