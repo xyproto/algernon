@@ -191,19 +191,19 @@ func jnodeSendToURL(L *lua.LState) int {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", posturl, bytes.NewReader(jsonData))
 	if err != nil {
-		L.Push(lua.LString("FAIL: " + err.Error()))
-		return 1 // number of results
+		log.Error(err)
+		return 0 // number of results
 	}
 	if authtoken != "" {
 		req.Header.Add("Authorization", "auth_token=\""+authtoken+"\"")
 	}
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", "application/json; charset=utf-8")
 
 	// Send request and return result
 	resp, err := client.Do(req)
-	if err != nil || resp.Status != "200 OK" {
-		L.Push(lua.LString("FAIL: " + resp.Status))
-		return 1 // number of results
+	if err != nil {
+		log.Error(err)
+		return 0 // number of results
 	}
 
 	L.Push(lua.LString(resp.Status))
@@ -245,8 +245,8 @@ func jnodeReceiveFromURL(L *lua.LState) int {
 
 	new_jnode, err := jpath.New(bodyData)
 	if err != nil {
-		L.Push(lua.LString(resp.Status))
-		return 1 // number of results
+		log.Error(err)
+		return 0 // number of results
 	}
 
 	*jnode = *new_jnode
@@ -292,8 +292,8 @@ func constructJNode(L *lua.LState) (*lua.LUserData, error) {
 var jnodeMethods = map[string]lua.LGFunction{
 	"__tostring": jnodeJSON,
 	"add":        jnodeAdd,
-	"getstring":  jnodeGetString,
 	"get":        jnodeGetNode,
+	"getstring":  jnodeGetString,
 	"set":        jnodeSet,
 	"delkey":     jnodeDelKey,
 	"pretty":     jnodeJSON,

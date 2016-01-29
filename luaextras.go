@@ -45,10 +45,11 @@ function dir(t)
   if t == nil then
     t = _G
   end
+  local output = {}
   for k, v in pairs(t) do
-    print(string.format("%-16s\t->\t%s", tostring(k), tostring(v)))
+	table.insert(output, string.format("%-16s\t->\t%s", tostring(k), tostring(v)))
   end
-  return ""
+  return table.concat(output, "\n")
 end
 `
 
