@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -245,8 +246,40 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		// Place the form data in a map
 		m := make(map[string]string)
 		req.ParseForm()
-		for k, v := range req.Form {
-			m[k] = v[0]
+		for key, values := range req.Form {
+			m[key] = values[0]
+		}
+		// Convert the map to a table and return it
+		L.Push(map2table(L, m))
+		return 1 // number of results
+	}))
+
+	// Retrieve a table with keys and values from the URL in the request
+	L.SetGlobal("urldata", L.NewFunction(func(L *lua.LState) int {
+
+		var valueMap url.Values
+		var err error
+
+		if L.GetTop() == 1 {
+			// If given an argument
+			rawurl := L.ToString(1)
+			valueMap, err = url.ParseQuery(rawurl)
+			// Log error as warning if there are issues.
+			// An empty Value map will then be used.
+			if err != nil {
+				log.Error(err)
+				// return 0
+			}
+		} else {
+			// If not given an argument
+			valueMap = req.URL.Query() // map[string][]string
+		}
+
+		// Place the Value data in a map, using the first values
+		// if there are many values for a given key.
+		m := make(map[string]string)
+		for key, values := range valueMap {
+			m[key] = values[0]
 		}
 		// Convert the map to a table and return it
 		L.Push(map2table(L, m))

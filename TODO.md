@@ -19,7 +19,8 @@ Priority
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
-- [ ] Document and test the jnode.go code
+- [ ] Document and test the jnode.go code and urldata()
+- [ ] Add a method for representing a JNode or JFile as a Lua table, if possible
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
@@ -49,14 +50,14 @@ Various
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as
       Algernon applications
 - [ ] Look into github.com/jessevdk/go-flags/
-- [ ] pprint should output text to the browser when not running in the repl
+- [ ] pprint should output text to the browser when not running in the repl
       (or be disabled)
 - [ ] Graph of visitors over time
 - [ ] See if the HTTP headers from the client + country of origin + mouse
       movement patterns can become some sort of pseudo ID. Combine with a
       neural net. Can be used for storing non-critical data like prefered
       themes, font sizes etc. Time of day may also be an input.
-- [ ] Add editor syntax highlight files.
+- [ ] Add editor syntax highlight files.
 - [ ] Support for pretty URLs and/or routing in serverconf.lua
       (/position/x/2/y/4).
 - [ ] Commandline utilities for editing users, permissions, databases and Lua
@@ -67,7 +68,7 @@ Various
 - [ ] deb/ppa
 - [/] Use some of the tricks from go-bootstrap.io
 - [ ] Consider using https://github.com/sbinet/igo instead of readline.
-- [ ] Create a utility for creating and running new projects, ala Meteor.
+- [ ] Create a utility for creating and running new projects, ala Meteor.
 
 Data control
 ------------
@@ -77,13 +78,13 @@ Data control
 Events
 ------
 - [ ] Better 404 page not found page for users visiting "/".
-- [ ] Consider using channels in a more clever way, to completely avoid
+- [ ] Consider using channels in a more clever way, to completely avoid
       sleeping. Possibly by sending channels over channels.
 - [ ] Consider only listening for changes after a file has been visited, then
       stop watching it after a while.
-- [ ] Use a regexp or a JavaScript minification package instead of replacing
+- [ ] Use a regexp or a JavaScript minification package instead of replacing
       strings in insertAutoRefresh.
-- [ ] In genFileChangeEvents, check for CloseNotify for more graceful timeouts.
+- [ ] In genFileChangeEvents, check for CloseNotify for more graceful timeouts.
 
 Server configuration
 --------------------
@@ -114,10 +115,10 @@ Plugins
 Additional security
 -------------------
 - [ ] Consider using https://github.com/unrolled/secure
-- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for
       selected URL prefixes. Use code from "scoreserver".
 - [ ] Check that HTTP reads not only times out, but has a deadline.
-- [ ] Flag for disabling directory listings entirely.
+- [ ] Flag for disabling directory listings entirely.
 - [ ] OAuth 1
 - [ ] OAuth 2
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
@@ -142,14 +143,14 @@ Documentation and samples
 - [ ] Port [niltalk](https://github.com/knadh/niltalk) to Algernon,
       in a separate repository.
 - [ ] Create a sample chat application.
-- [ ] Document possible Markdown keywords somewhere (in a separate document).
+- [ ] Document possible Markdown keywords somewhere (in a separate document).
 - [ ] Write a Lua library and use it in several web handlers.
 - [ ] Make an application where .alg files can be uploaded and then hosted.
 
 Lua
 ---
 - [ ] Wrap JNode in the same way as JFile.
-- [ ] Add a Lua function ForEach that takes a data structure and a function
+- [ ] Add a Lua function ForEach that takes a data structure and a function
       that takes a key and a value.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries.
@@ -187,14 +188,14 @@ Maybe
 - [ ] Integrate C6: https://github.com/c9s/c6
 - [ ] Add configurable log hooks for the systems logrus supports.
       See: https://github.com/Sirupsen/logrus
-- [ ] Use the path/filepath package for walking directories.
+- [ ] Use the path/filepath package for walking directories.
 - [ ] Add a Lua function for outputting Lua tables to the client.
 - [ ] Add a Lua function for fetching a value from a table, or a blank string.
 - [ ] Add a Lua function for checking if a file exists.
 - [ ] Mention the `jpath` package in the README.
 - [ ] Support for plugins written in BF.
 - [ ] A flag to store the Bolt database inside the given zip file?
-- [ ] Keep all configuration settings in Redis. Use an external package for
+- [ ] Keep all configuration settings in Redis. Use an external package for
       handling configuration.
 - [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package,
       as a virtual DOM.
@@ -226,7 +227,7 @@ Maybe
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
-- [ ] Read zip files directly instead of decompressing when given as the
+- [ ] Read zip files directly instead of decompressing when given as the
       first argument (downside: some Amber functions look for files in the
       same directory).
 - [ ] Utilities to lint and package .alg archives.
