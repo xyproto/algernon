@@ -598,6 +598,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
 
+	// Extras
+	exportExtras(L)
+
 	// Pretty printing
 	exportREPL(L)
 

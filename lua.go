@@ -17,6 +17,7 @@ import (
 func arguments2buffer(L *lua.LState, addNewline bool) bytes.Buffer {
 	var buf bytes.Buffer
 	top := L.GetTop()
+
 	// Add all the string arguments to the buffer
 	for i := 1; i <= top; i++ {
 		buf.WriteString(L.Get(i).String())
@@ -220,6 +221,9 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
 
+	// Extras
+	exportExtras(L)
+
 	// pprint
 	//exportREPL(L)
 
@@ -346,6 +350,9 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	// For saving and loading Lua functions
 	exportCodeLibrary(L, userstate)
+
+	// Extras
+	exportExtras(L)
 
 	// Plugins
 	exportPluginFunctions(L, nil)
