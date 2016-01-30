@@ -117,6 +117,16 @@ warn(...)
 err(...)
 // Output text. Takes a variable number of strings.
 print(...)
+// Output HTML given Markdown. Takes a variable number of strings.
+mprint(...)
+// Output HTML given Amber. Takes a variable number of strings.
+aprint(...)
+// Output CSS given GCSS. Takes a variable number of strings.
+gprint(...)
+// Output JavaScript given JSX. Takes a variable number of strings.
+jprint(...)
+// Ouput (mainly) HMTL given Pongo2. Takes a variable number of strings.
+poprint(...)
 
 Cache
 
@@ -139,6 +149,32 @@ jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
 // Takes an optional number of spaces to indent the JSON data.
 toJSON(table[, number]) -> string
+// Create a JSON document node.
+JNode() -> userdata
+// Add JSON data to a node. The first argument is an optional JSON path.
+// The second argument is a JSON data string. Retursn true on success.
+// "x" is the default JSON path.
+jnode:add([string, ]string) ->
+// Given a JSON path, retrives a JSON node.
+jnode:get(string) -> userdata
+// Given a JSON path, retrieves a JSON string.
+jnode:getstring(string) -> string
+// Given a JSON path and a JSON string, set the value.
+jnode:set(string, string)
+// Given a JSON path, remove a key from a map.
+jnode:delkey(string) -> bool
+// Return the JSON data, nicely formatted.
+jnode:pretty() -> string
+// Return the JSON data, as a compact string.
+jnode:compact() -> string
+// Sends JSON data to the given URL. Returns the HTTP status code as a string.
+// The content type is set to "application/json; charset=utf-8".
+// The second argument is an optional authentication token that is used for the
+// Authorization header field.
+jnode:send(string[, string]) -> string
+// Fetches JSON over HTTP given an URL that starts with http or https.
+// The JSON data is placed in the JNode. Returns the HTTP status code as a string.
+jnode:receive(string) -> string
 
 Plugins
 
@@ -184,6 +220,18 @@ sleep(number)
 unixnano() -> number
 // Convert Markdown to HTML
 markdown(string) -> string
+
+Extra
+
+// Takes a Python filename, executes the script with the "python" binary in the Path.
+// Returns the output as a Lua table, where each line is an entry.
+py(string) -> table
+// Takes one or more system commands (possibly separated by ";") and runs them.
+// Returns the output lines as a table.
+run(string) -> table
+// Lists the keys and values of a Lua table. Returns a string.
+// Lists the contents of the global namespace "_G" if no arguments are given.
+dir([table]) -> string
 `
 	usageMessage = `
 Type "webhelp" for an overview of functions that are available when
@@ -367,6 +415,8 @@ DenyHandler(function)
 // Provide a lua function that will be run once,
 // when the server is ready to start serving.
 OnReady(function)
+// Use a Lua file for stting up HTTP handlers instead of using the directory structure.
+ServerFile(string) -> bool
 `
 	exitMessage = "bye"
 )

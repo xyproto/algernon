@@ -15,13 +15,10 @@ Priority
       + .alg launcher.
 - [ ] Built in support for running the Lua REPL in the browser
       (possibly by using "gotty").
-- [ ] Document how to read XML or JSON from one place and output processed
+- [ ] Document how to read JSON from one place and output processed
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
-- [ ] Document and test the jnode.go code and urldata()
-- [ ] Add a method for representing a JNode or JFile as a Lua table, if possible
-- [ ] Document the changes to basic.go and also the new Lua functions
 
 Report issues for Go / go vet / go lint
 ---------------------------------------

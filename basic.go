@@ -58,6 +58,13 @@ func exportBasicSystemFunctions(L *lua.LState) {
 		return 0
 	}))
 
+	// Return the current unixtime, with an attempt at nanosecond resolution
+	L.SetGlobal("unixnano", L.NewFunction(func(L *lua.LState) int {
+		// Extract the correct number of nanoseconds
+		L.Push(lua.LNumber(time.Now().UnixNano()))
+		return 1 // number of results
+	}))
+
 	// Convert Markdown to HTML
 	L.SetGlobal("markdown", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
@@ -65,13 +72,6 @@ func exportBasicSystemFunctions(L *lua.LState) {
 		// Convert the buffer to markdown and output the translated string
 		html := strings.TrimSpace(string(blackfriday.MarkdownCommon([]byte(buf.String()))))
 		L.Push(lua.LString(html))
-		return 1 // number of results
-	}))
-
-	// Return the current unixtime, with an attempt at nanosecond resolution
-	L.SetGlobal("unixnano", L.NewFunction(func(L *lua.LState) int {
-		// Extract the correct number of nanoseconds
-		L.Push(lua.LNumber(time.Now().UnixNano()))
 		return 1 // number of results
 	}))
 

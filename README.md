@@ -245,6 +245,12 @@ unixnano() -> number
 
 // Convert Markdown to HTML [after version 0.87]
 markdown(string) -> string
+
+// Return the directory where the REPL or script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
+scriptdir([string]) -> string
+
+// Return the directory where the server is running. If a filename (optional) is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
+serverdir([string]) -> string
 ~~~
 
 
@@ -282,20 +288,17 @@ status(number)
 // Set a HTTP status code and output a message (optional).
 error(number[, string])
 
-// Return the directory where the script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
-scriptdir([string]) -> string
-
-// Return the directory where the server is running. If a filename (optional) is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
-serverdir([string]) -> string
-
 // Serve a file that exists in the same directory as the script.
 serve(string)
 
 // Return the rendered contents of a file that exists in the same directory as the script. [after version 0.87]
 render(string)
 
-// Return a table with keys and values as given in a posted form, or as given in the URL (`/some/page?x=7` makes the key `x` with the value `7` available).
+// Return a table with keys and values as given in a posted form, or as given in the URL.
 formdata() -> table
+
+// Return a table with keys and values as given in the request URL, or in the given URL (`/some/page?x=7` makes the key `x` with the value `7` available).
+urldata([string]) -> table
 
 // Redirect to a relative URL
 redirect(string)
@@ -343,7 +346,7 @@ jfile:get(string) -> string
 
 // Takes a JSON path (optional) and JSON data to be added to the list.
 // The JSON path must point to a list, if given, unless the JSON file is empty.
-// Returns true on success.
+// "x" is the default JSON path. Returns true on success.
 jfile:add([string, ]string) -> bool
 
 // Take a JSON path and a string value. Changes the entry. Returns true on success.
@@ -355,6 +358,42 @@ jfile:delkey(string) -> bool
 // Convert a Lua table, where keys are strings and values are strings or numbers, to JSON.
 // Takes an optional number of spaces to indent the JSON data.
 toJSON(table[, number]) -> string
+
+// Create a JSON document node.
+JNode() -> userdata
+
+// Add JSON data to a node. The first argument is an optional JSON path.
+// The second argument is a JSON data string. Retursn true on success.
+// "x" is the default JSON path.
+jnode:add([string, ]string) ->
+
+// Given a JSON path, retrives a JSON node.
+jnode:get(string) -> userdata
+
+// Given a JSON path, retrieves a JSON string.
+jnode:getstring(string) -> string
+
+// Given a JSON path and a JSON string, set the value.
+jnode:set(string, string)
+
+// Given a JSON path, remove a key from a map.
+jnode:delkey(string) -> bool
+
+// Return the JSON data, nicely formatted.
+jnode:pretty() -> string
+
+// Return the JSON data, as a compact string.
+jnode:compact() -> string
+
+// Sends JSON data to the given URL. Returns the HTTP status code as a string.
+// The content type is set to "application/json; charset=utf-8".
+// The second argument is an optional authentication token that is used for the
+// Authorization header field.
+jnode:send(string[, string]) -> string
+
+// Fetches JSON over HTTP given an URL that starts with http or https.
+// The JSON data is placed in the JNode. Returns the HTTP status code as a string.
+jnode:receive(string) -> string
 ~~~
 
 
@@ -786,6 +825,23 @@ Commands that are only available in the REPL
 * `webhelp` displays a syntax highlighted overview of functions related to handling requests.
 * `confighelp` displays a syntax highlighted overview of functions related to server configuration.
 * `pprint` can be used for displaying a description, or contents, of Lua values.
+
+Extra Lua functions
+-------------------
+
+~~~c
+// Takes a Python filename, executes the script with the `python` binary in the Path.
+// Returns the output as a Lua table, where each line is an entry.
+py(string) -> table
+
+// Takes one or more system commands (possibly separated by `;`) and runs them.
+// Returns the output lines as a table.
+run(string) -> table
+
+// Lists the keys and values of a Lua table. Returns a string.
+// Lists the contents of the global namespace `_G` if no arguments are given.
+dir([table]) -> string
+~~~
 
 
 Releases
