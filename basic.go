@@ -75,25 +75,6 @@ func exportBasicSystemFunctions(L *lua.LState) {
 		return 1 // number of results
 	}))
 
-	// Get the current directory since this is probably in the REPL
-	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
-		scriptpath, err := os.Getwd()
-		if err != nil {
-			log.Error(err)
-			L.Push(lua.LString("."))
-			return 1 // number of results
-		}
-		top := L.GetTop()
-		if top == 1 {
-			// Also include a separator and a filename
-			fn := L.ToString(1)
-			scriptpath = filepath.Join(scriptpath, fn)
-		}
-		// Now have the correct absolute scriptpath
-		L.Push(lua.LString(scriptpath))
-		return 1 // number of results
-	}))
-
 	// Get the full filename of a given file that is in the directory
 	// where the server is running (root directory for the server).
 	// If no filename is given, the directory where the server is

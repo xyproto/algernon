@@ -11,6 +11,7 @@ import (
 	"github.com/xyproto/term"
 	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -529,6 +530,25 @@ func exportREPL(L *lua.LState) {
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
 		pprint(L.Get(1))
 		return 0 // number of results
+	}))
+
+	// Get the current directory since this is probably in the REPL
+	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
+		scriptpath, err := os.Getwd()
+		if err != nil {
+			log.Error(err)
+			L.Push(lua.LString("."))
+			return 1 // number of results
+		}
+		top := L.GetTop()
+		if top == 1 {
+			// Also include a separator and a filename
+			fn := L.ToString(1)
+			scriptpath = filepath.Join(scriptpath, fn)
+		}
+		// Now have the correct absolute scriptpath
+		L.Push(lua.LString(scriptpath))
+		return 1 // number of results
 	}))
 
 }
