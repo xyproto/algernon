@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <title>Tufte CSS</title>
+  </head>
+  <body>
+    <article>
+      <h1>Tufte CSS</h1>
+
+      <section>
+        <p>This is an example of combining Pongo2, GCSS and Tufte CSS.</p>
+        <label for="mn-demo" class="margin-toggle">&#8853;</label>
+        <input type="checkbox" id="mn-demo" class="margin-toggle"/>
+        <span class="marginnote">
+          This is a margin note.
+        </span>
+      </section>
+
+      <section>
+        <p>Here is the <a href="https://edwardtufte.github.io/tufte-css/">Tufte CSS</a> web page.</p>
+
+        <p>The <b>tufte-css</b> folder was checked out with:
+        <pre><code>git clone https://github.com/edwardtufte/tufte-css</code></pre>
+        </p>
+
+        Not bad.
+      </section>
+
+    </article>
+  </body>
+</html>
