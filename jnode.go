@@ -161,7 +161,7 @@ func jnodeJSONcompact(L *lua.LState) int {
 // Second argument (optional) Auth token.
 // Returns a string that starts with FAIL if it fails.
 // Returns the HTTP status code if it works out.
-func jnodeSendToURL(L *lua.LState) int {
+func jnodePOSTToURL(L *lua.LState) int {
 	jnode := checkJNode(L) // arg 1
 
 	posturl := L.ToString(2)
@@ -210,10 +210,63 @@ func jnodeSendToURL(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Send JSON to host. First argument: URL
+// Second argument (optional) Auth token.
+// Returns a string that starts with FAIL if it fails.
+// Returns the HTTP status code if it works out.
+func jnodePUTToURL(L *lua.LState) int {
+	jnode := checkJNode(L) // arg 1
+
+	puturl := L.ToString(2)
+	if puturl == "" {
+		L.ArgError(2, "URL for sending a JSON PUT requests to expected")
+	}
+
+	if !strings.HasPrefix(puturl, "http") {
+		L.ArgError(2, "URL must start with http or https")
+	}
+
+	top := L.GetTop()
+	authtoken := ""
+	if top == 3 {
+		// Optional
+		authtoken = L.ToString(3)
+	}
+
+	// Render JSON
+	jsonData, err := jnode.JSON()
+	if err != nil {
+		L.Push(lua.LString("FAIL: " + err.Error()))
+		return 1 // number of results
+	}
+
+	// Set up request
+	client := &http.Client{}
+	req, err := http.NewRequest("PUT", puturl, bytes.NewReader(jsonData))
+	if err != nil {
+		log.Error(err)
+		return 0 // number of results
+	}
+	if authtoken != "" {
+		req.Header.Add("Authorization", "auth_token=\""+authtoken+"\"")
+	}
+	req.Header.Add("Content-Type", "application/json; charset=utf-8")
+
+	// Send request and return result
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err)
+		return 0 // number of results
+	}
+
+	L.Push(lua.LString(resp.Status))
+	return 1 // number of results
+}
+
 // Receive JSON from host. First argument: URL
 // Returns a string that starts with FAIL if it fails.
 // Fills the current JSON node if it works out.
-func jnodeReceiveFromURL(L *lua.LState) int {
+func jnodeGETFromURL(L *lua.LState) int {
 	jnode := checkJNode(L) // arg 1
 
 	posturl := L.ToString(2)
@@ -298,8 +351,11 @@ var jnodeMethods = map[string]lua.LGFunction{
 	"delkey":     jnodeDelKey,
 	"pretty":     jnodeJSON,
 	"compact":    jnodeJSONcompact,
-	"send":       jnodeSendToURL,
-	"receive":    jnodeReceiveFromURL,
+	"send":       jnodePOSTToURL,
+	"POST":       jnodePOSTToURL,
+	"PUT":        jnodePUTToURL,
+	"receive":    jnodeGETFromURL,
+	"GET":        jnodeGETFromURL,
 }
 
 // Make functions related JSON nodes

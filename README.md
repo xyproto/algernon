@@ -389,10 +389,19 @@ jnode:compact() -> string
 // The content type is set to "application/json; charset=utf-8".
 // The second argument is an optional authentication token that is used for the
 // Authorization header field.
+jnode:POST(string[, string]) -> string
+
+// Alias for jnode:POST
 jnode:send(string[, string]) -> string
+
+// Same as jnode:POST, but sends HTTP PUT instead.
+jnode:PUT(string[, string]) -> string
 
 // Fetches JSON over HTTP given an URL that starts with http or https.
 // The JSON data is placed in the JNode. Returns the HTTP status code as a string.
+jnode:GET(string) -> string
+
+// Alias for jnode:GET
 jnode:receive(string) -> string
 ~~~
 
