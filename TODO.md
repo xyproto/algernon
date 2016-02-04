@@ -69,6 +69,7 @@ Various
 - [ ] Create a utility for creating and running new projects, ala Meteor.
 - [ ] Add Lua functions for BSON and ION?
 - [ ] Add Lua functions for HTTP PUT without using JSON, for etcd
+- [ ] Add Lua methods for sending JSON with a custom HTTP verb
 
 Data control
 ------------
