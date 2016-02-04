@@ -67,6 +67,8 @@ Various
 - [/] Use some of the tricks from go-bootstrap.io
 - [ ] Consider using https://github.com/sbinet/igo instead of readline.
 - [ ] Create a utility for creating and running new projects, ala Meteor.
+- [ ] Add Lua functions for BSON and ION?
+- [ ] Add Lua functions for HTTP PUT without using JSON, for etcd
 
 Data control
 ------------
