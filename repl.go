@@ -612,20 +612,20 @@ func highlight(o *term.TextOutput, line string) string {
 	return module + function + unprocessed + typed + comment
 }
 
-func mustSaveHistory(o *term.TextOutput, historyFilename string) {
-	if verboseMode {
-		fmt.Printf(o.LightBlue("Saving REPL history to %s... "), historyFilename)
-	}
-	if err := saveHistory(historyFilename); err != nil {
-		if verboseMode {
-			fmt.Println(o.DarkRed("failed: " + err.Error()))
-		} else {
-			fmt.Printf(o.DarkRed("Failed to store REPL history to %s: %s\n"), historyFilename, err)
-		}
-	} else if verboseMode {
-		fmt.Println(o.LightGreen("ok"))
-	}
-}
+//func mustSaveHistory(o *term.TextOutput, historyFilename string) {
+//	if verboseMode {
+//		fmt.Printf(o.LightBlue("Saving REPL history to %s... "), historyFilename)
+//	}
+//	if err := saveHistory(historyFilename); err != nil {
+//		if verboseMode {
+//			fmt.Println(o.DarkRed("failed: " + err.Error()))
+//		} else {
+//			fmt.Printf(o.DarkRed("Failed to store REPL history to %s: %s\n"), historyFilename, err)
+//		}
+//	} else if verboseMode {
+//		fmt.Println(o.LightGreen("ok"))
+//	}
+//}
 
 // Output syntax highlighted help text, with an additional usage message
 func outputHelp(o *term.TextOutput, helpText string) {

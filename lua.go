@@ -295,31 +295,31 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 	return nil
 }
 
-// Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
-// Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
-
-	// Retrieve a Lua state
-	L := luapool.Get()
-
-	// Give no filename (an empty string will be handled correctly by the function).
-	// Nil is the channel for sending flush requests. nil is checked for in the function.
-	exportCommonFunctions(w, req, "", perm, L, luapool, nil, cache)
-
-	// Run the script
-	if err := L.DoString(script); err != nil {
-		// Close the Lua state
-		L.Close()
-
-		// Logging and/or HTTP response is handled elsewhere
-		return err
-	}
-
-	// Only put the Lua state back if there were no errors
-	luapool.Put(L)
-
-	return nil
-}
+//// Run a Lua string as a HTTP handler. Also has access to the userstate and permissions.
+//// Returns an error if there was a problem with running the lua script, otherwise nil.
+//func runLuaString(w http.ResponseWriter, req *http.Request, script string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) error {
+//
+//	// Retrieve a Lua state
+//	L := luapool.Get()
+//
+//	// Give no filename (an empty string will be handled correctly by the function).
+//	// Nil is the channel for sending flush requests. nil is checked for in the function.
+//	exportCommonFunctions(w, req, "", perm, L, luapool, nil, cache)
+//
+//	// Run the script
+//	if err := L.DoString(script); err != nil {
+//		// Close the Lua state
+//		L.Close()
+//
+//		// Logging and/or HTTP response is handled elsewhere
+//		return err
+//	}
+//
+//	// Only put the Lua state back if there were no errors
+//	luapool.Put(L)
+//
+//	return nil
+//}
 
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.

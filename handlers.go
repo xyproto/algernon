@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +32,7 @@ var (
 	mimereader *mime.Reader
 
 	// Placed in the header when responding
-	luaVersionString = lua.PackageName + "/" + lua.PackageVersion
+	// luaVersionString = lua.PackageName + "/" + lua.PackageVersion
 )
 
 // Check if the client supports gzip compressed responses
@@ -310,9 +309,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 }
 
 // For communicating information about the underlying software
-func powerHeader(w http.ResponseWriter, name, version string) {
-	w.Header().Set("X-Powered-By", name+"/"+version)
-}
+// func powerHeader(w http.ResponseWriter, name, version string) {
+//	w.Header().Set("X-Powered-By", name+"/"+version)
+// }
 
 // Server headers that are set before anything else
 func serverHeaders(w http.ResponseWriter) {
