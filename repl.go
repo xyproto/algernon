@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/jpath"
@@ -11,10 +16,6 @@ import (
 	"github.com/xyproto/term"
 	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 )
 
 const (
@@ -703,10 +704,10 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 
 	// Start the read, eval, print loop
 	var (
-		line     string
-		prompt   = o.LightGreen("lua> ")
-		EOF      bool
-		EOFcount int
+		line   string
+		prompt = o.LightGreen("lua> ")
+		EOF    bool
+		//EOFcount int
 	)
 	if loadHistory(historyFilename) != nil && fs.exists(historyFilename) {
 		log.Error("Could not load REPL history:", historyFilename)
@@ -741,15 +742,17 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		}
 
 		if EOF {
-			switch EOFcount {
-			case 0:
-				o.Err("Press ctrl-d again to exit.")
-				EOFcount++
-				continue
-			default:
-				done <- true
-				return nil
-			}
+			done <- true
+			return nil
+			//switch EOFcount {
+			//case 0:
+			//	o.Err("Press ctrl-d again to exit.")
+			//	EOFcount++
+			//	continue
+			//default:
+			//	done <- true
+			//	return nil
+			//}
 		}
 
 		line = strings.TrimSpace(line)
