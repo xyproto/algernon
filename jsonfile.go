@@ -1,12 +1,13 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/jpath"
-	"github.com/yuin/gopher-lua"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/jpath"
+	"github.com/yuin/gopher-lua"
 )
 
 // For dealing with JSON documents and strings
@@ -62,8 +63,8 @@ func jfileAdd(L *lua.LState) int {
 }
 
 // Takes a JFile and a JSON path.
-// Returns a value or an empty string.
-func jfileGet(L *lua.LState) int {
+// Returns a string value or an empty string.
+func jfileGetString(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
 	jsonpath := L.ToString(2)
 	if jsonpath == "" {
@@ -72,8 +73,84 @@ func jfileGet(L *lua.LState) int {
 	val, err := jfile.GetString(jsonpath)
 	if err != nil {
 		log.Error(err)
+		val = ""
 	}
 	L.Push(lua.LString(val))
+	return 1 // number of results
+}
+
+// Takes a JFile and a JSON path.
+// Returns a JNode or nil.
+func jfileGetNode(L *lua.LState) int {
+	jfile := checkJFile(L) // arg 1
+	jsonpath := L.ToString(2)
+	if jsonpath == "" {
+		L.ArgError(2, "JSON path expected")
+	}
+	node, err := jfile.GetNode(jsonpath)
+	if err != nil {
+		L.Push(lua.LNil)
+		return 1 // number of results
+	}
+
+	// Return the JNode
+	ud := L.NewUserData()
+	ud.Value = node
+	L.SetMetatable(ud, L.GetTypeMetatable(lJNodeClass))
+	L.Push(ud)
+	return 1 // number of results
+}
+
+// Takes a JFile and a JSON path.
+// Returns a value or nil.
+func jfileGet(L *lua.LState) int {
+	jfile := checkJFile(L) // arg 1
+	jsonpath := L.ToString(2)
+	if jsonpath == "" {
+		L.ArgError(2, "JSON path expected")
+	}
+
+	// Will handle nil nodes below, so the error value can be ignored
+	node, _ := jfile.GetNode(jsonpath)
+
+	// Convert the JSON node to a Lua value, if possible
+	var retval lua.LValue
+	if node == jpath.NilNode {
+		retval = lua.LNil
+	} else if _, ok := node.CheckMap(); ok {
+		// Return the JNode instead of converting the map
+		log.Info("Returning a JSON node instead of a Lua map")
+		ud := L.NewUserData()
+		ud.Value = node
+		L.SetMetatable(ud, L.GetTypeMetatable(lJNodeClass))
+		retval = ud
+		//buf.WriteString(fmt.Sprintf("Map with %d elements.", len(m)))
+	} else if _, ok := node.CheckList(); ok {
+		log.Info("Returning a JSON node instead of a Lua map")
+		// Return the JNode instead of converting the list
+		ud := L.NewUserData()
+		ud.Value = node
+		L.SetMetatable(ud, L.GetTypeMetatable(lJNodeClass))
+		retval = ud
+		//buf.WriteString(fmt.Sprintf("List with %d elements.", len(l)))
+	} else if s, ok := node.CheckString(); ok {
+		retval = lua.LString(s)
+	} else if s, ok := node.CheckInt(); ok {
+		retval = lua.LNumber(s)
+	} else if b, ok := node.CheckBool(); ok {
+		retval = lua.LBool(b)
+	} else if i, ok := node.CheckInt64(); ok {
+		retval = lua.LNumber(i)
+	} else if u, ok := node.CheckUint64(); ok {
+		retval = lua.LNumber(u)
+	} else if f, ok := node.CheckFloat64(); ok {
+		retval = lua.LNumber(f)
+	} else {
+		log.Error("Unknown JSON node type")
+		return 0
+	}
+	// Return the LValue
+	L.Push(retval)
 	return 1 // number of results
 }
 
@@ -127,12 +204,6 @@ func jfileJSON(L *lua.LState) int {
 	return 1 // number of results
 }
 
-//// String representation
-//func jfileToString(L *lua.LState) int {
-//	L.Push(lua.LString("JSON file"))
-//	return 1 // number of results
-//}
-
 // Create a new JSON file
 func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
 	fullFilename := filename
@@ -160,6 +231,8 @@ func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
 var jfileMethods = map[string]lua.LGFunction{
 	"__tostring": jfileJSON,
 	"add":        jfileAdd,
+	"getstring":  jfileGetString,
+	"getnode":    jfileGetNode,
 	"get":        jfileGet,
 	"set":        jfileSet,
 	"delkey":     jfileDelKey,
