@@ -29,8 +29,10 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Support SASS and HAML.
 - [ ] PostgreSQL HSTORE support
 - [ ] RethinkDB support
+- [ ] Port Pastecat to Algernon (https://github.com/mvdan/pastecat)
 - [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
 - [ ] Add config Function for adding a directory listing title to a certain path regex
       (and/or a title.txt or common.md file).
@@ -226,7 +228,6 @@ Maybe
       code to the server for evaluation.
 - [ ] Re-run the Lua server script if changed. Restart the server if the addr
       or port is changed.
-- [ ] Support SASS.
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
 - [ ] simplegres and permissiongres, for PostgreSQL.
