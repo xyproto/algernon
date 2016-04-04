@@ -29,6 +29,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Check out https://github.com/peterh/liner
 - [ ] Support SASS and HAML.
 - [ ] PostgreSQL HSTORE support
 - [ ] RethinkDB support
