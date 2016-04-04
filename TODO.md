@@ -7,10 +7,10 @@ Priority
       out before the playback has finished.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
-- [ ] Add support for systemd reload.
+- [ ] Add support for systemd reload, not just restart.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
-- [ ] Support for websockets.
+- [ ] Support for websockets (port a small multiplayer game to test).
 - [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
 - [ ] Built in support for running the Lua REPL in the browser
@@ -28,7 +28,8 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
-- [ ] Lua functions that return tables that can be iterated over in Pongo2 templates
+- [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
+- [X] Lua functions that return tables that can be iterated over in Pongo2 templates
 - [ ] Add config Function for adding a directory listing title to a certain path regex
       (and/or a title.txt or common.md file).
 - [ ] An option for using brotly compression instead of gzip
@@ -68,7 +69,6 @@ Various
 - [ ] Consider using https://github.com/sbinet/igo instead of readline.
 - [ ] Create a utility for creating and running new projects, ala Meteor.
 - [ ] Add Lua functions for BSON and ION?
-- [ ] Add Lua functions for HTTP PUT without using JSON, for etcd
 - [ ] Add Lua methods for sending JSON with a custom HTTP verb
 
 Data control
@@ -246,3 +246,4 @@ Maybe
 - [ ] Add a Lua function for removing all cache entries without a hit.
 - [X] Installer for OS X (now on App Store).
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
+- [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place)
