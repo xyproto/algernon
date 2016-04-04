@@ -246,7 +246,7 @@ func main() {
 	// (and can be set by both)
 	ranServerReadyFunction := finalConfiguration(serverHost)
 
-	// If no configuration files were being ran succesfully,
+	// If no configuration files were being ran successfully,
 	// output basic server information.
 	if len(serverConfigurationFilenames) == 0 {
 		if !quietMode {

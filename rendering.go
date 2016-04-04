@@ -148,7 +148,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	// Prepare for receiving title and code_theme information
 	given := map[string]string{"title": "", "code_theme": defaultTheme}
 
-	// Also prepare for receving meta tag information
+	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
 
 	// Extract keywords from the given data, and remove the lines with keywords

@@ -76,7 +76,7 @@ func NewFileStat(useCache bool, repeatedlyClearStatCache time.Duration) *FileSta
 	return fs
 }
 
-// Normalize a filename by removing the preceeding "./".
+// Normalize a filename by removing the precedeing "./".
 // Useful when caching, to avoid duplicate entries.
 func normalize(filename string) string {
 	if filename == "" {
