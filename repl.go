@@ -140,7 +140,11 @@ JSON
 // Use, or create, a JSON document/file.
 JFile(filename) -> userdata
 // Retrieve a string, given a valid JSON path. May return an empty string.
-jfile:get(string) -> string
+jfile:getstring(string) -> string
+// Retrieve a JSON node, given a valid JSON path. May return nil.
+jfile:getnode(string) -> userdata
+// Retrieve a value, given a valid JSON path. May return nil.
+jfile:get(string) -> value
 // Change an entry given a JSON path and a value. Returns true if successful.
 jfile:set(string, string) -> bool
 // Given a JSON path (optional) and JSON data, add it to a JSON list.
