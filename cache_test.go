@@ -165,7 +165,7 @@ func TestRandomStoreGet(t *testing.T) {
 	cache := newFileCache(5, false, 0)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	filenames := []string{"a", "b", "c"}
-	datasets := [][]byte{[]byte{0, 1, 2}, []byte{3, 4, 5, 6}, []byte{7}}
+	datasets := [][]byte{{0, 1, 2}, {3, 4, 5, 6}, {7}}
 	for i := 0; i < 100; i++ {
 		switch rand.Intn(4) {
 		case 0, 1: // Add data to the cache
