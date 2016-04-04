@@ -2,6 +2,7 @@
 
 Priority
 --------
+- [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
 - [ ] Video tutorials and screencasts.
 - [ ] Make it possible to stream music or video without the connection timing
       out before the playback has finished.
@@ -28,8 +29,9 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] PostgreSQL HSTORE support
+- [ ] RethinkDB support
 - [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
-- [X] Lua functions that return tables that can be iterated over in Pongo2 templates
 - [ ] Add config Function for adding a directory listing title to a certain path regex
       (and/or a title.txt or common.md file).
 - [ ] An option for using brotly compression instead of gzip
@@ -244,6 +246,5 @@ Maybe
       if timestamp changes, data is re-read.
 - [ ] web handlers should have access to setting up additional web handlers
 - [ ] Add a Lua function for removing all cache entries without a hit.
-- [X] Installer for OS X (now on App Store).
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place)
