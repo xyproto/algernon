@@ -26,8 +26,8 @@ const (
 	defaultMemoryLimit int64 = 32 * MiB
 
 	// Chunk size when reading uploaded file
-	//chunkSize int64 = 4 * KiB
-	chunkSize = defaultMemoryLimit
+	chunkSize int64 = 4 * KiB
+	//chunkSize = defaultMemoryLimit
 )
 
 // UploadedFile represents a file that has been uploaded but not yet been
@@ -74,13 +74,11 @@ func newUploadedFile(req *http.Request, scriptdir, formID string, uploadLimit in
 	}
 
 	// Store the data in a buffer, for later usage.
-	// The buffer has a limited size.
-	data := make([]byte, uploadLimit)
-	buf := bytes.NewBuffer(data)
+	buf := new(bytes.Buffer)
 
 	// Read the data in chunks
 	var totalWritten, writtenBytes, i int64
-	for i = 0; i < int64(buf.Len()); i += chunkSize {
+	for i = 0; i < int64(uploadLimit); i += chunkSize {
 		writtenBytes, err = io.CopyN(buf, file, chunkSize)
 		totalWritten += writtenBytes
 		if totalWritten > uploadLimit {
@@ -95,9 +93,6 @@ func newUploadedFile(req *http.Request, scriptdir, formID string, uploadLimit in
 			return nil, err
 		}
 	}
-
-	// trunkate the buffer to the uploaded size
-	buf.Truncate(int(totalWritten))
 
 	// all ok
 	return &UploadedFile{req, scriptdir, handler.Header, handler.Filename, buf}, nil
