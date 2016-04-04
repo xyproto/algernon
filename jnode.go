@@ -296,13 +296,13 @@ func jnodeGETFromURL(L *lua.LState) int {
 		return 0 // number of results
 	}
 
-	new_jnode, err := jpath.New(bodyData)
+	newJnode, err := jpath.New(bodyData)
 	if err != nil {
 		log.Error(err)
 		return 0 // number of results
 	}
 
-	*jnode = *new_jnode
+	*jnode = *newJnode
 
 	L.Push(lua.LString(resp.Status))
 	return 1 // number of results
