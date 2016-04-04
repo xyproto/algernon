@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"sync"
@@ -10,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 )
+
+const forcedShutdownTimeout = 1 * time.Second
 
 // Configuration for serving HTTP, HTTPS and/or HTTP/2
 type algernonServerConfig struct {
@@ -38,39 +41,45 @@ func atShutdown(shutdownFunction func()) {
 	shutdownFunctions = append(shutdownFunctions, shutdownFunction)
 }
 
-// Run the shutdown functions
-func runShutdown() {
-	mut.Lock()
-	defer mut.Unlock()
+// Generate a function that will run the postponed shutdown functions
+// Note that gracefulServer can be nil. It's only used for finding out if the
+// server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
+func generateShutdownFunction(gracefulServer *graceful.Server) func() {
+	return func() {
+		mut.Lock()
+		defer mut.Unlock()
 
-	if completed {
-		// The shutdown functions have already been called
-		return
+		if completed {
+			// The shutdown functions have already been called
+			return
+		}
+
+		if verboseMode {
+			log.Info("Initating shutdown")
+		}
+
+		// Call the shutdown functions in chronological order (FIFO)
+		for _, shutdownFunction := range shutdownFunctions {
+			shutdownFunction()
+		}
+
+		completed = true
+
+		if verboseMode {
+			log.Info("Shutdown complete")
+		}
+
+		// Forced shutdown
+		if gracefulServer != nil {
+			if gracefulServer.Interrupted {
+				gracefulServer.Stop(forcedShutdownTimeout)
+				fatalExit(errors.New("Killed"))
+			}
+		}
+
+		// One final flush
+		os.Stdout.Sync()
 	}
-
-	if verboseMode {
-		log.Info("Initating shutdown")
-	}
-
-	// Call the shutdown functions in chronological order (FIFO)
-	for _, shutdownFunction := range shutdownFunctions {
-		shutdownFunction()
-	}
-
-	// Call the shutdown functions in reverse chronological order (LIFO)
-	//for i := len(shutdownFunctions) - 1; i >= 0; i-- {
-	//	shutdownFunctions[i]()
-	//}
-
-	completed = true
-
-	// TODO: Figure out why this sometimes does not happen, while the above lines do happen
-	if verboseMode {
-		log.Info("Shutdown complete")
-	}
-
-	// One final flush
-	os.Stdout.Sync()
 }
 
 // Create a new graceful server configuration
@@ -96,7 +105,7 @@ func newGracefulServer(mux *http.ServeMux, http2support bool, addr string, shutd
 		Timeout: shutdownTimeout,
 	}
 	// Handle ctrl-c
-	gracefulServer.ShutdownInitiated = runShutdown
+	gracefulServer.ShutdownInitiated = generateShutdownFunction(gracefulServer) // for investigating gracefulServer.Interrupted
 	return gracefulServer
 }
 

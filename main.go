@@ -308,6 +308,8 @@ func main() {
 		go REPL(perm, luapool, cache, ready, done)
 	}
 
+	shutdownTimeout := 10 * time.Second
+
 	conf := &algernonServerConfig{
 		productionMode:      productionMode,
 		serverHost:          serverHost,
@@ -316,12 +318,12 @@ func main() {
 		serverKey:           serverKey,
 		serveJustHTTP:       serveJustHTTP,
 		serveJustHTTP2:      serveJustHTTP2,
-		shutdownTimeout:     10 * time.Second,
+		shutdownTimeout:     shutdownTimeout,
 		internalLogFilename: internalLogFilename,
 	}
 
 	// Run the shutdown functions if graceful does not
-	defer runShutdown()
+	defer generateShutdownFunction(nil)()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS
 	if err := serve(conf, mux, done, ready); err != nil {
