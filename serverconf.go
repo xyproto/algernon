@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	bolt "github.com/xyproto/permissionbolt"
-	"github.com/xyproto/permissions2"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
@@ -167,7 +166,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 				// Non-fatal error
 				log.Error("Permission denied handler failed:", err)
 				// Use the default permission handler from now on if the lua function fails
-				perm.SetDenyFunction(permissions.PermissionDenied)
+				perm.SetDenyFunction(redis.PermissionDenied)
 				perm.DenyFunction()(w, req)
 			}
 		})
@@ -320,8 +319,13 @@ func mustAquirePermissions() pinterface.IPermissions {
 				}
 			}
 		} else {
-			perm = redis.NewWithRedisConf(redisDBindex, redisAddr)
-			dbName = "Redis"
+			var err error
+			perm, err = redis.NewWithRedisConf2(redisDBindex, redisAddr)
+			if err != nil {
+				log.Warnf("Could not use Redis as database backend: %s", err)
+			} else {
+				dbName = "Redis"
+			}
 		}
 	}
 	if dbName == "" && boltFilename == "" {
