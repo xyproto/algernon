@@ -29,10 +29,11 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] RethinkDB support
+- [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
 - [ ] Support SASS and HAML.
 - [ ] PostgreSQL HSTORE support
-- [ ] RethinkDB support
 - [ ] Port Pastecat to Algernon (https://github.com/mvdan/pastecat)
 - [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
 - [ ] Add config Function for adding a directory listing title to a certain path regex
