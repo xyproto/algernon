@@ -52,7 +52,7 @@ func map2table(L *lua.LState, m map[string]string) *lua.LTable {
 // Convert a Lua table to one of the following types, depending on the content:
 // map[string]string, map[string]int, map[int]string, map[int]int
 // If no suitable keys and values are found, a nil interface is returned.
-// If several different types are found, multiple is set to true.
+// If several different types are found, the returned bool is true.
 func table2map(luaTable *lua.LTable) (interface{}, bool) {
 
 	mapSS, mapSI, mapIS, mapII := table2maps(luaTable)
