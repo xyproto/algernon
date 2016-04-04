@@ -50,3 +50,6 @@ algernon.debug
 
 # Profiling
 *.prof
+
+# Testing
+test.json
