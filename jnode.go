@@ -308,12 +308,6 @@ func jnodeGETFromURL(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// String representation
-//func jnodeToString(L *lua.LState) int {
-//	L.Push(lua.LString("JSON node"))
-//	return 1 // number of results
-//}
-
 // Create a new JSON node. JSON data as the first argument is optional.
 // Logs an error if the given JSON can't be parsed.
 // Always returns a JSON Node.
