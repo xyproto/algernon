@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/bradfitz/http2"
-	log "github.com/sirupsen/logrus"
-	"github.com/tylerb/graceful"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/bradfitz/http2"
+	log "github.com/sirupsen/logrus"
+	"github.com/tylerb/graceful"
 )
 
 // Configuration for serving HTTP, HTTPS and/or HTTP/2
@@ -124,7 +125,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	switch {
 	case conf.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		log.Info("Serving HTTPS + HTTP/2 on " + conf.serverHost + ":443")
+		log.Info("Serving HTTP/2 on " + conf.serverHost + ":443")
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
@@ -143,7 +144,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			}
 		}()
 	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 withoutHTTPS
-		log.Info("Serving HTTP/2 on " + conf.serverAddr)
+		log.Info("Serving HTTP/2 without HTTPS on " + conf.serverAddr)
 		go func() {
 			// Listen for HTTP/2 requests
 			HTTP2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
@@ -153,7 +154,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			}
 		}()
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
-		log.Info("Serving HTTPS + HTTP/2 on " + conf.serverAddr)
+		log.Info("Serving HTTP/2 on " + conf.serverAddr)
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
 		// Start serving. Shut down gracefully at exit.
