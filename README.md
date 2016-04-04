@@ -342,7 +342,13 @@ Tips:
 JFile(filename) -> userdata
 
 // Takes a JSON path. Returns a string value, or an empty string.
-jfile:get(string) -> string
+jfile:getstring(string) -> string
+
+// Takes a JSON path. Returns a JNode or nil.
+jfile:getnode(string) -> userdata
+
+// Takes a JSON path. Returns a string value, or an empty string.
+jfile:getstring(string) -> string
 
 // Takes a JSON path (optional) and JSON data to be added to the list.
 // The JSON path must point to a list, if given, unless the JSON file is empty.
