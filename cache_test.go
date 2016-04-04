@@ -189,6 +189,10 @@ func TestRandomStoreGet(t *testing.T) {
 			data := []byte(cookie.RandomString(rand.Intn(cacheSize + 1)))
 			_, err := cache.storeData(filename, data)
 			if err != nil {
+				if err == ErrAlreadyStored {
+					// If that filename is already stored, just continue
+					continue
+				}
 				t.Fatal(err)
 			}
 			datablock2, err := cache.fetchAndCache(filename)
