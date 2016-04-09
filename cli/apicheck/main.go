@@ -50,5 +50,5 @@ func main() {
 	New("permissions", permissions.Version, 2.2).Status()
 	New("simplemaria", simplemaria.Version, 2.0).Status()
 	New("permissionsql", permissionsql.Version, 2.0).Status()
-	New("pinterface", pinterface.Version, 2.0).Status()
+	New("pinterface", pinterface.Version, 3.0).Status()
 }
