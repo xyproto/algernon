@@ -29,6 +29,8 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Create a site generator for Algernon.
+      Draw inspiration from http://nanoc.ws/doc/tutorial/
 - [ ] RethinkDB support
 - [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
