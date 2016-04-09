@@ -744,6 +744,9 @@ SetPasswordAlgo(string)
 // Takes a username and password (username can be used for salting sha256)
 HashPassword(string, string) -> string
 
+// Change the password for a user, given a username and a new password
+SetPassword(string, string)
+
 // Check if a given username and password is correct
 // Takes a username and password
 CorrectPassword(string, string) -> bool

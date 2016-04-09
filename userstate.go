@@ -275,6 +275,14 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		userstate.SetPasswordAlgo(algorithm)
 		return 0 // number of results
 	}))
+	// Change the password for a user
+	L.SetGlobal("SetPassword", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		password := L.ToString(2)
+		userstate.SetPassword(username, password)
+		return 0 // number of results
+	}))
+
 	// Hash the password, returns a string
 	// Takes a username and password (username can be used for salting)
 	L.SetGlobal("HashPassword", L.NewFunction(func(L *lua.LState) int {
