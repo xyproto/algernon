@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"time"
 )
 
 // TODO: Find a good external package for handling configuration and
@@ -22,6 +23,8 @@ const (
 	defaultPermissions        = 0660
 	defaultCacheSize          = MiB      // 1 MiB
 	defaultCacheMaxEntitySize = 64 * KiB // 64 KB
+
+	forcedShutdownTimeout = 1 * time.Second
 )
 
 var (

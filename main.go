@@ -56,11 +56,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Console output
-	if !quietMode {
-		fmt.Println(banner())
-	}
-
 	// CPU profiling
 	if profileCPU != "" {
 		f, err := os.Create(profileCPU)
@@ -88,11 +83,6 @@ func main() {
 			log.Info("Saving heap profile to ", profileMem)
 			pprof.WriteHeapProfile(f)
 		})
-	}
-
-	// Dividing line between the banner and output from any of the configuration scripts
-	if len(serverConfigurationFilenames) > 0 && !quietMode {
-		fmt.Println("--------------------------------------- - - · ·")
 	}
 
 	// Request handlers
@@ -163,6 +153,17 @@ func main() {
 	if singleFileMode {
 		debugMode = true
 		serveJustHTTP = true
+		autoIncPort = true
+	}
+
+	// Console output
+	if !quietMode && !singleFileMode {
+		fmt.Println(banner())
+	}
+
+	// Dividing line between the banner and output from any of the configuration scripts
+	if len(serverConfigurationFilenames) > 0 && !quietMode {
+		fmt.Println("--------------------------------------- - - · ·")
 	}
 
 	// Connect to a database and retrieve a Permissions struct

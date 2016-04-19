@@ -12,8 +12,6 @@ import (
 	"github.com/tylerb/graceful"
 )
 
-const forcedShutdownTimeout = 1 * time.Second
-
 // Configuration for serving HTTP, HTTPS and/or HTTP/2
 type algernonServerConfig struct {
 	productionMode      bool
