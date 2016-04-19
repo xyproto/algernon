@@ -240,10 +240,10 @@ warn(...)
 // Log the given strings as an error. Takes a variable number of strings.
 err(...)
 
-// Return the number of nanoseconds from 1970 ("Unix time") [after version 0.87]
+// Return the number of nanoseconds from 1970 ("Unix time")
 unixnano() -> number
 
-// Convert Markdown to HTML [after version 0.87]
+// Convert Markdown to HTML
 markdown(string) -> string
 
 // Return the directory where the REPL or script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
@@ -291,7 +291,7 @@ error(number[, string])
 // Serve a file that exists in the same directory as the script.
 serve(string)
 
-// Return the rendered contents of a file that exists in the same directory as the script. [after version 0.87]
+// Return the rendered contents of a file that exists in the same directory as the script.
 render(string)
 
 // Return a table with keys and values as given in a posted form, or as given in the URL.
@@ -882,6 +882,6 @@ Requirements
 General information
 -------------------
 
-* Version: 0.87
+* Version: 0.88
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
