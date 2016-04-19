@@ -153,7 +153,6 @@ func main() {
 	if singleFileMode {
 		debugMode = true
 		serveJustHTTP = true
-		autoIncPort = true
 	}
 
 	// Console output
