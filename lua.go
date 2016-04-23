@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -9,7 +10,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
+	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
+)
+
+var (
+	errToMap = errors.New("Could not represent Lua structure table as a map")
 )
 
 // Retrieve all the arguments given to a lua function
@@ -183,6 +189,54 @@ func table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 	})
 
 	return everything
+}
+
+// Convert a Lua table to a map by using gluamapper.
+// If the map really is an array (all the keys are indices), return true.
+func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
+	var (
+		m         = make(map[interface{}]interface{})
+		opt       = gluamapper.Option{}
+		indices   []uint64
+		i, length uint64
+	)
+	// Catch a problem that may occur when converting the map value with gluamapper.ToGoValue
+	defer func() {
+		if r := recover(); r != nil {
+			retmap = m
+			err = errToMap // Could not represent Lua structure table as a map
+			return
+		}
+	}()
+	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
+		if i, isNum := tkey.(lua.LNumber); isNum {
+			indices = append(indices, uint64(i))
+		}
+		// If tkey or tvalue is an LTable, give up
+		m[gluamapper.ToGoValue(tkey, opt)] = gluamapper.ToGoValue(tvalue, opt)
+		length++
+	})
+	// Report back as a map, not an array, if there are no elements
+	if length == 0 {
+		return m, false, nil
+	}
+	// Loop through every index that must be present in an array
+	isAnArray := true
+	for i = 1; i <= length; i++ {
+		// The map must have this index in order to be an array
+		hasIt := false
+		for _, val := range indices {
+			if val == i {
+				hasIt = true
+				break
+			}
+		}
+		if !hasIt {
+			isAnArray = false
+			break
+		}
+	}
+	return m, isAnArray, nil
 }
 
 // Return a *lua.LState object that contains several exposed functions
