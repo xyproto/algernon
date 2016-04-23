@@ -323,9 +323,9 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 			// String variables
 			okfuncs[k] = s
 		} else {
-			if debugMode && verboseMode {
-				log.Info(fmt.Sprintf("Not exposing %s (type %T) from Lua script.", k, k))
-			}
+			// Exposing variable as it is.
+			// TODO: Add more tests for this codepath
+			okfuncs[k] = v
 		}
 	}
 
