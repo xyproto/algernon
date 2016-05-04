@@ -20,6 +20,8 @@ Priority
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
+- [ ] A parameter for the single file mode instead of checking for ".md"
+- [ ] A parameter for only running the Lua repl
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
