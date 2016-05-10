@@ -31,6 +31,8 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Specify if rate limiting is per user/ip/handler
+- [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
 - [ ] Create a site generator for Algernon.
       Draw inspiration from http://nanoc.ws/doc/tutorial/
@@ -44,7 +46,6 @@ Various
 - [ ] Add config Function for adding a directory listing title to a certain path regex
       (and/or a title.txt or common.md file).
 - [ ] An option for using brotly compression instead of gzip
-- [ ] Integrate fasthttp: https://github.com/valyala/fasthttp
 - [ ] Add a lua function for presenting an executable as a web application,
       like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
