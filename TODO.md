@@ -2,6 +2,9 @@
 
 Priority
 --------
+- [ ] Fix problem when resizing in screen or tmux
+- [ ] Fix occational problem with extra characters when serving over HTTPS
+- [ ] Add flag for not using a database
 - [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
 - [ ] Video tutorials and screencasts.
 - [ ] Make it possible to stream music or video without the connection timing
@@ -159,6 +162,7 @@ Documentation and samples
 - [ ] Document possible Markdown keywords somewhere (in a separate document).
 - [ ] Write a Lua library and use it in several web handlers.
 - [ ] Make an application where .alg files can be uploaded and then hosted.
+- [ ] Add a sample for bricklayer https://github.com/ademilter/bricklayer
 
 Lua
 ---
@@ -257,3 +261,4 @@ Maybe
 - [ ] Add a Lua function for removing all cache entries without a hit.
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
 - [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place)
+- [ ] Rewrite in C++14 and rename the project to "FnuFnu"
