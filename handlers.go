@@ -75,6 +75,8 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			dataBlock.ToClient(w, req)
 		}
 
+		return
+
 	// Markdown pages are handled differently
 	case ".md", ".markdown":
 
