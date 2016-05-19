@@ -111,6 +111,10 @@ var (
 
 	// Look for files in the directory with the same name as the requested hostname
 	serverAddDomain bool
+
+	// Don't use a database backend. There will be loss of functionality.
+	// TODO: Add a flag for this.
+	useNoDatabase bool
 )
 
 func usage() {

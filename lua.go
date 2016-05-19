@@ -242,15 +242,9 @@ func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{
 // Return a *lua.LState object that contains several exposed functions
 func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache) {
 
-	// Retrieve the userstate
-	userstate := perm.UserState()
-
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
 	exportBasicWeb(w, req, L, filename, flushFunc)
-
-	// Functions for serving files in the same directory as a script
-	exportServeFile(w, req, L, filename, perm, luapool, cache)
 
 	// Make other basic functions available
 	exportBasicSystemFunctions(L)
@@ -258,22 +252,33 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// Functions for rendering markdown or amber
 	exportRenderFunctions(w, req, L)
 
-	// Make the functions related to userstate available to the Lua script
-	exportUserstate(w, req, L, userstate)
+	// If there is a database backend
+	if perm != nil {
 
-	// Simpleredis data structures
-	exportList(L, userstate)
-	exportSet(L, userstate)
-	exportHash(L, userstate)
-	exportKeyValue(L, userstate)
+		// Retrieve the userstate
+		userstate := perm.UserState()
+
+		// Functions for serving files in the same directory as a script
+		exportServeFile(w, req, L, filename, perm, luapool, cache)
+
+		// Make the functions related to userstate available to the Lua script
+		exportUserstate(w, req, L, userstate)
+
+		// Simpleredis data structures
+		exportList(L, userstate)
+		exportSet(L, userstate)
+		exportHash(L, userstate)
+		exportKeyValue(L, userstate)
+
+		// For saving and loading Lua functions
+		exportCodeLibrary(L, userstate)
+
+	}
 
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, filepath.Dir(filename))
 	exportJNode(L)
-
-	// For saving and loading Lua functions
-	exportCodeLibrary(L, userstate)
 
 	// Extras
 	exportExtras(L)
@@ -377,33 +382,38 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
+// perm can be nil, but then several Lua functions will not be exposed
 func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, singleFileMode bool) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
 
-	// Retrieve the userstate
-	userstate := perm.UserState()
-
-	// Server configuration functions
-	exportServerConfigFunctions(L, perm, filename, luapool)
-
-	// Other basic system functions, like log()
+	// Basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
-	// Simpleredis data structures (could be used for storing server stats)
-	exportList(L, userstate)
-	exportSet(L, userstate)
-	exportHash(L, userstate)
-	exportKeyValue(L, userstate)
+	// If there is a database backend
+	if perm != nil {
+
+		// Retrieve the userstate
+		userstate := perm.UserState()
+
+		// Server configuration functions
+		exportServerConfigFunctions(L, perm, filename, luapool)
+
+		// Simpleredis data structures (could be used for storing server stats)
+		exportList(L, userstate)
+		exportSet(L, userstate)
+		exportHash(L, userstate)
+		exportKeyValue(L, userstate)
+
+		// For saving and loading Lua functions
+		exportCodeLibrary(L, userstate)
+	}
 
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, filepath.Dir(filename))
 	exportJNode(L)
-
-	// For saving and loading Lua functions
-	exportCodeLibrary(L, userstate)
 
 	// Extras
 	exportExtras(L)

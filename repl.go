@@ -606,9 +606,6 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 		historyFilename = filepath.Join(historydir, ".algernon_history")
 	}
 
-	// Retrieve the userstate
-	userstate := perm.UserState()
-
 	// Retrieve a Lua state
 	L := luapool.Get()
 	// Don't re-use the Lua state
@@ -620,19 +617,26 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	// Other basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
-	// Simpleredis data structures
-	exportList(L, userstate)
-	exportSet(L, userstate)
-	exportHash(L, userstate)
-	exportKeyValue(L, userstate)
+	// If there is a database backend
+	if perm != nil {
+
+		// Retrieve the userstate
+		userstate := perm.UserState()
+
+		// Simpleredis data structures
+		exportList(L, userstate)
+		exportSet(L, userstate)
+		exportHash(L, userstate)
+		exportKeyValue(L, userstate)
+
+		// For saving and loading Lua functions
+		exportCodeLibrary(L, userstate)
+	}
 
 	// For handling JSON data
 	exportJSONFunctions(L)
 	exportJFile(L, serverDir)
 	exportJNode(L)
-
-	// For saving and loading Lua functions
-	exportCodeLibrary(L, userstate)
 
 	// Extras
 	exportExtras(L)

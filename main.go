@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/xyproto/pinterface"
 	"github.com/xyproto/unzip"
 	"github.com/yuin/gopher-lua"
 )
@@ -167,8 +168,19 @@ func main() {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
-	// Connect to a database and retrieve a Permissions struct
-	perm := mustAquirePermissions()
+	// Disable the database backend if the BoltDB filename is /dev/null
+	if boltFilename == "/dev/null" {
+		useNoDatabase = true
+	}
+
+	var perm pinterface.IPermissions // nil by default
+	if !useNoDatabase {
+		// Connect to a database and retrieve a Permissions struct
+		perm, err = aquirePermissions()
+		if err != nil {
+			log.Fatalln("Could not find a usable database backend.")
+		}
+	}
 
 	// Lua LState pool
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
@@ -221,7 +233,11 @@ func main() {
 			}
 			if err := runConfiguration(filename, perm, luapool, cache, mux, false); err != nil {
 				log.Error("Could not use configuration script: " + filename)
-				fatalExit(err)
+				if perm != nil {
+					fatalExit(err)
+				} else {
+					log.Warn("Ignoring script error since database backend is disabled.")
+				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
 		}

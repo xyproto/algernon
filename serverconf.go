@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -121,6 +122,7 @@ func serverInfo() string {
 }
 
 // Make functions related to server configuration and permissions available
+// Can not handle perm == nil
 func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, filename string, luapool *lStatePool) {
 
 	// Set a default host and port. Maybe useful for alg applications.
@@ -240,7 +242,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 // Use one of the databases for the permission middleware,
 // assign a name to dbName (used for the status output) and
 // return a Permissions struct.
-func mustAquirePermissions() pinterface.IPermissions {
+func aquirePermissions() (pinterface.IPermissions, error) {
 	var (
 		err  error
 		perm pinterface.IPermissions
@@ -361,8 +363,8 @@ func mustAquirePermissions() pinterface.IPermissions {
 	}
 	if dbName == "" {
 		// This may typically happen if Algernon is already running
-		log.Fatalln("Could not find a usable database backend.")
+		return nil, errors.New("Could not find a usable database backend")
 	}
 
-	return perm
+	return perm, nil
 }

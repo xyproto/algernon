@@ -425,11 +425,15 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
-		if perm.Rejected(w, req) {
-			// Get and call the Permission Denied function
-			perm.DenyFunction()(w, req)
-			// Reject the request by returning
-			return
+		// Rejecting requests is handled by the permission system, which
+		// in turn requires a database backend.
+		if perm != nil {
+			if perm.Rejected(w, req) {
+				// Get and call the Permission Denied function
+				perm.DenyFunction()(w, req)
+				// Reject the request by returning
+				return
+			}
 		}
 
 		// Local to this function
