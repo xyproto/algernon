@@ -2,8 +2,6 @@
 
 Priority
 --------
-- [ ] Fix problem when resizing in screen or tmux
-- [ ] Fix occational problem with extra characters when serving over HTTPS
 - [ ] Add flag for not using a database
 - [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
 - [ ] Video tutorials and screencasts.
