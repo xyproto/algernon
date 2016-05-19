@@ -9,10 +9,12 @@ import (
 	internallog "log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/xyproto/unzip"
@@ -305,7 +307,11 @@ func main() {
 
 	// The Lua REPL
 	if !serverMode {
+		// If the REPL uses readline, the SIGWINCH signal is handled
 		go REPL(perm, luapool, cache, ready, done)
+	} else {
+		// Ignore SIGWINCH if we are not going to use a REPL
+		signal.Ignore(syscall.SIGWINCH)
 	}
 
 	shutdownTimeout := 10 * time.Second
