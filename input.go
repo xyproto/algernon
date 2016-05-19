@@ -14,3 +14,5 @@ func getInput(prompt string) (string, error) {
 func saveHistory(historyFilename string) error { return nil }
 func loadHistory(historyFilename string) error { return nil }
 func addHistory(line string)                   {}
+
+// TODO: If this file is used, SIGWINCH should probably be ignored too
