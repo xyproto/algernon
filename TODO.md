@@ -32,6 +32,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Flag for listing directory pages with dates and sizes too
 - [ ] Specify if rate limiting is per user/ip/handler
 - [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
