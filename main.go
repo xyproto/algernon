@@ -159,7 +159,7 @@ func main() {
 	}
 
 	// Console output
-	if !quietMode && !singleFileMode {
+	if !quietMode && !singleFileMode && !simpleMode {
 		fmt.Println(banner())
 	}
 
@@ -327,7 +327,9 @@ func main() {
 		go REPL(perm, luapool, cache, ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL
-		signal.Ignore(syscall.SIGWINCH)
+		if runtime.GOOS != "windows" {
+			signal.Ignore(syscall.SIGWINCH)
+		}
 	}
 
 	shutdownTimeout := 10 * time.Second
