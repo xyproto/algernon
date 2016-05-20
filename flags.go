@@ -115,6 +115,9 @@ var (
 	// Don't use a database backend. There will be loss of functionality.
 	// TODO: Add a flag for this.
 	useNoDatabase bool
+
+	// For serving a directory with files over regular HTTP
+	simpleMode bool
 )
 
 func usage() {
@@ -179,6 +182,9 @@ Available flags:
   --servername                 Custom HTTP header value for the Server field.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
+  -x, --simple                 Serve as regular HTTP, enable server mode and
+                               disable all features that requires a database
+							   (same as -boltdb=/dev/null).
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
 `)
@@ -190,7 +196,7 @@ func handleFlags(serverTempDir string) string {
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
-		showVersionShort, quietModeShort, cacheFileStatShort bool
+		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -249,6 +255,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&profileMem, "memprofile", "", "Write memory profile to file")
 	flag.BoolVar(&cacheFileStat, "statcache", false, "Cache os.Stat")
 	flag.BoolVar(&serverAddDomain, "domain", false, "Look for files in the directory named the same as the hostname")
+	flag.BoolVar(&simpleMode, "simple", false, "Serve a directory of files over HTTP")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -261,6 +268,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&showVersionShort, "v", false, "Version")
 	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
 	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
+	flag.BoolVar(&simpleModeShort, "x", false, "Simple mode")
 
 	flag.Parse()
 
@@ -275,6 +283,7 @@ func handleFlags(serverTempDir string) string {
 	showVersion = showVersion || showVersionShort
 	quietMode = quietMode || quietModeShort
 	cacheFileStat = cacheFileStat || cacheFileStatShort
+	simpleMode = simpleMode || simpleModeShort
 
 	// Disable verbose mode if quiet mode has been enabled
 	if quietMode {
@@ -317,6 +326,12 @@ func handleFlags(serverTempDir string) string {
 			limitRequests = 700 // Increase the rate limit considerably
 		}
 		cacheMode = cacheModeDevelopment
+	} else if simpleMode {
+		useBolt = true
+		boltFilename = "/dev/null"
+		serveJustHTTP = true
+		serverMode = true
+		cacheMode = cacheModeOff
 	}
 
 	// If a watch directory is given, enable the auto refresh feature
