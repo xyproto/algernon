@@ -236,7 +236,7 @@ func main() {
 				if perm != nil {
 					fatalExit(err)
 				} else {
-					log.Warn("Ignoring script error since database backend is disabled.")
+					log.Warn("Ignoring script error since the database backend is disabled.")
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)

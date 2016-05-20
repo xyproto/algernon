@@ -196,8 +196,8 @@ Available flags:
   Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
     algernon -c --domain --server --cachesize 67108864 --prod /srv
 
-  Serve the files in the current directory over HTTP, no cache, no database:
-    algernon -x . :9000
+  Serve the current directory over HTTP, no cache, no database, port 3000:
+    algernon -x
 `)
 }
 
