@@ -875,7 +875,7 @@ Releases
 Requirements
 ------------
 
-* go >= 1.4
+* go >= 1.5
 * readline, for UNIX-like systems
 
 
