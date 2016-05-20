@@ -128,7 +128,7 @@ func usage() {
 	fmt.Println(`
 
 Syntax:
-  algernon [flags] [file or directory to serve]
+  algernon [flags] [file or directory to serve] [host][:port]
 
 Available flags:
   -h, --help                   This help text
@@ -141,7 +141,7 @@ Available flags:
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
                                Enables server mode. Sets cache to "production".
-  -a, --autorefresh            Enable the event server and auto-refresh feature.
+  -a, --autorefresh            Enable event server and auto-refresh feature.
                                Sets cache mode to "images".
   --cache=MODE                 Sets a cache mode. The default is "on".
                                "on"      - Cache everything.
@@ -156,7 +156,7 @@ Available flags:
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
   --key=FILENAME               TLS key, if using HTTPS.
-  -d, --debug                  Enable debug mode (display errors in the browser).
+  -d, --debug                  Enable debug mode (show errors in the browser).
   -b, --bolt                   Use "` + defaultBoltFilename + `"
                                as the Bolt database.
   --boltdb=FILENAME            Use a specific file as the Bolt database
@@ -165,13 +165,13 @@ Available flags:
   --dbindex=INDEX              Redis database index (0 is default).
   --conf=FILENAME              Lua script with additional configuration.
   --log=FILENAME               Log to a file instead of to the console.
-  --internal=FILENAME          Internal log file (verbose when HTTP/2 is enabled)
-  -t, --httponly               Serve regular HTTP
-  --http2only                  Serve HTTP/2, without HTTPS
-  --maria=DSN                  Use the given MariaDB or MySQL host
-  --mariadb=NAME               Use the given MariaDB or MySQL database
-  --verbose                    Slightly more verbose logging
-  --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes)
+  --internal=FILENAME          Internal log file (can be a bit verbose).
+  -t, --httponly               Serve regular HTTP.
+  --http2only                  Serve HTTP/2, without HTTPS.
+  --maria=DSN                  Use the given MariaDB or MySQL host.
+  --mariadb=NAME               Use the given MariaDB or MySQL database.
+  --verbose                    Slightly more verbose logging.
+  --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + defaultEventRefresh + `").
   --limit=N                    Limit clients to N requests per second
@@ -184,9 +184,20 @@ Available flags:
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database
-							   (same as -boltdb=/dev/null).
+                               (same as -boltdb=/dev/null).
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
+
+  Examples
+
+  For auto-refreshing a webpage while developing:
+    algernon --dev --httponly --debug --autorefresh --bolt --server . :4000
+
+  Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
+    algernon -c --domain --server --cachesize 67108864 --prod /srv
+
+  Serve the files in the current directory over HTTP, no cache, no database:
+    algernon -x . :9000
 `)
 }
 
