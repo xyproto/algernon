@@ -65,8 +65,11 @@ func serverInfo() string {
 	if !productionMode {
 		buf.WriteString("Server address:\t\t" + serverAddr + "\n")
 	} // else port 80 and 443
-	buf.WriteString("Database:\t\t" + dbName + "\n")
-
+	if dbName == "" {
+		buf.WriteString("Database:\t\tDisabled\n")
+	} else {
+		buf.WriteString("Database:\t\t" + dbName + "\n")
+	}
 	if luaServerFilename != "" {
 		buf.WriteString("Server filename:\t" + luaServerFilename + "\n")
 	}
