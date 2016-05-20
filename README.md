@@ -882,6 +882,6 @@ Requirements
 General information
 -------------------
 
-* Version: 0.9
+* Version: 0.91
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
