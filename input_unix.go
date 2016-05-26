@@ -4,6 +4,8 @@ package main
 
 import (
 	"github.com/bobappleyard/readline"
+	"os/signal"
+	"syscall"
 )
 
 func getInput(prompt string) (string, error) {
@@ -20,4 +22,8 @@ func loadHistory(historyFilename string) error {
 
 func addHistory(line string) {
 	readline.AddHistory(line)
+}
+
+func ignoreTerminalResizeSignal() {
+	signal.Ignore(syscall.SIGWINCH)
 }

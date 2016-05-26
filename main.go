@@ -9,12 +9,10 @@ import (
 	internallog "log"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/xyproto/pinterface"
@@ -327,9 +325,7 @@ func main() {
 		go REPL(perm, luapool, cache, ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL
-		if runtime.GOOS != "windows" {
-			signal.Ignore(syscall.SIGWINCH)
-		}
+		ignoreTerminalResizeSignal()
 	}
 
 	shutdownTimeout := 10 * time.Second
