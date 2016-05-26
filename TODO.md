@@ -33,6 +33,8 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Describe how to set up a system a bit similar to a wiki,
+      but more lightweight, using git + git hooks + algernon.
 - [ ] Add a flag for listing and selecting styles for Markdown and directory listings.
 - [ ] Specify if rate limiting is per user/ip/handler
 - [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
