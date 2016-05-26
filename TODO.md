@@ -2,7 +2,8 @@
 
 Priority
 --------
-- [ ] Add flag for not using a database
+- [ ] Better syntax highlighting when rendering Markdown
+- [ ] List files and directories with dates and sizes too, by default.
 - [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
 - [ ] Video tutorials and screencasts.
 - [ ] Make it possible to stream music or video without the connection timing
@@ -32,7 +33,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
-- [ ] Flag for listing directory pages with dates and sizes too
+- [ ] Add a flag for listing and selecting styles for Markdown and directory listings.
 - [ ] Specify if rate limiting is per user/ip/handler
 - [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
