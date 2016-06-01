@@ -23,8 +23,9 @@ const (
 	// Default stylesheet filename (GCSS)
 	defaultStyleFilename = "style.gcss"
 
-	// Default syntax highlighting theme for Markdown (See https://highlightjs.org/ for more themes).
-	defaultTheme = "mono-blue"
+	// Default syntax highlighting theme for Markdown
+	// See https://rawgit.com/google/code-prettify/master/styles/index.html for more themes
+	defaultTheme = "sunburst"
 
 	// The default font
 	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
@@ -211,6 +212,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 
 	// Add syntax highlighting
 	head.WriteString(highlightHTML(given["code_theme"]))
+	htmlbody = highlightHTMLcode(htmlbody)
 
 	// Add meta tags, if metadata information has been declared
 	for _, keyword := range metaKeywords {

@@ -13,15 +13,20 @@ const (
 	preHighlight  = "<font style='color: red !important'>"
 	postHighlight = "</font>"
 
-	// Syntax highlighting theme for errors (See https://highlightjs.org/ for more themes).
-	errorTheme = "github"
+	// Syntax highlighting theme for errors
+	//errorTheme = "default"
 )
 
 // HTML to be added for enabling highlighting.
 func highlightHTML(theme string) string {
-	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/styles/` + theme + `.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>`
+	return `<script src="//cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=` + theme + `"></script>`
+}
+
+func highlightHTMLcode(htmlbody string) string {
+	// Change <pre><code to <pre class="prettyprint"><code
+	htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\"><code", -1)
+	htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
+	return htmlbody
 }
 
 // Write the contents of a ResponseRecorder to a ResponseWriter
@@ -162,12 +167,11 @@ func prettyError(w http.ResponseWriter, req *http.Request, filename string, file
 	    white-space: pre-wrap;
 	  }
 	</style>
-	` + highlightHTML(errorTheme) + `
   </head>
   <body>
     <div style="font-size: 3em; font-weight: bold;">` + title + `</div>
     Contents of ` + filename + `:
-    <div>
+	<div>
 	  <pre><code class="` + langclass + `">` + code + `</code></pre>
 	</div>
     Error message:
