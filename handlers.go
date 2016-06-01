@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
