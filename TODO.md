@@ -179,12 +179,14 @@ Lua
 - [ ] Way to load parts of a page asynchronously (with gopher-lua channels?)
 - [ ] Way to use Lua libraries for adding ie. SQLite support.
 
+
 Performance
 -----------
 - [ ] Minify CSS, JS and HTML (enabled by default, can be disabled)
 - [ ] Find a reliable way of measuring speed and emulating users.
       gor? https://github.com/buger/gor
 - [ ] Cache compiled templates as well, not only the final result.
+
 
 Unusual features
 ----------------
@@ -195,6 +197,7 @@ Unusual features
       vertices in a polygon. Update: Someone else has made a format for this!
       https://github.com/cparnot/ASCIImage
 
+
 Serving several domains
 -----------------------
 - [ ] HTTP/2 + HTTPS + certificates per subdomain (a parameter for a
@@ -204,7 +207,7 @@ Serving several domains
 
 Maybe
 -----
-- [ ] Integrate C6: https://github.com/c9s/c6
+- [ ] Add support for both SASS and SCSS (Perhaps https://github.com/c9s/c6)
 - [ ] Add configurable log hooks for the systems logrus supports.
       See: https://github.com/Sirupsen/logrus
 - [ ] Use the path/filepath package for walking directories.
