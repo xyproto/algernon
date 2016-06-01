@@ -182,7 +182,15 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	time.Sleep(20 * time.Millisecond)
 
 	ready <- true // Send a "ready" message to the REPL
-	<-done        // Wait for a "done" message from the REPL (or just keep waiting)
+
+	// Open the URL, if specified
+	if openURLAfterServing {
+		// TODO: Better check for http vs https when selecting the URL to open
+		//       when both are being served.
+		openURL(conf.serverHost, conf.serverAddr, !conf.serveJustHTTP2)
+	}
+
+	<-done // Wait for a "done" message from the REPL (or just keep waiting)
 
 	return nil // Done serving
 }

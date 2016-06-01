@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Algernon
+GenericName=Web Server
+Comment=HTTP/2 web server with Lua and template support
+Exec=algernon
+Icon=algernon
+Terminal=false
+StartupNotify=false
+Categories=Application;
+MimeType=text/markdown;

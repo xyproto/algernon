@@ -118,6 +118,14 @@ var (
 
 	// For serving a directory with files over regular HTTP
 	simpleMode bool
+
+	// Open the URL after serving
+	openURLAfterServing bool
+	// Open the URL after serving, with a specific application
+	openExecutable string
+
+	// Quit after the first request?
+	quitAfterFirstRequest bool
 )
 
 func usage() {
@@ -180,11 +188,14 @@ Available flags:
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername                 Custom HTTP header value for the Server field.
+  -o, --open=[EXECUTABLE]      Open the served URL with xdg-open, or with the
+                               given executable.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database
                                (same as -boltdb=/dev/null).
+  -f, --first                  Quit after the first request.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
 
@@ -207,7 +218,7 @@ func handleFlags(serverTempDir string) string {
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
-		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort bool
+		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort, quitAfterFirstRequestShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -267,6 +278,8 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&cacheFileStat, "statcache", false, "Cache os.Stat")
 	flag.BoolVar(&serverAddDomain, "domain", false, "Look for files in the directory named the same as the hostname")
 	flag.BoolVar(&simpleMode, "simple", false, "Serve a directory of files over HTTP")
+	flag.StringVar(&openExecutable, "open", "", "Open URL after serving, with an application")
+	flag.BoolVar(&quitAfterFirstRequest, "first", false, "Quit after the first request")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -280,6 +293,8 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
 	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
 	flag.BoolVar(&simpleModeShort, "x", false, "Simple mode")
+	flag.BoolVar(&openURLAfterServing, "o", false, "Open URL after serving")
+	flag.BoolVar(&quitAfterFirstRequestShort, "f", false, "Quit after the first request")
 
 	flag.Parse()
 
@@ -295,6 +310,8 @@ func handleFlags(serverTempDir string) string {
 	quietMode = quietMode || quietModeShort
 	cacheFileStat = cacheFileStat || cacheFileStatShort
 	simpleMode = simpleMode || simpleModeShort
+	openURLAfterServing = openURLAfterServing || (openExecutable != "")
+	quitAfterFirstRequest = quitAfterFirstRequest || quitAfterFirstRequestShort
 
 	// Disable verbose mode if quiet mode has been enabled
 	if quietMode {
@@ -406,6 +423,11 @@ func handleFlags(serverTempDir string) string {
 		if err != nil {
 			redisDBindex = DBindex
 		}
+	}
+
+	// Use the default openExecutable if none is set
+	if openURLAfterServing && openExecutable == "" {
+		openExecutable = defaultOpenExecutable
 	}
 
 	// Add the serverConfScript to the list of configuration scripts to be read and executed

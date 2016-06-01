@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,6 +22,9 @@ const (
 
 	// Gzip content over this size
 	gzipThreshold = 4096
+
+	// Pretty soon
+	soonDuration = time.Second * 3
 )
 
 var (
@@ -41,6 +45,10 @@ func clientCanGzip(req *http.Request) bool {
 
 // When serving a file. The file must exist. Must be given a full filename.
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+
+	if quitAfterFirstRequest {
+		go quitSoon()
+	}
 
 	// Mimetypes
 	ext := strings.ToLower(filepath.Ext(filename))
@@ -308,6 +316,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 	// Serve the file
 	dataBlock.ToClient(w, req)
+
 }
 
 // For communicating information about the underlying software
@@ -403,4 +412,11 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
+}
+
+// Quit after first request
+func quitSoon() {
+	time.Sleep(soonDuration)
+	log.Info("Quit after first request")
+	fatalExit(nil)
 }

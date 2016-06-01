@@ -72,6 +72,10 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 // dirname is the specific directory that is to be served (should never be ".")
 func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
+	if quitAfterFirstRequest {
+		go quitSoon()
+	}
+
 	// If the URL does not end with a slash, redirect to an URL that does
 	if !strings.HasSuffix(req.URL.Path, "/") {
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
