@@ -368,6 +368,27 @@ func fatalExit(err error) {
 	log.Fatalln(err)
 }
 
+// Abrupt exit
+func abruptExit(msg string) {
+	// Log to file, if a log file is used
+	if serverLogFile != "" {
+		log.Info(msg)
+	}
+	// Then switch to stderr and log the message there as well
+	log.SetOutput(os.Stderr)
+	// Use the standard formatter
+	log.SetFormatter(&log.TextFormatter{})
+	// Log and exit
+	log.Info(msg)
+	os.Exit(0)
+}
+
+// Quit after a short duration
+func quitSoon(msg string, soon time.Duration) {
+	time.Sleep(soon)
+	abruptExit(msg)
+}
+
 // Insert doctype in HTML, if missing
 // Does not check if the given data is HTML. Assumes it to be HTML.
 func insertDoctype(htmldata []byte) []byte {

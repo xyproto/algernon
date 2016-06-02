@@ -73,7 +73,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
 	if quitAfterFirstRequest {
-		go quitSoon()
+		go quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
 	// If the URL does not end with a slash, redirect to an URL that does

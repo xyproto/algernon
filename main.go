@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	versionString = "Algernon 0.91"
+	versionString = "Algernon 0.92"
 	description   = "HTTP/2 Web Server"
 )
 
@@ -91,6 +91,25 @@ func main() {
 
 	// Read mime data from the system, if available
 	initializeMime()
+
+	// Log to a file as JSON, if a log file has been specified
+	if serverLogFile != "" {
+		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
+		if err != nil {
+			log.Error("Could not log to", serverLogFile)
+			fatalExit(err)
+		}
+		log.SetFormatter(&log.JSONFormatter{})
+		log.SetOutput(f)
+	} else if quietMode {
+		// If quiet mode is enabled and no log file has been specified, disable logging
+		log.SetOutput(ioutil.Discard)
+	}
+
+	if quietMode {
+		os.Stdout.Close()
+		os.Stderr.Close()
+	}
 
 	// Create a new FileStat struct, with optional caching (for speed).
 	// Clear the cache every 10 minutes.
@@ -200,25 +219,6 @@ func main() {
 		}
 		serverDir = filepath.Dir(serverDir)
 		singleFileMode = false
-	}
-
-	// Log to a file as JSON, if a log file has been specified
-	if serverLogFile != "" {
-		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
-		if err != nil {
-			log.Error("Could not log to", serverLogFile)
-			fatalExit(err)
-		}
-		log.SetFormatter(&log.JSONFormatter{})
-		log.SetOutput(f)
-	} else if quietMode {
-		// If quiet mode is enabled and no log file has been specified, disable logging
-		log.SetOutput(ioutil.Discard)
-	}
-
-	if quietMode {
-		os.Stdout.Close()
-		os.Stderr.Close()
 	}
 
 	// Read server configuration script, if present.

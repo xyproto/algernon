@@ -1,4 +1,4 @@
-// +build linux nacl !darwin !dragonfly !freebsd !netbsd !openbsd !solaris
+// +build linux nacl solaris
 
 package main
 

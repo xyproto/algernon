@@ -126,6 +126,9 @@ var (
 
 	// Quit after the first request?
 	quitAfterFirstRequest bool
+
+	// Markdown mode
+	markdownMode bool
 )
 
 func usage() {
@@ -187,15 +190,18 @@ Available flags:
   --nolimit                    Disable rate limiting.
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
-  --servername                 Custom HTTP header value for the Server field.
-  -o, --open=[EXECUTABLE]      Open the served URL with xdg-open, or with the
-                               given executable.
+  --servername=TEXT            Custom HTTP header value for the Server field.
+  -o, --open=EXECUTABLE        Open the served URL with ` + defaultOpenExecutable + `, or with the
+                               given application.
+  -z, --quit                   Quit after the first request has been served.
+  -m                           View a Markdown document in the browser.
+                               Quits after the file has been served once.
+							   Same as -q -o -z.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database
                                (same as -boltdb=/dev/null).
-  -f, --first                  Quit after the first request.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
 
@@ -279,7 +285,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&serverAddDomain, "domain", false, "Look for files in the directory named the same as the hostname")
 	flag.BoolVar(&simpleMode, "simple", false, "Serve a directory of files over HTTP")
 	flag.StringVar(&openExecutable, "open", "", "Open URL after serving, with an application")
-	flag.BoolVar(&quitAfterFirstRequest, "first", false, "Quit after the first request")
+	flag.BoolVar(&quitAfterFirstRequest, "quit", false, "Quit after the first request")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -294,7 +300,8 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
 	flag.BoolVar(&simpleModeShort, "x", false, "Simple mode")
 	flag.BoolVar(&openURLAfterServing, "o", false, "Open URL after serving")
-	flag.BoolVar(&quitAfterFirstRequestShort, "f", false, "Quit after the first request")
+	flag.BoolVar(&quitAfterFirstRequestShort, "z", false, "Quit after the first request")
+	flag.BoolVar(&markdownMode, "m", false, "Markdown mode")
 
 	flag.Parse()
 
@@ -312,6 +319,13 @@ func handleFlags(serverTempDir string) string {
 	simpleMode = simpleMode || simpleModeShort
 	openURLAfterServing = openURLAfterServing || (openExecutable != "")
 	quitAfterFirstRequest = quitAfterFirstRequest || quitAfterFirstRequestShort
+
+	// Serve a single Markdown file once, and open it in the browser
+	if markdownMode {
+		quietMode = true
+		openURLAfterServing = true
+		quitAfterFirstRequest = true
+	}
 
 	// Disable verbose mode if quiet mode has been enabled
 	if quietMode {

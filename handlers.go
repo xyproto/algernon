@@ -23,7 +23,7 @@ const (
 	gzipThreshold = 4096
 
 	// Pretty soon
-	soonDuration = time.Second * 3
+	defaultSoonDuration = time.Second * 3
 )
 
 var (
@@ -46,7 +46,7 @@ func clientCanGzip(req *http.Request) bool {
 func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
 
 	if quitAfterFirstRequest {
-		go quitSoon()
+		go quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
 	// Mimetypes
@@ -411,11 +411,4 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
-}
-
-// Quit after first request
-func quitSoon() {
-	time.Sleep(soonDuration)
-	log.Info("Quit after first request")
-	fatalExit(nil)
 }
