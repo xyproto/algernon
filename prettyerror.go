@@ -15,6 +15,8 @@ const (
 
 	// Syntax highlighting theme for errors
 	//errorTheme = "default"
+
+	hiBackgroundColor = "#23252b"
 )
 
 // HTML to be added for enabling highlighting.
@@ -24,7 +26,7 @@ func highlightHTML(theme string) string {
 
 func highlightHTMLcode(htmlbody string) string {
 	// Change <pre><code to <pre class="prettyprint"><code
-	htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\"><code", -1)
+	htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
 	htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
 	return htmlbody
 }
