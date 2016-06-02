@@ -16,7 +16,7 @@ const (
 	// Syntax highlighting theme for errors
 	//errorTheme = "default"
 
-	hiBackgroundColor = "#23252b"
+	hiBackgroundColor = "#202228"
 )
 
 // HTML to be added for enabling highlighting.
