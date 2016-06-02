@@ -16,7 +16,7 @@ const (
 
 	maxAttemptsAtIncreasingPortNumber = 128
 
-	waitBeforeOpen = time.Second * 1
+	waitBeforeOpen = time.Millisecond * 200
 )
 
 // nextPort increases the port number by 1
