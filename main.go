@@ -121,6 +121,11 @@ func main() {
 		filename := serverDir
 		// Check if the file exists
 		if fs.exists(filename) {
+			if markdownMode {
+				// Serve the given Markdown file as a static HTTP server
+				serveStaticFile(filename, defaultWebColonPort)
+				return
+			}
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(filename)) {
 			case ".md", ".markdown":
