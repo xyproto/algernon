@@ -5,5 +5,5 @@ package main
 // Not Linux, not BSDs
 
 const (
-	defaultOpenExecutable = "start"
+	defaultOpenExecutable = "explorer"
 )
