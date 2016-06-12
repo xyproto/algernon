@@ -194,9 +194,9 @@ Available flags:
   -o, --open=EXECUTABLE        Open the served URL with ` + defaultOpenExecutable + `, or with the
                                given application.
   -z, --quit                   Quit after the first request has been served.
-  -m                           View a Markdown document in the browser.
+  -m                           View the given Markdown file in the browser.
                                Quits after the file has been served once.
-							   Same as -q -o -z.
+                               ("-m" is equivalent to "-q -o -z").
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
