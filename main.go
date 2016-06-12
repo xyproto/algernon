@@ -235,11 +235,11 @@ func main() {
 				fmt.Println("Running configuration file: " + filename)
 			}
 			if err := runConfiguration(filename, perm, luapool, cache, mux, false); err != nil {
-				log.Error("Could not use configuration script: " + filename)
 				if perm != nil {
+					log.Error("Could not use configuration script: " + filename)
 					fatalExit(err)
 				} else {
-					log.Warn("Ignoring script error since the database backend is disabled.")
+					log.Warn("Not running " + filename + ": the database backend is disabled")
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
