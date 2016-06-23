@@ -24,6 +24,7 @@ Priority
       for port, host, keys etc.
 - [ ] A parameter for only running the Lua repl
 - [ ] Output an access log in a goaccess.io friendly format
+- [ ] Render JavaScript server-side by using Otto, Duktape or wrapped V8
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
