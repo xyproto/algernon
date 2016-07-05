@@ -35,6 +35,7 @@ Report issues for Go / go vet / go lint
 Various
 -------
 - [ ] Create a sample that is inspired by this design: http://codepen.io/KtorZ/pen/ZOzdqG
+- [ ] Add Markdown themes from: https://github.com/mixu/markdown-styles
 - [ ] Add a similar boilerplate as Jekyll to megaboilerplate.com
 - [ ] Describe how to set up a system a bit similar to a wiki,
       but more lightweight, using git + git hooks + algernon.
