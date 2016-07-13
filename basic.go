@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -289,7 +290,13 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Redirect a request
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
 		newurl := L.ToString(1)
-		http.Redirect(w, req, newurl, http.StatusMovedPermanently)
+		httpStatusCode := http.StatusMovedPermanently
+		if L.GetTop() == 2 {
+			if intStatusCode, err := strconv.Atoi(L.ToString(2)); err == nil {
+				httpStatusCode = intStatusCode
+			}
+		}
+		http.Redirect(w, req, newurl, httpStatusCode)
 		return 0 // number of results
 	}))
 

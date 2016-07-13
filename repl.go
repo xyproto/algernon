@@ -408,8 +408,8 @@ serve(string)
 // Return a table with keys and values as given in a posted form, or as given
 // in the URL ("/some/page?x=7" makes "x" with the value "7" available).
 formdata() -> table
-// Redirect to a different URL
-redirect(string)
+// Redirect to a different URL. May take a HTTP status code.
+redirect(string[, string])
 // Transmit what has been outputted so far, to the client.
 flush()
 `

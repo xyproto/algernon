@@ -300,8 +300,8 @@ formdata() -> table
 // Return a table with keys and values as given in the request URL, or in the given URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 urldata([string]) -> table
 
-// Redirect to a relative URL
-redirect(string)
+// Redirect to a relative URL. May take an HTTP status code that will be used when redirecting.
+redirect(string[, string])
 
 // Transmit what has been outputted so far, to the client.
 flush()
