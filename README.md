@@ -282,7 +282,7 @@ headers() -> table
 // Return the HTTP body in the request (will only read the body once, since it's streamed).
 body() -> string
 
-// Set a HTTP status code (like 200 or 404). Must come before other output.
+// Set a HTTP status code (like 200 or 404). Must be used before other functions that writes to the client!
 status(number)
 
 // Set a HTTP status code and output a message (optional).
@@ -300,8 +300,11 @@ formdata() -> table
 // Return a table with keys and values as given in the request URL, or in the given URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 urldata([string]) -> table
 
-// Redirect to a relative URL. May take an HTTP status code that will be used when redirecting.
+// Redirect to an absolute or relative URL. May take an HTTP status code that will be used when redirecting.
 redirect(string[, string])
+
+// Permanent redirect to an absolute or relative URL. Uses status code 302.
+permanent_redirect(string)
 
 // Transmit what has been outputted so far, to the client.
 flush()
