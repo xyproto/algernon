@@ -260,13 +260,15 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		if debugMode {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
+			// Create a new http.Header for a place to store a copy of the header changes
+			httpStatus := &FutureStatus{}
 			// The flush function writes the ResponseRecorder to the ResponseWriter
 			flushFunc := func() {
 				writeRecorder(w, recorder)
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache, httpStatus); err != nil {
 				errortext := err.Error()
 				fileblock, err := cache.read(filename, shouldCache(ext))
 				if err != nil {
@@ -278,7 +280,12 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				// If there were errors, display an error page
 				prettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
 			} else {
-				// If things went well, write to the ResponseWriter
+				// If things went well, check if there is a status code we should write first
+				// (especially for the case of a redirect)
+				if httpStatus.code != 0 {
+					w.WriteHeader(httpStatus.code)
+				}
+				// Then write to the ResponseWriter
 				writeRecorder(w, recorder)
 			}
 		} else {
@@ -287,7 +294,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache); err != nil {
+			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache, nil); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}

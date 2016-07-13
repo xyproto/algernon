@@ -163,7 +163,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request, without caching
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, nil)
+			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, nil, nil)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)

@@ -240,11 +240,11 @@ func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache, httpStatus *FutureStatus) {
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
-	exportBasicWeb(w, req, L, filename, flushFunc)
+	exportBasicWeb(w, req, L, filename, flushFunc, httpStatus)
 
 	// Make other basic functions available
 	exportBasicSystemFunctions(L)
@@ -298,7 +298,8 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache) error {
+// Also returns a header map
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache, fust *FutureStatus) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -343,7 +344,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 	// Export functions to the Lua state
 	// Flush can be an uninitialized channel, it is handled in the function.
-	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache, fust)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -426,7 +427,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	if singleFileMode {
 		// Lua HTTP handlers
-		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false)
+		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false, nil)
 	}
 
 	// Run the script
@@ -462,7 +463,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, nil)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -518,7 +519,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache)
+					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, nil)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)

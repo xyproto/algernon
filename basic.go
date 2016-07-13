@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +16,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/yuin/gopher-lua"
 )
+
+// Future status code.
+// Useful when redirecting in combination with writing to a buffer before writing to a client.
+type FutureStatus struct {
+	code int
+}
 
 func exportBasicSystemFunctions(L *lua.LState) {
 
@@ -99,7 +104,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
 // realW is only used for flushing the buffer in debug mode, and is the underlying ResponseWriter.
-func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func()) {
+func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
 
 	// Print text to the webpage that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -190,6 +195,9 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Set the HTTP status code (must come before print)
 	L.SetGlobal("status", L.NewFunction(func(L *lua.LState) int {
 		code := int(L.ToNumber(1))
+		if httpStatus != nil {
+			httpStatus.code = code
+		}
 		w.WriteHeader(code)
 		return 0 // number of results
 	}))
@@ -197,6 +205,9 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Set a HTTP status code and print a message (optional)
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
 		code := int(L.ToNumber(1))
+		if httpStatus != nil {
+			httpStatus.code = code
+		}
 		w.WriteHeader(code)
 		if L.GetTop() == 2 {
 			message := L.ToString(2)
@@ -287,14 +298,26 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 1 // number of results
 	}))
 
-	// Redirect a request
+	// Redirect a request (as found, by default)
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
 		newurl := L.ToString(1)
 		httpStatusCode := http.StatusFound
 		if L.GetTop() == 2 {
-			if intStatusCode, err := strconv.Atoi(L.ToString(2)); err == nil {
-				httpStatusCode = intStatusCode
-			}
+			httpStatusCode = int(L.ToNumber(2))
+		}
+		if httpStatus != nil {
+			httpStatus.code = httpStatusCode
+		}
+		http.Redirect(w, req, newurl, httpStatusCode)
+		return 0 // number of results
+	}))
+
+	// Permanently redirect a request, which is the same as redirect(url, 301)
+	L.SetGlobal("permanent_redirect", L.NewFunction(func(L *lua.LState) int {
+		newurl := L.ToString(1)
+		httpStatusCode := http.StatusMovedPermanently
+		if httpStatus != nil {
+			httpStatus.code = httpStatusCode
 		}
 		http.Redirect(w, req, newurl, httpStatusCode)
 		return 0 // number of results

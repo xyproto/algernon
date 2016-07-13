@@ -12,7 +12,7 @@ import (
 )
 
 // Make functions related to handling HTTP requests available to Lua scripts
-func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool) {
+func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus) {
 
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1)
@@ -20,7 +20,7 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache)
+			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, httpStatus)
 
 			// Then run the given Lua function
 			L.Push(handleFunc)
