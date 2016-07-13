@@ -290,7 +290,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Redirect a request
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
 		newurl := L.ToString(1)
-		httpStatusCode := http.StatusMovedPermanently
+		httpStatusCode := http.StatusFound
 		if L.GetTop() == 2 {
 			if intStatusCode, err := strconv.Atoi(L.ToString(2)); err == nil {
 				httpStatusCode = intStatusCode
