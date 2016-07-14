@@ -260,7 +260,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		if debugMode {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
-			// Create a new http.Header for a place to store a copy of the header changes
+			// Create a new struct for keeping an optional http header status
 			httpStatus := &FutureStatus{}
 			// The flush function writes the ResponseRecorder to the ResponseWriter
 			flushFunc := func() {

@@ -17,8 +17,8 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Future status code.
-// Useful when redirecting in combination with writing to a buffer before writing to a client.
+// FutureStatus is useful when redirecting in combination with writing to a
+// buffer before writing to a client. May contain more fields in the future.
 type FutureStatus struct {
 	code int
 }
