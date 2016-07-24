@@ -45,7 +45,6 @@ Various
 - [ ] Create alg2systemd-nspawn and alg2runc.
 - [ ] Create a site generator for Algernon.
       Draw inspiration from http://nanoc.ws/doc/tutorial/
-- [ ] RethinkDB support
 - [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
 - [ ] Support SASS and HAML.
@@ -172,9 +171,11 @@ Documentation and samples
 
 Lua
 ---
-- [ ] Wrap JNode in the same way as JFile.
 - [ ] Add a Lua function ForEach that takes a data structure and a function
       that takes a key and a value.
+- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
+- [ ] Wrap JNode in the same way as JFile.
+- [ ] Deprecate "toJSON" and create some sort of JSON object that returns the string by default.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries.
       (Like `require`, but over http). (possibly luarocks packages).
@@ -214,6 +215,7 @@ Maybe
 - [ ] Add support for both SASS and SCSS (Perhaps https://github.com/c9s/c6)
 - [ ] Add configurable log hooks for the systems logrus supports.
       See: https://github.com/Sirupsen/logrus
+- [ ] RethinkDB support.
 - [ ] Use the path/filepath package for walking directories.
 - [ ] Add a Lua function for outputting Lua tables to the client.
 - [ ] Add a Lua function for fetching a value from a table, or a blank string.
