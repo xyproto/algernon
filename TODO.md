@@ -1,30 +1,40 @@
 # Plans
 
-Priority
---------
-- [ ] Better syntax highlighting when rendering Markdown
-- [ ] List files and directories with dates and sizes too, by default.
-- [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
-- [ ] Video tutorials and screencasts.
+Priority 1
+----------
+- [ ] PostgreSQL HSTORE support.
+- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
+- [ ] Better syntax highlighting when rendering Markdown.
+- [ ] Provide a Lua sample/command for listing files and directories with dates
+      and sizes.
 - [ ] Make it possible to stream music or video without the connection timing
       out before the playback has finished.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
-- [ ] Add support for systemd reload, not just restart.
+- [ ] Terminal recording demonstrating the Lua interpreter.
+- [ ] Terminal recording demostrating creating a simple register+login site.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
+- [ ] Render JavaScript server-side by using my fork of Otto.
+- [ ] Add an option for using brotly compression instead of gzip.
+- [ ] When requests are handled, spawn each switch/case as a go routine.
+      Benchmark to see if there is a difference.
+- [ ] Parse options with https://github.com/docopt/docopt.go
+
+Priority 2
+----------
 - [ ] Support for websockets (port a small multiplayer game to test).
+- [ ] Add support for systemd reload, not just restart.
+- [ ] Video tutorials and screencasts.
+- [ ] Support [HAML](https://github.com/travissimon/ghaml) and
+      [Sass](https://github.com/wellington/sass).
 - [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
-- [ ] Built in support for running the Lua REPL in the browser
-      (possibly by using "gotty").
 - [ ] Document how to read JSON from one place and output processed
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
-- [ ] A parameter for only running the Lua repl
 - [ ] Output an access log in a goaccess.io friendly format
-- [ ] Render JavaScript server-side by using Otto, Duktape or wrapped V8
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
@@ -34,12 +44,16 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
-- [ ] Create a sample that is inspired by this design: http://codepen.io/KtorZ/pen/ZOzdqG
+- [ ] Built in support for running the Lua REPL in the browser (possibly by
+      using "gotty", either as a package or wrapped in a script).
+- [ ] Create a sample that is inspired by this design:
+      http://codepen.io/KtorZ/pen/ZOzdqG
 - [ ] Add Markdown themes from: https://github.com/mixu/markdown-styles
 - [ ] Add a similar boilerplate as Jekyll to megaboilerplate.com
 - [ ] Describe how to set up a system a bit similar to a wiki,
       but more lightweight, using git + git hooks + algernon.
-- [ ] Add a flag for listing and selecting styles for Markdown and directory listings.
+- [ ] Add a flag for listing and selecting styles for Markdown and directory
+      listings.
 - [ ] Specify if rate limiting is per user/ip/handler
 - [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
@@ -48,12 +62,10 @@ Various
 - [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
 - [ ] Support SASS and HAML.
-- [ ] PostgreSQL HSTORE support
 - [ ] Port Pastecat to Algernon (https://github.com/mvdan/pastecat)
 - [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
-- [ ] Add config Function for adding a directory listing title to a certain path regex
-      (and/or a title.txt or common.md file).
-- [ ] An option for using brotly compression instead of gzip
+- [ ] Add config Function for adding a directory listing title to a certain
+      path regex (and/or a title.txt or common.md file).
 - [ ] Add a lua function for presenting an executable as a web application,
       like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
@@ -173,7 +185,6 @@ Lua
 ---
 - [ ] Add a Lua function ForEach that takes a data structure and a function
       that takes a key and a value.
-- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
 - [ ] Wrap JNode in the same way as JFile.
 - [ ] Deprecate "toJSON" and create some sort of JSON object that returns the string by default.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
