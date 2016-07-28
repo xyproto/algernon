@@ -2,9 +2,13 @@
 
 Priority 1
 ----------
-- [ ] PostgreSQL HSTORE support.
-- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
+- [ ] Terminal recording demostrating creating a simple register+login site.
 - [ ] Better syntax highlighting when rendering Markdown.
+- [ ] Larger selection of built-in Markdown styles, with a flag for dumping
+      them as a style.gcss, for easy modification. Or use a system directory
+      for this.
+- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
+- [ ] PostgreSQL HSTORE support.
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
 - [ ] Make it possible to stream music or video without the connection timing
@@ -12,7 +16,6 @@ Priority 1
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
 - [ ] Terminal recording demonstrating the Lua interpreter.
-- [ ] Terminal recording demostrating creating a simple register+login site.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
 - [ ] Render JavaScript server-side by using my fork of Otto.
@@ -35,6 +38,10 @@ Priority 2
 - [ ] Also support a configuration file using github.com/alyu/configparser,
       for port, host, keys etc.
 - [ ] Output an access log in a goaccess.io friendly format
+- [ ] Document better the order of output calls when modifying the header to
+      redirect.
+- [ ] Document what the "current directory" is for various Lua functions that
+      deals with files.
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
