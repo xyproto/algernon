@@ -223,13 +223,13 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 	// Use a single Lua file as the server, instead of directory structure
 	L.SetGlobal("ServerFile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
-		serverfilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !fs.exists(filename) {
-			log.Error("Could not find", serverfilename)
+		serverFilename := filepath.Join(filepath.Dir(filename), givenFilename)
+		if !fs.exists(serverFilename) {
+			log.Error("Could not find", serverFilename)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
-		luaServerFilename = serverfilename
+		luaServerFilename = serverFilename
 		L.Push(lua.LBool(true))
 		return 1 // number of results
 	}))

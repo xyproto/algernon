@@ -323,4 +323,25 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 0 // number of results
 	}))
 
+	// Run the given Lua file (replacement for the built-in dofile, to look in the right directory)
+	// Returns whatever the Lua file returns when it is being run.
+	L.SetGlobal("dofile", L.NewFunction(func(L *lua.LState) int {
+		givenFilename := L.ToString(1)
+		luaFilename := filepath.Join(filepath.Dir(filename), givenFilename)
+		if !fs.exists(luaFilename) {
+			log.Error("Could not find:", luaFilename)
+			return 0 // number of results
+		}
+		if err := L.DoFile(luaFilename); err != nil {
+			log.Errorf("Error running %s: %s\n", luaFilename, err.Error())
+			return 0 // number of results
+		}
+		// Retrieve the returned value from the script
+		retval := L.Get(-1)
+		L.Pop(1)
+		// Return the value returned from the script
+		L.Push(retval)
+		return 1 // number of results
+	}))
+
 }
