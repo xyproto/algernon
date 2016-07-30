@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bmizerany/assert"
 	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/permissionsql"
@@ -10,6 +11,7 @@ import (
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simplemaria"
 	"github.com/xyproto/simpleredis"
+	"testing"
 )
 
 // VersionInfo helps to keep track of package names and versions
@@ -32,23 +34,12 @@ func (v *VersionInfo) Check() error {
 	return nil
 }
 
-// Status reports if the current version is satisfactory
-func (v *VersionInfo) Status() {
-	fmt.Print("\t" + v.name + "...")
-	if err := v.Check(); err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("ok")
-	}
-}
-
-func main() {
-	fmt.Println("API dependency check")
-	New("simplebolt", simplebolt.Version, 3.0).Status()
-	New("permissionbolt", permissionbolt.Version, 2.0).Status()
-	New("simpleredis", simpleredis.Version, 2.0).Status()
-	New("permissions", permissions.Version, 2.2).Status()
-	New("simplemaria", simplemaria.Version, 2.0).Status()
-	New("permissionsql", permissionsql.Version, 2.0).Status()
-	New("pinterface", pinterface.Version, 3.0).Status()
+func TestAPI(t *testing.T) {
+	assert.Equal(t, New("simplebolt", simplebolt.Version, 3.0).Check(), nil)
+	assert.Equal(t, New("permissionbolt", permissionbolt.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("permissions", permissions.Version, 2.2).Check(), nil)
+	assert.Equal(t, New("simplemaria", simplemaria.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("pinterface", pinterface.Version, 3.0).Check(), nil)
 }
