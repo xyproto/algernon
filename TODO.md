@@ -2,11 +2,11 @@
 
 Priority 1
 ----------
-- [ ] Terminal recording demostrating creating a simple register+login site.
+- [ ] Parse options with https://github.com/docopt/docopt.go
+- [ ] When requests are handled, spawn each switch/case as a Go routine.
+      Benchmark to see if there is a difference.
+- [ ] Add a flag for caching to the database backend instead of to memory
 - [ ] Better syntax highlighting when rendering Markdown.
-- [ ] Larger selection of built-in Markdown styles, with a flag for dumping
-      them as a style.gcss, for easy modification. Or use a system directory
-      for this.
 - [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
 - [ ] PostgreSQL HSTORE support.
 - [ ] Provide a Lua sample/command for listing files and directories with dates
@@ -15,17 +15,20 @@ Priority 1
       out before the playback has finished.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
-- [ ] Terminal recording demonstrating the Lua interpreter.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
-- [ ] Render JavaScript server-side by using my fork of Otto.
-- [ ] Add an option for using brotly compression instead of gzip.
-- [ ] When requests are handled, spawn each switch/case as a go routine.
-      Benchmark to see if there is a difference.
-- [ ] Parse options with https://github.com/docopt/docopt.go
+- [ ] Terminal recording demonstrating the Lua interpreter.
+- [ ] Terminal recording demostrating creating a simple register+login site.
 
 Priority 2
 ----------
+- [ ] Render JavaScript server-side by using my fork of Otto.
+- [ ] Add an option for using brotly compression instead of gzip.
+- [ ] Larger selection of built-in Markdown styles, with a flag for dumping
+      them as a style.gcss, for easy modification. Or use a system directory
+      for this.
+- [ ] Use https://github.com/irfansharif/cfilter for potentially faster cache
+      lookups.
 - [ ] Support for websockets (port a small multiplayer game to test).
 - [ ] Add support for systemd reload, not just restart.
 - [ ] Video tutorials and screencasts.
