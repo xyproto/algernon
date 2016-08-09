@@ -64,8 +64,8 @@ func newUploadedFile(req *http.Request, scriptdir, formID string, uploadLimit in
 	}
 
 	// For specifying the memory usage when uploading
-	if err := req.ParseMultipartForm(defaultMemoryLimit); err != nil {
-		return nil, err
+	if errMem := req.ParseMultipartForm(defaultMemoryLimit); errMem != nil {
+		return nil, errMem
 	}
 	file, handler, err := req.FormFile(formID)
 	defer file.Close()
@@ -83,8 +83,7 @@ func newUploadedFile(req *http.Request, scriptdir, formID string, uploadLimit in
 		totalWritten += writtenBytes
 		if totalWritten > uploadLimit {
 			// File too large
-			err := fmt.Errorf("Uploaded file was too large: %d bytes (limit is %d bytes)", totalWritten, uploadLimit)
-			return nil, err
+			return nil, fmt.Errorf("Uploaded file was too large: %d bytes (limit is %d bytes)", totalWritten, uploadLimit)
 		} else if writtenBytes < chunkSize || err == io.EOF {
 			// Done writing
 			break

@@ -59,9 +59,9 @@ func main() {
 
 	// CPU profiling
 	if profileCPU != "" {
-		f, err := os.Create(profileCPU)
-		if err != nil {
-			log.Fatal(err)
+		f, errProfile := os.Create(profileCPU)
+		if errProfile != nil {
+			log.Fatal(errProfile)
 		}
 		go func() {
 			log.Info("Profiling CPU usage")
@@ -76,10 +76,10 @@ func main() {
 	// Memory profiling at server shutdown
 	if profileMem != "" {
 		atShutdown(func() {
-			f, err := os.Create(profileMem)
+			f, errProfile := os.Create(profileMem)
 			defer f.Close()
-			if err != nil {
-				log.Fatal(err)
+			if errProfile != nil {
+				log.Fatal(errProfile)
 			}
 			log.Info("Saving heap profile to ", profileMem)
 			pprof.WriteHeapProfile(f)
@@ -94,10 +94,10 @@ func main() {
 
 	// Log to a file as JSON, if a log file has been specified
 	if serverLogFile != "" {
-		f, err := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
-		if err != nil {
+		f, errJSONLog := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
+		if errJSONLog != nil {
 			log.Error("Could not log to", serverLogFile)
-			fatalExit(err)
+			fatalExit(errJSONLog)
 		}
 		log.SetFormatter(&log.JSONFormatter{})
 		log.SetOutput(f)
@@ -234,10 +234,10 @@ func main() {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
-			if err := runConfiguration(filename, perm, luapool, cache, mux, false); err != nil {
+			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false); errConf != nil {
 				if perm != nil {
 					log.Error("Could not use configuration script: " + filename)
-					fatalExit(err)
+					fatalExit(errConf)
 				} else {
 					log.Warn("Not running " + filename + ": the database backend is disabled")
 				}
@@ -254,9 +254,9 @@ func main() {
 		if verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if err := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true); err != nil {
+		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true); errLua != nil {
 			log.Error("Error in Lua server script: " + luaServerFilename)
-			fatalExit(err)
+			fatalExit(errLua)
 		}
 	} else {
 		// Register HTTP handler functions

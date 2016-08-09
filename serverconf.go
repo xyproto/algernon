@@ -261,9 +261,9 @@ func aquirePermissions() (pinterface.IPermissions, error) {
 		perm, err = bolt.NewWithConf(boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				tempFile, err := ioutil.TempFile("", "algernon")
-				if err != nil {
-					log.Fatal("Unable to find a temporary file to use:", err)
+				tempFile, errTemp := ioutil.TempFile("", "algernon")
+				if errTemp != nil {
+					log.Fatal("Unable to find a temporary file to use:", errTemp)
 				} else {
 					boltFilename = tempFile.Name() + ".db"
 				}
@@ -338,9 +338,9 @@ func aquirePermissions() (pinterface.IPermissions, error) {
 		perm, err = bolt.NewWithConf(boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				tempFile, err := ioutil.TempFile("", "algernon")
-				if err != nil {
-					log.Fatal("Unable to find a temporary file to use:", err)
+				tempFile, errTemp := ioutil.TempFile("", "algernon")
+				if errTemp != nil {
+					log.Fatal("Unable to find a temporary file to use:", errTemp)
 				} else {
 					boltFilename = tempFile.Name() + ".db"
 				}
