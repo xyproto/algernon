@@ -80,7 +80,7 @@ func serveStaticFile(filename, colonPort string) {
 	HTTPserver := newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
 
 	// Attempt to serve just the single file
-	if errServe := HTTPserver.ListenAndServe(); err != nil {
+	if errServe := HTTPserver.ListenAndServe(); errServe != nil {
 		// If it fails, try several times, increasing the port by 1 each time
 		for i := 0; i < maxAttemptsAtIncreasingPortNumber; i++ {
 			if errServe = HTTPserver.ListenAndServe(); errServe != nil {
