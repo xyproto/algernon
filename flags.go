@@ -340,7 +340,7 @@ func handleFlags(serverTempDir string) string {
 		redisAddr = host + defaultRedisColonPort
 	}
 
-	// May be overriden by devMode
+	// May be overridden by devMode
 	if serverMode {
 		debugMode = false
 	}

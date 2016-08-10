@@ -125,7 +125,7 @@ aprint(...)
 gprint(...)
 // Output JavaScript given JSX. Takes a variable number of strings.
 jprint(...)
-// Ouput (mainly) HMTL given Pongo2. Takes a variable number of strings.
+// Output (mainly) HMTL given Pongo2. Takes a variable number of strings.
 poprint(...)
 
 Cache
