@@ -3,15 +3,17 @@ package main
 
 import (
 	"fmt"
+	"testing"
 	"github.com/bmizerany/assert"
-	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/pinterface"
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/permissionsql"
-	"github.com/xyproto/pinterface"
-	"github.com/xyproto/simplebolt"
-	"github.com/xyproto/simplemaria"
+	"github.com/xyproto/permissionbolt"
+	"github.com/xyproto/permissionwrench"
 	"github.com/xyproto/simpleredis"
-	"testing"
+	"github.com/xyproto/simplemaria"
+	"github.com/xyproto/simplebolt"
+	"github.com/xyproto/simplehstore"
 )
 
 // VersionInfo helps to keep track of package names and versions
@@ -41,5 +43,7 @@ func TestAPI(t *testing.T) {
 	assert.Equal(t, New("permissions", permissions.Version, 2.2).Check(), nil)
 	assert.Equal(t, New("simplemaria", simplemaria.Version, 2.0).Check(), nil)
 	assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("simplehstore", simplehstore.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("permissionwrench", permissionwrench.Version, 2.0).Check(), nil)
 	assert.Equal(t, New("pinterface", pinterface.Version, 3.0).Check(), nil)
 }
