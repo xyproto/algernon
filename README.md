@@ -51,7 +51,6 @@ Design decisions
 Features and limitations
 ------------------------
 
-* The PostgreSQL support is experimental and work in progress. Uses HSTORE.
 * Supports HTTP/2, with or without HTTPS.
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
@@ -76,6 +75,7 @@ Features and limitations
 * Can read from and save to JSON documents. Supports simple JSON path expressions (like a simple version of XPath, but for JSON).
 * If cache compression is enabled, files that are stored in the cache can be sent directly from the cache to the client, without decompressing.
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
+* When using PostgreSQL, the HSTORE feature is used, so minimum version 9.1 is required.
 
 Utilities
 ---------
