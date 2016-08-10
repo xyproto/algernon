@@ -326,7 +326,7 @@ func aquirePermissions() (pinterface.IPermissions, error) {
 	if dbName == "" && postgresDatabase != "" {
 		// Given a database, but not a host, connect to localhost
 		// New permissions middleware, using a PostgreSQL database
-		perm, err = postgres.NewWithConf("test:@127.0.0.1/" + postgresDatabase)
+		perm, err = postgres.NewWithConf("postgres:@127.0.0.1/" + postgresDatabase)
 		if err != nil {
 			if postgresDatabase != "" {
 				log.Errorf("Could not use PostgreSQL as database backend: %s", err)

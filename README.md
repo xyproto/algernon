@@ -51,6 +51,7 @@ Design decisions
 Features and limitations
 ------------------------
 
+* The PostgreSQL support is experimental and work in progress. Uses HSTORE.
 * Supports HTTP/2, with or without HTTPS.
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
