@@ -3,17 +3,17 @@ package main
 
 import (
 	"fmt"
-	"testing"
 	"github.com/bmizerany/assert"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/permissionsql"
-	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissionwrench"
-	"github.com/xyproto/simpleredis"
-	"github.com/xyproto/simplemaria"
+	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simplehstore"
+	"github.com/xyproto/simplemaria"
+	"github.com/xyproto/simpleredis"
+	"testing"
 )
 
 // VersionInfo helps to keep track of package names and versions

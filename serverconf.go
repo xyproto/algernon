@@ -14,6 +14,7 @@ import (
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
+	postgres "github.com/xyproto/permissionwrench"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
@@ -310,6 +311,31 @@ func aquirePermissions() (pinterface.IPermissions, error) {
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			dbName = "MariaDB/MySQL"
+		}
+	}
+	if dbName == "" && postgresDSN != "" {
+		// New permissions middleware, using a PostgreSQL database
+		perm, err = postgres.NewWithDSN(postgresDSN, postgresDatabase)
+		if err != nil {
+			log.Errorf("Could not use PostgreSQL as database backend: %s", err)
+		} else {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "PostgreSQL"
+		}
+	}
+	if dbName == "" && postgresDatabase != "" {
+		// Given a database, but not a host, connect to localhost
+		// New permissions middleware, using a PostgreSQL database
+		perm, err = postgres.NewWithConf("test:@127.0.0.1/" + postgresDatabase)
+		if err != nil {
+			if postgresDatabase != "" {
+				log.Errorf("Could not use PostgreSQL as database backend: %s", err)
+			} else {
+				log.Warnf("Could not use PostgreSQL as database backend: %s", err)
+			}
+		} else {
+			// The connection string may contain a password, so don't include it in the dbName
+			dbName = "PostgreSQL"
 		}
 	}
 	if dbName == "" {

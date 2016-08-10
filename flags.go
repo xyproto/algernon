@@ -74,6 +74,8 @@ var (
 	useBolt            bool
 	mariadbDSN         string // connection string
 	mariaDatabase      string // database name
+	postgresDSN        string // connection string
+	postgresDatabase   string // database name
 	redisAddr          string
 	redisDBindex       int
 	redisAddrSpecified bool
@@ -178,8 +180,10 @@ Available flags:
   --internal=FILENAME          Internal log file (can be a bit verbose).
   -t, --httponly               Serve regular HTTP.
   --http2only                  Serve HTTP/2, without HTTPS.
-  --maria=DSN                  Use the given MariaDB or MySQL host.
-  --mariadb=NAME               Use the given MariaDB or MySQL database.
+  --maria=DSN                  Use the given MariaDB or MySQL host/database.
+  --mariadb=NAME               Use the given MariaDB or MySQL database name.
+  --postgres=DSN               Use the given PostgreSQL host/database.
+  --postgresdb=NAME            Use the given PostgreSQL database name.
   --verbose                    Slightly more verbose logging.
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
@@ -267,6 +271,8 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&serverMode, "server", false, "Server mode (disable interactive mode)")
 	flag.StringVar(&mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
 	flag.StringVar(&mariaDatabase, "mariadb", "", "MariaDB/MySQL database name")
+	flag.StringVar(&postgresDSN, "postgres", "", "PostgreSQL connection string (DSN)")
+	flag.StringVar(&postgresDatabase, "postgresdb", "", "PostgreSQL database name")
 	flag.BoolVar(&useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&boltFilename, "boltdb", "", "Bolt database filename")
 	flag.Int64Var(&limitRequests, "limit", defaultLimit, "Limit clients to a number of requests per second")
