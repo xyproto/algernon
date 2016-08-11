@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -35,9 +34,6 @@ var (
 
 func main() {
 	var err error
-
-	// Will be default in Go 1.5
-	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Temporary directory that might be used for logging, databases or file extraction
 	serverTempDir, err := ioutil.TempDir("", "algernon")
