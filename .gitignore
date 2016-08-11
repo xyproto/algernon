@@ -53,3 +53,6 @@ algernon.debug
 
 # Testing
 test.json
+
+# Generated files
+alg2docker/Dockerfile

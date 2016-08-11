@@ -14,4 +14,4 @@ And you can run it with:
 
 Note that the resulting Docker image tries to serve the application as fast as possible and use caching aggressively. Change the options in the Dockerfile if you wish to enable the auto-refresh feature, disable caching or enable the debug mode.
 
-The resulting Docker image will include the application itself, but not the SSL keys used for HTTPS+HTTP/2.
+The resulting Docker image will include the application itself, but not the SSL keys used for HTTPS+HTTP/2. They are named `cert.pem` and `key.pem` and needs to be placed in the `config` directory (if using the docker command above).

@@ -1,42 +1,46 @@
 #!/bin/bash
+#
+# alg2docker 0.2
+#
+# Convert an Algernon application (.alg or .zip) to a Dockerfile
+#
 
-filename='hello.alg'
-newfile='Dockerfile'
-name='John Bob'
-email='john@thebobs.cx'
+# default settings
+filename=hello.alg
+newfile=Dockerfile
+name="$(whoami)"
+email="$EMAIL"
+force="false"
 
-if [[ $1 != "" ]]; then
-  filename="$1"
-else
-  echo 'alg2docker v.0.1'
+if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
+  echo 'alg2docker 0.2'
   echo
-  echo 'Usage: alg2docker (.alg file) (new Dockerfile) (Name) (Email)'
+  echo 'Convert an Algernon application (.alg or .zip) to a Dockerfile'
   echo
-  echo "Example: alg2docker hello.alg Dockerfile 'John Bob' 'john@thebobs.cx'"
+  echo 'Usage:'
+  echo '    alg2docker [-f] ALGFILE [DOCKERFILE] [NAME] [EMAIL]'
+  echo
+  echo 'Example:'
+  echo "    alg2docker hello.alg Dockerfile '$name' '$email'"
   echo
   exit 1
 fi
 
-if [[ $2 != "" ]]; then
-  newfile="$2"
+if [[ $1 == "-f" ]]; then
+  force="true"
+  shift
 fi
 
-if [[ -e $newfile ]]; then
-  echo "$newfile already exists!"
+if [[ $1 != "" ]]; then filename="$1"; fi
+if [[ $2 != "" ]]; then newfile="$2"; fi
+if [[ $3 != "" ]]; then name="$3"; fi
+if [[ $4 != "" ]]; then email="$4"; fi
+
+if [[ -e $newfile && $force == "false" ]]; then
+  echo "ERROR: file already exists: $newfile"
+  echo "Use -f as the first argument to overwrite."
   exit 1
 fi
-
-if [[ $3 != "" ]]; then
-  name="$3"
-fi
-
-if [[ $4 != "" ]]; then
-  email="$4"
-fi
-
-echo "Generating Dockerfile: $newfile"
-echo "Using this .alg file: $filename"
-echo "For $name <$email>"
 
 cat <<EOF > "$newfile"
 # Dockerfile for serving an Algernon application as
