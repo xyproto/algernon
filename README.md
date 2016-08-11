@@ -1,12 +1,12 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, GCSS, JSX, Bolt, Redis, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
-keywords: http2, HTTP/2, web server, http, go, golang, github, algernon, lua, markdown, amber, GCSS, JSX, permissions2, React, Bolt, MySQL, Three.js, graceful, pie, tollbooth
+description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
+keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, GCSS, JSX, Bolt, Redis, MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
@@ -17,7 +17,7 @@ Running within Docker: [xyproto/algernon](https://hub.docker.com/r/xyproto/alger
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 
 Design decisions
@@ -51,7 +51,7 @@ Design decisions
 Features and limitations
 ------------------------
 
-* Supports HTTP/2, with or without HTTPS.
+* Supports HTTP/2, with or without HTTPS (browsers may require HTTPS when using HTTP/2).
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * The Algernon executable is compiled to native and is reasonably fast.
@@ -75,7 +75,7 @@ Features and limitations
 * Can read from and save to JSON documents. Supports simple JSON path expressions (like a simple version of XPath, but for JSON).
 * If cache compression is enabled, files that are stored in the cache can be sent directly from the cache to the client, without decompressing.
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
-* When using PostgreSQL, the HSTORE feature is used, so minimum version 9.1 is required.
+* When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 
 Utilities
 ---------
@@ -107,7 +107,7 @@ Running Algernon (screenshot from an earlier version):
 
 ---
 
-The idea is that webpages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS or GCSS, while data can be provided by a Lua script that talks to Redis, Bolt or MySQL.
+The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS or GCSS, while data can be provided by a Lua script that talks to Redis, BoltDB, PostgreSQL or MariaDB/MySQL.
 
 Amber and GCSS is a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
@@ -117,11 +117,12 @@ The auto-refresh feature is supported when using Markdown, Pongo2 or Amber, and 
 
 The JSX to JavaScript (ECMAscript) transpiler is built-in.
 
-Redis is fast, scalable and offers good [data persistence](http://redis.io/topics/persistence). This should be the prefered backend.
+Redis is fast, scalable and offers good [data persistence](http://redis.io/topics/persistence). This should be the preferred backend.
 
 Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go. It makes it easy to run Algernon without having to set up a database host first.
+MariaDB/MySQL support is included because of its widespread availability.
 
-MySQL support is included because of its widespread availability.
+PostgreSQL is a solid and fast database that is also supported.
 
 Screenshots
 -----------
@@ -327,7 +328,7 @@ gprint(...)
 // Output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 jprint(...)
 
-// Output HTML to the browser/client. The given text is converted from Pango2 to HTML. Takes a variable number of strings.
+// Output HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
 poprint(...)
 ~~~
 
@@ -373,11 +374,11 @@ toJSON(table[, number]) -> string
 JNode() -> userdata
 
 // Add JSON data to a node. The first argument is an optional JSON path.
-// The second argument is a JSON data string. Retursn true on success.
+// The second argument is a JSON data string. Returns true on success.
 // "x" is the default JSON path.
 jnode:add([string, ]string) ->
 
-// Given a JSON path, retrives a JSON node.
+// Given a JSON path, retrieves a JSON node.
 jnode:get(string) -> userdata
 
 // Given a JSON path, retrieves a JSON string.
@@ -468,7 +469,7 @@ UploadedFile(string[, number]) -> userdata, string
 // Return the uploaded filename, as specified by the client
 uploadedfile:filename() -> string
 
-// Return the size of the data that has been recevied
+// Return the size of the data that has been received
 uploadedfile:size() -> number
 
 // Return the mime type of the uploaded file, as specified by the client
@@ -633,11 +634,11 @@ UserRights() -> bool
 HasUser(string) -> bool
 
 // Get the value from the given boolean field
-// Takes a username and fieldname
+// Takes a username and field name
 BooleanField(string, string) -> bool
 
 // Save a value as a boolean field
-// Takes a username, fieldname and boolean value
+// Takes a username, field name and boolean value
 SetBooleanField(string, string, bool)
 
 // Check if a given username is confirmed

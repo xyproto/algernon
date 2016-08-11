@@ -23,7 +23,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		return 1 // number of results
 	}))
 	// Get the value from the given boolean field, returns bool
-	// Takes a username and fieldname
+	// Takes a username and field name
 	L.SetGlobal("BooleanField", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
 		fieldname := L.ToString(2)
@@ -31,7 +31,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		return 1 // number of results
 	}))
 	// Save a value as a boolean field, returns nothing
-	// Takes a username, fieldname and boolean value
+	// Takes a username, field name and boolean value
 	L.SetGlobal("SetBooleanField", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
 		fieldname := L.ToString(2)

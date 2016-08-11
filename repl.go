@@ -156,10 +156,10 @@ toJSON(table[, number]) -> string
 // Create a JSON document node.
 JNode() -> userdata
 // Add JSON data to a node. The first argument is an optional JSON path.
-// The second argument is a JSON data string. Retursn true on success.
+// The second argument is a JSON data string. Returns true on success.
 // "x" is the default JSON path.
 jnode:add([string, ]string) ->
-// Given a JSON path, retrives a JSON node.
+// Given a JSON path, retrieves a JSON node.
 jnode:get(string) -> userdata
 // Given a JSON path, retrieves a JSON string.
 jnode:getstring(string) -> string
@@ -260,10 +260,10 @@ UserRights() -> bool
 // Check if the given username exists
 HasUser(string) -> bool
 // Get the value from the given boolean field
-// Takes a username and fieldname
+// Takes a username and field name
 BooleanField(string, string) -> bool
 // Save a value as a boolean field
-// Takes a username, fieldname and boolean value
+// Takes a username, field name and boolean value
 SetBooleanField(string, string, bool)
 // Check if a given username is confirmed
 IsConfirmed(string) -> bool
