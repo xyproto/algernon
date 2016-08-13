@@ -2,13 +2,12 @@
 
 Priority 1
 ----------
-- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] When requests are handled, spawn each switch/case as a Go routine.
       Benchmark to see if there is a difference.
 - [ ] Add a flag for caching to the database backend instead of to memory
 - [ ] Better syntax highlighting when rendering Markdown.
 - [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
-- [ ] PostgreSQL HSTORE support.
+- [X] PostgreSQL HSTORE support.
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
 - [ ] Make it possible to stream music or video without the connection timing
@@ -22,6 +21,7 @@ Priority 1
 
 Priority 2
 ----------
+- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Render JavaScript server-side by using my fork of Otto.
 - [ ] Add an option for using brotly compression instead of gzip.
 - [ ] Larger selection of built-in Markdown styles, with a flag for dumping
@@ -274,7 +274,7 @@ Maybe
       or port is changed.
 - [ ] Add a function tprint("file.tmpl", table) for github.com/unrolled/render.
 - [ ] Add an option for exiting after any page has been visited once.
-- [ ] simplegres and permissiongres, for PostgreSQL.
+- [X] simplehstore and permissionwrench, for PostgreSQL.
 - [ ] Read zip files directly instead of decompressing when given as the
       first argument (downside: some Amber functions look for files in the
       same directory).
