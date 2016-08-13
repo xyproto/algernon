@@ -2,6 +2,8 @@
 
 Priority 1
 ----------
+- [ ] Fix data race at github.com/flosch/pongo2.Context.Update()
+      (or lock with a mutex)
 - [ ] When requests are handled, spawn each switch/case as a Go routine.
       Benchmark to see if there is a difference.
 - [ ] Add a flag for caching to the database backend instead of to memory
