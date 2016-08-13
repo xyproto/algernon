@@ -91,6 +91,7 @@ var (
 	cacheMode          cacheModeSetting
 	cacheCompression   bool
 	cacheMaxEntitySize uint64
+	noCache            bool
 
 	// Output
 	quietMode bool
@@ -165,6 +166,7 @@ Available flags:
                                "images"  - Only images (png, jpg, gif, svg).
                                "off"     - Disable caching.
   --cachesize=N                Set the total cache size, in bytes.
+  --nocache                    Another way to disable the caching.
   --rawcache                   Disable cache compression.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
@@ -291,6 +293,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&simpleMode, "simple", false, "Serve a directory of files over HTTP")
 	flag.StringVar(&openExecutable, "open", "", "Open URL after serving, with an application")
 	flag.BoolVar(&quitAfterFirstRequest, "quit", false, "Quit after the first request")
+	flag.BoolVar(&noCache, "nocache", false, "Disable caching")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -384,6 +387,11 @@ func handleFlags(serverTempDir string) string {
 	// If a watch directory is given, enable the auto refresh feature
 	if autoRefreshDir != "" {
 		autoRefreshMode = true
+	}
+
+	// If nocache is given, disable the cache
+	if noCache {
+		cacheMode = cacheModeOff
 	}
 
 	// If auto-refresh is enabled, change the caching
