@@ -8,7 +8,7 @@ import (
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/pongo2" // fork of flosch/pongo2, while waiting for pull request to go through
+	"github.com/flosch/pongo2"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
