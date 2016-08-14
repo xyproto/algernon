@@ -23,6 +23,7 @@ Priority 1
 
 Priority 2
 ----------
+- [ ] Server side support for https://github.com/gmetais/sw-delta
 - [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Render JavaScript server-side by using my fork of Otto.
 - [ ] Add an option for using brotly compression instead of gzip.
