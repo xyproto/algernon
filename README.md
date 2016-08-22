@@ -847,12 +847,14 @@ Commands that are only available in the REPL
 * `help` displays a syntax highlighted overview of most functions.
 * `webhelp` displays a syntax highlighted overview of functions related to handling requests.
 * `confighelp` displays a syntax highlighted overview of functions related to server configuration.
-* `pprint` can be used for displaying a description, or contents, of Lua values.
 
 Extra Lua functions
 -------------------
 
 ~~~c
+// Pretty print. Outputs the values in, or a description of, the given Lua value(s).
+pprint(...)
+
 // Takes a Python filename, executes the script with the `python` binary in the Path.
 // Returns the output as a Lua table, where each line is an entry.
 py(string) -> table

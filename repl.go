@@ -224,8 +224,8 @@ Various
 ServerInfo() -> string
 // Return the version string for the server
 version() -> string
-// Tries to extract and print the contents of a Lua value
-pprint(value)
+// Tries to extract and print the contents of the given Lua values
+pprint(...)
 // Sleep the given number of seconds (can be a float)
 sleep(number)
 // Return the number of nanoseconds from 1970 ("Unix time")
