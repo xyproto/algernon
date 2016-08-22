@@ -120,7 +120,26 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		buf.WriteString("\n")
 
 		// Write the combined text to the http.ResponseWriter
-		w.Write(buf.Bytes())
+		buf.WriteTo(w)
+
+		return 0 // number of results
+	}))
+
+	// Pretty print text to the webpage that is being served. Add a newline.
+	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
+		var buf bytes.Buffer
+		top := L.GetTop()
+		for i := 1; i <= top; i++ {
+			pprintToWriter(&buf, L.Get(i))
+			if i != top {
+				buf.WriteString("\t")
+			}
+		}
+		// Final newline
+		buf.WriteString("\n")
+
+		// Write the combined text to the http.ResponseWriter
+		buf.WriteTo(w)
 
 		return 0 // number of results
 	}))

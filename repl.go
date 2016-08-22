@@ -10,7 +10,6 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/jpath"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
@@ -439,57 +438,11 @@ ServerFile(string) -> bool
 	exitMessage = "bye"
 )
 
-// Output more informative information than the memory location.
-// Attempt to extract and print the values of the given lua.LValue.
+// Pretty print the given Lua value to stdout
 func pprint(value lua.LValue) {
-	switch v := value.(type) {
-	case *lua.LTable:
-		m, isAnArray, err := table2mapinterface(v)
-		if err != nil {
-			// Could not convert to a map
-			fmt.Println(v)
-			return
-		}
-		if isAnArray {
-			// A map which is really an array (arrays in Lua are maps)
-			var buf bytes.Buffer
-			buf.WriteString("{")
-			// Order the map
-			length := len(m)
-			for i := 1; i <= length; i++ {
-				val := m[float64(i)] // gluamapper uses float64 for all numbers
-				buf.WriteString(fmt.Sprintf("%#v", val))
-				if i != length {
-					// Output a comma for every element except the last one
-					buf.WriteString(", ")
-				}
-			}
-			buf.WriteString("}")
-			fmt.Println(buf.String())
-			return
-		}
-		// A go map
-		fmt.Println(fmt.Sprintf("%#v", m)[29:])
-	case *lua.LFunction:
-		if v.Proto != nil {
-			// Extended information about the function
-			fmt.Println(v.Proto)
-		} else {
-			fmt.Println(v)
-		}
-	case *lua.LUserData:
-		if jfile, ok := v.Value.(*jpath.JFile); ok {
-			fmt.Println(v)
-			fmt.Printf("filename: %s\n", jfile.GetFilename())
-			if data, err := jfile.JSON(); err == nil { // success
-				fmt.Printf("JSON data:\n%s\n", string(data))
-			}
-		} else {
-			fmt.Println(v)
-		}
-	default:
-		fmt.Println(v)
-	}
+	var buf bytes.Buffer
+	pprintToWriter(&buf, value)
+	fmt.Println(buf.String())
 }
 
 // Export Lua functions related to the REPL

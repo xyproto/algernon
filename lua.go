@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/jpath"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
@@ -17,6 +19,59 @@ import (
 var (
 	errToMap = errors.New("Could not represent Lua structure table as a map")
 )
+
+// Output more informative information than the memory location.
+// Attempt to extract and print the values of the given lua.LValue.
+func pprintToWriter(w io.Writer, value lua.LValue) {
+	switch v := value.(type) {
+	case *lua.LTable:
+		m, isAnArray, err := table2mapinterface(v)
+		if err != nil {
+			// Could not convert to a map
+			fmt.Println(v)
+			return
+		}
+		if isAnArray {
+			// A map which is really an array (arrays in Lua are maps)
+			var buf bytes.Buffer
+			buf.WriteString("{")
+			// Order the map
+			length := len(m)
+			for i := 1; i <= length; i++ {
+				val := m[float64(i)] // gluamapper uses float64 for all numbers
+				buf.WriteString(fmt.Sprintf("%#v", val))
+				if i != length {
+					// Output a comma for every element except the last one
+					buf.WriteString(", ")
+				}
+			}
+			buf.WriteString("}")
+			buf.WriteTo(w)
+			return
+		}
+		// A go map
+		fmt.Fprintln(w, fmt.Sprintf("%#v", m)[29:])
+	case *lua.LFunction:
+		if v.Proto != nil {
+			// Extended information about the function
+			fmt.Fprintln(w, v.Proto)
+		} else {
+			fmt.Fprintln(w, v)
+		}
+	case *lua.LUserData:
+		if jfile, ok := v.Value.(*jpath.JFile); ok {
+			fmt.Fprintln(w, v)
+			fmt.Fprintf(w, "filename: %s\n", jfile.GetFilename())
+			if data, err := jfile.JSON(); err == nil { // success
+				fmt.Fprintf(w, "JSON data:\n%s\n", string(data))
+			}
+		} else {
+			fmt.Fprintln(w, v)
+		}
+	default:
+		fmt.Fprintln(w, v)
+	}
+}
 
 // Retrieve all the arguments given to a lua function
 // and gather the strings in a buffer.
