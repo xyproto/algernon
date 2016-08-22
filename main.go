@@ -28,7 +28,7 @@ var (
 	// For convenience. Set in the main function.
 	serverHost      string
 	dbName          string
-	refreshDuration time.Duration
+	refreshDuration time.Duration // for the auto-refresh feature
 	fs              *FileStat
 )
 
@@ -108,8 +108,8 @@ func main() {
 	}
 
 	// Create a new FileStat struct, with optional caching (for speed).
-	// Clear the cache every 10 minutes.
-	fs = NewFileStat(cacheFileStat, time.Minute*10)
+	// Clear the cache every N minutes.
+	fs = NewFileStat(cacheFileStat, defaultStatCacheRefresh)
 
 	// Check if the given directory really is a directory
 	if !fs.isDir(serverDir) {
