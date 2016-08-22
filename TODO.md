@@ -57,6 +57,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Make it easy to apply patches on the fly, when GET-ting the resulting file
 - [ ] Built in support for running the Lua REPL in the browser (possibly by
       using "gotty", either as a package or wrapped in a script).
 - [ ] Create a sample that is inspired by this design:
