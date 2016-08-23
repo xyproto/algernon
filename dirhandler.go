@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
 )
 
@@ -76,19 +77,29 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 		go quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
-	// If the URL does not end with a slash, redirect to an URL that does
-	if !strings.HasSuffix(req.URL.Path, "/") {
-		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
-		return
+	// Add slash to directory name, if missing
+	// TODO: Check that this works on Windows too
+	if !strings.HasSuffix(dirname, "/") {
+		dirname += "/"
+
+		if !fs.isDir(dirname) {
+			log.Error("dirname " + dirname + " is not a directory!")
+		}
+		if !fs.isDir(rootdir) {
+			log.Error("rootdir " + rootdir + " is not a directory!")
+		}
 	}
+
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
-		if fs.exists(filename) {
+		log.Info("FILENAME: " + filename)
+		if fs.exists(filename) && !fs.isDir(filename) {
 			filePage(w, req, filename, perm, luapool, cache)
 			return
 		}
 	}
+
 	// Serve a directory listing of no index file is found
 	directoryListing(w, req, rootdir, dirname)
 }
