@@ -144,6 +144,25 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 0 // number of results
 	}))
 
+	// Pretty print to string
+	L.SetGlobal("ppstr", L.NewFunction(func(L *lua.LState) int {
+		var buf bytes.Buffer
+		top := L.GetTop()
+		for i := 1; i <= top; i++ {
+			pprintToWriter(&buf, L.Get(i))
+			if i != top {
+				buf.WriteString("\t")
+			}
+		}
+		// Final newline
+		buf.WriteString("\n")
+
+		// Return the string
+		L.Push(lua.LString(buf.String()))
+
+		return 1 // number of results
+	}))
+
 	// Flush the ResponseWriter.
 	// Needed in debug mode, where ResponseWriter is buffered.
 	L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
