@@ -393,6 +393,7 @@ func handleFlags(serverTempDir string) string {
 	// If nocache is given, disable the cache
 	if noCache {
 		cacheMode = cacheModeOff
+		cacheFileStat = false
 	}
 
 	// If auto-refresh is enabled, change the caching
@@ -400,6 +401,7 @@ func handleFlags(serverTempDir string) string {
 		if cacheModeString == "" {
 			// Disable caching by default, when auto-refresh is enabled
 			cacheMode = cacheModeOff
+			cacheFileStat = false
 		}
 	}
 
