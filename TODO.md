@@ -2,15 +2,11 @@
 
 Priority 1
 ----------
-- [ ] When sending form data with POST, make action="dirname" and action="dirname/" equivalent.
-- [ ] Fix data race at github.com/flosch/pongo2.Context.Update()
-      (or lock with a mutex)
-- [ ] When requests are handled, spawn each switch/case as a Go routine.
-      Benchmark to see if there is a difference.
-- [ ] Add a flag for caching to the database backend instead of to memory
 - [ ] Better syntax highlighting when rendering Markdown.
 - [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
-- [X] PostgreSQL HSTORE support.
+- [ ] When requests are handled, spawn each switch/case as a Go routine.
+      Benchmark to see if there is a difference.
+- [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
 - [ ] Make it possible to stream music or video without the connection timing
@@ -25,8 +21,8 @@ Priority 1
 Priority 2
 ----------
 - [ ] Server side support for https://github.com/gmetais/sw-delta
-- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Render JavaScript server-side by using my fork of Otto.
+- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Add an option for using brotly compression instead of gzip.
 - [ ] Larger selection of built-in Markdown styles, with a flag for dumping
       them as a style.gcss, for easy modification. Or use a system directory
