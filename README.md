@@ -14,6 +14,11 @@ GitBook: [Creating Web Applications with Algernon](http://algernonbook.roboticov
 
 Running within Docker: [xyproto/algernon](https://hub.docker.com/r/xyproto/algernon/)
 
+Quick installation
+------------------
+
+`go get gopkg.in/xyproto/algernon.v1`
+
 Technologies
 ------------
 
@@ -83,7 +88,7 @@ Utilities
 * [http2check](https://github.com/xyproto/http2check) can be used for checking if a web server is offering [HTTP/2](https://tools.ietf.org/html/rfc7540).
 
 
-Quick Installation
+Installation
 ------------------
 
 ##### OS X
@@ -93,10 +98,16 @@ Quick Installation
 ##### Arch Linux
   * Install `algernon` from AUR, using your favorite AUR helper.
 
-##### Any system where go is installed (and $GOPATH has been set)
-  * `go get github.com/xyproto/algernon`
-  * Add `$GOPATH/bin` to $PATH, if needed.
+##### Any system where go is available
 
+This method is using the latest commit from the master branch:
+
+`go get github.com/xyproto/algernon`
+
+If needed, first:
+
+  * Set the GOPATH. For example: `export GOPATH=~/go`
+  * Add $GOPATH/bin to the path. For example: `export PATH=$PATH:$GOPATH/bin`
 
 Overview
 --------
