@@ -32,6 +32,9 @@ var (
 	// Default rate limit, as a string
 	defaultLimitString = strconv.Itoa(defaultLimit)
 
+	// Store the request limit as a string for faster HTTP header creation later on
+	limitRequestsString string
+
 	// Default Bolt database file, for some operating systems
 	defaultBoltFilename = "/tmp/algernon.db"
 
@@ -93,6 +96,7 @@ var (
 	cacheCompression   bool
 	cacheMaxEntitySize uint64
 	noCache            bool
+	noHeaders          bool
 
 	// Output
 	quietMode bool
@@ -168,6 +172,7 @@ Available flags:
                                "off"     - Disable caching.
   --cachesize=N                Set the total cache size, in bytes.
   --nocache                    Another way to disable the caching.
+  --noheaders                  Don't set any HTTP headers by default.
   --rawcache                   Disable cache compression.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
@@ -295,6 +300,7 @@ func handleFlags(serverTempDir string) string {
 	flag.StringVar(&openExecutable, "open", "", "Open URL after serving, with an application")
 	flag.BoolVar(&quitAfterFirstRequest, "quit", false, "Quit after the first request")
 	flag.BoolVar(&noCache, "nocache", false, "Disable caching")
+	flag.BoolVar(&noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -395,6 +401,9 @@ func handleFlags(serverTempDir string) string {
 		cacheMode = cacheModeOff
 		cacheFileStat = false
 	}
+
+	// Convert the request limit to a string
+	limitRequestsString = strconv.FormatInt(limitRequests, 10)
 
 	// If auto-refresh is enabled, change the caching
 	if autoRefreshMode {

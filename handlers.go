@@ -335,6 +335,8 @@ func serverHeaders(w http.ResponseWriter) {
 	w.Header().Set("Server", serverHeaderName)
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+	w.Header().Set("Content-Security-Policy", "connect-src 'self'; object-src 'self'; form-action 'self'")
 }
 
 // When a file is not found
@@ -392,8 +394,10 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		dirname := filename
 		hasfile := fs.exists(noslash)
 
-		// Set the server header.
-		serverHeaders(w)
+		// Set the server headers, if not disabled
+		if !noHeaders {
+			serverHeaders(w)
+		}
 
 		// Share the directory or file
 		if hasdir {
