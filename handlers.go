@@ -233,6 +233,24 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 
 		return
 
+	case ".scss":
+
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
+		scssblock, err := cache.read(filename, shouldCache(ext))
+		if err != nil {
+			if debugMode {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", filename, err)
+			}
+			return
+		}
+
+		// Render the SASS page as CSS
+		scssPage(w, req, filename, scssblock.MustData())
+
+		return
+
 	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")

@@ -43,6 +43,28 @@ type FileStat struct {
 	exMut   *sync.RWMutex
 }
 
+// Used for temporarily silencing stdout by redirecting to /dev/null or NUL
+type Output struct {
+	stdout  *os.File
+	enabled bool
+}
+
+// Disable output to stdout
+func (o *Output) disable() {
+	if !o.enabled {
+		o.stdout = os.Stdout
+		os.Stdout, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0644)
+		o.enabled = true
+	}
+}
+
+// Enable output to stdout
+func (o *Output) enable() {
+	if o.enabled {
+		os.Stdout = o.stdout
+	}
+}
+
 // NewFileStat creates a new FileStat struct, with optional caching.
 // Only use the caching if it is not critical that os.Stat is always correct.
 func NewFileStat(useCache bool, repeatedlyClearStatCache time.Duration) *FileStat {
@@ -212,7 +234,8 @@ func getFilenames(dirname string) []string {
 
 // Easy way to output a HTML page
 func easyPage(title, body, theme string) string {
-	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, builtinExtraHTML[theme], builtinThemes[theme], title, body)
+	//return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, builtinExtraHTML[theme], builtinThemes[theme], title, body)
+	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, "", builtinThemes[theme], title, body)
 }
 
 // Easy way to build links to directories

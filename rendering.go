@@ -9,6 +9,7 @@ import (
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
+	"github.com/wellington/sass/compiler"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
@@ -40,7 +41,7 @@ var (
 	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean", "redbox": "railscasts"}
 
 	// Extra HTML tags for <head> per built-in theme
-	builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": "", "custom": ""}
+	//builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": "", "custom": ""}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -257,7 +258,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Load the default font in <head>
-	head.WriteString(builtinExtraHTML[defaultTheme])
+	//head.WriteString(builtinExtraHTML[defaultTheme])
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
@@ -537,7 +538,7 @@ func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdat
 		}
 		return
 	}
-	// Write the resulting GCSS to the client
+	// Write the resulting CSS to the client
 	NewDataBlock(buf.Bytes()).ToClient(w, req)
 }
 
@@ -569,4 +570,26 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 		// Write the generated data to the client
 		NewDataBlock(data).ToClient(w, req)
 	}
+}
+
+// Write the given source bytes as SCSS converted to CSS, to a writer.
+// filename is only used if there are errors.
+func scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
+	// Silence the compiler output
+	o := Output{}
+	o.disable()
+	// Compile the given filename. Sass might want to import other file, which is probably
+	// why the Sass compiler doesn't support just taking in a slice of bytes.
+	cssString, err := compiler.Run(filename)
+	o.enable()
+	if err != nil {
+		if debugMode {
+			fmt.Fprintf(w, "Could not compile SCSS:\n\n%s\n%s", err, string(scssdata))
+		} else {
+			log.Errorf("Could not compile SCSS:\n%s\n%s", err, string(scssdata))
+		}
+		return
+	}
+	// Write the resulting CSS to the client
+	NewDataBlock([]byte(cssString)).ToClient(w, req)
 }
