@@ -54,6 +54,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Find a way to redirect while preserving headers and/or use a mux package.
 - [ ] Implement a documentation server that can convert files with pandoc.
 - [ ] Make it easy to apply patches on the fly, when GET-ting the resulting file
 - [ ] Built in support for running the Lua REPL in the browser (possibly by
