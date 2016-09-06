@@ -2,7 +2,6 @@
 
 Priority 1
 ----------
-- [ ] Use [highlightjs](https://highlightjs.org) when rendering Markdown
 - [ ] Check the memory use when serving many large files in quick succession.
 - [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Add a flag for caching to the database backend instead of to memory.
@@ -16,6 +15,7 @@ Priority 1
       for playing and downloading videos.
 - [ ] Terminal recording demonstrating the Lua interpreter.
 - [ ] Terminal recording demostrating creating a simple register+login site.
+- [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
 
 Priority 2
 ----------

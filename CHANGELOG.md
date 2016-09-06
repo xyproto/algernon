@@ -1,0 +1,55 @@
+# Changelog
+
+Changes from 1.0 to 1.1
+=======================
+
+General
+-------
+
+* Tested with Go 1.7
+* Added PostgreSQL >= 9.1 support (with the HSTORE feature).
+* Added two built-in themes for error pages, directory listings and Markdown.
+* Added a `--theme` flag for selecting a theme.
+* Added a `--nocache` flag for disabling caching.
+* Added default HTTP headers, for security.
+* Algernon servers now get A+ at https://securityheaders.io/.
+* Added a `--noheader` flag for disabling security-related HTTP headers.
+* Switched back to the official pongo2 repo after a pull request was merged.
+
+Lua
+---
+
+* Added a `pprint` function for slightly prettier printing.
+* Added a `ppstr` function for slightly prettier printing, but to a string.
+* Let `redirect` take an optional HTTP status code.
+* Added a `permanent_redirect` function which only takes an URL.
+* Let `dofile` search the directory of the Lua file that is running.
+* Fixed an issue with returning HTTP status codes from Lua in Debug mode.
+* Renamed `toJSON` to just `JSON`. Both are still present and still work.
+
+Markdown
+--------
+
+* Can now select a built-in theme with `theme:`.
+* Can now select the highlight.js theme with `code_style:`.
+
+REPL
+----
+
+* More graceful shutdown upon SIGHUP on Linux.
+
+Deployment
+----------
+
+* Minor improvements to the `alg2docker` script.
+
+Samples and documentation
+-------------------------
+
+* Fixed several minor typos.
+* Added an URL location check in the "bob" sample.
+
+1.0
+===
+
+* Release
