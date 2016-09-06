@@ -230,7 +230,7 @@ func main() {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
-			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false); errConf != nil {
+			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false, defaultTheme); errConf != nil {
 				if perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					fatalExit(errConf)
@@ -250,13 +250,13 @@ func main() {
 		if verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true); errLua != nil {
+		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true, defaultTheme); errLua != nil {
 			log.Error("Error in Lua server script: " + luaServerFilename)
 			fatalExit(errLua)
 		}
 	} else {
 		// Register HTTP handler functions
-		registerHandlers(mux, "/", serverDir, perm, luapool, cache, serverAddDomain)
+		registerHandlers(mux, "/", serverDir, perm, luapool, cache, serverAddDomain, defaultTheme)
 	}
 
 	// Set the values that has not been set by flags nor scripts

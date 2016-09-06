@@ -12,7 +12,7 @@ import (
 )
 
 // Directory listing
-func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname string) {
+func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
 	var buf bytes.Buffer
 	for _, filename := range getFilenames(dirname) {
 
@@ -51,9 +51,9 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 
 	var htmldata []byte
 	if buf.Len() > 0 {
-		htmldata = []byte(easyPage(title, buf.String()))
+		htmldata = []byte(easyPage(title, buf.String(), theme))
 	} else {
-		htmldata = []byte(easyPage(title, "Empty directory"))
+		htmldata = []byte(easyPage(title, "Empty directory", theme))
 	}
 
 	// If the auto-refresh feature has been enabled
@@ -70,7 +70,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 // Serve a directory. The directory must exist.
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, theme string) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -90,5 +90,5 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 		}
 	}
 	// Serve a directory listing of no index file is found
-	directoryListing(w, req, rootdir, dirname)
+	directoryListing(w, req, rootdir, dirname, theme)
 }

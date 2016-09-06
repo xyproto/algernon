@@ -12,7 +12,7 @@ import (
 )
 
 // Make functions related to handling HTTP requests available to Lua scripts
-func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus) {
+func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
 
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1)
@@ -36,7 +36,7 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		} else {
 			limiter := tollbooth.NewLimiter(limitRequests, time.Second)
 			limiter.MessageContentType = "text/html; charset=utf-8"
-			limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
+			limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 			mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, wrappedHandleFunc))
 		}
 
@@ -48,7 +48,7 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
 
-		registerHandlers(mux, handlePath, rootdir, perm, luapool, cache, addDomain)
+		registerHandlers(mux, handlePath, rootdir, perm, luapool, cache, addDomain, theme)
 
 		return 0 // number of results
 	}))

@@ -340,8 +340,8 @@ func serverHeaders(w http.ResponseWriter) {
 }
 
 // When a file is not found
-func noPage(filename string) string {
-	return easyPage("Not found", "File not found: "+filename)
+func noPage(filename, theme string) string {
+	return easyPage("Not found", "File not found: "+filename, theme)
 }
 
 func initializeMime() {
@@ -360,7 +360,7 @@ func getDomain(req *http.Request) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool) {
+func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool, theme string) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
@@ -401,7 +401,7 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, servedir, dirname, perm, luapool, cache)
+			dirPage(w, req, servedir, dirname, perm, luapool, cache, theme)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
@@ -410,7 +410,7 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, noPage(filename))
+		fmt.Fprint(w, noPage(filename, theme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not
@@ -419,7 +419,7 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 	} else {
 		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
-		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>")
+		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

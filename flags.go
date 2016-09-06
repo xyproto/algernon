@@ -137,6 +137,9 @@ var (
 
 	// Markdown mode
 	markdownMode bool
+
+	// Theme for Markdown and error pages
+	defaultTheme string
 )
 
 func usage() {
@@ -208,6 +211,10 @@ Available flags:
   -m                           View the given Markdown file in the browser.
                                Quits after the file has been served once.
                                ("-m" is equivalent to "-q -o -z").
+  --theme=NAME                 Builtin theme to use for Markdown, error pages and
+                               directory listings.
+                               Use a style.css file for customizing further.
+                               Possible values are: "gray" and "dark".
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
@@ -215,6 +222,7 @@ Available flags:
                                (same as -boltdb=/dev/null).
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
+
 
   Examples
 
@@ -301,6 +309,7 @@ func handleFlags(serverTempDir string) string {
 	flag.BoolVar(&quitAfterFirstRequest, "quit", false, "Quit after the first request")
 	flag.BoolVar(&noCache, "nocache", false, "Disable caching")
 	flag.BoolVar(&noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
+	flag.StringVar(&defaultTheme, "theme", "gray", "Theme for Markdown and directory listings")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

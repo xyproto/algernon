@@ -211,8 +211,8 @@ func getFilenames(dirname string) []string {
 }
 
 // Easy way to output a HTML page
-func easyPage(title, body string) string {
-	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, defaultFont, defaultStyle, title, body)
+func easyPage(title, body, theme string) string {
+	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, builtinFonts[theme], builtinThemes[theme], title, body)
 }
 
 // Easy way to build links to directories

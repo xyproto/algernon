@@ -22,20 +22,19 @@ import (
 const (
 	// Default stylesheet filename (GCSS)
 	defaultStyleFilename = "style.gcss"
+)
 
-	// Default highlight.js style for Markdown
+var (
+	// The available built-in CSS themes. Corresponds with the font themes below.
+	builtinThemes = map[string]string{"gray": "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 4.5em; font-size: 1em; } a { color: #401010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }",
+		"dark": "body { background-color: #101010; color: #f0f0f0; font-family: 'Lato', sans-serif; font-weight: 400;  margin: 4.5em; font-size: 1em; } a { color: #c0a0a0; font-family: courier; } a:hover { color: #f0a0a0; } a:active { color: yellow; } h1 { color: #f0f0f0; }"}
+
+	// The available font themes
+	builtinFonts = map[string]string{"gray": "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>", "dark": "<link href='//fonts.googleapis.com/css?family=Lato:400' rel='stylesheet' type='text/css'>"}
+
+	// Built in themes corresponding to highlight.js styles
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
-	defaultCodeStyle = "color-brewer"
-
-	// Default markdown style
-	defaultTheme = "default"
-
-	// The default font
-	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
-
-	// The default CSS style
-	// Will be used for directory listings and rendering unstyled markdown pages
-	defaultStyle = "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 4.5em; font-size: 1em; } a { color: #4010010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }"
+	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "atom-one-dark"}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -155,7 +154,7 @@ func highlightHTML(code_style string) string {
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and code_style information
-	given := map[string]string{"title": "", "code_style": defaultCodeStyle, "theme": defaultTheme}
+	given := map[string]string{"title": "", "code_style": defaultCodeStyles[defaultTheme], "theme": defaultTheme}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
@@ -214,8 +213,14 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		head.WriteString(`<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
-		// If not, use the default style in <head>
-		head.WriteString("<style>" + defaultStyle + "</style>")
+		// If not, use the theme by inserting the CSS style directly
+		theme := given["theme"]
+		if theme == "" {
+			head.WriteString("<style>" + builtinThemes[defaultTheme] + "</style>")
+		} else {
+			// TODO: Add check for if the theme is valid! Use defaultTheme if not.
+			head.WriteString("<style>" + builtinThemes[theme] + "</style>")
+		}
 	}
 
 	// Add syntax highlighting
@@ -231,7 +236,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Load the default font in <head>
-	head.WriteString(defaultFont)
+	head.WriteString(builtinFonts[defaultTheme])
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
