@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -78,6 +79,10 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 
 	// If the URL does not end with a slash, redirect to an URL that does
 	if !strings.HasSuffix(req.URL.Path, "/") {
+		if req.Method == "POST" {
+			log.Warn("Redirecting a POST request: " + req.URL.Path + " -> " + req.URL.Path + "/.")
+			log.Warn("Header data may be lost! Please add the missing slash.")
+		}
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
 		return
 	}
