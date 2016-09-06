@@ -880,6 +880,24 @@ run(string) -> table
 dir([table]) -> string
 ~~~
 
+Markdown
+--------
+
+Algernon can be used as a quick Markdown viewer with the `-m` flag.
+
+Try `algernon -m README.md` to view `README.md` in the browser, serving the file once on a port >3000.
+
+In addition to the regular Markdown syntax, Algernon supports setting the page title and syntax highlight style with a header comment like this at the top of a Markdown file:
+
+```
+<!--
+title: Page title
+code_theme: default
+-->
+```
+
+Code is highlighted with [highlight.js](https://highlightjs.org/) and [several styles](https://highlightjs.org/static/demo/) are available.
+
 
 Releases
 --------

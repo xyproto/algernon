@@ -23,9 +23,12 @@ const (
 	// Default stylesheet filename (GCSS)
 	defaultStyleFilename = "style.gcss"
 
-	// Default syntax highlighting theme for Markdown
-	// See https://rawgit.com/google/code-prettify/master/styles/index.html for more themes
-	defaultTheme = "sunburst"
+	// Default highlight.js style for Markdown
+	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
+	defaultCodeStyle = "agate"
+
+	// Default markdown style
+	defaultTheme = "default"
 
 	// The default font
 	defaultFont = "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>"
@@ -144,10 +147,15 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 
 }
 
+// HTML to be added for enabling highlighting.
+func highlightHTML(code_style string) string {
+	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/` + code_style + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
+}
+
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
-	// Prepare for receiving title and code_theme information
-	given := map[string]string{"title": "", "code_theme": defaultTheme}
+	// Prepare for receiving title and code_style information
+	given := map[string]string{"title": "", "code_style": defaultCodeStyle, "theme": defaultTheme}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
@@ -211,7 +219,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Add syntax highlighting
-	head.WriteString(highlightHTML(given["code_theme"]))
+	head.WriteString(highlightHTML(given["code_style"]))
 	htmlbody = highlightHTMLcode(htmlbody)
 
 	// Add meta tags, if metadata information has been declared

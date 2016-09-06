@@ -13,21 +13,14 @@ const (
 	preHighlight  = "<font style='color: red !important'>"
 	postHighlight = "</font>"
 
-	// Syntax highlighting theme for errors
-	//errorTheme = "default"
-
 	hiBackgroundColor = "#202228"
 )
 
-// HTML to be added for enabling highlighting.
-func highlightHTML(theme string) string {
-	return `<script src="//cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=` + theme + `"></script>`
-}
-
+// Highlight a block of HTML by adding <pre><code> and styling
 func highlightHTMLcode(htmlbody string) string {
 	// Change <pre><code to <pre class="prettyprint"><code
-	htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
-	htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
+	//htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
+	//htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
 	return htmlbody
 }
 
