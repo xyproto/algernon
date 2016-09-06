@@ -34,7 +34,7 @@ var (
 
 	// Built in themes corresponding to highlight.js styles
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
-	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "atom-one-dark"}
+	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "obsidian"}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -191,6 +191,11 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		}
 	}
 
+	theme := given["theme"]
+	if theme == "" {
+		theme = defaultTheme
+	}
+
 	var head bytes.Buffer
 
 	// If style.gcss is present, use that style in <head>
@@ -214,17 +219,16 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		head.WriteString(`<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
-		theme := given["theme"]
-		if theme == "" {
-			head.WriteString("<style>" + builtinThemes[defaultTheme] + "</style>")
-		} else {
-			// TODO: Add check for if the theme is valid! Use defaultTheme if not.
-			head.WriteString("<style>" + builtinThemes[theme] + "</style>")
-		}
+		head.WriteString("<style>" + builtinThemes[theme] + "</style>")
 	}
 
 	// Add syntax highlighting
-	head.WriteString(highlightHTML(given["code_style"]))
+	code_style := given["code_style"]
+	if code_style == "" {
+		head.WriteString(highlightHTML(defaultCodeStyles[theme]))
+	} else {
+		head.WriteString(highlightHTML(code_style))
+	}
 	htmlbody = highlightHTMLcode(htmlbody)
 
 	// Add meta tags, if metadata information has been declared
