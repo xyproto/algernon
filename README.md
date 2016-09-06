@@ -893,7 +893,7 @@ In addition to the regular Markdown syntax, Algernon supports setting the page t
 <!--
 title: Page title
 theme: dark
-code_style: ocean
+code_style: obsidian
 -->
 ```
 

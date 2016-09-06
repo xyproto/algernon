@@ -34,7 +34,7 @@ var (
 
 	// Built in themes corresponding to highlight.js styles
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
-	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "obsidian"}
+	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean"}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -154,7 +154,7 @@ func highlightHTML(code_style string) string {
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and code_style information
-	given := map[string]string{"title": "", "code_style": defaultCodeStyles[defaultTheme], "theme": defaultTheme}
+	given := map[string]string{"title": "", "code_style": "", "theme": ""}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
