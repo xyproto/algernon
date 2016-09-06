@@ -25,7 +25,7 @@ const (
 
 	// Default highlight.js style for Markdown
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
-	defaultCodeStyle = "agate"
+	defaultCodeStyle = "color-brewer"
 
 	// Default markdown style
 	defaultTheme = "default"
