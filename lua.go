@@ -114,7 +114,8 @@ func map2table(L *lua.LState, m map[string]string) *lua.LTable {
 // map[string]string, map[string]int, map[int]string, map[int]int
 // If no suitable keys and values are found, a nil interface is returned.
 // If several different types are found, the returned bool is true.
-func table2map(luaTable *lua.LTable) (interface{}, bool) {
+// TODO: Look into that gopher-lua module that are made for converting to and from Lua tables. It will be cleaner.
+func table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
 
 	mapSS, mapSI, mapIS, mapII := table2maps(luaTable)
 
@@ -126,18 +127,34 @@ func table2map(luaTable *lua.LTable) (interface{}, bool) {
 	total := lss + lsi + lis + lii
 
 	// Return the first map that has values
-	if lss > 0 {
-		//log.Println(key, "STRING -> STRING map")
-		return interface{}(mapSS), lss < total
-	} else if lsi > 0 {
-		//log.Println(key, "STRING -> INT map")
-		return interface{}(mapSI), lsi < total
-	} else if lis > 0 {
-		//log.Println(key, "INT -> STRING map")
-		return interface{}(mapIS), lis < total
-	} else if lii > 0 {
-		//log.Println(key, "INT -> INT map")
-		return interface{}(mapII), lii < total
+	if !preferInt {
+		if lss > 0 {
+			//log.Println(key, "STRING -> STRING map")
+			return interface{}(mapSS), lss < total
+		} else if lsi > 0 {
+			//log.Println(key, "STRING -> INT map")
+			return interface{}(mapSI), lsi < total
+		} else if lis > 0 {
+			//log.Println(key, "INT -> STRING map")
+			return interface{}(mapIS), lis < total
+		} else if lii > 0 {
+			//log.Println(key, "INT -> INT map")
+			return interface{}(mapII), lii < total
+		}
+	} else {
+		if lii > 0 {
+			//log.Println(key, "INT -> INT map")
+			return interface{}(mapII), lii < total
+		} else if lis > 0 {
+			//log.Println(key, "INT -> STRING map")
+			return interface{}(mapIS), lis < total
+		} else if lsi > 0 {
+			//log.Println(key, "STRING -> INT map")
+			return interface{}(mapSI), lsi < total
+		} else if lss > 0 {
+			//log.Println(key, "STRING -> STRING map")
+			return interface{}(mapSS), lss < total
+		}
 	}
 
 	return nil, false
@@ -544,7 +561,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 
 			// Convert the table to a map and save it.
 			// Ignore values of a different type.
-			mapinterface, _ := table2map(luaTable)
+			mapinterface, _ := table2map(luaTable, false)
 			switch m := mapinterface.(type) {
 			case map[string]string:
 				funcs[key.String()] = map[string]string(m)

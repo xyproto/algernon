@@ -2,10 +2,9 @@
 
 Priority 1
 ----------
-- [ ] Better syntax highlighting when rendering Markdown.
-- [ ] Make toJSON(run("ls"), 4) sort entries by numerical value.
-- [ ] When requests are handled, spawn each switch/case as a Go routine.
-      Benchmark to see if there is a difference.
+- [ ] Use [highlightjs](https://highlightjs.org) when rendering Markdown
+- [ ] Check the memory use when serving many large files in quick succession.
+- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
@@ -20,9 +19,10 @@ Priority 1
 
 Priority 2
 ----------
-- [ ] Server side support for https://github.com/gmetais/sw-delta
+- [ ] When requests are handled, spawn each switch/case as a Go routine.
+      Benchmark to see if there is a difference.
 - [ ] Render JavaScript server-side by using my fork of Otto.
-- [ ] Parse options with https://github.com/docopt/docopt.go
+- [ ] Server side support for https://github.com/gmetais/sw-delta
 - [ ] Add an option for using brotly compression instead of gzip.
 - [ ] Larger selection of built-in Markdown styles, with a flag for dumping
       them as a style.gcss, for easy modification. Or use a system directory
@@ -54,6 +54,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Implement a documentation server that can convert files with pandoc.
 - [ ] Make it easy to apply patches on the fly, when GET-ting the resulting file
 - [ ] Built in support for running the Lua REPL in the browser (possibly by
       using "gotty", either as a package or wrapped in a script).
@@ -194,10 +195,11 @@ Documentation and samples
 
 Lua
 ---
+- [ ] Add a function named "sort" for quickly sorting tables by key or by value, numerical or lexical.
 - [ ] Add a Lua function ForEach that takes a data structure and a function
       that takes a key and a value.
 - [ ] Wrap JNode in the same way as JFile.
-- [ ] Deprecate "toJSON" and create some sort of JSON object that returns the string by default.
+- [ ] Change the "JSON" function and create some sort of JSON object that returns the string by default.
 - [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries.
       (Like `require`, but over http). (possibly luarocks packages).
@@ -209,10 +211,10 @@ Lua
 
 Performance
 -----------
-- [ ] Minify CSS, JS and HTML (enabled by default, can be disabled)
+- [ ] Minify CSS, JS and HTML (as enabled by default, but can be disabled)
 - [ ] Find a reliable way of measuring speed and emulating users.
       gor? https://github.com/buger/gor
-- [ ] Cache compiled templates as well, not only the final result.
+- [ ] Cache compiled templates as well, not just the final result.
 
 
 Unusual features

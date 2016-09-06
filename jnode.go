@@ -387,8 +387,13 @@ func exportJSONFunctions(L *lua.LState) {
 		)
 		table := L.ToTable(1)
 
-		// Convert the Lua table to a map that can be used when converting
-		// to JSON (map[string]interface{})
+		//
+		// NOTE:
+		//   JSON keys in maps are always strings!
+		//   See: https://stackoverflow.com/questions/24284612/failed-to-json-marshal-map-with-non-string-keys
+		//
+
+		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
 		mapinterface := table2interfacemap(table)
 
 		// If an optional argument is supplied, indent the given number of spaces
@@ -411,8 +416,8 @@ func exportJSONFunctions(L *lua.LState) {
 	})
 
 	// Convert a table to JSON
-	L.SetGlobal("toJSON", toJSON)
+	L.SetGlobal("JSON", toJSON)
+	L.SetGlobal("toJSON", toJSON) // Alias for backward compatibility
 	L.SetGlobal("ToJSON", toJSON) // Alias for backward compatibility
-	L.SetGlobal("JSON", toJSON)   // Alias for backward compatibility
 
 }

@@ -172,7 +172,7 @@ Available flags:
                                "off"     - Disable caching.
   --cachesize=N                Set the total cache size, in bytes.
   --nocache                    Another way to disable the caching.
-  --noheaders                  Don't set any HTTP headers by default.
+  --noheaders                  Don't use the security-related HTTP headers.
   --rawcache                   Disable cache compression.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.

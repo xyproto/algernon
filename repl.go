@@ -151,7 +151,7 @@ jfile:add([string, ]string) -> bool
 jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
 // Takes an optional number of spaces to indent the JSON data.
-toJSON(table[, number]) -> string
+JSON(table[, number]) -> string
 // Create a JSON document node.
 JNode() -> userdata
 // Add JSON data to a node. The first argument is an optional JSON path.
