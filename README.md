@@ -17,7 +17,7 @@ Running within Docker: [xyproto/algernon](https://hub.docker.com/r/xyproto/alger
 Quick installation
 ------------------
 
-`go get gopkg.in/xyproto/algernon.v1.1`
+`go get gopkg.in/xyproto/algernon.v1`
 
 Technologies
 ------------
