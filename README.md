@@ -889,13 +889,11 @@ Try `algernon -m README.md` to view `README.md` in the browser, serving the file
 
 In addition to the regular Markdown syntax, Algernon supports setting the page title and syntax highlight style with a header comment like this at the top of a Markdown file:
 
-```
-<!--
-title: Page title
-theme: dark
-code_style: obsidian
--->
-```
+    <!--
+    title: Page title
+    theme: dark
+    code_style: obsidian
+    -->
 
 Code is highlighted with [highlight.js](https://highlightjs.org/) and [several styles](https://highlightjs.org/static/demo/) are available.
 
