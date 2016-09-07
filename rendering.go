@@ -183,6 +183,11 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		}
 	}
 
+	// Checkboxes
+	htmlbody = strings.Replace(htmlbody, "<li>[ ] ", "<li><input type=\"checkbox\" disabled> ", everyInstance)
+	htmlbody = strings.Replace(htmlbody, "<li>[x] ", "<li><input type=\"checkbox\" disabled checked> ", everyInstance)
+	htmlbody = strings.Replace(htmlbody, "<li>[X] ", "<li><input type=\"checkbox\" disabled checked> ", everyInstance)
+
 	// If there is no given title, use the h1title
 	title := given["title"]
 	if title == "" {
