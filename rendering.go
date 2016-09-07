@@ -26,15 +26,18 @@ const (
 
 var (
 	// The available built-in CSS themes. Corresponds with the font themes below.
-	builtinThemes = map[string]string{"gray": "body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 4.5em; font-size: 1em; } a { color: #401010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }",
-		"dark": "body { background-color: #101010; color: #f0f0f0; font-family: 'Lato', sans-serif; font-weight: 400;  margin: 4.5em; font-size: 1em; } a { color: #c0a0a0; font-family: courier; } a:hover { color: #f0a0a0; } a:active { color: yellow; } h1 { color: #f0f0f0; }"}
-
-	// The available font themes
-	builtinFonts = map[string]string{"gray": "<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>", "dark": "<link href='//fonts.googleapis.com/css?family=Lato:400' rel='stylesheet' type='text/css'>"}
+	builtinThemes = map[string]string{
+		"gray":   "@import url(//fonts.googleapis.com/css?family=Lato:300); body { background-color: #e7eaed; color: #0b0b0b; font-family: 'Lato', sans-serif; font-weight: 300;  margin: 4.5em; font-size: 1em; } a { color: #401010; font-family: courier; } a:hover { color: #801010; } a:active { color: yellow; } h1 { color: #101010; }",
+		"dark":   "@import url(//fonts.googleapis.com/css?family=Lato:400); body { background-color: #101010; color: #f0f0f0; font-family: 'Lato', sans-serif; font-weight: 400;  margin: 4.5em; font-size: 1em; } a { color: #c0a0a0; font-family: courier; } a:hover { color: #f0a0a0; } a:active { color: yellow; } h1 { color: #f0f0f0; }",
+		"redbox": "@import url(//fonts.googleapis.com/css?family=Monoton|Monofett);html{background-color:#222;}body{color:#111;background-color:#999;font-family:Monofett, cursive;font-size:2em;margin:2.7em;padding:0 5em 1em 2em;border-radius:50px;border:solid 10px #a00;box-shadow:10px 10px 16px black, 6px 6px 8px #222 inset;display:inline-block;}h2{font-family:Monoton, cursive;color:black;}ul{margin-left:1em;}li{list-style:none;}li:hover{color:#d00;}",
+	}
 
 	// Built in themes corresponding to highlight.js styles
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
-	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean"}
+	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean", "redbox": "ocean"}
+
+	// Extra HTML tags for <head> per built-in theme
+	builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": ""}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -240,7 +243,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Load the default font in <head>
-	head.WriteString(builtinFonts[defaultTheme])
+	head.WriteString(builtinExtraHTML[defaultTheme])
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
