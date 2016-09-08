@@ -2,40 +2,49 @@
 
 Priority 1
 ----------
-- [ ] Check the memory use when serving many large files in quick succession.
-- [ ] Parse options with https://github.com/docopt/docopt.go
+- [ ] Fork and modify the wellington sass package to read from bytes.
+- [ ] Add support for Handlebars: https://github.com/aymerick/raymond
+- [ ] Add support for [Ghost](https://ghost.org) themes.
 - [ ] Add a flag for caching to the database backend instead of to memory.
-- [ ] Provide a Lua sample/command for listing files and directories with dates
-      and sizes.
-- [ ] Make it possible to stream music or video without the connection timing
-      out before the playback has finished.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
 - [ ] Handle .avi and other multimedia files better. Display a pretty page
       for playing and downloading videos.
-- [ ] Terminal recording demonstrating the Lua interpreter.
-- [ ] Terminal recording demostrating creating a simple register+login site.
 - [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
 
 Priority 2
 ----------
+- [ ] Check the memory use when serving many large files in quick succession.
+- [ ] Make it possible to stream music or video without the connection timing
+      out before the playback has finished.
+- [ ] Server side support for https://github.com/gmetais/sw-delta
+- [ ] Support for websockets (port a small multiplayer game to test).
+- [ ] User management interface + web REPL + stats + logs + import/export data
+      + .alg launcher.
+- [ ] Algernon Application Hub.
+
+Documentation/tutorials
+-----------------------
+- [ ] Terminal recording demostrating creating a simple register+login site.
+- [ ] Terminal recording demonstrating the Lua interpreter.
+- [ ] Video tutorials and screencasts.
+- [ ] Update the book to be more similar to the python Flask documentation.
+
+Priority 3
+----------
+- [ ] Parse options with https://github.com/docopt/docopt.go
 - [ ] When requests are handled, spawn each switch/case as a Go routine.
       Benchmark to see if there is a difference.
 - [ ] Render JavaScript server-side by using my fork of Otto.
-- [ ] Server side support for https://github.com/gmetais/sw-delta
 - [ ] Add an option for using brotly compression instead of gzip.
 - [ ] Larger selection of built-in Markdown styles, with a flag for dumping
       them as a style.gcss, for easy modification. Or use a system directory
       for this.
 - [ ] Use https://github.com/irfansharif/cfilter for potentially faster cache
       lookups.
-- [ ] Support for websockets (port a small multiplayer game to test).
 - [ ] Add support for systemd reload, not just restart.
-- [ ] Video tutorials and screencasts.
 - [ ] Support [HAML](https://github.com/travissimon/ghaml) and
       [Sass](https://github.com/wellington/sass).
-- [ ] User management interface + web REPL + stats + logs + import/export data
-      + .alg launcher.
 - [ ] Document how to read JSON from one place and output processed
       data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser,
@@ -54,7 +63,8 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
-- [ ] Support [Ghost](https://ghost.org) themes.
+- [ ] Provide a Lua sample/command for listing files and directories with dates
+      and sizes.
 - [ ] Find a way to redirect while preserving headers and/or use a mux package.
 - [ ] Implement a documentation server that can convert files with pandoc.
 - [ ] Make it easy to apply patches on the fly, when GET-ting the resulting file
