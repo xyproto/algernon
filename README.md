@@ -62,7 +62,8 @@ Features and limitations
 * The Algernon executable is compiled to native and is reasonably fast.
 * Works on Linux, OS X and 64-bit Windows.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
-* The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (there is an auto-refresh feature).
+* Live editing/preview when using the auto-refresh feature.
+* The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (or when the Lua file is modified, if using auto-refresh).
 * Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
 * Built-in support for [Markdown](https://github.com/russross/blackfriday), [Pongo2](https://github.com/flosch/pongo2), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * Redis is used for the database backend, by default.
