@@ -898,6 +898,8 @@ In addition to the regular Markdown syntax, Algernon supports setting the page t
 
 Code is highlighted with [highlight.js](https://highlightjs.org/) and [several styles](https://highlightjs.org/static/demo/) are available.
 
+The theme can alternatively be a path to a CSS file, or `style.gcss` can exist in the same directory.
+
 
 Releases
 --------

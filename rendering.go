@@ -22,6 +22,9 @@ import (
 const (
 	// Default stylesheet filename (GCSS)
 	defaultStyleFilename = "style.gcss"
+
+	// highlight.js style for custom CSS
+	defaultCustomCodeStyle = "github"
 )
 
 var (
@@ -37,7 +40,7 @@ var (
 	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean", "redbox": "railscasts"}
 
 	// Extra HTML tags for <head> per built-in theme
-	builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": ""}
+	builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": "", "custom": ""}
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -202,6 +205,12 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	theme := given["theme"]
 	if theme == "" {
 		theme = defaultTheme
+	}
+
+	// If the theme is a filename, create a custom theme where the file is imported from the CSS
+	if strings.Contains(theme, ".") {
+		builtinThemes[theme] = "@import url(" + theme + ");"
+		defaultCodeStyles[theme] = defaultCustomCodeStyle
 	}
 
 	var head bytes.Buffer
