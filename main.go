@@ -235,7 +235,7 @@ func main() {
 					log.Error("Could not use configuration script: " + filename)
 					fatalExit(errConf)
 				} else {
-					log.Warn("Not running " + filename + ": the database backend is disabled")
+					log.Warn("Not running " + filename + " because the database backend is disabled.")
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
