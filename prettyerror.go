@@ -12,8 +12,6 @@ const (
 	// Highlight of errors in the code
 	preHighlight  = "<font style='color: red !important'>"
 	postHighlight = "</font>"
-
-	hiBackgroundColor = "#202228"
 )
 
 // Highlight a block of HTML by adding <pre><code> and styling

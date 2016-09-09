@@ -154,14 +154,14 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // HTML to be added for enabling highlighting.
-func highlightHTML(code_style string) string {
-	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/` + code_style + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
+func highlightHTML(codeStyle string) string {
+	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/` + codeStyle + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
-	// Prepare for receiving title and code_style information
-	given := map[string]string{"title": "", "code_style": "", "theme": ""}
+	// Prepare for receiving title and codeStyle information
+	given := map[string]string{"title": "", "codeStyle": "", "theme": ""}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
@@ -241,11 +241,11 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Add syntax highlighting
-	code_style := given["code_style"]
-	if code_style == "" {
+	codeStyle := given["codeStyle"]
+	if codeStyle == "" {
 		head.WriteString(highlightHTML(defaultCodeStyles[theme]))
 	} else {
-		head.WriteString(highlightHTML(code_style))
+		head.WriteString(highlightHTML(codeStyle))
 	}
 	htmlbody = highlightHTMLcode(htmlbody)
 

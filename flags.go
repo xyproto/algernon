@@ -24,8 +24,6 @@ const (
 	defaultCacheSize          = MiB             // 1 MiB
 	defaultCacheMaxEntitySize = 64 * KiB        // 64 KB
 	defaultStatCacheRefresh   = time.Minute * 1 // Refresh the stat cache, if the stat cache feature is enabled
-
-	forcedShutdownTimeout = 1 * time.Second
 )
 
 var (

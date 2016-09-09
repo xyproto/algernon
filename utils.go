@@ -43,7 +43,7 @@ type FileStat struct {
 	exMut   *sync.RWMutex
 }
 
-// Used for temporarily silencing stdout by redirecting to /dev/null or NUL
+// Output can be used for temporarily silencing stdout by redirecting to /dev/null or NUL
 type Output struct {
 	stdout  *os.File
 	enabled bool
