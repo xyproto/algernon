@@ -5,6 +5,7 @@ MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
 RUN apt-get -y update && apt-get -y install libreadline-dev
 RUN go get github.com/xyproto/algernon
+RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
 
 VOLUME /srv/algernon
 VOLUME /etc/algernon

@@ -9,7 +9,7 @@ import (
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
-	"github.com/wellington/sass/compiler"
+	"github.com/xyproto/sass/compiler"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"

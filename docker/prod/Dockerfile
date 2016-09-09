@@ -12,6 +12,7 @@ ENV PATH /go/bin/:$PATH
 
 ENV CGO_ENABLED=0
 RUN go get github.com/xyproto/algernon
+RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
 
 VOLUME /srv/algernon
 VOLUME /etc/algernon

@@ -3,8 +3,8 @@
 FROM golang:alpine
 MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
-RUN apk update && apk add bash curl git mercurial go && rm -rf /var/cache/apk/*
-# apk add subversion bzr openssh-client ca-certificates
+RUN apk update && apk add bash curl git mercurial go openssh-client && rm -rf /var/cache/apk/*
+# apk add subversion bzr ca-certificates
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
@@ -12,6 +12,7 @@ ENV PATH /go/bin/:$PATH
 
 ENV CGO_ENABLED=0
 RUN go get github.com/xyproto/algernon
+RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
 
 VOLUME /srv/algernon
 VOLUME /etc/algernon
