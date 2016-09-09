@@ -1,12 +1,12 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
+description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
 keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo4.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass, GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
@@ -22,7 +22,7 @@ Quick installation
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [risotto](https://github.com/mamaar/risotto) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 
 Design decisions
@@ -45,6 +45,7 @@ Design decisions
     * Markdown: .md (rendered as HTML)
     * Pongo2: .po2, .pongo2 or .tpl (rendered as any text, typically HTML)
     * Amber: .amber (rendered as HTML)
+    * Sass: .scss (rendered as CSS)
     * GCSS: .gcss (rendered as CSS)
     * JSX: .jsx (rendered as JavaScript/ECMAScript)
     * Lua: .lua (a script that provides its own output and content type)
@@ -65,12 +66,12 @@ Features and limitations
 * Live editing/preview when using the auto-refresh feature.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (or when the Lua file is modified, if using auto-refresh).
 * Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
-* Built-in support for [Markdown](https://github.com/russross/blackfriday), [Pongo2](https://github.com/flosch/pongo2), [Amber](https://github.com/eknkc/amber), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
+* Built-in support for [Markdown](https://github.com/russross/blackfriday), [Pongo2](https://github.com/flosch/pongo2), [Amber](https://github.com/eknkc/amber), [Sass](https://github.com/wellington/sass), [GCSS](https://github.com/yosssi/gcss) and [JSX](https://github.com/mamaar/risotto).
 * Redis is used for the database backend, by default.
 * Algernon will fall back to the built-in Bolt database if no Redis server is available.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
-* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
+* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Includes an interactive REPL.
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
 * Full multithreading. All available CPUs will be used.
@@ -119,11 +120,11 @@ Running Algernon (screenshot from an earlier version):
 
 ---
 
-The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS or GCSS, while data can be provided by a Lua script that talks to Redis, BoltDB, PostgreSQL or MariaDB/MySQL.
+The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS, Sass or GCSS, while data can be provided by a Lua script that talks to Redis, BoltDB, PostgreSQL or MariaDB/MySQL.
 
 Amber and GCSS is a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
-Pongo2, GCSS and Lua also combines well. Pongo2 is more flexible than Amber.
+Pongo2, Sass and Lua also combines well. Pongo2 is more flexible than Amber.
 
 The auto-refresh feature is supported when using Markdown, Pongo2 or Amber, and is useful to get an instant preview when developing.
 
@@ -141,7 +142,7 @@ Screenshots
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_markdown.png">
 
-*Markdown can easily be styled with GCSS.*
+*Markdown can easily be styled with Sass or GCSS.*
 
 ---
 
@@ -179,7 +180,7 @@ Getting started
 
 ##### Run Algernon in "dev" mode
 
-This enables debug mode, uses the internal Bolt database, uses regular HTTP instead of HTTPS+HTTP/2 and enables caching for all files except: Pongo2, Amber, Lua, GCSS, Markdown and JSX.
+This enables debug mode, uses the internal Bolt database, uses regular HTTP instead of HTTPS+HTTP/2 and enables caching for all files except: Pongo2, Amber, Lua, Sass, GCSS, Markdown and JSX.
 
 * `algernon -e`
 
@@ -328,19 +329,19 @@ Lua functions for formatted output
 ----------------------------------
 
 ~~~c
-// Output Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
+// Output rendered Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
 mprint(...)
 
-// Output Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
+// Output rendered Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
 aprint(...)
 
-// Output GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
+// Output rendered GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 gprint(...)
 
-// Output JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
+// Output rendered JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 jprint(...)
 
-// Output HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
+// Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
 poprint(...)
 ~~~
 

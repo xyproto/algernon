@@ -116,15 +116,15 @@ warn(...)
 err(...)
 // Output text. Takes a variable number of strings.
 print(...)
-// Output HTML given Markdown. Takes a variable number of strings.
+// Output rendered HTML given Markdown. Takes a variable number of strings.
 mprint(...)
-// Output HTML given Amber. Takes a variable number of strings.
+// Output rendered HTML given Amber. Takes a variable number of strings.
 aprint(...)
-// Output CSS given GCSS. Takes a variable number of strings.
+// Output rendered CSS given GCSS. Takes a variable number of strings.
 gprint(...)
-// Output JavaScript given JSX. Takes a variable number of strings.
+// Output rendered JavaScript given JSX. Takes a variable number of strings.
 jprint(...)
-// Output (mainly) HMTL given Pongo2. Takes a variable number of strings.
+// Output (mainly) rendered HMTL given Pongo2. Takes a variable number of strings.
 poprint(...)
 
 Cache
