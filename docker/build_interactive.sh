@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build -t algernon_interactive interactive/
+docker build --no-cache -t algernon_interactive interactive/

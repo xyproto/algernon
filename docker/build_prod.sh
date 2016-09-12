@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build -t algernon_prod prod/
+docker build --no-cache -t algernon_prod prod/

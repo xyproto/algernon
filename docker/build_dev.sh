@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build -t algernon_dev dev/
+docker build --no-cache -t algernon_dev dev/
