@@ -1,0 +1,56 @@
+package: github.com/xyproto/algernon
+import:
+- package: github.com/bobappleyard/readline
+- package: github.com/bradfitz/http2
+- package: github.com/didip/tollbooth
+- package: github.com/eknkc/amber
+- package: github.com/flosch/pongo2
+  version: ^3.0.0
+- package: github.com/klauspost/pgzip
+  version: ^1.0.0
+- package: github.com/mamaar/risotto
+  subpackages:
+  - generator
+  - parser
+- package: github.com/mitchellh/go-homedir
+- package: github.com/natefinch/pie
+- package: github.com/russross/blackfriday
+  version: ^1.4.0
+- package: github.com/sirupsen/logrus
+  version: ^0.10.0
+- package: github.com/tylerb/graceful
+  version: ^1.2.13
+- package: github.com/wellington/sass
+  subpackages:
+  - compiler
+- package: github.com/xyproto/jpath
+  version: ^0.5.0
+- package: github.com/xyproto/mime
+- package: github.com/xyproto/permissionbolt
+  version: ^2.0.0
+- package: github.com/xyproto/permissions2
+  version: ^2.2.0
+- package: github.com/xyproto/permissionsql
+  version: ^2.0.0
+- package: github.com/xyproto/permissionwrench
+- package: github.com/xyproto/pinterface
+  version: ^2.0.0
+- package: github.com/xyproto/recwatch
+  version: ^0.2.3
+- package: github.com/xyproto/simpleredis
+  version: ^2.0.0
+- package: github.com/xyproto/term
+- package: github.com/xyproto/unzip
+- package: github.com/yosssi/gcss
+  version: ^0.1.0
+- package: github.com/yuin/gluamapper
+- package: github.com/yuin/gopher-lua
+testImport:
+- package: github.com/bmizerany/assert
+- package: github.com/xyproto/cookie
+  version: ^1.0.0
+- package: github.com/xyproto/simplebolt
+  version: ^3.0.0
+- package: github.com/xyproto/simplehstore
+- package: github.com/xyproto/simplemaria
+  version: ^3.0.0
