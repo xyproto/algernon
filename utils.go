@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -19,11 +18,6 @@ const (
 	KiB = 1024
 	// MiB is a megabyte
 	MiB = 1024 * 1024
-)
-
-var (
-	// A selection of allowed keywords for the HTML meta tag
-	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 )
 
 // FileStat can cache calls to os.Stat. This requires that the user wants to
@@ -185,15 +179,6 @@ func (fs *FileStat) exists(path string) bool {
 	return err == nil
 }
 
-// Create an empty file if it doesn't exist
-//func touch(filename string) error {
-//	if !fs.exists(filename) {
-//		_, err := os.Create(filename)
-//		return err
-//	}
-//	return nil
-//}
-
 // Translate a given URL path to a probable full filename
 func url2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
@@ -232,22 +217,6 @@ func getFilenames(dirname string) []string {
 	return filenames
 }
 
-// Easy way to output a HTML page
-func easyPage(title, body, theme string) string {
-	//return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, builtinExtraHTML[theme], builtinThemes[theme], title, body)
-	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, "", builtinThemes[theme], title, body)
-}
-
-// Easy way to build links to directories
-func easyLink(text, url string, isDirectory bool) string {
-	// Add a final slash, if needed
-	if isDirectory {
-		text += "/"
-		url += "/"
-	}
-	return "<a href=\"/" + url + "\">" + text + "</a><br>"
-}
-
 // Build up a string on the form "functionname(arg1, arg2, arg3)"
 func infostring(functionName string, args []string) string {
 	s := functionName + "("
@@ -283,37 +252,6 @@ func oneLevelOfIndentation(data *[]byte, keyword string) string {
 	}
 	// Return an empty string, or whitespace for one level of indentation
 	return whitespace
-}
-
-// Add a link to a stylesheet in the given Amber code
-func linkToStyle(amberdata *[]byte, url string) {
-	// If the given url is not already mentioned and the data contains "body"
-	if !bytes.Contains(*amberdata, []byte(url)) && bytes.Contains(*amberdata, []byte("html")) && bytes.Contains(*amberdata, []byte("body")) {
-		// Extract one level of indendation
-		whitespace := oneLevelOfIndentation(amberdata, "body")
-		// Check if there already is a head section
-		if bytes.Contains(*amberdata, []byte("head")) {
-			// Add a link to the stylesheet
-			*amberdata = bytes.Replace(*amberdata, []byte("head\n"), []byte("head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
-
-		} else if bytes.Contains(*amberdata, []byte("body")) {
-
-			// Add a link to the stylesheet
-			*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
-		}
-	}
-}
-
-// Add a link to a stylesheet in the given HTML code
-func linkToStyleHTML(htmldata *[]byte, url string) {
-	// If the given url is not already mentioned and the data contains "body"
-	if !bytes.Contains(*htmldata, []byte(url)) && bytes.Contains(*htmldata, []byte("body")) {
-		if bytes.Contains(*htmldata, []byte("</head>")) {
-			*htmldata = bytes.Replace(*htmldata, []byte("</head>"), []byte("  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>"), 1)
-		} else if bytes.Contains(*htmldata, []byte("<body>")) {
-			*htmldata = bytes.Replace(*htmldata, []byte("<body>"), []byte("  <head>\n  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>\n  <body>"), 1)
-		}
-	}
 }
 
 // Filter []byte slices into two groups, depending on the given filter function
@@ -370,13 +308,6 @@ func extractKeywords(data []byte, special map[string]string) []byte {
 	return bytes.Join(regular, bnl)
 }
 
-// Add meta tag names to the given map
-func addMetaKeywords(keywords map[string]string) {
-	for _, keyword := range metaKeywords {
-		keywords[keyword] = ""
-	}
-}
-
 // Fatal exit
 func fatalExit(err error) {
 	// Log to file, if a log file is used
@@ -412,23 +343,6 @@ func quitSoon(msg string, soon time.Duration) {
 	abruptExit(msg)
 }
 
-// Insert doctype in HTML, if missing
-// Does not check if the given data is HTML. Assumes it to be HTML.
-func insertDoctype(htmldata []byte) []byte {
-	// If there are more than two lines
-	if bytes.Count(htmldata, []byte("\n")) > 2 {
-		fields := bytes.SplitN(htmldata, []byte("\n"), 3)
-		line1 := strings.ToLower(string(fields[0]))
-		line2 := strings.ToLower(string(fields[1]))
-		if strings.Contains(line1, "doctype") || strings.Contains(line2, "doctype") {
-			return htmldata
-		}
-		// Doctype is missing from the first two lines, add it
-		return []byte("<!doctype html>\n" + string(htmldata))
-	}
-	return htmldata
-}
-
 // Convert time.Duration to milliseconds, as a string (without "ms")
 func durationToMS(d time.Duration, multiplier float64) string {
 	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
@@ -450,10 +364,12 @@ func describeBytes(size int64) string {
 	return strconv.Itoa(int(round(float64(size)*100.0/MiB)/100)) + " MiB"
 }
 
+// Round a float64 to the nearest integer and return as a float64
 func roundf(x float64) float64 {
 	return math.Floor(0.5 + x)
 }
 
+// Round a float64 to the nearest integer
 func round(x float64) int64 {
 	return int64(roundf(x))
 }
