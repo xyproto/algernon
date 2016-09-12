@@ -63,6 +63,7 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
 - [ ] Find a way to redirect while preserving headers and/or use a mux package.
