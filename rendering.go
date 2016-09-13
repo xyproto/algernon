@@ -137,7 +137,7 @@ func highlightHTML(codeStyle string) string {
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and codeStyle information
-	given := map[string]string{"title": "", "codeStyle": "", "theme": ""}
+	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": ""}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
@@ -179,9 +179,17 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		}
 	}
 
+	// Find the theme that should be used
 	theme := given["theme"]
 	if theme == "" {
 		theme = defaultTheme
+	}
+
+	// Check if a specific string should be replaced with the current theme
+	replaceWithTheme := given["replace_with_theme"]
+	if replaceWithTheme != "" {
+		// Replace all instances of the value given with "replace_with_theme: ..." with the current theme name
+		htmlbody = strings.Replace(htmlbody, replaceWithTheme, theme, everyInstance)
 	}
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
@@ -217,7 +225,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Add syntax highlighting
-	codeStyle := given["codeStyle"]
+	codeStyle := given["codestyle"]
 	if codeStyle == "" {
 		head.WriteString(highlightHTML(defaultCodeStyles[theme]))
 	} else {
