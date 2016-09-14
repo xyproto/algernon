@@ -63,6 +63,9 @@ Report issues for Go / go vet / go lint
 
 Various
 -------
+- [ ] Port the layout and concept of werc to Algernon
+      See: http://werc.cat-v.org/ and
+      https://bitbucket.org/mischief/gowerc/src
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
 - [ ] Provide a Lua sample/command for listing files and directories with dates
       and sizes.
