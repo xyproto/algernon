@@ -1,0 +1,45 @@
+// Selector + child selectors
+html
+  font-size: 12px
+  color: #000
+  display: block
+  body
+    font-size: 1px
+    color: #001
+    &.class
+      font-size: 2px
+      color: #002
+    &#id
+      font-size: 3px
+      color: #003
+    &:visited
+      font-size: 4px
+      color: #004
+    &[name="test"]
+      font-size: 5px
+      color: #005
+    span, div
+      font-size: 6px
+      color: #006
+    span a
+      font-size: 7px
+      color: #007
+    & > div
+      font-size: 8px
+      color: #008
+    & + div
+      font-size: 9px
+      color: #009
+*
+  color: #fff
+nav
+  ul
+    margin: 0
+    padding: 0
+    list-style: none
+  li
+    display: inline-block
+  a
+    display: block
+    padding: 6px 12px
+    text-decoration: none

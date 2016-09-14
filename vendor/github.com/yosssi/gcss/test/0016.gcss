@@ -1,0 +1,23 @@
+$param2: black
+
+$test($param1, $param2)
+  font-size: $param1
+  color: $param2
+
+$test2($param)
+  div
+    display: $param
+    span
+      display: $param
+  &:hover
+    color: $param2
+
+html
+  body
+    display: block
+    $test(12px, blue)
+    margin: 0
+    $test2(none)
+    background: $not-exist-param
+    $not-exist-mixin()
+

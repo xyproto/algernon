@@ -1,0 +1,38 @@
+// Various types of a parent reference
+div
+  font-size: 12px
+  &:hover
+    color: blue
+  & span
+    font-size: 14px
+    a
+      color: red
+  header &
+    font-weight: bold
+    span
+      background-color: white
+  section
+    font-size: 11px
+    & a
+      color: yellow
+    span &
+      color: black
+
+.class1, .class2
+  font-size: 12px
+  &:hover
+    color: blue
+  & span
+    font-size: 14px
+    a
+      color: red
+  header &
+    font-weight: bold
+    span
+      background-color: white
+  section
+    font-size: 11px
+    & a
+      color: yellow
+    span &
+      color: black

@@ -1,0 +1,55 @@
+// At-rules which include mixins
+$color: black
+
+$mixin-for-media-1($font-size)
+  font-size: $font-size
+
+$mixin-for-media-2($background)
+  html
+    background: $background
+    color: $color
+
+$mixin-for-media-3()
+  h1
+    color: red
+
+$mixin-for-page($margin)
+  margin: $margin
+
+$mixin-for-font-face()
+  font-family: "Example Font"
+  src: url("http://www.example.com/fonts/example")
+
+@media screen, projection
+  $mixin-for-media-1(13px)
+  $mixin-for-media-2(red)
+  body
+    max-width: 35em
+    margin: 0 auto
+    $mixin-for-media-3()
+
+@media screen, projection
+  $mixin-for-media-2(red)
+
+@media print
+  $mixin-for-media-1(13px)
+  $mixin-for-media-2(red)
+  body
+    max-width: 35em
+    margin: 0 auto
+    $mixin-for-media-3()
+
+@page
+  $mixin-for-page(2.5cm)
+
+@page :left
+  $mixin-for-page(2.5cm)
+
+@page :right
+  $mixin-for-page(2.5cm)
+
+@page :first
+  $mixin-for-page(2.5cm)
+
+@font-face
+  $mixin-for-font-face()
