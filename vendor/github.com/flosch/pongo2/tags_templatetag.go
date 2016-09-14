@@ -1,9 +1,5 @@
 package pongo2
 
-import (
-	"bytes"
-)
-
 type tagTemplateTagNode struct {
 	content string
 }
@@ -19,20 +15,20 @@ var templateTagMapping = map[string]string{
 	"closecomment":  "#}",
 }
 
-func (node *tagTemplateTagNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) *Error {
-	buffer.WriteString(node.content)
+func (node *tagTemplateTagNode) Execute(ctx *ExecutionContext, writer TemplateWriter) *Error {
+	writer.WriteString(node.content)
 	return nil
 }
 
 func tagTemplateTagParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Error) {
-	tt_node := &tagTemplateTagNode{}
+	ttNode := &tagTemplateTagNode{}
 
-	if arg_token := arguments.MatchType(TokenIdentifier); arg_token != nil {
-		output, found := templateTagMapping[arg_token.Val]
+	if argToken := arguments.MatchType(TokenIdentifier); argToken != nil {
+		output, found := templateTagMapping[argToken.Val]
 		if !found {
-			return nil, arguments.Error("Argument not found", arg_token)
+			return nil, arguments.Error("Argument not found", argToken)
 		}
-		tt_node.content = output
+		ttNode.content = output
 	} else {
 		return nil, arguments.Error("Identifier expected.", nil)
 	}
@@ -41,7 +37,7 @@ func tagTemplateTagParser(doc *Parser, start *Token, arguments *Parser) (INodeTa
 		return nil, arguments.Error("Malformed templatetag-tag argument.", nil)
 	}
 
-	return tt_node, nil
+	return ttNode, nil
 }
 
 func init() {

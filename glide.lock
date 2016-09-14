@@ -1,11 +1,9 @@
-hash: a9c38acf68d84132b381ab1f552177e9e5196e9b7e6f56dec03324a71a1d54fd
-updated: 2016-09-14T21:49:44.789951876+02:00
+hash: 7be3d544d750f1c65fa1494d9cd09eed95e08cd72bbace9f18267a7248300123
+updated: 2016-09-14T22:16:14.100825205+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 119f50887f8fe324fe2386421c27a11af014b64e
   repo: https://golang.org/x/crypto
-  subpackages:
-  - bcrypt
 - name: github.com/bobappleyard/readline
   version: 7e300e02d38ee8b418c0b4841877f1845d392328
 - name: github.com/boltdb/bolt
@@ -27,7 +25,9 @@ imports:
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/flosch/pongo2
-  version: 5e81b817a0c48c1c57cdf1a9056cf76bdee02ca9
+  version: 22499f94d3d56c7238591344a6902715d0b8fbbf
+- name: github.com/fsnotify/fsnotify
+  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/garyburd/redigo
   version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
   subpackages:
@@ -40,10 +40,6 @@ imports:
 - name: github.com/gophertown/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
   repo: https://github.com/fsnotify/fsnotify
-- name: github.com/gophertown/looper
-  version: bc28a212ab3643c208f17fc7bfb628671cb018c3
-  subpackages:
-  - gat
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/klauspost/compress
@@ -56,10 +52,6 @@ imports:
   version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/klauspost/pgzip
   version: 95e8170c5d4da28db9c64dfc9ec3138ea4466fd4
-- name: github.com/koyachi/go-term-ansicolor
-  version: 6f81280f93607303140434290f00ee0a269904ad
-  subpackages:
-  - ansicolor
 - name: github.com/lib/pq
   version: 50761b0867bd1d9d069276790bcd4a3bccf2324a
   subpackages:
@@ -87,13 +79,13 @@ imports:
 - name: github.com/nsf/termbox-go
   version: b6acae516ace002cb8105a89024544a1480655a5
 - name: github.com/russross/blackfriday
-  version: 0b647d0506a698cca42caca173e55559b12a69f2
+  version: 35eb537633d9950afc8ae7bdf0edb6134584e9fc
 - name: github.com/shopspring/decimal
   version: 74d668a796fa3734c552fb907d9b83146d0bebee
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 10ef21a441db47d8b13ebcc5fd2310f636973c77
 - name: github.com/sirupsen/logrus
-  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
 - name: github.com/tylerb/graceful
   version: 50a48b6e73fcc75b45e22c05b79629a67c79e938
 - name: github.com/wellington/sass
@@ -116,35 +108,35 @@ imports:
 - name: github.com/xyproto/cookie
   version: b84c85ae2aa3e21b2c7fc8c37d5a3081c0c9c83b
 - name: github.com/xyproto/jpath
-  version: 1ad2e3b39c7317f4ddc4a8bdbecd6de18bd96834
+  version: f0d6e5f685931608fe60575a9d7aace23b6e4ce8
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
-  version: 8df47150b65e3fe2b2490b9e03ff6d4649bf3880
+  version: d14dc9d92dd463cdb7024a2b846c4ab704e3271f
 - name: github.com/xyproto/permissions2
-  version: c6357e25ddf866acc484119a9124da9c2f6a9c2c
+  version: 904788a416f7af87bb21c257d041f17fa7899cc3
 - name: github.com/xyproto/permissionsql
-  version: f4c51ecb42942b56a789a9076b680c2330ff2ed9
+  version: d517b172d4846d40dce3870244009df6326c6bcb
 - name: github.com/xyproto/permissionwrench
   version: f7312b99544b911522e43ef34e1ce540658e1ec8
 - name: github.com/xyproto/pinterface
-  version: 55840daef9f0e7ef7c824055a45c20b5931e540c
+  version: a5a0c6ccdeb92a8016a15724f36e6ad5570caa93
 - name: github.com/xyproto/recwatch
-  version: 852a8adc26397b8773f073ae8999fc5605e512f9
+  version: 07a9f17aef563117f0826c6372dcc7249c343c54
 - name: github.com/xyproto/simplebolt
-  version: 3ad76f169f0ede30c60f6b098efd305ad995e417
+  version: e14f3929e5626e6a8c703e61c5b912014ef1d199
 - name: github.com/xyproto/simplehstore
   version: e2bf082ae1e61cbe950f2e2de5833e188173ba24
 - name: github.com/xyproto/simplemaria
-  version: 8f9afd4d1e73d0151c5cd2b9e40b553932edb7db
+  version: 5cf67844724df03656f16a32348bbef589d5f919
 - name: github.com/xyproto/simpleredis
-  version: 97bd090877ec34e2eebb75a547eaab25bf92dee4
+  version: de7b4cb9d1be983af7e9924394a27b67927e4918
 - name: github.com/xyproto/term
   version: 9e12074e834ac795cf9e5d8ac4f3149babb59576
 - name: github.com/xyproto/unzip
   version: 823950573952ff86553b26381fe7472549873cb4
 - name: github.com/yosssi/gcss
-  version: 4dc500a9960c4bc1224c28c9695f6447b1d14d99
+  version: 39677598ea4f3ec1da5568173b4d43611f307edb
 - name: github.com/yuin/gluamapper
   version: d836955830e75240d46ce9f0e6d148d94f2e1d3a
 - name: github.com/yuin/gopher-lua
@@ -162,6 +154,11 @@ imports:
   version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
   subpackages:
   - unix
+- name: launchpad.net/gocheck
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+  repo: https://github.com/go-check/check
+  subpackages:
+  - ?go-get=1
 testImports:
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28

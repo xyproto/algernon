@@ -59,6 +59,28 @@ func TestPasswordBasic(t *testing.T) {
 
 }
 
+func TestPasswordBasic2(t *testing.T) {
+	// Test the other method for connecting to Redis
+	userstate, err := NewUserStateSimple2()
+	if err != nil {
+		t.Error("Error, " + err.Error())
+	}
+
+	// Assert that the default password algorithm is "bcrypt+"
+	if userstate.PasswordAlgo() != "bcrypt+" {
+		t.Error("Error, bcrypt+ should be the default password algorithm")
+	}
+
+	// Set password algorithm
+	userstate.SetPasswordAlgo("sha256")
+
+	// Assert that the algorithm is now sha256
+	if userstate.PasswordAlgo() != "sha256" {
+		t.Error("Error, setting password algorithm failed")
+	}
+
+}
+
 // Check if the functionality for backwards compatible hashing works
 func TestPasswordBackward(t *testing.T) {
 	userstate := NewUserStateSimple()
@@ -136,8 +158,56 @@ func TestHostPassword(t *testing.T) {
 		t.Error("Error, user bob should exist")
 	}
 
+	// Remove bob
 	userstate.RemoveUser("bob")
 	if userstate.HasUser("bob") {
 		t.Error("Error, user bob should not exist")
 	}
+}
+
+func TestChangePassword(t *testing.T) {
+	userstate := NewUserStateSimple()
+
+	userstate.AddUser("bob", "hunter1", "bob@zombo.com")
+	if !userstate.HasUser("bob") {
+		t.Error("Error, user bob should exist")
+	}
+
+	// Check that the password is "hunter1"
+	if !userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should be hunter1!")
+	}
+	// Check that the password is not "hunter2"
+	if userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should not be hunter2!")
+	}
+
+	// Change the password for user "bob" to "hunter2"
+	username := "bob"
+	password := "hunter2"
+	passwordHash := userstate.HashPassword(username, password)
+	userstate.Users().Set(username, "password", passwordHash)
+
+	// Check that the password is "hunter2"
+	if !userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should be hunter2!")
+	}
+	// Check that the password is not "hunter1"
+	if userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should not be hunter1!")
+	}
+
+	// Change the password back to "hunter1"
+	userstate.SetPassword("bob", "hunter1")
+
+	// Check that the password is "hunter1"
+	if !userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should be hunter1!")
+	}
+	// Check that the password is not "hunter2"
+	if userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should not be hunter2!")
+	}
+
+	userstate.RemoveUser("bob")
 }

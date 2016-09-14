@@ -17,12 +17,12 @@ func main() {
 	// Create a list named "greetings"
 	list, err := simplebolt.NewList(db, "greetings")
 	if err != nil {
-		log.Fatalf("Could not create list! %s", err)
+		log.Fatalf("Could not create a list! %s", err)
 	}
 
 	// Add "hello" to the list
 	if err := list.Add("hello"); err != nil {
-		log.Fatalf("Could not add an item to list! %s", err)
+		log.Fatalf("Could not add an item to the list! %s", err)
 	}
 
 	// Get the last item of the list

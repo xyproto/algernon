@@ -1,4 +1,6 @@
-// Simplebolt provides a simple way to use Bolt. Similar to simpleredis.
+// Package simplebolt provides a simple way to use the Bolt database.
+// The API design is similar to xyproto/simpleredis, and the database backends
+// are interchangeable, by using the xyproto/pinterface package.
 package simplebolt
 
 import (
@@ -6,6 +8,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -45,7 +48,8 @@ var (
 
 // Create a new bolt database
 func New(filename string) (*Database, error) {
-	db, err := bolt.Open(filename, 0644, nil)
+	// Use a timeout, in case the database file is already in use
+	db, err := bolt.Open(filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +147,7 @@ func (l *List) GetLastN(n int) (results []string, err error) {
 		if bucket == nil {
 			return ErrBucketNotFound
 		}
-		var size int64 = 0
+		var size int64
 		bucket.ForEach(func(_, _ []byte) error {
 			size++
 			return nil // Continue ForEach
@@ -152,8 +156,10 @@ func (l *List) GetLastN(n int) (results []string, err error) {
 			return errors.New("Too few items in list")
 		}
 		// Ok, fetch the n last items. startPos is counting from 0.
-		var startPos int64 = size - int64(n)
-		var i int64 = 0
+		var (
+			startPos = size - int64(n)
+			i        int64
+		)
 		bucket.ForEach(func(_, value []byte) error {
 			if i >= startPos {
 				results = append(results, string(value))
@@ -180,7 +186,7 @@ func (l *List) Clear() error {
 	if l.name == nil {
 		return ErrDoesNotExist
 	}
-	return (*bolt.DB)(l.db).View(func(tx *bolt.Tx) error {
+	return (*bolt.DB)(l.db).Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(l.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -465,7 +471,7 @@ func (h *HashMap) Del(elementid string) error {
 		return ErrDoesNotExist
 	}
 	// Remove the keys starting with elementid + ":"
-	return (*bolt.DB)(h.db).View(func(tx *bolt.Tx) error {
+	return (*bolt.DB)(h.db).Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -619,12 +625,12 @@ func (kv *KeyValue) Remove() error {
 }
 
 // Remove all elements from this key/value
-func (k *KeyValue) Clear() error {
-	if k.name == nil {
+func (kv *KeyValue) Clear() error {
+	if kv.name == nil {
 		return ErrDoesNotExist
 	}
-	return (*bolt.DB)(k.db).Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(k.name)
+	return (*bolt.DB)(kv.db).Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(kv.name)
 		if bucket == nil {
 			return ErrBucketNotFound
 		}

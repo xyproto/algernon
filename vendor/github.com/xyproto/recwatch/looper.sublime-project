@@ -1,9 +1,0 @@
-{
-	"folders":
-	[
-		{
-			"path": ".",
-      "file_exclude_patterns": ["looper"]
-		}
-	]
-}

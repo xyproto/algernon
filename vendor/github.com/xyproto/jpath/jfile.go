@@ -33,6 +33,11 @@ func NewFile(filename string) (*JFile, error) {
 	return &JFile{filename, js, rw, true}, nil
 }
 
+// GetFilename returns the current filename
+func (jf *JFile) GetFilename() string {
+	return jf.filename
+}
+
 // SetPretty can be used for setting the "pretty" flag to true, for indenting
 // all JSON output. Set to true by default.
 func (jf *JFile) SetPretty(pretty bool) {
@@ -47,6 +52,9 @@ func (jf *JFile) SetRW(rw *sync.RWMutex) {
 // GetNode tries to find the JSON node that corresponds to the given JSON path
 func (jf *JFile) GetNode(JSONpath string) (*Node, error) {
 	node, _, err := jf.rootnode.GetNodes(JSONpath)
+	if node == NilNode {
+		return NilNode, errors.New("nil node")
+	}
 	return node, err
 }
 
@@ -90,7 +98,9 @@ func (jf *JFile) Write(data []byte) error {
 
 // AddJSON adds JSON data at the given JSON path. If pretty is true, the JSON is indented.
 func (jf *JFile) AddJSON(JSONpath string, JSONdata []byte) error {
-	jf.rootnode.AddJSON(JSONpath, JSONdata)
+	if err := jf.rootnode.AddJSON(JSONpath, JSONdata); err != nil {
+		return err
+	}
 	// Use the correct JSON function, depending on the pretty parameter
 	JSON := jf.rootnode.JSON
 	if jf.pretty {

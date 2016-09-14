@@ -13,7 +13,7 @@ func main() {
 
 	if len(flag.Args()) != 3 {
 		fmt.Println("Syntax: jset [filename] [JSON path] [value]")
-		fmt.Println("Example: jset books.json x[1].author Catniss")
+		fmt.Println("Example: jset books.json x[1].author Suzanne")
 		os.Exit(1)
 	}
 

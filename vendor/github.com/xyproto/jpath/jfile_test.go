@@ -24,6 +24,10 @@ func TestAddFile(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.Equal(t, string(fileData), string(finalJSON))
+
+	// Adding data when the path is not found should result in an error
+	err = AddJSON(tmpfile, "ost", someJSON, true)
+	assert.NotEqual(t, nil, err)
 }
 
 func TestGetFile(t *testing.T) {

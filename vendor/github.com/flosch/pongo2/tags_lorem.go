@@ -1,7 +1,6 @@
 package pongo2
 
 import (
-	"bytes"
 	"math/rand"
 	"strings"
 	"time"
@@ -19,64 +18,64 @@ type tagLoremNode struct {
 	random   bool   // does not use the default paragraph "Lorem ipsum dolor sit amet, ..."
 }
 
-func (node *tagLoremNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) *Error {
+func (node *tagLoremNode) Execute(ctx *ExecutionContext, writer TemplateWriter) *Error {
 	switch node.method {
 	case "b":
 		if node.random {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString("\n")
+					writer.WriteString("\n")
 				}
 				par := tagLoremParagraphs[rand.Intn(len(tagLoremParagraphs))]
-				buffer.WriteString(par)
+				writer.WriteString(par)
 			}
 		} else {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString("\n")
+					writer.WriteString("\n")
 				}
 				par := tagLoremParagraphs[i%len(tagLoremParagraphs)]
-				buffer.WriteString(par)
+				writer.WriteString(par)
 			}
 		}
 	case "w":
 		if node.random {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString(" ")
+					writer.WriteString(" ")
 				}
 				word := tagLoremWords[rand.Intn(len(tagLoremWords))]
-				buffer.WriteString(word)
+				writer.WriteString(word)
 			}
 		} else {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString(" ")
+					writer.WriteString(" ")
 				}
 				word := tagLoremWords[i%len(tagLoremWords)]
-				buffer.WriteString(word)
+				writer.WriteString(word)
 			}
 		}
 	case "p":
 		if node.random {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString("\n")
+					writer.WriteString("\n")
 				}
-				buffer.WriteString("<p>")
+				writer.WriteString("<p>")
 				par := tagLoremParagraphs[rand.Intn(len(tagLoremParagraphs))]
-				buffer.WriteString(par)
-				buffer.WriteString("</p>")
+				writer.WriteString(par)
+				writer.WriteString("</p>")
 			}
 		} else {
 			for i := 0; i < node.count; i++ {
 				if i > 0 {
-					buffer.WriteString("\n")
+					writer.WriteString("\n")
 				}
-				buffer.WriteString("<p>")
+				writer.WriteString("<p>")
 				par := tagLoremParagraphs[i%len(tagLoremParagraphs)]
-				buffer.WriteString(par)
-				buffer.WriteString("</p>")
+				writer.WriteString(par)
+				writer.WriteString("</p>")
 
 			}
 		}
@@ -88,33 +87,33 @@ func (node *tagLoremNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) *
 }
 
 func tagLoremParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Error) {
-	lorem_node := &tagLoremNode{
+	loremNode := &tagLoremNode{
 		position: start,
 		count:    1,
 		method:   "b",
 	}
 
-	if count_token := arguments.MatchType(TokenNumber); count_token != nil {
-		lorem_node.count = AsValue(count_token.Val).Integer()
+	if countToken := arguments.MatchType(TokenNumber); countToken != nil {
+		loremNode.count = AsValue(countToken.Val).Integer()
 	}
 
-	if method_token := arguments.MatchType(TokenIdentifier); method_token != nil {
-		if method_token.Val != "w" && method_token.Val != "p" && method_token.Val != "b" {
+	if methodToken := arguments.MatchType(TokenIdentifier); methodToken != nil {
+		if methodToken.Val != "w" && methodToken.Val != "p" && methodToken.Val != "b" {
 			return nil, arguments.Error("lorem-method must be either 'w', 'p' or 'b'.", nil)
 		}
 
-		lorem_node.method = method_token.Val
+		loremNode.method = methodToken.Val
 	}
 
 	if arguments.MatchOne(TokenIdentifier, "random") != nil {
-		lorem_node.random = true
+		loremNode.random = true
 	}
 
 	if arguments.Remaining() > 0 {
 		return nil, arguments.Error("Malformed lorem-tag arguments.", nil)
 	}
 
-	return lorem_node, nil
+	return loremNode, nil
 }
 
 func init() {

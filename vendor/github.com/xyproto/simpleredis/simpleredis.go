@@ -1,4 +1,4 @@
-// Easy way to use Redis from Go.
+// Package simpleredis provides an easy way to use Redis.
 package simpleredis
 
 import (

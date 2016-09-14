@@ -1,8 +1,9 @@
 # [pongo](https://en.wikipedia.org/wiki/Pongo_%28genus%29)2
 
-[![GoDoc](https://godoc.org/github.com/flosch/pongo2?status.png)](https://godoc.org/github.com/flosch/pongo2)
+[![Join the chat at https://gitter.im/flosch/pongo2](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/flosch/pongo2)
+[![GoDoc](https://godoc.org/github.com/flosch/pongo2?status.svg)](https://godoc.org/github.com/flosch/pongo2)
 [![Build Status](https://travis-ci.org/flosch/pongo2.svg?branch=master)](https://travis-ci.org/flosch/pongo2)
-[![Coverage Status](https://coveralls.io/repos/flosch/pongo2/badge.png?branch=master)](https://coveralls.io/r/flosch/pongo2?branch=master)
+[![Coverage Status](https://coveralls.io/repos/flosch/pongo2/badge.svg?branch=master)](https://coveralls.io/r/flosch/pongo2?branch=master)
 [![gratipay](http://img.shields.io/badge/gratipay-support%20pongo-brightgreen.svg)](https://gratipay.com/flosch/)
 [![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=3654947)](https://www.bountysource.com/trackers/3654947-pongo2?utm_source=3654947&utm_medium=shield&utm_campaign=TRACKER_BADGE)
 
@@ -95,6 +96,7 @@ Please also have a look on the [caveats](https://github.com/flosch/pongo2#caveat
 
 If you're using the `master`-branch of pongo2, you might be interested in this section. Since pongo2 is still in development (even though there is a first stable release!), there could be (backwards-incompatible) API changes over time. To keep track of these and therefore make it painless for you to adapt your codebase, I'll list them here.
 
+ * Function signature for tag execution changed: not taking a `bytes.Buffer` anymore; instead `Execute()`-functions are now taking a `TemplateWriter` interface.
  * Function signature for tag and filter parsing/execution changed (`error` return type changed to `*Error`).
  * `INodeEvaluator` has been removed and got replaced by `IEvaluator`. You can change your existing tags/filters by simply replacing the interface.
  * Two new helper functions: [`RenderTemplateFile()`](https://godoc.org/github.com/flosch/pongo2#RenderTemplateFile) and [`RenderTemplateString()`](https://godoc.org/github.com/flosch/pongo2#RenderTemplateString).
@@ -104,7 +106,7 @@ If you're using the `master`-branch of pongo2, you might be interested in this s
 ## How you can help
 
  * Write [filters](https://github.com/flosch/pongo2/blob/master/filters_builtin.go#L3) / [tags](https://github.com/flosch/pongo2/blob/master/tags.go#L4) (see [tutorial](https://www.florian-schlachter.de/post/pongo2/)) by forking pongo2 and sending pull requests
- * Write/improve code tests (use the following command to see what tests are missing: `go test -v -cover -covermode=count -coverprofile=cover.out && go tool cover -html=cover.out`)
+ * Write/improve code tests (use the following command to see what tests are missing: `go test -v -cover -covermode=count -coverprofile=cover.out && go tool cover -html=cover.out` or have a look on [gocover.io/github.com/flosch/pongo2](http://gocover.io/github.com/flosch/pongo2))
  * Write/improve template tests (see the `template_tests/` directory)
  * Write middleware, libraries and websites using pongo2. :-)
 
@@ -115,7 +117,8 @@ For a documentation on how the templating language works you can [head over to t
 You can access pongo2's API documentation on [godoc](https://godoc.org/github.com/flosch/pongo2).
 
 ## Blog post series
-
+ 
+ * [pongo2 v3 released](https://www.florian-schlachter.de/post/pongo2-v3/)
  * [pongo2 v2 released](https://www.florian-schlachter.de/post/pongo2-v2/)
  * [pongo2 1.0 released](https://www.florian-schlachter.de/post/pongo2-10/) [August 8th 2014]
  * [pongo2 playground](https://www.florian-schlachter.de/post/pongo2-playground/) [August 1st 2014]
@@ -154,8 +157,12 @@ You can access pongo2's API documentation on [godoc](https://godoc.org/github.co
  * [beego-pongo2.v2](https://github.com/ipfans/beego-pongo2.v2) - Same as `beego-pongo2`, but for pongo2 v2.
  * [macaron-pongo2](https://github.com/macaron-contrib/pongo2) - pongo2 support for [Macaron](https://github.com/Unknwon/macaron), a modular web framework.
  * [ginpongo2](https://github.com/ngerakines/ginpongo2) - middleware for [gin](github.com/gin-gonic/gin) to use pongo2 templates
- * [pongo2-trans](https://github.com/fromYukki/pongo2trans) - `trans`-tag implementation for internationalization
-
+ * [Build'n support for Iris' template engine](https://github.com/kataras/iris) 
+ * [pongo2gin](https://github.com/robvdl/pongo2gin) - alternative renderer for [gin](github.com/gin-gonic/gin) to use pongo2 templates
+ * [pongo2-trans](https://github.com/digitalcrab/pongo2trans) - `trans`-tag implementation for internationalization
+ * [tpongo2](https://github.com/tango-contrib/tpongo2) - pongo2 support for [Tango](https://github.com/lunny/tango), a micro-kernel & pluggable web framework.
+ * [p2cli](https://github.com/wrouesnel/p2cli) - command line templating utility based on pongo2
+ 
 Please add your project to this list and send me a pull request when you've developed something nice for pongo2.
 
 # API-usage examples

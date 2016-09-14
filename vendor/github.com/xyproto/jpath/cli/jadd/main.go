@@ -13,7 +13,7 @@ func main() {
 
 	if len(flag.Args()) != 3 {
 		fmt.Println("Syntax: jadd [filename] [JSON path] [JSON data]")
-		fmt.Println("Example: jadd books.json x '{\"author\": \"Catniss\", \"book\": \"Yeah\"}'")
+		fmt.Println("Example: jadd books.json x '{\"author\": \"Suzanne\", \"book\": \"Yeah\"}'")
 		os.Exit(1)
 	}
 

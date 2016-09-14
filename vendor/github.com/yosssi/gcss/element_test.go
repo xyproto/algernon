@@ -12,10 +12,12 @@ func Test_newElement_selector(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("error occurred [error: %q]", err.Error())
+		return
 	}
 
 	if _, ok := e.(*selector); !ok {
 		t.Errorf(`e's type should be "*selector" [actual: %q]`, reflect.TypeOf(e))
+		return
 	}
 }
 
@@ -26,9 +28,11 @@ func Test_newElement_mixinDeclaration(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("error occurred [error: %q]", err.Error())
+		return
 	}
 
 	if _, ok := e.(*mixinDeclaration); !ok {
 		t.Errorf(`e's type should be "*mixinDeclaration" [actual: %q]`, reflect.TypeOf(e))
+		return
 	}
 }

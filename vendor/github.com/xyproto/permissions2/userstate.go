@@ -2,6 +2,7 @@ package permissions
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -36,13 +37,24 @@ type UserState struct {
 // Create a new *UserState that can be used for managing users.
 // The random number generator will be seeded after generating the cookie secret.
 // A connection pool for the local Redis server (dbindex 0) will be created.
+// Calls log.Fatal if things go wrong.
 func NewUserStateSimple() *UserState {
 	// db index 0, initialize random generator after generating the cookie secret
 	return NewUserState(0, true, defaultRedisServer)
 }
 
+// Create a new *UserState that can be used for managing users.
+// The random number generator will be seeded after generating the cookie secret.
+// A connection pool for the local Redis server (dbindex 0) will be created.
+// Returns an error if things go wrong.
+func NewUserStateSimple2() (*UserState, error) {
+	// db index 0, initialize random generator after generating the cookie secret
+	return NewUserState2(0, true, defaultRedisServer)
+}
+
 // Same as NewUserStateSimple, but takes a hostname and a password.
 // Use NewUserState for control over the database index and port number.
+// Calls log.Fatal if things go wrong.
 func NewUserStateWithPassword(hostname, password string) *UserState {
 	// db index 0, initialize random generator after generating the cookie secret, password
 	connectTo := hostname
@@ -58,11 +70,30 @@ func NewUserStateWithPassword(hostname, password string) *UserState {
 	return NewUserState(0, true, connectTo)
 }
 
+// Same as NewUserStateSimple, but takes a hostname and a password.
+// Use NewUserState for control over the database index and port number.
+// Returns an error if things go wrong.
+func NewUserStateWithPassword2(hostname, password string) (*UserState, error) {
+	// db index 0, initialize random generator after generating the cookie secret, password
+	connectTo := hostname
+	if (password == "") && (strings.Count(hostname, ":") == 0) {
+		connectTo = hostname + ":6379"
+	} else if strings.Count(hostname, ":") > 0 {
+		connectTo = password + "@" + hostname
+	} else {
+		connectTo = password + "@" + hostname + ":6379"
+	}
+	// Create a new UserState with database index 0, "true" for seeding the
+	// random number generator and host string
+	return NewUserState2(0, true, connectTo)
+}
+
 // Create a new *UserState that can be used for managing users.
 // dbindex is the Redis database index (0 is a good default value).
 // If randomseed is true, the random number generator will be seeded after generating the cookie secret (true is a good default value).
 // redisHostPort is host:port for the desired Redis server (can be blank for localhost)
 // Also creates a new ConnectionPool.
+// Calls log.Fatal if things go wrong.
 func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState {
 	var pool *simpleredis.ConnectionPool
 
@@ -71,12 +102,16 @@ func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState
 		redisHostPort = defaultRedisServer
 	}
 
-	// Test connection
+	// Test connection (the client can do this test before creating a new userstate)
 	if err := simpleredis.TestConnectionHost(redisHostPort); err != nil {
-		log.Fatalln(err.Error())
+		errorMessage := err.Error()
+		if errorMessage == "dial tcp :6379: getsockopt: connection refused" {
+			log.Fatalln("Fatal: Unable to connect to Redis server on port 6379.")
+		}
+		log.Fatalln(errorMessage)
 	}
 
-	// Aquire connection pool
+	// Acquire connection pool
 	pool = simpleredis.NewConnectionPoolHost(redisHostPort)
 
 	state := new(UserState)
@@ -119,6 +154,72 @@ func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState
 	return state
 }
 
+// Create a new *UserState that can be used for managing users.
+// dbindex is the Redis database index (0 is a good default value).
+// If randomseed is true, the random number generator will be seeded after generating the cookie secret (true is a good default value).
+// redisHostPort is host:port for the desired Redis server (can be blank for localhost)
+// Also creates a new ConnectionPool.
+// Returns an error if things go wrong.
+func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserState, error) {
+	var pool *simpleredis.ConnectionPool
+
+	// Connnect to the default redis server if redisHostPort is empty
+	if redisHostPort == "" {
+		redisHostPort = defaultRedisServer
+	}
+
+	// Test connection (the client can do this test before creating a new userstate)
+	if err := simpleredis.TestConnectionHost(redisHostPort); err != nil {
+		errorMessage := err.Error()
+		if errorMessage == "dial tcp :6379: getsockopt: connection refused" {
+			return nil, errors.New("Unable to connect to Redis server on port 6379.")
+		}
+		return nil, err
+	}
+
+	// Acquire connection pool
+	pool = simpleredis.NewConnectionPoolHost(redisHostPort)
+
+	state := new(UserState)
+
+	state.users = simpleredis.NewHashMap(pool, "users")
+	state.users.SelectDatabase(dbindex)
+
+	state.usernames = simpleredis.NewSet(pool, "usernames")
+	state.usernames.SelectDatabase(dbindex)
+
+	state.unconfirmed = simpleredis.NewSet(pool, "unconfirmed")
+	state.unconfirmed.SelectDatabase(dbindex)
+
+	state.pool = pool
+
+	state.dbindex = dbindex
+
+	// For the secure cookies
+	// This must happen before the random seeding, or
+	// else people will have to log in again after every server restart
+	state.cookieSecret = cookie.RandomCookieFriendlyString(30)
+
+	// Seed the random number generator
+	if randomseed {
+		rand.Seed(time.Now().UnixNano())
+	}
+
+	// Cookies lasts for 24 hours by default. Specified in seconds.
+	state.cookieTime = cookie.DefaultCookieTime
+
+	// Default password hashing algorithm is "bcrypt+", which is the same as
+	// "bcrypt", but with backwards compatibility for checking sha256 hashes.
+	state.passwordAlgorithm = "bcrypt+" // "bcrypt+", "bcrypt" or "sha256"
+
+	if pool.Ping() != nil {
+		defer pool.Close()
+		return nil, fmt.Errorf("Wrong hostname, port or password. (%s does not reply to PING)\n", redisHostPort)
+	}
+
+	return state, nil
+}
+
 // Get the Host (for qualifying for the IUserState interface)
 func (state *UserState) Host() pinterface.IHost {
 	return state.pool
@@ -156,6 +257,16 @@ func (state *UserState) HasUser(username string) bool {
 		panic("ERROR: Lost connection to Redis?")
 	}
 	return val
+}
+
+// Check if the given username exists.
+func (state *UserState) HasUser2(username string) (bool, error) {
+	val, err := state.usernames.Has(username)
+	if err != nil {
+		// This happened at concurrent connections before introducing the connection pool
+		return false, errors.New("Lost connection to Redis?")
+	}
+	return val, nil
 }
 
 // Return the boolean value for a given username and fieldname.
@@ -414,6 +525,12 @@ func (state *UserState) HashPassword(username, password string) string {
 	}
 	// Only valid password algorithms should be allowed to set
 	return ""
+}
+
+// SetPassword sets the password for a user.
+// Does not take a password hash, will hash the password string.
+func (state *UserState) SetPassword(username, password string) {
+	state.users.Set(username, "password", state.HashPassword(username, password))
 }
 
 // Return the stored hash, or an empty byte slice.

@@ -12,12 +12,14 @@ func Test_atRule_WriteTo(t *testing.T) {
 
 	if _, err := ar.WriteTo(ioutil.Discard); err != nil {
 		t.Errorf("error occurred [error: %q]", err.Error())
+		return
 	}
 }
 
 func Test_atRule_WriteTo_fromFile(t *testing.T) {
 	if _, err := CompileFile("test/0009.gcss"); err != nil {
 		t.Errorf("error occurred [error: %q]", err.Error())
+		return
 	}
 }
 
@@ -28,5 +30,6 @@ func Test_newAtRule(t *testing.T) {
 
 	if ar.ln != ln {
 		t.Errorf("ar.ln should be %+v [actual: %+v]", ln, ar.ln)
+		return
 	}
 }

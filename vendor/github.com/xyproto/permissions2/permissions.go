@@ -1,4 +1,4 @@
-// Package permissions provides a way to keep track of users, login states and permissions.
+// Package permissions2 provides a way to keep track of users, login states and permissions.
 package permissions
 
 import (
@@ -28,9 +28,30 @@ func New() *Permissions {
 	return NewPermissions(NewUserStateSimple())
 }
 
+// Initialize a Permissions struct with all the default settings.
+// This will also connect to the redis host at localhost:6379.
+func New2() (*Permissions, error) {
+	userstate, err := NewUserStateSimple2()
+	if err != nil {
+		return nil, err
+	}
+	return NewPermissions(userstate), nil
+}
+
 // Initialize a Permissions struct with Redis DB index and host:port
+// Calls log.Fatal if something goes wrong.
 func NewWithRedisConf(dbindex int, hostPort string) *Permissions {
 	return NewPermissions(NewUserState(dbindex, true, hostPort))
+}
+
+// Initialize a Permissions struct with Redis DB index and host:port
+// Returns an error if something goes wrong.
+func NewWithRedisConf2(dbindex int, hostPort string) (*Permissions, error) {
+	userstate, err := NewUserState2(dbindex, true, hostPort)
+	if err != nil {
+		return nil, err
+	}
+	return NewPermissions(userstate), nil
 }
 
 // Initialize a Permissions struct with the given UserState and

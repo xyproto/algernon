@@ -1,14 +1,11 @@
 package pongo2
 
-import (
-	"bytes"
-)
-
 type tagForNode struct {
-	key              string
-	value            string // only for maps: for key, value in map
-	object_evaluator IEvaluator
-	reversed         bool
+	key             string
+	value           string // only for maps: for key, value in map
+	objectEvaluator IEvaluator
+	reversed        bool
+	sorted          bool
 
 	bodyWrapper  *NodeWrapper
 	emptyWrapper *NodeWrapper
@@ -24,7 +21,7 @@ type tagForLoopInformation struct {
 	Parentloop  *tagForLoopInformation
 }
 
-func (node *tagForNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) (forError *Error) {
+func (node *tagForNode) Execute(ctx *ExecutionContext, writer TemplateWriter) (forError *Error) {
 	// Backup forloop (as parentloop in public context), key-name and value-name
 	forCtx := NewChildExecutionContext(ctx)
 	parentloop := forCtx.Private["forloop"]
@@ -42,7 +39,7 @@ func (node *tagForNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) (fo
 	// Register loopInfo in public context
 	forCtx.Private["forloop"] = loopInfo
 
-	obj, err := node.object_evaluator.Evaluate(forCtx)
+	obj, err := node.objectEvaluator.Evaluate(forCtx)
 	if err != nil {
 		return err
 	}
@@ -67,7 +64,7 @@ func (node *tagForNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) (fo
 		loopInfo.Revcounter0 = count - (idx + 1) // TODO: Not sure about this, have to look it up
 
 		// Render elements with updated context
-		err := node.bodyWrapper.Execute(forCtx, buffer)
+		err := node.bodyWrapper.Execute(forCtx, writer)
 		if err != nil {
 			forError = err
 			return false
@@ -76,30 +73,30 @@ func (node *tagForNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) (fo
 	}, func() {
 		// Nothing to iterate over (maybe wrong type or no items)
 		if node.emptyWrapper != nil {
-			err := node.emptyWrapper.Execute(forCtx, buffer)
+			err := node.emptyWrapper.Execute(forCtx, writer)
 			if err != nil {
 				forError = err
 			}
 		}
-	}, node.reversed)
+	}, node.reversed, node.sorted)
 
-	return nil
+	return forError
 }
 
 func tagForParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Error) {
-	for_node := &tagForNode{}
+	forNode := &tagForNode{}
 
 	// Arguments parsing
-	var value_token *Token
-	key_token := arguments.MatchType(TokenIdentifier)
-	if key_token == nil {
+	var valueToken *Token
+	keyToken := arguments.MatchType(TokenIdentifier)
+	if keyToken == nil {
 		return nil, arguments.Error("Expected an key identifier as first argument for 'for'-tag", nil)
 	}
 
 	if arguments.Match(TokenSymbol, ",") != nil {
 		// Value name is provided
-		value_token = arguments.MatchType(TokenIdentifier)
-		if value_token == nil {
+		valueToken = arguments.MatchType(TokenIdentifier)
+		if valueToken == nil {
 			return nil, arguments.Error("Value name must be an identifier.", nil)
 		}
 	}
@@ -108,18 +105,22 @@ func tagForParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Erro
 		return nil, arguments.Error("Expected keyword 'in'.", nil)
 	}
 
-	object_evaluator, err := arguments.ParseExpression()
+	objectEvaluator, err := arguments.ParseExpression()
 	if err != nil {
 		return nil, err
 	}
-	for_node.object_evaluator = object_evaluator
-	for_node.key = key_token.Val
-	if value_token != nil {
-		for_node.value = value_token.Val
+	forNode.objectEvaluator = objectEvaluator
+	forNode.key = keyToken.Val
+	if valueToken != nil {
+		forNode.value = valueToken.Val
 	}
 
 	if arguments.MatchOne(TokenIdentifier, "reversed") != nil {
-		for_node.reversed = true
+		forNode.reversed = true
+	}
+
+	if arguments.MatchOne(TokenIdentifier, "sorted") != nil {
+		forNode.sorted = true
 	}
 
 	if arguments.Remaining() > 0 {
@@ -131,7 +132,7 @@ func tagForParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Erro
 	if err != nil {
 		return nil, err
 	}
-	for_node.bodyWrapper = wrapper
+	forNode.bodyWrapper = wrapper
 
 	if endargs.Count() > 0 {
 		return nil, endargs.Error("Arguments not allowed here.", nil)
@@ -143,14 +144,14 @@ func tagForParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Erro
 		if err != nil {
 			return nil, err
 		}
-		for_node.emptyWrapper = wrapper
+		forNode.emptyWrapper = wrapper
 
 		if endargs.Count() > 0 {
 			return nil, endargs.Error("Arguments not allowed here.", nil)
 		}
 	}
 
-	return for_node, nil
+	return forNode, nil
 }
 
 func init() {

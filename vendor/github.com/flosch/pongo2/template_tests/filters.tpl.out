@@ -105,7 +105,7 @@ h
 
 first
 T
-<pongo2.comment Value>
+<pongo2_test.comment Value>
 
 
 
@@ -113,7 +113,7 @@ T
 
 last
 t
-<pongo2.comment Value>
+<pongo2_test.comment Value>
 
 
 
@@ -174,6 +174,9 @@ floatformat
 34.260
 
 join
+Hello, 99, 3.140000, good
+
+split
 Hello, 99, 3.140000, good
 
 stringformat

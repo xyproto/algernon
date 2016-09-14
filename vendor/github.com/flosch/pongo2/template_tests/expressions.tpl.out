@@ -46,8 +46,24 @@ True
 False
 False
 True
+True
+False
+True
+True
+False
+True
+False
 
 issue #48 (associativity for infix operators)
 33
 12
 0
+
+issue #64 (uint comparison with int const)
+8
+True
+False
+True
+True
+False
+False

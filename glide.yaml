@@ -36,6 +36,8 @@ import:
   repo: https://golang.org/x/crypto
 - package: github.com/gophertown/fsnotify
   repo: https://github.com/fsnotify/fsnotify
+- package: launchpad.net/gocheck?go-get=1
+  repo: https://github.com/go-check/check
 testImport:
 - package: github.com/bmizerany/assert
 - package: github.com/xyproto/cookie
@@ -43,5 +45,3 @@ testImport:
 - package: github.com/xyproto/simplehstore
 - package: github.com/xyproto/simplemaria
 - package: github.com/go-check/check
-
-

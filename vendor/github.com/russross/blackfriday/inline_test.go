@@ -15,9 +15,8 @@ package blackfriday
 
 import (
 	"regexp"
-	"testing"
-
 	"strings"
+	"testing"
 )
 
 func runMarkdownInline(input string, opts Options, htmlFlags int, params HtmlRendererParameters) string {
@@ -60,13 +59,11 @@ func doTestsInlineParam(t *testing.T, tests []string, opts Options, htmlFlags in
 	params HtmlRendererParameters) {
 	// catch and report panics
 	var candidate string
-	/*
-		defer func() {
-			if err := recover(); err != nil {
-				t.Errorf("\npanic while processing [%#v] (%v)\n", candidate, err)
-			}
-		}()
-	*/
+	defer func() {
+		if err := recover(); err != nil {
+			t.Errorf("\npanic while processing [%#v]: %s\n", candidate, err)
+		}
+	}()
 
 	for i := 0; i+1 < len(tests); i += 2 {
 		input := tests[i]
@@ -156,8 +153,33 @@ func TestEmphasis(t *testing.T) {
 
 		"*What is A\\* algorithm?*\n",
 		"<p><em>What is A* algorithm?</em></p>\n",
+
+		"some para_graph with _emphasised_ text.\n",
+		"<p>some para_graph with <em>emphasised</em> text.</p>\n",
+
+		"some paragraph with _emphasised_ te_xt.\n",
+		"<p>some paragraph with <em>emphasised</em> te_xt.</p>\n",
+
+		"some paragraph with t_wo bi_ts of _emphasised_ text.\n",
+		"<p>some paragraph with t<em>wo bi</em>ts of <em>emphasised</em> text.</p>\n",
+
+		"un*frigging*believable\n",
+		"<p>un<em>frigging</em>believable</p>\n",
 	}
 	doTestsInline(t, tests)
+}
+
+func TestNoIntraEmphasis(t *testing.T) {
+	tests := []string{
+		"some para_graph with _emphasised_ text.\n",
+		"<p>some para_graph with <em>emphasised</em> text.</p>\n",
+
+		"un*frigging*believable\n",
+		"<p>un*frigging*believable</p>\n",
+	}
+	doTestsInlineParam(t, tests, Options{
+		Extensions: EXTENSION_NO_INTRA_EMPHASIS},
+		0, HtmlRendererParameters{})
 }
 
 func TestReferenceOverride(t *testing.T) {
@@ -541,6 +563,20 @@ func TestInlineLink(t *testing.T) {
 
 		"[link](<../>)\n",
 		"<p><a href=\"../\">link</a></p>\n",
+
+		// Issue 116 in blackfriday
+		"![](http://www.broadgate.co.uk/Content/Upload/DetailImages/Cyclus700(1).jpg)",
+		"<p><img src=\"http://www.broadgate.co.uk/Content/Upload/DetailImages/Cyclus700(1).jpg\" alt=\"\" /></p>\n",
+
+		// no closing ), autolinking detects the url next
+		"[disambiguation](http://en.wikipedia.org/wiki/Disambiguation_(disambiguation) is the",
+		"<p>[disambiguation](<a href=\"http://en.wikipedia.org/wiki/Disambiguation_(disambiguation\">http://en.wikipedia.org/wiki/Disambiguation_(disambiguation</a>) is the</p>\n",
+
+		"[disambiguation](http://en.wikipedia.org/wiki/Disambiguation_(disambiguation)) is the",
+		"<p><a href=\"http://en.wikipedia.org/wiki/Disambiguation_(disambiguation)\">disambiguation</a> is the</p>\n",
+
+		"[disambiguation](http://en.wikipedia.org/wiki/Disambiguation_(disambiguation))",
+		"<p><a href=\"http://en.wikipedia.org/wiki/Disambiguation_(disambiguation)\">disambiguation</a></p>\n",
 	}
 	doLinkTestsInline(t, tests)
 
@@ -681,6 +717,9 @@ func TestReferenceLink(t *testing.T) {
 
 		"[ref]\n   [ref]: ../url/ \"title\"\n",
 		"<p><a href=\"../url/\" title=\"title\">ref</a></p>\n",
+
+		"[link][ref]\n   [ref]: /url/",
+		"<p><a href=\"/url/\">link</a></p>\n",
 	}
 	doLinkTestsInline(t, tests)
 }

@@ -31,6 +31,10 @@ func TestList(t *testing.T) {
 	if (len(items) > 0) && (items[0] != testdata) {
 		t.Errorf("Error, wrong list contents! %v", items)
 	}
+	err = list.Clear()
+	if err != nil {
+		t.Errorf("Error, could not clear list! %s", err.Error())
+	}
 	err = list.Remove()
 	if err != nil {
 		t.Errorf("Error, could not remove list! %s", err.Error())
@@ -237,6 +241,7 @@ func TestVarious(t *testing.T) {
 
 	h.Set("bob", "password", "hunter1")
 	h.Set("bob", "email", "bob@zombo.com")
+
 	h.GetAll()
 
 	_, err = h.Has("bob", "password")
@@ -247,6 +252,18 @@ func TestVarious(t *testing.T) {
 	_, err = h.Exists("bob")
 	if err != nil {
 		t.Error(err)
+	}
+
+	h.Set("john", "password", "hunter2")
+	h.Set("john", "email", "john@zombo.com")
+
+	h.Del("john")
+	found, err := h.Exists("john")
+	if err != nil {
+		t.Error(err)
+	}
+	if found {
+		t.Error("not supposed to exist")
 	}
 
 	h.Remove()

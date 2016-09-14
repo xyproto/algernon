@@ -185,3 +185,53 @@ func TestHostPassword(t *testing.T) {
 		t.Error("Error, user bob should not exist")
 	}
 }
+
+func TestChangePassword(t *testing.T) {
+	userstate, err := NewUserState(connectionString, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userstate.AddUser("bob", "hunter1", "bob@zombo.com")
+	if !userstate.HasUser("bob") {
+		t.Error("Error, user bob should exist")
+	}
+
+	// Check that the password is "hunter1"
+	if !userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should be hunter1!")
+	}
+	// Check that the password is not "hunter2"
+	if userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should not be hunter2!")
+	}
+
+	// Change the password for user "bob" to "hunter2"
+	username := "bob"
+	password := "hunter2"
+	passwordHash := userstate.HashPassword(username, password)
+	userstate.Users().Set(username, "password", passwordHash)
+
+	// Check that the password is "hunter2"
+	if !userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should be hunter2!")
+	}
+	// Check that the password is not "hunter1"
+	if userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should not be hunter1!")
+	}
+
+	// Change the password back to "hunter1"
+	userstate.SetPassword("bob", "hunter1")
+
+	// Check that the password is "hunter1"
+	if !userstate.CorrectPassword("bob", "hunter1") {
+		t.Error("Error, password is incorrect: should be hunter1!")
+	}
+	// Check that the password is not "hunter2"
+	if userstate.CorrectPassword("bob", "hunter2") {
+		t.Error("Error, password is incorrect: should not be hunter2!")
+	}
+
+	userstate.RemoveUser("bob")
+}

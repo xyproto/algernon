@@ -3,8 +3,9 @@ Simple Bolt
 
 [![Build Status](https://travis-ci.org/xyproto/simplebolt.svg?branch=master)](https://travis-ci.org/xyproto/simplebolt)
 [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt)
+[![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/simplebolt)
 
-Simple way to use Bolt. Similar to [simpleredis](https://github.com/xyproto/simpleredis).
+Simple way to use the [Bolt](github.com/boltdb/bolt) database. Similar design to [simpleredis](https://github.com/xyproto/simpleredis).
 
 
 Online API Documentation
@@ -43,12 +44,12 @@ func main() {
 	// Create a list named "greetings"
 	list, err := simplebolt.NewList(db, "greetings")
 	if err != nil {
-		log.Fatalf("Could not create list! %s", err)
+		log.Fatalf("Could not create a list! %s", err)
 	}
 
 	// Add "hello" to the list
 	if err := list.Add("hello"); err != nil {
-		log.Fatalf("Could not add an item to list! %s", err)
+		log.Fatalf("Could not add an item to the list! %s", err)
 	}
 
 	// Get the last item of the list
@@ -68,7 +69,7 @@ func main() {
 Version, license and author
 ---------------------------
 
-* API version: 3.0
 * License: MIT
-* Author: Alexander F Rødseth
+* API version: 3.0
+* Author: Alexander F Rødseth <xyproto@archlinux.org>
 

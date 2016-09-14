@@ -3,6 +3,7 @@ package pongo2
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -12,7 +13,7 @@ type Value struct {
 	safe bool // used to indicate whether a Value needs explicit escaping in the template
 }
 
-// Converts any given value to a pongo2.Value
+// AsValue converts any given value to a pongo2.Value
 // Usually being used within own functions passed to a template
 // through a Context or within filter functions.
 //
@@ -24,7 +25,7 @@ func AsValue(i interface{}) *Value {
 	}
 }
 
-// Like AsValue, but does not apply the 'escape' filter.
+// AsSafeValue works like AsValue, but does not apply the 'escape' filter.
 func AsSafeValue(i interface{}) *Value {
 	return &Value{
 		val:  reflect.ValueOf(i),
@@ -111,9 +112,8 @@ func (v *Value) String() string {
 	case reflect.Bool:
 		if v.Bool() {
 			return "True"
-		} else {
-			return "False"
 		}
+		return "False"
 	case reflect.Struct:
 		if t, ok := v.Interface().(fmt.Stringer); ok {
 			return t.String()
@@ -229,19 +229,19 @@ func (v *Value) Negate() *Value {
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if v.Integer() != 0 {
 			return AsValue(0)
-		} else {
-			return AsValue(1)
 		}
+		return AsValue(1)
 	case reflect.Float32, reflect.Float64:
 		if v.Float() != 0.0 {
 			return AsValue(float64(0.0))
-		} else {
-			return AsValue(float64(1.1))
 		}
+		return AsValue(float64(1.1))
 	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 		return AsValue(v.getResolvedValue().Len() == 0)
 	case reflect.Bool:
 		return AsValue(!v.getResolvedValue().Bool())
+	case reflect.Struct:
+		return AsValue(false)
 	default:
 		logf("Value.IsTrue() not available for type: %s\n", v.getResolvedValue().Kind().String())
 		return AsValue(true)
@@ -301,7 +301,7 @@ func (v *Value) Index(i int) *Value {
 	}
 }
 
-// Checks whether the underlying value (which must be of type struct, map,
+// Contains checks whether the underlying value (which must be of type struct, map,
 // string, array or slice) contains of another Value (e. g. used to check
 // whether a struct contains of a specific field or a map contains a specific key).
 //
@@ -310,25 +310,32 @@ func (v *Value) Index(i int) *Value {
 func (v *Value) Contains(other *Value) bool {
 	switch v.getResolvedValue().Kind() {
 	case reflect.Struct:
-		field_value := v.getResolvedValue().FieldByName(other.String())
-		return field_value.IsValid()
+		fieldValue := v.getResolvedValue().FieldByName(other.String())
+		return fieldValue.IsValid()
 	case reflect.Map:
-		var map_value reflect.Value
+		var mapValue reflect.Value
 		switch other.Interface().(type) {
 		case int:
-			map_value = v.getResolvedValue().MapIndex(other.getResolvedValue())
+			mapValue = v.getResolvedValue().MapIndex(other.getResolvedValue())
 		case string:
-			map_value = v.getResolvedValue().MapIndex(other.getResolvedValue())
+			mapValue = v.getResolvedValue().MapIndex(other.getResolvedValue())
 		default:
 			logf("Value.Contains() does not support lookup type '%s'\n", other.getResolvedValue().Kind().String())
 			return false
 		}
 
-		return map_value.IsValid()
+		return mapValue.IsValid()
 	case reflect.String:
 		return strings.Contains(v.getResolvedValue().String(), other.String())
 
-	// TODO: reflect.Array, reflect.Slice
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.getResolvedValue().Len(); i++ {
+			item := v.getResolvedValue().Index(i)
+			if other.Interface() == item.Interface() {
+				return true
+			}
+		}
+		return false
 
 	default:
 		logf("Value.Contains() not available for type: %s\n", v.getResolvedValue().Kind().String())
@@ -357,16 +364,22 @@ func (v *Value) CanSlice() bool {
 // If the underlying value has no items or is not one of the types above,
 // the empty function (function's second argument) will be called.
 func (v *Value) Iterate(fn func(idx, count int, key, value *Value) bool, empty func()) {
-	v.IterateOrder(fn, empty, false)
+	v.IterateOrder(fn, empty, false, false)
 }
 
 // Like Value.Iterate, but can iterate through an array/slice/string in reverse. Does
 // not affect the iteration through a map because maps don't have any particular order.
-func (v *Value) IterateOrder(fn func(idx, count int, key, value *Value) bool, empty func(), reverse bool) {
+func (v *Value) IterateOrder(fn func(idx, count int, key, value *Value) bool, empty func(), reverse bool, sorted bool) {
 	switch v.getResolvedValue().Kind() {
 	case reflect.Map:
-		// Reverse not needed for maps, since they are not ordered
-		keys := v.getResolvedValue().MapKeys()
+		keys := sortedKeys(v.getResolvedValue().MapKeys())
+		if sorted {
+			if reverse {
+				sort.Sort(sort.Reverse(keys))
+			} else {
+				sort.Sort(keys)
+			}
+		}
 		keyLen := len(keys)
 		for idx, key := range keys {
 			value := v.getResolvedValue().MapIndex(key)
@@ -379,19 +392,31 @@ func (v *Value) IterateOrder(fn func(idx, count int, key, value *Value) bool, em
 		}
 		return // done
 	case reflect.Array, reflect.Slice:
+		var items valuesList
+
 		itemCount := v.getResolvedValue().Len()
-		if itemCount > 0 {
+		for i := 0; i < itemCount; i++ {
+			items = append(items, &Value{val: v.getResolvedValue().Index(i)})
+		}
+
+		if sorted {
 			if reverse {
-				for i := itemCount - 1; i >= 0; i-- {
-					if !fn(i, itemCount, &Value{val: v.getResolvedValue().Index(i)}, nil) {
-						return
-					}
-				}
+				sort.Sort(sort.Reverse(items))
 			} else {
-				for i := 0; i < itemCount; i++ {
-					if !fn(i, itemCount, &Value{val: v.getResolvedValue().Index(i)}, nil) {
-						return
-					}
+				sort.Sort(items)
+			}
+		} else {
+			if reverse {
+				for i := 0; i < itemCount/2; i++ {
+					items[i], items[itemCount-1-i] = items[itemCount-1-i], items[i]
+				}
+			}
+		}
+
+		if len(items) > 0 {
+			for idx, item := range items {
+				if !fn(idx, itemCount, item, nil) {
+					return
 				}
 			}
 		} else {
@@ -399,7 +424,12 @@ func (v *Value) IterateOrder(fn func(idx, count int, key, value *Value) bool, em
 		}
 		return // done
 	case reflect.String:
-		// TODO: Not utf8-compatible (utf8-decoding neccessary)
+		if sorted {
+			// TODO(flosch): Handle sorted
+			panic("TODO: handle sort for type string")
+		}
+
+		// TODO(flosch): Not utf8-compatible (utf8-decoding neccessary)
 		charCount := v.getResolvedValue().Len()
 		if charCount > 0 {
 			if reverse {
@@ -435,5 +465,55 @@ func (v *Value) Interface() interface{} {
 
 // Checks whether two values are containing the same value or object.
 func (v *Value) EqualValueTo(other *Value) bool {
+	// comparison of uint with int fails using .Interface()-comparison (see issue #64)
+	if v.IsInteger() && other.IsInteger() {
+		return v.Integer() == other.Integer()
+	}
 	return v.Interface() == other.Interface()
+}
+
+type sortedKeys []reflect.Value
+
+func (sk sortedKeys) Len() int {
+	return len(sk)
+}
+
+func (sk sortedKeys) Less(i, j int) bool {
+	vi := &Value{val: sk[i]}
+	vj := &Value{val: sk[j]}
+	switch {
+	case vi.IsInteger() && vj.IsInteger():
+		return vi.Integer() < vj.Integer()
+	case vi.IsFloat() && vj.IsFloat():
+		return vi.Float() < vj.Float()
+	default:
+		return vi.String() < vj.String()
+	}
+}
+
+func (sk sortedKeys) Swap(i, j int) {
+	sk[i], sk[j] = sk[j], sk[i]
+}
+
+type valuesList []*Value
+
+func (vl valuesList) Len() int {
+	return len(vl)
+}
+
+func (vl valuesList) Less(i, j int) bool {
+	vi := vl[i]
+	vj := vl[j]
+	switch {
+	case vi.IsInteger() && vj.IsInteger():
+		return vi.Integer() < vj.Integer()
+	case vi.IsFloat() && vj.IsFloat():
+		return vi.Float() < vj.Float()
+	default:
+		return vi.String() < vj.String()
+	}
+}
+
+func (vl valuesList) Swap(i, j int) {
+	vl[i], vl[j] = vl[j], vl[i]
 }

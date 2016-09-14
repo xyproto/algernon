@@ -1,41 +1,38 @@
 package pongo2
 
-import (
-	"bytes"
-)
-
 type tagIncludeNode struct {
-	tpl                *Template
-	filename_evaluator IEvaluator
-	lazy               bool
-	only               bool
-	filename           string
-	with_pairs         map[string]IEvaluator
+	tpl               *Template
+	filenameEvaluator IEvaluator
+	lazy              bool
+	only              bool
+	filename          string
+	withPairs         map[string]IEvaluator
+	ifExists          bool
 }
 
-func (node *tagIncludeNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer) *Error {
+func (node *tagIncludeNode) Execute(ctx *ExecutionContext, writer TemplateWriter) *Error {
 	// Building the context for the template
-	include_ctx := make(Context)
+	includeCtx := make(Context)
 
 	// Fill the context with all data from the parent
 	if !node.only {
-		include_ctx.Update(ctx.Public)
-		include_ctx.Update(ctx.Private)
+		includeCtx.Update(ctx.Public)
+		includeCtx.Update(ctx.Private)
 	}
 
 	// Put all custom with-pairs into the context
-	for key, value := range node.with_pairs {
+	for key, value := range node.withPairs {
 		val, err := value.Evaluate(ctx)
 		if err != nil {
 			return err
 		}
-		include_ctx[key] = val
+		includeCtx[key] = val
 	}
 
 	// Execute the template
 	if node.lazy {
 		// Evaluate the filename
-		filename, err := node.filename_evaluator.Evaluate(ctx)
+		filename, err := node.filenameEvaluator.Evaluate(ctx)
 		if err != nil {
 			return err
 		}
@@ -45,76 +42,93 @@ func (node *tagIncludeNode) Execute(ctx *ExecutionContext, buffer *bytes.Buffer)
 		}
 
 		// Get include-filename
-		included_filename := ctx.template.set.resolveFilename(ctx.template, filename.String())
+		includedFilename := ctx.template.set.resolveFilename(ctx.template, filename.String())
 
-		included_tpl, err2 := ctx.template.set.FromFile(included_filename)
+		includedTpl, err2 := ctx.template.set.FromFile(includedFilename)
 		if err2 != nil {
+			// if this is ReadFile error, and "if_exists" flag is enabled
+			if node.ifExists && err2.(*Error).Sender == "fromfile" {
+				return nil
+			}
 			return err2.(*Error)
 		}
-		err2 = included_tpl.ExecuteWriter(include_ctx, buffer)
+		err2 = includedTpl.ExecuteWriter(includeCtx, writer)
 		if err2 != nil {
 			return err2.(*Error)
-		}
-		return nil
-	} else {
-		// Template is already parsed with static filename
-		err := node.tpl.ExecuteWriter(include_ctx, buffer)
-		if err != nil {
-			return err.(*Error)
 		}
 		return nil
 	}
+	// Template is already parsed with static filename
+	err := node.tpl.ExecuteWriter(includeCtx, writer)
+	if err != nil {
+		return err.(*Error)
+	}
+	return nil
+}
+
+type tagIncludeEmptyNode struct{}
+
+func (node *tagIncludeEmptyNode) Execute(ctx *ExecutionContext, writer TemplateWriter) *Error {
+	return nil
 }
 
 func tagIncludeParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *Error) {
-	include_node := &tagIncludeNode{
-		with_pairs: make(map[string]IEvaluator),
+	includeNode := &tagIncludeNode{
+		withPairs: make(map[string]IEvaluator),
 	}
 
-	if filename_token := arguments.MatchType(TokenString); filename_token != nil {
+	if filenameToken := arguments.MatchType(TokenString); filenameToken != nil {
 		// prepared, static template
 
+		// "if_exists" flag
+		ifExists := arguments.Match(TokenIdentifier, "if_exists") != nil
+
 		// Get include-filename
-		included_filename := doc.template.set.resolveFilename(doc.template, filename_token.Val)
+		includedFilename := doc.template.set.resolveFilename(doc.template, filenameToken.Val)
 
 		// Parse the parent
-		include_node.filename = included_filename
-		included_tpl, err := doc.template.set.FromFile(included_filename)
+		includeNode.filename = includedFilename
+		includedTpl, err := doc.template.set.FromFile(includedFilename)
 		if err != nil {
-			return nil, err.(*Error).updateFromTokenIfNeeded(doc.template, filename_token)
+			// if this is ReadFile error, and "if_exists" token presents we should create and empty node
+			if err.(*Error).Sender == "fromfile" && ifExists {
+				return &tagIncludeEmptyNode{}, nil
+			}
+			return nil, err.(*Error).updateFromTokenIfNeeded(doc.template, filenameToken)
 		}
-		include_node.tpl = included_tpl
+		includeNode.tpl = includedTpl
 	} else {
 		// No String, then the user wants to use lazy-evaluation (slower, but possible)
-		filename_evaluator, err := arguments.ParseExpression()
+		filenameEvaluator, err := arguments.ParseExpression()
 		if err != nil {
-			return nil, err.updateFromTokenIfNeeded(doc.template, filename_token)
+			return nil, err.updateFromTokenIfNeeded(doc.template, filenameToken)
 		}
-		include_node.filename_evaluator = filename_evaluator
-		include_node.lazy = true
+		includeNode.filenameEvaluator = filenameEvaluator
+		includeNode.lazy = true
+		includeNode.ifExists = arguments.Match(TokenIdentifier, "if_exists") != nil // "if_exists" flag
 	}
 
 	// After having parsed the filename we're gonna parse the with+only options
 	if arguments.Match(TokenIdentifier, "with") != nil {
 		for arguments.Remaining() > 0 {
 			// We have at least one key=expr pair (because of starting "with")
-			key_token := arguments.MatchType(TokenIdentifier)
-			if key_token == nil {
+			keyToken := arguments.MatchType(TokenIdentifier)
+			if keyToken == nil {
 				return nil, arguments.Error("Expected an identifier", nil)
 			}
 			if arguments.Match(TokenSymbol, "=") == nil {
 				return nil, arguments.Error("Expected '='.", nil)
 			}
-			value_expr, err := arguments.ParseExpression()
+			valueExpr, err := arguments.ParseExpression()
 			if err != nil {
-				return nil, err.updateFromTokenIfNeeded(doc.template, key_token)
+				return nil, err.updateFromTokenIfNeeded(doc.template, keyToken)
 			}
 
-			include_node.with_pairs[key_token.Val] = value_expr
+			includeNode.withPairs[keyToken.Val] = valueExpr
 
 			// Only?
 			if arguments.Match(TokenIdentifier, "only") != nil {
-				include_node.only = true
+				includeNode.only = true
 				break // stop parsing arguments because it's the last option
 			}
 		}
@@ -124,7 +138,7 @@ func tagIncludeParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *
 		return nil, arguments.Error("Malformed 'include'-tag arguments.", nil)
 	}
 
-	return include_node, nil
+	return includeNode, nil
 }
 
 func init() {
