@@ -9,5 +9,5 @@ env:
   - GO15VENDOREXPERIMENT=1
 
 install:
-  - curl -L -s https://github.com/Masterminds/glide/releases/download/0.12.2/glide-linux-amd64.tar.gz | tar zxC ./
+  - curl -L -s https://github.com/Masterminds/glide/releases/download/v0.12.2/glide-v0.12.2-linux-amd64.tar.gz | tar zxC ./
   - ./linux-amd64/glide install
