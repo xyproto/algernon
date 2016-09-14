@@ -10,4 +10,5 @@ go:
 sudo: false
 
 script:
-  - GO15VENDOREXPERIMENT=1 go test
+  - rm -rf vendor
+  - go test
