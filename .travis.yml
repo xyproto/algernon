@@ -1,5 +1,12 @@
 language: go
 
+sudo: required
+
 go:
   - 1.7
-  - tip
+
+script:
+  - curl https://glide.sh/get | sh
+  - glide install
+  - go build
+  - go test
