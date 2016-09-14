@@ -1,12 +1,13 @@
 language: go
 
-sudo: required
-
 go:
   - 1.7
 
-script:
-  - curl https://glide.sh/get | sh
-  - glide install
-  - go build
-  - go test
+sudo: false
+
+env:
+  - GO15VENDOREXPERIMENT=1
+
+install:
+  - curl -L -s https://github.com/Masterminds/glide/releases/download/0.12.2/glide-linux-amd64.tar.gz | tar zxC ./
+  - ./linux-amd64/glide install
