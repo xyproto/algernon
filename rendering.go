@@ -190,7 +190,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
 	if strings.Contains(theme, ".") {
-		builtinThemes[theme] = "@import url(" + theme + ");"
+		builtinThemes[theme] = "<link rel=\"stylesheet\" href=\"" + theme + "\">"
 		defaultCodeStyles[theme] = defaultCustomCodeStyle
 	}
 
@@ -217,7 +217,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		head.WriteString(`<link href="` + defaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
-		head.WriteString("<style>" + builtinThemes[theme] + "</style>")
+		head.WriteString(builtinThemes[theme])
 	}
 
 	// Add syntax highlighting

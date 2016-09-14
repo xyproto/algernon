@@ -3,8 +3,21 @@ title: Algernon
 description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
 keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
 replace_with_theme: default_theme
-theme: dark
+theme: style.css
 -->
+
+<div id='stars'></div>
+<div id='stars2'></div>
+<div id='stars3'></div>
+<div id='title'>
+  <span>
+    PURE CSS
+  </span>
+  <br>
+  <span>
+    PARALLAX PIXEL STARS
+  </span>
+</div>
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo_default_theme.png" style="margin-left: 2em"></a>
 
