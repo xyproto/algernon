@@ -1,5 +1,5 @@
-hash: 9f950a8f8d66ba7186219911dfd31abafaee8f549cafd1a21f728ba1a4c440a1
-updated: 2016-09-14T10:31:13.09467206+02:00
+hash: a9c38acf68d84132b381ab1f552177e9e5196e9b7e6f56dec03324a71a1d54fd
+updated: 2016-09-14T21:49:44.789951876+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 119f50887f8fe324fe2386421c27a11af014b64e
@@ -165,6 +165,8 @@ imports:
 testImports:
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
+- name: github.com/go-check/check
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/kr/pretty
   version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
 - name: github.com/kr/text

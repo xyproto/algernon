@@ -42,5 +42,6 @@ testImport:
 - package: github.com/xyproto/simplebolt
 - package: github.com/xyproto/simplehstore
 - package: github.com/xyproto/simplemaria
+- package: github.com/go-check/check
 
 
