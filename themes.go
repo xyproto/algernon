@@ -26,16 +26,12 @@ var (
 	// See https://github.com/isagalaev/highlight.js/tree/master/src/styles for more styles
 	defaultCodeStyles = map[string]string{"gray": "color-brewer", "dark": "ocean", "redbox": "railscasts"}
 
-	// Extra HTML tags for <head> per built-in theme
-	//builtinExtraHTML = map[string]string{"gray": "", "dark": "", "redbox": "", "custom": ""}
-
 	// A selection of allowed keywords for the HTML meta tag
 	metaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 )
 
 // Easy way to output a HTML page
 func easyPage(title, body, theme string) string {
-	//return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, builtinExtraHTML[theme], builtinThemes[theme], title, body)
 	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, "", builtinThemes[theme], title, body)
 }
 
@@ -47,6 +43,11 @@ func easyLink(text, url string, isDirectory bool) string {
 		url += "/"
 	}
 	return "<a href=\"/" + url + "\">" + text + "</a><br>"
+}
+
+// HTML to be added for enabling highlighting.
+func highlightHTML(codeStyle string) string {
+	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/` + codeStyle + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
 }
 
 // Add a link to a stylesheet in the given Amber code

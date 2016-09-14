@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -127,11 +128,6 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		return 0 // number of results
 	}))
 
-}
-
-// HTML to be added for enabling highlighting.
-func highlightHTML(codeStyle string) string {
-	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/` + codeStyle + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
@@ -270,6 +266,7 @@ func validGCSS(gcssdata []byte) error {
 func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
+	pongoMut := new(sync.RWMutex)
 
 	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
@@ -302,6 +299,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 		}
 		return
 	}
+
+	pongoMut.Lock()
 
 	okfuncs := make(pongo2.Context)
 
@@ -352,6 +351,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 
 	// Make the Lua functions available to Pongo
 	pongo2.Globals.Update(okfuncs)
+
+	pongoMut.Unlock()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -559,13 +560,18 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 // Write the given source bytes as SCSS converted to CSS, to a writer.
 // filename is only used if there are errors.
 func scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
-	// Silence the compiler output
+	// TODO: Gather stderr and print with log.Errorf if needed
 	o := Output{}
-	o.disable()
+	// Silence the compiler output
+	if !debugMode {
+		o.disable()
+	}
 	// Compile the given filename. Sass might want to import other file, which is probably
 	// why the Sass compiler doesn't support just taking in a slice of bytes.
 	cssString, err := compiler.Run(filename)
-	o.enable()
+	if !debugMode {
+		o.enable()
+	}
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Could not compile SCSS:\n\n%s\n%s", err, string(scssdata))
