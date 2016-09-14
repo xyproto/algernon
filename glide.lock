@@ -1,5 +1,5 @@
-hash: 7be3d544d750f1c65fa1494d9cd09eed95e08cd72bbace9f18267a7248300123
-updated: 2016-09-14T22:16:14.100825205+02:00
+hash: 499d69a8a9ff88c4e57c8ff281e49a9880506716ed8803190383ff8c538e693e
+updated: 2016-09-14T22:24:54.999703105+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 119f50887f8fe324fe2386421c27a11af014b64e
@@ -160,6 +160,9 @@ imports:
   subpackages:
   - ?go-get=1
 testImports:
+- name: assert
+  version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
+  repo: https://github.com/bmizerany/assert
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
 - name: github.com/go-check/check

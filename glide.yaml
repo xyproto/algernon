@@ -39,7 +39,8 @@ import:
 - package: launchpad.net/gocheck?go-get=1
   repo: https://github.com/go-check/check
 testImport:
-- package: github.com/bmizerany/assert
+- package: assert
+  repo: https://github.com/bmizerany/assert
 - package: github.com/xyproto/cookie
 - package: github.com/xyproto/simplebolt
 - package: github.com/xyproto/simplehstore
