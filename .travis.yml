@@ -1,14 +1,5 @@
 language: go
 
 go:
-  - 1.5
-  - 1.6
   - 1.7
   - tip
-
-# Let Travis use a container instead of a VM
-sudo: false
-
-script:
-  - rm -rf vendor
-  - go test
