@@ -5,3 +5,9 @@ go:
   - 1.6
   - 1.7
   - tip
+
+# Let Travis use a container instead of a VM
+sudo: false
+
+script:
+  - GO15VENDOREXPERIMENT=1 go test
