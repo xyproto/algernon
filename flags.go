@@ -179,10 +179,9 @@ Available flags:
   --cert=FILENAME              TLS certificate, if using HTTPS.
   --key=FILENAME               TLS key, if using HTTPS.
   -d, --debug                  Enable debug mode (show errors in the browser).
-  -b, --bolt                   Use "` + defaultBoltFilename + `"
-                               as the Bolt database.
-  --boltdb=FILENAME            Use a specific file as the Bolt database
-  --redis=[HOST][:PORT]        Use "` + defaultRedisColonPort + `" as the Redis database.
+  -b, --bolt                   Use "` + defaultBoltFilename + `" for the Bolt database.
+  --boltdb=FILENAME            Use a specific file for the Bolt database
+  --redis=[HOST][:PORT]        Use "` + defaultRedisColonPort + `" for the Redis database.
   --dbindex=INDEX              Redis database index (0 is default).
   --conf=FILENAME              Lua script with additional configuration.
   --log=FILENAME               Log to a file instead of to the console.
