@@ -133,7 +133,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
 	// Prepare for receiving title and codeStyle information
-	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": ""}
+	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
 
 	// Also prepare for receiving meta tag information
 	addMetaKeywords(given)
@@ -218,6 +218,23 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	} else {
 		// If not, use the theme by inserting the CSS style directly
 		head.WriteString("<style>" + builtinThemes[theme] + "</style>")
+	}
+
+	// Additional CSS file
+	additionalCSSfile := given["css"]
+	if additionalCSSfile != "" {
+		// If serving a single Markdown file, include the CSS file inline in a style tag
+		if markdownMode && fs.exists(additionalCSSfile) {
+			cssblock, err := cache.read(additionalCSSfile, shouldCache(".css"))
+			if err != nil {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+				return
+			}
+			cssdata := cssblock.MustData()
+			head.WriteString("<style>" + string(cssdata) + "</style>")
+		} else {
+			head.WriteString(`<link href="` + additionalCSSfile + `" rel="stylesheet" type="text/css">`)
+		}
 	}
 
 	// Add syntax highlighting
