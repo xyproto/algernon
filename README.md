@@ -1,6 +1,6 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
+description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
 keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
 replace_with_theme: default_theme
 theme: dark
@@ -8,7 +8,7 @@ theme: dark
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo_default_theme.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass, GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
