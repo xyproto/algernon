@@ -5,7 +5,6 @@ time for url in \
   'http://localhost:7531/samples/sass/' \
   'http://localhost:7531/samples/hellolua/' \
   'http://localhost:7531/samples/greetings/' \
-  'http://localhost:7531/samples/pongo2/' \
   ;
 do
   echo "$url"
