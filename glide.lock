@@ -1,5 +1,5 @@
-hash: 499d69a8a9ff88c4e57c8ff281e49a9880506716ed8803190383ff8c538e693e
-updated: 2016-09-14T22:24:54.999703105+02:00
+hash: 87cb12a25c839c36f054339f51b664fc4e0253b0b3443aa95a447325b0d05cc7
+updated: 2016-09-19T13:53:50.579841685+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 119f50887f8fe324fe2386421c27a11af014b64e
@@ -24,8 +24,6 @@ imports:
   - parser
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
-- name: github.com/flosch/pongo2
-  version: 22499f94d3d56c7238591344a6902715d0b8fbbf
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/garyburd/redigo
@@ -121,6 +119,8 @@ imports:
   version: f7312b99544b911522e43ef34e1ce540658e1ec8
 - name: github.com/xyproto/pinterface
   version: a5a0c6ccdeb92a8016a15724f36e6ad5570caa93
+- name: github.com/xyproto/pongo2
+  version: 0b8cefa21dd6be21ec95b7bcbf9d2b519b1eee10
 - name: github.com/xyproto/recwatch
   version: 07a9f17aef563117f0826c6372dcc7249c343c54
 - name: github.com/xyproto/simplebolt
