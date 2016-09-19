@@ -32,9 +32,7 @@ func TestPongoPage(t *testing.T) {
 
 	// Lua LState pool
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
-	atShutdown(func() {
-		luapool.Shutdown()
-	})
+	defer luapool.Shutdown()
 
 	// There was Lua code available. Now make the functions and
 	// variables available for the template.
