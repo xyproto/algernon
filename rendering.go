@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/eknkc/amber"
-	"github.com/flosch/pongo2"
 	"github.com/mamaar/risotto/generator"
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
+	"github.com/xyproto/pongo2"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
@@ -18,7 +18,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -283,7 +282,6 @@ func validGCSS(gcssdata []byte) error {
 func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
-	pongoMut := new(sync.RWMutex)
 
 	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
@@ -317,9 +315,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 		return
 	}
 
-	pongoMut.Lock()
-
-	okfuncs := make(pongo2.Context)
+	okfuncs := pongo2.NewContext()
 
 	// Go through the global Lua scope
 	for k, v := range funcs {
@@ -354,22 +350,20 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				return pongo2.AsValue(retval)
 			}
 			// Save the wrapped function for the pongo2 template execution
-			okfuncs[k] = wrapfunc
+			okfuncs.Set(k, wrapfunc)
 
 		} else if s, ok := v.(string); ok {
 			// String variables
-			okfuncs[k] = s
+			okfuncs.Set(k, s)
 		} else {
 			// Exposing variable as it is.
 			// TODO: Add more tests for this codepath
-			okfuncs[k] = v
+			okfuncs.Set(k, v)
 		}
 	}
 
 	// Make the Lua functions available to Pongo
 	pongo2.Globals.Update(okfuncs)
-
-	pongoMut.Unlock()
 
 	defer func() {
 		if r := recover(); r != nil {
