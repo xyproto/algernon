@@ -41,7 +41,7 @@ func TestPongoPage(t *testing.T) {
 	funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, nil, luapool, cache)
 	assert.Equal(t, err, nil)
 
-	// Trigger the error
+	// Trigger the error (now resolved)
 	for i := 0; i < 10; i++ {
 		go pongoPage(w, req, filename, luafilename, pongodata, funcs, cache)
 	}
