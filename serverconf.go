@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
@@ -127,7 +128,7 @@ func serverInfo() string {
 
 // Make functions related to server configuration and permissions available
 // Can not handle perm == nil
-func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, filename string, luapool *lStatePool) {
+func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, filename string, luapool *lStatePool, pongomutex *sync.RWMutex) {
 
 	// Set a default host and port. Maybe useful for alg applications.
 	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
@@ -164,7 +165,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 		// Custom handler for when permissions are denied
 		perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request, without caching
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, nil, nil)
+			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, nil, nil, pongomutex)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)

@@ -1,0 +1,5 @@
+<html>
+  <body>
+    <p>pongo2 {{ pongo2.version }}</p>
+  </body>
+</html>

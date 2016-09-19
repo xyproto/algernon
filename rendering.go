@@ -18,8 +18,15 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 )
+
+// Check if the given data is valid GCSS. The error value is returned on the channel.
+func validGCSS(gcssdata []byte, errorReturn chan error) {
+	buf := bytes.NewBuffer(gcssdata)
+	var w bytes.Buffer
+	_, err := gcss.Compile(&w, buf)
+	errorReturn <- err
+}
 
 // Expose functions that are related to rendering text, to the given Lua state
 func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
@@ -206,8 +213,12 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 				return
 			}
 			gcssdata := gcssblock.MustData()
+
 			// Try compiling the GCSS file first
-			if err := validGCSS(gcssdata); err != nil {
+			errChan := make(chan error)
+			go validGCSS(gcssdata, errChan)
+			err = <-errChan
+			if err != nil {
 				// Invalid GCSS, return an error page
 				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
@@ -270,21 +281,9 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	NewDataBlock(htmldata).ToClient(w, req)
 }
 
-// Check if the given data is valid GCSS
-func validGCSS(gcssdata []byte) error {
-	buf := bytes.NewBuffer(gcssdata)
-	var w bytes.Buffer
-	_, err := gcss.Compile(&w, buf)
-	return err
-}
-
-var pongomut = &sync.RWMutex{}
-
 // Write the given source bytes as Amber converted to HTML, to a writer.
-// filename and luafilename are only used if there are errors.
-func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
-
-	pongomut.Lock()
+// the filename is only used if there are errors.
+func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
 
@@ -299,8 +298,12 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				return
 			}
 			gcssdata := gcssblock.MustData()
-			// Try compiling the GCSS file before the Amber file
-			if err := validGCSS(gcssdata); err != nil {
+
+			// Try compiling the GCSS file before the Pongo2 file
+			errChan := make(chan error)
+			go validGCSS(gcssdata, errChan)
+			err = <-errChan
+			if err != nil {
 				// Invalid GCSS, return an error page
 				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
@@ -384,7 +387,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 	}()
 
 	// Render the Pongo2 template to the buffer
-	if err := tpl.ExecuteWriter(pongo2.Globals, &buf); err != nil {
+	err = tpl.ExecuteWriter(pongo2.Globals, &buf)
+	if err != nil {
 		//if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
 		if debugMode {
 			prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
@@ -439,13 +443,11 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 
 	// Write the rendered template to the client
 	NewDataBlock(buf.Bytes()).ToClient(w, req)
-
-	pongomut.Unlock()
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
-// filename and luafilename are only used if there are errors.
-func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
+// the filename is only used if there are errors.
+func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
 
 	var buf bytes.Buffer
 
@@ -459,8 +461,12 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				return
 			}
 			gcssdata := gcssblock.MustData()
+
 			// Try compiling the GCSS file before the Amber file
-			if err := validGCSS(gcssdata); err != nil {
+			errChan := make(chan error)
+			go validGCSS(gcssdata, errChan)
+			err = <-errChan
+			if err != nil {
 				// Invalid GCSS, return an error page
 				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return

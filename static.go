@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -62,7 +63,7 @@ func shortInfoAndOpen(filename, colonPort string, cancelChannel chan bool) {
 
 // Convenience function for serving only a single file
 // (quick and easy way to view a README.md file)
-func serveStaticFile(filename, colonPort string) {
+func serveStaticFile(filename, colonPort string, pongomutex *sync.RWMutex) {
 	log.Info("Single file mode. Not using the regular parameters.")
 
 	cancelChannel := make(chan bool, 1)
@@ -75,7 +76,7 @@ func serveStaticFile(filename, colonPort string) {
 	cache := newFileCache(defaultStaticCacheSize, true, 0)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
-		filePage(w, req, filename, nil, nil, cache)
+		filePage(w, req, filename, nil, nil, cache, pongomutex)
 	})
 	HTTPserver := newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
 

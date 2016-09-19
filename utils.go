@@ -35,6 +35,9 @@ type FileStat struct {
 	// Cache for checking if files exists, if "everFile" is enabled
 	exCache map[string]bool
 	exMut   *sync.RWMutex
+
+	// How often the stat cache should be cleared
+	clearStatCacheDelay time.Duration
 }
 
 // Output can be used for temporarily silencing stdout by redirecting to /dev/null or NUL
@@ -61,9 +64,9 @@ func (o *Output) enable() {
 
 // NewFileStat creates a new FileStat struct, with optional caching.
 // Only use the caching if it is not critical that os.Stat is always correct.
-func NewFileStat(useCache bool, repeatedlyClearStatCache time.Duration) *FileStat {
+func NewFileStat(useCache bool, clearStatCacheDelay time.Duration) *FileStat {
 	if !useCache {
-		return &FileStat{false, nil, nil, nil, nil}
+		return &FileStat{false, nil, nil, nil, nil, clearStatCacheDelay}
 	}
 
 	dirCache := make(map[string]bool)
@@ -72,12 +75,12 @@ func NewFileStat(useCache bool, repeatedlyClearStatCache time.Duration) *FileSta
 	exCache := make(map[string]bool)
 	exMut := new(sync.RWMutex)
 
-	fs := &FileStat{true, dirCache, dirMut, exCache, exMut}
+	fs := &FileStat{true, dirCache, dirMut, exCache, exMut, clearStatCacheDelay}
 
 	// Clear the file stat cache every N seconds
 	go func() {
 		for {
-			time.Sleep(repeatedlyClearStatCache)
+			fs.Sleep(0)
 
 			fs.dirMut.Lock()
 			fs.dirCache = make(map[string]bool)
@@ -90,6 +93,11 @@ func NewFileStat(useCache bool, repeatedlyClearStatCache time.Duration) *FileSta
 	}()
 
 	return fs
+}
+
+// Sleep for an entire stat cache clear cycle + optional extra sleep time
+func (fs *FileStat) Sleep(extraSleep time.Duration) {
+	time.Sleep(fs.clearStatCacheDelay)
 }
 
 // Normalize a filename by removing the precedeing "./".

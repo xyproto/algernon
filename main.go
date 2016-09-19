@@ -4,7 +4,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	internallog "log"
 	"net/http"
@@ -12,7 +11,10 @@ import (
 	"path/filepath"
 	"runtime/pprof"
 	"strings"
+	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/unzip"
@@ -88,6 +90,9 @@ func main() {
 	// Read mime data from the system, if available
 	initializeMime()
 
+	// Create a mutex for Pongo2 template rendering
+	pongomutex := &sync.RWMutex{}
+
 	// Log to a file as JSON, if a log file has been specified
 	if serverLogFile != "" {
 		f, errJSONLog := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
@@ -119,14 +124,14 @@ func main() {
 		if fs.exists(filename) {
 			if markdownMode {
 				// Serve the given Markdown file as a static HTTP server
-				serveStaticFile(filename, defaultWebColonPort)
+				serveStaticFile(filename, defaultWebColonPort, pongomutex)
 				return
 			}
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(filename)) {
 			case ".md", ".markdown":
 				// Serve the given Markdown file as a static HTTP server
-				serveStaticFile(filename, defaultWebColonPort)
+				serveStaticFile(filename, defaultWebColonPort, pongomutex)
 				return
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
@@ -230,7 +235,7 @@ func main() {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
-			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false, defaultTheme); errConf != nil {
+			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false, defaultTheme, pongomutex); errConf != nil {
 				if perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					fatalExit(errConf)
@@ -250,13 +255,13 @@ func main() {
 		if verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true, defaultTheme); errLua != nil {
+		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true, defaultTheme, pongomutex); errLua != nil {
 			log.Error("Error in Lua server script: " + luaServerFilename)
 			fatalExit(errLua)
 		}
 	} else {
 		// Register HTTP handler functions
-		registerHandlers(mux, "/", serverDir, perm, luapool, cache, serverAddDomain, defaultTheme)
+		registerHandlers(mux, "/", serverDir, perm, luapool, cache, serverAddDomain, defaultTheme, pongomutex)
 	}
 
 	// Set the values that has not been set by flags nor scripts
@@ -323,7 +328,7 @@ func main() {
 	// The Lua REPL
 	if !serverMode {
 		// If the REPL uses readline, the SIGWINCH signal is handled
-		go REPL(perm, luapool, cache, ready, done)
+		go REPL(perm, luapool, cache, pongomutex, ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL
 		ignoreTerminalResizeSignal()

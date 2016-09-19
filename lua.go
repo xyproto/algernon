@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/jpath"
@@ -312,7 +313,7 @@ func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache, httpStatus *FutureStatus) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache, httpStatus *FutureStatus, pongomutex *sync.RWMutex) {
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
@@ -331,7 +332,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 		userstate := perm.UserState()
 
 		// Functions for serving files in the same directory as a script
-		exportServeFile(w, req, L, filename, perm, luapool, cache)
+		exportServeFile(w, req, L, filename, perm, luapool, cache, pongomutex)
 
 		// Make the functions related to userstate available to the Lua script
 		exportUserstate(w, req, L, userstate)
@@ -371,7 +372,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // Also returns a header map
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache, fust *FutureStatus) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache, fust *FutureStatus, pongomutex *sync.RWMutex) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -416,7 +417,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 	// Export functions to the Lua state
 	// Flush can be an uninitialized channel, it is handled in the function.
-	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache, fust)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache, fust, pongomutex)
 
 	// Run the script
 	if err := L.DoFile(filename); err != nil {
@@ -456,7 +457,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // perm can be nil, but then several Lua functions will not be exposed
-func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, singleFileMode bool, theme string) error {
+func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, singleFileMode bool, theme string, pongomutex *sync.RWMutex) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -471,7 +472,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 		userstate := perm.UserState()
 
 		// Server configuration functions
-		exportServerConfigFunctions(L, perm, filename, luapool)
+		exportServerConfigFunctions(L, perm, filename, luapool, pongomutex)
 
 		// Simpleredis data structures (could be used for storing server stats)
 		exportList(L, userstate)
@@ -499,7 +500,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	if singleFileMode {
 		// Lua HTTP handlers
-		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false, nil, theme)
+		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false, nil, theme, pongomutex)
 	}
 
 	// Run the script
@@ -525,7 +526,9 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) (template.FuncMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) (template.FuncMap, error) {
+	pongomutex.Lock()
+	defer pongomutex.Unlock()
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -535,7 +538,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, nil)
+	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, nil, pongomutex)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -591,7 +594,7 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, nil)
+					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, nil, pongomutex)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)
@@ -602,7 +605,8 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 					}
 
 					// Run the Lua function
-					if err := L2.PCall(len(args), lua.MultRet, nil); err != nil {
+					err := L2.PCall(len(args), lua.MultRet, nil)
+					if err != nil {
 						// If calling the function did not work out, return the infostring and error
 						return infostring(functionName, args), err
 					}

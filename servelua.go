@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"sync"
 )
 
 // Expose functions for serving other files to Lua
-func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
 
 	// Serve a file in the scriptdir
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
@@ -24,7 +25,7 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 			log.Error("Could not serve " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}
-		filePage(w, req, serveFilename, perm, luapool, cache)
+		filePage(w, req, serveFilename, perm, luapool, cache, pongomutex)
 		return 0 // Number of results
 	}))
 
@@ -43,7 +44,7 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 
 		// Render the filename to a httptest.Recorder
 		recorder := httptest.NewRecorder()
-		filePage(recorder, req, serveFilename, perm, luapool, cache)
+		filePage(recorder, req, serveFilename, perm, luapool, cache, pongomutex)
 
 		// Return the recorder as a string
 		L.Push(lua.LString(recorderToString(recorder)))

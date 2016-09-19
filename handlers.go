@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/didip/tollbooth"
 	"github.com/xyproto/mime"
@@ -43,7 +45,7 @@ func clientCanGzip(req *http.Request) bool {
 }
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache) {
+func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -128,7 +130,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		if luablock.HasData() {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache)
+			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache, pongomutex)
 			if err != nil {
 				if debugMode {
 					// Use the Lua filename as the title
@@ -155,11 +157,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		// Render the Amber page, using functions from data.lua, if available
-		amberPage(w, req, filename, luafilename, amberblock.MustData(), funcs, cache)
+		amberPage(w, req, filename, amberblock.MustData(), funcs, cache)
 
 		return
 
-	case ".tmpl", ".pongo2", ".po2":
+	case ".po2", ".pongo2", ".tpl", ".tmpl":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		pongoblock, err := cache.read(filename, shouldCache(ext))
@@ -171,22 +173,27 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			}
 			return
 		}
-		// Try reading data.lua as well, if possible
+
+		// Make the functions in data.lua available for the Pongo2 template
 		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
-		luablock, err := cache.read(luafilename, shouldCache(ext))
-		if err != nil {
-			// Could not find and/or read data.lua
-			luablock = EmptyDataBlock
-		}
-		// Make functions from the given Lua data available
-		funcs := make(template.FuncMap)
-		// luablock can be empty if there was an error or if the file was empty
-		if luablock.HasData() {
-			// There was Lua code available. Now make the functions and
-			// variables available for the template.
-			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache)
+		if fs.exists(luafilename) {
+
+			// Extract the function map from data.lua in a goroutine
+			errChan := make(chan error)
+			funcMapChan := make(chan template.FuncMap)
+
+			go lua2funcMap(w, req, filename, luafilename, ext, perm, luapool, cache, pongomutex, errChan, funcMapChan)
+			funcs := <-funcMapChan
+			err = <-errChan
+
 			if err != nil {
 				if debugMode {
+					// Try reading data.lua as well, if possible
+					luablock, luablockErr := cache.read(luafilename, shouldCache(ext))
+					if luablockErr != nil {
+						// Could not find and/or read data.lua
+						luablock = EmptyDataBlock
+					}
 					// Use the Lua filename as the title
 					prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
 				} else {
@@ -194,24 +201,20 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				}
 				return
 			}
-			if debugMode && verboseMode {
-				s := "These functions from " + luafilename
-				s += " are useable for " + filename + ": "
-				// Create a comma separated list of the available functions
-				for key := range funcs {
-					s += key + ", "
-				}
-				// Remove the final comma
-				if strings.HasSuffix(s, ", ") {
-					s = s[:len(s)-2]
-				}
-				// Output the message
-				log.Info(s)
-			}
+
+			// Render the Pongo2 page, using functions from data.lua, if available
+			pongomutex.Lock()
+			pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
+			pongomutex.Unlock()
+
+			return
 		}
 
-		// Render the Pongo2 page, using functions from data.lua, if available
-		pongoPage(w, req, filename, luafilename, pongoblock.MustData(), funcs, cache)
+		// Use the Pongo2 template without any Lua functions
+		pongomutex.Lock()
+		funcs := make(template.FuncMap)
+		pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
+		pongomutex.Unlock()
 
 		return
 
@@ -286,7 +289,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache, httpStatus); err != nil {
+			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache, httpStatus, pongomutex); err != nil {
 				errortext := err.Error()
 				fileblock, err := cache.read(filename, shouldCache(ext))
 				if err != nil {
@@ -312,7 +315,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache, nil); err != nil {
+			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache, nil, pongomutex); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
@@ -378,7 +381,7 @@ func getDomain(req *http.Request) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool, theme string) {
+func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool, theme string, pongomutex *sync.RWMutex) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
@@ -419,11 +422,11 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, servedir, dirname, perm, luapool, cache, theme)
+			dirPage(w, req, servedir, dirname, perm, luapool, cache, theme, pongomutex)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm, luapool, cache)
+			filePage(w, req, noslash, perm, luapool, cache, pongomutex)
 			return
 		}
 		// Not found

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -545,7 +546,7 @@ func outputHelp(o *term.TextOutput, helpText string) {
 
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
 // A variety of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, ready, done chan bool) error {
+func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
 	var (
 		historyFilename string
 		err             error
@@ -568,7 +569,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, r
 	defer L.Close()
 
 	// Server configuration functions
-	exportServerConfigFunctions(L, perm, "", luapool)
+	exportServerConfigFunctions(L, perm, "", luapool, pongomutex)
 
 	// Other basic system functions, like log()
 	exportBasicSystemFunctions(L)

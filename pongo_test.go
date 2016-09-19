@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestPongoPage(t *testing.T) {
+func pongoPageTest(n int, t *testing.T) {
 	fs = NewFileStat(true, time.Minute*1)
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -20,7 +20,7 @@ func TestPongoPage(t *testing.T) {
 	luafilename := "samples/pongo2/data.lua"
 	pongodata, err := ioutil.ReadFile(filename)
 	assert.Equal(t, err, nil)
-	cache := newFileCache(10000000, true, 64*KiB)
+	cache := newFileCache(20000000, true, 64*KiB)
 
 	luablock, err := cache.read(luafilename, shouldCache(".po2"))
 	assert.Equal(t, err, nil)
@@ -40,7 +40,33 @@ func TestPongoPage(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	// Trigger the error (now resolved)
+	for i := 0; i < n; i++ {
+		go pongoPage(w, req, filename, pongodata, funcs, cache)
+	}
+}
+
+func TestPongoPage(t *testing.T) {
+	pongoPageTest(1, t)
+}
+
+func TestConcurrentPongoPage1(t *testing.T) {
+	pongoPageTest(10, t)
+}
+
+func TestConcurrentPongoPage2(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		go pongoPage(w, req, filename, luafilename, pongodata, funcs, cache)
+		go pongoPageTest(1, t)
+	}
+}
+
+func TestConcurrentPongoPage3(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		go pongoPageTest(10, t)
+	}
+}
+
+func TestConcurrentPongoPage4(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		go pongoPageTest(1000, t)
 	}
 }

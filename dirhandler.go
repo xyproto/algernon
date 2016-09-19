@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/xyproto/pinterface"
 )
@@ -71,7 +72,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 // Serve a directory. The directory must exist.
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, theme string) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, theme string, pongomutex *sync.RWMutex) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -90,7 +91,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
 		if fs.exists(filename) {
-			filePage(w, req, filename, perm, luapool, cache)
+			filePage(w, req, filename, perm, luapool, cache, pongomutex)
 			return
 		}
 	}
