@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // Expose functions that are related to rendering text, to the given Lua state
@@ -277,9 +278,13 @@ func validGCSS(gcssdata []byte) error {
 	return err
 }
 
+var pongomut = &sync.RWMutex{}
+
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // filename and luafilename are only used if there are errors.
 func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
+
+	pongomut.Lock()
 
 	var buf bytes.Buffer
 
@@ -339,6 +344,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 				for i, sv := range vals {
 					strs[i] = sv.String()
 				}
+
 				// Call the Lua function
 				retval, err := f(strs...)
 
@@ -433,6 +439,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename, luafilename s
 
 	// Write the rendered template to the client
 	NewDataBlock(buf.Bytes()).ToClient(w, req)
+
+	pongomut.Unlock()
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
