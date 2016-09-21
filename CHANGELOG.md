@@ -1,5 +1,17 @@
 # Changelog
 
+Changes from 1.1 to 1.2
+=======================
+
+* Add support for SCSS (Sass).
+* Fix the Pongo2 + Lua data race issue with a Mutex.
+* Vendor all dependencies and add a Glide YAML file.
+* Render `* [ ]`, `* [x]` and `* [X]` in Markdown as checkboxes.
+* Add support for different images per Markdown theme, using the `replace_with_theme` keyword.
+* Add support for custom CSS from Markdown, using the `css` keyword.
+* Add another built-in Markdown theme: redbox.
+* Remove unused variables.
+
 Changes from 1.0 to 1.1
 =======================
 
