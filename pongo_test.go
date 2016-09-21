@@ -54,24 +54,24 @@ func TestPongoPage(t *testing.T) {
 	pongoPageTest(1, t)
 }
 
-func TestConcurrentPongoPage1(t *testing.T) {
-	pongoPageTest(10, t)
-}
-
-func TestConcurrentPongoPage2(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		go pongoPageTest(1, t)
-	}
-}
-
-func TestConcurrentPongoPage3(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		go pongoPageTest(10, t)
-	}
-}
-
-func TestConcurrentPongoPage4(t *testing.T) {
-	for i := 0; i < 1000; i++ {
-		go pongoPageTest(1000, t)
-	}
-}
+//func TestConcurrentPongoPage1(t *testing.T) {
+//	pongoPageTest(10, t)
+//}
+//
+//func TestConcurrentPongoPage2(t *testing.T) {
+//	for i := 0; i < 10; i++ {
+//		go pongoPageTest(1, t)
+//	}
+//}
+//
+//func TestConcurrentPongoPage3(t *testing.T) {
+//	for i := 0; i < 10; i++ {
+//		go pongoPageTest(10, t)
+//	}
+//}
+//
+//func TestConcurrentPongoPage4(t *testing.T) {
+//	for i := 0; i < 1000; i++ {
+//		go pongoPageTest(1000, t)
+//	}
+//}
