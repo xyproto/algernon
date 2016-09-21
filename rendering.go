@@ -236,7 +236,8 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
 		if markdownMode && fs.exists(additionalCSSfile) {
-			cssblock, err := cache.read(additionalCSSfile, shouldCache(".css"))
+			// Cache the CSS only if Markdown should be cached
+			cssblock, err := cache.read(additionalCSSfile, shouldCache(".md"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -252,10 +253,12 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	codeStyle := given["codestyle"]
 	if codeStyle == "" {
 		head.WriteString(highlightHTML(defaultCodeStyles[theme]))
-	} else {
+	} else if codeStyle != "none" {
 		head.WriteString(highlightHTML(codeStyle))
 	}
-	htmlbody = highlightHTMLcode(htmlbody)
+	if codeStyle != "none" {
+		htmlbody = highlightHTMLcode(htmlbody)
+	}
 
 	// Add meta tags, if metadata information has been declared
 	for _, keyword := range metaKeywords {
@@ -264,9 +267,6 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 			head.WriteString(fmt.Sprintf(`<meta name="%s" content="%s" />`, keyword, given[keyword]))
 		}
 	}
-
-	// Load the default font in <head>
-	//head.WriteString(builtinExtraHTML[defaultTheme])
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
