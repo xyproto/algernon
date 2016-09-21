@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
@@ -25,8 +26,6 @@ func pongoPageTest(n int, t *testing.T) {
 	luablock, err := cache.read(luafilename, shouldCache(".po2"))
 	assert.Equal(t, err, nil)
 
-	// Make functions from the given Lua data available
-	funcs := make(template.FuncMap)
 	// luablock can be empty if there was an error or if the file was empty
 	assert.Equal(t, luablock.HasData(), true)
 
@@ -34,9 +33,15 @@ func pongoPageTest(n int, t *testing.T) {
 	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	defer luapool.Shutdown()
 
-	// There was Lua code available. Now make the functions and
-	// variables available for the template.
-	funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, nil, luapool, cache)
+	// Pongo2+Lua mutex
+	pongomutex := &sync.RWMutex{}
+
+	// Make functions from the given Lua data available
+	errChan := make(chan error)
+	funcMapChan := make(chan template.FuncMap)
+	go lua2funcMap(w, req, filename, luafilename, ".lua", nil, luapool, cache, pongomutex, errChan, funcMapChan)
+	funcs := <-funcMapChan
+	err = <-errChan
 	assert.Equal(t, err, nil)
 
 	// Trigger the error (now resolved)
