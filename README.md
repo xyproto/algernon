@@ -897,9 +897,12 @@ In addition to the regular Markdown syntax, Algernon supports setting the page t
     title: Page title
     theme: dark
     code_style: obsidian
+    replace_with_theme: default_theme
     -->
 
-Code is highlighted with [highlight.js](https://highlightjs.org/) and [several styles](https://highlightjs.org/static/demo/) are available.
+Code is highlighted with [highlight.js](https://highlightjs.org/) and [several styles](https://highlightjs.org/static/demo/) are available. "none" is also possible.
+
+The string that follows "replace_with_theme" will be used for replacing the string for the current theme with the given string. This makes it possible to use an image like `logo_default_theme.png` for one theme and `logo_dark.png` for another theme.
 
 The theme can alternatively be a path to a CSS file, or `style.gcss` can exist in the same directory.
 
