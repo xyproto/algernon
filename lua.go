@@ -23,13 +23,14 @@ var (
 
 // Output more informative information than the memory location.
 // Attempt to extract and print the values of the given lua.LValue.
+// Does not add a newline at the end.
 func pprintToWriter(w io.Writer, value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:
 		m, isAnArray, err := table2mapinterface(v)
 		if err != nil {
 			// Could not convert to a map
-			fmt.Println(v)
+			fmt.Fprint(w, v)
 			return
 		}
 		if isAnArray {
@@ -55,22 +56,22 @@ func pprintToWriter(w io.Writer, value lua.LValue) {
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function
-			fmt.Fprintln(w, v.Proto)
+			fmt.Fprint(w, v.Proto)
 		} else {
-			fmt.Fprintln(w, v)
+			fmt.Fprint(w, v)
 		}
 	case *lua.LUserData:
 		if jfile, ok := v.Value.(*jpath.JFile); ok {
 			fmt.Fprintln(w, v)
 			fmt.Fprintf(w, "filename: %s\n", jfile.GetFilename())
 			if data, err := jfile.JSON(); err == nil { // success
-				fmt.Fprintf(w, "JSON data:\n%s\n", string(data))
+				fmt.Fprintf(w, "JSON data:\n%s", string(data))
 			}
 		} else {
-			fmt.Fprintln(w, v)
+			fmt.Fprint(w, v)
 		}
 	default:
-		fmt.Fprintln(w, v)
+		fmt.Fprint(w, v)
 	}
 }
 
