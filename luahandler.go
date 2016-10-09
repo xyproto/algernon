@@ -20,12 +20,16 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		handleFunc := L.ToFunction(2)
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
+
+			L2 := luapool.Get()
+			defer luapool.Put(L2)
+
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, httpStatus, pongomutex)
+			exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, httpStatus, pongomutex)
 
 			// Then run the given Lua function
-			L.Push(handleFunc)
-			if err := L.PCall(0, lua.MultRet, nil); err != nil {
+			L2.Push(handleFunc)
+			if err := L2.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
 				log.Error("Handler for "+handlePath+" failed:", err)
 			}
