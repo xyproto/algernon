@@ -1,5 +1,5 @@
 hash: 87cb12a25c839c36f054339f51b664fc4e0253b0b3443aa95a447325b0d05cc7
-updated: 2016-09-19T13:53:50.579841685+02:00
+updated: 2016-10-09T16:38:26.066530628+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 119f50887f8fe324fe2386421c27a11af014b64e
@@ -71,7 +71,7 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
-  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+  version: 281073eb9eb092240d33ef253c404f1cca550309
 - name: github.com/natefinch/pie
   version: 13d3874dc4836d5db81d3a950aa5436b1eb23372
 - name: github.com/nsf/termbox-go
@@ -168,6 +168,6 @@ testImports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/kr/pretty
-  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+  version: e6ac2fc51e89a3249e82157fa0bb7a18ef9dd5bb
 - name: github.com/kr/text
-  version: 7cafcd837844e784b526369c9bce262804aebc60
+  version: bb797dc4fb8320488f47bf11de07a733d7233e1f
