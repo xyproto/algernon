@@ -15,6 +15,8 @@ import (
 // Make functions related to handling HTTP requests available to Lua scripts
 func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, pongomutex *sync.RWMutex) {
 
+	luahandlermutex := &sync.RWMutex{}
+
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1)
 		handleFunc := L.ToFunction(2)
@@ -23,6 +25,9 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 
 			L2 := luapool.Get()
 			defer luapool.Put(L2)
+
+			luahandlermutex.Lock()
+			defer luahandlermutex.Unlock()
 
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
 			exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, httpStatus, pongomutex)
