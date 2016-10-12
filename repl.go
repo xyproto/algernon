@@ -449,9 +449,21 @@ func pprint(value lua.LValue) {
 // Export Lua functions related to the REPL
 func exportREPL(L *lua.LState) {
 
-	// Attempt to return a more informative text than the memory location
+	// Attempt to return a more informative text than the memory location.
+	// Can take several arguments, just like print().
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
-		pprint(L.Get(1))
+		var buf bytes.Buffer
+		top := L.GetTop()
+		for i := 1; i <= top; i++ {
+			pprintToWriter(&buf, L.Get(i))
+			if i != top {
+				buf.WriteString("\t")
+			}
+		}
+
+		// Output the combined text
+		fmt.Println(buf.String())
+
 		return 0 // number of results
 	}))
 
