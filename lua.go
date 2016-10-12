@@ -29,6 +29,7 @@ func pprintToWriter(w io.Writer, value lua.LValue) {
 	case *lua.LTable:
 		m, isAnArray, err := table2mapinterface(v)
 		if err != nil {
+			//log.Info("try: for k,v in pairs(t) do pprint(k,v) end")
 			// Could not convert to a map
 			fmt.Fprint(w, v)
 			return
@@ -52,7 +53,7 @@ func pprintToWriter(w io.Writer, value lua.LValue) {
 			return
 		}
 		// A go map
-		fmt.Fprintln(w, fmt.Sprintf("%#v", m)[29:])
+		fmt.Fprint(w, fmt.Sprintf("%#v", m)[29:])
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function
