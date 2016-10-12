@@ -196,6 +196,9 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		for key := range req.Header {
 			L.RawSet(luaTable, lua.LString(key), lua.LString(req.Header.Get(key)))
 		}
+		if req.Host != "" {
+			L.RawSet(luaTable, lua.LString("Host"), lua.LString(req.Host))
+		}
 		L.Push(luaTable)
 		return 1 // number of results
 	}))
