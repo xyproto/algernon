@@ -741,11 +741,26 @@ func (c *Compiler) visitExpression(outerexpr ast.Expr) string {
 						break
 					}
 				}
+				for fname, _ := range FuncMap {
+					if fname == ident.Name {
+						builtin = true
+						break
+					}
+				}
 			}
 
 			if builtin {
 				stack.PushFront(ce.Fun.(*ast.Ident).Name)
 				c.write(`{{` + name + ` := ` + pop())
+			} else if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
+				exec(se.X)
+				x := pop()
+
+				if x == "." {
+					x = ""
+				}
+				stack.PushFront(se.Sel.Name)
+				c.write(`{{` + name + ` := ` + x + `.` + pop())
 			} else {
 				exec(ce.Fun)
 				c.write(`{{` + name + ` := call ` + pop())

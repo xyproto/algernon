@@ -174,6 +174,38 @@ func Test_FuncCall(t *testing.T) {
 	}
 }
 
+func Test_FuncMapFunctionCall(t *testing.T) {
+	FuncMap["upper"] = strings.ToUpper
+
+	res, err := run(`#{ upper("test") }`, nil)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	} else {
+		expect(res, `TEST`, t)
+	}
+}
+
+type DummyStruct struct {
+	X string
+}
+
+func (d DummyStruct) MethodWithArg(s string) string {
+	return d.X + " " + s
+}
+
+func Test_StructMethodCall(t *testing.T) {
+	d := DummyStruct{X: "Hello"}
+
+	res, err := run(`#{ $.MethodWithArg("world") }`, d)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	} else {
+		expect(res, `Hello world`, t)
+	}
+}
+
 func Test_Multiple_File_Inheritance(t *testing.T) {
 	tmpl, err := CompileDir("samples/", DefaultDirOptions, DefaultOptions)
 	if err != nil {

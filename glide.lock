@@ -1,13 +1,13 @@
 hash: 87cb12a25c839c36f054339f51b664fc4e0253b0b3443aa95a447325b0d05cc7
-updated: 2016-10-09T16:38:26.066530628+02:00
+updated: 2016-10-12T10:55:51.963436063+02:00
 imports:
 - name: code.google.com/p/go.crypto
-  version: 119f50887f8fe324fe2386421c27a11af014b64e
+  version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
   repo: https://golang.org/x/crypto
 - name: github.com/bobappleyard/readline
   version: 7e300e02d38ee8b418c0b4841877f1845d392328
 - name: github.com/boltdb/bolt
-  version: fff57c100f4dea1905678da7e90d92429dff2904
+  version: 074dffcc83e9f421e261526d297cd93f22a34080
 - name: github.com/bradfitz/http2
   version: aa7658c0e9902e929a9ed0996ef949e59fc0f3ab
   subpackages:
@@ -19,13 +19,13 @@ imports:
   - errors
   - libstring
 - name: github.com/eknkc/amber
-  version: 7875e9689d335cd15294cd6f4f0ef8322ce4c8e7
+  version: 80f9e2780533d6112fcba4c3f39d04afdc5138c9
   subpackages:
   - parser
 - name: github.com/fatih/color
-  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+  version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/fsnotify/fsnotify
-  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
+  version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: github.com/garyburd/redigo
   version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
   subpackages:
@@ -36,12 +36,12 @@ imports:
 - name: github.com/go-sql-driver/mysql
   version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
 - name: github.com/gophertown/fsnotify
-  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
+  version: 629574ca2a5df945712d3079857300b5e4da0236
   repo: https://github.com/fsnotify/fsnotify
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/klauspost/compress
-  version: 08fe86a420401e830c24114bdf9f1ba91331407a
+  version: d0763f13d86e630f5d3ea9fa848a6ecc68255297
   subpackages:
   - flate
 - name: github.com/klauspost/cpuid
@@ -51,7 +51,7 @@ imports:
 - name: github.com/klauspost/pgzip
   version: 95e8170c5d4da28db9c64dfc9ec3138ea4466fd4
 - name: github.com/lib/pq
-  version: 50761b0867bd1d9d069276790bcd4a3bccf2324a
+  version: 068cb1c8e4be77b9bdef4d0d91f162160537779e
   subpackages:
   - oid
 - name: github.com/mamaar/risotto
@@ -63,11 +63,11 @@ imports:
   - parser
   - token
 - name: github.com/mattn/go-colorable
-  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/mattn/go-runewidth
-  version: d6bea18f789704b5f83375793155289da36a3c7f
+  version: 737072b4e32b7a5018b4a7125da8d12de90e8045
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
@@ -77,11 +77,11 @@ imports:
 - name: github.com/nsf/termbox-go
   version: b6acae516ace002cb8105a89024544a1480655a5
 - name: github.com/russross/blackfriday
-  version: 35eb537633d9950afc8ae7bdf0edb6134584e9fc
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shopspring/decimal
   version: 74d668a796fa3734c552fb907d9b83146d0bebee
 - name: github.com/shurcooL/sanitized_anchor_name
-  version: 10ef21a441db47d8b13ebcc5fd2310f636973c77
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/sirupsen/logrus
   version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
 - name: github.com/tylerb/graceful
@@ -140,18 +140,18 @@ imports:
 - name: github.com/yuin/gluamapper
   version: d836955830e75240d46ce9f0e6d148d94f2e1d3a
 - name: github.com/yuin/gopher-lua
-  version: 6a1397dfb6f8e7af08496129dd96f5f62c148f47
+  version: dd0fd531098d425ac1576765d9cca3274f8dd8d6
   subpackages:
   - ast
   - parse
   - pm
 - name: golang.org/x/crypto
-  version: 119f50887f8fe324fe2386421c27a11af014b64e
+  version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/sys
-  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
+  version: 9bb9f0998d48b31547d975974935ae9b48c7a03c
   subpackages:
   - unix
 - name: launchpad.net/gocheck

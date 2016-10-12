@@ -114,3 +114,39 @@ stack traceback:
 @TAB@issues.lua:103: in main chunk
 @TAB@[G]: ?]], "@TAB@", "\t"))
 
+-- issue 81
+local tbl = {
+        [-1] = "a",
+        [0] = "b",
+        [1] = "c",
+}
+local a, b = next(tbl, nil)
+assert( a == -1 and b == "a" or a == 0 and b == "b" or a == 1 and b == "c")
+local a, b = next(tbl, a)
+assert( a == -1 and b == "a" or a == 0 and b == "b" or a == 1 and b == "c")
+local a, b = next(tbl, a)
+assert( a == -1 and b == "a" or a == 0 and b == "b" or a == 1 and b == "c")
+local a, b = next(tbl, a)
+assert( a == nil and b == nil)
+
+local tbl = {'a', 'b'}
+local a, b = next(tbl, nil)
+assert(a == 1 and b == "a")
+local a, b = next(tbl, a)
+assert(a == 2 and b == "b")
+local a, b = next(tbl, a)
+assert(a == nil and b == nil)
+
+-- issue 82
+local cr = function()
+        return coroutine.wrap(function()
+                coroutine.yield(1, "a")
+                coroutine.yield(2, "b")
+        end)
+end
+
+local f = cr()
+local a, b = f()
+assert(a == 1 and b == "a")
+local a, b = f()
+assert(a == 2 and b == "b")
