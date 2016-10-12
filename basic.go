@@ -20,7 +20,7 @@ import (
 // FutureStatus is useful when redirecting in combination with writing to a
 // buffer before writing to a client. May contain more fields in the future.
 type FutureStatus struct {
-	code int
+	code int // Buffered HTTP status code
 }
 
 func exportBasicSystemFunctions(L *lua.LState) {
@@ -135,6 +135,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 				buf.WriteString("\t")
 			}
 		}
+
 		// Final newline
 		buf.WriteString("\n")
 
@@ -154,8 +155,6 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 				buf.WriteString("\t")
 			}
 		}
-		// Final newline
-		buf.WriteString("\n")
 
 		// Return the string
 		L.Push(lua.LString(buf.String()))
