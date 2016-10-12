@@ -71,7 +71,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 		if gracefulServer != nil {
 			if gracefulServer.Interrupted {
 				//gracefulServer.Stop(forcedShutdownTimeout)
-				fatalExit(errors.New("Killed"))
+				fatalExit(errors.New("Interrupted"))
 			}
 		}
 
