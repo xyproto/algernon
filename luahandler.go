@@ -21,16 +21,18 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		handlePath := L.ToString(1)
 		handleFunc := L.ToFunction(2)
 
+		// TODO: Set up a channel and function for retrieving a lua "handleFunc" and running it, using the common luapool as needed
+
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
 
+			luapool := luapool
 			L2 := luapool.Get()
 			defer luapool.Put(L2)
 
-			luahandlermutex.Lock()
-			defer luahandlermutex.Unlock()
-
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
+			luahandlermutex.Lock()
 			exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, httpStatus, pongomutex)
+			luahandlermutex.Unlock()
 
 			// Then run the given Lua function
 			L2.Push(handleFunc)
