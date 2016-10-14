@@ -186,7 +186,9 @@ This enables debug mode, uses the internal Bolt database, uses regular HTTP inst
 
 * `algernon -e`
 
-##### Enable HTTP/2 in the browser
+Then try creating an `index.lua` file with `print("Hello, World!")` and visit the served web page in a browser.
+
+##### Enable HTTP/2 in the browser (for older browsers)
 
 * Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
 * Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
@@ -927,6 +929,6 @@ Requirements
 General information
 -------------------
 
-* Version: 1.1
+* Version: 1.2.1
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
