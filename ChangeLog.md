@@ -1,5 +1,12 @@
 # Changelog
 
+Changes from 1.2 to 1.2.1
+=========================
+
+* Improve the REPL and the pprint function
+* Fix a race issue when setting up a handle function from Lua
+* Add a "Host" header to the header table
+
 Changes from 1.1 to 1.2
 =======================
 
