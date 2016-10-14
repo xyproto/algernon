@@ -1,4 +1,4 @@
-package permissionwrench
+package permissionHSTORE
 
 import (
 	"errors"
@@ -394,6 +394,16 @@ func (state *UserState) CookieTimeout(username string) int64 {
 // SetCookieTimeout sets how long a login cookie should last, in seconds.
 func (state *UserState) SetCookieTimeout(cookieTime int64) {
 	state.cookieTime = cookieTime
+}
+
+// CookieSecret returns the current cookie secret
+func (state *UserState) CookieSecret() string {
+	return state.cookieSecret
+}
+
+// SetCookieSecret sets the current cookie secret
+func (state *UserState) SetCookieSecret(cookieSecret string) {
+	state.cookieSecret = cookieSecret
 }
 
 // PasswordAlgo returns the current password hashing algorithm.

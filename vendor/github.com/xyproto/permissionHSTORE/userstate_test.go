@@ -1,4 +1,4 @@
-package permissionwrench
+package permissionHSTORE
 
 import (
 	"fmt"

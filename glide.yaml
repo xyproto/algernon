@@ -23,7 +23,7 @@ import:
 - package: github.com/xyproto/permissionbolt
 - package: github.com/xyproto/permissions2
 - package: github.com/xyproto/permissionsql
-- package: github.com/xyproto/permissionwrench
+- package: github.com/xyproto/permissionHSTORE
 - package: github.com/xyproto/pinterface
 - package: github.com/xyproto/recwatch
 - package: github.com/xyproto/simpleredis

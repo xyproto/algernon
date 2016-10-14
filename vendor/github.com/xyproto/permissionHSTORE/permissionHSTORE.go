@@ -1,5 +1,5 @@
-// Package permissionwrench provides a way to keeping track of users, login states and permissions.
-package permissionwrench
+// Package permissionHSTORE provides a way to keeping track of users, login states and permissions.
+package permissionHSTORE
 
 import (
 	"github.com/xyproto/pinterface"
@@ -19,7 +19,7 @@ type Permissions struct {
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.0
+	Version = 2.1
 )
 
 // Initialize a Permissions struct with all the default settings.

@@ -1,4 +1,4 @@
-# amber [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/eknkc/amber)
+# amber [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/eknkc/amber) [![Build Status](https://travis-ci.org/eknkc/amber.svg?branch=master)](https://travis-ci.org/eknkc/amber)
 
 ```go
 import "github.com/eknkc/amber"
@@ -214,14 +214,14 @@ Mixins (reusable template blocks that accept arguments) can be defined:
         span Surprise!
     mixin link($href, $title, $text)
         a[href=$href][title=$title] #{$text}
-        
+
 and then called multiple times within a template (or even within another mixin definition):
 
     div
     	+surprise
     	+surprise
         +link("http://google.com", "Google", "Check out Google")
-        
+
 Template data, variables, expressions, etc., can all be passed as arguments:
 
     +link(GoogleUrl, $googleTitle, "Check out " + $googleTitle)

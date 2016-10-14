@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 // Convenience function for making it easier to get hold of http.ResponseWriter
@@ -27,7 +27,7 @@ func main() {
 	e := echo.New()
 
 	// New permissions middleware
-	perm, err := permissionwrench.New()
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}

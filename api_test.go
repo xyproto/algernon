@@ -4,10 +4,10 @@ package main
 import (
 	"fmt"
 	"github.com/bmizerany/assert"
+	"github.com/xyproto/permissionHSTORE"
 	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
 	"github.com/xyproto/permissionsql"
-	"github.com/xyproto/permissionwrench"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simplehstore"
@@ -43,7 +43,7 @@ func TestAPI(t *testing.T) {
 	assert.Equal(t, New("permissions", permissions.Version, 2.2).Check(), nil)
 	assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
 	assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
-	assert.Equal(t, New("simplehstore", simplehstore.Version, 2.0).Check(), nil)
-	assert.Equal(t, New("permissionwrench", permissionwrench.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("simplehstore", simplehstore.Version, 2.1).Check(), nil)
+	assert.Equal(t, New("permissionHSTORE", permissionHSTORE.Version, 2.1).Check(), nil)
 	assert.Equal(t, New("pinterface", pinterface.Version, 3.0).Check(), nil)
 }

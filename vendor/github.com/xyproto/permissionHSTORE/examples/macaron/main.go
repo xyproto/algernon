@@ -7,14 +7,14 @@ import (
 	"strings"
 
 	"github.com/Unknwon/macaron"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
 	m := macaron.Classic()
 
 	// New permissions middleware
-	perm, err := permissionwrench.New()
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}

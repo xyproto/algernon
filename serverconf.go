@@ -12,10 +12,10 @@ import (
 	"strings"
 	"sync"
 
+	postgres "github.com/xyproto/permissionHSTORE"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
-	postgres "github.com/xyproto/permissionwrench"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"

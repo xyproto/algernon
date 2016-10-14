@@ -1,8 +1,8 @@
-hash: 87cb12a25c839c36f054339f51b664fc4e0253b0b3443aa95a447325b0d05cc7
-updated: 2016-10-12T10:55:51.963436063+02:00
+hash: e33e64d61711f097a4abb2961db1de5ef75662b6f34b138eb56d0ea8f4dd19d2
+updated: 2016-10-14T12:06:41.883479313+02:00
 imports:
 - name: code.google.com/p/go.crypto
-  version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
+  version: 5f31782cfb2b6373211f8f9fbf31283fa234b570
   repo: https://golang.org/x/crypto
 - name: github.com/bobappleyard/readline
   version: 7e300e02d38ee8b418c0b4841877f1845d392328
@@ -19,13 +19,13 @@ imports:
   - errors
   - libstring
 - name: github.com/eknkc/amber
-  version: 80f9e2780533d6112fcba4c3f39d04afdc5138c9
+  version: a69a021e158c3b06700cc881c05d0923f627b578
   subpackages:
   - parser
 - name: github.com/fatih/color
   version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/fsnotify/fsnotify
-  version: 629574ca2a5df945712d3079857300b5e4da0236
+  version: bd2828f9f176e52d7222e565abb2d338d3f3c103
 - name: github.com/garyburd/redigo
   version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
   subpackages:
@@ -36,7 +36,7 @@ imports:
 - name: github.com/go-sql-driver/mysql
   version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
 - name: github.com/gophertown/fsnotify
-  version: 629574ca2a5df945712d3079857300b5e4da0236
+  version: bd2828f9f176e52d7222e565abb2d338d3f3c103
   repo: https://github.com/fsnotify/fsnotify
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
@@ -51,7 +51,7 @@ imports:
 - name: github.com/klauspost/pgzip
   version: 95e8170c5d4da28db9c64dfc9ec3138ea4466fd4
 - name: github.com/lib/pq
-  version: 068cb1c8e4be77b9bdef4d0d91f162160537779e
+  version: ae8357db35d721c58dcdc911318b55bef6b1b001
   subpackages:
   - oid
 - name: github.com/mamaar/risotto
@@ -110,15 +110,15 @@ imports:
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
-  version: d14dc9d92dd463cdb7024a2b846c4ab704e3271f
+  version: e60b21f434c6bd58a05a271f4c7e0ba559bebdbe
+- name: github.com/xyproto/permissionHSTORE
+  version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
-  version: 904788a416f7af87bb21c257d041f17fa7899cc3
+  version: 84b0270d160af9ef19485f927be061e998e1185b
 - name: github.com/xyproto/permissionsql
-  version: d517b172d4846d40dce3870244009df6326c6bcb
-- name: github.com/xyproto/permissionwrench
-  version: f7312b99544b911522e43ef34e1ce540658e1ec8
+  version: 14c0023a2a2d41af70db27509ae89a8b5d8e31b7
 - name: github.com/xyproto/pinterface
-  version: a5a0c6ccdeb92a8016a15724f36e6ad5570caa93
+  version: 0a2ee76fd4d458a7b2f89beabab0cc11135cb07e
 - name: github.com/xyproto/pongo2
   version: 0b8cefa21dd6be21ec95b7bcbf9d2b519b1eee10
 - name: github.com/xyproto/recwatch
@@ -126,11 +126,11 @@ imports:
 - name: github.com/xyproto/simplebolt
   version: e14f3929e5626e6a8c703e61c5b912014ef1d199
 - name: github.com/xyproto/simplehstore
-  version: e2bf082ae1e61cbe950f2e2de5833e188173ba24
+  version: 99a59d5aaec5c5ffa1c176314ad81b2d829ebbeb
 - name: github.com/xyproto/simplemaria
   version: 5cf67844724df03656f16a32348bbef589d5f919
 - name: github.com/xyproto/simpleredis
-  version: de7b4cb9d1be983af7e9924394a27b67927e4918
+  version: cda923d4c0ff8f4898045bb3ef953203c90a52d1
 - name: github.com/xyproto/term
   version: 9e12074e834ac795cf9e5d8ac4f3149babb59576
 - name: github.com/xyproto/unzip
@@ -140,13 +140,13 @@ imports:
 - name: github.com/yuin/gluamapper
   version: d836955830e75240d46ce9f0e6d148d94f2e1d3a
 - name: github.com/yuin/gopher-lua
-  version: dd0fd531098d425ac1576765d9cca3274f8dd8d6
+  version: d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e
   subpackages:
   - ast
   - parse
   - pm
 - name: golang.org/x/crypto
-  version: 4cd25d65a015cc83d41bf3454e6e8d6c116d16da
+  version: 5f31782cfb2b6373211f8f9fbf31283fa234b570
   subpackages:
   - bcrypt
   - blowfish

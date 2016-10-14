@@ -5,19 +5,44 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/codegangsta/negroni"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
+	"github.com/xyproto/pinterface"
 )
 
+type permissionHandler struct {
+	// perm is a Permissions structure that can be used to deny requests
+	// and acquire the UserState. By using `pinterface.IPermissions` instead
+	// of `*permissionHSTORE.Permissions`, the code is compatible with not only
+	// `permissionHSTORE`, but also other modules that uses other database
+	// backends, like `permissions2` which uses Redis.
+	perm pinterface.IPermissions
+
+	// The HTTP multiplexer
+	mux *http.ServeMux
+}
+
+// Implement the ServeHTTP method to make a permissionHandler a http.Handler
+func (ph *permissionHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Check if the user has the right admin/user rights
+	if ph.perm.Rejected(w, req) {
+		// Let the user know, by calling the custom "permission denied" function
+		ph.perm.DenyFunction()(w, req)
+		// Reject the request by not calling the next handler below
+		return
+	}
+	// Serve the requested page if permissions were granted
+	ph.mux.ServeHTTP(w, req)
+}
+
 func main() {
-	n := negroni.Classic()
 	mux := http.NewServeMux()
 
-	// New permissions middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal("Could not open Bolt database")
 	}
 
 	// Blank slate, no default permissions
@@ -87,12 +112,17 @@ func main() {
 		http.Error(w, "Permission denied!", http.StatusForbidden)
 	})
 
-	// Enable the permissions middleware
-	n.Use(perm)
+	// Configure the HTTP server and permissionHandler struct
+	s := &http.Server{
+		Addr:           ":3000",
+		Handler:        &permissionHandler{perm, mux},
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
 
-	// Use mux for routing, this goes last
-	n.UseHandler(mux)
+	log.Println("Listening for requests on port 3000")
 
-	// Serve
-	n.Run(":3000")
+	// Start listening
+	s.ListenAndServe()
 }

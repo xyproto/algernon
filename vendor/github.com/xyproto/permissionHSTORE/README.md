@@ -1,4 +1,4 @@
-#PermissionWrench [![Build Status](https://travis-ci.org/xyproto/permissionwrench.svg?branch=master)](https://travis-ci.org/xyproto/permissionwrench) [![GoDoc](https://godoc.org/github.com/xyproto/permissionwrench?status.svg)](http://godoc.org/github.com/xyproto/permissionwrench) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissionwrench)
+#PermissionHSTORE [![Build Status](https://travis-ci.org/xyproto/permissionHSTORE.svg?branch=master)](https://travis-ci.org/xyproto/permissionHSTORE) [![GoDoc](https://godoc.org/github.com/xyproto/permissionHSTORE?status.svg)](http://godoc.org/github.com/xyproto/permissionHSTORE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissionHSTORE)
 
 Middleware for keeping track of users, login states and permissions.
 
@@ -38,15 +38,15 @@ import (
 	"strings"
 
 	"github.com/codegangsta/negroni"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
 	n := negroni.Classic()
 	mux := http.NewServeMux()
 
-	// New permissionwrench middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -118,7 +118,7 @@ func main() {
 		http.Error(w, "Permission denied!", http.StatusForbidden)
 	})
 
-	// Enable the permissionwrench middleware
+	// Enable the permissionHSTORE middleware
 	n.Use(perm)
 
 	// Use mux for routing, this goes last
@@ -141,14 +141,14 @@ import (
 	"strings"
 
 	"github.com/go-martini/martini"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
 	m := martini.Classic()
 
-	// New permissionwrench middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -228,7 +228,7 @@ func main() {
 		c.Next()
 	}
 
-	// Enable the permissionwrench middleware
+	// Enable the permissionHSTORE middleware
 	m.Use(permissionHandler)
 
 	// Serve
@@ -248,14 +248,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
 	g := gin.New()
 
-	// New permissionwrench middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -279,7 +279,7 @@ func main() {
 	// Logging middleware
 	g.Use(gin.Logger())
 
-	// Enable the permissionwrench middleware, must come before recovery
+	// Enable the permissionHSTORE middleware, must come before recovery
 	g.Use(permissionHandler)
 
 	// Recovery middleware
@@ -364,14 +364,14 @@ import (
 	"strings"
 
 	"github.com/Unknwon/macaron"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
 	m := macaron.Classic()
 
-	// New permissionwrench middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -399,7 +399,7 @@ func main() {
 		ctx.Next()
 	}
 
-	// Enable the permissionwrench middleware, must come before recovery
+	// Enable the permissionHSTORE middleware, must come before recovery
 	m.Use(permissionHandler)
 
 	// Recovery middleware
@@ -486,7 +486,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 // Convenience function for making it easier to get hold of http.ResponseWriter
@@ -503,7 +503,7 @@ func main() {
 	e := echo.New()
 
 	// New permissions middleware
-	perm, err := permissionwrench.New()
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -614,13 +614,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 	"github.com/zenazn/goji"
 )
 
 func main() {
 	// New permissions middleware
-	perm, err := permissionwrench.New()
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -727,15 +727,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xyproto/permissionwrench"
+	"github.com/xyproto/permissionHSTORE"
 	"github.com/xyproto/pinterface"
 )
 
 type permissionHandler struct {
 	// perm is a Permissions structure that can be used to deny requests
 	// and acquire the UserState. By using `pinterface.IPermissions` instead
-	// of `*permissionwrench.Permissions`, the code is compatible with not only
-	// `permissionwrench`, but also other modules that uses other database
+	// of `*permissionHSTORE.Permissions`, the code is compatible with not only
+	// `permissionHSTORE`, but also other modules that uses other database
 	// backends, like `permissions2` which uses Redis.
 	perm pinterface.IPermissions
 
@@ -759,8 +759,8 @@ func (ph *permissionHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 func main() {
 	mux := http.NewServeMux()
 
-	// New permissionwrench middleware
-	perm, err := permissionwrench.New()
+	// New permissionHSTORE middleware
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatal("Could not open Bolt database")
 	}
@@ -857,7 +857,6 @@ Default permissions
 
 The default permissions can be cleared with the `Clear()` function.
 
-
 Password hashing
 ----------------
 
@@ -865,30 +864,54 @@ Password hashing
 * By default, all new password will be hashed with bcrypt.
 * For backwards compatibility, old password hashes with the length of a sha256 hash will be checked with sha256. To disable this behavior, and only ever use bcrypt, add this line: `userstate.SetPasswordAlgo("bcrypt")`
 
-Additional resources
---------------------
+Retrieving the underlying PostgreSQL database
+---------------------------------------------
 
-* Here is a short code snippet for retriving the underlying PostgreSQL database: https://gist.github.com/xyproto/08aa02cbdec33f5f0ff00a2183db29f6
+Here is a short example application for retrieving the underlying PostgreSQL database:
 
+```go
+package main
 
+import (
+	"fmt"
+	"github.com/xyproto/permissionHSTORE"
+	"github.com/xyproto/simplehstore"
+)
+
+func main() {
+	perm, err := permissionHSTORE.New()
+	if err != nil {
+		fmt.Println("Could not open database")
+		return
+	}
+	userstate := perm.UserState()
+
+	// A bit of checking is needed, since the database backend is interchangeable
+	if puserstate, ok := userstate.(*permissionwrench.UserState); ok {
+		if host, ok := puserstate.Host().(*simplehstore.Host); ok {
+			db := host.Database()
+			fmt.Printf("PostgreSQL database: %v (%T)\n", db, db)
+		}
+	} else {
+		fmt.Println("Not using the PostgreSQL database backend")
+	}
+}
+```
 
 Coding style
 ------------
 
-* log.Fatal or panic shall only be used for problems that may occur when starting the application, like not being able to connect to the database. The rest of the functions should return errors instead, so that they can be handled.
 * The code shall always be formatted with `go fmt`.
-
 
 Online API Documentation
 ------------------------
 
-[godoc.org](http://godoc.org/github.com/xyproto/permissionwrench)
-
+[godoc.org](http://godoc.org/github.com/xyproto/permissionHSTORE)
 
 General information
 -------------------
 
-* Version: 2.0
+* Version: 2.1
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>
 

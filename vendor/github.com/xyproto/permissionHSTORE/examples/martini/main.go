@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xyproto/permissionwrench"
-	"github.com/zenazn/goji"
+	"github.com/go-martini/martini"
+	"github.com/xyproto/permissionHSTORE"
 )
 
 func main() {
+	m := martini.Classic()
+
 	// New permissions middleware
-	perm, err := permissionwrench.New()
+	perm, err := permissionHSTORE.New()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -23,7 +25,7 @@ func main() {
 	// Get the userstate, used in the handlers below
 	userstate := perm.UserState()
 
-	goji.Get("/", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "Has user bob: %v\n", userstate.HasUser("bob"))
 		fmt.Fprintf(w, "Logged in on server: %v\n", userstate.IsLoggedIn("bob"))
 		fmt.Fprintf(w, "Is confirmed: %v\n", userstate.IsConfirmed("bob"))
@@ -33,74 +35,68 @@ func main() {
 		fmt.Fprintf(w, "\nTry: /register, /confirm, /remove, /login, /logout, /makeadmin, /clear, /data and /admin")
 	})
 
-	goji.Get("/register", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/register", func(w http.ResponseWriter) {
 		userstate.AddUser("bob", "hunter1", "bob@zombo.com")
 		fmt.Fprintf(w, "User bob was created: %v\n", userstate.HasUser("bob"))
 	})
 
-	goji.Get("/confirm", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/confirm", func(w http.ResponseWriter) {
 		userstate.MarkConfirmed("bob")
 		fmt.Fprintf(w, "User bob was confirmed: %v\n", userstate.IsConfirmed("bob"))
 	})
 
-	goji.Get("/remove", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/remove", func(w http.ResponseWriter) {
 		userstate.RemoveUser("bob")
 		fmt.Fprintf(w, "User bob was removed: %v\n", !userstate.HasUser("bob"))
 	})
 
-	goji.Get("/login", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/login", func(w http.ResponseWriter) {
 		userstate.Login(w, "bob")
 		fmt.Fprintf(w, "bob is now logged in: %v\n", userstate.IsLoggedIn("bob"))
 	})
 
-	goji.Get("/logout", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/logout", func(w http.ResponseWriter) {
 		userstate.Logout("bob")
 		fmt.Fprintf(w, "bob is now logged out: %v\n", !userstate.IsLoggedIn("bob"))
 	})
 
-	goji.Get("/makeadmin", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/makeadmin", func(w http.ResponseWriter) {
 		userstate.SetAdminStatus("bob")
 		fmt.Fprintf(w, "bob is now administrator: %v\n", userstate.IsAdmin("bob"))
 	})
 
-	goji.Get("/clear", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/clear", func(w http.ResponseWriter) {
 		userstate.ClearCookie(w)
 		fmt.Fprintf(w, "Clearing cookie")
 	})
 
-	goji.Get("/data", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/data", func(w http.ResponseWriter) {
 		fmt.Fprintf(w, "user page that only logged in users must see!")
 	})
 
-	goji.Get("/admin", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/admin", func(w http.ResponseWriter) {
 		fmt.Fprintf(w, "super secret information that only logged in administrators must see!\n\n")
 		if usernames, err := userstate.AllUsernames(); err == nil {
 			fmt.Fprintf(w, "list of all users: "+strings.Join(usernames, ", "))
 		}
 	})
 
-	// Custom "permissions denied" message
-	perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
-		http.Error(w, "Permission denied!", http.StatusForbidden)
-	})
-
-	// Permissions middleware for Goji
-	permissionHandler := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// Check if the user has the right admin/user rights
-			if perm.Rejected(w, req) {
-				// Deny the request
-				perm.DenyFunction()(w, req)
-				return
-			}
-			// Serve the requested page
-			next.ServeHTTP(w, req)
-		})
+	// Set up a middleware handler for Martini, with a custom "permission denied" message.
+	permissionHandler := func(w http.ResponseWriter, req *http.Request, c martini.Context) {
+		// Check if the user has the right admin/user rights
+		if perm.Rejected(w, req) {
+			// Deny the request
+			http.Error(w, "Permission denied!", http.StatusForbidden)
+			// Reject the request by not calling the next handler below
+			return
+		}
+		// Call the next middleware handler
+		c.Next()
 	}
 
 	// Enable the permissions middleware
-	goji.Use(permissionHandler)
+	m.Use(permissionHandler)
 
-	// Goji will listen to port 8000 by default
-	goji.Serve()
+	// Serve
+	m.Run()
 }
