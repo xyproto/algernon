@@ -8,5 +8,6 @@ print("Current user is logged in, has a valid cookie and *admin rights*: " .. to
 print("Try: /register, /confirm, /remove, /login, /logout, /clear, /data, /makeadmin and /admin")
 
 if urlpath() ~= "/" then
-  print[[NOTE: The current URL path is not "/". For the default URL permissions to work, Algernon must either be run from this direcotry, or the URL prefixes must be configured correctly]]
+  print()
+  print[[NOTE: The current URL path is not "/". For the default URL permissions to work, Algernon must either be run from this directory, or the URL prefixes must be configured correctly.]]
 end
