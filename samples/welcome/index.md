@@ -23,6 +23,7 @@ Samples
 * [Counter](counter)
 * [Iterate](iterate)
 * [Bootstrap](bootstrap)
+* [Permissions](permissions)
 
 
 Resources
