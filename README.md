@@ -12,10 +12,6 @@ Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass(
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
-GitBook: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
-
-Running within Docker: [xyproto/algernon](https://hub.docker.com/r/xyproto/algernon/)
-
 Quick installation
 ------------------
 
@@ -925,10 +921,15 @@ Requirements
 * go >= 1.5
 * readline, for UNIX-like systems
 
+Other resources
+---------------
+
+* GitBook draft: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
+* [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
 
 General information
 -------------------
 
-* Version: 1.2.1
+* Version: 1.3
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>

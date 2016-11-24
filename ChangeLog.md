@@ -1,5 +1,11 @@
 # Changelog
 
+Changes from 1.2.1 to 1.3
+=========================
+
+* Support for streaming large files (http range)
+* Minor improvements to the samples
+
 Changes from 1.2 to 1.2.1
 =========================
 
