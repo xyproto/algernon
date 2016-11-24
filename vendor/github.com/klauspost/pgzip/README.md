@@ -3,15 +3,26 @@ pgzip
 
 Go parallel gzip compression/decompression. This is a fully gzip compatible drop in replacement for "compress/gzip".
 
-This will split compression into blocks that are compressed in parallel. This can be useful for compressing big amounts of data. The output is a standard gzip file.
+This will split compression into blocks that are compressed in parallel. 
+This can be useful for compressing big amounts of data. The output is a standard gzip file.
 
-The gzip decompression is modified so it decompresses ahead of the current reader. This means that reads will be non-blocking if the decompressor can keep ahead of your code reading from it. CRC calculation also takes place in a separate goroutine.
+The gzip decompression is modified so it decompresses ahead of the current reader. 
+This means that reads will be non-blocking if the decompressor can keep ahead of your code reading from it. 
+CRC calculation also takes place in a separate goroutine.
 
-You should only use this if you are (de)compressing big amounts of data, say **more than 1MB** at the time, otherwise you will not see any benefit, and it will likely be faster to use the internal gzip library.
+You should only use this if you are (de)compressing big amounts of data, 
+say **more than 1MB** at the time, otherwise you will not see any benefit, 
+and it will likely be faster to use the internal gzip library 
+or [this package](https://github.com/klauspost/compress).
 
-It is important to note that this library creates and reads *standard gzip files*. You do not have to match the compressor/decompressor to get the described speedups, and the gzip files are fully compatible with other gzip readers/writers.
+It is important to note that this library creates and reads *standard gzip files*. 
+You do not have to match the compressor/decompressor to get the described speedups, 
+and the gzip files are fully compatible with other gzip readers/writers.
 
-A golang variant of this is [bgzf](https://godoc.org/github.com/biogo/hts/bgzf), which has the same feature, as well as seeking in the resulting file. The only drawback is a slightly bigger overhead compared to this and pure gzip. See a comparison below.
+A golang variant of this is [bgzf](https://godoc.org/github.com/biogo/hts/bgzf), 
+which has the same feature, as well as seeking in the resulting file. 
+The only drawback is a slightly bigger overhead compared to this and pure gzip. 
+See a comparison below.
 
 [![GoDoc][1]][2] [![Build Status][3]][4]
 
@@ -22,7 +33,14 @@ A golang variant of this is [bgzf](https://godoc.org/github.com/biogo/hts/bgzf),
 
 Installation
 ====
-```go get github.com/klauspost/pgzip```
+```go get github.com/klauspost/pgzip/...```
+
+You might need to get/update the dependencies:
+
+```
+go get -u github.com/klauspost/compress
+go get -u github.com/klauspost/crc32
+```
 
 Usage
 ====
@@ -36,6 +54,9 @@ with
 
 # Changes
 
+* Oct 6, 2016: Fixed an issue if the destination writer returned an error.
+* Oct 6, 2016: Better buffer reuse, should now generate less garbage.
+* Oct 6, 2016: Output does not change based on write sizes.
 * Dec 8, 2015: Decoder now supports the io.WriterTo interface, giving a speedup and less GC pressure.
 * Oct 9, 2015: Reduced allocations by ~35 by using sync.Pool. ~15% overall speedup.
 

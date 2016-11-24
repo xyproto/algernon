@@ -368,14 +368,15 @@ func testDeterm(i int, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = io.Copy(w, br)
+	// Use a very small prime sized buffer.
+	cbuf := make([]byte, 787)
+	_, err = copyBuffer(w, br, cbuf)
 	if err != nil {
 		t.Fatal(err)
 	}
 	w.Flush()
 	w.Close()
 
-	// We
 	rand.Seed(1337)
 	t2 := make([]byte, length)
 	for idx := range t2 {
@@ -388,7 +389,10 @@ func testDeterm(i int, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = io.Copy(w2, br2)
+	// We choose a different buffer size,
+	// bigger than a maximum block, and also a prime.
+	cbuf = make([]byte, 81761)
+	_, err = copyBuffer(w2, br2, cbuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -505,4 +509,106 @@ func TestErrors(t *testing.T) {
 		t.Fatal("Writer.Close: Should have returned error")
 	}
 
+}
+
+// A writer that fails after N writes.
+type errorWriter2 struct {
+	N int
+}
+
+func (e *errorWriter2) Write(b []byte) (int, error) {
+	if e.N <= 0 {
+		return 0, io.ErrClosedPipe
+	}
+	e.N--
+	return len(b), nil
+}
+
+// Test if errors from the underlying writer is passed upwards.
+func TestWriteError(t *testing.T) {
+	buf := new(bytes.Buffer)
+	n := 65536
+	if !testing.Short() {
+		n *= 4
+	}
+	for i := 0; i < n; i++ {
+		fmt.Fprintf(buf, "asdasfasf%d%dfghfgujyut%dyutyu\n", i, i, i)
+	}
+	in := buf.Bytes()
+	// We create our own buffer to control number of writes.
+	copyBuf := make([]byte, 128)
+	for l := 0; l < 10; l++ {
+		for fail := 1; fail <= 16; fail *= 2 {
+			// Fail after 'fail' writes
+			ew := &errorWriter2{N: fail}
+			w, err := NewWriterLevel(ew, l)
+			if err != nil {
+				t.Fatalf("NewWriter: level %d: %v", l, err)
+			}
+			n, err := copyBuffer(w, bytes.NewBuffer(in), copyBuf)
+			if err == nil {
+				t.Fatalf("Level %d: Expected an error, writer was %#v", l, ew)
+			}
+			n2, err := w.Write([]byte{1, 2, 2, 3, 4, 5})
+			if n2 != 0 {
+				t.Fatal("Level", l, "Expected 0 length write, got", n)
+			}
+			if err == nil {
+				t.Fatal("Level", l, "Expected an error")
+			}
+			err = w.Flush()
+			if err == nil {
+				t.Fatal("Level", l, "Expected an error on flush")
+			}
+			err = w.Close()
+			if err == nil {
+				t.Fatal("Level", l, "Expected an error on close")
+			}
+
+			w.Reset(ioutil.Discard)
+			n2, err = w.Write([]byte{1, 2, 3, 4, 5, 6})
+			if err != nil {
+				t.Fatal("Level", l, "Got unexpected error after reset:", err)
+			}
+			if n2 == 0 {
+				t.Fatal("Level", l, "Got 0 length write, expected > 0")
+			}
+			if testing.Short() {
+				return
+			}
+		}
+	}
+}
+
+// copyBuffer is a copy of io.CopyBuffer, since we want to support older go versions.
+// This is modified to never use io.WriterTo or io.ReaderFrom interfaces.
+func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (written int64, err error) {
+	if buf == nil {
+		buf = make([]byte, 32*1024)
+	}
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+		}
+		if er == io.EOF {
+			break
+		}
+		if er != nil {
+			err = er
+			break
+		}
+	}
+	return written, err
 }

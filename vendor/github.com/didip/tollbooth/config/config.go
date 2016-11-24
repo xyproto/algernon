@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/juju/ratelimit"
+	"golang.org/x/time/rate"
 )
 
 // NewLimiter is a constructor for Limiter.
@@ -14,7 +14,7 @@ func NewLimiter(max int64, ttl time.Duration) *Limiter {
 	limiter.MessageContentType = "text/plain; charset=utf-8"
 	limiter.Message = "You have reached maximum request limit."
 	limiter.StatusCode = 429
-	limiter.tokenBuckets = make(map[string]*ratelimit.Bucket)
+	limiter.tokenBuckets = make(map[string]*rate.Limiter)
 	limiter.IPLookups = []string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"}
 
 	return limiter
@@ -54,7 +54,7 @@ type Limiter struct {
 	BasicAuthUsers []string
 
 	// Throttler struct
-	tokenBuckets map[string]*ratelimit.Bucket
+	tokenBuckets map[string]*rate.Limiter
 
 	sync.RWMutex
 }
@@ -62,16 +62,10 @@ type Limiter struct {
 // LimitReached returns a bool indicating if the Bucket identified by key ran out of tokens.
 func (l *Limiter) LimitReached(key string) bool {
 	l.Lock()
+	defer l.Unlock()
 	if _, found := l.tokenBuckets[key]; !found {
-		l.tokenBuckets[key] = ratelimit.NewBucketWithQuantum(l.TTL, l.Max, l.Max)
+		l.tokenBuckets[key] = rate.NewLimiter(rate.Every(l.TTL), int(l.Max))
 	}
 
-	_, isSoonerThanMaxWait := l.tokenBuckets[key].TakeMaxDuration(1, 0)
-	l.Unlock()
-
-	if isSoonerThanMaxWait {
-		return false
-	}
-
-	return true
+	return !l.tokenBuckets[key].AllowN(time.Now(), 1)
 }
