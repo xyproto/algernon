@@ -66,7 +66,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 
 	// Serve the page
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
-	NewDataBlock(htmldata).ToClient(w, req)
+	NewDataBlock(htmldata).ToClient(w, req, dirname)
 }
 
 // Serve a directory. The directory must exist.

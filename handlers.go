@@ -78,10 +78,10 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			// Insert JavaScript for refreshing the page, into the HTML
 			htmldata = insertAutoRefresh(req, htmldata)
 			// Write the data to the client
-			NewDataBlock(htmldata).ToClient(w, req)
+			NewDataBlock(htmldata).ToClient(w, req, filename)
 		} else {
 			// Serve the file
-			dataBlock.ToClient(w, req)
+			dataBlock.ToClient(w, req, filename)
 		}
 
 		return
@@ -342,7 +342,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 	}
 
 	// Serve the file
-	dataBlock.ToClient(w, req)
+	dataBlock.ToClient(w, req, filename)
 
 }
 

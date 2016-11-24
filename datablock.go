@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"github.com/klauspost/pgzip"
+	"github.com/mattetti/filebuffer"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var preferSpeed = true // prefer speed over best compression ratio?
@@ -124,7 +126,7 @@ func errorToDataBlock(err error) *DataBlock {
 
 // ToClient writes the data to the client.
 // Also sets the right headers and compresses the data with gzip if needed.
-func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request) {
+func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request, name string) {
 	canGzip := clientCanGzip(req)               // Has the client announced that it can handle gzipped data?
 	overThreshold := b.Length() > gzipThreshold // Is there enough data that it makes sense to compress it?
 
@@ -152,9 +154,13 @@ func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
-	// Set the length and write the data to the client
-	w.Header().Set("Content-Length", b.StringLength())
-	w.Write(b.data)
+
+	// Done by ServeContent instead
+	//w.Header().Set("Content-Length", b.StringLength())
+	//w.Write(b.data)
+
+	// Serve the data with http.ServeContent, which supports ranges/streaming
+	http.ServeContent(w, req, name, time.Time{}, filebuffer.New(b.data))
 }
 
 // Compress data using pgzip. Returns the data, data length and an error.

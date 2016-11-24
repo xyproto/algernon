@@ -278,7 +278,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Write the rendered Markdown page to the client
-	NewDataBlock(htmldata).ToClient(w, req)
+	NewDataBlock(htmldata).ToClient(w, req, filename)
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
@@ -442,7 +442,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	}
 
 	// Write the rendered template to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req)
+	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
@@ -533,7 +533,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 	buf = *changedBuf
 
 	// Write the rendered template to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req)
+	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
@@ -549,7 +549,7 @@ func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdat
 		return
 	}
 	// Write the resulting CSS to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req)
+	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
 }
 
 func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
@@ -578,7 +578,7 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 			return
 		}
 		// Write the generated data to the client
-		NewDataBlock(data).ToClient(w, req)
+		NewDataBlock(data).ToClient(w, req, filename)
 	}
 }
 
@@ -606,5 +606,5 @@ func scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdat
 		return
 	}
 	// Write the resulting CSS to the client
-	NewDataBlock([]byte(cssString)).ToClient(w, req)
+	NewDataBlock([]byte(cssString)).ToClient(w, req, filename)
 }
