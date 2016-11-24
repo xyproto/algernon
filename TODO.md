@@ -8,15 +8,12 @@ Priority 1
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
-- [ ] Handle .avi and other multimedia files better. Display a pretty page
-      for playing and downloading videos.
 - [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
 
 Priority 2
 ----------
-- [ ] Check the memory use when serving many large files in quick succession.
-- [ ] Make it possible to stream music or video without the connection timing
-      out before the playback has finished.
+- [ ] Look into the memory use when serving many large files in quick succession.
+- [ ] Present directories with media files with a built-in page.
 - [ ] Server side support for https://github.com/gmetais/sw-delta
 - [ ] Support for websockets (port a small multiplayer game to test).
 - [ ] User management interface + web REPL + stats + logs + import/export data
@@ -32,70 +29,51 @@ Documentation/tutorials
 
 Priority 3
 ----------
-- [ ] Parse options with https://github.com/docopt/docopt.go
-- [ ] When requests are handled, spawn each switch/case as a Go routine.
-      Benchmark to see if there is a difference.
-- [ ] Render JavaScript server-side by using my fork of Otto.
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go)
+- [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
+- [ ] Render JavaScript server-side by using [Goja](https://github.com/dop251/goja)
 - [ ] Add an option for using brotly compression instead of gzip.
-- [ ] Larger selection of built-in Markdown styles, with a flag for dumping
-      them as a style.gcss, for easy modification. Or use a system directory
-      for this.
-- [ ] Use https://github.com/irfansharif/cfilter for potentially faster cache
-      lookups.
+- [ ] Larger selection of built-in Markdown styles, with a flag for dumping them as a style.gcss, for easy modification. Or use a system directory for this.
+- [ ] Use [cfilter](https://github.com/irfansharif/cfilter) for potentially faster cache lookups.
 - [ ] Add support for systemd reload, not just restart.
-- [ ] Support [HAML](https://github.com/travissimon/ghaml) and
-      [Sass](https://github.com/wellington/sass).
-- [ ] Document how to read JSON from one place and output processed
-      data somewhere else.
-- [ ] Also support a configuration file using github.com/alyu/configparser,
-      for port, host, keys etc.
+- [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
+- [ ] Document how to read JSON from one place and output processed data somewhere else.
+- [ ] Also support a configuration file using github.com/alyu/configparser, for port, host, keys etc.
 - [ ] Output an access log in a goaccess.io friendly format
-- [ ] Document better the order of output calls when modifying the header to
-      redirect.
-- [ ] Document what the "current directory" is for various Lua functions that
-      deals with files.
+- [ ] Document better the order of output calls when modifying the header to redirect.
+- [ ] Document what the "current directory" is for various Lua functions that deals with files.
 
 Report issues for Go / go vet / go lint
 ---------------------------------------
-- [ ] Two identical lines in a row that is the same assignment should result
-      in an error.
+- [ ] Two identical lines in a row that is the same assignment should result in an error.
 - [ ] Constant byte slices should be allowed.
 
 Various
 -------
 - [ ] Port the layout and concept of werc to Algernon
-      See: http://werc.cat-v.org/ and
-      https://bitbucket.org/mischief/gowerc/src
+      See: http://werc.cat-v.org/ and https://bitbucket.org/mischief/gowerc/src
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
-- [ ] Provide a Lua sample/command for listing files and directories with dates
-      and sizes.
+- [ ] Provide a Lua sample/command for listing files and directories with dates and sizes.
 - [ ] Find a way to redirect while preserving headers and/or use a mux package.
 - [ ] Implement a documentation server that can convert files with pandoc.
 - [ ] Make it easy to apply patches on the fly, when GET-ting the resulting file
-- [ ] Built in support for running the Lua REPL in the browser (possibly by
-      using "gotty", either as a package or wrapped in a script).
-- [ ] Create a sample that is inspired by this design:
-      http://codepen.io/KtorZ/pen/ZOzdqG
+- [ ] Built in support for running the Lua REPL in the browser (possibly by using "gotty", either as a package or wrapped in a script).
+- [ ] Create a sample that is inspired by this design: http://codepen.io/KtorZ/pen/ZOzdqG
 - [ ] Add Markdown themes from: https://github.com/mixu/markdown-styles
 - [ ] Add a similar boilerplate as Jekyll to megaboilerplate.com
-- [ ] Describe how to set up a system a bit similar to a wiki,
-      but more lightweight, using git + git hooks + algernon.
-- [ ] Add a flag for listing and selecting styles for Markdown and directory
-      listings.
+- [ ] Describe how to set up a system a bit similar to a wiki, but more lightweight, using git + git hooks + algernon.
+- [ ] Add a flag for listing and selecting styles for Markdown and directory listings.
 - [ ] Specify if rate limiting is per user/ip/handler
 - [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
-- [ ] Create a site generator for Algernon.
-      Draw inspiration from http://nanoc.ws/doc/tutorial/
+- [ ] Create a site generator for Algernon. Draw inspiration from http://nanoc.ws/doc/tutorial/
 - [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
 - [ ] Support SASS and HAML.
 - [ ] Port Pastecat to Algernon (https://github.com/mvdan/pastecat)
 - [ ] Argon2 support (https://godoc.org/github.com/magical/argon2)
-- [ ] Add config Function for adding a directory listing title to a certain
-      path regex (and/or a title.txt or common.md file).
-- [ ] Add a lua function for presenting an executable as a web application,
-      like gotty does. Create a password protected example application.
+- [ ] Add config Function for adding a directory listing title to a certain path regex (and/or a title.txt or common.md file).
+- [ ] Add a lua function for presenting an executable as a web application, like gotty does. Create a password protected example application.
 - [ ] Use a struct for the configuration variables.
 - [ ] Web application for browsing the database.
 - [ ] Document the case sensitivity or add case insensitivity support.
@@ -106,21 +84,17 @@ Various
 - [ ] C plugin
 - [ ] File upload while handling gzip
 - [ ] Cache os.Stat also when serving directory listings
-- [ ] Implement https://github.com/labstack/echo/tree/master/examples as
-      Algernon applications
+- [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
 - [ ] Look into github.com/jessevdk/go-flags/
-- [ ] pprint should output text to the browser when not running in the repl
-      (or be disabled)
+- [ ] pprint should output text to the browser when not running in the repl (or be disabled)
 - [ ] Graph of visitors over time
 - [ ] See if the HTTP headers from the client + country of origin + mouse
       movement patterns can become some sort of pseudo ID. Combine with a
       neural net. Can be used for storing non-critical data like prefered
       themes, font sizes etc. Time of day may also be an input.
 - [ ] Add editor syntax highlight files.
-- [ ] Support for pretty URLs and/or routing in serverconf.lua
-      (/position/x/2/y/4).
-- [ ] Commandline utilities for editing users, permissions, databases and Lua
-      functions in databases.
+- [ ] Support for pretty URLs and/or routing in serverconf.lua (/position/x/2/y/4).
+- [ ] Commandline utilities for editing users, permissions, databases and Lua functions in databases.
 - [ ] Add a lua function for running a lua function periodically.
 - [ ] Add a cache mode for caching binary files only.
 - [ ] MSI installer.
@@ -133,18 +107,14 @@ Various
 
 Data control
 ------------
-- [ ] Add simpleredis/simplebolt/simplemaria functions for exporting/importing
-      data to JSON and offer these.
+- [ ] Add simpleredis/simplebolt/simplemaria functions for exporting/importing data to JSON and offer these.
 
 Events
 ------
 - [ ] Better 404 page not found page for users visiting "/".
-- [ ] Consider using channels in a more clever way, to completely avoid
-      sleeping. Possibly by sending channels over channels.
-- [ ] Consider only listening for changes after a file has been visited, then
-      stop watching it after a while.
-- [ ] Use a regexp or a JavaScript minification package instead of replacing
-      strings in insertAutoRefresh.
+- [ ] Consider using channels in a more clever way, to completely avoid sleeping. Possibly by sending channels over channels.
+- [ ] Consider only listening for changes after a file has been visited, then stop watching it after a while.
+- [ ] Use a regexp or a JavaScript minification package instead of replacing strings in insertAutoRefresh.
 - [ ] In genFileChangeEvents, check for CloseNotify for more graceful timeouts.
 
 Server configuration
@@ -153,8 +123,7 @@ Server configuration
 
 Routing
 -------
-- [ ] Server("host:port", "/srv/http/somedirectory",
-             "/var/log/algernon/logfile.log")
+- [ ] Server("host:port", "/srv/http/somedirectory", "/var/log/algernon/logfile.log")
 - [ ] Redirect("host/path:port", ":port/path")
 - [ ] Rewrite("host:port", "host:port/path")
 - [ ] RewritePrefix("www.", "")
@@ -166,25 +135,20 @@ REPL
 
 Plugins
 -------
-- [ ] Unmarshal the CallPlugin reply into appropriate Lua structures instead
-      of returning a JSON string.
-- [ ] If a plugin ends with ".go", check if go is installed and run it with
-      "go run" (if a binary of the same name has not been provided for the
-      current platform).
+- [ ] Unmarshal the CallPlugin reply into appropriate Lua structures instead of returning a JSON string.
+- [ ] If a plugin ends with ".go", check if go is installed and run it with "go run" (if a binary of the same name has not been provided for the current platform).
 - [ ] Add a function for loading all plugins in a "plugins" directory.
 
 Additional security
 -------------------
 - [ ] Consider using https://github.com/unrolled/secure
-- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for
-      selected URL prefixes. Use code from "scoreserver".
+- [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver".
 - [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Flag for disabling directory listings entirely.
 - [ ] OAuth 1
 - [ ] OAuth 2
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
-- [ ] Check if "*" or the server host should be used as parameter to the
-      EventServer function
+- [ ] Check if "*" or the server host should be used as parameter to the EventServer function
 - [ ] Implement a warning when using cookies over regular HTTP.
 
 Logging
