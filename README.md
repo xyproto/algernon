@@ -930,6 +930,6 @@ Other resources
 General information
 -------------------
 
-* Version: 1.3
+* Version: 1.3.1
 * License: MIT
 * Alexander F Rødseth <xyproto@archlinux.org>

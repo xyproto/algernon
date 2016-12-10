@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.3 to 1.3.1
+=========================
+
+* Less strict headers when using the auto-refresh feature
+
 Changes from 1.2.1 to 1.3
 =========================
 
