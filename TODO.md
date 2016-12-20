@@ -26,6 +26,7 @@ Documentation/tutorials
 - [ ] Terminal recording demonstrating the Lua interpreter.
 - [ ] Video tutorials and screencasts.
 - [ ] Update the book to be more similar to the python Flask documentation.
+- [ ] Create a docker image that comes with all the samples.
 
 Priority 3
 ----------
