@@ -1,0 +1,10 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style/style.scss" />
+    <script src="js/main.js"></script>
+  </head>
+  <body>
+    <h1>hi</h1>
+  </body>
+</html>
