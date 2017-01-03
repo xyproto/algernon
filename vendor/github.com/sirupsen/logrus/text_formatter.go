@@ -122,8 +122,7 @@ func (f *TextFormatter) printColored(b *bytes.Buffer, entry *Entry, keys []strin
 	}
 	for _, k := range keys {
 		v := entry.Data[k]
-		fmt.Fprintf(b, " \x1b[%dm%s\x1b[0m=", levelColor, k)
-		f.appendValue(b, v)
+		fmt.Fprintf(b, " \x1b[%dm%s\x1b[0m=%+v", levelColor, k, v)
 	}
 }
 
@@ -143,11 +142,7 @@ func (f *TextFormatter) appendKeyValue(b *bytes.Buffer, key string, value interf
 
 	b.WriteString(key)
 	b.WriteByte('=')
-	f.appendValue(b, value)
-	b.WriteByte(' ')
-}
 
-func (f *TextFormatter) appendValue(b *bytes.Buffer, value interface{}) {
 	switch value := value.(type) {
 	case string:
 		if !needsQuoting(value) {
@@ -160,9 +155,11 @@ func (f *TextFormatter) appendValue(b *bytes.Buffer, value interface{}) {
 		if !needsQuoting(errmsg) {
 			b.WriteString(errmsg)
 		} else {
-			fmt.Fprintf(b, "%q", errmsg)
+			fmt.Fprintf(b, "%q", value)
 		}
 	default:
 		fmt.Fprint(b, value)
 	}
+
+	b.WriteByte(' ')
 }

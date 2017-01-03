@@ -156,7 +156,7 @@ func (td *tempDir) newPath() string {
 		}
 	}
 	result := filepath.Join(td.path, strconv.Itoa(td.counter))
-	td.counter++
+	td.counter += 1
 	return result
 }
 
@@ -274,7 +274,7 @@ func (c *C) logString(issue string) {
 
 func (c *C) logCaller(skip int) {
 	// This is a bit heavier than it ought to be.
-	skip++ // Our own frame.
+	skip += 1 // Our own frame.
 	pc, callerFile, callerLine, ok := runtime.Caller(skip)
 	if !ok {
 		return
@@ -284,7 +284,7 @@ func (c *C) logCaller(skip int) {
 	testFunc := runtime.FuncForPC(c.method.PC())
 	if runtime.FuncForPC(pc) != testFunc {
 		for {
-			skip++
+			skip += 1
 			if pc, file, line, ok := runtime.Caller(skip); ok {
 				// Note that the test line may be different on
 				// distinct calls for the same test.  Showing
@@ -460,10 +460,10 @@ func (tracker *resultTracker) _loopRoutine() {
 			// Calls still running. Can't stop.
 			select {
 			// XXX Reindent this (not now to make diff clear)
-			case <-tracker._expectChan:
-				tracker._waiting++
+			case c = <-tracker._expectChan:
+				tracker._waiting += 1
 			case c = <-tracker._doneChan:
-				tracker._waiting--
+				tracker._waiting -= 1
 				switch c.status() {
 				case succeededSt:
 					if c.kind == testKd {
@@ -498,9 +498,9 @@ func (tracker *resultTracker) _loopRoutine() {
 			select {
 			case tracker._stopChan <- true:
 				return
-			case <-tracker._expectChan:
-				tracker._waiting++
-			case <-tracker._doneChan:
+			case c = <-tracker._expectChan:
+				tracker._waiting += 1
+			case c = <-tracker._doneChan:
 				panic("Tracker got an unexpected done call.")
 			}
 		}
@@ -568,13 +568,13 @@ func newSuiteRunner(suite interface{}, runConf *RunConf) *suiteRunner {
 
 	var filterRegexp *regexp.Regexp
 	if conf.Filter != "" {
-		regexp, err := regexp.Compile(conf.Filter)
-		if err != nil {
+		if regexp, err := regexp.Compile(conf.Filter); err != nil {
 			msg := "Bad filter expression: " + err.Error()
 			runner.tracker.result.RunError = errors.New(msg)
 			return runner
+		} else {
+			filterRegexp = regexp
 		}
-		filterRegexp = regexp
 	}
 
 	for i := 0; i != suiteNumMethods; i++ {

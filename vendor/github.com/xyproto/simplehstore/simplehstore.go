@@ -12,12 +12,12 @@ import (
 	"strings"
 
 	// Using the PostgreSQL database engine
-	pq "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.1
+	Version = 2.0
 )
 
 // Host represents a PostgreSQL database
@@ -100,16 +100,6 @@ func TestConnectionHostWithDSN(connectionString string) (err error) {
 	return err
 }
 
-// Enclose in single quote and escape single quotes within
-func singleQuote(s string) string {
-	return "'" + escape(s) + "'"
-}
-
-// Escape single quotes
-func escape(s string) string {
-	return strings.Replace(s, "'", "''", -1)
-}
-
 /* --- Host functions --- */
 
 // NewHost sets up a new database connection.
@@ -120,7 +110,7 @@ func NewHost(connectionString string) *Host {
 	if err != nil {
 		log.Fatalln("Could not connect to " + newConnectionString + "!")
 	}
-	host := &Host{db, pq.QuoteIdentifier(dbname), false}
+	host := &Host{db, dbname, false}
 	if err := host.Ping(); err != nil {
 		log.Fatalln("Host does not reply to ping: " + err.Error())
 	}
@@ -139,7 +129,7 @@ func NewHostWithDSN(connectionString string, dbname string) *Host {
 	if err != nil {
 		log.Fatalln("Could not connect to " + connectionString + "!")
 	}
-	host := &Host{db, pq.QuoteIdentifier(dbname), false}
+	host := &Host{db, dbname, false}
 	if err := host.Ping(); err != nil {
 		log.Fatalln("Host does not reply to ping: " + err.Error())
 	}
@@ -184,7 +174,7 @@ func (host *Host) SelectDatabase(dbname string) error {
 
 // Will create the database if it does not already exist
 func (host *Host) createDatabase() error {
-	if _, err := host.db.Exec(fmt.Sprintf("CREATE DATABASE %s WITH ENCODING '%s'", host.dbname, encoding)); err != nil {
+	if _, err := host.db.Exec("CREATE DATABASE " + host.dbname + " WITH ENCODING '" + encoding + "'"); err != nil {
 		if !strings.HasSuffix(err.Error(), "already exists") {
 			return err
 		}
@@ -224,14 +214,14 @@ func (host *Host) Ping() error {
 
 // Create a new list. Lists are ordered.
 func NewList(host *Host, name string) (*List, error) {
-	l := &List{host, pq.QuoteIdentifier(name)} // name is the name of the table
-	if _, err := l.host.db.Exec(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, %s %s)", l.table, listCol, defaultStringType)); err != nil {
+	l := &List{host, name}
+	if _, err := l.host.db.Exec("CREATE TABLE IF NOT EXISTS " + name + " (id SERIAL PRIMARY KEY, " + listCol + " " + defaultStringType + ")"); err != nil {
 		if !strings.HasSuffix(err.Error(), "already exists") {
 			return nil, err
 		}
 	}
 	if Verbose {
-		log.Println("Created table " + l.table + " in database " + host.dbname)
+		log.Println("Created table " + name + " in database " + host.dbname)
 	}
 	return l, nil
 }
@@ -241,7 +231,7 @@ func (l *List) Add(value string) error {
 	if !l.host.rawUTF8 {
 		Encode(&value)
 	}
-	_, err := l.host.db.Exec(fmt.Sprintf("INSERT INTO %s (%s) VALUES ($1)", l.table, listCol), value)
+	_, err := l.host.db.Exec("INSERT INTO " + l.table + " (" + listCol + ") VALUES ('" + value + "')")
 	return err
 }
 
@@ -251,7 +241,7 @@ func (l *List) GetAll() ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM %s ORDER BY id", listCol, l.table))
+	rows, err := l.host.db.Query("SELECT " + listCol + " FROM " + l.table + " ORDER BY id")
 	if err != nil {
 		return values, err
 	}
@@ -280,7 +270,7 @@ func (l *List) GetLast() (string, error) {
 	var value string
 	// Fetches the item with the largest id.
 	// Faster than "ORDER BY id DESC limit 1" for large tables.
-	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM %s WHERE id = (SELECT MAX(id) FROM %s)", listCol, l.table, l.table))
+	rows, err := l.host.db.Query("SELECT " + listCol + " FROM " + l.table + " WHERE id = (SELECT MAX(id) FROM " + l.table + ")")
 	if err != nil {
 		return value, err
 	}
@@ -310,7 +300,7 @@ func (l *List) GetLastN(n int) ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM (SELECT * FROM %s ORDER BY id DESC limit %d)sub ORDER BY id ASC", listCol, l.table, n))
+	rows, err := l.host.db.Query("SELECT " + listCol + " FROM (SELECT * FROM " + l.table + " ORDER BY id DESC limit " + strconv.Itoa(n) + ")sub ORDER BY id ASC")
 	if err != nil {
 		return values, err
 	}
@@ -340,14 +330,14 @@ func (l *List) GetLastN(n int) ([]string, error) {
 // Remove this list
 func (l *List) Remove() error {
 	// Remove the table
-	_, err := l.host.db.Exec(fmt.Sprintf("DROP TABLE %s", l.table))
+	_, err := l.host.db.Exec("DROP TABLE " + l.table)
 	return err
 }
 
 // Clear the list contents
 func (l *List) Clear() error {
 	// Clear the table
-	_, err := l.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", l.table))
+	_, err := l.host.db.Exec("TRUNCATE TABLE " + l.table)
 	return err
 }
 
@@ -355,15 +345,15 @@ func (l *List) Clear() error {
 
 // Create a new set
 func NewSet(host *Host, name string) (*Set, error) {
-	s := &Set{host, pq.QuoteIdentifier(name)} // name is the name of the table
+	s := &Set{host, name}
 	// list is the name of the column
-	if _, err := s.host.db.Exec(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (%s %s)", s.table, setCol, defaultStringType)); err != nil {
+	if _, err := s.host.db.Exec("CREATE TABLE IF NOT EXISTS " + name + " (" + setCol + " " + defaultStringType + ")"); err != nil {
 		if !strings.HasSuffix(err.Error(), "already exists") {
 			return nil, err
 		}
 	}
 	if Verbose {
-		log.Println("Created table " + s.table + " in database " + host.dbname)
+		log.Println("Created table " + name + " in database " + host.dbname)
 	}
 	return s, nil
 }
@@ -377,7 +367,7 @@ func (s *Set) Add(value string) error {
 	// Check that the value is not already there before adding
 	has, err := s.Has(originalValue)
 	if !has && (err == nil) {
-		_, err = s.host.db.Exec(fmt.Sprintf("INSERT INTO %s (%s) VALUES ($1)", s.table, setCol), value)
+		_, err = s.host.db.Exec("INSERT INTO " + s.table + " (" + setCol + ") VALUES ('" + value + "')")
 	}
 	return err
 }
@@ -387,7 +377,7 @@ func (s *Set) Has(value string) (bool, error) {
 	if !s.host.rawUTF8 {
 		Encode(&value)
 	}
-	rows, err := s.host.db.Query(fmt.Sprintf("SELECT %s FROM %s WHERE %s = $1", setCol, s.table, setCol), value)
+	rows, err := s.host.db.Query("SELECT " + setCol + " FROM " + s.table + " WHERE " + setCol + " = '" + value + "'")
 	if err != nil {
 		return false, err
 	}
@@ -422,7 +412,7 @@ func (s *Set) GetAll() ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := s.host.db.Query(fmt.Sprintf("SELECT %s FROM %s", setCol, s.table))
+	rows, err := s.host.db.Query("SELECT " + setCol + " FROM " + s.table)
 	if err != nil {
 		return values, err
 	}
@@ -449,21 +439,21 @@ func (s *Set) Del(value string) error {
 		Encode(&value)
 	}
 	// Remove a value from the table
-	_, err := s.host.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE %s = '%s'", s.table, setCol, value))
+	_, err := s.host.db.Exec("DELETE FROM " + s.table + " WHERE " + setCol + " = '" + value + "'")
 	return err
 }
 
 // Remove this set
 func (s *Set) Remove() error {
 	// Remove the table
-	_, err := s.host.db.Exec(fmt.Sprintf("DROP TABLE %s", s.table))
+	_, err := s.host.db.Exec("DROP TABLE " + s.table)
 	return err
 }
 
 // Clear the list contents
 func (s *Set) Clear() error {
 	// Clear the table
-	_, err := s.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", s.table))
+	_, err := s.host.db.Exec("TRUNCATE TABLE " + s.table)
 	return err
 }
 
@@ -471,16 +461,16 @@ func (s *Set) Clear() error {
 
 // Create a new hashmap
 func NewHashMap(host *Host, name string) (*HashMap, error) {
-	h := &HashMap{host, pq.QuoteIdentifier(name)}
+	h := &HashMap{host, name}
 	// Using three columns: element id, key and value
-	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (%s %s, attr hstore)", h.table, ownerCol, defaultStringType)
+	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (%s %s, attr hstore)", name, ownerCol, defaultStringType)
 	if _, err := h.host.db.Exec(query); err != nil {
 		if !strings.HasSuffix(err.Error(), "already exists") {
 			return nil, err
 		}
 	}
 	if Verbose {
-		log.Println("Created HSTORE table " + h.table + " in database " + host.dbname)
+		log.Println("Created HSTORE table " + name + " in database " + host.dbname)
 	}
 	return h, nil
 }
@@ -499,12 +489,12 @@ func (h *HashMap) Set(owner, key, value string) error {
 		Encode(&value)
 	}
 	if hasKey {
-		_, err = h.host.db.Exec(fmt.Sprintf("UPDATE %s SET attr = attr || '\"%s\"=>\"%s\"' :: hstore WHERE %s = %s AND attr ? %s", h.table, escape(key), escape(value), ownerCol, singleQuote(owner), singleQuote(key)))
+		_, err = h.host.db.Exec("UPDATE " + h.table + " SET attr = attr || '\"" + key + "\"=>\"" + value + "\"' :: hstore WHERE " + ownerCol + " = '" + owner + "' AND attr ? '" + key + "'")
 		if Verbose {
 			log.Println("Updated HSTORE table: " + h.table)
 		}
 	} else {
-		_, err = h.host.db.Exec(fmt.Sprintf("INSERT INTO %s (%s, attr) VALUES (%s, '\"%s\"=>\"%s\"')", h.table, ownerCol, singleQuote(owner), escape(key), escape(value)))
+		_, err = h.host.db.Exec("INSERT INTO " + h.table + " (" + ownerCol + ", attr) VALUES ('" + owner + "', '\"" + key + "\"=>\"" + value + "\"')")
 		if Verbose {
 			log.Println("Added to HSTORE table: " + h.table)
 		}
@@ -514,7 +504,7 @@ func (h *HashMap) Set(owner, key, value string) error {
 
 // Get a value from a hashmap given the element id (for instance a user id) and the key (for instance "password").
 func (h *HashMap) Get(owner, key string) (string, error) {
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT attr -> %s FROM %s WHERE %s = %s AND attr ? %s", singleQuote(key), h.table, ownerCol, singleQuote(owner), singleQuote(key)))
+	rows, err := h.host.db.Query("SELECT attr -> '" + key + "' FROM " + h.table + " WHERE " + ownerCol + " = '" + owner + "' AND attr ? '" + key + "'")
 	if err != nil {
 		return "", err
 	}
@@ -547,7 +537,7 @@ func (h *HashMap) Get(owner, key string) (string, error) {
 
 // Check if a given owner + key is in the hash map
 func (h *HashMap) Has(owner, key string) (bool, error) {
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT attr -> %s FROM %s WHERE %s = %s AND attr ? %s", singleQuote(key), h.table, ownerCol, singleQuote(owner), singleQuote(key)))
+	rows, err := h.host.db.Query("SELECT attr -> '" + key + "' FROM " + h.table + " WHERE " + ownerCol + " = '" + owner + "' AND attr ? '" + key + "'")
 	if err != nil {
 		return false, err
 	}
@@ -578,7 +568,7 @@ func (h *HashMap) Has(owner, key string) (bool, error) {
 
 // Check if a given owner exists as a hash map at all
 func (h *HashMap) Exists(owner string) (bool, error) {
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT attr FROM %s WHERE %s = %s", h.table, ownerCol, singleQuote(owner)))
+	rows, err := h.host.db.Query("SELECT attr FROM " + h.table + " WHERE " + ownerCol + " = '" + owner + "'")
 	if err != nil {
 		return false, err
 	}
@@ -609,7 +599,7 @@ func (h *HashMap) GetAll() ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT %s FROM %s", ownerCol, h.table))
+	rows, err := h.host.db.Query("SELECT " + ownerCol + " FROM " + h.table)
 	if err != nil {
 		return values, err
 	}
@@ -636,14 +626,14 @@ func (h *HashMap) GetAll() ([]string, error) {
 // Remove a key for an entry in a hashmap (for instance the email field for a user)
 func (h *HashMap) DelKey(owner, key string) error {
 	// Remove a key from the hashmap
-	_, err := h.host.db.Exec(fmt.Sprintf("UPDATE %s SET attr = delete(attr, %s) WHERE %s = %s AND attr ? %s", h.table, singleQuote(key), ownerCol, singleQuote(owner), singleQuote(key)))
+	_, err := h.host.db.Exec("UPDATE " + h.table + " SET attr = delete(attr, '" + key + "') WHERE " + ownerCol + " = '" + owner + "' AND attr ? '" + key + "'")
 	return err
 }
 
 // Remove an element (for instance a user)
 func (h *HashMap) Del(owner string) error {
 	// Remove an element id from the table
-	results, err := h.host.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE %s = %s", h.table, ownerCol, singleQuote(owner)))
+	results, err := h.host.db.Exec("DELETE FROM " + h.table + " WHERE " + ownerCol + " = '" + owner + "'")
 	if err != nil {
 		return err
 	}
@@ -660,14 +650,14 @@ func (h *HashMap) Del(owner string) error {
 // Remove this hashmap
 func (h *HashMap) Remove() error {
 	// Remove the table
-	_, err := h.host.db.Exec(fmt.Sprintf("DROP TABLE %s", h.table))
+	_, err := h.host.db.Exec("DROP TABLE " + h.table)
 	return err
 }
 
 // Clear the contents
 func (h *HashMap) Clear() error {
 	// Clear the table
-	_, err := h.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", h.table))
+	_, err := h.host.db.Exec("TRUNCATE TABLE " + h.table)
 	return err
 }
 
@@ -676,14 +666,14 @@ func (h *HashMap) Clear() error {
 // Create a new key/value
 func NewKeyValue(host *Host, name string) (*KeyValue, error) {
 	kv := &KeyValue{host, name}
-	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (attr hstore)", pq.QuoteIdentifier(kvPrefix+kv.table))
+	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s%s (attr hstore)", kvPrefix, name)
 	if _, err := kv.host.db.Exec(query); err != nil {
 		if !strings.HasSuffix(err.Error(), "already exists") {
 			return nil, err
 		}
 	}
 	if Verbose {
-		log.Println("Created HSTORE table " + pq.QuoteIdentifier(kvPrefix+kv.table) + " in database " + host.dbname)
+		log.Println("Created HSTORE table " + name + " in database " + host.dbname)
 	}
 	return kv, nil
 }
@@ -695,17 +685,17 @@ func (kv *KeyValue) Set(key, value string) error {
 	}
 	if _, err := kv.Get(key); err != nil {
 		// Key does not exist, create it
-		_, err = kv.host.db.Exec(fmt.Sprintf("INSERT INTO %s (attr) VALUES ('\"%s\"=>\"%s\"')", pq.QuoteIdentifier(kvPrefix+kv.table), escape(key), escape(value)))
+		_, err = kv.host.db.Exec("INSERT INTO " + kvPrefix + kv.table + " (attr) VALUES ('\"" + key + "\"=>\"" + value + "\"')")
 		return err
 	}
 	// Key exists, update the value
-	_, err := kv.host.db.Exec(fmt.Sprintf("UPDATE %s SET attr = attr || '\"%s\"=>\"%s\"' :: hstore", pq.QuoteIdentifier(kvPrefix+kv.table), escape(key), escape(value)))
+	_, err := kv.host.db.Exec("UPDATE " + kvPrefix + kv.table + " SET attr = attr || '\"" + key + "\"=>\"" + value + "\"' :: hstore")
 	return err
 }
 
 // Get a value given a key
 func (kv *KeyValue) Get(key string) (string, error) {
-	rows, err := kv.host.db.Query(fmt.Sprintf("SELECT attr -> %s FROM %s", singleQuote(key), pq.QuoteIdentifier(kvPrefix+kv.table)))
+	rows, err := kv.host.db.Query("SELECT attr -> '" + key + "' FROM " + kvPrefix + kv.table)
 	if err != nil {
 		return "", err
 	}
@@ -766,20 +756,20 @@ func (kv *KeyValue) Inc(key string) (string, error) {
 
 // Remove a key
 func (kv *KeyValue) Del(key string) error {
-	_, err := kv.host.db.Exec(fmt.Sprintf("UPDATE %s SET attr = delete(attr, %s)", pq.QuoteIdentifier(kvPrefix+kv.table), singleQuote(key)))
+	_, err := kv.host.db.Exec("UPDATE " + kvPrefix + kv.table + " SET attr = delete(attr, '" + key + "')")
 	return err
 }
 
 // Remove this key/value
 func (kv *KeyValue) Remove() error {
 	// Remove the table
-	_, err := kv.host.db.Exec(fmt.Sprintf("DROP TABLE %s", pq.QuoteIdentifier(kvPrefix+kv.table)))
+	_, err := kv.host.db.Exec("DROP TABLE " + kvPrefix + kv.table)
 	return err
 }
 
 // Clear this key/value
 func (kv *KeyValue) Clear() error {
 	// Remove the table
-	_, err := kv.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", pq.QuoteIdentifier(kvPrefix+kv.table)))
+	_, err := kv.host.db.Exec("TRUNCATE TABLE " + kvPrefix + kv.table)
 	return err
 }

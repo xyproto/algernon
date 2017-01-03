@@ -32,10 +32,6 @@ var (
 	ErrSSLNotSupported           = errors.New("pq: SSL is not enabled on the server")
 	ErrSSLKeyHasWorldPermissions = errors.New("pq: Private key file has group or world access. Permissions should be u=rw (0600) or less.")
 	ErrCouldNotDetectUsername    = errors.New("pq: Could not detect default username. Please provide one explicitly.")
-
-	errUnexpectedReady = errors.New("unexpected ReadyForQuery")
-	errNoRowsAffected  = errors.New("no RowsAffected available after the empty statement")
-	errNoLastInsertId  = errors.New("no LastInsertId available after the empty statement")
 )
 
 type drv struct{}
@@ -119,9 +115,6 @@ type conn struct {
 	// Whether to always send []byte parameters over as binary.  Enables single
 	// round-trip mode for non-prepared Query calls.
 	binaryParameters bool
-
-	// If true this connection is in the middle of a COPY
-	inCopy bool
 }
 
 // Handle driver-side settings in parsed connection string.
@@ -605,16 +598,11 @@ func (cn *conn) simpleExec(q string) (res driver.Result, commandTag string, err 
 			res, commandTag = cn.parseComplete(r.string())
 		case 'Z':
 			cn.processReadyForQuery(r)
-			if res == nil && err == nil {
-				err = errUnexpectedReady
-			}
 			// done
 			return
 		case 'E':
 			err = parseError(r)
-		case 'I':
-			res = emptyRows
-		case 'T', 'D':
+		case 'T', 'D', 'I':
 			// ignore any results
 		default:
 			cn.bad = true
@@ -676,20 +664,6 @@ func (cn *conn) simpleQuery(q string) (res *rows, err error) {
 			errorf("unknown response for simple query: %q", t)
 		}
 	}
-}
-
-type noRows struct{}
-
-var emptyRows noRows
-
-var _ driver.Result = noRows{}
-
-func (noRows) LastInsertId() (int64, error) {
-	return 0, errNoLastInsertId
-}
-
-func (noRows) RowsAffected() (int64, error) {
-	return 0, errNoRowsAffected
 }
 
 // Decides which column formats to use for a prepared statement.  The input is
@@ -769,40 +743,31 @@ func (cn *conn) Prepare(q string) (_ driver.Stmt, err error) {
 	defer cn.errRecover(&err)
 
 	if len(q) >= 4 && strings.EqualFold(q[:4], "COPY") {
-		s, err := cn.prepareCopyIn(q)
-		if err == nil {
-			cn.inCopy = true
-		}
-		return s, err
+		return cn.prepareCopyIn(q)
 	}
 	return cn.prepareTo(q, cn.gname()), nil
 }
 
 func (cn *conn) Close() (err error) {
-	// Skip cn.bad return here because we always want to close a connection.
+	if cn.bad {
+		return driver.ErrBadConn
+	}
 	defer cn.errRecover(&err)
-
-	// Ensure that cn.c.Close is always run. Since error handling is done with
-	// panics and cn.errRecover, the Close must be in a defer.
-	defer func() {
-		cerr := cn.c.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
 
 	// Don't go through send(); ListenerConn relies on us not scribbling on the
 	// scratch buffer of this connection.
-	return cn.sendSimpleMessage('X')
+	err = cn.sendSimpleMessage('X')
+	if err != nil {
+		return err
+	}
+
+	return cn.c.Close()
 }
 
 // Implement the "Queryer" interface
 func (cn *conn) Query(query string, args []driver.Value) (_ driver.Rows, err error) {
 	if cn.bad {
 		return nil, driver.ErrBadConn
-	}
-	if cn.inCopy {
-		return nil, errCopyInProgress
 	}
 	defer cn.errRecover(&err)
 
@@ -1507,21 +1472,10 @@ func (rs *rows) Next(dest []driver.Value) (err error) {
 				dest[i] = decode(&conn.parameterStatus, rs.rb.next(l), rs.colTyps[i], rs.colFmts[i])
 			}
 			return
-		case 'T':
-			rs.colNames, rs.colFmts, rs.colTyps = parsePortalRowDescribe(&rs.rb)
-			return io.EOF
 		default:
 			errorf("unexpected message after execute: %q", t)
 		}
 	}
-}
-
-func (rs *rows) HasNextResultSet() bool {
-	return !rs.done
-}
-
-func (rs *rows) NextResultSet() error {
-	return nil
 }
 
 // QuoteIdentifier quotes an "identifier" (e.g. a table or a column name) to be
@@ -1766,9 +1720,6 @@ func (cn *conn) readExecuteResponse(protocolState string) (res driver.Result, co
 			res, commandTag = cn.parseComplete(r.string())
 		case 'Z':
 			cn.processReadyForQuery(r)
-			if res == nil && err == nil {
-				err = errUnexpectedReady
-			}
 			return res, commandTag, err
 		case 'E':
 			err = parseError(r)
@@ -1776,9 +1727,6 @@ func (cn *conn) readExecuteResponse(protocolState string) (res driver.Result, co
 			if err != nil {
 				cn.bad = true
 				errorf("unexpected %q after error %s", t, err)
-			}
-			if t == 'I' {
-				res = emptyRows
 			}
 			// ignore any results
 		default:

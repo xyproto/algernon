@@ -12,20 +12,18 @@ import (
 // crc32sse returns a hash for the first 4 bytes of the slice
 // len(a) must be >= 4.
 //go:noescape
-func crc32sse(a []byte) uint32
+func crc32sse(a []byte) hash
 
 // crc32sseAll calculates hashes for each 4-byte set in a.
 // dst must be east len(a) - 4 in size.
 // The size is not checked by the assembly.
 //go:noescape
-func crc32sseAll(a []byte, dst []uint32)
+func crc32sseAll(a []byte, dst []hash)
 
 // matchLenSSE4 returns the number of matching bytes in a and b
 // up to length 'max'. Both slices must be at least 'max'
 // bytes in size.
-//
-// TODO: drop the "SSE4" name, since it doesn't use any SSE instructions.
-//
+// It uses the PCMPESTRI SSE 4.2 instruction.
 //go:noescape
 func matchLenSSE4(a, b []byte, max int) int
 

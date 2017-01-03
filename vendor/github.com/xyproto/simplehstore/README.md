@@ -93,6 +93,6 @@ License, author and version
 
 * License: MIT
 * Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
-* Version: 2.1
+* Version: 2.0
 
 

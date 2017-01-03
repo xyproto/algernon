@@ -22,7 +22,7 @@ type mysqlConn struct {
 	affectedRows     uint64
 	insertId         uint64
 	cfg              *Config
-	maxAllowedPacket int
+	maxPacketAllowed int
 	maxWriteSize     int
 	writeTimeout     time.Duration
 	flags            clientFlag
@@ -135,11 +135,6 @@ func (mc *mysqlConn) Prepare(query string) (driver.Stmt, error) {
 }
 
 func (mc *mysqlConn) interpolateParams(query string, args []driver.Value) (string, error) {
-	// Number of ? should be same to len(args)
-	if strings.Count(query, "?") != len(args) {
-		return "", driver.ErrSkip
-	}
-
 	buf := mc.buf.takeCompleteBuffer()
 	if buf == nil {
 		// can not take the buffer. Something must be wrong with the connection
@@ -246,7 +241,7 @@ func (mc *mysqlConn) interpolateParams(query string, args []driver.Value) (strin
 			return "", driver.ErrSkip
 		}
 
-		if len(buf)+4 > mc.maxAllowedPacket {
+		if len(buf)+4 > mc.maxPacketAllowed {
 			return "", driver.ErrSkip
 		}
 	}

@@ -9,12 +9,12 @@ func init() {
 }
 
 // crc32sse should never be called.
-func crc32sse(a []byte) uint32 {
+func crc32sse(a []byte) hash {
 	panic("no assembler")
 }
 
 // crc32sseAll should never be called.
-func crc32sseAll(a []byte, dst []uint32) {
+func crc32sseAll(a []byte, dst []hash) {
 	panic("no assembler")
 }
 
@@ -25,10 +25,9 @@ func matchLenSSE4(a, b []byte, max int) int {
 }
 
 // histogram accumulates a histogram of b in h.
-//
-// len(h) must be >= 256, and h's elements must be all zeroes.
+// h must be at least 256 entries in length,
+// and must be cleared before calling this function.
 func histogram(b []byte, h []int32) {
-	h = h[:256]
 	for _, t := range b {
 		h[t]++
 	}
