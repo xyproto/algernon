@@ -327,7 +327,7 @@ func main() {
 
 	// The Lua REPL
 	if !serverMode {
-		// If the REPL uses readline, the SIGWINCH signal is handled
+		// If the REPL uses readline, the SIGWINCH signal is handled there
 		go REPL(perm, luapool, cache, pongomutex, ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL

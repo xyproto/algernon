@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 
+	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/pinterface"
@@ -638,9 +640,36 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, p
 		EOF    bool
 		//EOFcount int
 	)
-	if loadHistory(historyFilename) != nil && fs.exists(historyFilename) {
-		log.Error("Could not load REPL history:", historyFilename)
+
+	completer := readline.NewPrefixCompleter(
+		readline.PcItem("help"),
+		readline.PcItem("exit"),
+		readline.PcItem("quit"),
+		readline.PcItem("bye"),
+		readline.PcItem("zalgo"),
+		readline.PcItem("webhelp"),
+
+		&readline.PrefixCompleter{Name: []rune("print(")},
+		&readline.PrefixCompleter{Name: []rune("pprint(")},
+		&readline.PrefixCompleter{Name: []rune("dir(")},
+		&readline.PrefixCompleter{Name: []rune("py(")},
+		&readline.PrefixCompleter{Name: []rune("run(")},
+		&readline.PrefixCompleter{Name: []rune("sleep(")},
+		&readline.PrefixCompleter{Name: []rune("unixnano()")},
+	)
+
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:            prompt,
+		HistoryFile:       historyFilename,
+		AutoComplete:      completer,
+		InterruptPrompt:   "^C",
+		EOFPrompt:         "exit",
+		HistorySearchFold: true,
+	})
+	if err != nil {
+		log.Error("Could not use github.com/chzyer/readline: " + err.Error())
 	}
+
 	// To be run at server shutdown
 	atShutdown(func() {
 		// Verbose mode has different log output at shutdown
@@ -651,23 +680,27 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, p
 	for {
 		// Retrieve user input
 		EOF = false
-		if line, err = getInput(prompt); err != nil {
-			if err.Error() == "EOF" {
+		if line, err = l.Readline(); err != nil {
+			if err == io.EOF {
 				if debugMode {
 					o.Println(o.LightPurple(err.Error()))
 				}
 				EOF = true
+			} else if err == readline.ErrInterrupt {
+				log.Warn("Interrupted")
+				done <- true
+				return nil
 			} else {
 				log.Error("Error reading line(" + err.Error() + ").")
 				continue
 			}
 		} else {
-			addHistory(line)
+			//addHistory(line)
 			// Save the REPL history at every line.
 			// This proved to be safer than only saving the history at shutdown
 			// (due to how ctrl-c was handled on some systems)
 			// and it's hard to imagine performance issues with this.
-			saveHistory(historyFilename)
+			//saveHistory(historyFilename)
 		}
 
 		if EOF {
