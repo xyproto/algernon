@@ -1,6 +1,6 @@
 package: github.com/xyproto/algernon
 import:
-- package: github.com/bobappleyard/readline
+- package: github.com/chzyer/readline
 - package: github.com/bradfitz/http2
 - package: github.com/didip/tollbooth
 - package: github.com/eknkc/amber
