@@ -1,5 +1,12 @@
 # Changelog
 
+Changes from 1.3.1 to 1.3.2
+===========================
+
+* Remove the dependency on readline. No external dependencies.
+* The beginnings of better completion in the REPL.
+* Update the external dependencies using Glide.
+
 Changes from 1.3 to 1.3.1
 =========================
 
