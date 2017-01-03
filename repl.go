@@ -641,14 +641,16 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, p
 		//EOFcount int
 	)
 
+	// TODO: Automatically generate a list of all words that should be completed
+	//       based on the documentation or repl help text. Then add each word
+	//       to the completer.
 	completer := readline.NewPrefixCompleter(
-		readline.PcItem("help"),
-		readline.PcItem("exit"),
-		readline.PcItem("quit"),
-		readline.PcItem("bye"),
-		readline.PcItem("zalgo"),
-		readline.PcItem("webhelp"),
-
+		&readline.PrefixCompleter{Name: []rune("help")},
+		&readline.PrefixCompleter{Name: []rune("webhelp")},
+		&readline.PrefixCompleter{Name: []rune("bye")},
+		&readline.PrefixCompleter{Name: []rune("quit")},
+		&readline.PrefixCompleter{Name: []rune("exit")},
+		&readline.PrefixCompleter{Name: []rune("zalgo")},
 		&readline.PrefixCompleter{Name: []rune("print(")},
 		&readline.PrefixCompleter{Name: []rune("pprint(")},
 		&readline.PrefixCompleter{Name: []rune("dir(")},
@@ -667,7 +669,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, p
 		HistorySearchFold: true,
 	})
 	if err != nil {
-		log.Error("Could not use github.com/chzyer/readline: " + err.Error())
+		log.Error("Could not initiate github.com/chzyer/readline: " + err.Error())
 	}
 
 	// To be run at server shutdown
