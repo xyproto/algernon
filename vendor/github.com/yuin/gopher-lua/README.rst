@@ -149,10 +149,10 @@ To test ``LNilType`` and ``LBool``, You **must** use pre-defined constants.
 
    lv := L.Get(-1) // get the value at the top of the stack
 
-   if lv == LTrue { // correct
+   if lv == lua.LTrue { // correct
    }
 
-   if bl, ok == lv.(lua.LBool); ok && bool(bl) { // wrong
+   if bl, ok := lv.(lua.LBool); ok && bool(bl) { // wrong
    }
 
 In Lua, both ``nil`` and ``false`` make a condition false. ``LVIsFalse`` and ``LVAsBool`` implement this specification.
@@ -160,10 +160,10 @@ In Lua, both ``nil`` and ``false`` make a condition false. ``LVIsFalse`` and ``L
 .. code-block:: go
 
    lv := L.Get(-1) // get the value at the top of the stack
-   if LVIsFalse(lv) { // lv is nil or false
+   if lua.LVIsFalse(lv) { // lv is nil or false
    }
 
-   if LVAsBool(lv) { // lv is neither nil nor false
+   if lua.LVAsBool(lv) { // lv is neither nil nor false
    }
 
 Objects that based on go structs(``LFunction``. ``LUserData``, ``LTable``)
@@ -714,6 +714,7 @@ Libraries for GopherLua
 - `glua-lfs <https://github.com/layeh/gopher-lfs>`_ : Partially implements the luafilesystem module for gopher-lua
 - `gluaurl <https://github.com/cjoudrey/gluaurl>`_ : A url parser/builder module for gopher-lua
 - `gluahttpscrape <https://github.com/felipejfc/gluahttpscrape>`_ : A simple HTML scraper module for gopher-lua
+- `gluaxmlpath <https://github.com/ailncode/gluaxmlpath>`_ : An xmlpath module for gopher-lua
 
 ----------------------------------------------------------------
 Donation

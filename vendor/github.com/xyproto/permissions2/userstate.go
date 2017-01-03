@@ -492,6 +492,16 @@ func (state *UserState) SetCookieTimeout(cookieTime int64) {
 	state.cookieTime = cookieTime
 }
 
+// Get cookie secret
+func (state *UserState) CookieSecret() string {
+	return state.cookieSecret
+}
+
+// Set cookie secret
+func (state *UserState) SetCookieSecret(cookieSecret string) {
+	state.cookieSecret = cookieSecret
+}
+
 // Get the current password hashing algorithm.
 func (state *UserState) PasswordAlgo() string {
 	return state.passwordAlgorithm

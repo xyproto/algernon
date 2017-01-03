@@ -1,11 +1,11 @@
 hash: 63ab4b66672faa4b31ed0844fb049d5e412ce64be34c1112c3167a1e6b9c7149
-updated: 2017-01-03T16:33:46.565099118+01:00
+updated: 2017-01-03T20:30:50.908706135+01:00
 imports:
 - name: code.google.com/p/go.crypto
-  version: 119f50887f8fe324fe2386421c27a11af014b64e
+  version: ede567c8e044a5913dad1d1af3696d9da953104c
   repo: https://golang.org/x/crypto
 - name: github.com/boltdb/bolt
-  version: fff57c100f4dea1905678da7e90d92429dff2904
+  version: 0d9f544bb94aac29c185968483459ef74d6deb5d
 - name: github.com/bradfitz/http2
   version: aa7658c0e9902e929a9ed0996ef949e59fc0f3ab
   subpackages:
@@ -13,45 +13,43 @@ imports:
 - name: github.com/chzyer/readline
   version: c914be64f07d9998f52bf0d598ec26d457168c0f
 - name: github.com/didip/tollbooth
-  version: 3c82d92ebe4fd84faf80a8837abf6126aa054b15
+  version: 605330a2a1a74c6535f5a4d5e8ddab4e024015c4
   subpackages:
   - config
   - errors
   - libstring
 - name: github.com/eknkc/amber
-  version: 7875e9689d335cd15294cd6f4f0ef8322ce4c8e7
+  version: a69a021e158c3b06700cc881c05d0923f627b578
   subpackages:
   - parser
 - name: github.com/fatih/color
-  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+  version: bf82308e8c8546dc2b945157173eb8a959ae9505
 - name: github.com/fsnotify/fsnotify
-  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/garyburd/redigo
-  version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
+  version: d7de57ceb51b029d5c5a61e26587f672e2834178
   subpackages:
   - internal
   - redis
 - name: github.com/getwe/figlet4go
   version: bc879344e874dd110753d17083a2a7acf3136683
 - name: github.com/go-sql-driver/mysql
-  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
+  version: 665b83488b90b902ce0a305ef6652e599771cdf9
 - name: github.com/gophertown/fsnotify
-  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
   repo: https://github.com/fsnotify/fsnotify
-- name: github.com/juju/ratelimit
-  version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/klauspost/compress
-  version: 08fe86a420401e830c24114bdf9f1ba91331407a
+  version: e3b7981a12dd3cab49afa1d3a50e715846f23732
   subpackages:
   - flate
 - name: github.com/klauspost/cpuid
   version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
 - name: github.com/klauspost/crc32
-  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
+  version: cb6bfca970f6908083f26f39a79009d608efd5cd
 - name: github.com/klauspost/pgzip
-  version: 95e8170c5d4da28db9c64dfc9ec3138ea4466fd4
+  version: e1189db7261c60cf75c77d573014936620d3d119
 - name: github.com/lib/pq
-  version: 50761b0867bd1d9d069276790bcd4a3bccf2324a
+  version: d8eeeb8bae8896dd8e1b7e514ab0d396c4f12a1b
   subpackages:
   - oid
 - name: github.com/mamaar/risotto
@@ -65,11 +63,11 @@ imports:
 - name: github.com/mattetti/filebuffer
   version: 80f2c1c4dcf558a0cee1e4303225d17c6238e00a
 - name: github.com/mattn/go-colorable
-  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+  version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
 - name: github.com/mattn/go-runewidth
-  version: d6bea18f789704b5f83375793155289da36a3c7f
+  version: 737072b4e32b7a5018b4a7125da8d12de90e8045
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
@@ -77,17 +75,17 @@ imports:
 - name: github.com/natefinch/pie
   version: 13d3874dc4836d5db81d3a950aa5436b1eb23372
 - name: github.com/nsf/termbox-go
-  version: b6acae516ace002cb8105a89024544a1480655a5
+  version: 0b413bfa31e8c6843db20dce4454566b1951709e
 - name: github.com/russross/blackfriday
-  version: 35eb537633d9950afc8ae7bdf0edb6134584e9fc
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shopspring/decimal
   version: 74d668a796fa3734c552fb907d9b83146d0bebee
 - name: github.com/shurcooL/sanitized_anchor_name
-  version: 10ef21a441db47d8b13ebcc5fd2310f636973c77
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/sirupsen/logrus
-  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
+  version: a437dfd2463eaedbec3dfe443e477d3b0a810b3f
 - name: github.com/tylerb/graceful
-  version: 50a48b6e73fcc75b45e22c05b79629a67c79e938
+  version: 4df1190835320af7076dfcf27b3d071fd3612caf
 - name: github.com/wellington/sass
   version: cab90b3986d6d581baa47302e8be3ddb588e5f21
   subpackages:
@@ -112,15 +110,15 @@ imports:
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
-  version: d14dc9d92dd463cdb7024a2b846c4ab704e3271f
+  version: e60b21f434c6bd58a05a271f4c7e0ba559bebdbe
 - name: github.com/xyproto/permissionHSTORE
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
-  version: 904788a416f7af87bb21c257d041f17fa7899cc3
+  version: 84b0270d160af9ef19485f927be061e998e1185b
 - name: github.com/xyproto/permissionsql
-  version: d517b172d4846d40dce3870244009df6326c6bcb
+  version: 14c0023a2a2d41af70db27509ae89a8b5d8e31b7
 - name: github.com/xyproto/pinterface
-  version: a5a0c6ccdeb92a8016a15724f36e6ad5570caa93
+  version: 0a2ee76fd4d458a7b2f89beabab0cc11135cb07e
 - name: github.com/xyproto/pongo2
   version: 0b8cefa21dd6be21ec95b7bcbf9d2b519b1eee10
 - name: github.com/xyproto/recwatch
@@ -128,11 +126,11 @@ imports:
 - name: github.com/xyproto/simplebolt
   version: e14f3929e5626e6a8c703e61c5b912014ef1d199
 - name: github.com/xyproto/simplehstore
-  version: e2bf082ae1e61cbe950f2e2de5833e188173ba24
+  version: 99a59d5aaec5c5ffa1c176314ad81b2d829ebbeb
 - name: github.com/xyproto/simplemaria
   version: 5cf67844724df03656f16a32348bbef589d5f919
 - name: github.com/xyproto/simpleredis
-  version: de7b4cb9d1be983af7e9924394a27b67927e4918
+  version: cda923d4c0ff8f4898045bb3ef953203c90a52d1
 - name: github.com/xyproto/term
   version: 9e12074e834ac795cf9e5d8ac4f3149babb59576
 - name: github.com/xyproto/unzip
@@ -142,22 +140,30 @@ imports:
 - name: github.com/yuin/gluamapper
   version: d836955830e75240d46ce9f0e6d148d94f2e1d3a
 - name: github.com/yuin/gopher-lua
-  version: 6a1397dfb6f8e7af08496129dd96f5f62c148f47
+  version: 7692488a1ad6bd06dc48890f4a149b65a86a767d
   subpackages:
   - ast
   - parse
   - pm
 - name: golang.org/x/crypto
-  version: 119f50887f8fe324fe2386421c27a11af014b64e
+  version: ede567c8e044a5913dad1d1af3696d9da953104c
   subpackages:
   - bcrypt
   - blowfish
+- name: golang.org/x/net
+  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  subpackages:
+  - context
 - name: golang.org/x/sys
-  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
+  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:
   - unix
+- name: golang.org/x/time
+  version: f51c12702a4d776e4c1fa9b0fabab841babae631
+  subpackages:
+  - rate
 - name: launchpad.net/gocheck
-  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+  version: aa8c43564278bc4c58e8ca51bfc5f1c149925cf0
   repo: https://github.com/go-check/check
   subpackages:
   - ?go-get=1
@@ -168,7 +174,7 @@ testImports:
 - name: github.com/bmizerany/assert
   version: b7ed37b82869576c289d7d97fb2bbd8b64a0cb28
 - name: github.com/go-check/check
-  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+  version: aa8c43564278bc4c58e8ca51bfc5f1c149925cf0
 - name: github.com/kr/pretty
   version: e6ac2fc51e89a3249e82157fa0bb7a18ef9dd5bb
 - name: github.com/kr/text

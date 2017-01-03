@@ -2,9 +2,12 @@ package tollbooth
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/didip/tollbooth/config"
 )
 
 func TestLimitByKeys(t *testing.T) {
@@ -263,4 +266,37 @@ func TestRequestMethodCustomHeadersAndBasicAuthUsersBuildKeys(t *testing.T) {
 		}
 	}
 
+}
+
+func TestLimitHandler(t *testing.T) {
+	limiter := config.NewLimiter(1, time.Second)
+	limiter.IPLookups = []string{"X-Real-IP", "RemoteAddr", "X-Forwarded-For"}
+	limiter.Methods = []string{"POST"}
+
+	handler := LimitHandler(limiter, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`hello world`))
+	}))
+
+	req, err := http.NewRequest("POST", "/doesntmatter", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("X-Real-IP", "2601:7:1c82:4097:59a0:a80b:2841:b8c8")
+
+	rr := httptest.NewRecorder()
+
+	go func() {
+		handler.ServeHTTP(rr, req)
+		// Should not be limited
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+		}
+	}()
+
+	handler.ServeHTTP(rr, req)
+	//Should be limited
+	if status := rr.Code; status != http.StatusTooManyRequests {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusTooManyRequests)
+	}
 }
