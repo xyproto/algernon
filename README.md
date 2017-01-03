@@ -919,7 +919,6 @@ Requirements
 ------------
 
 * go >= 1.5
-* readline, for UNIX-like systems
 
 Other resources
 ---------------
