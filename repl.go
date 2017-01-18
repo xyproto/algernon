@@ -445,7 +445,7 @@ ServerFile(string) -> bool
 func pprint(value lua.LValue) {
 	var buf bytes.Buffer
 	pprintToWriter(&buf, value)
-	fmt.Println(buf.String())
+	fmt.Print(buf.String())
 }
 
 // Export Lua functions related to the REPL
@@ -535,27 +535,26 @@ func highlight(o *term.TextOutput, line string) string {
 	return module + function + unprocessed + typed + comment
 }
 
-//func mustSaveHistory(o *term.TextOutput, historyFilename string) {
-//	if verboseMode {
-//		fmt.Printf(o.LightBlue("Saving REPL history to %s... "), historyFilename)
-//	}
-//	if err := saveHistory(historyFilename); err != nil {
-//		if verboseMode {
-//			fmt.Println(o.DarkRed("failed: " + err.Error()))
-//		} else {
-//			fmt.Printf(o.DarkRed("Failed to store REPL history to %s: %s\n"), historyFilename, err)
-//		}
-//	} else if verboseMode {
-//		fmt.Println(o.LightGreen("ok"))
-//	}
-//}
-
 // Output syntax highlighted help text, with an additional usage message
 func outputHelp(o *term.TextOutput, helpText string) {
 	for _, line := range strings.Split(helpText, "\n") {
 		o.Println(highlight(o, line))
 	}
 	o.Println(usageMessage)
+}
+
+// Take all functions mentioned in the given help text string and add them to the readline completer
+func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.PrefixCompleter) {
+	for _, line := range strings.Split(helpText, "\n") {
+		if !strings.HasPrefix(line, "//") && strings.Contains(line, "(") {
+			parts := strings.Split(line, "(")
+			if strings.Contains(line, "()") {
+				completer.Children = append(completer.Children, &readline.PrefixCompleter{Name: []rune(parts[0] + "()")})
+			} else {
+				completer.Children = append(completer.Children, &readline.PrefixCompleter{Name: []rune(parts[0] + "(")})
+			}
+		}
+	}
 }
 
 // REPL provides a "Read Eveal Print" loop for interacting with Lua.
@@ -651,14 +650,9 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, p
 		&readline.PrefixCompleter{Name: []rune("quit")},
 		&readline.PrefixCompleter{Name: []rune("exit")},
 		&readline.PrefixCompleter{Name: []rune("zalgo")},
-		&readline.PrefixCompleter{Name: []rune("print(")},
-		&readline.PrefixCompleter{Name: []rune("pprint(")},
-		&readline.PrefixCompleter{Name: []rune("dir(")},
-		&readline.PrefixCompleter{Name: []rune("py(")},
-		&readline.PrefixCompleter{Name: []rune("run(")},
-		&readline.PrefixCompleter{Name: []rune("sleep(")},
-		&readline.PrefixCompleter{Name: []rune("unixnano()")},
 	)
+
+	addFunctionsFromHelptextToCompleter(generalHelpText, completer)
 
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:            prompt,
