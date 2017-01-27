@@ -441,13 +441,6 @@ ServerFile(string) -> bool
 	exitMessage = "bye"
 )
 
-// Pretty print the given Lua value to stdout
-func pprint(value lua.LValue) {
-	var buf bytes.Buffer
-	pprintToWriter(&buf, value)
-	fmt.Print(buf.String())
-}
-
 // Export Lua functions related to the REPL
 func exportREPL(L *lua.LState) {
 
