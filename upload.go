@@ -68,10 +68,10 @@ func newUploadedFile(req *http.Request, scriptdir, formID string, uploadLimit in
 		return nil, errMem
 	}
 	file, handler, err := req.FormFile(formID)
-	defer file.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	// Store the data in a buffer, for later usage.
 	buf := new(bytes.Buffer)
@@ -165,11 +165,11 @@ func (ulf *UploadedFile) write(fullFilename string) error {
 	}
 	// Write the uploaded file
 	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, defaultPermissions)
-	defer f.Close()
 	if err != nil {
 		log.Error("Error when creating ", fullFilename)
 		return err
 	}
+	defer f.Close()
 	// Copy the data to a new buffer, to keep the data and the length
 	fileDataBuffer := bytes.NewBuffer(ulf.buf.Bytes())
 	if _, err := io.Copy(f, fileDataBuffer); err != nil {

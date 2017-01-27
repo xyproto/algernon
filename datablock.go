@@ -199,6 +199,9 @@ func gzipWrite(w io.Writer, data []byte, speed bool) (int, error) {
 		level = pgzip.BestSpeed
 	}
 	gw, err := pgzip.NewWriterLevel(w, level)
+	if err != nil {
+		return 0, err
+	}
 	defer gw.Close()
 	bytesWritten, err := gw.Write(data)
 	if err != nil {
@@ -211,6 +214,9 @@ func gzipWrite(w io.Writer, data []byte, speed bool) (int, error) {
 func gunzipWrite(w io.Writer, data []byte) (int, error) {
 	// Write gzipped data to the client
 	gr, err := pgzip.NewReader(bytes.NewBuffer(data))
+	if err != nil {
+		return 0, err
+	}
 	defer gr.Close()
 	data, err = ioutil.ReadAll(gr)
 	if err != nil {

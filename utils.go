@@ -205,7 +205,6 @@ func url2filename(dirname, urlpath string) string {
 // Get a list of filenames from a given directory name (that must exist)
 func getFilenames(dirname string) []string {
 	dir, err := os.Open(dirname)
-	defer dir.Close()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"dirname": dirname,
@@ -213,6 +212,7 @@ func getFilenames(dirname string) []string {
 		}).Error("Could not open directory")
 		return []string{}
 	}
+	defer dir.Close()
 	filenames, err := dir.Readdirnames(-1)
 	if err != nil {
 		log.WithFields(log.Fields{

@@ -75,10 +75,10 @@ func main() {
 	if profileMem != "" {
 		atShutdown(func() {
 			f, errProfile := os.Create(profileMem)
-			defer f.Close()
 			if errProfile != nil {
 				log.Fatal(errProfile)
 			}
+			defer f.Close()
 			log.Info("Saving heap profile to ", profileMem)
 			pprof.WriteHeapProfile(f)
 		})
@@ -285,8 +285,6 @@ func main() {
 
 	// Direct internal logging elsewhere
 	internalLogFile, err := os.Open(internalLogFilename)
-	defer internalLogFile.Close()
-
 	if err != nil {
 		// Could not open the internalLogFilename filename, try using another filename
 		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, defaultPermissions)
@@ -300,6 +298,7 @@ func main() {
 			fatalExit(fmt.Errorf("Could not write to %s nor %s.", internalLogFilename, "internal.log"))
 		}
 	}
+	defer internalLogFile.Close()
 	internallog.SetOutput(internalLogFile)
 
 	// Serve filesystem events in the background.
