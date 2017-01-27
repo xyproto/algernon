@@ -158,11 +158,8 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	if strings.HasPrefix(htmlbody, "<p>#") {
 		fields := strings.Split(htmlbody, "<")
 		if len(fields) > 2 {
-			h1title = fields[1][2:]
+			h1title = strings.TrimPrefix(fields[1][2:], "#")
 			htmlbody = htmlbody[len("<p>"+h1title):]
-			if strings.HasPrefix(h1title, "#") {
-				h1title = h1title[1:]
-			}
 		}
 	}
 
@@ -249,15 +246,17 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		}
 	}
 
-	// Add syntax highlighting
 	codeStyle := given["codestyle"]
-	if codeStyle == "" {
-		head.WriteString(highlightHTML(defaultCodeStyles[theme]))
-	} else if codeStyle != "none" {
-		head.WriteString(highlightHTML(codeStyle))
-	}
-	if codeStyle != "none" {
-		htmlbody = highlightHTMLcode(htmlbody)
+	// Add syntax highlighting to the header, but only if "<code" is present
+	if strings.Contains(htmlbody, "<code") {
+		if codeStyle == "" {
+			head.WriteString(highlightHTML(defaultCodeStyles[theme]))
+		} else if codeStyle != "none" {
+			head.WriteString(highlightHTML(codeStyle))
+		}
+		if codeStyle != "none" {
+			htmlbody = highlightHTMLcode(htmlbody)
+		}
 	}
 
 	// Add meta tags, if metadata information has been declared
