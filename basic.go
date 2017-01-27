@@ -280,10 +280,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Given a filename, return the URL path
 	L.SetGlobal("file2url", L.NewFunction(func(L *lua.LState) int {
 		fn := L.ToString(1)
-		targetpath := filepath.Join(filepath.Dir(filename), fn)
-		if strings.HasPrefix(targetpath, serverDir) {
-			targetpath = targetpath[len(serverDir):]
-		}
+		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), serverDir)
 		if pathsep != "/" {
 			// For operating systems that use another path separator for files than for URLs
 			targetpath = strings.Replace(targetpath, pathsep, "/", everyInstance)

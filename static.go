@@ -38,7 +38,7 @@ func openAfter(wait time.Duration, hostname, colonPort string, https bool, cance
 	// Wait a bit
 	time.Sleep(wait)
 	select {
-	case _ = <-cancelChannel:
+	case <-cancelChannel:
 		// Got a message on the cancelChannel:
 		// don't open the URL with an external application.
 		return
