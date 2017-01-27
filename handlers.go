@@ -322,7 +322,17 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 		}
 
 		return
+	case "", ".exe", ".com", ".elf", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2", ".tar.xz", ".txz", ".gz", ".zip", ".7z", ".rar", ".arj", ".lz":
+		// No extension, or binary file extension
+		// Set headers for downloading the file instead of displaying it in the browser.
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment")
+
 	}
+
+	// TODO Add support for "prettifying"/HTML-ifying some file extensions:
+	// movies, music, source code etc. Wrap videos in the right html tags for playback, etc.
+	// This should be placed in a separate Go module.
 
 	// Set the correct Content-Type
 	if mimereader != nil {
