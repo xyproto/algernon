@@ -1,5 +1,15 @@
 # Changelog
 
+Changes from 1.3.2 to 1.4
+=========================
+
+* Improve autocomplete in the REPL.
+* Only add syntax highlighting to rendered HTML when needed.
+* Some refactoring: made the code simpler.
+* Move error checks before defer statements whenever possible.
+* Set headers so that browsers will download the most common binary formats instead of displaying them.
+* Update dependencies.
+
 Changes from 1.3.1 to 1.3.2
 ===========================
 
