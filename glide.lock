@@ -1,5 +1,5 @@
 hash: 63ab4b66672faa4b31ed0844fb049d5e412ce64be34c1112c3167a1e6b9c7149
-updated: 2017-01-03T20:30:50.908706135+01:00
+updated: 2017-02-12T13:22:45.81787086+01:00
 imports:
 - name: code.google.com/p/go.crypto
   version: ede567c8e044a5913dad1d1af3696d9da953104c
@@ -11,7 +11,7 @@ imports:
   subpackages:
   - hpack
 - name: github.com/chzyer/readline
-  version: c914be64f07d9998f52bf0d598ec26d457168c0f
+  version: eef24db1d59cac55d773312ab6efe1890187f2de
 - name: github.com/didip/tollbooth
   version: 605330a2a1a74c6535f5a4d5e8ddab4e024015c4
   subpackages:
@@ -75,7 +75,7 @@ imports:
 - name: github.com/natefinch/pie
   version: 13d3874dc4836d5db81d3a950aa5436b1eb23372
 - name: github.com/nsf/termbox-go
-  version: 0b413bfa31e8c6843db20dce4454566b1951709e
+  version: b6acae516ace002cb8105a89024544a1480655a5
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shopspring/decimal
