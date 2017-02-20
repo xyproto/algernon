@@ -1,0 +1,5 @@
+body
+  margin: 8em
+  font-family: sans-serif
+  font-weight: bold
+  font-size: 1.2em
