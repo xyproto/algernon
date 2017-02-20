@@ -17,6 +17,11 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 		serveFilename := filepath.Join(scriptdir, L.ToString(1))
+		dataFilename := filepath.Join(scriptdir, defaultLuaDataFilename)
+		if L.GetTop() >= 2 {
+			// Optional argument for using a different file than "data.lua"
+			dataFilename = filepath.Join(scriptdir, L.ToString(2))
+		}
 		if !fs.exists(serveFilename) {
 			log.Error("Could not serve " + serveFilename + ". File not found.")
 			return 0 // Number of results
@@ -25,7 +30,7 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 			log.Error("Could not serve " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}
-		filePage(w, req, serveFilename, perm, luapool, cache, pongomutex)
+		filePage(w, req, serveFilename, dataFilename, perm, luapool, cache, pongomutex)
 		return 0 // Number of results
 	}))
 
@@ -33,6 +38,11 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 	L.SetGlobal("render", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 		serveFilename := filepath.Join(scriptdir, L.ToString(1))
+		dataFilename := filepath.Join(scriptdir, defaultLuaDataFilename)
+		if L.GetTop() >= 2 {
+			// Optional argument for using a different file than "data.lua"
+			dataFilename = filepath.Join(scriptdir, L.ToString(2))
+		}
 		if !fs.exists(serveFilename) {
 			log.Error("Could not render " + serveFilename + ". File not found.")
 			return 0 // Number of results
@@ -44,7 +54,7 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 
 		// Render the filename to a httptest.Recorder
 		recorder := httptest.NewRecorder()
-		filePage(recorder, req, serveFilename, perm, luapool, cache, pongomutex)
+		filePage(recorder, req, serveFilename, dataFilename, perm, luapool, cache, pongomutex)
 
 		// Return the recorder as a string
 		L.Push(lua.LString(recorderToString(recorder)))

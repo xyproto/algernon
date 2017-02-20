@@ -91,7 +91,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
 		if fs.exists(filename) {
-			filePage(w, req, filename, perm, luapool, cache, pongomutex)
+			filePage(w, req, filename, defaultLuaDataFilename, perm, luapool, cache, pongomutex)
 			return
 		}
 	}

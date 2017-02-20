@@ -39,6 +39,9 @@ var (
 	// Default log file, for some operating systems
 	defaultLogFile = "/tmp/algernon.log"
 
+	// Default filename for a Lua script that provides data to a template
+	defaultLuaDataFilename = "data.lua"
+
 	// List of configuration filenames to check
 	serverConfigurationFilenames = []string{"/etc/algernon/serverconf.lua"}
 

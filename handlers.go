@@ -44,8 +44,73 @@ func clientCanGzip(req *http.Request) bool {
 	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
 }
 
+func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext string, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
+	pongoblock, err := cache.read(filename, shouldCache(ext))
+	if err != nil {
+		if debugMode {
+			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+		} else {
+			log.Errorf("Unable to read %s: %s", filename, err)
+		}
+		return
+	}
+
+	// Make the functions in luaDataFilename available for the Pongo2 template
+
+	luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
+	if fs.exists(luaDataFilename) {
+		luafilename = luaDataFilename
+	}
+	if fs.exists(luafilename) {
+		// Extract the function map from luaDataFilenname in a goroutine
+		errChan := make(chan error)
+		funcMapChan := make(chan template.FuncMap)
+
+		go lua2funcMap(w, req, filename, luafilename, ext, perm, luapool, cache, pongomutex, errChan, funcMapChan)
+		funcs := <-funcMapChan
+		err = <-errChan
+
+		if err != nil {
+			if debugMode {
+				// Try reading luaDataFilename as well, if possible
+				luablock, luablockErr := cache.read(luafilename, shouldCache(ext))
+				if luablockErr != nil {
+					// Could not find and/or read luaDataFilename
+					luablock = EmptyDataBlock
+				}
+				// Use the Lua filename as the title
+				prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+			} else {
+				log.Error(err)
+			}
+			return
+		}
+
+		// Render the Pongo2 page, using functions from luaDataFilename, if available
+		pongomutex.Lock()
+		pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
+		pongomutex.Unlock()
+
+		return
+	}
+
+	// Output a warning if something different from default has been given
+	if !strings.HasSuffix(luafilename, defaultLuaDataFilename) {
+		log.Warn("Could not read ", luafilename)
+	}
+
+	// Use the Pongo2 template without any Lua functions
+	pongomutex.Lock()
+	funcs := make(template.FuncMap)
+	pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
+	pongomutex.Unlock()
+
+	return
+}
+
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
+func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -117,11 +182,11 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			}
 			return
 		}
-		// Try reading data.lua as well, if possible
-		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
+		// Try reading luaDataFilename as well, if possible
+		luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
 		luablock, err := cache.read(luafilename, shouldCache(ext))
 		if err != nil {
-			// Could not find and/or read data.lua
+			// Could not find and/or read luaDataFilename
 			luablock = EmptyDataBlock
 		}
 		// Make functions from the given Lua data available
@@ -156,66 +221,14 @@ func filePage(w http.ResponseWriter, req *http.Request, filename string, perm pi
 			}
 		}
 
-		// Render the Amber page, using functions from data.lua, if available
+		// Render the Amber page, using functions from luaDataFilename, if available
 		amberPage(w, req, filename, amberblock.MustData(), funcs, cache)
 
 		return
 
 	case ".po2", ".pongo2", ".tpl", ".tmpl":
 
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		pongoblock, err := cache.read(filename, shouldCache(ext))
-		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
-			return
-		}
-
-		// Make the functions in data.lua available for the Pongo2 template
-		luafilename := filepath.Join(filepath.Dir(filename), "data.lua")
-		if fs.exists(luafilename) {
-
-			// Extract the function map from data.lua in a goroutine
-			errChan := make(chan error)
-			funcMapChan := make(chan template.FuncMap)
-
-			go lua2funcMap(w, req, filename, luafilename, ext, perm, luapool, cache, pongomutex, errChan, funcMapChan)
-			funcs := <-funcMapChan
-			err = <-errChan
-
-			if err != nil {
-				if debugMode {
-					// Try reading data.lua as well, if possible
-					luablock, luablockErr := cache.read(luafilename, shouldCache(ext))
-					if luablockErr != nil {
-						// Could not find and/or read data.lua
-						luablock = EmptyDataBlock
-					}
-					// Use the Lua filename as the title
-					prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
-				} else {
-					log.Error(err)
-				}
-				return
-			}
-
-			// Render the Pongo2 page, using functions from data.lua, if available
-			pongomutex.Lock()
-			pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
-			pongomutex.Unlock()
-
-			return
-		}
-
-		// Use the Pongo2 template without any Lua functions
-		pongomutex.Lock()
-		funcs := make(template.FuncMap)
-		pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
-		pongomutex.Unlock()
-
+		pongoHandler(w, req, filename, ext, luaDataFilename, perm, luapool, cache, pongomutex)
 		return
 
 	case ".gcss":
@@ -438,7 +451,7 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, perm, luapool, cache, pongomutex)
+			filePage(w, req, noslash, defaultLuaDataFilename, perm, luapool, cache, pongomutex)
 			return
 		}
 		// Not found

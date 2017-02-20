@@ -76,7 +76,7 @@ func serveStaticFile(filename, colonPort string, pongomutex *sync.RWMutex) {
 	cache := newFileCache(defaultStaticCacheSize, true, 0)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
-		filePage(w, req, filename, nil, nil, cache, pongomutex)
+		filePage(w, req, filename, defaultLuaDataFilename, nil, nil, cache, pongomutex)
 	})
 	HTTPserver := newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
 
