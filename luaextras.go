@@ -59,8 +59,6 @@ func loadExtras(L *lua.LState) int {
 		log.Error("Could not load Lua extras!")
 		log.Error(err)
 	}
-	//L.Push(lua.LString("Loaded extra functions"))
-	//return 1 // number of results
 	return 0 // number of results
 }
 
