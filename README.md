@@ -903,7 +903,7 @@ Code is highlighted with [highlight.js](https://highlightjs.org/) and [several s
 
 The string that follows `replace_with_theme` will be used for replacing the current theme string (like `dark`) with the given string. This makes it possible to use one image (like `logo_default_theme.png`) for one theme and another image (`logo_dark.png`) for the dark theme.
 
-The theme can be `gray`, `dark`, `redbox`, `default` or a path to a CSS file. Or `style.gcss` can exist in the same directory.
+The theme can be `light`, `dark`, `redbox`, `default` or a path to a CSS file. Or `style.gcss` can exist in the same directory.
 
 
 Releases

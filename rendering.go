@@ -185,6 +185,11 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 		theme = defaultTheme
 	}
 
+	// Theme aliases. Use a map if there are more than 1 aliases in the future.
+	if theme == "light" {
+		theme = "gray"
+	}
+
 	// Check if a specific string should be replaced with the current theme
 	replaceWithTheme := given["replace_with_theme"]
 	if replaceWithTheme != "" {

@@ -213,8 +213,7 @@ Available flags:
                                ("-m" is equivalent to "-q -o -z").
   --theme=NAME                 Builtin theme to use for Markdown, error pages and
                                directory listings.
-                               Use a style.css file for customizing further.
-                               Possible values are: gray, dark and redbox
+                               Possible values are: "light", "dark" or "redbox".
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and

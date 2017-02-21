@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -162,6 +163,9 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 		}()
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
 		log.Info("Serving HTTP/2 on " + conf.serverAddr)
+		if !strings.HasSuffix(conf.serverAddr, ":443") {
+			log.Warn("Serving HTTP/2+HTTPS on a non-standard port. Prefix the URL with \"https://\"!")
+		}
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
 		// Start serving. Shut down gracefully at exit.
