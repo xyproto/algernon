@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/eknkc/amber"
+	"github.com/flosch/pongo2"
 	"github.com/mamaar/risotto/generator"
 	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
-	"github.com/xyproto/pongo2"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 	"html/template"
@@ -327,7 +327,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 		return
 	}
 
-	okfuncs := pongo2.NewContext()
+	okfuncs := make(pongo2.Context)
 
 	// Go through the global Lua scope
 	for k, v := range funcs {
@@ -363,15 +363,15 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 				return pongo2.AsValue(retval)
 			}
 			// Save the wrapped function for the pongo2 template execution
-			okfuncs.Set(k, wrapfunc)
+			okfuncs[k] = wrapfunc
 
 		} else if s, ok := v.(string); ok {
 			// String variables
-			okfuncs.Set(k, s)
+			okfuncs[k] = s
 		} else {
 			// Exposing variable as it is.
 			// TODO: Add more tests for this codepath
-			okfuncs.Set(k, v)
+			okfuncs[k] = v
 		}
 	}
 

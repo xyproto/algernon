@@ -63,6 +63,10 @@ type Config struct {
 	// it use in IM usually.
 	UniqueEditLine bool
 
+	// filter input runes (may be used to disable CtrlZ or for translating some keys to different actions)
+	// -> output = new (translated) rune and true/false if continue with processing this one
+	FuncFilterInputRune func(rune) (rune, bool)
+
 	// force use interactive even stdout is not a tty
 	FuncIsTerminal      func() bool
 	FuncMakeRaw         func() error

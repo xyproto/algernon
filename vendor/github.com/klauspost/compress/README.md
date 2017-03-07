@@ -10,8 +10,10 @@ It offers slightly better compression at lower compression settings, and up to 3
 * [Re-balancing Deflate Compression Levels](https://blog.klauspost.com/rebalancing-deflate-compression-levels/)
 
 [![Build Status](https://travis-ci.org/klauspost/compress.svg?branch=master)](https://travis-ci.org/klauspost/compress)
+[![Sourcegraph Badge](https://sourcegraph.com/github.com/klauspost/compress/-/badge.svg)](https://sourcegraph.com/github.com/klauspost/compress?badge)
 
 # changelog
+* Jan 14, 2017: Reduce stack pressure due to array copies. See [Issue #18625](https://github.com/golang/go/issues/18625).
 * Oct 25, 2016: Level 2-4 have been rewritten and now offers significantly better performance than before.
 * Oct 20, 2016: Port zlib changes from Go 1.7 to fix zlib writer issue. Please update.
 * Oct 16, 2016: Go 1.7 changes merged. Apples to apples this package is a few percent faster, but has a significantly better balance between speed and compression per level. 

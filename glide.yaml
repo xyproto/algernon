@@ -4,7 +4,7 @@ import:
 - package: github.com/bradfitz/http2
 - package: github.com/didip/tollbooth
 - package: github.com/eknkc/amber
-- package: github.com/xyproto/pongo2
+- package: github.com/flosch/pongo2
 - package: github.com/klauspost/pgzip
 - package: github.com/mamaar/risotto
   subpackages:

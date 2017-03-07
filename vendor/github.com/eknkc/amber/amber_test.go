@@ -71,6 +71,20 @@ func Test_Mixin_MultiArguments(t *testing.T) {
 	}
 }
 
+func Test_Mixin_NameWithDashes(t *testing.T) {
+	res, err := run(`
+		mixin i-am-mixin($a, $b, $c, $d)
+			p #{$a} #{$b} #{$c} #{$d}
+
+		+i-am-mixin("a", "b", "c", A)`, map[string]int{"A": 2})
+
+	if err != nil {
+		t.Fatal(err.Error())
+	} else {
+		expect(res, `<p>a b c 2</p>`, t)
+	}
+}
+
 func Test_ClassName(t *testing.T) {
 	res, err := run(`div.test
 						p.test1.test2
@@ -96,14 +110,14 @@ func Test_Id(t *testing.T) {
 }
 
 func Test_Attribute(t *testing.T) {
-	res, err := run(`div[name="Test"][foo="bar"].testclass
+	res, err := run(`div[name="Test"][@foo="bar"].testclass
 						p
 							[style="text-align: center; color: maroon"]`, nil)
 
 	if err != nil {
 		t.Fatal(err.Error())
 	} else {
-		expect(res, `<div class="testclass" foo="bar" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
+		expect(res, `<div @foo="bar" class="testclass" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
 	}
 }
 
@@ -230,6 +244,22 @@ func Test_Multiple_File_Inheritance(t *testing.T) {
 	var res bytes.Buffer
 	t1c.Execute(&res, nil)
 	expect(strings.TrimSpace(res.String()), "<p>This is C</p>", t)
+}
+
+func Test_Recursion_In_Blocks(t *testing.T) {
+	tmpl, err := CompileDir("samples/", DefaultDirOptions, DefaultOptions)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	top, ok := tmpl["recursion.top"]
+	if !ok || top == nil {
+		t.Fatal("template not found.")
+	}
+
+	var res bytes.Buffer
+	top.Execute(&res, nil)
+	expect(strings.TrimSpace(res.String()), "content", t)
 }
 
 func Failing_Test_CompileDir(t *testing.T) {

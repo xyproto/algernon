@@ -22,6 +22,8 @@ var (
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
 )
 
+// Used for dealing with the user state, users and passwords.
+// Can also be used for retrieving the underlying Redis connection pool.
 type UserState struct {
 	// see: http://redis.io/topics/data-types
 	users             *simpleredis.HashMap        // Hash map of users, with several different fields per user ("loggedin", "confirmed", "email" etc)
@@ -529,9 +531,9 @@ func (state *UserState) SetPasswordAlgo(algorithm string) error {
 func (state *UserState) HashPassword(username, password string) string {
 	switch state.passwordAlgorithm {
 	case "sha256":
-		return string(hash_sha256(state.cookieSecret, username, password))
+		return string(hashSha256(state.cookieSecret, username, password))
 	case "bcrypt", "bcrypt+":
-		return string(hash_bcrypt(password))
+		return string(hashBcrypt(password))
 	}
 	// Only valid password algorithms should be allowed to set
 	return ""
@@ -544,7 +546,7 @@ func (state *UserState) SetPassword(username, password string) {
 }
 
 // Return the stored hash, or an empty byte slice.
-func (state *UserState) stored_hash(username string) []byte {
+func (state *UserState) storedHash(username string) []byte {
 	hashString, err := state.PasswordHash(username)
 	if err != nil {
 		return []byte{}
@@ -560,7 +562,7 @@ func (state *UserState) CorrectPassword(username, password string) bool {
 	}
 
 	// Retrieve the stored password hash
-	hash := state.stored_hash(username)
+	hash := state.storedHash(username)
 	if len(hash) == 0 {
 		return false
 	}
@@ -568,15 +570,14 @@ func (state *UserState) CorrectPassword(username, password string) bool {
 	// Check the password with the right password algorithm
 	switch state.passwordAlgorithm {
 	case "sha256":
-		return correct_sha256(hash, state.cookieSecret, username, password)
+		return correctSha256(hash, state.cookieSecret, username, password)
 	case "bcrypt":
-		return correct_bcrypt(hash, password)
+		return correctBcrypt(hash, password)
 	case "bcrypt+": // for backwards compatibility with sha256
-		if is_sha256(hash) && correct_sha256(hash, state.cookieSecret, username, password) {
+		if isSha256(hash) && correctSha256(hash, state.cookieSecret, username, password) {
 			return true
-		} else {
-			return correct_bcrypt(hash, password)
 		}
+		return correctBcrypt(hash, password)
 	}
 	return false
 }
@@ -647,11 +648,11 @@ func (state *UserState) Confirm(username string) {
 
 // Take a confirmation code and mark the corresponding unconfirmed user as confirmed.
 func (state *UserState) ConfirmUserByConfirmationCode(confirmationcode string) error {
-	if username, err := state.FindUserByConfirmationCode(confirmationcode); err != nil {
+	username, err := state.FindUserByConfirmationCode(confirmationcode)
+	if err != nil {
 		return err
-	} else {
-		state.Confirm(username)
 	}
+	state.Confirm(username)
 	return nil
 }
 
@@ -681,10 +682,10 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 // Also check if the chosen username only contains letters, numbers and/or underscore.
 // Use the "CorrectPassword" function for checking if the password is correct.
 func ValidUsernamePassword(username, password string) error {
-	const allowed_letters = "abcdefghijklmnopqrstuvwxyzæøåABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ_0123456789"
+	const allAllowedLetters = "abcdefghijklmnopqrstuvwxyzæøåABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ_0123456789"
 NEXT:
 	for _, letter := range username {
-		for _, allowedLetter := range allowed_letters {
+		for _, allowedLetter := range allAllowedLetters {
 			if letter == allowedLetter {
 				continue NEXT // check the next letter in the username
 			}

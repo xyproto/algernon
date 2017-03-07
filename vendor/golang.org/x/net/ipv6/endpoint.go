@@ -12,6 +12,11 @@ import (
 	"golang.org/x/net/internal/netreflect"
 )
 
+// BUG(mikio): On Windows, the JoinSourceSpecificGroup,
+// LeaveSourceSpecificGroup, ExcludeSourceSpecificGroup and
+// IncludeSourceSpecificGroup methods of PacketConn are not
+// implemented.
+
 // A Conn represents a network endpoint that uses IPv6 transport.
 // It allows to set basic IP-level socket options such as traffic
 // class and hop limit.
@@ -50,8 +55,8 @@ func NewConn(c net.Conn) *Conn {
 }
 
 // A PacketConn represents a packet network endpoint that uses IPv6
-// transport.  It is used to control several IP-level socket options
-// including IPv6 header manipulation.  It also provides datagram
+// transport. It is used to control several IP-level socket options
+// including IPv6 header manipulation. It also provides datagram
 // based network I/O methods specific to the IPv6 and higher layer
 // protocols such as OSPF, GRE, and UDP.
 type PacketConn struct {
