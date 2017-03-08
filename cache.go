@@ -363,7 +363,7 @@ func (cache *FileCache) freeSpace() uint64 {
 	return cache.size - cache.offset
 }
 
-// Return formatted cache statstics
+// Return formatted cache statistics
 func (cache *FileCache) stats() string {
 	cache.rw.Lock()
 	defer cache.rw.Unlock()

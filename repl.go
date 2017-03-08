@@ -127,7 +127,7 @@ aprint(...)
 gprint(...)
 // Output rendered JavaScript given JSX. Takes a variable number of strings.
 jprint(...)
-// Output (mainly) rendered HMTL given Pongo2. Takes a variable number of strings.
+// Output (mainly) rendered HTML given Pongo2. Takes a variable number of strings.
 poprint(...)
 
 Cache
@@ -364,7 +364,7 @@ File uploads
 UploadedFile(string[, number]) -> userdata, string
 // Return the uploaded filename, as specified by the client
 uploadedfile:filename() -> string
-// Return the size of the data that has been recevied
+// Return the size of the data that has been received
 uploadedfile:size() -> number
 // Return the mime type of the uploaded file, as specified by the client
 uploadedfile:mimetype() -> string
@@ -435,7 +435,7 @@ DenyHandler(function)
 // Provide a lua function that will be run once,
 // when the server is ready to start serving.
 OnReady(function)
-// Use a Lua file for stting up HTTP handlers instead of using the directory structure.
+// Use a Lua file for setting up HTTP handlers instead of using the directory structure.
 ServerFile(string) -> bool
 `
 	exitMessage = "bye"
@@ -550,7 +550,7 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 	}
 }
 
-// REPL provides a "Read Eveal Print" loop for interacting with Lua.
+// REPL provides a "Read Eval Print" loop for interacting with Lua.
 // A variety of functions are exposed to the Lua state.
 func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
 	var (

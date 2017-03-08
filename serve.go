@@ -54,7 +54,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 		}
 
 		if verboseMode {
-			log.Info("Initating shutdown")
+			log.Info("Initiating shutdown")
 		}
 
 		// Call the shutdown functions in chronological order (FIFO)
@@ -111,7 +111,7 @@ func newGracefulServer(mux *http.ServeMux, http2support bool, addr string, shutd
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
 func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool) error {
 
-	// If we are not writing internal logs to a file, reduce the verboseness
+	// If we are not writing internal logs to a file, reduce the verbosity
 	http2.VerboseLogs = (conf.internalLogFilename != os.DevNull)
 
 	// Channel to wait and see if we should just serve regular HTTP instead
@@ -151,7 +151,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 				fatalExit(err)
 			}
 		}()
-	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 withoutHTTPS
+	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
 		log.Info("Serving HTTP/2 without HTTPS on " + conf.serverAddr)
 		go func() {
 			// Listen for HTTP/2 requests
@@ -189,7 +189,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 
 	// Open the URL, if specified
 	if openURLAfterServing {
-		// TODO: Better check for http vs https when selecting the URL to open
+		// TODO: Better check for HTTP vs HTTPS when selecting the URL to open
 		//       when both are being served.
 		openURL(conf.serverHost, conf.serverAddr, !conf.serveJustHTTP2)
 	}

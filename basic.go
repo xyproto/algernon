@@ -103,10 +103,9 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
-// realW is only used for flushing the buffer in debug mode, and is the underlying ResponseWriter.
 func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
 
-	// Print text to the webpage that is being served. Add a newline.
+	// Print text to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		var buf bytes.Buffer
 		top := L.GetTop()
@@ -125,7 +124,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 		return 0 // number of results
 	}))
 
-	// Pretty print text to the webpage that is being served. Add a newline.
+	// Pretty print text to the web page that is being served. Add a newline.
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
 		var buf bytes.Buffer
 		top := L.GetTop()
