@@ -200,10 +200,10 @@ func (state *UserState) SetUsernameCookie(w http.ResponseWriter, username string
 		return errors.New("Can't set cookie for empty username")
 	}
 	if !state.HasUser(username) {
-		return errors.New("Can't store cookie for non-existsing user")
+		return errors.New("Can't store cookie for non-existing user")
 	}
 	// Create a cookie that lasts for a while ("timeout" seconds),
-	// this is the equivivalent of a session for a given username.
+	// this is the equivalent of a session for a given username.
 	cookie.SetSecureCookiePath(w, "user", username, state.cookieTime, "/", state.cookieSecret)
 	return nil
 }
@@ -277,7 +277,7 @@ func (state *UserState) addUserUnchecked(username, passwordHash, email string) {
 	state.users.Set(username, "password", passwordHash)
 	state.users.Set(username, "email", email)
 
-	// Addditional fields
+	// Additional fields
 	additionalfields := []string{"loggedin", "confirmed", "admin"}
 	for _, fieldname := range additionalfields {
 		state.users.Set(username, fieldname, "false")
@@ -456,13 +456,13 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 
 // FindUserByConfirmationCode tries to find the corresponding username,
 // given a unique confirmation code.
-func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (string, error) {
+func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
 		return "", errors.New("All existing users are already confirmed.")
 	}
 
-	// Find the username by looking up the confirmationcode on unconfirmed users
+	// Find the username by looking up the confirmationCode on unconfirmed users
 	username := ""
 	for _, aUsername := range unconfirmedUsernames {
 		aConfirmationCode, err := state.ConfirmationCode(aUsername)
@@ -470,7 +470,7 @@ func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (str
 			// If the confirmation code can not be found, just skip this one
 			continue
 		}
-		if confirmationcode == aConfirmationCode {
+		if confirmationCode == aConfirmationCode {
 			// Found the right user
 			username = aUsername
 			break
@@ -501,8 +501,8 @@ func (state *UserState) Confirm(username string) {
 
 // ConfirmUserByConfirmationCode takes a unique confirmation code and marks
 // the corresponding unconfirmed user as confirmed.
-func (state *UserState) ConfirmUserByConfirmationCode(confirmationcode string) error {
-	username, err := state.FindUserByConfirmationCode(confirmationcode)
+func (state *UserState) ConfirmUserByConfirmationCode(confirmationCode string) error {
+	username, err := state.FindUserByConfirmationCode(confirmationCode)
 	if err != nil {
 		return err
 	}

@@ -1,5 +1,5 @@
 hash: eea6e6ab3b8bdf281b82ee767880b3310451e9da18e3b4765ecaacc68cbd1bbb
-updated: 2017-03-07T10:42:50.687840996+01:00
+updated: 2017-03-08T14:14:15.742060422+01:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 728b753d0135da6801d45a38e6f43ff55779c5c2
@@ -23,7 +23,7 @@ imports:
   subpackages:
   - parser
 - name: github.com/fatih/color
-  version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/flosch/pongo2
   version: 1d0f0d3af150c4a65dfd424d742f7374819e7d29
 - name: github.com/fsnotify/fsnotify
@@ -70,7 +70,7 @@ imports:
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-runewidth
   version: 14207d285c6c197daabb5c9793d63e7af9ab2d50
@@ -110,17 +110,17 @@ imports:
   - strops
   - token
 - name: github.com/xyproto/cookie
-  version: b84c85ae2aa3e21b2c7fc8c37d5a3081c0c9c83b
+  version: f60670cd5ff7e2632a4df609f65300898672d1aa
 - name: github.com/xyproto/jpath
   version: f0d6e5f685931608fe60575a9d7aace23b6e4ce8
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
-  version: da81d8ae3548f170e41b3219864e8620a77c268b
+  version: a61a12f47f91fdca4adff6cc636c9d43c4095bd4
 - name: github.com/xyproto/permissionHSTORE
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
-  version: e0952938e9c87c095770c39f7760a67a0021d726
+  version: 41cec418722480f99fe7d178df3528ce17d18d5f
 - name: github.com/xyproto/permissionsql
   version: 72c26ae88c7835c8fdc55ce7ec1dbb7661b5c6ac
 - name: github.com/xyproto/pinterface
@@ -159,7 +159,7 @@ imports:
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: e48874b42435b4347fc52bdee0424a52abc974d7
+  version: d67a3279aecd76a65c4c9e6c352c888f5b3a574a
   subpackages:
   - unix
 - name: golang.org/x/time

@@ -88,17 +88,17 @@ func (perm *Permissions) Clear() {
 	perm.userPathPrefixes = []string{}
 }
 
-// Add an url path prefix that is a page for the logged in administrators
+// AddAdminPath registers a path prefix for URLs that shall only be reached by logged in administrators
 func (perm *Permissions) AddAdminPath(prefix string) {
 	perm.adminPathPrefixes = append(perm.adminPathPrefixes, prefix)
 }
 
-// Add an url path prefix that is a page for the logged in users
+// AddUserPath registers a path prefix for URLs that shall only be reached by logged in users
 func (perm *Permissions) AddUserPath(prefix string) {
 	perm.userPathPrefixes = append(perm.userPathPrefixes, prefix)
 }
 
-// Add an url path prefix that is a public page
+// AddPublicPath registers a path prefix for URLs that can be reached by anyone
 func (perm *Permissions) AddPublicPath(prefix string) {
 	perm.publicPathPrefixes = append(perm.publicPathPrefixes, prefix)
 }

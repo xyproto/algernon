@@ -6,7 +6,7 @@ import (
 	"math/rand"
 )
 
-// Generate a random string of the given length.
+// RandomString generates a random string of a given length.
 func RandomString(length int) string {
 	b := make([]byte, length)
 	for i := 0; i < length; i++ {
@@ -15,8 +15,12 @@ func RandomString(length int) string {
 	return string(b)
 }
 
-// Generate a random, but human-friendly, string of the given length.
-// Should be possible to read out loud and send in an email without problems.
+/*RandomHumanFriendlyString generates a random, but human-friendly, string of
+ * the given length. It should be possible to read out loud and send in an email
+ * without problems. The string alternates between vowels and consontants.
+ *
+ * Example output for length 10: ykyzexebub
+ */
 func RandomHumanFriendlyString(length int) string {
 	const (
 		vowels     = "aeiouy" // email+browsers didn't like "æøå" too much
@@ -33,7 +37,8 @@ func RandomHumanFriendlyString(length int) string {
 	return string(b)
 }
 
-// Generate a random, but cookie-friendly, string of the given length.
+// RandomCookieFriendlyString generates a random, but cookie-friendly, string of
+// the given length.
 func RandomCookieFriendlyString(length int) string {
 	const allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)

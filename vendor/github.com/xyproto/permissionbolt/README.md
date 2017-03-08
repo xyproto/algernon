@@ -611,7 +611,7 @@ Password hashing
 Additional resources
 --------------------
 
-* Here is a short code snippet for retriving the underlying Bolt database: https://gist.github.com/xyproto/87d95ea79ad1019d3599
+* Here is a short code snippet for retrieving the underlying Bolt database: https://gist.github.com/xyproto/87d95ea79ad1019d3599
 
 
 Coding style
