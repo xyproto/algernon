@@ -13,6 +13,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
@@ -552,7 +553,7 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 
 // REPL provides a "Read Eval Print" loop for interacting with Lua.
 // A variety of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
+func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
 	var (
 		historyFilename string
 		err             error

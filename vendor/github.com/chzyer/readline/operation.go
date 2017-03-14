@@ -32,6 +32,10 @@ type Operation struct {
 	*opVim
 }
 
+func (o *Operation) SetBuffer(what string) {
+	o.buf.Set([]rune(what))
+}
+
 type wrapWriter struct {
 	r      *Operation
 	t      *Terminal

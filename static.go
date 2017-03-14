@@ -4,12 +4,14 @@ package main
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
 )
 
 const (
@@ -71,9 +73,8 @@ func serveStaticFile(filename, colonPort string, pongomutex *sync.RWMutex) {
 	shortInfoAndOpen(filename, colonPort, cancelChannel)
 
 	mux := http.NewServeMux()
-	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression
-	preferSpeed = false
-	cache := newFileCache(defaultStaticCacheSize, true, 0)
+	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression, compress for size not for speed
+	cache := datablock.NewFileCache(defaultStaticCacheSize, true, 0, false)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
 		filePage(w, req, filename, defaultLuaDataFilename, nil, nil, cache, pongomutex)

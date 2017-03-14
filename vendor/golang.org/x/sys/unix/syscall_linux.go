@@ -556,7 +556,7 @@ func (sa *SockaddrALG) sockaddr() (unsafe.Pointer, _Socklen, error) {
 // bidirectional communication between a hypervisor and its guest virtual
 // machines.
 type SockaddrVM struct {
-	// CID and Port specify a client ID and port address for a VM socket.
+	// CID and Port specify a context ID and port address for a VM socket.
 	// Guests have a unique CID, and hosts may have a well-known CID of:
 	//  - VMADDR_CID_HYPERVISOR: refers to the hypervisor process.
 	//  - VMADDR_CID_HOST: refers to other processes on the host.

@@ -3,6 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"html/template"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	"github.com/eknkc/amber"
 	"github.com/flosch/pongo2"
 	"github.com/mamaar/risotto/generator"
@@ -10,14 +17,9 @@ import (
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
+	"github.com/xyproto/datablock"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
-	"html/template"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 // Check if the given data is valid GCSS. The error value is returned on the channel.
@@ -138,7 +140,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *FileCache) {
+func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *datablock.FileCache) {
 	// Prepare for receiving title and codeStyle information
 	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
 
@@ -207,9 +209,9 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
-	if fs.exists(GCSSfilename) {
+	if fs.Exists(GCSSfilename) {
 		if debugMode {
-			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -237,9 +239,9 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	additionalCSSfile := given["css"]
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
-		if markdownMode && fs.exists(additionalCSSfile) {
+		if markdownMode && fs.Exists(additionalCSSfile) {
 			// Cache the CSS only if Markdown should be cached
-			cssblock, err := cache.read(additionalCSSfile, shouldCache(".md"))
+			cssblock, err := cache.Read(additionalCSSfile, shouldCache(".md"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -282,21 +284,21 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	}
 
 	// Write the rendered Markdown page to the client
-	NewDataBlock(htmldata).ToClient(w, req, filename)
+	dataToClient(w, req, filename, htmldata)
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // the filename is only used if there are errors.
-func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap, cache *FileCache) {
+func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap, cache *datablock.FileCache) {
 
 	var buf bytes.Buffer
 
 	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
-	if fs.exists(GCSSfilename) {
+	if fs.Exists(GCSSfilename) {
 		if debugMode {
-			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -446,20 +448,20 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	}
 
 	// Write the rendered template to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
+	dataToClient(w, req, filename, buf.Bytes())
 }
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // the filename is only used if there are errors.
-func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap, cache *FileCache) {
+func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap, cache *datablock.FileCache) {
 
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
-	if fs.exists(GCSSfilename) {
+	if fs.Exists(GCSSfilename) {
 		if debugMode {
-			gcssblock, err := cache.read(GCSSfilename, shouldCache(".gcss"))
+			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -537,7 +539,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 	buf = *changedBuf
 
 	// Write the rendered template to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
+	dataToClient(w, req, filename, buf.Bytes())
 }
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
@@ -553,7 +555,7 @@ func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdat
 		return
 	}
 	// Write the resulting CSS to the client
-	NewDataBlock(buf.Bytes()).ToClient(w, req, filename)
+	dataToClient(w, req, filename, buf.Bytes())
 }
 
 func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
@@ -582,7 +584,7 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 			return
 		}
 		// Write the generated data to the client
-		NewDataBlock(data).ToClient(w, req, filename)
+		dataToClient(w, req, filename, data)
 	}
 }
 
@@ -610,5 +612,5 @@ func scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdat
 		return
 	}
 	// Write the resulting CSS to the client
-	NewDataBlock([]byte(cssString)).ToClient(w, req, filename)
+	dataToClient(w, req, filename, []byte(cssString))
 }

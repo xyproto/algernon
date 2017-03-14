@@ -364,7 +364,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	L.SetGlobal("dofile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
 		luaFilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !fs.exists(luaFilename) {
+		if !fs.Exists(luaFilename) {
 			log.Error("Could not find:", luaFilename)
 			return 0 // number of results
 		}

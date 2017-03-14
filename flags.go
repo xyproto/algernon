@@ -92,12 +92,13 @@ var (
 	showVersion bool
 
 	// Caching
-	cacheSize          uint64
-	cacheMode          cacheModeSetting
-	cacheCompression   bool
-	cacheMaxEntitySize uint64
-	noCache            bool
-	noHeaders          bool
+	cacheSize             uint64
+	cacheMode             cacheModeSetting
+	cacheCompression      bool
+	cacheMaxEntitySize    uint64
+	cacheCompressionSpeed = true // Compression speed over compactness
+	noCache               bool
+	noHeaders             bool
 
 	// Output
 	quietMode bool

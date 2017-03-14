@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/jpath"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gluamapper"
@@ -315,7 +316,7 @@ func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *FileCache, httpStatus *FutureStatus, pongomutex *sync.RWMutex) {
+func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *datablock.FileCache, httpStatus *FutureStatus, pongomutex *sync.RWMutex) {
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
@@ -374,7 +375,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // Also returns a header map
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *FileCache, fust *FutureStatus, pongomutex *sync.RWMutex) error {
+func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *datablock.FileCache, fust *FutureStatus, pongomutex *sync.RWMutex) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -429,7 +430,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // perm can be nil, but then several Lua functions will not be exposed
-func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, singleFileMode bool, theme string, pongomutex *sync.RWMutex) error {
+func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, mux *http.ServeMux, singleFileMode bool, theme string, pongomutex *sync.RWMutex) error {
 
 	// Retrieve a Lua state
 	L := luapool.Get()
@@ -498,7 +499,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) (template.FuncMap, error) {
+func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) (template.FuncMap, error) {
 	pongomutex.Lock()
 	defer pongomutex.Unlock()
 

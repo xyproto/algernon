@@ -1,17 +1,19 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/pinterface"
-	"github.com/yuin/gopher-lua"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
+	"github.com/xyproto/pinterface"
+	"github.com/yuin/gopher-lua"
 )
 
 // Expose functions for serving other files to Lua
-func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
+func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) {
 
 	// Serve a file in the scriptdir
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
@@ -22,11 +24,11 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 			// Optional argument for using a different file than "data.lua"
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))
 		}
-		if !fs.exists(serveFilename) {
+		if !fs.Exists(serveFilename) {
 			log.Error("Could not serve " + serveFilename + ". File not found.")
 			return 0 // Number of results
 		}
-		if fs.isDir(serveFilename) {
+		if fs.IsDir(serveFilename) {
 			log.Error("Could not serve " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}
@@ -43,11 +45,11 @@ func exportServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, fi
 			// Optional argument for using a different file than "data.lua"
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))
 		}
-		if !fs.exists(serveFilename) {
+		if !fs.Exists(serveFilename) {
 			log.Error("Could not render " + serveFilename + ". File not found.")
 			return 0 // Number of results
 		}
-		if fs.isDir(serveFilename) {
+		if fs.IsDir(serveFilename) {
 			log.Error("Could not render " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}

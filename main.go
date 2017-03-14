@@ -16,6 +16,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/unzip"
 	"github.com/yuin/gopher-lua"
@@ -31,7 +32,7 @@ var (
 	serverHost      string
 	dbName          string
 	refreshDuration time.Duration // for the auto-refresh feature
-	fs              *FileStat
+	fs              *datablock.FileStat
 )
 
 func main() {
@@ -114,14 +115,14 @@ func main() {
 
 	// Create a new FileStat struct, with optional caching (for speed).
 	// Clear the cache every N minutes.
-	fs = NewFileStat(cacheFileStat, defaultStatCacheRefresh)
+	fs = datablock.NewFileStat(cacheFileStat, defaultStatCacheRefresh)
 
 	// Check if the given directory really is a directory
-	if !fs.isDir(serverDir) {
+	if !fs.IsDir(serverDir) {
 		// Possibly a file
 		filename := serverDir
 		// Check if the file exists
-		if fs.exists(filename) {
+		if fs.Exists(filename) {
 			if markdownMode {
 				// Serve the given Markdown file as a static HTTP server
 				serveStaticFile(filename, defaultWebColonPort, pongomutex)
@@ -145,7 +146,7 @@ func main() {
 				// directory of the newly extracted ZIP file.
 				if filenames := getFilenames(serverDir); len(filenames) == 1 {
 					fullPath := filepath.Join(serverDir, filenames[0])
-					if fs.isDir(fullPath) {
+					if fs.IsDir(fullPath) {
 						// Use this as the server directory instead
 						serverDir = fullPath
 					}
@@ -154,7 +155,7 @@ func main() {
 				// directory, register them.
 				for _, filename := range serverConfigurationFilenames {
 					configFilename := filepath.Join(serverDir, filename)
-					if fs.exists(configFilename) {
+					if fs.Exists(configFilename) {
 						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
 					}
 				}
@@ -216,7 +217,7 @@ func main() {
 	// Create a cache struct for reading files (contains functions that can
 	// be used for reading files, also when caching is disabled).
 	// The final argument is for compressing with "fast" instead of "best".
-	cache := newFileCache(cacheSize, cacheCompression, cacheMaxEntitySize)
+	cache := datablock.NewFileCache(cacheSize, cacheCompression, cacheMaxEntitySize, cacheCompressionSpeed)
 
 	if singleFileMode && filepath.Ext(serverDir) == ".lua" {
 		luaServerFilename = serverDir
@@ -231,7 +232,7 @@ func main() {
 	// The scripts may change global variables.
 	var ranConfigurationFilenames []string
 	for _, filename := range serverConfigurationFilenames {
-		if fs.exists(filename) {
+		if fs.Exists(filename) {
 			if verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}

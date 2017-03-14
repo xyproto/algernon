@@ -242,6 +242,11 @@ func (i *Instance) Readline() (string, error) {
 	return i.Operation.String()
 }
 
+func (i *Instance) ReadlineWithDefault(what string) (string, error) {
+	i.Operation.SetBuffer(what)
+	return i.Operation.String()
+}
+
 func (i *Instance) SaveHistory(content string) error {
 	return i.Operation.SaveHistory(content)
 }

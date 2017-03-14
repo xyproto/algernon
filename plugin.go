@@ -2,15 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/natefinch/pie"
-	"github.com/xyproto/term"
-	"github.com/yuin/gopher-lua"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/natefinch/pie"
+	"github.com/xyproto/term"
+	"github.com/yuin/gopher-lua"
 )
 
 type luaPlugin struct {
@@ -39,7 +40,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.exists(path) {
+		if !fs.Exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 
@@ -61,7 +62,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		luacode, err := p.LuaCode(givenPath)
 		if err != nil {
 			if o != nil {
-				o.Err("[Plugin] Could not call the LuaCode function!")
+				o.Err("[Plugin] Could not call the LuaCode function!")
 				o.Err("Error: " + err.Error())
 			}
 			L.Push(lua.LBool(false)) // Fail
@@ -72,7 +73,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		luahelp, err := p.LuaHelp()
 		if err != nil {
 			if o != nil {
-				o.Err("[Plugin] Could not call the LuaHelp function!")
+				o.Err("[Plugin] Could not call the LuaHelp function!")
 				o.Err("Error: " + err.Error())
 			}
 			L.Push(lua.LBool(false)) // Fail
@@ -83,7 +84,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		luacode = strings.TrimSpace(luacode)
 		if L.DoString(luacode) != nil {
 			if o != nil {
-				o.Err("[Plugin] Error in Lua code provided by plugin!")
+				o.Err("[Plugin] Error in Lua code provided by plugin!")
 				o.Err("Error: " + err.Error())
 			}
 			L.Push(lua.LBool(false)) // Fail
@@ -108,7 +109,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.exists(path) {
+		if !fs.Exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 
@@ -130,7 +131,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		luacode, err := p.LuaCode(givenPath)
 		if err != nil {
 			if o != nil {
-				o.Err("[PluginCode] Could not call the LuaCode function!")
+				o.Err("[PluginCode] Could not call the LuaCode function!")
 				o.Err("Error: " + err.Error())
 			}
 			L.Push(lua.LString("")) // Fail
@@ -156,7 +157,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.exists(path) {
+		if !fs.Exists(path) {
 			path = filepath.Join(serverDir, path)
 		}
 
@@ -189,7 +190,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 		jsonargs, err := json.Marshal(args)
 		if err != nil {
 			if o != nil {
-				o.Err("[CallPlugin] Error when marshalling arguments to JSON")
+				o.Err("[CallPlugin] Error when marshalling arguments to JSON")
 				o.Err("Error: " + err.Error())
 			}
 			L.Push(lua.LString("")) // Fail

@@ -4,12 +4,14 @@ package main
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
+
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/pinterface"
 )
 
@@ -33,7 +35,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 		urlpath := fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(easyLink(filename, urlpath, fs.isDir(fullFilename)))
+		buf.WriteString(easyLink(filename, urlpath, fs.IsDir(fullFilename)))
 	}
 	title := dirname
 	// Strip the leading "./"
@@ -66,13 +68,13 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 
 	// Serve the page
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
-	NewDataBlock(htmldata).ToClient(w, req, dirname)
+	dataToClient(w, req, dirname, htmldata)
 }
 
 // Serve a directory. The directory must exist.
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, theme string, pongomutex *sync.RWMutex) {
+func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, theme string, pongomutex *sync.RWMutex) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -90,7 +92,7 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	// Handle the serving of index files, if needed
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
-		if fs.exists(filename) {
+		if fs.Exists(filename) {
 			filePage(w, req, filename, defaultLuaDataFilename, perm, luapool, cache, pongomutex)
 			return
 		}

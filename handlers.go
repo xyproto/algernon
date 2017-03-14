@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/didip/tollbooth"
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 )
@@ -44,9 +45,9 @@ func clientCanGzip(req *http.Request) bool {
 	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
 }
 
-func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext string, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
+func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext string, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
-	pongoblock, err := cache.read(filename, shouldCache(ext))
+	pongoblock, err := cache.Read(filename, shouldCache(ext))
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -59,10 +60,10 @@ func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext
 	// Make the functions in luaDataFilename available for the Pongo2 template
 
 	luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
-	if fs.exists(luaDataFilename) {
+	if fs.Exists(luaDataFilename) {
 		luafilename = luaDataFilename
 	}
-	if fs.exists(luafilename) {
+	if fs.Exists(luafilename) {
 		// Extract the function map from luaDataFilenname in a goroutine
 		errChan := make(chan error)
 		funcMapChan := make(chan template.FuncMap)
@@ -74,10 +75,10 @@ func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext
 		if err != nil {
 			if debugMode {
 				// Try reading luaDataFilename as well, if possible
-				luablock, luablockErr := cache.read(luafilename, shouldCache(ext))
+				luablock, luablockErr := cache.Read(luafilename, shouldCache(ext))
 				if luablockErr != nil {
 					// Could not find and/or read luaDataFilename
-					luablock = EmptyDataBlock
+					luablock = datablock.EmptyDataBlock
 				}
 				// Use the Lua filename as the title
 				prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
@@ -110,7 +111,7 @@ func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext
 }
 
 // When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex) {
+func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) {
 
 	if quitAfterFirstRequest {
 		go quitSoon("Quit after first request", defaultSoonDuration)
@@ -127,7 +128,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 
 		// Read the file (possibly in compressed format, straight from the cache)
-		dataBlock, err := cache.read(filename, shouldCache(ext))
+		dataBlock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Can't open %s: %s", filename, err)
@@ -143,10 +144,10 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 			// Insert JavaScript for refreshing the page, into the HTML
 			htmldata = insertAutoRefresh(req, htmldata)
 			// Write the data to the client
-			NewDataBlock(htmldata).ToClient(w, req, filename)
+			dataToClient(w, req, filename, htmldata)
 		} else {
 			// Serve the file
-			dataBlock.ToClient(w, req, filename)
+			dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
 		}
 
 		return
@@ -155,7 +156,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	case ".md", ".markdown":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		markdownblock, err := cache.read(filename, shouldCache(ext))
+		markdownblock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -173,7 +174,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	case ".amber", ".amb":
 
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		amberblock, err := cache.read(filename, shouldCache(ext))
+		amberblock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -184,10 +185,10 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 		}
 		// Try reading luaDataFilename as well, if possible
 		luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
-		luablock, err := cache.read(luafilename, shouldCache(ext))
+		luablock, err := cache.Read(luafilename, shouldCache(ext))
 		if err != nil {
 			// Could not find and/or read luaDataFilename
-			luablock = EmptyDataBlock
+			luablock = datablock.EmptyDataBlock
 		}
 		// Make functions from the given Lua data available
 		funcs := make(template.FuncMap)
@@ -234,7 +235,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	case ".gcss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		gcssblock, err := cache.read(filename, shouldCache(ext))
+		gcssblock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -252,7 +253,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	case ".scss":
 
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		scssblock, err := cache.read(filename, shouldCache(ext))
+		scssblock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -270,7 +271,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	case ".jsx":
 
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-		jsxblock, err := cache.read(filename, shouldCache(ext))
+		jsxblock, err := cache.Read(filename, shouldCache(ext))
 		if err != nil {
 			if debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
@@ -304,12 +305,12 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 			// Run the lua script, without the possibility to flush
 			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache, httpStatus, pongomutex); err != nil {
 				errortext := err.Error()
-				fileblock, err := cache.read(filename, shouldCache(ext))
+				fileblock, err := cache.Read(filename, shouldCache(ext))
 				if err != nil {
 					// If the file could not be read, use the error message as the data
 					// Use the error as the file contents when displaying the error message
 					// if reading the file failed.
-					fileblock = errorToDataBlock(err)
+					fileblock = datablock.NewDataBlock([]byte(err.Error()), true)
 				}
 				// If there were errors, display an error page
 				prettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
@@ -355,7 +356,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	}
 
 	// Read the file (possibly in compressed format, straight from the cache)
-	dataBlock, err := cache.read(filename, shouldCache(ext))
+	dataBlock, err := cache.Read(filename, shouldCache(ext))
 	if err != nil {
 		if debugMode {
 			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
@@ -365,7 +366,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	}
 
 	// Serve the file
-	dataBlock.ToClient(w, req, filename)
+	dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
 
 }
 
@@ -406,7 +407,7 @@ func getDomain(req *http.Request) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, addDomain bool, theme string, pongomutex *sync.RWMutex) {
+func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, addDomain bool, theme string, pongomutex *sync.RWMutex) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
@@ -436,9 +437,9 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		if strings.HasSuffix(filename, pathsep) {
 			noslash = filename[:len(filename)-1]
 		}
-		hasdir := fs.exists(filename) && fs.isDir(filename)
+		hasdir := fs.Exists(filename) && fs.IsDir(filename)
 		dirname := filename
-		hasfile := fs.exists(noslash)
+		hasfile := fs.Exists(noslash)
 
 		// Set the server headers, if not disabled
 		if !noHeaders {

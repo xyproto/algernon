@@ -1,4 +1,4 @@
-package main
+package datablock
 
 import (
 	"bytes"
@@ -12,28 +12,29 @@ import (
 	"time"
 )
 
-var preferSpeed = true // prefer speed over best compression ratio?
-
 // DataBlock represents a block of data that may be compressed
 type DataBlock struct {
-	data       []byte
-	compressed bool
-	length     int
+	data             []byte
+	compressed       bool
+	length           int
+	compressionSpeed bool // prefer speed over best compression ratio?
 }
 
 var (
 	// EmptyDataBlock is an empty data block
-	EmptyDataBlock = &DataBlock{[]byte{}, false, 0}
+	EmptyDataBlock = &DataBlock{[]byte{}, false, 0, true}
 )
 
 // NewDataBlock creates a new uncompressed data block.
-func NewDataBlock(data []byte) *DataBlock {
-	return &DataBlock{data, false, len(data)}
+// compressionSpeed is if speedy compression should be used over compact compression
+func NewDataBlock(data []byte, compressionSpeed bool) *DataBlock {
+	return &DataBlock{data, false, len(data), compressionSpeed}
 }
 
 // Create a new data block where the data may already be compressed.
-func newDataBlockSpecified(data []byte, compressed bool) *DataBlock {
-	return &DataBlock{data, compressed, len(data)}
+// compressionSpeed is if speedy compression should be used over compact compression
+func newDataBlockSpecified(data []byte, compressed bool, compressionSpeed bool) *DataBlock {
+	return &DataBlock{data, compressed, len(data), compressionSpeed}
 }
 
 // UncompressedData returns the the original, uncompressed data,
@@ -58,11 +59,17 @@ func (b *DataBlock) MustData() []byte {
 	return b.data
 }
 
+// String returns the uncompressed data as a string or as an empty string.
+// Same as MustData, but converted to a string.
+func (b *DataBlock) String() string {
+	return string(b.MustData())
+}
+
 // Gzipped returns the compressed data, length and an error.
 // Will compress if needed.
 func (b *DataBlock) Gzipped() ([]byte, int, error) {
 	if !b.compressed {
-		return compress(b.data, preferSpeed)
+		return compress(b.data, b.compressionSpeed)
 	}
 	return b.data, b.length, nil
 }
@@ -72,7 +79,7 @@ func (b *DataBlock) Compress() error {
 	if b.compressed {
 		return nil
 	}
-	data, bytesWritten, err := compress(b.data, preferSpeed)
+	data, bytesWritten, err := compress(b.data, b.compressionSpeed)
 	if err != nil {
 		return err
 	}
@@ -118,16 +125,11 @@ func (b *DataBlock) HasData() bool {
 	return 0 != b.length
 }
 
-// Wrap an error message as a data block.
-// Can be used when reporting errors as a web page.
-func errorToDataBlock(err error) *DataBlock {
-	return NewDataBlock([]byte(err.Error()))
-}
-
 // ToClient writes the data to the client.
 // Also sets the right headers and compresses the data with gzip if needed.
-func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request, name string) {
-	canGzip := clientCanGzip(req)               // Has the client announced that it can handle gzipped data?
+// Set canGzip to true if the http client can handle gzipped data.
+// gzipThreshold is the threshold (in bytes) for when it makes sense to compress the data with gzip
+func (b *DataBlock) ToClient(w http.ResponseWriter, req *http.Request, name string, canGzip bool, gzipThreshold int) {
 	overThreshold := b.Length() > gzipThreshold // Is there enough data that it makes sense to compress it?
 
 	// Compress or decompress the data as needed. Add headers if compression is used.

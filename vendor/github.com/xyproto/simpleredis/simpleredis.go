@@ -180,11 +180,63 @@ func (rl *List) SelectDatabase(dbindex int) {
 	rl.dbindex = dbindex
 }
 
-// Add an element to the list
-func (rl *List) Add(value string) error {
+// Returns the element at index index in the list
+func (rl *List) Get(index int64) (string, error) {
+	conn := rl.pool.Get(rl.dbindex)
+	result, err := conn.Do("LINDEX", rl.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.String(result, err)
+}
+
+// Get the size of the list
+func (rl *List) Size() (int64, error) {
+	conn := rl.pool.Get(rl.dbindex)
+	size, err := conn.Do("LLEN", rl.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.Int64(size, err)
+}
+
+// Removes and returns the first element of the list
+func (rl *List) PopFirst() (string, error) {
+	conn := rl.pool.Get(rl.dbindex)
+	result, err := conn.Do("LPOP", rl.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.String(result, err)
+}
+
+// Removes and returns the last element of the list
+func (rl *List) PopLast() (string, error) {
+	conn := rl.pool.Get(rl.dbindex)
+	result, err := conn.Do("LPOP", rl.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.String(result, err)
+}
+
+// Add an element to the start of the list
+func (rl *List) AddStart(value string) error {
 	conn := rl.pool.Get(rl.dbindex)
 	_, err := conn.Do("RPUSH", rl.id, value)
 	return err
+}
+
+// Add an element to the end of the list list
+func (rl *List) AddEnd(value string) error {
+	conn := rl.pool.Get(rl.dbindex)
+	_, err := conn.Do("LPUSH", rl.id, value)
+	return err
+}
+
+// Default Add, aliased to List.AddStart
+func (rl *List) Add(value string) error {
+	return rl.AddStart(value)
 }
 
 // Get all elements of a list
@@ -219,6 +271,28 @@ func (rl *List) GetLastN(n int) ([]string, error) {
 	return strs, err
 }
 
+// Remove the first occurence of an element from the list
+func (rl *List) RemoveElement(value string) error {
+	conn := rl.pool.Get(rl.dbindex)
+	_, err := conn.Do("LREM", rl.id, value)
+	return err
+}
+
+// Set element of list at index n to value
+func (rl *List) Set(index int64, value string) error {
+	conn := rl.pool.Get(rl.dbindex)
+	_, err := conn.Do("LSET", rl.id, index, value)
+	return err
+}
+
+// Trim an existing list so that it will contain only the specified range of
+// elements specified.
+func (rl *List) Trim(start, stop int64) error {
+	conn := rl.pool.Get(rl.dbindex)
+	_, err := conn.Do("LTRIM", rl.id, start, stop)
+	return err
+}
+
 // Remove this list
 func (rl *List) Remove() error {
 	conn := rl.pool.Get(rl.dbindex)
@@ -250,6 +324,16 @@ func (rs *Set) Add(value string) error {
 	return err
 }
 
+// Returns the set cardinality (number of elements) of the set
+func (rs *Set) Size() (int64, error) {
+	conn := rs.pool.Get(rs.dbindex)
+	size, err := conn.Do("SCARD", rs.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.Int64(size, err)
+}
+
 // Check if a given value is in the set
 func (rs *Set) Has(value string) (bool, error) {
 	conn := rs.pool.Get(rs.dbindex)
@@ -269,6 +353,26 @@ func (rs *Set) GetAll() ([]string, error) {
 		strs[i] = getString(result, i)
 	}
 	return strs, err
+}
+
+// Remove a random member from the set
+func (rs *Set) Pop() (string, error) {
+	conn := rs.pool.Get(rs.dbindex)
+	result, err := conn.Do("SPOP", rs.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.String(result, err)
+}
+
+// Get a random member of the set
+func (rs *Set) Random() (string, error) {
+	conn := rs.pool.Get(rs.dbindex)
+	result, err := conn.Do("SRANDMEMBER", rs.id)
+	if err != nil {
+		panic(err)
+	}
+	return redis.String(result, err)
 }
 
 // Remove an element from the set

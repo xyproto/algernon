@@ -1,19 +1,21 @@
 package main
 
 import (
-	"github.com/didip/tollbooth"
 	"net/http"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/didip/tollbooth"
+
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
 // Make functions related to handling HTTP requests available to Lua scripts
-func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, pongomutex *sync.RWMutex) {
+func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, pongomutex *sync.RWMutex) {
 
 	luahandlermutex := &sync.RWMutex{}
 

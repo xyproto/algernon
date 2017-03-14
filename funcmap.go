@@ -7,22 +7,23 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/datablock"
 	"github.com/xyproto/pinterface"
 )
 
 // Functions for concurrent use by rendering.go and handlers.go
 
 // Read in a Lua file and return a template.FuncMap (or an error)
-func lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, perm pinterface.IPermissions, luapool *lStatePool, cache *FileCache, pongomutex *sync.RWMutex, errChan chan error, funcMapChan chan template.FuncMap) {
+func lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, errChan chan error, funcMapChan chan template.FuncMap) {
 
 	// Make functions from the given Lua data available
 	funcs := make(template.FuncMap)
 
 	// Try reading data.lua, if possible
-	luablock, err := cache.read(luafilename, shouldCache(ext))
+	luablock, err := cache.Read(luafilename, shouldCache(ext))
 	if err != nil {
 		// Could not find and/or read data.lua
-		luablock = EmptyDataBlock
+		luablock = datablock.EmptyDataBlock
 
 		// This is not an error tha needs to be given to the user
 	}

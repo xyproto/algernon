@@ -1,5 +1,5 @@
 hash: eea6e6ab3b8bdf281b82ee767880b3310451e9da18e3b4765ecaacc68cbd1bbb
-updated: 2017-03-08T14:14:15.742060422+01:00
+updated: 2017-03-14T18:39:43.426525206+01:00
 imports:
 - name: code.google.com/p/go.crypto
   version: 728b753d0135da6801d45a38e6f43ff55779c5c2
@@ -11,15 +11,15 @@ imports:
   subpackages:
   - hpack
 - name: github.com/chzyer/readline
-  version: 784bd70fe0690cd8994a9f7fec6cde879a6629b8
+  version: 41eea22f717c616615e1e59aa06cf831f9901f35
 - name: github.com/didip/tollbooth
-  version: 0587adcf612f2cc33e88eb2f216949425e4cef27
+  version: de229036b78daed1a011b643519bde8d12f36411
   subpackages:
   - config
   - errors
   - libstring
 - name: github.com/eknkc/amber
-  version: 9be5e8aae85904f63d505e0c00e5e0881d44ef4d
+  version: d15eb996544134263b00cce829b5bc4988fdb2df
   subpackages:
   - parser
 - name: github.com/fatih/color
@@ -53,7 +53,7 @@ imports:
 - name: github.com/klauspost/pgzip
   version: e1189db7261c60cf75c77d573014936620d3d119
 - name: github.com/lib/pq
-  version: ca5bc43047f2138703da0f3d3ca89a59f3d597f1
+  version: 472a0745531a17dbac346e828b4c60e73ddff30c
   subpackages:
   - oid
 - name: github.com/mamaar/risotto
@@ -89,7 +89,7 @@ imports:
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/sirupsen/logrus
-  version: 0208149b40d863d2c1a2f8fe5753096a9cf2cc8b
+  version: 1deb2db2a6fff8a35532079061b903c3a25eed52
 - name: github.com/tylerb/graceful
   version: d72b0151351a13d0421b763b88f791469c4f5dc7
 - name: github.com/wellington/sass
@@ -111,12 +111,14 @@ imports:
   - token
 - name: github.com/xyproto/cookie
   version: f60670cd5ff7e2632a4df609f65300898672d1aa
+- name: github.com/xyproto/datablock
+  version: d6b7b30e52a5389facb0e723786a37d4a034b3d0
 - name: github.com/xyproto/jpath
   version: f0d6e5f685931608fe60575a9d7aace23b6e4ce8
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
-  version: a61a12f47f91fdca4adff6cc636c9d43c4095bd4
+  version: d65cc50ff075e87ed81bee344b9e2f0009388ebb
 - name: github.com/xyproto/permissionHSTORE
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
@@ -134,7 +136,7 @@ imports:
 - name: github.com/xyproto/simplemaria
   version: 5cf67844724df03656f16a32348bbef589d5f919
 - name: github.com/xyproto/simpleredis
-  version: cda923d4c0ff8f4898045bb3ef953203c90a52d1
+  version: bec617f59019fbae3ac78b27482da310903b4e4d
 - name: github.com/xyproto/term
   version: 9e12074e834ac795cf9e5d8ac4f3149babb59576
 - name: github.com/xyproto/unzip
@@ -155,11 +157,11 @@ imports:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: d379faa25cbdc04d653984913a2ceb43b0bc46d7
+  version: a6577fac2d73be281a500b310739095313165611
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: d67a3279aecd76a65c4c9e6c352c888f5b3a574a
+  version: 99f16d856c9836c42d24e7ab64ea72916925fa97
   subpackages:
   - unix
 - name: golang.org/x/time

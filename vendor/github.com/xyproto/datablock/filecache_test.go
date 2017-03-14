@@ -1,20 +1,23 @@
-package main
+package datablock
 
 import (
-	"github.com/bmizerany/assert"
-	"github.com/xyproto/cookie"
 	"io/ioutil"
 	"math/rand"
+	"os"
+	"strings"
 	"testing"
+
+	"github.com/bmizerany/assert"
+	"github.com/xyproto/cookie"
 )
 
 func TestID(t *testing.T) {
-	cache := newFileCache(1, false, 0)
+	cache := NewFileCache(1, false, 0, true)
 	_ = cache.normalize("test.filename")
 }
 
 func TestHas(t *testing.T) {
-	cache := newFileCache(1, false, 0)
+	cache := NewFileCache(1, false, 0, true)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	readmeID := cache.normalize("README.md")
 	if cache.hasFile(readmeID) {
@@ -23,7 +26,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	cache := newFileCache(100000, false, 0)
+	cache := NewFileCache(100000, false, 0, true)
 	data, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -38,7 +41,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	cache := newFileCache(100000, false, 0)
+	cache := NewFileCache(100000, false, 0, true)
 	readmeData, err := ioutil.ReadFile("README.md")
 	if err != nil {
 		t.Error(err)
@@ -84,7 +87,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestOverflow(t *testing.T) {
-	cache := newFileCache(100000, false, 0)
+	cache := NewFileCache(100000, false, 0, true)
 	data, err := ioutil.ReadFile("README.md")
 	assert.Equal(t, err, nil)
 	// Repeatedly store a file until the cache is full
@@ -108,7 +111,7 @@ func differs(a, b []byte) bool {
 }
 
 func TestRemovalAddition(t *testing.T) {
-	cache := newFileCache(8, false, 0)
+	cache := NewFileCache(8, false, 0, true)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	adata := []byte{1, 1, 1, 1}
 	bdata := []byte{2, 2, 2, 2}
@@ -162,7 +165,7 @@ func TestRemovalAddition(t *testing.T) {
 
 func TestRandomStoreGet(t *testing.T) {
 	const cacheSize = 5
-	cache := newFileCache(5, false, 0)
+	cache := NewFileCache(5, false, 0, true)
 	cache.cacheWarningGiven = true // Silence warning when the cache is full
 	filenames := []string{"a", "b", "c"}
 	datasets := [][]byte{{0, 1, 2}, {3, 4, 5, 6}, {7}}
@@ -182,7 +185,7 @@ func TestRandomStoreGet(t *testing.T) {
 					//} else {
 					//	fmt.Printf("added %s (%v)\n", filename, id)
 				}
-				//fmt.Println(cache.stats())
+				//fmt.Println(cache.Stats())
 			}
 		case 2: // Add, get and remove data
 			filename := cookie.RandomHumanFriendlyString(rand.Intn(20))
@@ -223,7 +226,7 @@ func TestRandomStoreGet(t *testing.T) {
 			retDataBlock, err := cache.fetchAndCache(filename)
 			if err == nil {
 				//fmt.Printf("retrieved %s (%v)\n", filename, id)
-				//fmt.Println(cache.stats())
+				//fmt.Println(cache.Stats())
 				if retDataBlock.Length() != len(data) {
 					t.Errorf("Wrong length of data: %d vs %d\n", retDataBlock.Length(), len(data))
 				}
@@ -239,7 +242,7 @@ func TestRandomStoreGet(t *testing.T) {
 }
 
 func TestCompression(t *testing.T) {
-	cache := newFileCache(100000, true, 0)
+	cache := NewFileCache(100000, true, 0, true)
 	assert.Equal(t, true, cache.IsEmpty())
 	readmeData, err := ioutil.ReadFile("README.md")
 	assert.Equal(t, err, nil)
@@ -281,4 +284,54 @@ func TestCompression(t *testing.T) {
 			t.Error("Data from cache differs!")
 		}
 	}
+}
+
+func TestClear(t *testing.T) {
+	cache := NewFileCache(1000, true, 0, true)
+	assert.Equal(t, cache.size, cache.freeSpace())
+	readmeData, err := ioutil.ReadFile("README.md")
+	assert.Equal(t, err, nil)
+	compressedREADMEblock, err := cache.storeData("README.md", readmeData)
+	if err != nil {
+		t.Errorf("Could not store README.md in the cache: %s", err)
+	}
+	assert.NotEqual(t, 0, compressedREADMEblock.Length())
+	assert.NotEqual(t, cache.size, cache.freeSpace())
+	cache.Clear()
+	assert.Equal(t, cache.size, cache.freeSpace())
+}
+
+func TestStats(t *testing.T) {
+	cache := NewFileCache(123, true, 0, true)
+	assert.Equal(t, strings.Contains(cache.Stats(), "123 bytes"), true)
+}
+
+func TestRead(t *testing.T) {
+	// New file cache
+	cache := NewFileCache(2000, true, 0, true)
+	// Open a tempfile
+	tmpfile, err := ioutil.TempFile("", "example")
+	assert.Equal(t, err, nil)
+	// Write data to tempfile
+	content := []byte("SHOW ME WHAT YOU GOT")
+	_, err = tmpfile.Write(content)
+	assert.Equal(t, err, nil)
+	// Close tempfile
+	err = tmpfile.Close()
+	assert.Equal(t, err, nil)
+	// Read tempfile into cache, from disk
+	readmeData, err := cache.Read(tmpfile.Name(), true)
+	assert.Equal(t, err, nil)
+	// Check if data is equal
+	assert.Equal(t, content, readmeData.MustData())
+	// Remove tempfile
+	os.Remove(tmpfile.Name())
+	// Read tempfile from cache, it's gone from disk
+	readmeData2, err := cache.Read(tmpfile.Name(), true)
+	assert.Equal(t, err, nil)
+	// Check if strings are equal
+	assert.Equal(t, string(content), readmeData2.String())
+	// Try (and fail) to read data from disk, not from cache
+	_, err = cache.Read(tmpfile.Name(), false)
+	assert.NotEqual(t, err, nil) // Supposed to be an error
 }

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 
 	postgres "github.com/xyproto/permissionHSTORE"
 	bolt "github.com/xyproto/permissionbolt"
@@ -226,7 +227,7 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 	L.SetGlobal("ServerFile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
 		serverFilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !fs.exists(serverFilename) {
+		if !fs.Exists(serverFilename) {
 			log.Error("Could not find", serverFilename)
 			L.Push(lua.LBool(false))
 			return 1 // number of results

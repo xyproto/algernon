@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bmizerany/assert"
+	"github.com/xyproto/datablock"
 	"github.com/yuin/gopher-lua"
 	"html/template"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 )
 
 func pongoPageTest(n int, t *testing.T) {
-	fs = NewFileStat(true, time.Minute*1)
+	fs = datablock.NewFileStat(true, time.Minute*1)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
@@ -21,9 +22,9 @@ func pongoPageTest(n int, t *testing.T) {
 	luafilename := "samples/pongo2/data.lua"
 	pongodata, err := ioutil.ReadFile(filename)
 	assert.Equal(t, err, nil)
-	cache := newFileCache(20000000, true, 64*KiB)
+	cache := datablock.NewFileCache(20000000, true, 64*KiB, true)
 
-	luablock, err := cache.read(luafilename, shouldCache(".po2"))
+	luablock, err := cache.Read(luafilename, shouldCache(".po2"))
 	assert.Equal(t, err, nil)
 
 	// luablock can be empty if there was an error or if the file was empty
