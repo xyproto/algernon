@@ -442,8 +442,8 @@ ServerFile(string) -> bool
 	exitMessage = "bye"
 )
 
-// Export Lua functions related to the REPL
-func exportREPL(L *lua.LState) {
+// Export Lua functions specific to the REPL
+func exportREPLSpecific(L *lua.LState) {
 
 	// Attempt to return a more informative text than the memory location.
 	// Can take several arguments, just like print().
@@ -551,29 +551,8 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 	}
 }
 
-// REPL provides a "Read Eval Print" loop for interacting with Lua.
-// A variety of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
-	var (
-		historyFilename string
-		err             error
-	)
-
-	historydir, err := homedir.Dir()
-	if err != nil {
-		log.Error("Could not find a user directory to store the REPL history.")
-		historydir = "."
-	}
-	if runtime.GOOS == "windows" {
-		historyFilename = filepath.Join(historydir, "algernon", "repl.txt")
-	} else {
-		historyFilename = filepath.Join(historydir, ".algernon_history")
-	}
-
-	// Retrieve a Lua state
-	L := luapool.Get()
-	// Don't re-use the Lua state
-	defer L.Close()
+// Export the various Lua functions that might be needed at the REPL
+func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapool *lStatePool, pongomutex *sync.RWMutex, o *term.TextOutput, cache *datablock.FileCache) {
 
 	// Server configuration functions
 	exportServerConfigFunctions(L, perm, "", luapool, pongomutex)
@@ -605,18 +584,46 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 	// Extras
 	exportExtras(L)
 
-	// Pretty printing
-	exportREPL(L)
-
-	// Colors and input
-	enableColors := runtime.GOOS != "windows"
-	o := term.NewTextOutput(enableColors, true)
+	// Export pprint and scriptdir
+	exportREPLSpecific(L)
 
 	// Plugin functionality
 	exportPluginFunctions(L, o)
 
 	// Cache
 	exportCacheFunctions(L, cache)
+}
+
+// REPL provides a "Read Eval Print" loop for interacting with Lua.
+// A variety of functions are exposed to the Lua state.
+func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
+	var (
+		historyFilename string
+		err             error
+	)
+
+	historydir, err := homedir.Dir()
+	if err != nil {
+		log.Error("Could not find a user directory to store the REPL history.")
+		historydir = "."
+	}
+	if runtime.GOOS == "windows" {
+		historyFilename = filepath.Join(historydir, "algernon", "repl.txt")
+	} else {
+		historyFilename = filepath.Join(historydir, ".algernon_history")
+	}
+
+	// Retrieve a Lua state
+	L := luapool.Get()
+	// Don't re-use the Lua state
+	defer L.Close()
+
+	// Colors and input
+	enableColors := runtime.GOOS != "windows"
+	o := term.NewTextOutput(enableColors, true)
+
+	// Export a selection of functions to the Lua state
+	exporLuaFunctionsForREPL(L, perm, luapool, pongomutex, o, cache)
 
 	// Getting ready
 	o.Println(o.LightBlue(versionString))
