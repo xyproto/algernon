@@ -41,6 +41,22 @@ func recorderToString(recorder *httptest.ResponseRecorder) string {
 	return buf.String()
 }
 
+// Given a lowercase string for the language, return an approprite error page title
+func errorPageTitle(lang string) string {
+	switch lang {
+	case "":
+		return "Error"
+	case "css":
+		return "CSS Error"
+	case "gcss":
+		return "GCSS Error"
+	case "html":
+		return "HTML Error"
+	default:
+		return strings.Title(lang) + " Error"
+	}
+}
+
 // Return an informative error page to the user
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
@@ -111,14 +127,7 @@ func prettyError(w http.ResponseWriter, req *http.Request, filename string, file
 	}
 
 	// Set an appropriate title
-	title := "Error"
-	if lang == "gcss" {
-		title = "GCSS Error"
-	} else if lang == "html" {
-		title = "HTML Error"
-	} else if lang != "" {
-		title = strings.Title(lang) + " Error"
-	}
+	title := errorPageTitle(lang)
 
 	// Set the highlight class
 	langclass := lang
