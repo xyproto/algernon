@@ -19,7 +19,7 @@ func checkKeyValue(L *lua.LState) pinterface.IKeyValue {
 }
 
 // Create a new KeyValue collection.
-// id is the name of the KeyValue colleciton.
+// id is the name of the KeyValue collection.
 // dbindex is the Redis database index (typically 0).
 func newKeyValue(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserData, error) {
 	// Create a new key/value
