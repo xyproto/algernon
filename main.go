@@ -30,7 +30,6 @@ const (
 var (
 	// For convenience. Set in the main function.
 	serverHost      string
-	dbName          string
 	refreshDuration time.Duration // for the auto-refresh feature
 	fs              *datablock.FileStat
 )
@@ -198,9 +197,10 @@ func main() {
 	}
 
 	var perm pinterface.IPermissions // nil by default
+	var dbName string
 	if !useNoDatabase {
 		// Connect to a database and retrieve a Permissions struct
-		perm, err = aquirePermissions()
+		perm, dbName, err = aquirePermissions()
 		if err != nil {
 			log.Fatalln("Could not find a usable database backend.")
 		}

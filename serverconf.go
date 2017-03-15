@@ -245,49 +245,57 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 
 }
 
+// Initialize a bolt database, given a filename.
+// The filename is a pointer to a string. The string is set if a temporary file is used
+// (if Bolt times out when using the given filename)
+func initializeBoltDatabase(boltFilename *string, defaultBoltFilename string) (perm pinterface.IPermissions, dbname string, err error) {
+	if useBolt && *boltFilename == "" {
+		*boltFilename = defaultBoltFilename
+	}
+	if *boltFilename == "" {
+		err = errors.New("No bolt database filename given")
+		return
+	}
+	// New permissions middleware, using a Bolt database
+	perm, err = bolt.NewWithConf(*boltFilename)
+	if err != nil {
+		if err.Error() == "timeout" {
+			tempFile, errTemp := ioutil.TempFile("", "algernon")
+			if errTemp != nil {
+				err = fmt.Errorf("Unable to find a temporary file to use: %s", errTemp)
+				return
+			}
+			*boltFilename = tempFile.Name() + ".db"
+		} else {
+			err = fmt.Errorf("Could not use Bolt as database backend: %s", err)
+			return
+		}
+	} else {
+		dbName = "Bolt (" + *boltFilename + ")"
+	}
+	// Try the new database filename if there was a timeout
+	if dbName == "" && *boltFilename != defaultBoltFilename {
+		perm, err = bolt.NewWithConf(*boltFilename)
+		if err != nil {
+			if err.Error() == "timeout" {
+				err = errors.New("The Bolt database timed out!")
+				return
+			}
+			err = fmt.Errorf("Could not use Bolt as database backend: %s", err)
+			return
+		}
+		dbName = "Bolt, temporary"
+	}
+	return
+}
+
 // Use one of the databases for the permission middleware,
 // assign a name to dbName (used for the status output) and
 // return a Permissions struct.
-func aquirePermissions() (pinterface.IPermissions, error) {
-	var (
-		err  error
-		perm pinterface.IPermissions
-	)
-
-	// If Bolt is to be used and no filename is given
-	if useBolt && (boltFilename == "") {
-		boltFilename = defaultBoltFilename
-	}
-
-	if boltFilename != "" {
-		// New permissions middleware, using a Bolt database
-		perm, err = bolt.NewWithConf(boltFilename)
-		if err != nil {
-			if err.Error() == "timeout" {
-				tempFile, errTemp := ioutil.TempFile("", "algernon")
-				if errTemp != nil {
-					log.Fatal("Unable to find a temporary file to use:", errTemp)
-				} else {
-					boltFilename = tempFile.Name() + ".db"
-				}
-			} else {
-				log.Errorf("Could not use Bolt as database backend: %s", err)
-			}
-		} else {
-			dbName = "Bolt (" + boltFilename + ")"
-		}
-		// Try the new database filename if there was a timeout
-		if dbName == "" && boltFilename != defaultBoltFilename {
-			perm, err = bolt.NewWithConf(boltFilename)
-			if err != nil {
-				if err.Error() == "timeout" {
-					log.Error("The Bolt database timed out!")
-				} else {
-					log.Errorf("Could not use Bolt as database backend: %s", err)
-				}
-			} else {
-				dbName = "Bolt, temporary"
-			}
+func aquirePermissions() (perm pinterface.IPermissions, dbName string, err error) {
+	if useBolt {
+		if perm, dbName, err = initializeBoltDatabase(&boltFilename, defaultBoltFilename); err != nil {
+			log.Errorln(err)
 		}
 	}
 	if dbName == "" && mariadbDSN != "" {
