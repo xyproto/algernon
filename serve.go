@@ -120,7 +120,11 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	// Goroutine that wait for a message to just serve regular HTTP, if needed
 	go func() {
 		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
-		log.Info("Serving HTTP on " + conf.serverAddr)
+		if strings.HasPrefix(conf.serverAddr, ":") {
+			log.Info("Serving HTTP on http://localhost" + conf.serverAddr + "/")
+		} else {
+			log.Info("Serving HTTP on http://" + conf.serverAddr + "/")
+		}
 		HTTPserver := newGracefulServer(mux, false, conf.serverAddr, conf.shutdownTimeout)
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(); err != nil {
@@ -133,7 +137,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	switch {
 	case conf.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		log.Info("Serving HTTP/2 on " + conf.serverHost + ":443")
+		log.Info("Serving HTTP/2 on https://" + conf.serverHost + "/")
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
@@ -143,7 +147,7 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 				log.Error(err)
 			}
 		}()
-		log.Info("Serving HTTP on " + conf.serverHost + ":80")
+		log.Info("Serving HTTP on http://" + conf.serverHost + "/")
 		go func() {
 			HTTPserver := newGracefulServer(mux, false, conf.serverHost+":80", conf.shutdownTimeout)
 			if err := HTTPserver.ListenAndServe(); err != nil {
@@ -152,7 +156,11 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			}
 		}()
 	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
-		log.Info("Serving HTTP/2 without HTTPS on " + conf.serverAddr)
+		if strings.HasPrefix(conf.serverAddr, ":") {
+			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + conf.serverAddr + "/")
+		} else {
+			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + conf.serverAddr + "/")
+		}
 		go func() {
 			// Listen for HTTP/2 requests
 			HTTP2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
@@ -162,9 +170,10 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 			}
 		}()
 	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
-		log.Info("Serving HTTP/2 on " + conf.serverAddr)
-		if !strings.HasSuffix(conf.serverAddr, ":443") {
-			log.Warn("Serving HTTP/2+HTTPS on a non-standard port. Prefix the URL with \"https://\"!")
+		if strings.HasPrefix(conf.serverAddr, ":") {
+			log.Info("Serving HTTP/2 on https://localhost" + conf.serverAddr + "/")
+		} else {
+			log.Info("Serving HTTP/2 on https://" + conf.serverAddr + "/")
 		}
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
