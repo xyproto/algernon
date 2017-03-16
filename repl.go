@@ -635,10 +635,10 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 
 	// Start the read, eval, print loop
 	var (
-		line   string
-		prompt = o.LightGreen("lua> ")
-		EOF    bool
-		//EOFcount int
+		line     string
+		prompt   = o.LightGreen("lua> ")
+		EOF      bool
+		EOFcount int
 	)
 
 	// TODO: Automatically generate a list of all words that should be completed
@@ -701,17 +701,15 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 		}
 
 		if EOF {
-			done <- true
-			return nil
-			//switch EOFcount {
-			//case 0:
-			//	o.Err("Press ctrl-d again to exit.")
-			//	EOFcount++
-			//	continue
-			//default:
-			//	done <- true
-			//	return nil
-			//}
+			switch EOFcount {
+			case 0:
+				o.Err("Press ctrl-d again to exit.")
+				EOFcount++
+				continue
+			default:
+				done <- true
+				return nil
+			}
 		}
 
 		line = strings.TrimSpace(line)
