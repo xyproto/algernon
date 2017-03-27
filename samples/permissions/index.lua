@@ -7,7 +7,11 @@ print("Current user is logged in, has a valid cookie and *user rights*: " .. tos
 print("Current user is logged in, has a valid cookie and *admin rights*: " .. tostring(AdminRights()))
 print("Try: /register, /confirm, /remove, /login, /logout, /clear, /data, /makeadmin and /admin")
 
-if urlpath() ~= "/" then
+if urlpath() == "/permissions/" then
+  -- If running with the welcome.sh script:
+  AddAdminPrefix("/permissions/admin")
+  AddUserPrefix("/permissions/data")
+elseif urlpath() ~= "/" then
   print()
-  print[[NOTE: The current URL path is not "/". For the default URL permissions to work, Algernon must either be run from this directory, or the URL prefixes must be configured correctly.]]
+  print[[NOTE: The current URL path is not "/"! For the default URL permissions to work, Algernon must either be run from this directory, or the URL prefixes must be configured correctly. Try running `welcome.sh` from the project root.]]
 end
