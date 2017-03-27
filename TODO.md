@@ -2,16 +2,17 @@
 
 Priority 1
 ----------
-- [ ] Fork and modify the wellington sass package to read from bytes.
+- [ ] Fix the issue with Lua functions defined in Lua.
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go)
+
+Priority 2
+----------
 - [ ] Add support for Handlebars: https://github.com/aymerick/raymond
 - [ ] Add support for [Ghost](https://ghost.org) themes.
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
 - [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
-
-Priority 2
-----------
 - [ ] Look into the memory use when serving many large files in quick succession.
 - [ ] Present directories with media files with a built-in page.
 - [ ] Server side support for https://github.com/gmetais/sw-delta
@@ -30,7 +31,6 @@ Documentation/tutorials
 
 Priority 3
 ----------
-- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go)
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
 - [ ] Render JavaScript server-side by using [Goja](https://github.com/dop251/goja)
 - [ ] Add an option for using brotly compression instead of gzip.
