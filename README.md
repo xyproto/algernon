@@ -326,6 +326,7 @@ permanent_redirect(string)
 flush()
 ~~~
 
+
 Lua functions for formatted output
 ----------------------------------
 
@@ -472,6 +473,7 @@ codelib:import(string) -> bool
 codelib:clear() -> bool
 ~~~
 
+
 Lua functions for file uploads
 ------------------------------
 
@@ -508,7 +510,11 @@ CacheInfo() -> string
 
 // Clear the file cache.
 ClearCache()
+
+// Load a file into the cache, returns true on success.
+preload(string) -> bool
 ~~~
+
 
 Lua functions for data structures
 ---------------------------------

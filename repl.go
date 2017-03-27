@@ -135,6 +135,7 @@ Cache
 
 CacheInfo() -> string // Return information about the file cache.
 ClearCache() // Clear the file cache.
+preload(string) -> bool // Load a file into the cache, returns true on success.
 
 JSON
 

@@ -43,4 +43,20 @@ func exportCacheFunctions(L *lua.LState, cache *datablock.FileCache) {
 		return 1 // number of results
 	}))
 
+	// Try to load a file into the file cache, if it isn't already there
+	L.SetGlobal("preload", L.NewFunction(func(L *lua.LState) int {
+		filename := L.ToString(1)
+		if cache == nil {
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		// Don't read from disk if already in cache, hence "true"
+		if _, err := cache.Read(filename, true); err != nil {
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		L.Push(lua.LBool(true)) // success
+		return 1                // number of results
+	}))
+
 }
