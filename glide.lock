@@ -1,8 +1,8 @@
 hash: eea6e6ab3b8bdf281b82ee767880b3310451e9da18e3b4765ecaacc68cbd1bbb
-updated: 2017-03-14T18:39:43.426525206+01:00
+updated: 2017-03-27T13:38:23.518596341+02:00
 imports:
 - name: code.google.com/p/go.crypto
-  version: 728b753d0135da6801d45a38e6f43ff55779c5c2
+  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
   repo: https://golang.org/x/crypto
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -27,7 +27,7 @@ imports:
 - name: github.com/flosch/pongo2
   version: 1d0f0d3af150c4a65dfd424d742f7374819e7d29
 - name: github.com/fsnotify/fsnotify
-  version: 7d7316ed6e1ed2de075aab8dfc76de5d158d66e1
+  version: ff7bc41d4007f67e5456703c34342df4e0113f64
 - name: github.com/garyburd/redigo
   version: 0d253a66e6e1349f4581d6d2b300ee434ee2da9f
   subpackages:
@@ -36,9 +36,9 @@ imports:
 - name: github.com/getwe/figlet4go
   version: bc879344e874dd110753d17083a2a7acf3136683
 - name: github.com/go-sql-driver/mysql
-  version: 2e00b5cd70399450106cec6431c2e2ce3cae5034
+  version: 9dee4ca50b83acdf57a35fb9e6fb4be640afa2f3
 - name: github.com/gophertown/fsnotify
-  version: 7d7316ed6e1ed2de075aab8dfc76de5d158d66e1
+  version: ff7bc41d4007f67e5456703c34342df4e0113f64
   repo: https://github.com/fsnotify/fsnotify
 - name: github.com/juju/errors
   version: 6f54ff6318409d31ff16261533ce2c8381a4fd5d
@@ -53,7 +53,7 @@ imports:
 - name: github.com/klauspost/pgzip
   version: e1189db7261c60cf75c77d573014936620d3d119
 - name: github.com/lib/pq
-  version: 472a0745531a17dbac346e828b4c60e73ddff30c
+  version: 2704adc878c21e1329f46f6e56a1c387d788ff94
   subpackages:
   - oid
 - name: github.com/mamaar/risotto
@@ -89,7 +89,7 @@ imports:
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/sirupsen/logrus
-  version: 1deb2db2a6fff8a35532079061b903c3a25eed52
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/tylerb/graceful
   version: d72b0151351a13d0421b763b88f791469c4f5dc7
 - name: github.com/wellington/sass
@@ -112,7 +112,7 @@ imports:
 - name: github.com/xyproto/cookie
   version: f60670cd5ff7e2632a4df609f65300898672d1aa
 - name: github.com/xyproto/datablock
-  version: d6b7b30e52a5389facb0e723786a37d4a034b3d0
+  version: 9934fdd82ac3dcd8eb7508b6af05a1eeecb906a5
 - name: github.com/xyproto/jpath
   version: f0d6e5f685931608fe60575a9d7aace23b6e4ce8
 - name: github.com/xyproto/mime
@@ -122,7 +122,7 @@ imports:
 - name: github.com/xyproto/permissionHSTORE
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
-  version: 41cec418722480f99fe7d178df3528ce17d18d5f
+  version: 8070cbbb23bf75a1ea0e09382d0b49eb8a1b442d
 - name: github.com/xyproto/permissionsql
   version: 72c26ae88c7835c8fdc55ce7ec1dbb7661b5c6ac
 - name: github.com/xyproto/pinterface
@@ -152,16 +152,16 @@ imports:
   - parse
   - pm
 - name: golang.org/x/crypto
-  version: 728b753d0135da6801d45a38e6f43ff55779c5c2
+  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: a6577fac2d73be281a500b310739095313165611
+  version: 6c23252515492caf9b228a9d5cabcdbde29f7f82
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: 99f16d856c9836c42d24e7ab64ea72916925fa97
+  version: afadfcc7779c1f4db0f6f6438afcb108d9c9c7cd
   subpackages:
   - unix
 - name: golang.org/x/time
