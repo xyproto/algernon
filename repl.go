@@ -553,7 +553,7 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 }
 
 // Export the various Lua functions that might be needed at the REPL
-func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapool *lStatePool, pongomutex *sync.RWMutex, o *term.TextOutput, cache *datablock.FileCache) {
+func exportLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapool *lStatePool, pongomutex *sync.RWMutex, o *term.TextOutput, cache *datablock.FileCache) {
 
 	// Server configuration functions
 	exportServerConfigFunctions(L, perm, "", luapool, pongomutex)
@@ -561,21 +561,22 @@ func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapo
 	// Other basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
-	// If there is a database backend
+	// Extra check
 	if perm != nil {
-
-		// Retrieve the userstate
-		userstate := perm.UserState()
-
-		// Simpleredis data structures
-		exportList(L, userstate)
-		exportSet(L, userstate)
-		exportHash(L, userstate)
-		exportKeyValue(L, userstate)
-
-		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
+		log.Fatal("No database backend!")
 	}
+
+	// Retrieve the userstate
+	userstate := perm.UserState()
+
+	// Simpleredis data structures
+	exportList(L, userstate)
+	exportSet(L, userstate)
+	exportHash(L, userstate)
+	exportKeyValue(L, userstate)
+
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
 
 	// For handling JSON data
 	exportJSONFunctions(L)
@@ -624,7 +625,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 	o := term.NewTextOutput(enableColors, true)
 
 	// Export a selection of functions to the Lua state
-	exporLuaFunctionsForREPL(L, perm, luapool, pongomutex, o, cache)
+	exportLuaFunctionsForREPL(L, perm, luapool, pongomutex, o, cache)
 
 	// Getting ready
 	o.Println(o.LightBlue(versionString))

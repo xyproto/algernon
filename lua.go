@@ -328,28 +328,28 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	// Functions for rendering markdown or amber
 	exportRenderFunctions(w, req, L)
 
-	// If there is a database backend
+	// Extra check
 	if perm != nil {
-
-		// Retrieve the userstate
-		userstate := perm.UserState()
-
-		// Functions for serving files in the same directory as a script
-		exportServeFile(w, req, L, filename, perm, luapool, cache, pongomutex)
-
-		// Make the functions related to userstate available to the Lua script
-		exportUserstate(w, req, L, userstate)
-
-		// Simpleredis data structures
-		exportList(L, userstate)
-		exportSet(L, userstate)
-		exportHash(L, userstate)
-		exportKeyValue(L, userstate)
-
-		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
-
+		log.Fatal("No database backend!")
 	}
+
+	// Retrieve the userstate
+	userstate := perm.UserState()
+
+	// Functions for serving files in the same directory as a script
+	exportServeFile(w, req, L, filename, perm, luapool, cache, pongomutex)
+
+	// Make the functions related to userstate available to the Lua script
+	exportUserstate(w, req, L, userstate)
+
+	// Simpleredis data structures
+	exportList(L, userstate)
+	exportSet(L, userstate)
+	exportHash(L, userstate)
+	exportKeyValue(L, userstate)
+
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
 
 	// For handling JSON data
 	exportJSONFunctions(L)
@@ -438,24 +438,25 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 	// Basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
-	// If there is a database backend
+	// Extra check
 	if perm != nil {
-
-		// Retrieve the userstate
-		userstate := perm.UserState()
-
-		// Server configuration functions
-		exportServerConfigFunctions(L, perm, filename, luapool, pongomutex)
-
-		// Simpleredis data structures (could be used for storing server stats)
-		exportList(L, userstate)
-		exportSet(L, userstate)
-		exportHash(L, userstate)
-		exportKeyValue(L, userstate)
-
-		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
+		log.Fatal("No database backend!")
 	}
+
+	// Retrieve the userstate
+	userstate := perm.UserState()
+
+	// Server configuration functions
+	exportServerConfigFunctions(L, perm, filename, luapool, pongomutex)
+
+	// Simpleredis data structures (could be used for storing server stats)
+	exportList(L, userstate)
+	exportSet(L, userstate)
+	exportHash(L, userstate)
+	exportKeyValue(L, userstate)
+
+	// For saving and loading Lua functions
+	exportCodeLibrary(L, userstate)
 
 	// For handling JSON data
 	exportJSONFunctions(L)

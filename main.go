@@ -201,7 +201,13 @@ func main() {
 	if !useNoDatabase {
 		// Connect to a database and retrieve a Permissions struct
 		perm, err = aquirePermissions()
-		if err != nil {
+		if perm == nil || err != nil {
+			log.Fatalln("Could not find a usable database backend.")
+		}
+	} else {
+		// Temporary Bolt database
+		perm, err = aquireTemporaryPermissions()
+		if perm == nil || err != nil {
 			log.Fatalln("Could not find a usable database backend.")
 		}
 	}

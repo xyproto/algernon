@@ -245,9 +245,32 @@ func exportServerConfigFunctions(L *lua.LState, perm pinterface.IPermissions, fi
 
 }
 
+// Use a temporary Bolt database
+func aquireTemporaryPermissions() (pinterface.IPermissions, error) {
+	tempFile, errTemp := ioutil.TempFile("", "algernon")
+	if errTemp != nil {
+		log.Fatal("Unable to find a temporary file to use:", errTemp)
+	} else {
+		boltFilename = tempFile.Name() + ".db"
+	}
+	// Try the temporary filename
+	perm, err := bolt.NewWithConf(boltFilename)
+	if err != nil {
+		if err.Error() == "timeout" {
+			return nil, errors.New("The Bolt database timed out!")
+		}
+		return nil, fmt.Errorf("Could not use Bolt as database backend: %s", err)
+	}
+	dbName = "Bolt, temporary"
+	return perm, nil
+}
+
 // Use one of the databases for the permission middleware,
 // assign a name to dbName (used for the status output) and
 // return a Permissions struct.
+//
+// TODO: Too much if/else. Rewrite!
+//
 func aquirePermissions() (pinterface.IPermissions, error) {
 	var (
 		err  error
