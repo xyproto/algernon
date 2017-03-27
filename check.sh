@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ -z $GOPATH ] && export GOPATH=~/go
+
 echo -n go fmt...
 go fmt && echo ok || echo fail
 
