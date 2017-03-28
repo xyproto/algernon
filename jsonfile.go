@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -205,12 +206,12 @@ func jfileJSON(L *lua.LState) int {
 }
 
 // Create a new JSON file
-func constructJFile(L *lua.LState, filename string) (*lua.LUserData, error) {
+func constructJFile(L *lua.LState, filename string, fperm os.FileMode) (*lua.LUserData, error) {
 	fullFilename := filename
 	// Check if the file exists
 	if !fs.Exists(fullFilename) {
 		// Create an empty JSON document/file
-		if err := ioutil.WriteFile(fullFilename, []byte("[]\n"), defaultPermissions); err != nil {
+		if err := ioutil.WriteFile(fullFilename, []byte("[]\n"), fperm); err != nil {
 			return nil, err
 		}
 	}
@@ -240,7 +241,7 @@ var jfileMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to building a library of Lua code available
-func exportJFile(L *lua.LState, scriptdir string) {
+func (ac *algernonConfig) exportJFile(L *lua.LState, scriptdir string) {
 
 	// Register the JFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lJFileClass)
@@ -253,7 +254,7 @@ func exportJFile(L *lua.LState, scriptdir string) {
 		filename := L.ToString(1)
 
 		// Construct a new JFile
-		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename))
+		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename), ac.defaultPermissions)
 		if err != nil {
 			log.Error(err)
 			L.Push(lua.LString(err.Error()))

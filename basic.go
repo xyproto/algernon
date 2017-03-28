@@ -103,7 +103,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 // Make functions related to HTTP requests and responses available to Lua scripts.
 // Filename can be an empty string.
-func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
+func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
 
 	// Print text to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -279,7 +279,7 @@ func exportBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, fil
 	// Given a filename, return the URL path
 	L.SetGlobal("file2url", L.NewFunction(func(L *lua.LState) int {
 		fn := L.ToString(1)
-		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), serverDir)
+		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), ac.serverDir)
 		if pathsep != "/" {
 			// For operating systems that use another path separator for files than for URLs
 			targetpath = strings.Replace(targetpath, pathsep, "/", everyInstance)

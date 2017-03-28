@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/bmizerany/assert"
-	"github.com/xyproto/datablock"
-	"github.com/yuin/gopher-lua"
 	"html/template"
 	"io/ioutil"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/bmizerany/assert"
+	"github.com/xyproto/datablock"
+	"github.com/yuin/gopher-lua"
 )
 
 func pongoPageTest(n int, t *testing.T) {
@@ -22,32 +22,32 @@ func pongoPageTest(n int, t *testing.T) {
 	luafilename := "samples/pongo2/data.lua"
 	pongodata, err := ioutil.ReadFile(filename)
 	assert.Equal(t, err, nil)
-	cache := datablock.NewFileCache(20000000, true, 64*KiB, true)
 
-	luablock, err := cache.Read(luafilename, shouldCache(".po2"))
+	ac := newAlgernonConfig()
+
+	ac.cache = datablock.NewFileCache(20000000, true, 64*KiB, true)
+
+	luablock, err := ac.cache.Read(luafilename, ac.shouldCache(".po2"))
 	assert.Equal(t, err, nil)
 
 	// luablock can be empty if there was an error or if the file was empty
 	assert.Equal(t, luablock.HasData(), true)
 
 	// Lua LState pool
-	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
-	defer luapool.Shutdown()
-
-	// Pongo2+Lua mutex
-	pongomutex := &sync.RWMutex{}
+	ac.luapool = &lStatePool{saved: make([]*lua.LState, 0, 4)}
+	defer ac.luapool.Shutdown()
 
 	// Make functions from the given Lua data available
 	errChan := make(chan error)
 	funcMapChan := make(chan template.FuncMap)
-	go lua2funcMap(w, req, filename, luafilename, ".lua", nil, luapool, cache, pongomutex, errChan, funcMapChan)
+	go ac.lua2funcMap(w, req, filename, luafilename, ".lua", errChan, funcMapChan)
 	funcs := <-funcMapChan
 	err = <-errChan
 	assert.Equal(t, err, nil)
 
 	// Trigger the error (now resolved)
 	for i := 0; i < n; i++ {
-		go pongoPage(w, req, filename, pongodata, funcs, cache)
+		go ac.pongoPage(w, req, filename, pongodata, funcs)
 	}
 }
 

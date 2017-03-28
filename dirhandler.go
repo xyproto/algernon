@@ -7,16 +7,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/xyproto/datablock"
-	"github.com/xyproto/pinterface"
 )
 
 // Directory listing
-func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
+func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string, ac *algernonConfig) {
 	var buf bytes.Buffer
 	for _, filename := range getFilenames(dirname) {
 
@@ -61,9 +57,9 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 	}
 
 	// If the auto-refresh feature has been enabled
-	if autoRefreshMode {
+	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(req, htmldata)
+		htmldata = ac.insertAutoRefresh(req, htmldata)
 	}
 
 	// Serve the page
@@ -74,10 +70,10 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 // Serve a directory. The directory must exist.
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
-func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, theme string, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, theme string) {
 
-	if quitAfterFirstRequest {
-		go quitSoon("Quit after first request", defaultSoonDuration)
+	if ac.quitAfterFirstRequest {
+		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
 	// If the URL does not end with a slash, redirect to an URL that does
@@ -93,10 +89,10 @@ func dirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname string, 
 	for _, indexfile := range indexFilenames {
 		filename := filepath.Join(dirname, indexfile)
 		if fs.Exists(filename) {
-			filePage(w, req, filename, defaultLuaDataFilename, perm, luapool, cache, pongomutex)
+			ac.filePage(w, req, filename, ac.defaultLuaDataFilename)
 			return
 		}
 	}
 	// Serve a directory listing of no index file is found
-	directoryListing(w, req, rootdir, dirname, theme)
+	directoryListing(w, req, rootdir, dirname, theme, ac)
 }

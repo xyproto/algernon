@@ -29,7 +29,7 @@ func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
 }
 
 // Takes a Lua state and a term Output (should be nil if not in a REPL)
-func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
+func (ac *algernonConfig) exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 
 	// Expose the functionality of a given plugin (executable file).
 	// If on Windows, ".exe" is added to the path.
@@ -41,7 +41,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(serverDir, path)
+			path = filepath.Join(ac.serverDir, path)
 		}
 
 		// Connect with the Plugin
@@ -110,7 +110,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(serverDir, path)
+			path = filepath.Join(ac.serverDir, path)
 		}
 
 		// Connect with the Plugin
@@ -158,7 +158,7 @@ func exportPluginFunctions(L *lua.LState, o *term.TextOutput) {
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(serverDir, path)
+			path = filepath.Join(ac.serverDir, path)
 		}
 
 		fn := L.ToString(2)

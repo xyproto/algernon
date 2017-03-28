@@ -60,7 +60,7 @@ func errorPageTitle(lang string) string {
 // Return an informative error page to the user
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
-func prettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
+func (ac *algernonConfig) prettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
 
 	// HTTP status
 	//w.WriteHeader(http.StatusInternalServerError)
@@ -186,9 +186,9 @@ func prettyError(w http.ResponseWriter, req *http.Request, filename string, file
   </body>
 </html>`)
 
-	if autoRefreshMode {
+	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(req, htmldata)
+		htmldata = ac.insertAutoRefresh(req, htmldata)
 	}
 
 	w.Write(htmldata)

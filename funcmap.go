@@ -4,23 +4,21 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/pinterface"
 )
 
 // Functions for concurrent use by rendering.go and handlers.go
 
 // Read in a Lua file and return a template.FuncMap (or an error)
-func lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, errChan chan error, funcMapChan chan template.FuncMap) {
+func (ac *algernonConfig) lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, errChan chan error, funcMapChan chan template.FuncMap) {
 
 	// Make functions from the given Lua data available
 	funcs := make(template.FuncMap)
 
 	// Try reading data.lua, if possible
-	luablock, err := cache.Read(luafilename, shouldCache(ext))
+	luablock, err := ac.cache.Read(luafilename, ac.shouldCache(ext))
 	if err != nil {
 		// Could not find and/or read data.lua
 		luablock = datablock.EmptyDataBlock
@@ -32,13 +30,13 @@ func lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename
 	if luablock.HasData() {
 		// There was Lua code available. Now make the functions and
 		// variables available for the template.
-		funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache, pongomutex)
+		funcs, err = ac.luaFunctionMap(w, req, luablock.MustData(), luafilename)
 		if err != nil {
 			funcMapChan <- funcs
 			errChan <- err
 			return
 		}
-		if debugMode && verboseMode {
+		if ac.debugMode && ac.verboseMode {
 			s := "These functions from " + luafilename
 			s += " are useable for " + filename + ": "
 			// Create a comma separated list of the available functions

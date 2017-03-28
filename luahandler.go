@@ -9,13 +9,11 @@ import (
 	"github.com/didip/tollbooth"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
-	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
 // Make functions related to handling HTTP requests available to Lua scripts
-func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) exportLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
 
 	luahandlermutex := &sync.RWMutex{}
 
@@ -27,13 +25,12 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
 
-			luapool := luapool
-			L2 := luapool.Get()
-			defer luapool.Put(L2)
+			L2 := ac.luapool.Get()
+			defer ac.luapool.Put(L2)
 
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
 			luahandlermutex.Lock()
-			exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, httpStatus, pongomutex)
+			ac.exportCommonFunctions(w, req, filename, L2, nil, httpStatus)
 			luahandlermutex.Unlock()
 
 			// Then run the given Lua function
@@ -45,10 +42,10 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		}
 
 		// Handle requests differently depending on if rate limiting is enabled or not
-		if disableRateLimiting {
+		if ac.disableRateLimiting {
 			mux.HandleFunc(handlePath, wrappedHandleFunc)
 		} else {
-			limiter := tollbooth.NewLimiter(limitRequests, time.Second)
+			limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 			limiter.MessageContentType = "text/html; charset=utf-8"
 			limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 			mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, wrappedHandleFunc))
@@ -62,7 +59,7 @@ func exportLuaHandlerFunctions(L *lua.LState, filename string, perm pinterface.I
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
 
-		registerHandlers(mux, handlePath, rootdir, perm, luapool, cache, addDomain, theme, pongomutex)
+		ac.registerHandlers(mux, handlePath, rootdir, addDomain)
 
 		return 0 // number of results
 	}))

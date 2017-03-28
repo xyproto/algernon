@@ -8,13 +8,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
-	"github.com/xyproto/pinterface"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
 )
@@ -553,19 +550,19 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 }
 
 // Export the various Lua functions that might be needed at the REPL
-func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapool *lStatePool, pongomutex *sync.RWMutex, o *term.TextOutput, cache *datablock.FileCache) {
+func (ac *algernonConfig) exportLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput) {
 
 	// Server configuration functions
-	exportServerConfigFunctions(L, perm, "", luapool, pongomutex)
+	ac.exportServerConfigFunctions(L, "")
 
 	// Other basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
 	// If there is a database backend
-	if perm != nil {
+	if ac.perm != nil {
 
 		// Retrieve the userstate
-		userstate := perm.UserState()
+		userstate := ac.perm.UserState()
 
 		// Simpleredis data structures
 		exportList(L, userstate)
@@ -579,7 +576,7 @@ func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapo
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	exportJFile(L, serverDir)
+	ac.exportJFile(L, ac.serverDir)
 	exportJNode(L)
 
 	// Extras
@@ -589,15 +586,15 @@ func exporLuaFunctionsForREPL(L *lua.LState, perm pinterface.IPermissions, luapo
 	exportREPLSpecific(L)
 
 	// Plugin functionality
-	exportPluginFunctions(L, o)
+	ac.exportPluginFunctions(L, o)
 
 	// Cache
-	exportCacheFunctions(L, cache)
+	ac.exportCacheFunctions(L)
 }
 
 // REPL provides a "Read Eval Print" loop for interacting with Lua.
 // A variety of functions are exposed to the Lua state.
-func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex, ready, done chan bool) error {
+func (ac *algernonConfig) REPL(ready, done chan bool) error {
 	var (
 		historyFilename string
 		err             error
@@ -615,7 +612,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 	}
 
 	// Retrieve a Lua state
-	L := luapool.Get()
+	L := ac.luapool.Get()
 	// Don't re-use the Lua state
 	defer L.Close()
 
@@ -624,7 +621,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 	o := term.NewTextOutput(enableColors, true)
 
 	// Export a selection of functions to the Lua state
-	exporLuaFunctionsForREPL(L, perm, luapool, pongomutex, o, cache)
+	ac.exportLuaFunctionsForREPL(L, o)
 
 	// Getting ready
 	o.Println(o.LightBlue(versionString))
@@ -671,7 +668,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 	// To be run at server shutdown
 	atShutdown(func() {
 		// Verbose mode has different log output at shutdown
-		if !verboseMode {
+		if !ac.verboseMode {
 			o.Println(o.LightBlue(exitMessage))
 		}
 	})
@@ -680,7 +677,7 @@ func REPL(perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.Fi
 		EOF = false
 		if line, err = l.Readline(); err != nil {
 			if err == io.EOF {
-				if debugMode {
+				if ac.debugMode {
 					o.Println(o.LightPurple(err.Error()))
 				}
 				EOF = true

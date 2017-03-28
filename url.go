@@ -1,12 +1,13 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os/exec"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Open an URL with a browser
-func openURL(host, colonPort string, https bool) {
+func (ac *algernonConfig) openURL(host, colonPort string, https bool) {
 	if host == "" {
 		host = "localhost"
 	}
@@ -15,7 +16,7 @@ func openURL(host, colonPort string, https bool) {
 		prot = "https://"
 	}
 	url := prot + host + colonPort
-	log.Info("Running: " + openExecutable + " " + url)
-	cmd := exec.Command(openExecutable, url)
+	log.Info("Running: " + ac.openExecutable + " " + url)
+	cmd := exec.Command(ac.openExecutable, url)
 	cmd.Run()
 }

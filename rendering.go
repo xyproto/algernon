@@ -17,7 +17,6 @@ import (
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
-	"github.com/xyproto/datablock"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 )
@@ -31,7 +30,7 @@ func validGCSS(gcssdata []byte, errorReturn chan error) {
 }
 
 // Expose functions that are related to rendering text, to the given Lua state
-func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
+func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
 
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
@@ -50,7 +49,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := amber.Compile(buf.String(), amber.Options{PrettyPrint: true, LineNumbers: false})
 		if err != nil {
-			if debugMode {
+			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
@@ -71,7 +70,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := pongo2.FromBytes(buf.Bytes())
 		if err != nil {
-			if debugMode {
+			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
@@ -80,7 +79,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		}
 		// nil is the template context (variables etc in a map)
 		if err := tpl.ExecuteWriter(nil, w); err != nil {
-			if debugMode {
+			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
@@ -96,7 +95,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
 		if _, err := gcss.Compile(w, &buf); err != nil {
-			if debugMode {
+			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
@@ -113,7 +112,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		// Transform JSX to JavaScript and output the result.
 		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
 		if err != nil {
-			if debugMode {
+			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not parse JSX:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -123,7 +122,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 		}
 		gen, err := generator.Generate(prog)
 		if err != nil {
-			if debugMode {
+			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
 				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
@@ -140,7 +139,7 @@ func exportRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LSta
 }
 
 // Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, cache *datablock.FileCache) {
+func (ac *algernonConfig) markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
 	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
 
@@ -184,7 +183,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	// Find the theme that should be used
 	theme := given["theme"]
 	if theme == "" {
-		theme = defaultTheme
+		theme = ac.defaultTheme
 	}
 
 	// Theme aliases. Use a map if there are more than 1 aliases in the future.
@@ -210,8 +209,8 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if fs.Exists(GCSSfilename) {
-		if debugMode {
-			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
+		if ac.debugMode {
+			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -224,7 +223,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -239,9 +238,9 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	additionalCSSfile := given["css"]
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
-		if markdownMode && fs.Exists(additionalCSSfile) {
+		if ac.markdownMode && fs.Exists(additionalCSSfile) {
 			// Cache the CSS only if Markdown should be cached
-			cssblock, err := cache.Read(additionalCSSfile, shouldCache(".md"))
+			cssblock, err := ac.cache.Read(additionalCSSfile, ac.shouldCache(".md"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -278,9 +277,9 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
 
 	// If the auto-refresh feature has been enabled
-	if autoRefreshMode {
+	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = insertAutoRefresh(req, htmldata)
+		htmldata = ac.insertAutoRefresh(req, htmldata)
 	}
 
 	// Write the rendered Markdown page to the client
@@ -289,7 +288,7 @@ func markdownPage(w http.ResponseWriter, req *http.Request, data []byte, filenam
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // the filename is only used if there are errors.
-func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap, cache *datablock.FileCache) {
+func (ac *algernonConfig) pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap) {
 
 	var buf bytes.Buffer
 
@@ -297,8 +296,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if fs.Exists(GCSSfilename) {
-		if debugMode {
-			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
+		if ac.debugMode {
+			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -311,7 +310,7 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -321,8 +320,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	// Prepare a Pongo2 template
 	tpl, err := pongo2.DefaultSet.FromBytes(pongodata)
 	if err != nil {
-		if debugMode {
-			prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
+		if ac.debugMode {
+			ac.prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
 			log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, string(pongodata))
 		}
@@ -383,8 +382,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	defer func() {
 		if r := recover(); r != nil {
 			errmsg := fmt.Sprintf("Pongo2 error: %s", r)
-			if debugMode {
-				prettyError(w, req, filename, pongodata, errmsg, "pongo2")
+			if ac.debugMode {
+				ac.prettyError(w, req, filename, pongodata, errmsg, "pongo2")
 			} else {
 				log.Errorf("Could not execute Pongo2 template:\n%s", errmsg)
 			}
@@ -396,8 +395,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 	err = tpl.ExecuteWriter(pongo2.Globals, &buf)
 	if err != nil {
 		//if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
-		if debugMode {
-			prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
+		if ac.debugMode {
+			ac.prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
 			log.Errorf("Could not execute Pongo2 template:\n%s", err)
 		}
@@ -414,8 +413,8 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 			buf.Reset()
 			_, err := buf.Write(htmldata)
 			if err != nil {
-				if debugMode {
-					prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
+				if ac.debugMode {
+					ac.prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
 					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
@@ -424,15 +423,15 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 		}
 
 		// If the auto-refresh feature has been enabled
-		if autoRefreshMode {
+		if ac.autoRefreshMode {
 			// Insert JavaScript for refreshing the page into the generated HTML
-			changedBytes := insertAutoRefresh(req, buf.Bytes())
+			changedBytes := ac.insertAutoRefresh(req, buf.Bytes())
 
 			buf.Reset()
 			_, err := buf.Write(changedBytes)
 			if err != nil {
-				if debugMode {
-					prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
+				if ac.debugMode {
+					ac.prettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
 					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
@@ -453,15 +452,15 @@ func pongoPage(w http.ResponseWriter, req *http.Request, filename string, pongod
 
 // Write the given source bytes as Amber converted to HTML, to a writer.
 // the filename is only used if there are errors.
-func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap, cache *datablock.FileCache) {
+func (ac *algernonConfig) amberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap) {
 
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), defaultStyleFilename)
 	if fs.Exists(GCSSfilename) {
-		if debugMode {
-			gcssblock, err := cache.Read(GCSSfilename, shouldCache(".gcss"))
+		if ac.debugMode {
+			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -474,7 +473,7 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.prettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -485,8 +484,8 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 	// Compile the given amber template
 	tpl, err := amber.CompileData(amberdata, filename, amber.Options{PrettyPrint: true, LineNumbers: false})
 	if err != nil {
-		if debugMode {
-			prettyError(w, req, filename, amberdata, err.Error(), "amber")
+		if ac.debugMode {
+			ac.prettyError(w, req, filename, amberdata, err.Error(), "amber")
 		} else {
 			log.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
 		}
@@ -501,15 +500,15 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 		// message.
 		if strings.TrimSpace(err.Error()) == "reflect: call of reflect.Value.Type on zero Value" {
 			errortext := "Could not execute Amber template!<br>One of the functions called by the template is not available."
-			if debugMode {
-				prettyError(w, req, filename, amberdata, errortext, "amber")
+			if ac.debugMode {
+				ac.prettyError(w, req, filename, amberdata, errortext, "amber")
 			} else {
 				errortext = strings.Replace(errortext, "<br>", "\n", 1)
 				log.Errorf("Could not execute Amber template:\n%s", errortext)
 			}
 		} else {
-			if debugMode {
-				prettyError(w, req, filename, amberdata, err.Error(), "amber")
+			if ac.debugMode {
+				ac.prettyError(w, req, filename, amberdata, err.Error(), "amber")
 			} else {
 				log.Errorf("Could not execute Amber template:\n%s", err)
 			}
@@ -518,15 +517,15 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 	}
 
 	// If the auto-refresh feature has been enabled
-	if autoRefreshMode {
+	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		changedBytes := insertAutoRefresh(req, buf.Bytes())
+		changedBytes := ac.insertAutoRefresh(req, buf.Bytes())
 
 		buf.Reset()
 		_, err := buf.Write(changedBytes)
 		if err != nil {
-			if debugMode {
-				prettyError(w, req, filename, amberdata, err.Error(), "amber")
+			if ac.debugMode {
+				ac.prettyError(w, req, filename, amberdata, err.Error(), "amber")
 			} else {
 				log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 			}
@@ -544,10 +543,10 @@ func amberPage(w http.ResponseWriter, req *http.Request, filename string, amberd
 
 // Write the given source bytes as GCSS converted to CSS, to a writer.
 // filename is only used if there are errors.
-func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdata []byte) {
+func (ac *algernonConfig) gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdata []byte) {
 	var buf bytes.Buffer
 	if _, err := gcss.Compile(&buf, bytes.NewReader(gcssdata)); err != nil {
-		if debugMode {
+		if ac.debugMode {
 			fmt.Fprintf(w, "Could not compile GCSS:\n\n%s\n%s", err, string(gcssdata))
 		} else {
 			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
@@ -558,11 +557,11 @@ func gcssPage(w http.ResponseWriter, req *http.Request, filename string, gcssdat
 	dataToClient(w, req, filename, buf.Bytes())
 }
 
-func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
+func (ac *algernonConfig) jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
 	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
-		if debugMode {
-			prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+		if ac.debugMode {
+			ac.prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
 		}
@@ -570,8 +569,8 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 	}
 	gen, err := generator.Generate(prog)
 	if err != nil {
-		if debugMode {
-			prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+		if ac.debugMode {
+			ac.prettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
 			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
 		}
@@ -590,21 +589,21 @@ func jsxPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata 
 
 // Write the given source bytes as SCSS converted to CSS, to a writer.
 // filename is only used if there are errors.
-func scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
+func (ac *algernonConfig) scssPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
 	// TODO: Gather stderr and print with log.Errorf if needed
 	o := Output{}
 	// Silence the compiler output
-	if !debugMode {
+	if !ac.debugMode {
 		o.disable()
 	}
 	// Compile the given filename. Sass might want to import other file, which is probably
 	// why the Sass compiler doesn't support just taking in a slice of bytes.
 	cssString, err := compiler.Run(filename)
-	if !debugMode {
+	if !ac.debugMode {
 		o.enable()
 	}
 	if err != nil {
-		if debugMode {
+		if ac.debugMode {
 			fmt.Fprintf(w, "Could not compile SCSS:\n\n%s\n%s", err, string(scssdata))
 		} else {
 			log.Errorf("Could not compile SCSS:\n%s\n%s", err, string(scssdata))

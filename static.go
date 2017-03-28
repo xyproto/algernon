@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -36,7 +35,7 @@ func nextPort(colonPort string) (string, error) {
 }
 
 // This is a bit hacky, but it's only used when serving a single static file
-func openAfter(wait time.Duration, hostname, colonPort string, https bool, cancelChannel chan bool) {
+func (ac *algernonConfig) openAfter(wait time.Duration, hostname, colonPort string, https bool, cancelChannel chan bool) {
 	// Wait a bit
 	time.Sleep(wait)
 	select {
@@ -46,40 +45,40 @@ func openAfter(wait time.Duration, hostname, colonPort string, https bool, cance
 		return
 	case <-time.After(waitBeforeOpen):
 		// Got timeout, assume the port was not busy
-		openURL(hostname, colonPort, https)
+		ac.openURL(hostname, colonPort, https)
 	}
 }
 
 // shortInfo outputs a short string about which file is served where
-func shortInfoAndOpen(filename, colonPort string, cancelChannel chan bool) {
+func (ac *algernonConfig) shortInfoAndOpen(filename, colonPort string, cancelChannel chan bool) {
 	hostname := "localhost"
-	if serverHost != "" {
-		hostname = serverHost
+	if ac.serverHost != "" {
+		hostname = ac.serverHost
 	}
 	log.Info("Serving " + filename + " on http://" + hostname + colonPort)
 
-	if openURLAfterServing {
-		go openAfter(waitBeforeOpen, hostname, colonPort, false, cancelChannel)
+	if ac.openURLAfterServing {
+		go ac.openAfter(waitBeforeOpen, hostname, colonPort, false, cancelChannel)
 	}
 }
 
 // Convenience function for serving only a single file
 // (quick and easy way to view a README.md file)
-func serveStaticFile(filename, colonPort string, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) serveStaticFile(filename, colonPort string) {
 	log.Info("Single file mode. Not using the regular parameters.")
 
 	cancelChannel := make(chan bool, 1)
 
-	shortInfoAndOpen(filename, colonPort, cancelChannel)
+	ac.shortInfoAndOpen(filename, colonPort, cancelChannel)
 
 	mux := http.NewServeMux()
 	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression, compress for size not for speed
-	cache := datablock.NewFileCache(defaultStaticCacheSize, true, 0, false)
+	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", versionString)
-		filePage(w, req, filename, defaultLuaDataFilename, nil, nil, cache, pongomutex)
+		ac.filePage(w, req, filename, ac.defaultLuaDataFilename)
 	})
-	HTTPserver := newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
+	HTTPserver := ac.newGracefulServer(mux, false, ac.serverHost+colonPort)
 
 	// Attempt to serve just the single file
 	if errServe := HTTPserver.ListenAndServe(); errServe != nil {
@@ -89,23 +88,23 @@ func serveStaticFile(filename, colonPort string, pongomutex *sync.RWMutex) {
 				cancelChannel <- true
 				if !strings.HasSuffix(errServe.Error(), "already in use") {
 					// Not a problem with address already being in use
-					fatalExit(errServe)
+					ac.fatalExit(errServe)
 				}
 				log.Warn("Address already in use. Using next port number.")
 				if newPort, errNext := nextPort(colonPort); errNext != nil {
-					fatalExit(errNext)
+					ac.fatalExit(errNext)
 				} else {
 					colonPort = newPort
 				}
 
 				// Make a new cancel channel, and use the new URL
 				cancelChannel = make(chan bool, 1)
-				shortInfoAndOpen(filename, colonPort, cancelChannel)
+				ac.shortInfoAndOpen(filename, colonPort, cancelChannel)
 
-				HTTPserver = newGracefulServer(mux, false, serverHost+colonPort, 5*time.Second)
+				HTTPserver = ac.newGracefulServer(mux, false, ac.serverHost+colonPort)
 			}
 		}
 		// Several attempts failed
-		fatalExit(errServe)
+		ac.fatalExit(errServe)
 	}
 }

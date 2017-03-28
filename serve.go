@@ -13,19 +13,6 @@ import (
 	"github.com/tylerb/graceful"
 )
 
-// Configuration for serving HTTP, HTTPS and/or HTTP/2
-type algernonServerConfig struct {
-	productionMode      bool
-	serverHost          string
-	serverAddr          string
-	serverCert          string
-	serverKey           string
-	serveJustHTTP       bool
-	serveJustHTTP2      bool
-	shutdownTimeout     time.Duration
-	internalLogFilename string
-}
-
 // List of functions to run at shutdown
 var (
 	shutdownFunctions [](func())
@@ -43,7 +30,7 @@ func atShutdown(shutdownFunction func()) {
 // Generate a function that will run the postponed shutdown functions
 // Note that gracefulServer can be nil. It's only used for finding out if the
 // server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
-func generateShutdownFunction(gracefulServer *graceful.Server) func() {
+func (ac *algernonConfig) generateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
 		mut.Lock()
 		defer mut.Unlock()
@@ -53,7 +40,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 			return
 		}
 
-		if verboseMode {
+		if ac.verboseMode {
 			log.Info("Initiating shutdown")
 		}
 
@@ -64,7 +51,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 
 		completed = true
 
-		if verboseMode {
+		if ac.verboseMode {
 			log.Info("Shutdown complete")
 		}
 
@@ -72,7 +59,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 		if gracefulServer != nil {
 			if gracefulServer.Interrupted {
 				//gracefulServer.Stop(forcedShutdownTimeout)
-				fatalExit(errors.New("Interrupted"))
+				ac.fatalExit(errors.New("Interrupted"))
 			}
 		}
 
@@ -82,7 +69,7 @@ func generateShutdownFunction(gracefulServer *graceful.Server) func() {
 }
 
 // Create a new graceful server configuration
-func newGracefulServer(mux *http.ServeMux, http2support bool, addr string, shutdownTimeout time.Duration) *graceful.Server {
+func (ac *algernonConfig) newGracefulServer(mux *http.ServeMux, http2support bool, addr string) *graceful.Server {
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,
@@ -101,18 +88,18 @@ func newGracefulServer(mux *http.ServeMux, http2support bool, addr string, shutd
 	}
 	gracefulServer := &graceful.Server{
 		Server:  s,
-		Timeout: shutdownTimeout,
+		Timeout: ac.shutdownTimeout,
 	}
 	// Handle ctrl-c
-	gracefulServer.ShutdownInitiated = generateShutdownFunction(gracefulServer) // for investigating gracefulServer.Interrupted
+	gracefulServer.ShutdownInitiated = ac.generateShutdownFunction(gracefulServer) // for investigating gracefulServer.Interrupted
 	return gracefulServer
 }
 
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
-func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool) error {
+func (ac *algernonConfig) serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// If we are not writing internal logs to a file, reduce the verbosity
-	http2.VerboseLogs = (conf.internalLogFilename != os.DevNull)
+	http2.VerboseLogs = (ac.internalLogFilename != os.DevNull)
 
 	// Channel to wait and see if we should just serve regular HTTP instead
 	justServeRegularHTTP := make(chan bool)
@@ -120,66 +107,66 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	// Goroutine that wait for a message to just serve regular HTTP, if needed
 	go func() {
 		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
-		if strings.HasPrefix(conf.serverAddr, ":") {
-			log.Info("Serving HTTP on http://localhost" + conf.serverAddr + "/")
+		if strings.HasPrefix(ac.serverAddr, ":") {
+			log.Info("Serving HTTP on http://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Info("Serving HTTP on http://" + conf.serverAddr + "/")
+			log.Info("Serving HTTP on http://" + ac.serverAddr + "/")
 		}
-		HTTPserver := newGracefulServer(mux, false, conf.serverAddr, conf.shutdownTimeout)
+		HTTPserver := ac.newGracefulServer(mux, false, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			// If we can't serve regular HTTP on port 80, give up
-			fatalExit(err)
+			ac.fatalExit(err)
 		}
 	}()
 
 	// Decide which protocol to listen to
 	switch {
-	case conf.productionMode:
+	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		log.Info("Serving HTTP/2 on https://" + conf.serverHost + "/")
+		log.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
-			HTTPS2server := newGracefulServer(mux, true, conf.serverHost+":443", conf.shutdownTimeout)
+			HTTPS2server := ac.newGracefulServer(mux, true, ac.serverHost+":443")
 			// Start serving. Shut down gracefully at exit.
-			if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
+			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
 				log.Error(err)
 			}
 		}()
-		log.Info("Serving HTTP on http://" + conf.serverHost + "/")
+		log.Info("Serving HTTP on http://" + ac.serverHost + "/")
 		go func() {
-			HTTPserver := newGracefulServer(mux, false, conf.serverHost+":80", conf.shutdownTimeout)
+			HTTPserver := ac.newGracefulServer(mux, false, ac.serverHost+":80")
 			if err := HTTPserver.ListenAndServe(); err != nil {
 				// If we can't serve regular HTTP on port 80, give up
-				fatalExit(err)
+				ac.fatalExit(err)
 			}
 		}()
-	case conf.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
-		if strings.HasPrefix(conf.serverAddr, ":") {
-			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + conf.serverAddr + "/")
+	case ac.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
+		if strings.HasPrefix(ac.serverAddr, ":") {
+			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + conf.serverAddr + "/")
+			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + ac.serverAddr + "/")
 		}
 		go func() {
 			// Listen for HTTP/2 requests
-			HTTP2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
+			HTTP2server := ac.newGracefulServer(mux, true, ac.serverAddr)
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
 				justServeRegularHTTP <- true
 			}
 		}()
-	case !(conf.serveJustHTTP2 || conf.serveJustHTTP):
-		if strings.HasPrefix(conf.serverAddr, ":") {
-			log.Info("Serving HTTP/2 on https://localhost" + conf.serverAddr + "/")
+	case !(ac.serveJustHTTP2 || ac.serveJustHTTP):
+		if strings.HasPrefix(ac.serverAddr, ":") {
+			log.Info("Serving HTTP/2 on https://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Info("Serving HTTP/2 on https://" + conf.serverAddr + "/")
+			log.Info("Serving HTTP/2 on https://" + ac.serverAddr + "/")
 		}
 		// Listen for HTTPS + HTTP/2 requests
-		HTTPS2server := newGracefulServer(mux, true, conf.serverAddr, conf.shutdownTimeout)
+		HTTPS2server := ac.newGracefulServer(mux, true, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		go func() {
-			if err := HTTPS2server.ListenAndServeTLS(conf.serverCert, conf.serverKey); err != nil {
+			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
 				log.Error("Not serving HTTPS: ", err)
 				log.Info("Use the -t flag for serving regular HTTP")
 				// If HTTPS failed (perhaps the key + cert are missing),
@@ -197,10 +184,10 @@ func serve(conf *algernonServerConfig, mux *http.ServeMux, done, ready chan bool
 	ready <- true // Send a "ready" message to the REPL
 
 	// Open the URL, if specified
-	if openURLAfterServing {
+	if ac.openURLAfterServing {
 		// TODO: Better check for HTTP vs HTTPS when selecting the URL to open
 		//       when both are being served.
-		openURL(conf.serverHost, conf.serverAddr, !conf.serveJustHTTP2)
+		ac.openURL(ac.serverHost, ac.serverAddr, !ac.serveJustHTTP2)
 	}
 
 	<-done // Wait for a "done" message from the REPL (or just keep waiting)

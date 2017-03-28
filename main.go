@@ -9,15 +9,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime/pprof"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/pinterface"
 	"github.com/xyproto/unzip"
 	"github.com/yuin/gopher-lua"
 )
@@ -28,62 +24,19 @@ const (
 )
 
 var (
-	// For convenience. Set in the main function.
-	serverHost      string
-	dbName          string
-	refreshDuration time.Duration // for the auto-refresh feature
-	fs              *datablock.FileStat
+	// Struct for reading from the filesystem, with the possibility of caching
+	fs *datablock.FileStat
 )
 
 func main() {
 	var err error
 
-	// Temporary directory that might be used for logging, databases or file extraction
-	serverTempDir, err := ioutil.TempDir("", "algernon")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer os.RemoveAll(serverTempDir)
+	// Initialize the server configuration structure
+	ac := newAlgernonConfig()
 
-	// Set several configuration variables, based on the given flags and arguments
-	serverHost = handleFlags(serverTempDir)
-
-	// Version
-	if showVersion {
-		if !quietMode {
-			fmt.Println(versionString)
-		}
-		os.Exit(0)
-	}
-
-	// CPU profiling
-	if profileCPU != "" {
-		f, errProfile := os.Create(profileCPU)
-		if errProfile != nil {
-			log.Fatal(errProfile)
-		}
-		go func() {
-			log.Info("Profiling CPU usage")
-			pprof.StartCPUProfile(f)
-		}()
-		atShutdown(func() {
-			pprof.StopCPUProfile()
-			log.Info("Done profiling CPU usage")
-		})
-	}
-
-	// Memory profiling at server shutdown
-	if profileMem != "" {
-		atShutdown(func() {
-			f, errProfile := os.Create(profileMem)
-			if errProfile != nil {
-				log.Fatal(errProfile)
-			}
-			defer f.Close()
-			log.Info("Saving heap profile to ", profileMem)
-			pprof.WriteHeapProfile(f)
-		})
-	}
+	// Flags, version string output and profiling
+	ac.init()
+	defer os.RemoveAll(ac.serverTempDir)
 
 	// Request handlers
 	mux := http.NewServeMux()
@@ -91,155 +44,146 @@ func main() {
 	// Read mime data from the system, if available
 	initializeMime()
 
-	// Create a mutex for Pongo2 template rendering
-	pongomutex := &sync.RWMutex{}
-
 	// Log to a file as JSON, if a log file has been specified
-	if serverLogFile != "" {
-		f, errJSONLog := os.OpenFile(serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, defaultPermissions)
+	if ac.serverLogFile != "" {
+		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if errJSONLog != nil {
-			log.Error("Could not log to", serverLogFile)
-			fatalExit(errJSONLog)
+			log.Error("Could not log to", ac.serverLogFile)
+			ac.fatalExit(errJSONLog)
 		}
 		log.SetFormatter(&log.JSONFormatter{})
 		log.SetOutput(f)
-	} else if quietMode {
+	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
 		log.SetOutput(ioutil.Discard)
 	}
 
-	if quietMode {
+	if ac.quietMode {
 		os.Stdout.Close()
 		os.Stderr.Close()
 	}
 
 	// Create a new FileStat struct, with optional caching (for speed).
 	// Clear the cache every N minutes.
-	fs = datablock.NewFileStat(cacheFileStat, defaultStatCacheRefresh)
+	fs = datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
 
 	// Check if the given directory really is a directory
-	if !fs.IsDir(serverDir) {
+	if !fs.IsDir(ac.serverDir) {
 		// Possibly a file
-		filename := serverDir
+		filename := ac.serverDir
 		// Check if the file exists
 		if fs.Exists(filename) {
-			if markdownMode {
+			if ac.markdownMode {
 				// Serve the given Markdown file as a static HTTP server
-				serveStaticFile(filename, defaultWebColonPort, pongomutex)
+				ac.serveStaticFile(filename, ac.defaultWebColonPort)
 				return
 			}
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(filename)) {
 			case ".md", ".markdown":
 				// Serve the given Markdown file as a static HTTP server
-				serveStaticFile(filename, defaultWebColonPort, pongomutex)
+				ac.serveStaticFile(filename, ac.defaultWebColonPort)
 				return
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
-				err := unzip.Extract(filename, serverTempDir)
+				err := unzip.Extract(filename, ac.serverTempDir)
 				if err != nil {
 					log.Fatalln(err)
 				}
 				// Use the directory where the file was extracted as the server directory
-				serverDir = serverTempDir
+				ac.serverDir = ac.serverTempDir
 				// If there is only one directory there, assume it's the
 				// directory of the newly extracted ZIP file.
-				if filenames := getFilenames(serverDir); len(filenames) == 1 {
-					fullPath := filepath.Join(serverDir, filenames[0])
+				if filenames := getFilenames(ac.serverDir); len(filenames) == 1 {
+					fullPath := filepath.Join(ac.serverDir, filenames[0])
 					if fs.IsDir(fullPath) {
 						// Use this as the server directory instead
-						serverDir = fullPath
+						ac.serverDir = fullPath
 					}
 				}
 				// If there are server configuration files in the extracted
 				// directory, register them.
-				for _, filename := range serverConfigurationFilenames {
-					configFilename := filepath.Join(serverDir, filename)
+				for _, filename := range ac.serverConfigurationFilenames {
+					configFilename := filepath.Join(ac.serverDir, filename)
 					if fs.Exists(configFilename) {
-						serverConfigurationFilenames = append(serverConfigurationFilenames, configFilename)
+						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
 					}
 				}
 				// Disregard all configuration files from the current directory
 				// (filenames without a path separator), since we are serving a
 				// ZIP file.
-				for i, filename := range serverConfigurationFilenames {
+				for i, filename := range ac.serverConfigurationFilenames {
 					if strings.Count(filepath.ToSlash(filename), "/") == 0 {
 						// Remove the filename from the slice
-						serverConfigurationFilenames = append(serverConfigurationFilenames[:i], serverConfigurationFilenames[i+1:]...)
+						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames[:i], ac.serverConfigurationFilenames[i+1:]...)
 					}
 				}
 			default:
-				singleFileMode = true
+				ac.singleFileMode = true
 			}
 		} else {
-			fatalExit(errors.New("File does not exist: " + filename))
+			ac.fatalExit(errors.New("File does not exist: " + filename))
 		}
 	}
 
 	// Make a few changes to the defaults if we are serving a single file
-	if singleFileMode {
-		debugMode = true
-		serveJustHTTP = true
+	if ac.singleFileMode {
+		ac.debugMode = true
+		ac.serveJustHTTP = true
 	}
 
 	// Console output
-	if !quietMode && !singleFileMode && !simpleMode {
+	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode {
 		fmt.Println(banner())
 	}
 
 	// Dividing line between the banner and output from any of the configuration scripts
-	if len(serverConfigurationFilenames) > 0 && !quietMode {
+	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
 	// Disable the database backend if the BoltDB filename is /dev/null
-	if boltFilename == "/dev/null" {
-		useNoDatabase = true
+	if ac.boltFilename == "/dev/null" {
+		ac.useNoDatabase = true
 	}
 
-	var perm pinterface.IPermissions // nil by default
-	if !useNoDatabase {
+	if !ac.useNoDatabase {
 		// Connect to a database and retrieve a Permissions struct
-		perm, err = aquirePermissions()
+		ac.perm, err = ac.aquirePermissions()
 		if err != nil {
 			log.Fatalln("Could not find a usable database backend.")
 		}
 	}
 
 	// Lua LState pool
-	luapool := &lStatePool{saved: make([]*lua.LState, 0, 4)}
+	ac.luapool = &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	atShutdown(func() {
-		luapool.Shutdown()
+		ac.luapool.Shutdown()
 	})
 
 	// TODO: save repl history + close luapool + close logs ++ at shutdown
 
-	// Create a cache struct for reading files (contains functions that can
-	// be used for reading files, also when caching is disabled).
-	// The final argument is for compressing with "fast" instead of "best".
-	cache := datablock.NewFileCache(cacheSize, cacheCompression, cacheMaxEntitySize, cacheCompressionSpeed)
-
-	if singleFileMode && filepath.Ext(serverDir) == ".lua" {
-		luaServerFilename = serverDir
-		if luaServerFilename == "index.lua" || luaServerFilename == "data.lua" {
-			log.Warn("Using " + luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
+	if ac.singleFileMode && filepath.Ext(ac.serverDir) == ".lua" {
+		ac.luaServerFilename = ac.serverDir
+		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
+			log.Warn("Using " + ac.luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
 		}
-		serverDir = filepath.Dir(serverDir)
-		singleFileMode = false
+		ac.serverDir = filepath.Dir(ac.serverDir)
+		ac.singleFileMode = false
 	}
 
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
 	var ranConfigurationFilenames []string
-	for _, filename := range serverConfigurationFilenames {
+	for _, filename := range ac.serverConfigurationFilenames {
 		if fs.Exists(filename) {
-			if verboseMode {
+			if ac.verboseMode {
 				fmt.Println("Running configuration file: " + filename)
 			}
-			if errConf := runConfiguration(filename, perm, luapool, cache, mux, false, defaultTheme, pongomutex); errConf != nil {
-				if perm != nil {
+			if errConf := ac.runConfiguration(filename, mux, false); errConf != nil {
+				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
-					fatalExit(errConf)
+					ac.fatalExit(errConf)
 				} else {
 					log.Warn("Not running " + filename + " because the database backend is disabled.")
 				}
@@ -248,47 +192,47 @@ func main() {
 		}
 	}
 	// Only keep the active ones. Used when outputting server information.
-	serverConfigurationFilenames = ranConfigurationFilenames
+	ac.serverConfigurationFilenames = ranConfigurationFilenames
 
 	// Run the standalone Lua server, if specified
-	if luaServerFilename != "" {
+	if ac.luaServerFilename != "" {
 		// Run the Lua server file and set up handlers
-		if verboseMode {
+		if ac.verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := runConfiguration(luaServerFilename, perm, luapool, cache, mux, true, defaultTheme, pongomutex); errLua != nil {
-			log.Error("Error in Lua server script: " + luaServerFilename)
-			fatalExit(errLua)
+		if errLua := ac.runConfiguration(ac.luaServerFilename, mux, true); errLua != nil {
+			log.Error("Error in Lua server script: " + ac.luaServerFilename)
+			ac.fatalExit(errLua)
 		}
 	} else {
 		// Register HTTP handler functions
-		registerHandlers(mux, "/", serverDir, perm, luapool, cache, serverAddDomain, defaultTheme, pongomutex)
+		ac.registerHandlers(mux, "/", ac.serverDir, ac.serverAddDomain)
 	}
 
 	// Set the values that has not been set by flags nor scripts
 	// (and can be set by both)
-	ranServerReadyFunction := finalConfiguration(serverHost)
+	ranServerReadyFunction := ac.finalConfiguration(ac.serverHost)
 
 	// If no configuration files were being ran successfully,
 	// output basic server information.
-	if len(serverConfigurationFilenames) == 0 {
-		if !quietMode {
-			fmt.Println(serverInfo())
+	if len(ac.serverConfigurationFilenames) == 0 {
+		if !ac.quietMode {
+			fmt.Println(ac.Info())
 		}
 		ranServerReadyFunction = true
 	}
 
 	// Dividing line between the banner and output from any of the
 	// configuration scripts. Marks the end of the configuration output.
-	if ranServerReadyFunction && !quietMode {
+	if ranServerReadyFunction && !ac.quietMode {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
 	// Direct internal logging elsewhere
-	internalLogFile, err := os.Open(internalLogFilename)
+	internalLogFile, err := os.Open(ac.internalLogFilename)
 	if err != nil {
 		// Could not open the internalLogFilename filename, try using another filename
-		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, defaultPermissions)
+		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, ac.defaultPermissions)
 		atShutdown(func() {
 			// TODO This one is is special and should be closed after the other shutdown functions.
 			//      Set up a "done" channel instead of sleeping.
@@ -296,7 +240,7 @@ func main() {
 			internalLogFile.Close()
 		})
 		if err != nil {
-			fatalExit(fmt.Errorf("Could not write to %s nor %s.", internalLogFilename, "internal.log"))
+			ac.fatalExit(fmt.Errorf("Could not write to %s nor %s.", ac.internalLogFilename, "internal.log"))
 		}
 	}
 	defer internalLogFile.Close()
@@ -305,19 +249,19 @@ func main() {
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
 	// Can also be used when serving a single file.
-	if autoRefreshMode {
-		refreshDuration, err = time.ParseDuration(eventRefresh)
+	if ac.autoRefreshMode {
+		ac.refreshDuration, err = time.ParseDuration(ac.eventRefresh)
 		if err != nil {
-			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", eventRefresh, defaultEventRefresh))
+			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh))
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
-			refreshDuration, _ = time.ParseDuration(defaultEventRefresh)
+			ac.refreshDuration, _ = time.ParseDuration(ac.defaultEventRefresh)
 		}
-		if autoRefreshDir != "" {
+		if ac.autoRefreshDir != "" {
 			// Only watch the autoRefreshDir, recursively
-			EventServer(eventAddr, defaultEventPath, autoRefreshDir, refreshDuration, "*")
+			ac.EventServer(ac.autoRefreshDir, "*")
 		} else {
 			// Watch everything in the server directory, recursively
-			EventServer(eventAddr, defaultEventPath, serverDir, refreshDuration, "*")
+			ac.EventServer(ac.serverDir, "*")
 		}
 	}
 
@@ -326,33 +270,19 @@ func main() {
 	done := make(chan bool)  // for when the user wish to quit the server
 
 	// The Lua REPL
-	if !serverMode {
+	if !ac.serverMode {
 		// If the REPL uses readline, the SIGWINCH signal is handled there
-		go REPL(perm, luapool, cache, pongomutex, ready, done)
+		go ac.REPL(ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL
 		ignoreTerminalResizeSignal()
 	}
 
-	shutdownTimeout := 10 * time.Second
-
-	conf := &algernonServerConfig{
-		productionMode:      productionMode,
-		serverHost:          serverHost,
-		serverAddr:          serverAddr,
-		serverCert:          serverCert,
-		serverKey:           serverKey,
-		serveJustHTTP:       serveJustHTTP,
-		serveJustHTTP2:      serveJustHTTP2,
-		shutdownTimeout:     shutdownTimeout,
-		internalLogFilename: internalLogFilename,
-	}
-
 	// Run the shutdown functions if graceful does not
-	defer generateShutdownFunction(nil)()
+	defer ac.generateShutdownFunction(nil)()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS
-	if err := serve(conf, mux, done, ready); err != nil {
-		fatalExit(err)
+	if err := ac.serve(mux, done, ready); err != nil {
+		ac.fatalExit(err)
 	}
 }

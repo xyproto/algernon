@@ -60,8 +60,8 @@ func (cms cacheModeSetting) String() string {
 }
 
 // Return true of the given file type (extension) should be cached
-func shouldCache(ext string) bool {
-	switch cacheMode {
+func (ac *algernonConfig) shouldCache(ext string) bool {
+	switch ac.cacheMode {
 	case cacheModeOn:
 		return true
 	case cacheModeProduction, cacheModeSmall:

@@ -8,12 +8,9 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/jpath"
-	"github.com/xyproto/pinterface"
 	"github.com/yuin/gluamapper"
 	"github.com/yuin/gopher-lua"
 )
@@ -316,26 +313,26 @@ func table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{
 }
 
 // Return a *lua.LState object that contains several exposed functions
-func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, L *lua.LState, luapool *lStatePool, flushFunc func(), cache *datablock.FileCache, httpStatus *FutureStatus, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus) {
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
-	exportBasicWeb(w, req, L, filename, flushFunc, httpStatus)
+	ac.exportBasicWeb(w, req, L, filename, flushFunc, httpStatus)
 
 	// Make other basic functions available
 	exportBasicSystemFunctions(L)
 
 	// Functions for rendering markdown or amber
-	exportRenderFunctions(w, req, L)
+	ac.exportRenderFunctions(w, req, L)
 
 	// If there is a database backend
-	if perm != nil {
+	if ac.perm != nil {
 
 		// Retrieve the userstate
-		userstate := perm.UserState()
+		userstate := ac.perm.UserState()
 
 		// Functions for serving files in the same directory as a script
-		exportServeFile(w, req, L, filename, perm, luapool, cache, pongomutex)
+		ac.exportServeFile(w, req, L, filename)
 
 		// Make the functions related to userstate available to the Lua script
 		exportUserstate(w, req, L, userstate)
@@ -353,7 +350,7 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	exportJFile(L, filepath.Dir(filename))
+	ac.exportJFile(L, filepath.Dir(filename))
 	exportJNode(L)
 
 	// Extras
@@ -363,10 +360,10 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 	//exportREPL(L)
 
 	// Plugins
-	exportPluginFunctions(L, nil)
+	ac.exportPluginFunctions(L, nil)
 
 	// Cache
-	exportCacheFunctions(L, cache)
+	ac.exportCacheFunctions(L)
 
 	// File uploads
 	exportUploadedFile(L, w, req, filepath.Dir(filename))
@@ -375,15 +372,15 @@ func exportCommonFunctions(w http.ResponseWriter, req *http.Request, filename st
 // Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // Also returns a header map
-func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pinterface.IPermissions, luapool *lStatePool, flushFunc func(), cache *datablock.FileCache, fust *FutureStatus, pongomutex *sync.RWMutex) error {
+func (ac *algernonConfig) runLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus) error {
 
 	// Retrieve a Lua state
-	L := luapool.Get()
-	defer luapool.Put(L)
+	L := ac.luapool.Get()
+	defer ac.luapool.Put(L)
 
 	// Warn if the connection is closed before the script has finished.
 	// Requires that the requestWriter has CloseNotify.
-	if verboseMode {
+	if ac.verboseMode {
 
 		done := make(chan bool)
 
@@ -420,7 +417,7 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 
 	// Export functions to the Lua state
 	// Flush can be an uninitialized channel, it is handled in the function.
-	exportCommonFunctions(w, req, filename, perm, L, luapool, flushFunc, cache, fust, pongomutex)
+	ac.exportCommonFunctions(w, req, filename, L, flushFunc, fust)
 
 	// Run the script and return the error value.
 	// Logging and/or HTTP response is handled elsewhere.
@@ -430,22 +427,22 @@ func runLua(w http.ResponseWriter, req *http.Request, filename string, perm pint
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // perm can be nil, but then several Lua functions will not be exposed
-func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, mux *http.ServeMux, singleFileMode bool, theme string, pongomutex *sync.RWMutex) error {
+func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, singleFileMode bool) error {
 
 	// Retrieve a Lua state
-	L := luapool.Get()
+	L := ac.luapool.Get()
 
 	// Basic system functions, like log()
 	exportBasicSystemFunctions(L)
 
 	// If there is a database backend
-	if perm != nil {
+	if ac.perm != nil {
 
 		// Retrieve the userstate
-		userstate := perm.UserState()
+		userstate := ac.perm.UserState()
 
 		// Server configuration functions
-		exportServerConfigFunctions(L, perm, filename, luapool, pongomutex)
+		ac.exportServerConfigFunctions(L, filename)
 
 		// Simpleredis data structures (could be used for storing server stats)
 		exportList(L, userstate)
@@ -459,21 +456,21 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	exportJFile(L, filepath.Dir(filename))
+	ac.exportJFile(L, filepath.Dir(filename))
 	exportJNode(L)
 
 	// Extras
 	exportExtras(L)
 
 	// Plugins
-	exportPluginFunctions(L, nil)
+	ac.exportPluginFunctions(L, nil)
 
 	// Cache
-	exportCacheFunctions(L, cache)
+	ac.exportCacheFunctions(L)
 
 	if singleFileMode {
 		// Lua HTTP handlers
-		exportLuaHandlerFunctions(L, filename, perm, luapool, cache, mux, false, nil, theme, pongomutex)
+		ac.exportLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
 	}
 
 	// Run the script
@@ -486,7 +483,7 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
 	}
 
 	// Only put the Lua state back if there were no errors
-	luapool.Put(L)
+	ac.luapool.Put(L)
 
 	return nil
 }
@@ -499,19 +496,19 @@ func runConfiguration(filename string, perm pinterface.IPermissions, luapool *lS
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) (template.FuncMap, error) {
-	pongomutex.Lock()
-	defer pongomutex.Unlock()
+func (ac *algernonConfig) luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string) (template.FuncMap, error) {
+	ac.pongomutex.Lock()
+	defer ac.pongomutex.Unlock()
 
 	// Retrieve a Lua state
-	L := luapool.Get()
-	defer luapool.Put(L)
+	L := ac.luapool.Get()
+	defer ac.luapool.Put(L)
 
 	// Prepare an empty map of functions (and variables)
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	exportCommonFunctions(w, req, filename, perm, L, luapool, nil, cache, nil, pongomutex)
+	ac.exportCommonFunctions(w, req, filename, L, nil, nil)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -563,11 +560,11 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 				funcs[functionName] = func(args ...string) (interface{}, error) {
 
 					// Create a brand new Lua state
-					L2 := luapool.New()
+					L2 := ac.luapool.New()
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					exportCommonFunctions(w, req, filename, perm, L2, luapool, nil, cache, nil, pongomutex)
+					ac.exportCommonFunctions(w, req, filename, L2, nil, nil)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)
@@ -593,14 +590,14 @@ func luaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, fi
 						if tbl, ok := lv.(*lua.LTable); ok {
 							// lv was a Lua Table
 							retval = table2interfacemap(tbl)
-							if debugMode && verboseMode {
+							if ac.debugMode && ac.verboseMode {
 								log.Info(infostring(functionName, args) + " -> (map)")
 							}
 						} else if lv.Type() == lua.LTString {
 							// lv is a Lua String
 							retstr := L2.ToString(1)
 							retval = retstr
-							if debugMode && verboseMode {
+							if ac.debugMode && ac.verboseMode {
 								log.Info(infostring(functionName, args) + " -> \"" + retstr + "\"")
 							}
 						} else {

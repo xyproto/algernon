@@ -172,9 +172,9 @@ func extractKeywords(data []byte, special map[string]string) []byte {
 }
 
 // Fatal exit
-func fatalExit(err error) {
+func (ac *algernonConfig) fatalExit(err error) {
 	// Log to file, if a log file is used
-	if serverLogFile != "" {
+	if ac.serverLogFile != "" {
 		log.Error(err)
 	}
 	// Then switch to stderr and log the message there as well
@@ -186,9 +186,9 @@ func fatalExit(err error) {
 }
 
 // Abrupt exit
-func abruptExit(msg string) {
+func (ac *algernonConfig) abruptExit(msg string) {
 	// Log to file, if a log file is used
-	if serverLogFile != "" {
+	if ac.serverLogFile != "" {
 		log.Info(msg)
 	}
 	// Then switch to stderr and log the message there as well
@@ -201,9 +201,9 @@ func abruptExit(msg string) {
 }
 
 // Quit after a short duration
-func quitSoon(msg string, soon time.Duration) {
+func (ac *algernonConfig) quitSoon(msg string, soon time.Duration) {
 	time.Sleep(soon)
-	abruptExit(msg)
+	ac.abruptExit(msg)
 }
 
 // Convert time.Duration to milliseconds, as a string (without "ms")

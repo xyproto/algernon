@@ -3,13 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/xyproto/recwatch"
 )
@@ -97,7 +98,7 @@ func collectFileChangeEvents(watcher *recwatch.RecursiveWatcher, mut *sync.Mutex
 }
 
 // Create events whenever a file in the server directory changes
-func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration, allowed string) http.HandlerFunc {
+func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration, allowed string, ac *algernonConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream;charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -122,7 +123,7 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 					prevname := ""
 					for _, k := range keys {
 						ev := events[k]
-						if verboseMode {
+						if ac.verboseMode {
 							log.Info("EVENT " + ev.String())
 						}
 						// Avoid sending several events for the same filename
@@ -143,15 +144,14 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 
 // EventServer serves events on a dedicated port.
 // addr is the host address ([host][:port])
-// urlPath is the path to handle (ie /fs)
-// refresh is how often the event buffer should be checked and cleared.
 // The filesystem events are gathered independently of that.
 // Allowed can be "*" or a hostname and sets a header in the SSE stream.
-func EventServer(addr, urlPath, path string, refresh time.Duration, allowed string) {
+func (ac *algernonConfig) EventServer(path, allowed string) {
+
 	// Create a new filesystem watcher
 	rw, err := recwatch.NewRecursiveWatcher(path)
 	if err != nil {
-		fatalExit(err)
+		ac.fatalExit(err)
 	}
 
 	var mut sync.Mutex
@@ -159,10 +159,10 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 
 	// Collect the events for the last n seconds, repeatedly
 	// Runs in the background
-	collectFileChangeEvents(rw, &mut, events, refresh)
+	collectFileChangeEvents(rw, &mut, events, ac.refreshDuration)
 
-	if strings.Contains(addr, ":") {
-		fields := strings.Split(addr, ":")
+	if strings.Contains(ac.eventAddr, ":") {
+		fields := strings.Split(ac.eventAddr, ":")
 		log.Info("Serving filesystem events on port " + fields[1])
 	}
 
@@ -170,9 +170,9 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 	go func() {
 		eventMux := http.NewServeMux()
 		// Fire off events whenever a file in the server directory changes
-		eventMux.HandleFunc(urlPath, genFileChangeEvents(events, &mut, refresh, allowed))
+		eventMux.HandleFunc(ac.defaultEventPath, genFileChangeEvents(events, &mut, ac.refreshDuration, allowed, ac))
 		eventServer := &http.Server{
-			Addr:    addr,
+			Addr:    ac.eventAddr,
 			Handler: eventMux,
 			// ReadTimeout:  3600 * time.Second,
 			// WriteTimeout: 3600 *	 time.Second,
@@ -180,7 +180,7 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 		}
 		if err := eventServer.ListenAndServe(); err != nil {
 			// If we can't serve HTTP on this port, give up
-			fatalExit(err)
+			ac.fatalExit(err)
 		}
 	}()
 }
@@ -189,15 +189,15 @@ func EventServer(addr, urlPath, path string, refresh time.Duration, allowed stri
 // The JavaScript depends on the event server being available.
 // If javascript can not be inserted, return the original data.
 // Does not check if the given data is HTML. Assumes it to be HTML.
-func insertAutoRefresh(req *http.Request, htmldata []byte) []byte {
-	fullHost := eventAddr
+func (ac *algernonConfig) insertAutoRefresh(req *http.Request, htmldata []byte) []byte {
+	fullHost := ac.eventAddr
 	// If the host+port starts with ":", assume it's only the port number
 	if strings.HasPrefix(fullHost, ":") {
 		// Add the hostname in front
-		if serverHost != "" {
-			fullHost = serverHost + eventAddr
+		if ac.serverHost != "" {
+			fullHost = ac.serverHost + ac.eventAddr
 		} else {
-			fullHost = getDomain(req) + eventAddr
+			fullHost = getDomain(req) + ac.eventAddr
 		}
 	}
 	// Wait 70% of an event duration before starting to listen for events
@@ -206,14 +206,14 @@ func insertAutoRefresh(req *http.Request, htmldata []byte) []byte {
     <script>
     if (!!window.EventSource) {
 	  window.setTimeout(function() {
-        var source = new EventSource(window.location.protocol + '//` + fullHost + defaultEventPath + `');
+        var source = new EventSource(window.location.protocol + '//` + fullHost + ac.defaultEventPath + `');
         source.addEventListener('message', function(e) {
           const path = '/' + e.data;
           if (path.indexOf(window.location.pathname) >= 0) {
             location.reload()
           }
         }, false);
-	  }, ` + durationToMS(refreshDuration, multiplier) + `);
+	  }, ` + durationToMS(ac.refreshDuration, multiplier) + `);
 	}
     </script>`
 

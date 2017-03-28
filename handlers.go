@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -15,7 +14,6 @@ import (
 	"github.com/didip/tollbooth"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/mime"
-	"github.com/xyproto/pinterface"
 )
 
 const (
@@ -45,11 +43,11 @@ func clientCanGzip(req *http.Request) bool {
 	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
 }
 
-func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext string, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) pongoHandler(w http.ResponseWriter, req *http.Request, filename, ext string) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
-	pongoblock, err := cache.Read(filename, shouldCache(ext))
+	pongoblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
-		if debugMode {
+		if ac.debugMode {
 			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 		} else {
 			log.Errorf("Unable to read %s: %s", filename, err)
@@ -59,29 +57,29 @@ func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext
 
 	// Make the functions in luaDataFilename available for the Pongo2 template
 
-	luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
-	if fs.Exists(luaDataFilename) {
-		luafilename = luaDataFilename
+	luafilename := filepath.Join(filepath.Dir(filename), ac.defaultLuaDataFilename)
+	if fs.Exists(ac.defaultLuaDataFilename) {
+		luafilename = ac.defaultLuaDataFilename
 	}
 	if fs.Exists(luafilename) {
 		// Extract the function map from luaDataFilenname in a goroutine
 		errChan := make(chan error)
 		funcMapChan := make(chan template.FuncMap)
 
-		go lua2funcMap(w, req, filename, luafilename, ext, perm, luapool, cache, pongomutex, errChan, funcMapChan)
+		go ac.lua2funcMap(w, req, filename, luafilename, ext, errChan, funcMapChan)
 		funcs := <-funcMapChan
 		err = <-errChan
 
 		if err != nil {
-			if debugMode {
+			if ac.debugMode {
 				// Try reading luaDataFilename as well, if possible
-				luablock, luablockErr := cache.Read(luafilename, shouldCache(ext))
+				luablock, luablockErr := ac.cache.Read(luafilename, ac.shouldCache(ext))
 				if luablockErr != nil {
 					// Could not find and/or read luaDataFilename
 					luablock = datablock.EmptyDataBlock
 				}
 				// Use the Lua filename as the title
-				prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+				ac.prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
 			} else {
 				log.Error(err)
 			}
@@ -89,32 +87,44 @@ func pongoHandler(w http.ResponseWriter, req *http.Request, filename string, ext
 		}
 
 		// Render the Pongo2 page, using functions from luaDataFilename, if available
-		pongomutex.Lock()
-		pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
-		pongomutex.Unlock()
+		ac.pongomutex.Lock()
+		ac.pongoPage(w, req, filename, pongoblock.MustData(), funcs)
+		ac.pongomutex.Unlock()
 
 		return
 	}
 
 	// Output a warning if something different from default has been given
-	if !strings.HasSuffix(luafilename, defaultLuaDataFilename) {
+	if !strings.HasSuffix(luafilename, ac.defaultLuaDataFilename) {
 		log.Warn("Could not read ", luafilename)
 	}
 
 	// Use the Pongo2 template without any Lua functions
-	pongomutex.Lock()
+	ac.pongomutex.Lock()
 	funcs := make(template.FuncMap)
-	pongoPage(w, req, filename, pongoblock.MustData(), funcs, cache)
-	pongomutex.Unlock()
+	ac.pongoPage(w, req, filename, pongoblock.MustData(), funcs)
+	ac.pongomutex.Unlock()
 
 	return
 }
 
-// When serving a file. The file must exist. Must be given a full filename.
-func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) readAndLogErrors(w http.ResponseWriter, filename, ext string) (*datablock.DataBlock, error) {
+	byteblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
+	if err != nil {
+		if ac.debugMode {
+			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+		} else {
+			log.Errorf("Unable to read %s: %s", filename, err)
+		}
+	}
+	return byteblock, err
+}
 
-	if quitAfterFirstRequest {
-		go quitSoon("Quit after first request", defaultSoonDuration)
+// When serving a file. The file must exist. Must be given a full filename.
+func (ac *algernonConfig) filePage(w http.ResponseWriter, req *http.Request, filename, dataFilename string) {
+
+	if ac.quitAfterFirstRequest {
+		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
 	// Mimetypes
@@ -124,68 +134,48 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
 	case ".html", ".htm":
-
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 
 		// Read the file (possibly in compressed format, straight from the cache)
-		dataBlock, err := cache.Read(filename, shouldCache(ext))
+		htmlblock, err := ac.readAndLogErrors(w, filename, ext)
 		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Can't open %s: %s", filename, err)
-			} else {
-				log.Errorf("Can't open %s: %s", filename, err)
-			}
+			return
 		}
 
 		// If the auto-refresh feature has been enabled
-		if autoRefreshMode {
+		if ac.autoRefreshMode {
 			// Get the bytes from the datablock
-			htmldata := dataBlock.MustData()
+			htmldata := htmlblock.MustData()
 			// Insert JavaScript for refreshing the page, into the HTML
-			htmldata = insertAutoRefresh(req, htmldata)
+			htmldata = ac.insertAutoRefresh(req, htmldata)
 			// Write the data to the client
 			dataToClient(w, req, filename, htmldata)
 		} else {
 			// Serve the file
-			dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
+			htmlblock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
 		}
 
 		return
 
 	// Markdown pages are handled differently
 	case ".md", ".markdown":
-
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		markdownblock, err := cache.Read(filename, shouldCache(ext))
-		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
-			return
+		if markdownblock, err := ac.readAndLogErrors(w, filename, ext); err == nil {
+			// Render the markdown page
+			ac.markdownPage(w, req, markdownblock.MustData(), filename)
 		}
-
-		// Render the markdown page
-		markdownPage(w, req, markdownblock.MustData(), filename, cache)
-
 		return
 
 	case ".amber", ".amb":
-
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		amberblock, err := cache.Read(filename, shouldCache(ext))
+		amberblock, err := ac.readAndLogErrors(w, filename, ext)
 		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
 			return
 		}
+
 		// Try reading luaDataFilename as well, if possible
-		luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
-		luablock, err := cache.Read(luafilename, shouldCache(ext))
+		luafilename := filepath.Join(filepath.Dir(filename), ac.defaultLuaDataFilename)
+		luablock, err := ac.cache.Read(luafilename, ac.shouldCache(ext))
 		if err != nil {
 			// Could not find and/or read luaDataFilename
 			luablock = datablock.EmptyDataBlock
@@ -196,17 +186,17 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 		if luablock.HasData() {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = luaFunctionMap(w, req, luablock.MustData(), luafilename, perm, luapool, cache, pongomutex)
+			funcs, err = ac.luaFunctionMap(w, req, luablock.MustData(), luafilename)
 			if err != nil {
-				if debugMode {
+				if ac.debugMode {
 					// Use the Lua filename as the title
-					prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+					ac.prettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
 				} else {
 					log.Error(err)
 				}
 				return
 			}
-			if debugMode && verboseMode {
+			if ac.debugMode && ac.verboseMode {
 				s := "These functions from " + luafilename
 				s += " are useable for " + filename + ": "
 				// Create a comma separated list of the available functions
@@ -223,76 +213,44 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 		}
 
 		// Render the Amber page, using functions from luaDataFilename, if available
-		amberPage(w, req, filename, amberblock.MustData(), funcs, cache)
+		ac.amberPage(w, req, filename, amberblock.MustData(), funcs)
 
 		return
 
 	case ".po2", ".pongo2", ".tpl", ".tmpl":
-
-		pongoHandler(w, req, filename, ext, luaDataFilename, perm, luapool, cache, pongomutex)
+		ac.pongoHandler(w, req, filename, ext)
 		return
 
 	case ".gcss":
-
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		gcssblock, err := cache.Read(filename, shouldCache(ext))
-		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
-			return
+		if gcssblock, err := ac.readAndLogErrors(w, filename, ext); err == nil {
+			// Render the GCSS page as CSS
+			ac.gcssPage(w, req, filename, gcssblock.MustData())
 		}
-
-		// Render the GCSS page as CSS
-		gcssPage(w, req, filename, gcssblock.MustData())
-
 		return
 
 	case ".scss":
-
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		scssblock, err := cache.Read(filename, shouldCache(ext))
-		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
-			return
+		if scssblock, err := ac.readAndLogErrors(w, filename, ext); err == nil {
+			// Render the SASS page as CSS
+			ac.scssPage(w, req, filename, scssblock.MustData())
 		}
-
-		// Render the SASS page as CSS
-		scssPage(w, req, filename, scssblock.MustData())
-
 		return
 
 	case ".jsx":
-
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-		jsxblock, err := cache.Read(filename, shouldCache(ext))
-		if err != nil {
-			if debugMode {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-			} else {
-				log.Errorf("Unable to read %s: %s", filename, err)
-			}
-			return
+		if jsxblock, err := ac.readAndLogErrors(w, filename, ext); err == nil {
+			// Render the JSX page as JavaScript
+			ac.jsxPage(w, req, filename, jsxblock.MustData())
 		}
-
-		// Render the JSX page as JavaScript
-		jsxPage(w, req, filename, jsxblock.MustData())
-
 		return
 
 	case ".lua":
-
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 
 		// If debug mode is enabled
-		if debugMode {
+		if ac.debugMode {
 			// Use a buffered ResponseWriter for delaying the output
 			recorder := httptest.NewRecorder()
 			// Create a new struct for keeping an optional http header status
@@ -303,9 +261,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := runLua(recorder, req, filename, perm, luapool, flushFunc, cache, httpStatus, pongomutex); err != nil {
+			if err := ac.runLua(recorder, req, filename, flushFunc, httpStatus); err != nil {
 				errortext := err.Error()
-				fileblock, err := cache.Read(filename, shouldCache(ext))
+				fileblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 				if err != nil {
 					// If the file could not be read, use the error message as the data
 					// Use the error as the file contents when displaying the error message
@@ -313,7 +271,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 					fileblock = datablock.NewDataBlock([]byte(err.Error()), true)
 				}
 				// If there were errors, display an error page
-				prettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
+				ac.prettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
 			} else {
 				// If things went well, check if there is a status code we should write first
 				// (especially for the case of a redirect)
@@ -329,7 +287,7 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := runLua(w, req, filename, perm, luapool, flushFunc, cache, nil, pongomutex); err != nil {
+			if err := ac.runLua(w, req, filename, flushFunc, nil); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
@@ -356,17 +314,10 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 	}
 
 	// Read the file (possibly in compressed format, straight from the cache)
-	dataBlock, err := cache.Read(filename, shouldCache(ext))
-	if err != nil {
-		if debugMode {
-			fmt.Fprintf(w, "Can't open %s: %s", filename, err)
-		} else {
-			log.Errorf("Can't open %s: %s", filename, err)
-		}
+	if dataBlock, err := ac.readAndLogErrors(w, filename, ext); err == nil {
+		// Serve the file
+		dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
 	}
-
-	// Serve the file
-	dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
 
 }
 
@@ -376,9 +327,9 @@ func filePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilenam
 // }
 
 // Server headers that are set before anything else
-func serverHeaders(w http.ResponseWriter) {
-	w.Header().Set("Server", serverHeaderName)
-	if !autoRefreshMode {
+func (ac *algernonConfig) serverHeaders(w http.ResponseWriter) {
+	w.Header().Set("Server", ac.serverHeaderName)
+	if !ac.autoRefreshMode {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
@@ -407,16 +358,16 @@ func getDomain(req *http.Request) string {
 }
 
 // Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pinterface.IPermissions, luapool *lStatePool, cache *datablock.FileCache, addDomain bool, theme string, pongomutex *sync.RWMutex) {
+func (ac *algernonConfig) registerHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
 		// Rejecting requests is handled by the permission system, which
 		// in turn requires a database backend.
-		if perm != nil {
-			if perm.Rejected(w, req) {
+		if ac.perm != nil {
+			if ac.perm.Rejected(w, req) {
 				// Get and call the Permission Denied function
-				perm.DenyFunction()(w, req)
+				ac.perm.DenyFunction()(w, req)
 				// Reject the request by returning
 				return
 			}
@@ -442,31 +393,31 @@ func registerHandlers(mux *http.ServeMux, handlePath, servedir string, perm pint
 		hasfile := fs.Exists(noslash)
 
 		// Set the server headers, if not disabled
-		if !noHeaders {
-			serverHeaders(w)
+		if !ac.noHeaders {
+			ac.serverHeaders(w)
 		}
 
 		// Share the directory or file
 		if hasdir {
-			dirPage(w, req, servedir, dirname, perm, luapool, cache, theme, pongomutex)
+			ac.dirPage(w, req, servedir, dirname, ac.defaultTheme)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			filePage(w, req, noslash, defaultLuaDataFilename, perm, luapool, cache, pongomutex)
+			ac.filePage(w, req, noslash, ac.defaultLuaDataFilename)
 			return
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, noPage(filename, theme))
+		fmt.Fprint(w, noPage(filename, ac.defaultTheme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not
-	if disableRateLimiting {
+	if ac.disableRateLimiting {
 		mux.HandleFunc(handlePath, allRequests)
 	} else {
-		limiter := tollbooth.NewLimiter(limitRequests, time.Second)
+		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
-		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
+		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", ac.defaultTheme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

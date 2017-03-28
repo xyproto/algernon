@@ -3,14 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
 	"io"
 	"net/http"
 	"net/textproto"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/yuin/gopher-lua"
 )
 
 // For dealing with uploaded files in POST method handlers
@@ -157,14 +158,14 @@ func uploadedfileMimeType(L *lua.LState) int {
 
 // Write the uploaded file to the given full filename.
 // Does not overwrite files.
-func (ulf *UploadedFile) write(fullFilename string) error {
+func (ulf *UploadedFile) write(fullFilename string, fperm os.FileMode) error {
 	// Check if the file already exists
 	if _, err := os.Stat(fullFilename); err == nil { // exists
 		log.Error(fullFilename, " already exists")
 		return fmt.Errorf("File exists: " + fullFilename)
 	}
 	// Write the uploaded file
-	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, defaultPermissions)
+	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, fperm)
 	if err != nil {
 		log.Error("Error when creating ", fullFilename)
 		return err
@@ -186,6 +187,11 @@ func uploadedfileSave(L *lua.LState) int {
 	if L.GetTop() == 2 {
 		givenFilename = L.ToString(2) // optional argument
 	}
+	// optional argument, file permissions
+	var givenPermissions os.FileMode = 0660
+	if L.GetTop() == 3 {
+		givenPermissions = os.FileMode(L.ToInt(3))
+	}
 
 	// Use the given filename instead of the default one, if given
 	var filename string
@@ -199,7 +205,7 @@ func uploadedfileSave(L *lua.LState) int {
 	writeFilename := filepath.Join(ulf.scriptdir, filename)
 
 	// Write the file and return true if successful
-	L.Push(lua.LBool(ulf.write(writeFilename) == nil))
+	L.Push(lua.LBool(ulf.write(writeFilename, givenPermissions) == nil))
 	return 1 // number of results
 }
 
@@ -207,6 +213,12 @@ func uploadedfileSave(L *lua.LState) int {
 func uploadedfileSaveIn(L *lua.LState) int {
 	ulf := checkUploadedFile(L)     // arg 1
 	givenDirectory := L.ToString(2) // required argument
+
+	// optional argument, file permissions
+	var givenPermissions os.FileMode = 0660
+	if L.GetTop() == 3 {
+		givenPermissions = os.FileMode(L.ToInt(3))
+	}
 
 	// Get the full path
 	var writeFilename string
@@ -217,7 +229,7 @@ func uploadedfileSaveIn(L *lua.LState) int {
 	}
 
 	// Write the file and return true if successful
-	L.Push(lua.LBool(ulf.write(writeFilename) == nil))
+	L.Push(lua.LBool(ulf.write(writeFilename, givenPermissions) == nil))
 	return 1 // number of results
 }
 
