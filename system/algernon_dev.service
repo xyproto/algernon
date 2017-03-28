@@ -1,9 +1,12 @@
 [Unit]
 Description=Algernon web server
+Requires=redis.service
+After=redis.service
 
 [Service]
-Group=algernon
-ExecStart=/usr/bin/algernon -e -a --domain --server --log /var/log/algernon.log --addr=:80 /srv
+User=algernon
+Group=users
+ExecStart=/usr/bin/algernon -e -a --theme=dark --domain --server --log /var/log/algernon.log /srv/algernon
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
