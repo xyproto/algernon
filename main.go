@@ -48,11 +48,22 @@ func main() {
 	if ac.serverLogFile != "" {
 		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if errJSONLog != nil {
-			log.Error("Could not log to", ac.serverLogFile)
-			ac.fatalExit(errJSONLog)
+			log.Warn("Could not log to", ac.serverLogFile, ":", errJSONLog.Error())
+			// Try another filename
+			ac.serverLogFile = strings.Replace(ac.serverLogFile, ".log", "2.log", 1)
+			f, errJSONLog = os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
+			if errJSONLog != nil {
+				log.Warn("Could not log to", ac.serverLogFile, ":", errJSONLog.Error())
+			}
+			//
 		}
-		log.SetFormatter(&log.JSONFormatter{})
-		log.SetOutput(f)
+		// If we have a log file, log there
+		if errJSONLog == nil {
+			log.SetFormatter(&log.JSONFormatter{})
+			log.SetOutput(f)
+			//} else {
+			//ac.fatalExit(errJSONLog)
+		}
 	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
 		log.SetOutput(ioutil.Discard)
