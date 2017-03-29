@@ -62,7 +62,7 @@ Available flags:
   --mariadb=NAME               Use the given MariaDB or MySQL database name.
   --postgres=DSN               Use the given PostgreSQL host/database.
   --postgresdb=NAME            Use the given PostgreSQL database name.
-  --verbose                    Slightly more verbose logging.
+  -V, --verbose                Slightly more verbose logging.
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + ac.defaultEventRefresh + `").
@@ -110,7 +110,8 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 		// The short version of some flags
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
-		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort, quitAfterFirstRequestShort bool
+		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
+		quitAfterFirstRequestShort, verboseModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -187,6 +188,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
 	flag.BoolVar(&devModeShort, "e", false, "Development mode")
 	flag.BoolVar(&showVersionShort, "v", false, "Version")
+	flag.BoolVar(&verboseModeShort, "V", false, "Verbose")
 	flag.BoolVar(&quietModeShort, "q", false, "Quiet")
 	flag.BoolVar(&cacheFileStatShort, "c", false, "Cache os.Stat")
 	flag.BoolVar(&simpleModeShort, "x", false, "Simple mode")
@@ -210,6 +212,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	ac.simpleMode = ac.simpleMode || simpleModeShort
 	ac.openURLAfterServing = ac.openURLAfterServing || (ac.openExecutable != "")
 	ac.quitAfterFirstRequest = ac.quitAfterFirstRequest || quitAfterFirstRequestShort
+	ac.verboseMode = ac.verboseMode || verboseModeShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {
