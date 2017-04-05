@@ -279,7 +279,7 @@ func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Reques
 	// Given a filename, return the URL path
 	L.SetGlobal("file2url", L.NewFunction(func(L *lua.LState) int {
 		fn := L.ToString(1)
-		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), ac.serverDir)
+		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), ac.serverDirOrFilename)
 		if pathsep != "/" {
 			// For operating systems that use another path separator for files than for URLs
 			targetpath = strings.Replace(targetpath, pathsep, "/", everyInstance)

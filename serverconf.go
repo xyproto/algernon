@@ -63,7 +63,7 @@ type algernonConfig struct {
 	serverConfigurationFilenames []string
 
 	// Configuration that is exposed to the server configuration script(s)
-	serverDir, serverAddr, serverCert, serverKey, serverConfScript, internalLogFilename, serverLogFile string
+	serverDirOrFilename, serverAddr, serverCert, serverKey, serverConfScript, internalLogFilename, serverLogFile string
 
 	// If only HTTP/2 or HTTP
 	serveJustHTTP2, serveJustHTTP bool
@@ -201,7 +201,7 @@ func newAlgernonConfig() *algernonConfig {
 		defaultLuaDataFilename: "data.lua",
 
 		// List of configuration filenames to check
-		serverConfigurationFilenames: []string{"/etc/algernon/serverconf.lua"},
+		serverConfigurationFilenames: []string{"/etc/algernon/serverconf.lua", "/etc/algernon/server.lua"},
 
 		// Compression speed over compactness
 		cacheCompressionSpeed: true,
@@ -306,9 +306,9 @@ func (ac *algernonConfig) Info() string {
 	var buf bytes.Buffer
 
 	if !ac.singleFileMode {
-		buf.WriteString("Server directory:\t" + ac.serverDir + "\n")
+		buf.WriteString("Server directory:\t" + ac.serverDirOrFilename + "\n")
 	} else {
-		buf.WriteString("Filename:\t\t" + ac.serverDir + "\n")
+		buf.WriteString("Filename:\t\t" + ac.serverDirOrFilename + "\n")
 	}
 	if !ac.productionMode {
 		buf.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
@@ -493,7 +493,7 @@ func (ac *algernonConfig) exportServerConfigFunctions(L *lua.LState, filename st
 // Use one of the databases for the permission middleware,
 // assign a name to dbName (used for the status output) and
 // return a Permissions struct.
-func (ac *algernonConfig) aquirePermissions() (pinterface.IPermissions, error) {
+func (ac *algernonConfig) databaseBackend() (pinterface.IPermissions, error) {
 	var (
 		err  error
 		perm pinterface.IPermissions
@@ -585,9 +585,11 @@ func (ac *algernonConfig) aquirePermissions() (pinterface.IPermissions, error) {
 			ac.dbName = "PostgreSQL"
 		}
 	}
-	if ac.dbName == "" {
+	if ac.dbName == "" && ac.redisAddr != "" {
 		// New permissions middleware, using a Redis database
+		log.Info("Testing redis connection")
 		if err := simpleredis.TestConnectionHost(ac.redisAddr); err != nil {
+			log.Info("Redis connection failed")
 			// Only output an error when a Redis host other than the default host+port was specified
 			if ac.redisAddrSpecified {
 				if ac.singleFileMode {
@@ -597,7 +599,9 @@ func (ac *algernonConfig) aquirePermissions() (pinterface.IPermissions, error) {
 				}
 			}
 		} else {
+			log.Info("Redis connection worked out")
 			var err error
+			log.Info("Connecting to Redis...")
 			perm, err = redis.NewWithRedisConf2(ac.redisDBindex, ac.redisAddr)
 			if err != nil {
 				log.Warnf("Could not use Redis as database backend: %s", err)
@@ -640,6 +644,10 @@ func (ac *algernonConfig) aquirePermissions() (pinterface.IPermissions, error) {
 	if ac.dbName == "" {
 		// This may typically happen if Algernon is already running
 		return nil, errors.New("Could not find a usable database backend")
+	}
+
+	if ac.verboseMode {
+		log.Info("Database backend success: " + ac.dbName)
 	}
 
 	return perm, nil

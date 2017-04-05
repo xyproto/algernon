@@ -49,20 +49,10 @@ func main() {
 		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if errJSONLog != nil {
 			log.Warn("Could not log to", ac.serverLogFile, ":", errJSONLog.Error())
-			// Try another filename
-			ac.serverLogFile = strings.Replace(ac.serverLogFile, ".log", "2.log", 1)
-			f, errJSONLog = os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
-			if errJSONLog != nil {
-				log.Warn("Could not log to", ac.serverLogFile, ":", errJSONLog.Error())
-			}
-			//
-		}
-		// If we have a log file, log there
-		if errJSONLog == nil {
+		} else {
+			// Log to the given log filename
 			log.SetFormatter(&log.JSONFormatter{})
 			log.SetOutput(f)
-			//} else {
-			//ac.fatalExit(errJSONLog)
 		}
 	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
@@ -78,44 +68,49 @@ func main() {
 	// Clear the cache every N minutes.
 	fs = datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
 
+	// Output what we are attempting to access and serve
+	if ac.verboseMode {
+		log.Info("Accessing " + ac.serverDirOrFilename)
+	}
+
 	// Check if the given directory really is a directory
-	if !fs.IsDir(ac.serverDir) {
-		// Possibly a file
-		filename := ac.serverDir
+	if !fs.IsDir(ac.serverDirOrFilename) {
+		// It is not a directory
+		serverFile := ac.serverDirOrFilename
 		// Check if the file exists
-		if fs.Exists(filename) {
+		if fs.Exists(serverFile) {
 			if ac.markdownMode {
 				// Serve the given Markdown file as a static HTTP server
-				ac.serveStaticFile(filename, ac.defaultWebColonPort)
+				ac.serveStaticFile(serverFile, ac.defaultWebColonPort)
 				return
 			}
 			// Switch based on the lowercase filename extension
-			switch strings.ToLower(filepath.Ext(filename)) {
+			switch strings.ToLower(filepath.Ext(serverFile)) {
 			case ".md", ".markdown":
 				// Serve the given Markdown file as a static HTTP server
-				ac.serveStaticFile(filename, ac.defaultWebColonPort)
+				ac.serveStaticFile(serverFile, ac.defaultWebColonPort)
 				return
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
-				err := unzip.Extract(filename, ac.serverTempDir)
+				err := unzip.Extract(serverFile, ac.serverTempDir)
 				if err != nil {
 					log.Fatalln(err)
 				}
 				// Use the directory where the file was extracted as the server directory
-				ac.serverDir = ac.serverTempDir
+				ac.serverDirOrFilename = ac.serverTempDir
 				// If there is only one directory there, assume it's the
 				// directory of the newly extracted ZIP file.
-				if filenames := getFilenames(ac.serverDir); len(filenames) == 1 {
-					fullPath := filepath.Join(ac.serverDir, filenames[0])
+				if filenames := getFilenames(ac.serverDirOrFilename); len(filenames) == 1 {
+					fullPath := filepath.Join(ac.serverDirOrFilename, filenames[0])
 					if fs.IsDir(fullPath) {
 						// Use this as the server directory instead
-						ac.serverDir = fullPath
+						ac.serverDirOrFilename = fullPath
 					}
 				}
 				// If there are server configuration files in the extracted
 				// directory, register them.
 				for _, filename := range ac.serverConfigurationFilenames {
-					configFilename := filepath.Join(ac.serverDir, filename)
+					configFilename := filepath.Join(ac.serverDirOrFilename, filename)
 					if fs.Exists(configFilename) {
 						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
 					}
@@ -133,7 +128,7 @@ func main() {
 				ac.singleFileMode = true
 			}
 		} else {
-			ac.fatalExit(errors.New("File does not exist: " + filename))
+			ac.fatalExit(errors.New("File does not exist: " + serverFile))
 		}
 	}
 
@@ -160,7 +155,7 @@ func main() {
 
 	if !ac.useNoDatabase {
 		// Connect to a database and retrieve a Permissions struct
-		ac.perm, err = ac.aquirePermissions()
+		ac.perm, err = ac.databaseBackend()
 		if err != nil {
 			log.Fatalln("Could not find a usable database backend.")
 		}
@@ -169,17 +164,18 @@ func main() {
 	// Lua LState pool
 	ac.luapool = &lStatePool{saved: make([]*lua.LState, 0, 4)}
 	atShutdown(func() {
+		// TODO: Why not defer?
 		ac.luapool.Shutdown()
 	})
 
 	// TODO: save repl history + close luapool + close logs ++ at shutdown
 
-	if ac.singleFileMode && filepath.Ext(ac.serverDir) == ".lua" {
-		ac.luaServerFilename = ac.serverDir
+	if ac.singleFileMode && filepath.Ext(ac.serverDirOrFilename) == ".lua" {
+		ac.luaServerFilename = ac.serverDirOrFilename
 		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
 			log.Warn("Using " + ac.luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
 		}
-		ac.serverDir = filepath.Dir(ac.serverDir)
+		ac.serverDirOrFilename = filepath.Dir(ac.serverDirOrFilename)
 		ac.singleFileMode = false
 	}
 
@@ -189,7 +185,7 @@ func main() {
 	for _, filename := range ac.serverConfigurationFilenames {
 		if fs.Exists(filename) {
 			if ac.verboseMode {
-				fmt.Println("Running configuration file: " + filename)
+				log.Info("Running configuration file: " + filename)
 			}
 			if errConf := ac.runConfiguration(filename, mux, false); errConf != nil {
 				if ac.perm != nil {
@@ -200,6 +196,10 @@ func main() {
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
+		} else {
+			if ac.verboseMode {
+				log.Info("Looking for: " + filename)
+			}
 		}
 	}
 	// Only keep the active ones. Used when outputting server information.
@@ -217,7 +217,7 @@ func main() {
 		}
 	} else {
 		// Register HTTP handler functions
-		ac.registerHandlers(mux, "/", ac.serverDir, ac.serverAddDomain)
+		ac.registerHandlers(mux, "/", ac.serverDirOrFilename, ac.serverAddDomain)
 	}
 
 	// Set the values that has not been set by flags nor scripts
@@ -272,7 +272,7 @@ func main() {
 			ac.EventServer(ac.autoRefreshDir, "*")
 		} else {
 			// Watch everything in the server directory, recursively
-			ac.EventServer(ac.serverDir, "*")
+			ac.EventServer(ac.serverDirOrFilename, "*")
 		}
 	}
 

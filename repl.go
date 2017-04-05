@@ -576,7 +576,7 @@ func (ac *algernonConfig) exportLuaFunctionsForREPL(L *lua.LState, o *term.TextO
 
 	// For handling JSON data
 	exportJSONFunctions(L)
-	ac.exportJFile(L, ac.serverDir)
+	ac.exportJFile(L, ac.serverDirOrFilename)
 	exportJNode(L)
 
 	// Extras

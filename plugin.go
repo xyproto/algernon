@@ -41,7 +41,7 @@ func (ac *algernonConfig) exportPluginFunctions(L *lua.LState, o *term.TextOutpu
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(ac.serverDir, path)
+			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
 		// Connect with the Plugin
@@ -110,7 +110,7 @@ func (ac *algernonConfig) exportPluginFunctions(L *lua.LState, o *term.TextOutpu
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(ac.serverDir, path)
+			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
 		// Connect with the Plugin
@@ -158,7 +158,7 @@ func (ac *algernonConfig) exportPluginFunctions(L *lua.LState, o *term.TextOutpu
 			path = path + ".exe"
 		}
 		if !fs.Exists(path) {
-			path = filepath.Join(ac.serverDir, path)
+			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
 		fn := L.ToString(2)

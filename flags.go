@@ -134,7 +134,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 
 	// Commandline flag configuration
 
-	flag.StringVar(&ac.serverDir, "dir", ".", "Server directory")
+	flag.StringVar(&ac.serverDirOrFilename, "dir", ".", "Server directory")
 	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&ac.serverCert, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&ac.serverKey, "key", "key.pem", "Server key")
@@ -246,7 +246,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	// Change several defaults if production mode is enabled
 	if ac.productionMode {
 		// Use system directories
-		ac.serverDir = "/srv/algernon"
+		ac.serverDirOrFilename = "/srv/algernon"
 		ac.serverCert = "/etc/algernon/cert.pem"
 		ac.serverKey = "/etc/algernon/key.pem"
 		ac.cacheMode = cacheModeProduction
@@ -321,7 +321,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	// For backward compatibility with previous versions of Algernon
 
 	if len(flag.Args()) >= 1 {
-		ac.serverDir = flag.Args()[0]
+		ac.serverDirOrFilename = flag.Args()[0]
 	}
 	if len(flag.Args()) >= 2 {
 		ac.serverAddr = flag.Args()[1]
