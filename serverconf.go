@@ -585,18 +585,16 @@ func (ac *algernonConfig) databaseBackend() (pinterface.IPermissions, error) {
 			ac.dbName = "PostgreSQL"
 		}
 	}
-	if ac.dbName == "" && ac.redisAddr != "" {
+	if ac.dbName == "" && ac.redisAddrSpecified {
 		// New permissions middleware, using a Redis database
 		log.Info("Testing redis connection")
 		if err := simpleredis.TestConnectionHost(ac.redisAddr); err != nil {
 			log.Info("Redis connection failed")
 			// Only output an error when a Redis host other than the default host+port was specified
-			if ac.redisAddrSpecified {
-				if ac.singleFileMode {
-					log.Warnf("Could not use Redis as database backend: %s", err)
-				} else {
-					log.Errorf("Could not use Redis as database backend: %s", err)
-				}
+			if ac.singleFileMode {
+				log.Warnf("Could not use Redis as database backend: %s", err)
+			} else {
+				log.Errorf("Could not use Redis as database backend: %s", err)
 			}
 		} else {
 			log.Info("Redis connection worked out")
