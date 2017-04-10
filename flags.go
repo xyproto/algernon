@@ -44,6 +44,8 @@ Available flags:
   --cachesize=N                Set the total cache size, in bytes.
   --nocache                    Another way to disable the caching.
   --noheaders                  Don't use the security-related HTTP headers.
+  -n, --nobanner               Don't display a colorful banner at start.
+  --ctrld                      Press ctrl-d twice to exit the REPL.
   --rawcache                   Disable cache compression.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   --cert=FILENAME              TLS certificate, if using HTTPS.
@@ -111,7 +113,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
-		quitAfterFirstRequestShort, verboseModeShort bool
+		noBannerShort, quitAfterFirstRequestShort, verboseModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -178,6 +180,8 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.noCache, "nocache", false, "Disable caching")
 	flag.BoolVar(&ac.noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
 	flag.StringVar(&ac.defaultTheme, "theme", "gray", "Theme for Markdown and directory listings")
+	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
+	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -195,6 +199,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.openURLAfterServing, "o", false, "Open URL after serving")
 	flag.BoolVar(&quitAfterFirstRequestShort, "z", false, "Quit after the first request")
 	flag.BoolVar(&ac.markdownMode, "m", false, "Markdown mode")
+	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
 
 	flag.Parse()
 
@@ -213,6 +218,7 @@ func (ac *algernonConfig) handleFlags(serverTempDir string) {
 	ac.openURLAfterServing = ac.openURLAfterServing || (ac.openExecutable != "")
 	ac.quitAfterFirstRequest = ac.quitAfterFirstRequest || quitAfterFirstRequestShort
 	ac.verboseMode = ac.verboseMode || verboseModeShort
+	ac.noBanner = ac.noBanner || noBannerShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {

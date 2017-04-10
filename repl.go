@@ -699,12 +699,17 @@ func (ac *algernonConfig) REPL(ready, done chan bool) error {
 		}
 
 		if EOF {
-			switch EOFcount {
-			case 0:
-				o.Err("Press ctrl-d again to exit.")
-				EOFcount++
-				continue
-			default:
+			if ac.ctrldTwice {
+				switch EOFcount {
+				case 0:
+					o.Err("Press ctrl-d again to exit.")
+					EOFcount++
+					continue
+				default:
+					done <- true
+					return nil
+				}
+			} else {
 				done <- true
 				return nil
 			}

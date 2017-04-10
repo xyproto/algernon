@@ -427,7 +427,15 @@ func (ac *algernonConfig) runLua(w http.ResponseWriter, req *http.Request, filen
 // Run a Lua file as a configuration script. Also has access to the userstate and permissions.
 // Returns an error if there was a problem with running the lua script, otherwise nil.
 // perm can be nil, but then several Lua functions will not be exposed
-func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, singleFileMode bool) error {
+//
+// The idea is not to change the Lua struct or the luapool, but to set the configuration variables
+// with the given Lua configuration script.
+func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux) error {
+
+	//log.Info("runConfiguration(" + filename + ")")
+	//b2s := map[bool]string{true: "True", false: "False"}
+	//log.Info("ac.perm is nil? ", b2s[ac.perm == nil])
+	//log.Info("singleFileMode? ", b2s[singleFileMode])
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -468,7 +476,7 @@ func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, 
 	// Cache
 	ac.exportCacheFunctions(L)
 
-	if singleFileMode {
+	if ac.singleFileMode {
 		// Lua HTTP handlers
 		ac.exportLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
 	}

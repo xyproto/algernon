@@ -139,7 +139,8 @@ func main() {
 	}
 
 	// Console output
-	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode {
+	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
+		// Output a colorful ansi logo if a proper terminal is available
 		fmt.Println(banner())
 	}
 
@@ -176,6 +177,7 @@ func main() {
 			log.Warn("Using " + ac.luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
 		}
 		ac.serverDirOrFilename = filepath.Dir(ac.serverDirOrFilename)
+		// Make it possible to read other files from the Lua script
 		ac.singleFileMode = false
 	}
 
@@ -187,7 +189,7 @@ func main() {
 			if ac.verboseMode {
 				log.Info("Running configuration file: " + filename)
 			}
-			if errConf := ac.runConfiguration(filename, mux, false); errConf != nil {
+			if errConf := ac.runConfiguration(filename, mux); errConf != nil {
 				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					ac.fatalExit(errConf)
@@ -211,7 +213,7 @@ func main() {
 		if ac.verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := ac.runConfiguration(ac.luaServerFilename, mux, true); errLua != nil {
+		if errLua := ac.runConfiguration(ac.luaServerFilename, mux); errLua != nil {
 			log.Error("Error in Lua server script: " + ac.luaServerFilename)
 			ac.fatalExit(errLua)
 		}

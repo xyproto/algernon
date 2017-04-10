@@ -119,6 +119,7 @@ type algernonConfig struct {
 
 	// Output
 	quietMode bool
+	noBanner  bool
 
 	// If a single Lua file is provided, or Server() is used.
 	luaServerFilename string
@@ -160,17 +161,19 @@ type algernonConfig struct {
 	// Theme for Markdown and error pages
 	defaultTheme string
 
-	perm pinterface.IPermissions
-
-	luapool *lStatePool
-
-	cache *datablock.FileCache
-
 	// Workaround for rendering Pongo2 pages without concurrency issues
 	pongomutex *sync.RWMutex
 
 	// Temporary directory
 	serverTempDir string
+
+	// REPL
+	ctrldTwice bool
+
+	// State and caching
+	perm    pinterface.IPermissions
+	luapool *lStatePool
+	cache   *datablock.FileCache
 }
 
 func newAlgernonConfig() *algernonConfig {
