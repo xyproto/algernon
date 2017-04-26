@@ -92,9 +92,8 @@ func main() {
 				return
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
-				err := unzip.Extract(serverFile, ac.serverTempDir)
-				if err != nil {
-					log.Fatalln(err)
+				if extractErr := unzip.Extract(serverFile, ac.serverTempDir); extractErr != nil {
+					log.Fatalln(extractErr)
 				}
 				// Use the directory where the file was extracted as the server directory
 				ac.serverDirOrFilename = ac.serverTempDir
@@ -149,8 +148,8 @@ func main() {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
-	// Disable the database backend if the BoltDB filename is /dev/null
-	if ac.boltFilename == "/dev/null" {
+	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
+	if ac.boltFilename == os.DevNull {
 		ac.useNoDatabase = true
 	}
 
@@ -189,7 +188,7 @@ func main() {
 			if ac.verboseMode {
 				log.Info("Running configuration file: " + filename)
 			}
-			if errConf := ac.runConfiguration(filename, mux); errConf != nil {
+			if errConf := ac.runConfiguration(filename, mux, true); errConf != nil {
 				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					ac.fatalExit(errConf)
@@ -213,7 +212,7 @@ func main() {
 		if ac.verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := ac.runConfiguration(ac.luaServerFilename, mux); errLua != nil {
+		if errLua := ac.runConfiguration(ac.luaServerFilename, mux, true); errLua != nil {
 			log.Error("Error in Lua server script: " + ac.luaServerFilename)
 			ac.fatalExit(errLua)
 		}
@@ -253,7 +252,7 @@ func main() {
 			internalLogFile.Close()
 		})
 		if err != nil {
-			ac.fatalExit(fmt.Errorf("Could not write to %s nor %s.", ac.internalLogFilename, "internal.log"))
+			ac.fatalExit(fmt.Errorf("Error: could not write to %s nor %s", ac.internalLogFilename, "internal.log"))
 		}
 	}
 	defer internalLogFile.Close()

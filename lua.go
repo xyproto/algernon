@@ -430,7 +430,9 @@ func (ac *algernonConfig) runLua(w http.ResponseWriter, req *http.Request, filen
 //
 // The idea is not to change the Lua struct or the luapool, but to set the configuration variables
 // with the given Lua configuration script.
-func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux) error {
+//
+// luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
+func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, luaHandler bool) error {
 
 	//log.Info("runConfiguration(" + filename + ")")
 	//b2s := map[bool]string{true: "True", false: "False"}
@@ -476,7 +478,7 @@ func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux) 
 	// Cache
 	ac.exportCacheFunctions(L)
 
-	if ac.singleFileMode {
+	if luaHandler {
 		// Lua HTTP handlers
 		ac.exportLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
 	}
