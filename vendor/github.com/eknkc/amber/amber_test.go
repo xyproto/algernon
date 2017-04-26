@@ -85,6 +85,51 @@ func Test_Mixin_NameWithDashes(t *testing.T) {
 	}
 }
 
+func Test_Mixin_Unknown(t *testing.T) {
+	_, err := run(`
+		mixin foo($a)
+			p #{$a}
+
+		+bar(1)`, nil)
+
+	expected := `unknown mixin "bar"`
+	if err == nil {
+		t.Fatalf(`Expected {%s} error.`, expected)
+	} else if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
+	}
+}
+
+func Test_Mixin_NotEnoughArguments(t *testing.T) {
+	_, err := run(`
+		mixin foo($a)
+			p #{$a}
+
+		+foo()`, nil)
+
+	expected := `not enough arguments in call to mixin "foo" (have: 0, want: 1)`
+	if err == nil {
+		t.Fatalf(`Expected {%s} error.`, expected)
+	} else if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
+	}
+}
+
+func Test_Mixin_TooManyArguments(t *testing.T) {
+	_, err := run(`
+		mixin foo($a)
+			p #{$a}
+
+		+foo("a", "b")`, nil)
+
+	expected := `too many arguments in call to mixin "foo" (have: 2, want: 1)`
+	if err == nil {
+		t.Fatalf(`Expected {%s} error.`, expected)
+	} else if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
+	}
+}
+
 func Test_ClassName(t *testing.T) {
 	res, err := run(`div.test
 						p.test1.test2

@@ -5,13 +5,17 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/garyburd/redigo/redis"
 )
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.0
+	Version = 2.1
+
+	// The default [url]:port that Redis is running at
+	defaultRedisServer = ":6379"
 )
 
 // Common for each of the redis datastructures used here
@@ -31,12 +35,13 @@ type (
 	KeyValue redisDatastructure
 )
 
-const (
-	// The default [url]:port that Redis is running at
-	defaultRedisServer = ":6379"
-)
-
 var (
+	// Timeout settings for new connections
+	connectTimeout = 7 * time.Second
+	readTimeout    = 7 * time.Second
+	writeTimeout   = 7 * time.Second
+	idleTimeout    = 240 * time.Second
+
 	// How many connections should stay ready for requests, at a maximum?
 	// When an idle connection is used, new idle connections are created.
 	maxIdleConnections = 3
@@ -57,7 +62,14 @@ func newRedisConnectionTo(hostColonPort string) (redis.Conn, error) {
 		hostColonPort = theRest
 	}
 	hostColonPort = strings.TrimSpace(hostColonPort)
-	return redis.Dial("tcp", hostColonPort)
+	c, err := redis.Dial("tcp", hostColonPort, redis.DialConnectTimeout(connectTimeout), redis.DialReadTimeout(readTimeout), redis.DialWriteTimeout(writeTimeout))
+	if err != nil {
+		if c != nil {
+			c.Close()
+		}
+		return nil, err
+	}
+	return c, nil
 }
 
 // Get a string from a list of results at a given position
@@ -75,10 +87,10 @@ func TestConnection() (err error) {
 func TestConnectionHost(hostColonPort string) (err error) {
 	// Connect to the given host:port
 	conn, err := newRedisConnectionTo(hostColonPort)
-	if conn != nil {
-		conn.Close()
-	}
 	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
 		if r := recover(); r != nil {
 			err = errors.New("Could not connect to redis server: " + hostColonPort)
 		}
@@ -91,7 +103,11 @@ func TestConnectionHost(hostColonPort string) (err error) {
 // Create a new connection pool
 func NewConnectionPool() *ConnectionPool {
 	// The second argument is the maximum number of idle connections
-	redisPool := redis.NewPool(newRedisConnection, maxIdleConnections)
+	redisPool := &redis.Pool{
+		MaxIdle:     maxIdleConnections,
+		IdleTimeout: idleTimeout,
+		Dial:        newRedisConnection,
+	}
 	pool := ConnectionPool(*redisPool)
 	return &pool
 }
@@ -110,9 +126,12 @@ func twoFields(s, delim string) (string, string, bool) {
 // A password may be supplied as well, on the form "password@host:port".
 func NewConnectionPoolHost(hostColonPort string) *ConnectionPool {
 	// Create a redis Pool
-	redisPool := redis.NewPool(
+	redisPool := &redis.Pool{
+		// Maximum number of idle connections to the redis database
+		MaxIdle:     maxIdleConnections,
+		IdleTimeout: idleTimeout,
 		// Anonymous function for calling new RedisConnectionTo with the host:port
-		func() (redis.Conn, error) {
+		Dial: func() (redis.Conn, error) {
 			conn, err := newRedisConnectionTo(hostColonPort)
 			if err != nil {
 				return nil, err
@@ -128,8 +147,7 @@ func NewConnectionPoolHost(hostColonPort string) *ConnectionPool {
 			}
 			return conn, err
 		},
-		// Maximum number of idle connections to the redis database
-		maxIdleConnections)
+	}
 	pool := ConnectionPool(*redisPool)
 	return &pool
 }
@@ -569,4 +587,46 @@ func hasKey(pool *ConnectionPool, wildcard string, dbindex int) (bool, error) {
 		return false, err
 	}
 	return len(result) > 0, nil
+}
+
+// --- Related to setting and retrieving timeout values
+
+// SetConnectTimeout sets the connect timeout for new connections
+func SetConnectTimeout(t time.Duration) {
+	connectTimeout = t
+}
+
+// SetReadTimeout sets the read timeout for new connections
+func SetReadTimeout(t time.Duration) {
+	readTimeout = t
+}
+
+// SetWriteTimeout sets the write timeout for new connections
+func SetWriteTimeout(t time.Duration) {
+	writeTimeout = t
+}
+
+// SetIdleTimeout sets the idle timeout for new connections
+func SetIdleTimeout(t time.Duration) {
+	idleTimeout = t
+}
+
+// ConnectTimeout returns the current connect timeout for new connections
+func ConnectTimeout() time.Duration {
+	return connectTimeout
+}
+
+// ReadTimeout returns the current read timeout for new connections
+func ReadTimeout() time.Duration {
+	return readTimeout
+}
+
+// WriteTimeout returns the current write timeout for new connections
+func WriteTimeout() time.Duration {
+	return writeTimeout
+}
+
+// IdleTimeout returns the current idle timeout for new connections
+func IdleTimeout() time.Duration {
+	return idleTimeout
 }

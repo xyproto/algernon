@@ -45,9 +45,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-    if err != nil {
-        log.Fatalln(err)
-    }
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -148,9 +148,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-    if err != nil {
-        log.Fatalln(err)
-    }
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -245,7 +245,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-    "log"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xyproto/permissions2"
@@ -256,9 +256,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-    if err != nil {
-        log.Fatalln(err)
-    }
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -361,7 +361,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-    "log"
+	"log"
 
 	"github.com/xyproto/permissions2"
 	"github.com/zenazn/goji"
@@ -370,9 +370,9 @@ import (
 func main() {
 	// New permissions middleware
 	perm, err := permissions.New2()
-    if err != nil {
-        log.Fatalln(err)
-    }
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -510,9 +510,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-    if err != nil {
-        log.Fatalln(err)
-    }
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -616,12 +616,6 @@ Password hashing
 * For backwards compatibility, old password hashes with the length of a sha256 hash will be checked with sha256. To disable this behavior, and only ever use bcrypt, add this line: `userstate.SetPasswordAlgo("bcrypt")`
 
 
-Passing userstate to functions
--------------------------------
-
-One way of passing a userstate to a function is to use the [pinterface](https://github.com/xyproto/pinterface) package, like in [this source file](https://github.com/xyproto/algernon/blob/master/luahandler.go) (using `perm pinterface.IPermissions` as the argument). Another method is to use a closure, as in the examples above.
-
-
 Coding style
 ------------
 
@@ -648,16 +642,22 @@ username := "bob"
 propertyName := "clever"
 propertyValue, err := userstate.Users().Get(username, propertyName)
 if err != nil {
-    log.Print(err)
-    return err
+	log.Print(err)
+	return err
 }
 fmt.Printf("%s is %s: %s\n", username, propertyName, propertyValue)
 ```
+
+Passing userstate between functions, files and to other Go packages
+-------------------------------------------------------------------
+
+Using the `*pinterface.IUserState` type (from the [pinterface](https://github.com/xyproto/pinterface) package) makes it possible to pass UserState structs between functions, also in other packages. By using this interface, it is possible to seamlessly change the database backend from, for instance, Redis ([permissions2](https://github.com/xyproto/permissions2)) to BoltDB ([permissionbolt](https://github.com/xyproto/permissionbolt)).
+
 
 General information
 -------------------
 
 * Version: 2.2
 * License: MIT
-* Alexander F Rødseth
+* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
 

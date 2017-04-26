@@ -13,6 +13,7 @@ It offers slightly better compression at lower compression settings, and up to 3
 [![Sourcegraph Badge](https://sourcegraph.com/github.com/klauspost/compress/-/badge.svg)](https://sourcegraph.com/github.com/klauspost/compress?badge)
 
 # changelog
+* Apr 02, 2017: Change back to official crc32, since changes were merged in Go 1.7.
 * Jan 14, 2017: Reduce stack pressure due to array copies. See [Issue #18625](https://github.com/golang/go/issues/18625).
 * Oct 25, 2016: Level 2-4 have been rewritten and now offers significantly better performance than before.
 * Oct 20, 2016: Port zlib changes from Go 1.7 to fix zlib writer issue. Please update.
@@ -51,7 +52,7 @@ The packages are drop-in replacements for standard libraries. Simply replace the
 | `compress/gzip`    | `github.com/klauspost/compress/gzip`    |
 | `compress/zlib`    | `github.com/klauspost/compress/zlib`    |
 | `archive/zip`      | `github.com/klauspost/compress/zip`     |
-| `compress/deflate` | `github.com/klauspost/compress/deflate` |
+| `compress/flate`   | `github.com/klauspost/compress/flate`   |
 
 You may also be interested in [pgzip](https://github.com/klauspost/pgzip), which is a drop in replacement for gzip, which support multithreaded compression on big files and the optimized [crc32](https://github.com/klauspost/crc32) package used by these packages.
 

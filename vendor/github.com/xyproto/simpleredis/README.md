@@ -83,6 +83,11 @@ Testing
 Redis must be up and running locally for the `go test` tests to work.
 
 
+Timeout issues
+--------------
+
+If there are timeout issues when connecting to Redis, try consulting the Redis latency doctor on the server by running `redis-cli` and then `latency doctor`.
+
 Version, license and author
 ---------------------------
 
