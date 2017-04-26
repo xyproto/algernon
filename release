@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# Create release tarballs/zip for 64-bit linux, BSD and Plan9 + 64-bit ARM + raspberry pi 2/3 + Windows
+#
+name=algernon
+version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
+echo 'Compiling...'
+export GOARCH=amd64
+echo '* Linux'
+GOOS=linux go build -o $name.linux
+echo '* macOS'
+GOOS=darwin go build -o $name.macos
+echo '* FreeBSD'
+GOOS=freebsd go build -o $name.freebsd
+echo '* NetBSD'
+GOOS=netbsd go build -o $name.netbsd
+echo '* Dragonfly'
+GOOS=dragonfly go build -o $name.dragonfly
+echo '* OpenBSD'
+GOOS=openbsd go build -o $name.openbsd
+echo '* Windows'
+GOOS=windows go build -o $name.exe
+echo '* Linux ARM64'
+GOOS=linux GOARCH=arm64 go build -o $name.linux_arm64
+echo '* RPI 2/3'
+GOOS=linux GOARCH=arm GOARM=6 go build -o $name.rpi
+
+# Currently does not build for plan9 because of the fsnotify package
+#echo '* Plan9'
+#GOOS=plan9 go build -o $name.plan9
+
+# Compress the Windows release
+echo "Compressing $name-$version.zip"
+mkdir "$name-$version"
+cp $name.exe LICENSE "$name-$version/"
+zip -q -r "$name-$version.zip" "$name-$version/"
+rm -r "$name-$version"
+rm $name.exe
+
+# Compress the other tarballs
+for p in linux macos plan9 freebsd netbsd dragonfly openbsd linux_arm64 rpi; do
+  echo "Compressing $name-$version.$p.tar.xz"
+  mkdir "$name-$version-$p"
+  cp $name.1 $name.$p LICENSE "$name-$version-$p/"
+  gzip "$name-$version-$p/$name.1"
+  tar Jcf "$name-$version.$p.tar.xz" "$name-$version-$p/"
+  rm -r "$name-$version-$p"
+  rm $name.$p
+done
