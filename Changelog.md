@@ -1,5 +1,21 @@
 # Changelog
 
+Changes from 1.4 to 1.4.1
+=========================
+
+* Updates to the Markdown styling: tables, colors and &lt;code&gt; tags
+* Split out file caching to a separate package: [datablock](https://github.com/xyproto/datablock)
+* Add an [example](https://github.com/xyproto/algernon/tree/master/samples/structure) for structuring a web site.
+* Add a Lua `preload()` function, for caching files before they are needed.
+* Let the Lua `render()` and ` serve()` functions take an optional filename.
+* Fallback for the log filename.
+* Add `-V` flag for "verbose".
+* Add `--ctrld` flag for having to press `ctrl-d` twice to exit the REPL.
+* Use BoltDB by default instead of Redis.
+* Add script for testing functionality (HTTP server + curl) that is ran by the CI system.
+* Fix issue when running some `.alg` files.
+* Refactoring.
+
 Changes from 1.3.2 to 1.4
 =========================
 

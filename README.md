@@ -925,7 +925,7 @@ Releases
 Requirements
 ------------
 
-* go >= 1.5
+* go >= 1.7
 
 Other resources
 ---------------
@@ -936,6 +936,6 @@ Other resources
 General information
 -------------------
 
-* Version: 1.4
+* Version: 1.4.1
 * License: MIT
-* Alexander F Rødseth <xyproto@archlinux.org>
+* Alexander F Rødseth &ltxyproto@archlinux.org&gt
