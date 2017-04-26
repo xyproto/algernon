@@ -339,7 +339,7 @@ func (ac *algernonConfig) serverHeaders(w http.ResponseWriter) {
 
 // When a file is not found
 func noPage(filename, theme string) string {
-	return easyPage("Not found", "File not found: "+filename, theme)
+	return messagePage("Not found", "File not found: "+filename, theme)
 }
 
 func initializeMime() {
@@ -417,7 +417,7 @@ func (ac *algernonConfig) registerHandlers(mux *http.ServeMux, handlePath, serve
 	} else {
 		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
-		limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", ac.defaultTheme)
+		limiter.Message = messagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", ac.defaultTheme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

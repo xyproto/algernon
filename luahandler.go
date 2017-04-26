@@ -18,24 +18,23 @@ func (ac *algernonConfig) exportLuaHandlerFunctions(L *lua.LState, filename stri
 	luahandlermutex := &sync.RWMutex{}
 
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
+
 		handlePath := L.ToString(1)
 		handleFunc := L.ToFunction(2)
 
-		// TODO: Set up a channel and function for retrieving a lua "handleFunc" and running it, using the common luapool as needed
+		// TODO: Set up a channel and function for retrieving a lua "handleFunc" and running it,
+		//       using the common luapool as needed
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
 
-			L2 := ac.luapool.Get()
-			defer ac.luapool.Put(L2)
-
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
 			luahandlermutex.Lock()
-			ac.exportCommonFunctions(w, req, filename, L2, nil, httpStatus)
+			ac.exportCommonFunctions(w, req, filename, L, nil, httpStatus)
 			luahandlermutex.Unlock()
 
 			// Then run the given Lua function
-			L2.Push(handleFunc)
-			if err := L2.PCall(0, lua.MultRet, nil); err != nil {
+			L.Push(handleFunc)
+			if err := L.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
 				log.Error("Handler for "+handlePath+" failed:", err)
 			}
@@ -47,7 +46,7 @@ func (ac *algernonConfig) exportLuaHandlerFunctions(L *lua.LState, filename stri
 		} else {
 			limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 			limiter.MessageContentType = "text/html; charset=utf-8"
-			limiter.Message = easyPage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
+			limiter.Message = messagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 			mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, wrappedHandleFunc))
 		}
 

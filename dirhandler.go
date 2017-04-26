@@ -31,7 +31,7 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 		urlpath := fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(easyLink(filename, urlpath, fs.IsDir(fullFilename)))
+		buf.WriteString(htmlLink(filename, urlpath, fs.IsDir(fullFilename)))
 	}
 	title := dirname
 	// Strip the leading "./"
@@ -51,9 +51,9 @@ func directoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname
 
 	var htmldata []byte
 	if buf.Len() > 0 {
-		htmldata = []byte(easyPage(title, buf.String(), theme))
+		htmldata = []byte(messagePage(title, buf.String(), theme))
 	} else {
-		htmldata = []byte(easyPage(title, "Empty directory", theme))
+		htmldata = []byte(messagePage(title, "Empty directory", theme))
 	}
 
 	// If the auto-refresh feature has been enabled

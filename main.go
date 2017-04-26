@@ -188,7 +188,8 @@ func main() {
 			if ac.verboseMode {
 				log.Info("Running configuration file: " + filename)
 			}
-			if errConf := ac.runConfiguration(filename, mux, true); errConf != nil {
+			withHandlerFunctions := true
+			if errConf := ac.runConfiguration(filename, mux, withHandlerFunctions); errConf != nil {
 				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					ac.fatalExit(errConf)
@@ -212,7 +213,8 @@ func main() {
 		if ac.verboseMode {
 			fmt.Println("Running Lua Server File")
 		}
-		if errLua := ac.runConfiguration(ac.luaServerFilename, mux, true); errLua != nil {
+		withHandlerFunctions := true
+		if errLua := ac.runConfiguration(ac.luaServerFilename, mux, withHandlerFunctions); errLua != nil {
 			log.Error("Error in Lua server script: " + ac.luaServerFilename)
 			ac.fatalExit(errLua)
 		}

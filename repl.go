@@ -689,13 +689,6 @@ func (ac *algernonConfig) REPL(ready, done chan bool) error {
 				log.Error("Error reading line(" + err.Error() + ").")
 				continue
 			}
-		} else {
-			//addHistory(line)
-			// Save the REPL history at every line.
-			// This proved to be safer than only saving the history at shutdown
-			// (due to how ctrl-c was handled on some systems)
-			// and it's hard to imagine performance issues with this.
-			//saveHistory(historyFilename)
 		}
 
 		if EOF {

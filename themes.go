@@ -31,12 +31,12 @@ var (
 )
 
 // Easy way to output a HTML page
-func easyPage(title, body, theme string) string {
+func messagePage(title, body, theme string) string {
 	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, "", builtinThemes[theme], title, body)
 }
 
 // Easy way to build links to directories
-func easyLink(text, url string, isDirectory bool) string {
+func htmlLink(text, url string, isDirectory bool) string {
 	// Add a final slash, if needed
 	if isDirectory {
 		text += "/"

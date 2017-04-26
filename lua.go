@@ -345,7 +345,6 @@ func (ac *algernonConfig) exportCommonFunctions(w http.ResponseWriter, req *http
 
 		// For saving and loading Lua functions
 		exportCodeLibrary(L, userstate)
-
 	}
 
 	// For handling JSON data
@@ -432,12 +431,7 @@ func (ac *algernonConfig) runLua(w http.ResponseWriter, req *http.Request, filen
 // with the given Lua configuration script.
 //
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
-func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, luaHandler bool) error {
-
-	//log.Info("runConfiguration(" + filename + ")")
-	//b2s := map[bool]string{true: "True", false: "False"}
-	//log.Info("ac.perm is nil? ", b2s[ac.perm == nil])
-	//log.Info("singleFileMode? ", b2s[singleFileMode])
+func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -478,7 +472,7 @@ func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, 
 	// Cache
 	ac.exportCacheFunctions(L)
 
-	if luaHandler {
+	if withHandlerFunctions {
 		// Lua HTTP handlers
 		ac.exportLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
 	}
