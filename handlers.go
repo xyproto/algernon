@@ -104,8 +104,6 @@ func (ac *algernonConfig) pongoHandler(w http.ResponseWriter, req *http.Request,
 	funcs := make(template.FuncMap)
 	ac.pongoPage(w, req, filename, pongoblock.MustData(), funcs)
 	ac.pongomutex.Unlock()
-
-	return
 }
 
 func (ac *algernonConfig) readAndLogErrors(w http.ResponseWriter, filename, ext string) (*datablock.DataBlock, error) {

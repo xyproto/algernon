@@ -388,7 +388,6 @@ func (ac *algernonConfig) pongoPage(w http.ResponseWriter, req *http.Request, fi
 				log.Errorf("Could not execute Pongo2 template:\n%s", errmsg)
 			}
 		}
-		return
 	}()
 
 	// Render the Pongo2 template to the buffer
