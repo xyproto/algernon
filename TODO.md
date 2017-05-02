@@ -2,21 +2,25 @@
 
 Priority 1
 ----------
-- [ ] Fix the issue with Lua functions defined in Lua.
-- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go)
+- [ ] Introduce a separate package for dealing with Lua pools, Lua states and
+      adding custom functios to some Lua states. All without using mutexes.
+- [ ] Add support for [Ghost](https://ghost.org) themes.
+- [ ] Feature for sending the access log to the database + provide a page to
+      view the logs.
+- [ ] Port the layout and concept of werc to Algernon
+      See: http://werc.cat-v.org/ and https://bitbucket.org/mischief/gowerc/src
+- [ ] Support for websockets (port a small multiplayer game to test).
 
 Priority 2
 ----------
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or
+      [cli](https://github.com/urfave/cli)
 - [ ] Add support for Handlebars: https://github.com/aymerick/raymond
-- [ ] Add support for [Ghost](https://ghost.org) themes.
 - [ ] Add a flag for caching to the database backend instead of to memory.
-- [ ] Feature for sending the access log to the database + provide a page to
-      view the logs.
 - [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
 - [ ] Look into the memory use when serving many large files in quick succession.
 - [ ] Present directories with media files with a built-in page.
-- [ ] Server side support for https://github.com/gmetais/sw-delta
-- [ ] Support for websockets (port a small multiplayer game to test).
+- [ ] Server side support for [sw-delta](https://github.com/gmetais/sw-delta)
 - [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
 - [ ] Algernon Application Hub.
@@ -28,6 +32,8 @@ Documentation/tutorials
 - [ ] Video tutorials and screencasts.
 - [ ] Update the book to be more similar to the python Flask documentation.
 - [ ] Create a docker image that comes with all the samples.
+- [ ] Document what the "current directory" is for various Lua functions that deals with files.
+- [ ] Document better the order of output calls when modifying the header to redirect.
 
 Priority 3
 ----------
@@ -37,22 +43,18 @@ Priority 3
 - [ ] Larger selection of built-in Markdown styles, with a flag for dumping them as a style.gcss, for easy modification. Or use a system directory for this.
 - [ ] Use [cfilter](https://github.com/irfansharif/cfilter) for potentially faster cache lookups.
 - [ ] Add support for systemd reload, not just restart.
-- [ ] Support [HAML](https://github.com/travissimon/ghaml) and [Sass](https://github.com/wellington/sass).
+- [ ] Support [HAML](https://github.com/travissimon/ghaml)?
 - [ ] Document how to read JSON from one place and output processed data somewhere else.
 - [ ] Also support a configuration file using github.com/alyu/configparser, for port, host, keys etc.
 - [ ] Output an access log in a goaccess.io friendly format
-- [ ] Document better the order of output calls when modifying the header to redirect.
-- [ ] Document what the "current directory" is for various Lua functions that deals with files.
 
-Report issues for Go / go vet / go lint
----------------------------------------
+Feature requests and issues for Go
+----------------------------------
 - [ ] Two identical lines in a row that is the same assignment should result in an error.
 - [ ] Constant byte slices should be allowed.
 
 Various
 -------
-- [ ] Port the layout and concept of werc to Algernon
-      See: http://werc.cat-v.org/ and https://bitbucket.org/mischief/gowerc/src
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
 - [ ] Provide a Lua sample/command for listing files and directories with dates and sizes.
 - [ ] Find a way to redirect while preserving headers and/or use a mux package.
