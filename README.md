@@ -938,4 +938,4 @@ General information
 
 * Version: 1.4.1
 * License: MIT
-* Alexander F Rødseth &ltxyproto@archlinux.org&gt
+* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
