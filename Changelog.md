@@ -1,5 +1,12 @@
 # Changelog
 
+Changes from 1.4.1 to 1.4.2
+===========================
+
+* Update dependencies
+* Minor improvements to the code
+* Minor improvements to the documentation
+
 Changes from 1.4 to 1.4.1
 =========================
 
