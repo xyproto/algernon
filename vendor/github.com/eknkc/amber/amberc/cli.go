@@ -3,9 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	amber "github.com/eknkc/amber"
+	"os"
 )
 
 var prettyPrint bool

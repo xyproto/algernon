@@ -1,4 +1,4 @@
-// Package permissions provides a way to keep track of users, login states and permissions.
+// Package permissions2 provides a way to keep track of users, login states and permissions.
 package permissions
 
 import (
@@ -88,17 +88,17 @@ func (perm *Permissions) Clear() {
 	perm.userPathPrefixes = []string{}
 }
 
-// AddAdminPath registers a path prefix for URLs that shall only be reached by logged in administrators
+// Add an url path prefix that is a page for the logged in administrators
 func (perm *Permissions) AddAdminPath(prefix string) {
 	perm.adminPathPrefixes = append(perm.adminPathPrefixes, prefix)
 }
 
-// AddUserPath registers a path prefix for URLs that shall only be reached by logged in users
+// Add an url path prefix that is a page for the logged in users
 func (perm *Permissions) AddUserPath(prefix string) {
 	perm.userPathPrefixes = append(perm.userPathPrefixes, prefix)
 }
 
-// AddPublicPath registers a path prefix for URLs that can be reached by anyone
+// Add an url path prefix that is a public page
 func (perm *Permissions) AddPublicPath(prefix string) {
 	perm.publicPathPrefixes = append(perm.publicPathPrefixes, prefix)
 }
@@ -125,6 +125,7 @@ func PermissionDenied(w http.ResponseWriter, req *http.Request) {
 
 // Check if a given request should be rejected.
 func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
+	reject := false
 	path := req.URL.Path // the path of the url that the user wish to visit
 
 	// If it's not "/" and set to be public regardless of permissions
@@ -134,39 +135,41 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 		for _, prefix := range perm.adminPathPrefixes {
 			if strings.HasPrefix(path, prefix) {
 				if !perm.state.AdminRights(req) {
-					// Reject
-					return true
+					reject = true
+					break
 				}
 			}
 		}
 
-		// Reject if it's a user page and the user does not have user rights
-		for _, prefix := range perm.userPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				if !perm.state.UserRights(req) {
-					// Reject
-					return true
+		if !reject {
+			// Reject if it's a user page and the user does not have user rights
+			for _, prefix := range perm.userPathPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					if !perm.state.UserRights(req) {
+						reject = true
+						break
+					}
 				}
 			}
 		}
 
-		// Reject if it's not a public page
-		found := false
-		for _, prefix := range perm.publicPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				found = true
-				break
+		if !reject {
+			// Reject if it's not a public page
+			found := false
+			for _, prefix := range perm.publicPathPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					found = true
+					break
+				}
 			}
-		}
-		if !found {
-			// Reject
-			return true
+			if !found {
+				reject = true
+			}
 		}
 
 	}
 
-	// Not rejected
-	return false
+	return reject
 }
 
 // Middleware handler (compatible with Negroni)

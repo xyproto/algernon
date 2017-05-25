@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/urfave/negroni"
+	"github.com/codegangsta/negroni"
 	"github.com/xyproto/permissionbolt"
 )
 

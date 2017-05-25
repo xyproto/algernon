@@ -112,7 +112,8 @@ func PermissionDenied(w http.ResponseWriter, req *http.Request) {
 
 // Rejected checks if a given http request should be rejected
 func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
-	path := req.URL.Path // the path of the URL that the user wish to visit
+	reject := false
+	path := req.URL.Path // the path of the url that the user wish to visit
 
 	// If it's not "/" and set to be public regardless of permissions
 	if !(perm.rootIsPublic && path == "/") {
@@ -121,39 +122,41 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 		for _, prefix := range perm.adminPathPrefixes {
 			if strings.HasPrefix(path, prefix) {
 				if !perm.state.AdminRights(req) {
-					// Reject
-					return true
+					reject = true
+					break
 				}
 			}
 		}
 
-		// Reject if it's a user page and the user does not have user rights
-		for _, prefix := range perm.userPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				if !perm.state.UserRights(req) {
-					// Reject
-					return true
+		if !reject {
+			// Reject if it's a user page and the user does not have user rights
+			for _, prefix := range perm.userPathPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					if !perm.state.UserRights(req) {
+						reject = true
+						break
+					}
 				}
 			}
 		}
 
-		// Reject if it's not a public page
-		found := false
-		for _, prefix := range perm.publicPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				found = true
-				break
+		if !reject {
+			// Reject if it's not a public page
+			found := false
+			for _, prefix := range perm.publicPathPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					found = true
+					break
+				}
 			}
-		}
-		if !found {
-			// Reject
-			return true
+			if !found {
+				reject = true
+			}
 		}
 
 	}
 
-	// Not rejected
-	return false
+	return reject
 }
 
 // Middleware handler (compatible with Negroni)

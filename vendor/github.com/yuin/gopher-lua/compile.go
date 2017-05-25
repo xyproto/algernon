@@ -99,7 +99,7 @@ func savereg(ec *expcontext, reg int) int {
 
 func raiseCompileError(context *funcContext, line int, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
-	panic(&CompileError{context: context, Line: line, Message: msg})
+	panic(&CompileError{Context: context, Line: line, Message: msg})
 }
 
 func isVarArgReturnExpr(expr ast.Expr) bool {
@@ -128,13 +128,13 @@ func lnumberValue(expr ast.Expr) (LNumber, bool) {
 /* utilities }}} */
 
 type CompileError struct { // {{{
-	context *funcContext
+	Context *funcContext
 	Line    int
 	Message string
 }
 
 func (e *CompileError) Error() string {
-	return fmt.Sprintf("compile error near line(%v) %v: %v", e.Line, e.context.Proto.SourceName, e.Message)
+	return fmt.Sprintf("compile error near line(%v) %v: %v", e.Line, e.Context.Proto.SourceName, e.Message)
 } // }}}
 
 type codeStore struct { // {{{
@@ -1089,7 +1089,7 @@ func constFold(exp ast.Expr) ast.Expr { // {{{
 			case "^":
 				return &constLValueExpr{Value: LNumber(math.Pow(float64(lvalue), float64(rvalue)))}
 			default:
-				panic(fmt.Sprintf("unknown binop: %v", expr.Operator))
+				panic(fmt.Sprintf("unknwon binop: %v", expr.Operator))
 			}
 		} else {
 			retexpr := *expr

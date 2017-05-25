@@ -34,36 +34,6 @@ func mainLoop(L *LState, baseframe *callFrame) {
 	}
 }
 
-func mainLoopWithContext(L *LState, baseframe *callFrame) {
-	var inst uint32
-	var cf *callFrame
-
-	if L.stack.IsEmpty() {
-		return
-	}
-
-	L.currentFrame = L.stack.Last()
-	if L.currentFrame.Fn.IsG {
-		callGFunction(L, false)
-		return
-	}
-
-	for {
-		cf = L.currentFrame
-		inst = cf.Fn.Proto.Code[cf.Pc]
-		cf.Pc++
-		select {
-		case <-L.ctx.Done():
-			L.RaiseError(L.ctx.Err().Error())
-			return
-		default:
-			if jumpTable[int(inst>>26)](L, inst, baseframe) == 1 {
-				return
-			}
-		}
-	}
-}
-
 func copyReturnValues(L *LState, regv, start, n, b int) { // +inline-start
 	if b == 1 {
 		// this section is inlined by go-inline
@@ -190,7 +160,7 @@ func threadRun(L *LState) {
 			}
 		}
 	}()
-	L.mainLoop(L, nil)
+	mainLoop(L, nil)
 }
 
 type instFunc func(*LState, uint32, *callFrame) int
@@ -720,9 +690,6 @@ func init() {
 				meta = false
 			} else {
 				callable, meta = L.metaCall(lv)
-			}
-			if callable == nil {
-				L.RaiseError("attempt to call a non-function object")
 			}
 			// this section is inlined by go-inline
 			// source function is 'func (ls *LState) closeUpvalues(idx int) ' in '_state.go'

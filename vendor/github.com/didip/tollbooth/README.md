@@ -9,7 +9,7 @@ This is a generic middleware to rate-limit HTTP requests.
 
 
 ## Five Minutes Tutorial
-```go
+```
 package main
 
 import (
@@ -32,7 +32,7 @@ func main() {
 ## Features
 
 1. Rate-limit by request's remote IP, path, methods, custom headers, & basic auth usernames.
-    ```go
+    ```
     limiter := tollbooth.NewLimiter(1, time.Second)
 
     // Configure list of places to look for IP address.

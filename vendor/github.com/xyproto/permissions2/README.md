@@ -1,4 +1,4 @@
-# Permissions [![Build Status](https://travis-ci.org/xyproto/permissions2.svg?branch=master)](https://travis-ci.org/xyproto/permissions2) [![GoDoc](https://godoc.org/github.com/xyproto/permissions2?status.svg)](http://godoc.org/github.com/xyproto/permissions2) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissions2)
+#Permissions [![Build Status](https://travis-ci.org/xyproto/permissions2.svg?branch=master)](https://travis-ci.org/xyproto/permissions2) [![Build Status](https://drone.io/github.com/xyproto/permissions2/status.png)](https://drone.io/github.com/xyproto/permissions2/latest) [![GoDoc](https://godoc.org/github.com/xyproto/permissions2?status.svg)](http://godoc.org/github.com/xyproto/permissions2) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissions2)
 
 Middleware for keeping track of users, login states and permissions.
 
@@ -20,11 +20,11 @@ Features and limitations
 * Tries to keep things simple.
 * Only supports *public*, *user* and *admin* permissions out of the box, but offers functionality for implementing more fine grained permissions, if so desired.
 * The default permissions can be cleared with the `Clear()` function.
-* Supports [Negroni](https://github.com/urfave/negroni), [Martini](https://github.com/go-martini/martini), [Gin](https://github.com/gin-gonic/gin), [Goji](https://github.com/zenazn/goji) and plain `net/http`.
+* Supports [Negroni](https://github.com/codegangsta/negroni), [Martini](https://github.com/go-martini/martini), [Gin](https://github.com/gin-gonic/gin), [Macaron](https://github.com/Unknwon/macaron), [Echo](https://github.com/labstack/echo),  [Goji](https://github.com/zenazn/goji) and plain `net/http`.
 * Should also work with other frameworks, since the standard `http.HandlerFunc` is used everywhere.
 
 
-Example for [Negroni](https://github.com/urfave/negroni)
+Example for [Negroni](https://github.com/codegangsta/negroni)
 --------------------
 ~~~ go
 package main
@@ -35,7 +35,7 @@ import (
 	"strings"
     "log"
 
-	"github.com/urfave/negroni"
+	"github.com/codegangsta/negroni"
 	"github.com/xyproto/permissions2"
 )
 
@@ -45,9 +45,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
+    if err != nil {
+        log.Fatalln(err)
+    }
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -148,9 +148,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
+    if err != nil {
+        log.Fatalln(err)
+    }
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -245,7 +245,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"log"
+    "log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xyproto/permissions2"
@@ -256,9 +256,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
+    if err != nil {
+        log.Fatalln(err)
+    }
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -352,6 +352,127 @@ func main() {
 }
 ~~~
 
+
+Example for [Macaron](https://github.com/Unknwon/macaron)
+--------------------
+~~~ go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+    "log"
+
+	"github.com/Unknwon/macaron"
+	"github.com/xyproto/permissions2"
+)
+
+func main() {
+	m := macaron.Classic()
+
+	// New permissions middleware
+	perm, err := permissions.New2()
+    if err != nil {
+        log.Fatalln(err)
+    }
+
+	// Blank slate, no default permissions
+	//perm.Clear()
+
+	// Logging middleware
+	m.Use(macaron.Logger())
+
+	// Renderer middleware
+	m.Use(macaron.Renderer())
+
+	// Set up a middleware handler for Macaron, with a custom "permission denied" message.
+	permissionHandler := func(ctx *macaron.Context) {
+		// Check if the user has the right admin/user rights
+		if perm.Rejected(ctx.Resp, ctx.Req.Request) {
+			fmt.Fprintf(ctx.Resp, "Permission denied!")
+			// Deny the request
+			ctx.Error(http.StatusForbidden)
+			// Don't call other middleware handlers
+			return
+		}
+		// Call the next middleware handler
+		ctx.Next()
+	}
+
+	// Enable the permissions middleware, must come before recovery
+	m.Use(permissionHandler)
+
+	// Recovery middleware
+	m.Use(macaron.Recovery())
+
+	// Get the userstate, used in the handlers below
+	userstate := perm.UserState()
+
+	m.Get("/", func(ctx *macaron.Context) string {
+		msg := ""
+		msg += fmt.Sprintf("Has user bob: %v\n", userstate.HasUser("bob"))
+		msg += fmt.Sprintf("Logged in on server: %v\n", userstate.IsLoggedIn("bob"))
+		msg += fmt.Sprintf("Is confirmed: %v\n", userstate.IsConfirmed("bob"))
+		msg += fmt.Sprintf("Username stored in cookies (or blank): %v\n", userstate.Username(ctx.Req.Request))
+		msg += fmt.Sprintf("Current user is logged in, has a valid cookie and *user rights*: %v\n", userstate.UserRights(ctx.Req.Request))
+		msg += fmt.Sprintf("Current user is logged in, has a valid cookie and *admin rights*: %v\n", userstate.AdminRights(ctx.Req.Request))
+		msg += fmt.Sprintln("\nTry: /register, /confirm, /remove, /login, /logout, /makeadmin, /clear, /data and /admin")
+		return msg
+	})
+
+	m.Get("/register", func(ctx *macaron.Context) string {
+		userstate.AddUser("bob", "hunter1", "bob@zombo.com")
+		return fmt.Sprintf("User bob was created: %v\n", userstate.HasUser("bob"))
+	})
+
+	m.Get("/confirm", func(ctx *macaron.Context) string {
+		userstate.MarkConfirmed("bob")
+		return fmt.Sprintf("User bob was confirmed: %v\n", userstate.IsConfirmed("bob"))
+	})
+
+	m.Get("/remove", func(ctx *macaron.Context) string {
+		userstate.RemoveUser("bob")
+		return fmt.Sprintf("User bob was removed: %v\n", !userstate.HasUser("bob"))
+	})
+
+	m.Get("/login", func(ctx *macaron.Context) string {
+		// Headers will be written, for storing a cookie
+		userstate.Login(ctx.Resp, "bob")
+		return fmt.Sprintf("bob is now logged in: %v\n", userstate.IsLoggedIn("bob"))
+	})
+
+	m.Get("/logout", func(ctx *macaron.Context) string {
+		userstate.Logout("bob")
+		return fmt.Sprintf("bob is now logged out: %v\n", !userstate.IsLoggedIn("bob"))
+	})
+
+	m.Get("/makeadmin", func(ctx *macaron.Context) string {
+		userstate.SetAdminStatus("bob")
+		return fmt.Sprintf("bob is now administrator: %v\n", userstate.IsAdmin("bob"))
+	})
+
+	m.Get("/clear", func(ctx *macaron.Context) string {
+		userstate.ClearCookie(ctx.Resp)
+		return "Clearing cookie"
+	})
+
+	m.Get("/data", func(ctx *macaron.Context) string {
+		return "user page that only logged in users must see!"
+	})
+
+	m.Get("/admin", func(ctx *macaron.Context) {
+		fmt.Fprintf(ctx.Resp, "super secret information that only logged in administrators must see!\n\n")
+		if usernames, err := userstate.AllUsernames(); err == nil {
+			fmt.Fprintf(ctx.Resp, "list of all users: "+strings.Join(usernames, ", "))
+		}
+	})
+
+	// Serve
+	m.Run(3000)
+}
+~~~
+
 Example for [Goji](https://github.com/zenazn/goji)
 --------------------
 ~~~ go
@@ -361,7 +482,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"log"
+    "log"
 
 	"github.com/xyproto/permissions2"
 	"github.com/zenazn/goji"
@@ -370,9 +491,9 @@ import (
 func main() {
 	// New permissions middleware
 	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
+    if err != nil {
+        log.Fatalln(err)
+    }
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -463,6 +584,140 @@ func main() {
 }
 ~~~
 
+Example for [Echo](https://github.com/labstack/echo)
+-----------------------------------------------------
+
+~~~ go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
+	"github.com/labstack/echo/middleware"
+	"github.com/xyproto/permissions2"
+)
+
+// Convenience function for making it easier to get hold of http.ResponseWriter
+func w(c echo.Context) http.ResponseWriter {
+	return c.Response().(*standard.Response).ResponseWriter
+}
+
+// Convenience function for making it easier to get hold of *http.Request
+func req(c echo.Context) *http.Request {
+	return c.Request().(*standard.Request).Request
+}
+
+func main() {
+	e := echo.New()
+
+	// New permissions middleware
+	perm, err := permissions.New2()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Blank slate, no default permissions
+	//perm.Clear()
+
+	// Set up a middleware handler for Echo, with a custom "permission denied" message.
+	permissionHandler := echo.MiddlewareFunc(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return echo.HandlerFunc(func(c echo.Context) error {
+			// Check if the user has the right admin/user rights
+			if perm.Rejected(w(c), req(c)) {
+				// Deny the request
+				return echo.NewHTTPError(http.StatusForbidden, "Permission denied!")
+			}
+			// Continue the chain of middleware
+			return next(c)
+		})
+	})
+
+	// Logging middleware
+	e.Use(middleware.Logger())
+
+	// Enable the permissions middleware, must come before recovery
+	e.Use(permissionHandler)
+
+	// Recovery middleware
+	e.Use(middleware.Recover())
+
+	// Get the userstate, used in the handlers below
+	userstate := perm.UserState()
+
+	e.Get("/", echo.HandlerFunc(func(c echo.Context) error {
+		var buf bytes.Buffer
+		b2s := map[bool]string{false: "false", true: "true"}
+		buf.WriteString("Has user bob: " + b2s[userstate.HasUser("bob")] + "\n")
+		buf.WriteString("Logged in on server: " + b2s[userstate.IsLoggedIn("bob")] + "\n")
+		buf.WriteString("Is confirmed: " + b2s[userstate.IsConfirmed("bob")] + "\n")
+		buf.WriteString("Username stored in cookies (or blank): " + userstate.Username(req(c)) + "\n")
+		buf.WriteString("Current user is logged in, has a valid cookie and *user rights*: " + b2s[userstate.UserRights(req(c))] + "\n")
+		buf.WriteString("Current user is logged in, has a valid cookie and *admin rights*: " + b2s[userstate.AdminRights(req(c))] + "\n")
+		buf.WriteString("\nTry: /register, /confirm, /remove, /login, /logout, /makeadmin, /clear, /data and /admin")
+		return c.String(http.StatusOK, buf.String())
+	}))
+
+	e.Get("/register", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.AddUser("bob", "hunter1", "bob@zombo.com")
+		return c.String(http.StatusOK, fmt.Sprintf("User bob was created: %v\n", userstate.HasUser("bob")))
+	}))
+
+	e.Get("/confirm", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.MarkConfirmed("bob")
+		return c.String(http.StatusOK, fmt.Sprintf("User bob was confirmed: %v\n", userstate.IsConfirmed("bob")))
+	}))
+
+	e.Get("/remove", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.RemoveUser("bob")
+		return c.String(http.StatusOK, fmt.Sprintf("User bob was removed: %v\n", !userstate.HasUser("bob")))
+	}))
+
+	e.Get("/login", echo.HandlerFunc(func(c echo.Context) error {
+		// Headers will be written, for storing a cookie
+		userstate.Login(w(c), "bob")
+		return c.String(http.StatusOK, fmt.Sprintf("bob is now logged in: %v\n", userstate.IsLoggedIn("bob")))
+	}))
+
+	e.Get("/logout", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.Logout("bob")
+		return c.String(http.StatusOK, fmt.Sprintf("bob is now logged out: %v\n", !userstate.IsLoggedIn("bob")))
+	}))
+
+	e.Get("/makeadmin", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.SetAdminStatus("bob")
+		return c.String(http.StatusOK, fmt.Sprintf("bob is now administrator: %v\n", userstate.IsAdmin("bob")))
+	}))
+
+	e.Get("/clear", echo.HandlerFunc(func(c echo.Context) error {
+		userstate.ClearCookie(w(c))
+		return c.String(http.StatusOK, "Clearing cookie")
+	}))
+
+	e.Get("/data", echo.HandlerFunc(func(c echo.Context) error {
+		return c.String(http.StatusOK, "user page that only logged in users must see!")
+	}))
+
+	e.Get("/admin", echo.HandlerFunc(func(c echo.Context) error {
+		var buf bytes.Buffer
+		buf.WriteString("super secret information that only logged in administrators must see!\n\n")
+		if usernames, err := userstate.AllUsernames(); err == nil {
+			buf.WriteString("list of all users: " + strings.Join(usernames, ", "))
+		}
+		return c.String(http.StatusOK, buf.String())
+	}))
+
+	// Serve
+	e.Run(standard.New(":3000"))
+}
+~~~
+
+
 Example for just `net/http`
 ---------------------------
 
@@ -510,9 +765,9 @@ func main() {
 
 	// New permissions middleware
 	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
+    if err != nil {
+        log.Fatalln(err)
+    }
 
 	// Blank slate, no default permissions
 	//perm.Clear()
@@ -593,7 +848,7 @@ func main() {
 	log.Println("Listening for requests on port 3000")
 
 	// Start listening
-	log.Fatal(s.ListenAndServe())
+	s.ListenAndServe()
 }
 ~~~
 
@@ -614,6 +869,12 @@ Password hashing
 * bcrypt is used by default for hashing passwords. sha256 is also supported.
 * By default, all new password will be hashed with bcrypt.
 * For backwards compatibility, old password hashes with the length of a sha256 hash will be checked with sha256. To disable this behavior, and only ever use bcrypt, add this line: `userstate.SetPasswordAlgo("bcrypt")`
+
+
+Passing userstate to functions
+-------------------------------
+
+One way of passing a userstate to a function is to use the [pinterface](https://github.com/xyproto/pinterface) package, like in [this source file](https://github.com/xyproto/algernon/blob/master/luahandler.go) (using `perm pinterface.IPermissions` as the argument). Another method is to use a closure, as in the examples above.
 
 
 Coding style
@@ -642,22 +903,16 @@ username := "bob"
 propertyName := "clever"
 propertyValue, err := userstate.Users().Get(username, propertyName)
 if err != nil {
-	log.Print(err)
-	return err
+    log.Print(err)
+    return err
 }
 fmt.Printf("%s is %s: %s\n", username, propertyName, propertyValue)
 ```
-
-Passing userstate between functions, files and to other Go packages
--------------------------------------------------------------------
-
-Using the `*pinterface.IUserState` type (from the [pinterface](https://github.com/xyproto/pinterface) package) makes it possible to pass UserState structs between functions, also in other packages. By using this interface, it is possible to seamlessly change the database backend from, for instance, Redis ([permissions2](https://github.com/xyproto/permissions2)) to BoltDB ([permissionbolt](https://github.com/xyproto/permissionbolt)).
-
 
 General information
 -------------------
 
 * Version: 2.2
 * License: MIT
-* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
+* Alexander F Rødseth
 

@@ -388,16 +388,7 @@ func (z *Reader) doReadAhead() {
 			// Try to fill the buffer
 			n, err := io.ReadFull(decomp, buf)
 			if err == io.ErrUnexpectedEOF {
-				if n > 0 {
-					err = nil
-				} else {
-					// If we got zero bytes, we need to establish if
-					// we reached end of stream or truncated stream.
-					_, err = decomp.Read([]byte{})
-					if err == io.EOF {
-						err = nil
-					}
-				}
+				err = nil
 			}
 			if n < len(buf) {
 				buf = buf[0:n]

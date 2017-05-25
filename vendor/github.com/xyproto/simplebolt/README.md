@@ -3,6 +3,7 @@ Simple Bolt
 
 [![Build Status](https://travis-ci.org/xyproto/simplebolt.svg?branch=master)](https://travis-ci.org/xyproto/simplebolt)
 [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt)
+[![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/simplebolt)
 
 Simple way to use the [Bolt](github.com/boltdb/bolt) database. Similar design to [simpleredis](https://github.com/xyproto/simpleredis).
 
