@@ -1,11 +1,12 @@
 package: github.com/xyproto/algernon
+ignore:
+- code.google.com/p/go.crypto
+- code.google.com/p/bcrypt
 import:
 - package: github.com/chzyer/readline
-- package: github.com/bradfitz/http2
 - package: github.com/didip/tollbooth
 - package: github.com/eknkc/amber
 - package: github.com/flosch/pongo2
-- package: github.com/klauspost/pgzip
 - package: github.com/mamaar/risotto
   subpackages:
   - generator
@@ -18,12 +19,13 @@ import:
 - package: github.com/wellington/sass
   subpackages:
   - compiler
+- package: github.com/xyproto/datablock
 - package: github.com/xyproto/jpath
 - package: github.com/xyproto/mime
+- package: github.com/xyproto/permissionHSTORE
 - package: github.com/xyproto/permissionbolt
 - package: github.com/xyproto/permissions2
 - package: github.com/xyproto/permissionsql
-- package: github.com/xyproto/permissionHSTORE
 - package: github.com/xyproto/pinterface
 - package: github.com/xyproto/recwatch
 - package: github.com/xyproto/simpleredis
@@ -32,18 +34,13 @@ import:
 - package: github.com/yosssi/gcss
 - package: github.com/yuin/gluamapper
 - package: github.com/yuin/gopher-lua
-- package: code.google.com/p/go.crypto
-  repo: https://golang.org/x/crypto
-- package: github.com/gophertown/fsnotify
-  repo: https://github.com/fsnotify/fsnotify
-- package: launchpad.net/gocheck?go-get=1
-  repo: https://github.com/go-check/check
-testImport:
-- package: assert
-  repo: https://github.com/bmizerany/assert
-- package: github.com/xyproto/cookie
+- package: golang.org/x/net
+  subpackages:
+  - http2
+- package: golang.org/x/crypto
+- package: golang.org/x/crypto/bcrypt
 - package: github.com/xyproto/simplebolt
 - package: github.com/xyproto/simplehstore
 - package: github.com/xyproto/simplemaria
-- package: github.com/go-check/check
-- package: github.com/mattetti/filebuffer
+testImport:
+- package: github.com/bmizerany/assert

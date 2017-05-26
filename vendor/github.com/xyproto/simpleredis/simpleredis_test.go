@@ -2,6 +2,8 @@ package simpleredis
 
 import (
 	"github.com/xyproto/pinterface"
+	"log"
+	"strings"
 	"testing"
 )
 
@@ -9,6 +11,9 @@ var pool *ConnectionPool
 
 func TestLocalConnection(t *testing.T) {
 	if err := TestConnection(); err != nil {
+		if strings.HasSuffix(err.Error(), "i/o timeout") {
+			log.Println("Try the 'latency doctor' command in the redis-cli if i/o timeouts is a common problem.")
+		}
 		t.Errorf(err.Error())
 	}
 }
@@ -51,6 +56,9 @@ func TestList(t *testing.T) {
 		t.Errorf("Error, could not add item to list! %s", err.Error())
 	}
 	items, err := list.GetAll()
+	if err != nil {
+		t.Errorf("Error, could not retrieve list! %s", err.Error())
+	}
 	if len(items) != 1 {
 		t.Errorf("Error, wrong list length! %v", len(items))
 	}

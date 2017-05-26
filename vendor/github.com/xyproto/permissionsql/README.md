@@ -8,7 +8,7 @@ Uses MariaDB/MySQL as a backend.
 Connecting
 ----------
 
-For connecting to a MySQL/MariaDB host that is running locally, the `New` function can be used. For connecting to a remote server, the `NewWithDSN` function can be used.
+For connecting to a MariaDB/MySQL host that is running locally, the `New` function can be used. For connecting to a remote server, the `NewWithDSN` function can be used.
 
 
 Background
@@ -20,8 +20,7 @@ At first I tried combining the code for Redis database access and SQL database a
 
 I recommend using Redis and [permissions2](https://github.com/xyproto/permissions2) instead of this package, if possible. There is also [permissionbolt](https://github.com/xyproto/permissionbolt), which uses Bolt as a database (Bolt is written in Go).
 
-A PostgreSQL port of [simplemaria](https://github.com/xyproto/simplemaria) and [permissionsql](https://github.com/xyproto/permissionsql) would be warmly welcome.
-
+A PostgreSQL port of [simplemaria](https://github.com/xyproto/simplemaria) and [permissionsql](https://github.com/xyproto/permissionsql) that uses HSTORE is available as [simplehstore](https://github.com/xyproto/simplehstore) and [permissionHSTORE](https://github.com/xyproto/permissionHSTORE).
 
 Features and limitations
 ------------------------
@@ -612,11 +611,6 @@ Password hashing
 * bcrypt is used by default for hashing passwords. sha256 is also supported.
 * By default, all new password will be hashed with bcrypt.
 * For backwards compatibility, old password hashes with the length of a sha256 hash will be checked with sha256. To disable this behavior, and only ever use bcrypt, add this line: `userstate.SetPasswordAlgo("bcrypt")`
-
-Coding style
-------------
-
-* The code shall always be formatted with `go fmt`.
 
 Online API Documentation
 ------------------------

@@ -132,12 +132,12 @@ func TestPasswordAlgoMatching(t *testing.T) {
 	userstate := NewUserStateSimple()
 	// generate two different password using the same credentials but different algos
 	userstate.SetPasswordAlgo("sha256")
-	sha256_hash := userstate.HashPassword("testuser@example.com", "textpassword")
+	sha256Hash := userstate.HashPassword("testuser@example.com", "textpassword")
 	userstate.SetPasswordAlgo("bcrypt")
-	bcrypt_hash := userstate.HashPassword("testuser@example.com", "textpassword")
+	bcryptHash := userstate.HashPassword("testuser@example.com", "textpassword")
 
 	// they shouldn't match
-	if sha256_hash == bcrypt_hash {
+	if sha256Hash == bcryptHash {
 		t.Error("Error, different algorithms should not have a password match")
 	}
 }
