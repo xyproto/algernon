@@ -1,5 +1,5 @@
 hash: eea6e6ab3b8bdf281b82ee767880b3310451e9da18e3b4765ecaacc68cbd1bbb
-updated: 2017-05-25T20:02:33.751671154+02:00
+updated: 2017-05-26T10:36:17.623162355+02:00
 imports:
 - name: code.google.com/p/go.crypto
   version: ede567c8e044a5913dad1d1af3696d9da953104c
@@ -8,8 +8,6 @@ imports:
   version: 0d9f544bb94aac29c185968483459ef74d6deb5d
 - name: github.com/bradfitz/http2
   version: aa7658c0e9902e929a9ed0996ef949e59fc0f3ab
-  subpackages:
-  - hpack
 - name: github.com/chzyer/readline
   version: 41eea22f717c616615e1e59aa06cf831f9901f35
 - name: github.com/didip/tollbooth
@@ -158,6 +156,10 @@ imports:
   version: 4971afdc2f162e82d185353533d3cf16188a9f4e
   subpackages:
   - context
+  - http2
+  - http2/hpack
+  - idna
+  - lex/httplex
 - name: golang.org/x/sys
   version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:

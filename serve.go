@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bradfitz/http2"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
+	"golang.org/x/net/http2"
 )
 
 // List of functions to run at shutdown
