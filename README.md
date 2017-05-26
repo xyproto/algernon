@@ -936,6 +936,6 @@ Other resources
 General information
 -------------------
 
-* Version: 1.4.2
+* Version: 1.4.3
 * License: MIT
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;

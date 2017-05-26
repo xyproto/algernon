@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.4.2 to 1.4.3
+===========================
+
+* Update dependencies and the dependency configuration
+
 Changes from 1.4.1 to 1.4.2
 ===========================
 
