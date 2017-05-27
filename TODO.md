@@ -56,6 +56,7 @@ Feature requests and issues for Go
 Various
 -------
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
+- [ ] Draw inspiration from https://github.com/disintegration/bebop
 - [ ] Provide a Lua sample/command for listing files and directories with dates and sizes.
 - [ ] Find a way to redirect while preserving headers and/or use a mux package.
 - [ ] Implement a documentation server that can convert files with pandoc.
