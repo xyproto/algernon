@@ -1,5 +1,5 @@
 hash: 41b87a8476a7ea1f24c53085b97ce09ebdfe0a1e82df8565f0764b56ff6cd5b0
-updated: 2017-05-26T13:58:38.983394466+02:00
+updated: 2017-05-30T17:19:55.151482362Z
 imports:
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -16,22 +16,22 @@ imports:
   subpackages:
   - parser
 - name: github.com/fatih/color
-  version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/flosch/pongo2
   version: 1d0f0d3af150c4a65dfd424d742f7374819e7d29
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/garyburd/redigo
-  version: 433969511232c397de61b1442f9fd49ec06ae9ba
+  version: 0d253a66e6e1349f4581d6d2b300ee434ee2da9f
   subpackages:
   - internal
   - redis
 - name: github.com/getwe/figlet4go
   version: bc879344e874dd110753d17083a2a7acf3136683
 - name: github.com/go-sql-driver/mysql
-  version: 382e13d099fcf5f5994290892ab258fbebbdc5e3
+  version: 15dbaaedd46b79251eaa9c8ed5f280d28978bb3f
 - name: github.com/juju/errors
-  version: 8234c829496aaeae67c5c71235a2cbcc289e960a
+  version: 6f54ff6318409d31ff16261533ce2c8381a4fd5d
 - name: github.com/klauspost/compress
   version: e80ca55b53e5e6f53deed5c7842e7b7da95e1dc7
   subpackages:
@@ -63,7 +63,7 @@ imports:
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-runewidth
-  version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
+  version: 14207d285c6c197daabb5c9793d63e7af9ab2d50
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
@@ -73,10 +73,14 @@ imports:
 - name: github.com/nsf/termbox-go
   version: 7994c181db7761ca3c67a217068cf31826113f5f
 - name: github.com/russross/blackfriday
-  version: 0ba0f2b6ed7c475a92e4df8641825cb7a11d1fa3
+  version: b253417e1cb644d645a0a3bb1fa5034c8030127c
 - name: github.com/shopspring/decimal
   version: 74d668a796fa3734c552fb907d9b83146d0bebee
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 79c90efaf01eddc01945af5bc1797859189b830b
 - name: github.com/sirupsen/logrus
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
+- name: github.com/Sirupsen/logrus
   version: 5e5dc898656f695e2a086b8e12559febbfc01562
 - name: github.com/tylerb/graceful
   version: d72b0151351a13d0421b763b88f791469c4f5dc7
@@ -102,7 +106,7 @@ imports:
 - name: github.com/xyproto/datablock
   version: 9934fdd82ac3dcd8eb7508b6af05a1eeecb906a5
 - name: github.com/xyproto/jpath
-  version: c3c5db51d5cec049a9ef9cb0a76c2d589d4e2da5
+  version: f0d6e5f685931608fe60575a9d7aace23b6e4ce8
 - name: github.com/xyproto/mime
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
@@ -110,7 +114,7 @@ imports:
 - name: github.com/xyproto/permissionHSTORE
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
-  version: f200bb44e71b601bdfb5b6348e8d2d5348a28953
+  version: 6d43f21c3954750e28103b11f383e7591a3d56fe
 - name: github.com/xyproto/permissionsql
   version: 72c26ae88c7835c8fdc55ce7ec1dbb7661b5c6ac
 - name: github.com/xyproto/pinterface
@@ -122,7 +126,7 @@ imports:
 - name: github.com/xyproto/simplehstore
   version: 363dad89c8934aaa929387dc2da0818515743532
 - name: github.com/xyproto/simplemaria
-  version: 014c7f711a5fc71db2075362b1a9d1c665682b22
+  version: 5cf67844724df03656f16a32348bbef589d5f919
 - name: github.com/xyproto/simpleredis
   version: d1e7ae5b80c52b0d2879e6efe0ee01c660b8f119
 - name: github.com/xyproto/term
@@ -140,12 +144,12 @@ imports:
   - parse
   - pm
 - name: golang.org/x/crypto
-  version: 7e9105388ebff089b3f99f0ef676ea55a6da3a7e
+  version: c7af5bf2638a1164f2eb5467c39c6cffbd13a02e
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: b8b13433cc9973c2ad1c7217f0cf4a59d00b135d
+  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
   subpackages:
   - context
   - http2
@@ -153,11 +157,11 @@ imports:
   - idna
   - lex/httplex
 - name: golang.org/x/sys
-  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  version: 9f30dcbe5be197894515a338a9bda9253567ea8f
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
+  version: 4ee4af566555f5fbe026368b75596286a312663a
   subpackages:
   - secure/bidirule
   - transform

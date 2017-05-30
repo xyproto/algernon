@@ -144,16 +144,11 @@ func keyEq(a, b ssh.PublicKey) bool {
 	return bytes.Equal(a.Marshal(), b.Marshal())
 }
 
-// IsAuthorityForHost can be used as a callback in ssh.CertChecker
-func (db *hostKeyDB) IsHostAuthority(remote ssh.PublicKey, address string) bool {
-	h, p, err := net.SplitHostPort(address)
-	if err != nil {
-		return false
-	}
-	a := addr{host: h, port: p}
-
+// IsAuthority can be used as a callback in ssh.CertChecker
+func (db *hostKeyDB) IsAuthority(remote ssh.PublicKey) bool {
 	for _, l := range db.lines {
-		if l.cert && keyEq(l.knownKey.Key, remote) && l.match([]addr{a}) {
+		// TODO(hanwen): should we check the hostname against host pattern?
+		if l.cert && keyEq(l.knownKey.Key, remote) {
 			return true
 		}
 	}
@@ -414,7 +409,9 @@ func (db *hostKeyDB) Read(r io.Reader, filename string) error {
 
 // New creates a host key callback from the given OpenSSH host key
 // files. The returned callback is for use in
-// ssh.ClientConfig.HostKeyCallback. Hashed hostnames are not supported.
+// ssh.ClientConfig.HostKeyCallback. Hostnames are ignored for
+// certificates, ie. any certificate authority is assumed to be valid
+// for all remote hosts.  Hashed hostnames are not supported.
 func New(files ...string) (ssh.HostKeyCallback, error) {
 	db := newHostKeyDB()
 	for _, fn := range files {
@@ -428,8 +425,12 @@ func New(files ...string) (ssh.HostKeyCallback, error) {
 		}
 	}
 
+	// TODO(hanwen): properly supporting certificates requires an
+	// API change in the SSH library: IsAuthority should provide
+	// the address too?
+
 	var certChecker ssh.CertChecker
-	certChecker.IsHostAuthority = db.IsHostAuthority
+	certChecker.IsAuthority = db.IsAuthority
 	certChecker.IsRevoked = db.IsRevoked
 	certChecker.HostKeyFallback = db.check
 

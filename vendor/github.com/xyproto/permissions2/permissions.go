@@ -9,7 +9,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.3
+	Version = 2.2
 )
 
 // The structure that keeps track of the permissions for various path prefixes

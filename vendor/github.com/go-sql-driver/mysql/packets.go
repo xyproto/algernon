@@ -486,23 +486,22 @@ func (mc *mysqlConn) readResultOK() ([]byte, error) {
 				plugin := string(data[1:pluginEndIndex])
 				cipher := data[pluginEndIndex+1 : len(data)-1]
 
-				switch plugin {
-				case "mysql_old_password":
+				if plugin == "mysql_old_password" {
 					// using old_passwords
 					return cipher, ErrOldPassword
-				case "mysql_clear_password":
+				} else if plugin == "mysql_clear_password" {
 					// using clear text password
 					return cipher, ErrCleartextPassword
-				case "mysql_native_password":
+				} else if plugin == "mysql_native_password" {
 					// using mysql default authentication method
 					return cipher, ErrNativePassword
-				default:
+				} else {
 					return cipher, ErrUnknownPlugin
 				}
+			} else {
+				// https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::OldAuthSwitchRequest
+				return nil, ErrOldPassword
 			}
-
-			// https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::OldAuthSwitchRequest
-			return nil, ErrOldPassword
 
 		default: // Error otherwise
 			return nil, mc.handleErrorPacket(data)
@@ -1188,7 +1187,7 @@ func (rows *binaryRows) readRow(dest []driver.Value) error {
 			continue
 
 		case fieldTypeFloat:
-			dest[i] = math.Float32frombits(binary.LittleEndian.Uint32(data[pos : pos+4]))
+			dest[i] = float32(math.Float32frombits(binary.LittleEndian.Uint32(data[pos : pos+4])))
 			pos += 4
 			continue
 

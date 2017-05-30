@@ -4,13 +4,9 @@
 
 package ipv6
 
-import (
-	"syscall"
+import "syscall"
 
-	"golang.org/x/net/internal/socket"
-)
-
-func setControlMessage(c *socket.Conn, opt *rawOpt, cf ControlFlags, on bool) error {
+func setControlMessage(s uintptr, opt *rawOpt, cf ControlFlags, on bool) error {
 	// TODO(mikio): implement this
 	return syscall.EWINDOWS
 }

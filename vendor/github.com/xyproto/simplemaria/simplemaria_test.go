@@ -222,7 +222,7 @@ func TestHashMap(t *testing.T) {
 	value := "hunter1"
 
 	// Get key that doesn't exist yet
-	_, err = hashmap.Get("ownerblabla", "keyblabla")
+	item, err := hashmap.Get("ownerblabla", "keyblabla")
 	if err == nil {
 		t.Errorf("Key found, when it should be missing! %s", err.Error())
 	}
@@ -244,7 +244,7 @@ func TestHashMap(t *testing.T) {
 	if (len(items) > 0) && (items[0] != username) {
 		t.Errorf("Error, wrong elementid! %v", items)
 	}
-	item, err := hashmap.Get(username, key)
+	item, err = hashmap.Get(username, key)
 	if err != nil {
 		t.Errorf("Error, could not fetch value from hashmap! %s", err.Error())
 	}

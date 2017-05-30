@@ -278,8 +278,15 @@ TEXT ·chacha20Poly1305Open(SB), 0, $288-97
 	MOVQ ad+72(FP), adp
 
 	// Check for AVX2 support
-	CMPB ·useAVX2(SB), $1
-	JE   chacha20Poly1305Open_AVX2
+	CMPB runtime·support_avx2(SB), $0
+	JE   noavx2bmi2Open
+
+	// Check BMI2 bit for MULXQ.
+	// runtime·cpuid_ebx7 is always available here
+	// because it passed avx2 check
+	TESTL $(1<<8), runtime·cpuid_ebx7(SB)
+	JNE   chacha20Poly1305Open_AVX2
+noavx2bmi2Open:
 
 	// Special optimization, for very short buffers
 	CMPQ inl, $128
@@ -1484,8 +1491,16 @@ TEXT ·chacha20Poly1305Seal(SB), 0, $288-96
 	MOVQ src_len+56(FP), inl
 	MOVQ ad+72(FP), adp
 
-	CMPB ·useAVX2(SB), $1
-	JE   chacha20Poly1305Seal_AVX2
+	// Check for AVX2 support
+	CMPB runtime·support_avx2(SB), $0
+	JE   noavx2bmi2Seal
+
+	// Check BMI2 bit for MULXQ.
+	// runtime·cpuid_ebx7 is always available here
+	// because it passed avx2 check
+	TESTL $(1<<8), runtime·cpuid_ebx7(SB)
+	JNE   chacha20Poly1305Seal_AVX2
+noavx2bmi2Seal:
 
 	// Special optimization, for very short buffers
 	CMPQ inl, $128
@@ -2694,21 +2709,13 @@ sealAVX2Tail512LoopB:
 
 	JMP sealAVX2SealHash
 
-// func cpuid(eaxArg, ecxArg uint32) (eax, ebx, ecx, edx uint32)
-TEXT ·cpuid(SB), NOSPLIT, $0-24
-	MOVL eaxArg+0(FP), AX
-	MOVL ecxArg+4(FP), CX
+// func haveSSSE3() bool
+TEXT ·haveSSSE3(SB), NOSPLIT, $0
+	XORQ AX, AX
+	INCL AX
 	CPUID
-	MOVL AX, eax+8(FP)
-	MOVL BX, ebx+12(FP)
-	MOVL CX, ecx+16(FP)
-	MOVL DX, edx+20(FP)
+	SHRQ $9, CX
+	ANDQ $1, CX
+	MOVB CX, ret+0(FP)
 	RET
 
-// func xgetbv() (eax, edx uint32)
-TEXT ·xgetbv(SB),NOSPLIT,$0-8
-	MOVL $0, CX
-	XGETBV
-	MOVL AX, eax+0(FP)
-	MOVL DX, edx+4(FP)
-	RET

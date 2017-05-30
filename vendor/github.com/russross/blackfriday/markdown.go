@@ -13,6 +13,9 @@
 //
 //
 
+// Blackfriday markdown processor.
+//
+// Translates plain text with simple formatting rules into HTML or LaTeX.
 package blackfriday
 
 import (

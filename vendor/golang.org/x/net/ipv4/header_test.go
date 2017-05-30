@@ -12,8 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"golang.org/x/net/internal/socket"
 )
 
 type headerTest struct {
@@ -89,7 +87,7 @@ var headerLittleEndianTest = headerTest{
 
 func TestMarshalHeader(t *testing.T) {
 	tt := &headerLittleEndianTest
-	if socket.NativeEndian != binary.LittleEndian {
+	if nativeEndian != binary.LittleEndian {
 		t.Skip("no test for non-little endian machine yet")
 	}
 
@@ -120,7 +118,7 @@ func TestMarshalHeader(t *testing.T) {
 
 func TestParseHeader(t *testing.T) {
 	tt := &headerLittleEndianTest
-	if socket.NativeEndian != binary.LittleEndian {
+	if nativeEndian != binary.LittleEndian {
 		t.Skip("no test for big endian machine yet")
 	}
 

@@ -180,12 +180,9 @@ func TestCert(t *testing.T) {
 // therefore is buffered (net.Pipe deadlocks if both sides start with
 // a write.)
 func netPipe() (net.Conn, net.Conn, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
-		listener, err = net.Listen("tcp", "[::1]:0")
-		if err != nil {
-			return nil, nil, err
-		}
+		return nil, nil, err
 	}
 	defer listener.Close()
 	c1, err := net.Dial("tcp", listener.Addr().String())
@@ -203,9 +200,6 @@ func netPipe() (net.Conn, net.Conn, error) {
 }
 
 func TestAuth(t *testing.T) {
-	agent, _, cleanup := startAgent(t)
-	defer cleanup()
-
 	a, b, err := netPipe()
 	if err != nil {
 		t.Fatalf("netPipe: %v", err)
@@ -213,6 +207,9 @@ func TestAuth(t *testing.T) {
 
 	defer a.Close()
 	defer b.Close()
+
+	agent, _, cleanup := startAgent(t)
+	defer cleanup()
 
 	if err := agent.Add(AddedKey{PrivateKey: testPrivateKeys["rsa"], Comment: "comment"}); err != nil {
 		t.Errorf("Add: %v", err)

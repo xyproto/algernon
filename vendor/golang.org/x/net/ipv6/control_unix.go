@@ -11,14 +11,13 @@ import (
 	"syscall"
 
 	"golang.org/x/net/internal/iana"
-	"golang.org/x/net/internal/socket"
 )
 
-func setControlMessage(c *socket.Conn, opt *rawOpt, cf ControlFlags, on bool) error {
+func setControlMessage(s uintptr, opt *rawOpt, cf ControlFlags, on bool) error {
 	opt.Lock()
 	defer opt.Unlock()
-	if so, ok := sockOpts[ssoReceiveTrafficClass]; ok && cf&FlagTrafficClass != 0 {
-		if err := so.SetInt(c, boolint(on)); err != nil {
+	if cf&FlagTrafficClass != 0 && sockOpts[ssoReceiveTrafficClass].name > 0 {
+		if err := setInt(s, &sockOpts[ssoReceiveTrafficClass], boolint(on)); err != nil {
 			return err
 		}
 		if on {
@@ -27,8 +26,8 @@ func setControlMessage(c *socket.Conn, opt *rawOpt, cf ControlFlags, on bool) er
 			opt.clear(FlagTrafficClass)
 		}
 	}
-	if so, ok := sockOpts[ssoReceiveHopLimit]; ok && cf&FlagHopLimit != 0 {
-		if err := so.SetInt(c, boolint(on)); err != nil {
+	if cf&FlagHopLimit != 0 && sockOpts[ssoReceiveHopLimit].name > 0 {
+		if err := setInt(s, &sockOpts[ssoReceiveHopLimit], boolint(on)); err != nil {
 			return err
 		}
 		if on {
@@ -37,8 +36,8 @@ func setControlMessage(c *socket.Conn, opt *rawOpt, cf ControlFlags, on bool) er
 			opt.clear(FlagHopLimit)
 		}
 	}
-	if so, ok := sockOpts[ssoReceivePacketInfo]; ok && cf&flagPacketInfo != 0 {
-		if err := so.SetInt(c, boolint(on)); err != nil {
+	if cf&flagPacketInfo != 0 && sockOpts[ssoReceivePacketInfo].name > 0 {
+		if err := setInt(s, &sockOpts[ssoReceivePacketInfo], boolint(on)); err != nil {
 			return err
 		}
 		if on {
@@ -47,8 +46,8 @@ func setControlMessage(c *socket.Conn, opt *rawOpt, cf ControlFlags, on bool) er
 			opt.clear(cf & flagPacketInfo)
 		}
 	}
-	if so, ok := sockOpts[ssoReceivePathMTU]; ok && cf&FlagPathMTU != 0 {
-		if err := so.SetInt(c, boolint(on)); err != nil {
+	if cf&FlagPathMTU != 0 && sockOpts[ssoReceivePathMTU].name > 0 {
+		if err := setInt(s, &sockOpts[ssoReceivePathMTU], boolint(on)); err != nil {
 			return err
 		}
 		if on {
