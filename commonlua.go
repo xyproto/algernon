@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
 	"github.com/xyproto/algernon/lua/pure"
@@ -46,7 +47,7 @@ func (ac *algernonConfig) exportCommonFunctions(w http.ResponseWriter, req *http
 		datastruct.LoadKeyValue(L, userstate)
 
 		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
+		codelib.Load(L, userstate)
 	}
 
 	// For handling JSON data
@@ -157,7 +158,7 @@ func (ac *algernonConfig) runConfiguration(filename string, mux *http.ServeMux, 
 		datastruct.LoadKeyValue(L, userstate)
 
 		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
+		codelib.Load(L, userstate)
 	}
 
 	// For handling JSON data

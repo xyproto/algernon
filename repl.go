@@ -12,9 +12,9 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
-
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
@@ -578,7 +578,7 @@ func (ac *algernonConfig) exportLuaFunctionsForREPL(L *lua.LState, o *term.TextO
 		datastruct.LoadKeyValue(L, userstate)
 
 		// For saving and loading Lua functions
-		exportCodeLibrary(L, userstate)
+		codelib.Load(L, userstate)
 	}
 
 	// For handling JSON data

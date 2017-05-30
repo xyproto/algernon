@@ -1,4 +1,4 @@
-package main
+package codelib
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -154,7 +154,7 @@ var libMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to building a library of Lua code available
-func exportCodeLibrary(L *lua.LState, userstate pinterface.IUserState) {
+func Load(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 
 	// Register the Library class and the methods that belongs with it.
