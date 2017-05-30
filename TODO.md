@@ -55,6 +55,8 @@ Feature requests and issues for Go
 
 Various
 -------
+- [ ] Add a flag to minify all transmitted CSS/HTML/JS/JSON/SVG/XML files
+      https://github.com/tdewolff/minify
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
 - [ ] Draw inspiration from https://github.com/disintegration/bebop
 - [ ] Provide a Lua sample/command for listing files and directories with dates and sizes.
