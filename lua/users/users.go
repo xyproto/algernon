@@ -1,14 +1,15 @@
-package main
+package users
 
 import (
 	"net/http"
 
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
 
 // Make functions related to users and permissions available to Lua scripts
-func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
+func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments
 	L.SetGlobal("UserRights", L.NewFunction(func(L *lua.LState) int {
@@ -99,7 +100,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		if err != nil {
 			table = L.NewTable()
 		} else {
-			table = strings2table(L, usernames)
+			table = convert.Strings2table(L, usernames)
 		}
 		L.Push(table)
 		return 1 // number of results
@@ -140,7 +141,7 @@ func exportUserstate(w http.ResponseWriter, req *http.Request, L *lua.LState, us
 		if err != nil {
 			table = L.NewTable()
 		} else {
-			table = strings2table(L, usernames)
+			table = convert.Strings2table(L, usernames)
 		}
 		L.Push(table)
 		return 1 // number of results

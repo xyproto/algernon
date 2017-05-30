@@ -12,6 +12,10 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/convert"
+	"github.com/xyproto/algernon/lua/datastruct"
+
+	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
 )
@@ -452,7 +456,7 @@ func exportREPLSpecific(L *lua.LState) {
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
-			pprintToWriter(&buf, L.Get(i))
+			convert.PprintToWriter(&buf, L.Get(i))
 			if i != top {
 				buf.WriteString("\t")
 			}
@@ -568,10 +572,10 @@ func (ac *algernonConfig) exportLuaFunctionsForREPL(L *lua.LState, o *term.TextO
 		userstate := ac.perm.UserState()
 
 		// Simpleredis data structures
-		exportList(L, userstate)
-		exportSet(L, userstate)
-		exportHash(L, userstate)
-		exportKeyValue(L, userstate)
+		datastruct.LoadList(L, userstate)
+		datastruct.LoadSet(L, userstate)
+		datastruct.LoadHash(L, userstate)
+		datastruct.LoadKeyValue(L, userstate)
 
 		// For saving and loading Lua functions
 		exportCodeLibrary(L, userstate)
@@ -583,7 +587,7 @@ func (ac *algernonConfig) exportLuaFunctionsForREPL(L *lua.LState, o *term.TextO
 	exportJNode(L)
 
 	// Extras
-	exportExtras(L)
+	purelua.Load(L)
 
 	// Export pprint and scriptdir
 	exportREPLSpecific(L)

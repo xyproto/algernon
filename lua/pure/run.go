@@ -1,4 +1,5 @@
-package main
+// Lua functions for running commands and listing files
+package purelua
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -54,16 +55,9 @@ end
 `
 
 // Lua function for converting a table to JSON (string or int)
-func loadExtras(L *lua.LState) int {
+func Load(L *lua.LState) {
 	if err := L.DoString(luacode); err != nil {
 		log.Error("Could not load Lua extras!")
 		log.Error(err)
 	}
-	return 0 // number of results
-}
-
-func exportExtras(L *lua.LState) {
-	// Load extra Lua functions
-	//L.SetGlobal("extras", L.NewFunction(loadExtras))
-	loadExtras(L)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/jpath"
 	"github.com/yuin/gopher-lua"
 )
@@ -394,7 +395,7 @@ func exportJSONFunctions(L *lua.LState) {
 		//
 
 		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
-		mapinterface := table2interfacemap(table)
+		mapinterface := convert.Table2interfacemap(table)
 
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {

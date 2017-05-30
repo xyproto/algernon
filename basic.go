@@ -14,6 +14,7 @@ import (
 
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -33,7 +34,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Info" log type
 	L.SetGlobal("log", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L, false)
+		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
 		log.Info(buf.String())
 		return 0 // number of results
@@ -41,7 +42,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Warn" log type
 	L.SetGlobal("warn", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L, false)
+		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
 		log.Warn(buf.String())
 		return 0 // number of results
@@ -49,7 +50,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 
 	// Log text with the "Error" log type
 	L.SetGlobal("err", L.NewFunction(func(L *lua.LState) int {
-		buf := arguments2buffer(L, false)
+		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
 		log.Error(buf.String())
 		return 0 // number of results
@@ -74,7 +75,7 @@ func exportBasicSystemFunctions(L *lua.LState) {
 	// Convert Markdown to HTML
 	L.SetGlobal("markdown", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Convert the buffer to markdown and output the translated string
 		html := strings.TrimSpace(string(blackfriday.MarkdownCommon([]byte(buf.String()))))
 		L.Push(lua.LString(html))
@@ -129,7 +130,7 @@ func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Reques
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
-			pprintToWriter(&buf, L.Get(i))
+			convert.PprintToWriter(&buf, L.Get(i))
 			if i != top {
 				buf.WriteString("\t")
 			}
@@ -149,7 +150,7 @@ func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Reques
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
-			pprintToWriter(&buf, L.Get(i))
+			convert.PprintToWriter(&buf, L.Get(i))
 			if i != top {
 				buf.WriteString("\t")
 			}
@@ -298,7 +299,7 @@ func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Reques
 			m[key] = values[0]
 		}
 		// Convert the map to a table and return it
-		L.Push(map2table(L, m))
+		L.Push(convert.Map2table(L, m))
 		return 1 // number of results
 	}))
 
@@ -330,7 +331,7 @@ func (ac *algernonConfig) exportBasicWeb(w http.ResponseWriter, req *http.Reques
 			m[key] = values[0]
 		}
 		// Convert the map to a table and return it
-		L.Push(map2table(L, m))
+		L.Push(convert.Map2table(L, m))
 		return 1 // number of results
 	}))
 

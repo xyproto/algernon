@@ -17,6 +17,7 @@ import (
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 )
@@ -35,7 +36,7 @@ func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Convert the buffer to markdown and output the translated string
 		w.Write(blackfriday.MarkdownCommon([]byte(buf.String())))
 		return 0 // number of results
@@ -44,7 +45,7 @@ func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http
 	// Output text as rendered amber.
 	L.SetGlobal("aprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Use the buffer as a template.
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := amber.Compile(buf.String(), amber.Options{PrettyPrint: true, LineNumbers: false})
@@ -65,7 +66,7 @@ func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http
 	// Output text as rendered Pongo2
 	L.SetGlobal("poprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Use the buffer as a template.
 		// Options are "Pretty printing, but without line numbers."
 		tpl, err := pongo2.FromBytes(buf.Bytes())
@@ -91,7 +92,7 @@ func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http
 	// Output text as rendered GCSS
 	L.SetGlobal("gprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Transform GCSS to CSS and output the result.
 		// Ignoring the number of bytes written.
 		if _, err := gcss.Compile(w, &buf); err != nil {
@@ -108,7 +109,7 @@ func (ac *algernonConfig) exportRenderFunctions(w http.ResponseWriter, req *http
 	// Output text as rendered JSX
 	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
-		buf := arguments2buffer(L, true)
+		buf := convert.Arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
 		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
 		if err != nil {

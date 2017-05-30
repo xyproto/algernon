@@ -1,8 +1,9 @@
-package main
+package datastruct
 
 import (
 	"strings"
 
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
@@ -116,7 +117,7 @@ func hashGetAll(L *lua.LState) int {
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
-	L.Push(strings2table(L, all))
+	L.Push(convert.Strings2table(L, all))
 	return 1 // Number of returned values
 }
 
@@ -172,7 +173,7 @@ var hashMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportHash(L *lua.LState, userstate pinterface.IUserState) {
+func LoadHash(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 
 	// Register the hash map class and the methods that belongs with it.

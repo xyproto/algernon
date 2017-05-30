@@ -1,8 +1,9 @@
-package main
+package datastruct
 
 import (
 	"strings"
 
+	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
 )
@@ -69,7 +70,7 @@ func listGetAll(L *lua.LState) int {
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
-	L.Push(strings2table(L, all))
+	L.Push(convert.Strings2table(L, all))
 	return 1 // Number of returned values
 }
 
@@ -97,7 +98,7 @@ func listGetLastN(L *lua.LState) int {
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
-	L.Push(strings2table(L, results))
+	L.Push(convert.Strings2table(L, results))
 	return 1 // Number of returned values
 }
 
@@ -129,7 +130,7 @@ var listMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportList(L *lua.LState, userstate pinterface.IUserState) {
+func LoadList(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 
 	// Register the list class and the methods that belongs with it.

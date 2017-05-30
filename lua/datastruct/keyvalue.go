@@ -1,4 +1,4 @@
-package main
+package datastruct
 
 import (
 	"github.com/xyproto/pinterface"
@@ -118,7 +118,7 @@ var kvMethods = map[string]lua.LGFunction{
 }
 
 // Make functions related to HTTP requests and responses available to Lua scripts
-func exportKeyValue(L *lua.LState, userstate pinterface.IUserState) {
+func LoadKeyValue(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 
 	// Register the KeyValue class and the methods that belongs with it.
