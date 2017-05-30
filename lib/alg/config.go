@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lib/cache"
 	"github.com/xyproto/algernon/lib/platformdep"
 	"github.com/xyproto/algernon/lib/utils"
