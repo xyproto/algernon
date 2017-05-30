@@ -12,7 +12,7 @@ const (
 	defaultID = "__lua_code_library"
 
 	// Identifier for the Library class in Lua
-	lLibraryClass = "CODELIB"
+	Class = "CODELIB"
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a key/value).
@@ -139,7 +139,7 @@ func newCodeLibrary(L *lua.LState, creator pinterface.ICreator, id string) (*lua
 	// Create a new userdata struct
 	ud := L.NewUserData()
 	ud.Value = lualib
-	L.SetMetatable(ud, L.GetTypeMetatable(lLibraryClass))
+	L.SetMetatable(ud, L.GetTypeMetatable(Class))
 	return ud, nil
 }
 
@@ -158,7 +158,7 @@ func Load(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 
 	// Register the Library class and the methods that belongs with it.
-	mt := L.NewTypeMetatable(lLibraryClass)
+	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
 	L.SetFuncs(mt, libMethods)
 
