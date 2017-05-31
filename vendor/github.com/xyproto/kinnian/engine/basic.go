@@ -14,7 +14,6 @@ import (
 
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/xyproto/kinnian/utils"
 	"github.com/yuin/gopher-lua"
@@ -26,6 +25,8 @@ type FutureStatus struct {
 	code int // Buffered HTTP status code
 }
 
+// LoadBasicSystemFunctions loads functions related to logging, markdown and the
+// current server directory into the given Lua state
 func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 
 	// Return the version string
@@ -104,9 +105,10 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 
 }
 
-// Make functions related to HTTP requests and responses available to Lua scripts.
-// Filename can be an empty string.
-func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus, fs *datablock.FileStat) {
+// LoadBasicWeb loads functions related to handling requests, outputting data to
+// the browser, setting headers, pretty printing and dealing with the directory
+// where files are being served, into the given Lua state.
+func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
 
 	// Print text to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
@@ -367,7 +369,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("dofile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
 		luaFilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !fs.Exists(luaFilename) {
+		if !ac.fs.Exists(luaFilename) {
 			log.Error("Could not find:", luaFilename)
 			return 0 // number of results
 		}

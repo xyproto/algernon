@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/lua/codelib"
 	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/xyproto/kinnian/lua/datastruct"
@@ -19,12 +18,13 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Return a *lua.LState object that contains several exposed functions
-func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus, fs *datablock.FileStat) {
+// LoadCommonFunctions adds most of the available Lua functions in kinnian to
+// the given Lua state struct
+func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus) {
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
-	ac.LoadBasicWeb(w, req, L, filename, flushFunc, httpStatus, fs)
+	ac.LoadBasicWeb(w, req, L, filename, flushFunc, httpStatus)
 
 	// Make other basic functions available
 	ac.LoadBasicSystemFunctions(L)
@@ -39,7 +39,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		userstate := ac.perm.UserState()
 
 		// Functions for serving files in the same directory as a script
-		ac.LoadServeFile(w, req, L, filename, fs)
+		ac.LoadServeFile(w, req, L, filename)
 
 		// Make the functions related to userstate available to the Lua script
 		users.Load(w, req, L, userstate)
@@ -56,17 +56,17 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// For handling JSON data
 	jnode.LoadJSONFunctions(L)
-	ac.LoadJFile(L, filepath.Dir(filename), fs)
+	ac.LoadJFile(L, filepath.Dir(filename))
 	jnode.Load(L)
 
 	// Extras
-	purelua.Load(L)
+	pure.Load(L)
 
 	// pprint
 	//exportREPL(L)
 
 	// Plugins
-	ac.LoadPluginFunctions(L, nil, fs)
+	ac.LoadPluginFunctions(L, nil)
 
 	// Cache
 	ac.LoadCacheFunctions(L)
@@ -75,10 +75,10 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 	upload.Load(L, w, req, filepath.Dir(filename))
 }
 
-// Run a Lua file as a HTTP handler. Also has access to the userstate and permissions.
-// Returns an error if there was a problem with running the lua script, otherwise nil.
-// Also returns a header map
-func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus, fs *datablock.FileStat) error {
+// RunLua uses a Lua file as the HTTP handler. Also has access to the userstate
+// and permissions. Returns an error if there was a problem with running the lua
+// script, otherwise nil.
+func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus) error {
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -123,22 +123,23 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 
 	// Export functions to the Lua state
 	// Flush can be an uninitialized channel, it is handled in the function.
-	ac.LoadCommonFunctions(w, req, filename, L, flushFunc, fust, fs)
+	ac.LoadCommonFunctions(w, req, filename, L, flushFunc, fust)
 
 	// Run the script and return the error value.
 	// Logging and/or HTTP response is handled elsewhere.
 	return L.DoFile(filename)
 }
 
-// Run a Lua file as a configuration script. Also has access to the userstate and permissions.
-// Returns an error if there was a problem with running the lua script, otherwise nil.
-// perm can be nil, but then several Lua functions will not be exposed
+// RunConfiguration runs a Lua file as a configuration script. Also has access
+// to the userstate and permissions. Returns an error if there was a problem
+// with running the lua script, otherwise nil. perm can be nil, but then several
+// Lua functions will not be exposed.
 //
-// The idea is not to change the Lua struct or the luapool, but to set the configuration variables
-// with the given Lua configuration script.
+// The idea is not to change the Lua struct or the luapool, but to set the
+// configuration variables with the given Lua configuration script.
 //
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
-func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool, fs *datablock.FileStat) error {
+func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -153,7 +154,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 		userstate := ac.perm.UserState()
 
 		// Server configuration functions
-		ac.LoadServerConfigFunctions(L, filename, fs)
+		ac.LoadServerConfigFunctions(L, filename)
 
 		// Simpleredis data structures (could be used for storing server stats)
 		datastruct.LoadList(L, userstate)
@@ -167,21 +168,21 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// For handling JSON data
 	jnode.LoadJSONFunctions(L)
-	ac.LoadJFile(L, filepath.Dir(filename), fs)
+	ac.LoadJFile(L, filepath.Dir(filename))
 	jnode.Load(L)
 
 	// Extras
-	purelua.Load(L)
+	pure.Load(L)
 
 	// Plugins
-	ac.LoadPluginFunctions(L, nil, fs)
+	ac.LoadPluginFunctions(L, nil)
 
 	// Cache
 	ac.LoadCacheFunctions(L)
 
 	if withHandlerFunctions {
 		// Lua HTTP handlers
-		ac.LoadLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme, fs)
+		ac.LoadLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
 	}
 
 	// Run the script
@@ -199,15 +200,14 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 	return nil
 }
 
-/*
- * Return the functions available in the given Lua code as
+/*LuaFunctionMap returns the functions available in the given Lua code as
  * functions in a map that can be used by templates.
  *
  * Note that the lua functions must only accept and return strings
  * and that only the first returned value will be accessible.
  * The Lua functions may take an optional number of arguments.
  */
-func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string, fs *datablock.FileStat) (template.FuncMap, error) {
+func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string) (template.FuncMap, error) {
 	ac.pongomutex.Lock()
 	defer ac.pongomutex.Unlock()
 
@@ -219,7 +219,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 	funcs := make(template.FuncMap)
 
 	// Give no filename (an empty string will be handled correctly by the function).
-	ac.LoadCommonFunctions(w, req, filename, L, nil, nil, fs)
+	ac.LoadCommonFunctions(w, req, filename, L, nil, nil)
 
 	// Run the script
 	if err := L.DoString(string(luadata)); err != nil {
@@ -275,7 +275,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-					ac.LoadCommonFunctions(w, req, filename, L2, nil, nil, fs)
+					ac.LoadCommonFunctions(w, req, filename, L2, nil, nil)
 
 					// Push the Lua function to run
 					L2.Push(luaFunc)

@@ -17,7 +17,6 @@ import (
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/console"
 	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/xyproto/kinnian/utils"
@@ -25,7 +24,8 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Check if the given data is valid GCSS. The error value is returned on the channel.
+// ValidGCSS checks if the given data is valid GCSS.
+// The error value is returned on the channel.
 func ValidGCSS(gcssdata []byte, errorReturn chan error) {
 	buf := bytes.NewBuffer(gcssdata)
 	var w bytes.Buffer
@@ -33,7 +33,8 @@ func ValidGCSS(gcssdata []byte, errorReturn chan error) {
 	errorReturn <- err
 }
 
-// Expose functions that are related to rendering text, to the given Lua state
+// LoadRenderFunctions adds functions related to rendering text to the given
+// Lua state struct
 func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
 
 	// Output Markdown as HTML
@@ -142,8 +143,8 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 
 }
 
-// Write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string, fs *datablock.FileStat) {
+// MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
+func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
 	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
 
@@ -212,7 +213,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
-	if fs.Exists(GCSSfilename) {
+	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
@@ -242,7 +243,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	additionalCSSfile := given["css"]
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
-		if ac.markdownMode && fs.Exists(additionalCSSfile) {
+		if ac.markdownMode && ac.fs.Exists(additionalCSSfile) {
 			// Cache the CSS only if Markdown should be cached
 			cssblock, err := ac.cache.Read(additionalCSSfile, ac.shouldCache(".md"))
 			if err != nil {
@@ -283,23 +284,23 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = ac.insertAutoRefresh(req, htmldata)
+		htmldata = ac.InsertAutoRefresh(req, htmldata)
 	}
 
 	// Write the rendered Markdown page to the client
-	dataToClient(w, req, filename, htmldata)
+	DataToClient(w, req, filename, htmldata)
 }
 
-// Write the given source bytes as Amber converted to HTML, to a writer.
-// the filename is only used if there are errors.
-func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap, fs *datablock.FileStat) {
+// PongoPage write the given source bytes (ina Pongo2) converted to HTML, to a writer.
+// The filename is only used in error messages, if any.
+func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap) {
 
 	var buf bytes.Buffer
 
 	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
-	if fs.Exists(GCSSfilename) {
+	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
@@ -428,7 +429,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		// If the auto-refresh feature has been enabled
 		if ac.autoRefreshMode {
 			// Insert JavaScript for refreshing the page into the generated HTML
-			changedBytes := ac.insertAutoRefresh(req, buf.Bytes())
+			changedBytes := ac.InsertAutoRefresh(req, buf.Bytes())
 
 			buf.Reset()
 			_, err := buf.Write(changedBytes)
@@ -450,18 +451,18 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Write the rendered template to the client
-	dataToClient(w, req, filename, buf.Bytes())
+	DataToClient(w, req, filename, buf.Bytes())
 }
 
-// Write the given source bytes as Amber converted to HTML, to a writer.
-// the filename is only used if there are errors.
-func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap, fs *datablock.FileStat) {
+// AmberPage the given source bytes (in Amber) converted to HTML, to a writer.
+// The filename is only used in error messages, if any.
+func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap) {
 
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
 	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
-	if fs.Exists(GCSSfilename) {
+	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
 			if err != nil {
@@ -522,7 +523,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		changedBytes := ac.insertAutoRefresh(req, buf.Bytes())
+		changedBytes := ac.InsertAutoRefresh(req, buf.Bytes())
 
 		buf.Reset()
 		_, err := buf.Write(changedBytes)
@@ -541,11 +542,11 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	buf = *changedBuf
 
 	// Write the rendered template to the client
-	dataToClient(w, req, filename, buf.Bytes())
+	DataToClient(w, req, filename, buf.Bytes())
 }
 
-// Write the given source bytes as GCSS converted to CSS, to a writer.
-// filename is only used if there are errors.
+// GCSSPage writes the given source bytes (in GCSS) converted to CSS, to a writer.
+// The filename is only used in the error message, if any.
 func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename string, gcssdata []byte) {
 	var buf bytes.Buffer
 	if _, err := gcss.Compile(&buf, bytes.NewReader(gcssdata)); err != nil {
@@ -557,9 +558,11 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		return
 	}
 	// Write the resulting CSS to the client
-	dataToClient(w, req, filename, buf.Bytes())
+	DataToClient(w, req, filename, buf.Bytes())
 }
 
+// JSXPage writes the given source bytes (in JSX) converted to JS, to a writer.
+// The filename is only used in the error message, if any.
 func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
 	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
@@ -586,12 +589,12 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 			return
 		}
 		// Write the generated data to the client
-		dataToClient(w, req, filename, data)
+		DataToClient(w, req, filename, data)
 	}
 }
 
-// Write the given source bytes as SCSS converted to CSS, to a writer.
-// filename is only used if there are errors.
+// SCSSPage writes the given source bytes (in SCSS) converted to CSS, to a writer.
+// The filename is only used in the error message, if any.
 func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
 	// TODO: Gather stderr and print with log.Errorf if needed
 	o := console.Output{}
@@ -614,5 +617,5 @@ func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		return
 	}
 	// Write the resulting CSS to the client
-	dataToClient(w, req, filename, []byte(cssString))
+	DataToClient(w, req, filename, []byte(cssString))
 }

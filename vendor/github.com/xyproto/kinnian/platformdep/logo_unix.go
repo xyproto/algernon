@@ -70,7 +70,7 @@ func insertText(s, tabs string, linenr, offset int, message string, removal int)
 	return s
 }
 
-// Return ANSI graphics with the current version number embedded in the text
+// Banner returns ANSI graphics with the current version number embedded in the text
 func Banner(versionString, description string) string {
 	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"

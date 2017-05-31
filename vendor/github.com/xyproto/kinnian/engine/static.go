@@ -63,9 +63,9 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 	}
 }
 
-// Convenience function for serving only a single file
-// (quick and easy way to view a README.md file)
-func (ac *Config) ServeStaticFile(filename, colonPort string, fs *datablock.FileStat) {
+// ServeStaticFile is a convenience function for serving only a single file.
+// It can be used as a quick and easy way to view a README.md file.
+func (ac *Config) ServeStaticFile(filename, colonPort string) {
 	log.Info("Single file mode. Not using the regular parameters.")
 
 	cancelChannel := make(chan bool, 1)
@@ -77,7 +77,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string, fs *datablock.File
 	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", ac.versionString)
-		ac.FilePage(w, req, filename, ac.defaultLuaDataFilename, fs)
+		ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
 	})
 	HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+colonPort)
 

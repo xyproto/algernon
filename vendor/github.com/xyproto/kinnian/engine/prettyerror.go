@@ -16,7 +16,7 @@ const (
 	postHighlight = "</font>"
 )
 
-// Highlight a block of HTML by adding <pre><code> and styling
+// HighlightCode highlights a block of HTML by adding <pre><code> and styling
 func HighlightCode(htmlbody string) string {
 	// Change <pre><code to <pre class="prettyprint"><code
 	//htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
@@ -59,7 +59,7 @@ func errorPageTitle(lang string) string {
 	}
 }
 
-// Return an informative error page to the user
+// PrettyError serves an informative error page to the user
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
 func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
@@ -190,7 +190,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 
 	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = ac.insertAutoRefresh(req, htmldata)
+		htmldata = ac.InsertAutoRefresh(req, htmldata)
 	}
 
 	w.Write(htmldata)

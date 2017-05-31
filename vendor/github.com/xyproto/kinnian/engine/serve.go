@@ -20,16 +20,16 @@ var (
 	completed         bool
 )
 
-// Add a function to the list of functions that will be ran at shutdown
+// AtShutdown adds a function to the list of functions that will be ran at shutdown
 func AtShutdown(shutdownFunction func()) {
 	mut.Lock()
 	defer mut.Unlock()
 	shutdownFunctions = append(shutdownFunctions, shutdownFunction)
 }
 
-// Generate a function that will run the postponed shutdown functions
-// Note that gracefulServer can be nil. It's only used for finding out if the
-// server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
+// GenerateShutdownFunction generates a function that will run the postponed
+// shutdown functions.  Note that gracefulServer can be nil. It's only used for
+// finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
 func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
 		mut.Lock()
@@ -68,7 +68,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 	}
 }
 
-// Create a new graceful server configuration
+// NewGracefulServer creates a new graceful server configuration
 func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr string) *graceful.Server {
 	// Server configuration
 	s := &http.Server{

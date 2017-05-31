@@ -124,7 +124,7 @@ var setMethods = map[string]lua.LGFunction{
 	"clear":      setClear,
 }
 
-// Make functions related to HTTP requests and responses available to Lua scripts
+// LoadSet makes functions related to HTTP requests and responses available to Lua scripts
 func LoadSet(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 

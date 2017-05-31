@@ -117,7 +117,7 @@ var kvMethods = map[string]lua.LGFunction{
 	"clear":      kvClear,
 }
 
-// Make functions related to HTTP requests and responses available to Lua scripts
+// LoadKeyValue makes functions related to HTTP requests and responses available to Lua scripts
 func LoadKeyValue(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 

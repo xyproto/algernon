@@ -1,9 +1,11 @@
+// Package cachemode provides ways to deal with different cache modes
 package cachemode
 
+// Setting represents a cache mode setting
 type Setting int
 
+// Possible cache modes
 const (
-	// Possible cache modes
 	Unset       = iota // cache mode has not been set
 	On                 // cache everything
 	Development        // cache everything, except Amber, Lua, GCSS and Markdown
@@ -11,12 +13,11 @@ const (
 	Images             // cache images (png, jpg, gif, svg)
 	Small              // only cache small files (<=64KB) // 64 * 1024
 	Off                // cache nothing
+	Default     = On
 )
 
-const Default = On
-
 var (
-	// Table of cache mode setting names
+	// Names is a map of cache mode setting string representations
 	Names = map[Setting]string{
 		Unset:       "unset",
 		On:          "On",
@@ -28,7 +29,7 @@ var (
 	}
 )
 
-// newCacheModeSetting creates a CacheModeSetting based on a variety of string options, like "on" and "off".
+// New creates a CacheModeSetting based on a variety of string options, like "on" and "off".
 func New(mode string) Setting {
 	switch mode {
 	case "everything", "all", "on", "1", "enabled", "yes", "enable": // Cache everything.
@@ -48,7 +49,7 @@ func New(mode string) Setting {
 	}
 }
 
-// Return the name of the cache mode setting, if set
+// String returns the name of the cache mode setting, if set
 func (cms Setting) String() string {
 	for k, v := range Names {
 		if k == cms {

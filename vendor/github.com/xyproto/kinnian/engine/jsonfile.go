@@ -242,8 +242,8 @@ var jfileMethods = map[string]lua.LGFunction{
 	"string":     jfileJSON, // undocumented
 }
 
-// Make functions related to building a library of Lua code available
-func (ac *Config) LoadJFile(L *lua.LState, scriptdir string, fs *datablock.FileStat) {
+// LoadJFile makes functions related to building a library of Lua code available
+func (ac *Config) LoadJFile(L *lua.LState, scriptdir string) {
 
 	// Register the JFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lJFileClass)
@@ -256,7 +256,7 @@ func (ac *Config) LoadJFile(L *lua.LState, scriptdir string, fs *datablock.FileS
 		filename := L.ToString(1)
 
 		// Construct a new JFile
-		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename), ac.defaultPermissions, fs)
+		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename), ac.defaultPermissions, ac.fs)
 		if err != nil {
 			log.Error(err)
 			L.Push(lua.LString(err.Error()))

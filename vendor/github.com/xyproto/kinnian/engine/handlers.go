@@ -29,12 +29,13 @@ var (
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.amber", "index.tmpl", "index.po2"}
 )
 
-// Check if the client supports gzip compressed responses
-func clientCanGzip(req *http.Request) bool {
+// ClientCanGzip checks if the client supports gzip compressed responses
+func ClientCanGzip(req *http.Request) bool {
 	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
 }
 
-func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filename, ext string, fs *datablock.FileStat) {
+// PongoHandler renders and serves a Pongo2 template
+func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filename, ext string) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	pongoblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
@@ -49,15 +50,15 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	// Make the functions in luaDataFilename available for the Pongo2 template
 
 	luafilename := filepath.Join(filepath.Dir(filename), ac.defaultLuaDataFilename)
-	if fs.Exists(ac.defaultLuaDataFilename) {
+	if ac.fs.Exists(ac.defaultLuaDataFilename) {
 		luafilename = ac.defaultLuaDataFilename
 	}
-	if fs.Exists(luafilename) {
+	if ac.fs.Exists(luafilename) {
 		// Extract the function map from luaDataFilenname in a goroutine
 		errChan := make(chan error)
 		funcMapChan := make(chan template.FuncMap)
 
-		go ac.Lua2funcMap(w, req, filename, luafilename, ext, errChan, funcMapChan, fs)
+		go ac.Lua2funcMap(w, req, filename, luafilename, ext, errChan, funcMapChan)
 		funcs := <-funcMapChan
 		err = <-errChan
 
@@ -79,7 +80,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 
 		// Render the Pongo2 page, using functions from luaDataFilename, if available
 		ac.pongomutex.Lock()
-		ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs, fs)
+		ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs)
 		ac.pongomutex.Unlock()
 
 		return
@@ -93,10 +94,11 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	// Use the Pongo2 template without any Lua functions
 	ac.pongomutex.Lock()
 	funcs := make(template.FuncMap)
-	ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs, fs)
+	ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs)
 	ac.pongomutex.Unlock()
 }
 
+// ReadAndLogErrors tries to read a file, and logs an error if it could not be read
 func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) (*datablock.DataBlock, error) {
 	byteblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
@@ -109,16 +111,15 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 	return byteblock, err
 }
 
-// When serving a file. The file must exist. Must be given a full filename.
-func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, dataFilename string, fs *datablock.FileStat) {
+// FilePage tries to serve a single file. The file must exist. Must be given a full filename.
+func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, dataFilename string) {
 
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
 
-	// Mimetypes
+	// Use the file extension for setting the mimetype
 	ext := strings.ToLower(filepath.Ext(filename))
-
 	switch ext {
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
@@ -136,12 +137,12 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// Get the bytes from the datablock
 			htmldata := htmlblock.MustData()
 			// Insert JavaScript for refreshing the page, into the HTML
-			htmldata = ac.insertAutoRefresh(req, htmldata)
+			htmldata = ac.InsertAutoRefresh(req, htmldata)
 			// Write the data to the client
-			dataToClient(w, req, filename, htmldata)
+			DataToClient(w, req, filename, htmldata)
 		} else {
 			// Serve the file
-			htmlblock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
+			htmlblock.ToClient(w, req, filename, ClientCanGzip(req), gzipThreshold)
 		}
 
 		return
@@ -151,7 +152,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
 			// Render the markdown page
-			ac.MarkdownPage(w, req, markdownblock.MustData(), filename, fs)
+			ac.MarkdownPage(w, req, markdownblock.MustData(), filename)
 		}
 		return
 
@@ -175,7 +176,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		if luablock.HasData() {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename, fs)
+			funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename)
 			if err != nil {
 				if ac.debugMode {
 					// Use the Lua filename as the title
@@ -202,12 +203,12 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 
 		// Render the Amber page, using functions from luaDataFilename, if available
-		ac.AmberPage(w, req, filename, amberblock.MustData(), funcs, fs)
+		ac.AmberPage(w, req, filename, amberblock.MustData(), funcs)
 
 		return
 
 	case ".po2", ".pongo2", ".tpl", ".tmpl":
-		ac.PongoHandler(w, req, filename, ext, fs)
+		ac.PongoHandler(w, req, filename, ext)
 		return
 
 	case ".gcss":
@@ -250,7 +251,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
-			if err := ac.RunLua(recorder, req, filename, flushFunc, httpStatus, fs); err != nil {
+			if err := ac.RunLua(recorder, req, filename, flushFunc, httpStatus); err != nil {
 				errortext := err.Error()
 				fileblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 				if err != nil {
@@ -276,7 +277,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				Flush(w)
 			}
 			// Run the lua script, with the flush feature
-			if err := ac.RunLua(w, req, filename, flushFunc, nil, fs); err != nil {
+			if err := ac.RunLua(w, req, filename, flushFunc, nil); err != nil {
 				// Output the non-fatal error message to the log
 				log.Error("Error in ", filename+":", err)
 			}
@@ -305,12 +306,12 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	// Read the file (possibly in compressed format, straight from the cache)
 	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
 		// Serve the file
-		dataBlock.ToClient(w, req, filename, clientCanGzip(req), gzipThreshold)
+		dataBlock.ToClient(w, req, filename, ClientCanGzip(req), gzipThreshold)
 	}
 
 }
 
-// Server headers that are set before anything else
+// ServerHeaders sets the HTTP headers that are set before anything else
 func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 	w.Header().Set("Server", ac.serverHeaderName)
 	if !ac.autoRefreshMode {
@@ -322,8 +323,9 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 	// w.Header().Set("X-Powered-By", name+"/"+version)
 }
 
-// Serve all files in the current directory, or only a few select filetypes (html, css, js, png and txt)
-func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool, fs *datablock.FileStat) {
+// RegisterHandlers configures the given mutex and request limiter to handle
+// HTTP requests
+func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
@@ -353,9 +355,9 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		if strings.HasSuffix(filename, utils.Pathsep) {
 			noslash = filename[:len(filename)-1]
 		}
-		hasdir := fs.Exists(filename) && fs.IsDir(filename)
+		hasdir := ac.fs.Exists(filename) && ac.fs.IsDir(filename)
 		dirname := filename
-		hasfile := fs.Exists(noslash)
+		hasfile := ac.fs.Exists(noslash)
 
 		// Set the server headers, if not disabled
 		if !ac.noHeaders {
@@ -364,11 +366,11 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		// Share the directory or file
 		if hasdir {
-			ac.DirPage(w, req, servedir, dirname, ac.defaultTheme, fs)
+			ac.DirPage(w, req, servedir, dirname, ac.defaultTheme)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			ac.FilePage(w, req, noslash, ac.defaultLuaDataFilename, fs)
+			ac.FilePage(w, req, noslash, ac.defaultLuaDataFilename)
 			return
 		}
 		// Not found

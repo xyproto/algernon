@@ -1,3 +1,4 @@
+// Package codelib provides Lua functions for storing Lua functions in a database
 package codelib
 
 import (
@@ -11,7 +12,7 @@ import (
 const (
 	defaultID = "__lua_code_library"
 
-	// Identifier for the Library class in Lua
+	// Class identifies the Library class in Lua
 	Class = "CODELIB"
 )
 
@@ -153,7 +154,7 @@ var libMethods = map[string]lua.LGFunction{
 	"clear":      libClear,
 }
 
-// Make functions related to building a library of Lua code available
+// Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 

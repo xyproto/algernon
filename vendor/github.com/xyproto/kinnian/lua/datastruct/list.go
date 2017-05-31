@@ -129,7 +129,7 @@ var listMethods = map[string]lua.LGFunction{
 	"clear":      listClear,
 }
 
-// Make functions related to HTTP requests and responses available to Lua scripts
+// LoadList makes functions related to HTTP requests and responses available to Lua scripts
 func LoadList(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 

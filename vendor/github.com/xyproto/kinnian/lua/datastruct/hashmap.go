@@ -172,7 +172,7 @@ var hashMethods = map[string]lua.LGFunction{
 	"clear":      hashClear,
 }
 
-// Make functions related to HTTP requests and responses available to Lua scripts
+// LoadHash makes functions related to HTTP requests and responses available to Lua scripts
 func LoadHash(L *lua.LState, userstate pinterface.IUserState) {
 	creator := userstate.Creator()
 

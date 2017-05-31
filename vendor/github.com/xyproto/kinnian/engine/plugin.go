@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/natefinch/pie"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/term"
 	"github.com/yuin/gopher-lua"
 )
@@ -29,8 +28,9 @@ func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
 	return luahelp, lp.client.Call(namespace+".Help", "", &luahelp)
 }
 
-// Takes a Lua state and a term Output (should be nil if not in a REPL)
-func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput, fs *datablock.FileStat) {
+// LoadPluginFunctions takes a Lua state and a TextOutput
+// (the TextOutput struct should be nil if not in a REPL)
+func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput) {
 
 	// Expose the functionality of a given plugin (executable file).
 	// If on Windows, ".exe" is added to the path.
@@ -41,7 +41,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput, fs *dat
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.Exists(path) {
+		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
@@ -110,7 +110,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput, fs *dat
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.Exists(path) {
+		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
@@ -158,7 +158,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput, fs *dat
 		if runtime.GOOS == "windows" {
 			path = path + ".exe"
 		}
-		if !fs.Exists(path) {
+		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 

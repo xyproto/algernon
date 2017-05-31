@@ -1,3 +1,4 @@
+// Package engine provides the server configuration struct and several functions for serving files over HTTP
 package engine
 
 import (
@@ -25,6 +26,11 @@ import (
 	"github.com/xyproto/unzip"
 )
 
+// Version number. Stable API within major version numbers.
+const Version = 1.0
+
+// Config is the main structure for the Algernon server.
+// It contains all the state and settings.
 type Config struct {
 
 	// For convenience. Set in the main function.
@@ -184,9 +190,20 @@ type Config struct {
 
 	// Mime info
 	mimereader *mime.Reader
+
+	// For checking if files exists. FileStat cache.
+	fs *datablock.FileStat
 }
 
-func New(versionString, description string) *Config {
+// ErrVersion is returned when the initialization quits because all that is done
+// is showing version information
+var (
+	ErrVersion  = errors.New("only showing version information")
+	ErrDatabase = errors.New("could not find a usable database backend")
+)
+
+// New creates a new server configuration based using the default values
+func New(versionString, description string) (*Config, error) {
 	ac := &Config{
 		shutdownTimeout: 10 * time.Second,
 
@@ -229,18 +246,29 @@ func New(versionString, description string) *Config {
 		versionString: versionString,
 		description:   description,
 	}
-	ac.initFilesAndCache()
+	if err := ac.initFilesAndCache(); err != nil {
+		return nil, err
+	}
 	ac.initializeMime()
 	ac.setupLogging()
-	return ac
+
+	// File stat cache
+	ac.fs = datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
+
+	return ac, nil
+}
+
+// SetFileStatCache can be used to set a different FileStat cache than the default one
+func (ac *Config) SetFileStatCache(fs *datablock.FileStat) {
+	ac.fs = fs
 }
 
 // Initialize a temporary directory, handle flags, output version and handle profiling
-func (ac *Config) initFilesAndCache() {
+func (ac *Config) initFilesAndCache() error {
 	// Temporary directory that might be used for logging, databases or file extraction
 	serverTempDir, err := ioutil.TempDir("", "algernon")
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	ac.serverTempDir = serverTempDir
 
@@ -252,14 +280,14 @@ func (ac *Config) initFilesAndCache() {
 		if !ac.quietMode {
 			fmt.Println(ac.versionString)
 		}
-		os.Exit(0)
+		return ErrVersion
 	}
 
 	// CPU profiling
 	if ac.profileCPU != "" {
 		f, errProfile := os.Create(ac.profileCPU)
 		if errProfile != nil {
-			log.Fatal(errProfile)
+			return errProfile
 		}
 		go func() {
 			log.Info("Profiling CPU usage")
@@ -276,7 +304,8 @@ func (ac *Config) initFilesAndCache() {
 		AtShutdown(func() {
 			f, errProfile := os.Create(ac.profileMem)
 			if errProfile != nil {
-				log.Fatal(errProfile)
+				// Fatal is okay here, since it's inside the anonymous shutdown function
+				log.Fatalln(errProfile)
 			}
 			defer f.Close()
 			log.Info("Saving heap profile to ", ac.profileMem)
@@ -288,6 +317,7 @@ func (ac *Config) initFilesAndCache() {
 	// be used for reading files, also when caching is disabled).
 	// The final argument is for compressing with "fast" instead of "best".
 	ac.cache = datablock.NewFileCache(ac.cacheSize, ac.cacheCompression, ac.cacheMaxEntitySize, ac.cacheCompressionSpeed)
+	return nil
 }
 
 func (ac *Config) setupLogging() {
@@ -312,7 +342,7 @@ func (ac *Config) setupLogging() {
 	}
 }
 
-// Remove the temporary directory
+// Close removes the temporary directory
 func (ac *Config) Close() {
 	os.RemoveAll(ac.serverTempDir)
 }
@@ -385,15 +415,11 @@ func (ac *Config) shouldCache(ext string) bool {
 	}
 }
 
-// Serves and then quits
-// TODO: Rewrite to return an error instead
-func (ac *Config) MustServe(mux *http.ServeMux) {
+// MustServe serves files
+func (ac *Config) MustServe(mux *http.ServeMux) error {
 	var err error
 
 	defer ac.Close()
-
-	// Struct for reading from the filesystem, with the possibility of caching
-	fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
 
 	// Output what we are attempting to access and serve
 	if ac.verboseMode {
@@ -401,26 +427,26 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 	}
 
 	// Check if the given directory really is a directory
-	if !fs.IsDir(ac.serverDirOrFilename) {
+	if !ac.fs.IsDir(ac.serverDirOrFilename) {
 		// It is not a directory
 		serverFile := ac.serverDirOrFilename
 		// Check if the file exists
-		if fs.Exists(serverFile) {
+		if ac.fs.Exists(serverFile) {
 			if ac.markdownMode {
 				// Serve the given Markdown file as a static HTTP server
-				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort, fs)
-				return
+				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort)
+				return nil
 			}
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(serverFile)) {
 			case ".md", ".markdown":
 				// Serve the given Markdown file as a static HTTP server
-				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort, fs)
-				return
+				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort)
+				return nil
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
 				if extractErr := unzip.Extract(serverFile, ac.serverTempDir); extractErr != nil {
-					log.Fatalln(extractErr)
+					return extractErr
 				}
 				// Use the directory where the file was extracted as the server directory
 				ac.serverDirOrFilename = ac.serverTempDir
@@ -428,7 +454,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 				// directory of the newly extracted ZIP file.
 				if filenames := utils.GetFilenames(ac.serverDirOrFilename); len(filenames) == 1 {
 					fullPath := filepath.Join(ac.serverDirOrFilename, filenames[0])
-					if fs.IsDir(fullPath) {
+					if ac.fs.IsDir(fullPath) {
 						// Use this as the server directory instead
 						ac.serverDirOrFilename = fullPath
 					}
@@ -437,7 +463,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 				// directory, register them.
 				for _, filename := range ac.serverConfigurationFilenames {
 					configFilename := filepath.Join(ac.serverDirOrFilename, filename)
-					if fs.Exists(configFilename) {
+					if ac.fs.Exists(configFilename) {
 						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
 					}
 				}
@@ -454,7 +480,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 				ac.singleFileMode = true
 			}
 		} else {
-			ac.fatalExit(errors.New("File does not exist: " + serverFile))
+			return errors.New("File does not exist: " + serverFile)
 		}
 	}
 
@@ -484,7 +510,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 		// Connect to a database and retrieve a Permissions struct
 		ac.perm, err = ac.DatabaseBackend()
 		if err != nil {
-			log.Fatalln("Could not find a usable database backend.")
+			return ErrDatabase
 		}
 	}
 
@@ -511,20 +537,18 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 	// The scripts may change global variables.
 	var ranConfigurationFilenames []string
 	for _, filename := range ac.serverConfigurationFilenames {
-		if fs.Exists(filename) {
+		if ac.fs.Exists(filename) {
 			if ac.verboseMode {
 				log.Info("Running configuration file: " + filename)
 			}
 			withHandlerFunctions := true
-			if errConf := ac.RunConfiguration(filename, mux, withHandlerFunctions, fs); errConf != nil {
+			if errConf := ac.RunConfiguration(filename, mux, withHandlerFunctions); errConf != nil {
 				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
-					ac.fatalExit(errConf)
-				} else {
-					if ac.verboseMode {
-						log.Info("Skipping " + filename + " because the database backend is not in use.")
-					}
-
+					return errConf
+				}
+				if ac.verboseMode {
+					log.Info("Skipping " + filename + " because the database backend is not in use.")
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
@@ -544,13 +568,13 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 			fmt.Println("Running Lua Server File")
 		}
 		withHandlerFunctions := true
-		if errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions, fs); errLua != nil {
+		if errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions); errLua != nil {
 			log.Error("Error in Lua server script: " + ac.luaServerFilename)
-			ac.fatalExit(errLua)
+			return errLua
 		}
 	} else {
 		// Register HTTP handler functions
-		ac.RegisterHandlers(mux, "/", ac.serverDirOrFilename, ac.serverAddDomain, fs)
+		ac.RegisterHandlers(mux, "/", ac.serverDirOrFilename, ac.serverAddDomain)
 	}
 
 	// Set the values that has not been set by flags nor scripts
@@ -616,7 +640,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 	// The Lua REPL
 	if !ac.serverMode {
 		// If the REPL uses readline, the SIGWINCH signal is handled there
-		go ac.REPL(ready, done, fs)
+		go ac.REPL(ready, done)
 	} else {
 		// Ignore SIGWINCH if we are not going to use a REPL
 		platformdep.IgnoreTerminalResizeSignal()
@@ -626,7 +650,5 @@ func (ac *Config) MustServe(mux *http.ServeMux) {
 	defer ac.GenerateShutdownFunction(nil)()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS
-	if err := ac.Serve(mux, done, ready); err != nil {
-		ac.fatalExit(err)
-	}
+	return ac.Serve(mux, done, ready)
 }

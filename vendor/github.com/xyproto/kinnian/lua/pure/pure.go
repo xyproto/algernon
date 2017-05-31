@@ -1,5 +1,5 @@
-// Lua functions for running commands and listing files
-package purelua
+// Package pure provides Lua functions for running commands and listing files
+package pure
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -54,7 +54,8 @@ function dir(t)
 end
 `
 
-// Lua function for converting a table to JSON (string or int)
+// Load makes functions for running commands, python code or listing files to
+// the given Lua state struct: py, run and dir
 func Load(L *lua.LState) {
 	if err := L.DoString(luacode); err != nil {
 		log.Error("Could not load Lua extras!")

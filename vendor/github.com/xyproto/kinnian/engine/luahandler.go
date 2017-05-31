@@ -8,13 +8,13 @@ import (
 
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/utils"
 	"github.com/yuin/gopher-lua"
 )
 
-// Make functions related to handling HTTP requests available to Lua scripts
-func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, fs *datablock.FileStat) {
+// LoadLuaHandlerFunctions makes functions related to handling HTTP requests
+// available to Lua scripts
+func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
 
 	luahandlermutex := &sync.RWMutex{}
 
@@ -30,7 +30,7 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
 			luahandlermutex.Lock()
-			ac.LoadCommonFunctions(w, req, filename, L, nil, httpStatus, fs)
+			ac.LoadCommonFunctions(w, req, filename, L, nil, httpStatus)
 			luahandlermutex.Unlock()
 
 			// Then run the given Lua function
@@ -59,7 +59,7 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
 
-		ac.RegisterHandlers(mux, handlePath, rootdir, addDomain, fs)
+		ac.RegisterHandlers(mux, handlePath, rootdir, addDomain)
 
 		return 0 // number of results
 	}))

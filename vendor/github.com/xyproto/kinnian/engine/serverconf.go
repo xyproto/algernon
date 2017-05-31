@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/utils"
 	postgres "github.com/xyproto/permissionHSTORE"
 	bolt "github.com/xyproto/permissionbolt"
@@ -21,6 +20,7 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+// Info returns a string with various info about the current configuration
 func (ac *Config) Info() string {
 	var buf bytes.Buffer
 
@@ -91,9 +91,13 @@ func (ac *Config) Info() string {
 	return infoString[:len(infoString)-1]
 }
 
-// Make functions related to server configuration and permissions available
-// Can not handle perm == nil
-func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string, fs *datablock.FileStat) {
+// LoadServerConfigFunctions makes functions related to server configuration and
+// permissions available to the given Lua struct.
+func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) error {
+
+	if ac.perm == nil {
+		return errors.New("perm is nil when loading server config functions")
+	}
 
 	// Set a default host and port. Maybe useful for alg applications.
 	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
@@ -130,7 +134,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string, fs *
 		// Custom handler for when permissions are denied
 		ac.perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request, without caching
-			ac.LoadCommonFunctions(w, req, filename, L, nil, nil, fs)
+			ac.LoadCommonFunctions(w, req, filename, L, nil, nil)
 
 			// Then run the given Lua function
 			L.Push(luaDenyFunc)
@@ -191,7 +195,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string, fs *
 	L.SetGlobal("ServerFile", L.NewFunction(func(L *lua.LState) int {
 		givenFilename := L.ToString(1)
 		serverFilename := filepath.Join(filepath.Dir(filename), givenFilename)
-		if !fs.Exists(serverFilename) {
+		if !ac.fs.Exists(serverFilename) {
 			log.Error("Could not find", serverFilename)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
@@ -207,11 +211,12 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string, fs *
 		return 1 // number of results
 	}))
 
+	return nil
 }
 
-// Use one of the databases for the permission middleware,
-// assign a name to dbName (used for the status output) and
-// return a Permissions struct.
+// DatabaseBackend tries to retrieve a database backend, using one of the
+// available permission middleware packages. It assign a name to dbName
+// (used for the status output) and returns a IPermissions struct.
 func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 	var (
 		err  error

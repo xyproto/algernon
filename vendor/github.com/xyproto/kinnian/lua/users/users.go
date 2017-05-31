@@ -1,3 +1,4 @@
+// Package users provides Lua functions for dealing with users and permissions
 package users
 
 import (
@@ -8,7 +9,7 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-// Make functions related to users and permissions available to Lua scripts
+// Load makes functions related to users and permissions available to Lua scripts
 func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments

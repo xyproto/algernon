@@ -12,7 +12,6 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/lua/codelib"
 	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/xyproto/kinnian/lua/datastruct"
@@ -558,11 +557,11 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 	}
 }
 
-// Export the various Lua functions that might be needed at the REPL
-func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput, fs *datablock.FileStat) {
+// LoadLuaFunctionsForREPL exports the various Lua functions that might be needed in the REPL
+func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput) {
 
 	// Server configuration functions
-	ac.LoadServerConfigFunctions(L, "", fs)
+	ac.LoadServerConfigFunctions(L, "")
 
 	// Other basic system functions, like log()
 	ac.LoadBasicSystemFunctions(L)
@@ -585,17 +584,17 @@ func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput, fs 
 
 	// For handling JSON data
 	jnode.LoadJSONFunctions(L)
-	ac.LoadJFile(L, ac.serverDirOrFilename, fs)
+	ac.LoadJFile(L, ac.serverDirOrFilename)
 	jnode.Load(L)
 
 	// Extras
-	purelua.Load(L)
+	pure.Load(L)
 
 	// Export pprint and scriptdir
 	exportREPLSpecific(L)
 
 	// Plugin functionality
-	ac.LoadPluginFunctions(L, o, fs)
+	ac.LoadPluginFunctions(L, o)
 
 	// Cache
 	ac.LoadCacheFunctions(L)
@@ -603,7 +602,7 @@ func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput, fs 
 
 // REPL provides a "Read Eval Print" loop for interacting with Lua.
 // A variety of functions are exposed to the Lua state.
-func (ac *Config) REPL(ready, done chan bool, fs *datablock.FileStat) error {
+func (ac *Config) REPL(ready, done chan bool) error {
 	var (
 		historyFilename string
 		err             error
@@ -630,7 +629,7 @@ func (ac *Config) REPL(ready, done chan bool, fs *datablock.FileStat) error {
 	o := term.NewTextOutput(enableColors, true)
 
 	// Export a selection of functions to the Lua state
-	ac.LoadLuaFunctionsForREPL(L, o, fs)
+	ac.LoadLuaFunctionsForREPL(L, o)
 
 	// Getting ready
 	o.Println(o.LightBlue(ac.versionString))

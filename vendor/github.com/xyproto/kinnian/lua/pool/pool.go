@@ -1,3 +1,4 @@
+// Package pool provides functions for managing a pool of Lua state structs
 package pool
 
 import (
@@ -9,15 +10,18 @@ import (
 // The LState pool pattern, as recommended by the author of gopher-lua:
 // https://github.com/yuin/gopher-lua#the-lstate-pool-pattern
 
+// LStatePool is a pool of Lua states, with a mutex
 type LStatePool struct {
 	m     sync.Mutex
 	saved []*lua.LState
 }
 
+// New returns a new Lua pool structure
 func New() *LStatePool {
 	return &LStatePool{saved: make([]*lua.LState, 0, 4)}
 }
 
+// New returns a new Lua state
 func (pl *LStatePool) New() *lua.LState {
 	L := lua.NewState()
 	// setting the L up here.
@@ -25,6 +29,7 @@ func (pl *LStatePool) New() *lua.LState {
 	return L
 }
 
+// Get borrows an existing Lua state
 func (pl *LStatePool) Get() *lua.LState {
 	pl.m.Lock()
 	defer pl.m.Unlock()
@@ -37,16 +42,20 @@ func (pl *LStatePool) Get() *lua.LState {
 	return x
 }
 
+// Put delivers back a borrowed Lua state
 func (pl *LStatePool) Put(L *lua.LState) {
 	pl.m.Lock()
 	defer pl.m.Unlock()
 	pl.saved = append(pl.saved, L)
 }
 
+// Shutdown can be used then the Lua pool is being shut down
 func (pl *LStatePool) Shutdown() {
 	// The following line causes a race condition with the
 	// graceful shutdown package at server shutdown:
 	//for _, L := range pl.saved {
 	//	L.Close()
 	//}
+	// TODO: Add a test to catch this.
+	// TODO: Figure out why.
 }

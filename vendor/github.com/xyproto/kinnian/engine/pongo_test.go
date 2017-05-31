@@ -14,8 +14,6 @@ import (
 )
 
 func pongoPageTest(n int, t *testing.T) {
-	fs := datablock.NewFileStat(true, time.Minute*1)
-
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
@@ -24,7 +22,11 @@ func pongoPageTest(n int, t *testing.T) {
 	pongodata, err := ioutil.ReadFile(filename)
 	assert.Equal(t, err, nil)
 
-	ac := New("Algernon 123", "Just a test")
+	ac, err := New("Algernon 123", "Just a test")
+	assert.Equal(t, err, nil)
+
+	// Use a FileStat cache with different settings
+	ac.SetFileStatCache(datablock.NewFileStat(true, time.Minute*1))
 
 	ac.cache = datablock.NewFileCache(20000000, true, 64*utils.KiB, true)
 
@@ -41,14 +43,14 @@ func pongoPageTest(n int, t *testing.T) {
 	// Make functions from the given Lua data available
 	errChan := make(chan error)
 	funcMapChan := make(chan template.FuncMap)
-	go ac.Lua2funcMap(w, req, filename, luafilename, ".lua", errChan, funcMapChan, fs)
+	go ac.Lua2funcMap(w, req, filename, luafilename, ".lua", errChan, funcMapChan)
 	funcs := <-funcMapChan
 	err = <-errChan
 	assert.Equal(t, err, nil)
 
 	// Trigger the error (now resolved)
 	for i := 0; i < n; i++ {
-		go ac.PongoPage(w, req, filename, pongodata, funcs, fs)
+		go ac.PongoPage(w, req, filename, pongodata, funcs)
 	}
 }
 

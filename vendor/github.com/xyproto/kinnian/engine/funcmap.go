@@ -11,8 +11,8 @@ import (
 
 // Functions for concurrent use by rendering.go and handlers.go
 
-// Read in a Lua file and return a template.FuncMap (or an error)
-func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, errChan chan error, funcMapChan chan template.FuncMap, fs *datablock.FileStat) {
+// Lua2funcMap runs in a Lua file and returns the functions as a template.FuncMap (or an error)
+func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, errChan chan error, funcMapChan chan template.FuncMap) {
 
 	// Make functions from the given Lua data available
 	funcs := make(template.FuncMap)
@@ -23,14 +23,14 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 		// Could not find and/or read data.lua
 		luablock = datablock.EmptyDataBlock
 
-		// This is not an error tha needs to be given to the user
+		// This only means the file wasn't cached, so just ignore this error
 	}
 
 	// luablock can be empty if there was an error or if the file was empty
 	if luablock.HasData() {
 		// There was Lua code available. Now make the functions and
 		// variables available for the template.
-		funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename, fs)
+		funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename)
 		if err != nil {
 			funcMapChan <- funcs
 			errChan <- err

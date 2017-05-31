@@ -1,3 +1,4 @@
+// Package console provides functions for disabling and disabling output
 package console
 
 import (

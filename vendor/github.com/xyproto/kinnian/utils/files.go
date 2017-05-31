@@ -13,19 +13,20 @@ import (
 )
 
 const (
-	// Path separator
+	// Pathsep is the path separator for the current platform
 	Pathsep = string(filepath.Separator)
 
-	// Used when replacing strings
+	// EveryInstance can be used when replacing strings
 	EveryInstance = -1
 
-	// KiB is a kilobyte
+	// KiB is a kilobyte (kibibyte)
 	KiB = 1024
-	// MiB is a megabyte
+
+	// MiB is a megabyte (mibibyte)
 	MiB = 1024 * 1024
 )
 
-// Translate a given URL path to a probable full filename
+// URL2filename translates a given URL path to a probable full filename
 func URL2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
 		log.Warn("Someone was trying to access a directory with .. in the URL")
@@ -40,7 +41,7 @@ func URL2filename(dirname, urlpath string) string {
 	return dirname + "/" + urlpath
 }
 
-// Get a list of filenames from a given directory name (that must exist)
+// GetFilenames retrieves a list of filenames from a given directory name (that must exist)
 func GetFilenames(dirname string) []string {
 	dir, err := os.Open(dirname)
 	if err != nil {
@@ -63,7 +64,7 @@ func GetFilenames(dirname string) []string {
 	return filenames
 }
 
-// Build up a string on the form "functionname(arg1, arg2, arg3)"
+// Infostring builds up a string on the form "functionname(arg1, arg2, arg3)"
 func Infostring(functionName string, args []string) string {
 	s := functionName + "("
 	if len(args) > 0 {
@@ -72,8 +73,11 @@ func Infostring(functionName string, args []string) string {
 	return s + ")"
 }
 
-// Find one level of whitespace, given indented data
-// and a keyword to extract the whitespace in front of
+// OneLevelOfIndentation finds one level of whitespace, given indented data
+// and a keyword to extract the whitespace in front of.
+//
+// Returns either an empty string or the whitespace that represents one step of
+// indentation in the given source code data.
 func OneLevelOfIndentation(data *[]byte, keyword string) string {
 	whitespace := ""
 	kwb := []byte(keyword)
@@ -100,7 +104,7 @@ func OneLevelOfIndentation(data *[]byte, keyword string) string {
 	return whitespace
 }
 
-// Filter []byte slices into two groups, depending on the given filter function
+// FilterIntoGroups filters []byte slices into two groups, depending on the given filter function
 func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
 	var special, regular [][]byte
 	for _, byteline := range bytelines {
@@ -115,11 +119,13 @@ func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byt
 	return special, regular
 }
 
-// Given a source file, extract keywords and values into the given map.
-// The map must be filled with keywords to look for.
-// The keywords in the data must be on the form "keyword: value",
-// and can be within single-line HTML comments (<-- ... -->).
-// Returns the data for the lines that does not contain any of the keywords.
+/*ExtractKeywords can, given a source file, extract keywords and values into the
+ * given map.
+ * The map must be filled with keywords to look for.
+ * The keywords in the data must be on the form "keyword: value",
+ * and can be within single-line HTML comments (<-- ... -->).
+ * Returns the data for the lines that does not contain any of the keywords.
+ */
 func ExtractKeywords(data []byte, special map[string]string) []byte {
 	bnl := []byte("\n")
 	// Find and separate the lines starting with one of the keywords in the special map
@@ -154,12 +160,13 @@ func ExtractKeywords(data []byte, special map[string]string) []byte {
 	return bytes.Join(regular, bnl)
 }
 
-// Convert time.Duration to milliseconds, as a string (without "ms")
+// DurationToMS converts time.Duration to milliseconds, as a string,
+// (just the number as a string, no "ms" suffix).
 func DurationToMS(d time.Duration, multiplier float64) string {
 	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
 }
 
-// Convert byte to KiB or MiB
+// DescribeBytes converts bytes to KiB or MiB. Returns a string.
 func DescribeBytes(size int64) string {
 	if size < MiB {
 		return strconv.Itoa(int(round(float64(size)*100.0/KiB)/100)) + " KiB"
@@ -177,7 +184,7 @@ func round(x float64) int64 {
 	return int64(roundf(x))
 }
 
-// Write a status message to a buffer, given a name and a bool
+// WriteStatus writes a status message to a buffer, given a name and a bool
 func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 
 	// Check that at least one of the bools are true

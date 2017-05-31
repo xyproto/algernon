@@ -1,3 +1,4 @@
+// Package jnode provides Lua functions for dealing with JSON documents and strings
 package jnode
 
 import (
@@ -8,15 +9,13 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/xyproto/jpath"
+	"github.com/xyproto/kinnian/lua/convert"
 	"github.com/yuin/gopher-lua"
 )
 
-// For dealing with JSON documents and strings
-
 const (
-	// Identifier for the JNode class in Lua
+	// Class is an identifier for the JNode class in Lua
 	Class = "JNode"
 
 	// Prefix when indenting JSON
@@ -353,7 +352,7 @@ var jnodeMethods = map[string]lua.LGFunction{
 	"GET":        jnodeGETFromURL,
 }
 
-// Make functions related JSON nodes
+// Load makes functions related JSON nodes available to the given Lua state
 func Load(L *lua.LState) {
 
 	// Register the JNode class and the methods that belongs with it.
@@ -378,6 +377,7 @@ func Load(L *lua.LState) {
 
 }
 
+// LoadJSONFunctions makes helper functions for converting to JSON available
 func LoadJSONFunctions(L *lua.LState) {
 
 	// Lua function for converting a table to JSON (string or int)

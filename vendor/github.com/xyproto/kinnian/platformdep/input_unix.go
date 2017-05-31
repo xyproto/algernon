@@ -7,6 +7,7 @@ import (
 	"syscall"
 )
 
+// IgnoreTerminalResizeSignal configures UNIX related platforms to ignore SIGWINCH
 func IgnoreTerminalResizeSignal() {
 	signal.Ignore(syscall.SIGWINCH)
 }

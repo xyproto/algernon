@@ -186,11 +186,13 @@ func (ac *Config) EventServer(path, allowed string) {
 	}()
 }
 
-// Insert JavaScript that refreshes the page when the source files changes.
+// InsertAutoRefresh inserts JavaScript code to the page that makes the page
+// refresh itself when the source files changes.
 // The JavaScript depends on the event server being available.
-// If javascript can not be inserted, return the original data.
-// Does not check if the given data is HTML. Assumes it to be HTML.
-func (ac *Config) insertAutoRefresh(req *http.Request, htmldata []byte) []byte {
+// If JavaScript can not be inserted, return the original data.
+// Assumes that the given htmldata is actually HTML
+// (looks for body/head/html tags when inserting a script tag)
+func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	fullHost := ac.eventAddr
 	// If the host+port starts with ":", assume it's only the port number
 	if strings.HasPrefix(fullHost, ":") {

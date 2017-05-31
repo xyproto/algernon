@@ -1,3 +1,4 @@
+// Package upload provides functions for dealing with uploading files in a fast and safe way
 package upload
 
 import (
@@ -18,7 +19,7 @@ import (
 // For dealing with uploaded files in POST method handlers
 
 const (
-	// Identifier for the UploadedFile class in Lua
+	// Class is an identifier for the UploadedFile class in Lua
 	Class = "UploadedFile"
 
 	// Upload limit, in bytes
@@ -42,7 +43,7 @@ type UploadedFile struct {
 	buf       *bytes.Buffer
 }
 
-// Receives an uploadeded file
+// New creates a struct that is used for accepting an uploaded file
 //
 // The client will send all the data, if the data is over the given size,
 // if the Content-Length is wrongly set to a value below the the uploadLimit.
@@ -244,7 +245,7 @@ var uploadedfileMethods = map[string]lua.LGFunction{
 	"savein":     uploadedfileSaveIn,
 }
 
-// Make functions related to saving an uploaded file available
+// Load makes functions related to saving an uploaded file available
 func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir string) {
 
 	// Register the UploadedFile class and the methods that belongs with it.

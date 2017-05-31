@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Open an URL with a browser
+// OpenURL tries to open an URL with the system browser
 func (ac *Config) OpenURL(host, colonPort string, https bool) {
 	if host == "" {
 		host = "localhost"

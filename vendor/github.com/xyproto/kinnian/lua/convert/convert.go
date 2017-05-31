@@ -1,3 +1,4 @@
+// Package convert provides functions for converting to and from Lua structures
 package convert
 
 import (
@@ -16,7 +17,7 @@ var (
 	errToMap = errors.New("Could not represent Lua structure table as a map")
 )
 
-// Output more informative information than the memory location.
+// PprintToWriter outputs more informative information than the memory location.
 // Attempt to extract and print the values of the given lua.LValue.
 // Does not add a newline at the end.
 func PprintToWriter(w io.Writer, value lua.LValue) {
@@ -71,7 +72,7 @@ func PprintToWriter(w io.Writer, value lua.LValue) {
 	}
 }
 
-// Retrieve all the arguments given to a lua function
+// Arguments2buffer retrieves all the arguments given to a Lua function
 // and gather the strings in a buffer.
 func Arguments2buffer(L *lua.LState, addNewline bool) bytes.Buffer {
 	var buf bytes.Buffer
@@ -90,7 +91,7 @@ func Arguments2buffer(L *lua.LState, addNewline bool) bytes.Buffer {
 	return buf
 }
 
-// Convert a string slice to a lua table
+// Strings2table converts a string slice to a Lua table
 func Strings2table(L *lua.LState, sl []string) *lua.LTable {
 	table := L.NewTable()
 	for _, element := range sl {
@@ -99,7 +100,7 @@ func Strings2table(L *lua.LState, sl []string) *lua.LTable {
 	return table
 }
 
-// Convert a map[string]string to a lua table
+// Map2table converts a map[string]string to a Lua table
 func Map2table(L *lua.LState, m map[string]string) *lua.LTable {
 	table := L.NewTable()
 	for key, value := range m {
@@ -108,11 +109,14 @@ func Map2table(L *lua.LState, m map[string]string) *lua.LTable {
 	return table
 }
 
-// Convert a Lua table to one of the following types, depending on the content:
-// map[string]string, map[string]int, map[int]string, map[int]int
+// Table2map converts a Lua table to **one** of the following types, depending
+// on the content:
+//   map[string]string
+//   map[string]int
+//   map[int]string
+//   map[int]int
 // If no suitable keys and values are found, a nil interface is returned.
-// If several different types are found, the returned bool is true.
-// TODO: Look into that gopher-lua module that are made for converting to and from Lua tables. It will be cleaner.
+// If several different types are found, it returns true.
 func Table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
 
 	mapSS, mapSI, mapIS, mapII := Table2maps(luaTable)
@@ -158,8 +162,12 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
 	return nil, false
 }
 
-// Convert a Lua table to all of the following types, depending on the content:
-// map[string]string, map[string]int, map[int]string, map[int]int
+// Table2maps converts a Lua table to **all** of the following types,
+// depending on the content:
+//   map[string]string
+//   map[string]int
+//   map[int]string
+//   map[int]int
 func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[int]string, map[int]int) {
 
 	// Initialize possible maps we want to convert to
@@ -195,7 +203,7 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 	return mapSS, mapSI, mapIS, mapII
 }
 
-// Convert a Lua table to a map[string]interface{}
+// Table2interfacemap converts a Lua table to a map[string]interface{}
 func Table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 
 	// Initialize possible maps we want to convert to
@@ -261,7 +269,7 @@ func Table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 	return everything
 }
 
-// Convert a Lua table to a map by using gluamapper.
+// Table2mapinterface converts a Lua table to a map by using gluamapper.
 // If the map really is an array (all the keys are indices), return true.
 func Table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
 	var (
