@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"github.com/bmizerany/assert"
+	"github.com/xyproto/kinnian/engine"
 	"github.com/xyproto/permissionHSTORE"
 	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
@@ -46,4 +47,5 @@ func TestAPI(t *testing.T) {
 	assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
 	assert.Equal(t, New("permissionHSTORE", permissionHSTORE.Version, 2.1).Check(), nil)
 	assert.Equal(t, New("pinterface", pinterface.Version, 4.0).Check(), nil)
+	assert.Equal(t, New("kinnian", engine.Version, 2.0).Check(), nil)
 }
