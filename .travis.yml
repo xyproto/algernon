@@ -12,6 +12,7 @@ install:
   - ./linux-amd64/glide install
 
 script:
+  - go build
   - ./test.sh
 
 #script:
