@@ -44,14 +44,16 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		// Make the functions related to userstate available to the Lua script
 		users.Load(w, req, L, userstate)
 
+		creator := userstate.Creator()
+
 		// Simpleredis data structures
-		datastruct.LoadList(L, userstate)
-		datastruct.LoadSet(L, userstate)
-		datastruct.LoadHash(L, userstate)
-		datastruct.LoadKeyValue(L, userstate)
+		datastruct.LoadList(L, creator)
+		datastruct.LoadSet(L, creator)
+		datastruct.LoadHash(L, creator)
+		datastruct.LoadKeyValue(L, creator)
 
 		// For saving and loading Lua functions
-		codelib.Load(L, userstate)
+		codelib.Load(L, creator)
 	}
 
 	// For handling JSON data
@@ -156,14 +158,16 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 		// Server configuration functions
 		ac.LoadServerConfigFunctions(L, filename)
 
+		creator := userstate.Creator()
+
 		// Simpleredis data structures (could be used for storing server stats)
-		datastruct.LoadList(L, userstate)
-		datastruct.LoadSet(L, userstate)
-		datastruct.LoadHash(L, userstate)
-		datastruct.LoadKeyValue(L, userstate)
+		datastruct.LoadList(L, creator)
+		datastruct.LoadSet(L, creator)
+		datastruct.LoadHash(L, creator)
+		datastruct.LoadKeyValue(L, creator)
 
 		// For saving and loading Lua functions
-		codelib.Load(L, userstate)
+		codelib.Load(L, creator)
 	}
 
 	// For handling JSON data

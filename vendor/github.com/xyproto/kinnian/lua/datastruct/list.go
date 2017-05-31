@@ -130,8 +130,7 @@ var listMethods = map[string]lua.LGFunction{
 }
 
 // LoadList makes functions related to HTTP requests and responses available to Lua scripts
-func LoadList(L *lua.LState, userstate pinterface.IUserState) {
-	creator := userstate.Creator()
+func LoadList(L *lua.LState, creator pinterface.ICreator) {
 
 	// Register the list class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lListClass)

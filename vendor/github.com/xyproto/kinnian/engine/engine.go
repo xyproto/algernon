@@ -27,7 +27,7 @@ import (
 )
 
 // Version number. Stable API within major version numbers.
-const Version = 1.0
+const Version = 2.0
 
 // Config is the main structure for the Algernon server.
 // It contains all the state and settings.

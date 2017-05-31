@@ -118,8 +118,7 @@ var kvMethods = map[string]lua.LGFunction{
 }
 
 // LoadKeyValue makes functions related to HTTP requests and responses available to Lua scripts
-func LoadKeyValue(L *lua.LState, userstate pinterface.IUserState) {
-	creator := userstate.Creator()
+func LoadKeyValue(L *lua.LState, creator pinterface.ICreator) {
 
 	// Register the KeyValue class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lKeyValueClass)

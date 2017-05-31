@@ -9,6 +9,9 @@ for f in $directories; do
   echo "--- $f ---"
   cd "$p/$f"
 
+  echo -n go build...
+  go build && echo ok || echo fail
+
   echo -n go fmt...
   go fmt && echo ok || echo fail
   

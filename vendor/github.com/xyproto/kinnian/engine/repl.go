@@ -569,17 +569,17 @@ func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput) {
 	// If there is a database backend
 	if ac.perm != nil {
 
-		// Retrieve the userstate
-		userstate := ac.perm.UserState()
+		// Retrieve the creator struct
+		creator := ac.perm.UserState().Creator()
 
 		// Simpleredis data structures
-		datastruct.LoadList(L, userstate)
-		datastruct.LoadSet(L, userstate)
-		datastruct.LoadHash(L, userstate)
-		datastruct.LoadKeyValue(L, userstate)
+		datastruct.LoadList(L, creator)
+		datastruct.LoadSet(L, creator)
+		datastruct.LoadHash(L, creator)
+		datastruct.LoadKeyValue(L, creator)
 
 		// For saving and loading Lua functions
-		codelib.Load(L, userstate)
+		codelib.Load(L, creator)
 	}
 
 	// For handling JSON data
