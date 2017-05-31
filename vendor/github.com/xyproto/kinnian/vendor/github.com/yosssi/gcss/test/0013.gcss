@@ -1,0 +1,10 @@
+$black: #fff
+
+a
+  color: $black
+  &:hover
+    color: $black
+
+div
+  span
+    color: $black

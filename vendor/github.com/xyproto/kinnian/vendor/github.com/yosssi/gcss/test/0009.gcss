@@ -1,0 +1,47 @@
+@charset "ISO-8859-15"
+
+@import url("/css/main.css")
+@import "local.css"
+
+@media screen, projection
+  html
+    background: #fffef0
+    color: #300
+  body
+    max-width: 35em
+    margin: 0 auto
+@media print
+  html
+    background: #fff
+    color: #000
+  body
+    padding: 1in
+    border: 0.5pt solid #666
+@media print
+  a
+    font-size: 12px
+    &:hover
+      color: red
+  span
+    font-size: 10px
+    div
+      color: blue
+      &:hover
+        display: none
+        height: 0
+
+@page
+  margin: 2.5cm
+@page :left
+  margin-left: 5cm
+@page :right
+  margin-right: 5cm
+@page :first
+  margin-top: 8cm
+
+@font-face
+  font-family: "Example Font"
+  src: url("http://www.example.com/fonts/example")
+
+@namespace "http://www.w3.org/1999/xhtml"
+@namespace foo "http://example.com/ns/foo"

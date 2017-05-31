@@ -1,0 +1,5 @@
+// Selector + declarations
+html
+  font-size: 12px
+  color: #000
+  display: block

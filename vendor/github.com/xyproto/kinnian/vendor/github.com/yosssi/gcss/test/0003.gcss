@@ -1,0 +1,39 @@
+
+.sign-up-form, .sign-in-form, .inquiry-form
+  margin-top: 2rem
+  dl
+    &:not(:first-child)
+      margin-top; 1rem
+    dt
+      font-weight: bold
+  input[type='text'], input[type='password']
+    margin-top: 0.3rem
+  input[type='submit']
+    margin-top: 1rem
+    width: 10rem
+
+input
+  &[type='text'], &[type='password'], &[type='date'], &[type='time'], &[type='number']
+    width: 100%
+    radius: 3px
+    font-size: 1rem
+    padding: 0.5rem
+    -moz-box-sizing: border-box
+    box-sizing: border-box
+    -webkit-appearance: none
+    border: 1px solid silver
+    background-color: white
+  &[type='submit']
+    width: 100%
+    radius: 3px
+    font-size: 1rem
+    padding: 0.5rem
+    -moz-box-sizing: border-box
+    box-sizing: border-box
+    -webkit-appearance: none
+    line-height: 1.25rem
+    color: white
+    border: 1px solid darkgray
+    background-color: darkgray
+    &:hover, &:disabled
+      background-color: gray

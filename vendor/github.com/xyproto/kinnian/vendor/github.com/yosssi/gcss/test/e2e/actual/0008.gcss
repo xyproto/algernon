@@ -1,0 +1,21 @@
+// Mixins + Variables
+$color: yellow
+
+$inline-height($vertical-align, $div-color)
+  display: inline-block
+  vertical-align: $vertical-align
+  color: $div-color
+
+$a-tag($font-size, $a-color)
+  a
+    font-size: $font-size
+    color: $a-color
+
+body
+  $inline-height(top, $color)
+
+div
+  $a-tag(10px, $color)
+
+span
+  $a-tag(10px, $span-color)

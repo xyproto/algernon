@@ -1,0 +1,42 @@
+// At-rules which include variables
+$base-color: #000
+$font-color: #777
+$h1-color: #333
+$margin: 5cm
+$font: "Example Font"
+
+@media screen, projection
+  html
+    background: $base-color
+    color: $font-color
+  body
+    max-width: 35em
+    margin: 0 auto
+    h1
+      color: $h1-color
+
+@media print
+  html
+    background: $base-color
+    color: $font-color
+  body
+    max-width: 35em
+    margin: 0 auto
+    h1
+      color: $h1-color
+
+@page
+  margin: $margin
+
+@page :left
+  margin-left: $margin
+
+@page :right
+  margin-right: $margin
+
+@page :first
+  margin-top: $margin
+
+@font-face
+  font-family: $font
+  src: url("http://www.example.com/fonts/example")

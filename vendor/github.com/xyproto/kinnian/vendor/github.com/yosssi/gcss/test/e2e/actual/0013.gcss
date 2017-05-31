@@ -1,0 +1,22 @@
+// Variables in the middle of a statement
+$color1: #2e6580
+$color2: #3a83a7
+$color3: #509ec4
+$color4: #75b3d2
+$color5: #9bc9df
+$base-fonts: 'Helvetica Neue', Helvetica, Arial
+
+h1,h2,h3,h4,h5,h6,.h1,.h2,.h3,.h4,.h5,.h6
+  font-family: 'Droid Serif', $base-fonts, serif
+  color: $color1
+  a,a:hover,u
+    color: $color1
+    text-decoration: none
+  small
+    color: $color2
+
+body
+  font-family: 'Roboto', $base-fonts, sans-serif
+
+footer
+  margin-top: 10px
