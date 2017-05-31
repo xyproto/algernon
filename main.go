@@ -3,18 +3,29 @@ package main
 
 import (
 	"net/http"
+	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/kinnian/engine"
 )
 
 const (
-	versionString = "Algernon 1.4.3"
+	versionString = "Algernon 1.4.4"
 	description   = "HTTP/2 Web Server"
 )
 
 func main() {
 	// Create a new Algernon server. Also initialize log files etc.
-	algernon := engine.New(versionString, description)
+	algernon, err := engine.New(versionString, description)
+	if err != nil {
+		if err == engine.ErrVersion {
+			// Exit with error code 0 if --version was specified
+			os.Exit(0)
+		} else {
+			// Exit if there are problems with the fundamental setup
+			log.Fatalln(err)
+		}
+	}
 
 	// Set up a mux
 	mux := http.NewServeMux()
