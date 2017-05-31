@@ -4,7 +4,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/xyproto/algernon/lib/alg"
+	"github.com/xyproto/kinnian/engine"
 )
 
 const (
@@ -14,12 +14,11 @@ const (
 
 func main() {
 	// Create a new Algernon server. Also initialize log files etc.
-	ac := alg.New(versionString, description)
-	defer ac.Close()
+	algernon := engine.New(versionString, description)
 
 	// Set up a mux
 	mux := http.NewServeMux()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS. Quit when done.
-	ac.MustServe(mux)
+	algernon.MustServe(mux)
 }
