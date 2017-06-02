@@ -2,9 +2,9 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
+	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/kinnian/engine"
 )
@@ -27,9 +27,9 @@ func main() {
 		}
 	}
 
-	// Set up a mux
-	mux := http.NewServeMux()
+	// Set up Echo
+	e := echo.New()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS. Quit when done.
-	algernon.MustServe(mux)
+	algernon.MustServe(e)
 }
