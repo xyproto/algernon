@@ -39,7 +39,7 @@ func (s *Service) Start(args ...string) error {
 	var p **uint16
 	if len(args) > 0 {
 		vs := make([]*uint16, len(args))
-		for i := range vs {
+		for i, _ := range vs {
 			vs[i] = syscall.StringToUTF16Ptr(args[i])
 		}
 		p = &vs[0]

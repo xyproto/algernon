@@ -19,9 +19,6 @@ func (cn *conn) QueryContext(ctx context.Context, query string, args []driver.Na
 	finish := cn.watchCancel(ctx)
 	r, err := cn.query(query, list)
 	if err != nil {
-		if finish != nil {
-			finish()
-		}
 		return nil, err
 	}
 	r.finish = finish

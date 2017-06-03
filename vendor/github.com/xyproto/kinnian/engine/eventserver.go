@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/xyproto/kinnian/utils"
 	"github.com/xyproto/recwatch"
 )
@@ -148,6 +148,10 @@ func genFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Durat
 // The filesystem events are gathered independently of that.
 // Allowed can be "*" or a hostname and sets a header in the SSE stream.
 func (ac *Config) EventServer(path, allowed string) {
+
+	if !ac.fs.Exists(path) {
+		ac.fatalExit(errors.New(path + " does not exist, can't watch"))
+	}
 
 	// Create a new filesystem watcher
 	rw, err := recwatch.NewRecursiveWatcher(path)

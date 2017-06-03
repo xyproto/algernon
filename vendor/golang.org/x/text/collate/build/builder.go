@@ -472,6 +472,7 @@ func (b *Builder) build() (*table, error) {
 }
 
 // Build builds the root Collator.
+// TODO: return Weighter instead
 func (b *Builder) Build() (colltab.Weighter, error) {
 	table, err := b.build()
 	if err != nil {

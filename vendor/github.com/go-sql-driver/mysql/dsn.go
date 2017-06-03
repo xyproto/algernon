@@ -53,7 +53,6 @@ type Config struct {
 	InterpolateParams       bool // Interpolate placeholders into query string
 	MultiStatements         bool // Allow multiple statements in one query
 	ParseTime               bool // Parse time values to time.Time
-	RejectReadOnly          bool // Reject read-only connections
 	Strict                  bool // Return warnings as errors
 }
 
@@ -194,15 +193,6 @@ func (cfg *Config) FormatDSN() string {
 			buf.WriteString("?readTimeout=")
 		}
 		buf.WriteString(cfg.ReadTimeout.String())
-	}
-
-	if cfg.RejectReadOnly {
-		if hasParam {
-			buf.WriteString("&rejectReadOnly=true")
-		} else {
-			hasParam = true
-			buf.WriteString("?rejectReadOnly=true")
-		}
 	}
 
 	if cfg.Strict {
@@ -482,14 +472,6 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 				return
 			}
 
-		// Reject read-only connections
-		case "rejectReadOnly":
-			var isBool bool
-			cfg.RejectReadOnly, isBool = readBool(value)
-			if !isBool {
-				return errors.New("invalid bool value: " + value)
-			}
-
 		// Strict mode
 		case "strict":
 			var isBool bool
@@ -529,8 +511,6 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 				}
 
 				if tlsConfig, ok := tlsConfigRegister[name]; ok {
-					tlsConfig = cloneTLSConfig(tlsConfig)
-
 					if len(tlsConfig.ServerName) == 0 && !tlsConfig.InsecureSkipVerify {
 						host, _, err := net.SplitHostPort(cfg.Addr)
 						if err == nil {
