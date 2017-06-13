@@ -4,7 +4,7 @@ Priority 1
 ----------
 - [ ] Introduce a separate package for dealing with Lua pools, Lua states and
       adding custom functios to some Lua states. All without using mutexes.
-- [ ] Add support for [Ghost](https://ghost.org) themes.
+- [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
 - [ ] Feature for sending the access log to the database + provide a page to
       view the logs.
 - [ ] Port the layout and concept of werc to Algernon
