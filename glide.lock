@@ -123,7 +123,7 @@ imports:
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
   version: d65cc50ff075e87ed81bee344b9e2f0009388ebb
-- name: github.com/xyproto/permissionHSTORE
+- name: github.com/xyproto/pstore
   version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
   version: f200bb44e71b601bdfb5b6348e8d2d5348a28953
