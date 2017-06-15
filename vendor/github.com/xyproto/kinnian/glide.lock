@@ -1,5 +1,5 @@
-hash: 2e44e379d1235df10c225e9089da41981746b3c5992d06cc9cdcfbb12e1b5b60
-updated: 2017-05-31T11:40:08.058164359Z
+hash: 1c94124ce8338e1cdf6e2358f301908c53ecbddb9eb363a7cf5102c34fb0fb83
+updated: 2017-06-15T09:28:50.650004015Z
 imports:
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -22,14 +22,14 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/garyburd/redigo
-  version: fb985d0d06e5f1065b3bfb0b2bb8aea6809a3670
+  version: 95d11dba2d44531bdb8022752b98912baafae03a
   subpackages:
   - internal
   - redis
 - name: github.com/getwe/figlet4go
   version: bc879344e874dd110753d17083a2a7acf3136683
 - name: github.com/go-sql-driver/mysql
-  version: b64477099cc2bb2aaf583b4342d04e7d9966ff4c
+  version: e3f0fdcf52770a162d5a4540ddb8d9957ff456d1
 - name: github.com/juju/errors
   version: 8234c829496aaeae67c5c71235a2cbcc289e960a
 - name: github.com/klauspost/compress
@@ -107,14 +107,14 @@ imports:
   version: 58d5c367ee5b5e10f4662848579b8ccd759b280e
 - name: github.com/xyproto/permissionbolt
   version: 657ad1a411098f614a30382e53d4267067b0fa43
-- name: github.com/xyproto/permissionHSTORE
-  version: 01dd5855f011eaf03fc924f5c6c7f42cd867148e
 - name: github.com/xyproto/permissions2
   version: f200bb44e71b601bdfb5b6348e8d2d5348a28953
 - name: github.com/xyproto/permissionsql
   version: 72c26ae88c7835c8fdc55ce7ec1dbb7661b5c6ac
 - name: github.com/xyproto/pinterface
   version: e3542b15cf8cc7e9e17cc0fe331c79f913797cc9
+- name: github.com/xyproto/pstore
+  version: f2fb0982f213a75f369ef85c0f0694aa98bf96c6
 - name: github.com/xyproto/recwatch
   version: 07a9f17aef563117f0826c6372dcc7249c343c54
 - name: github.com/xyproto/simplebolt

@@ -37,8 +37,24 @@ var (
 // MessagePage is an easy way to output a HTML page only given a title, the body
 // (will be placed between the <body></body> tags) and the name of one of the
 // built-in themes.
+// Deprecated
 func MessagePage(title, body, theme string) string {
 	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<style>%s</style><head><body><h1>%s</h1>%s</body></html>", title, "", BuiltinThemes[theme], title, body)
+}
+
+// MessagePageBytes provides the same functionalityt as MessagePage,
+// but with []byte instead of string, and without closing </body></html>
+func MessagePageBytes(title string, body []byte, theme string) []byte {
+	var buf bytes.Buffer
+	buf.WriteString("<!doctype html><html><head><title>")
+	buf.WriteString(title)
+	buf.WriteString("</title><style>")
+	buf.WriteString(BuiltinThemes[theme])
+	buf.WriteString("</style><head><body><h1>")
+	buf.WriteString(title)
+	buf.WriteString("</h1>")
+	buf.Write(body)
+	return buf.Bytes()
 }
 
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory

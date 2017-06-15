@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "SQi5yeNb9HnAMRpEhQgcv9x9yKc=",
+			"path": "github.com/patrickmn/go-cache",
+			"revision": "7ac151875ffb48b9f3ccce9ea20f020b0c1596c8",
+			"revisionTime": "2017-04-18T23:29:47Z"
+		},
+		{
 			"checksumSHA1": "9jjO5GjLa0XF/nfWihF02RoH4qc=",
 			"path": "golang.org/x/net/context",
 			"revision": "f4b625ec9b21d620bb5ce57f2dfc3e08ca97fce6",

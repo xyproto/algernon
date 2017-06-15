@@ -11,11 +11,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/kinnian/utils"
-	postgres "github.com/xyproto/permissionHSTORE"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
+	postgres "github.com/xyproto/pstore"
 	"github.com/xyproto/simpleredis"
 	"github.com/yuin/gopher-lua"
 )

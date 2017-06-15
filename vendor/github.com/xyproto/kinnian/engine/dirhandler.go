@@ -12,13 +12,25 @@ import (
 	"github.com/xyproto/kinnian/utils"
 )
 
+var (
+	doubleP  = utils.Pathsep + utils.Pathsep /* // */
+	dotSlash = "." + utils.Pathsep           /* ./ */
+)
+
 // DirectoryListing serves the given directory as a web page with links the the contents
 func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
-	var buf bytes.Buffer
+	var (
+		buf          bytes.Buffer
+		fullFilename string
+		URLpath      string
+		title        = dirname
+	)
+
+	// Fill the coming HTML body with a list of all the filenames in `dirname`
 	for _, filename := range utils.GetFilenames(dirname) {
 
 		// Find the full name
-		fullFilename := dirname
+		fullFilename = dirname
 
 		// Add a "/" after the directory name, if missing
 		if !strings.HasSuffix(fullFilename, utils.Pathsep) {
@@ -29,34 +41,27 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		fullFilename += filename
 
 		// Remove the root directory from the link path
-		urlpath := fullFilename[len(rootdir)+1:]
+		URLpath = fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(utils.HTMLLink(filename, urlpath, ac.fs.IsDir(fullFilename)))
+		buf.WriteString(utils.HTMLLink(filename, URLpath, ac.fs.IsDir(fullFilename)))
 	}
-	title := dirname
+
 	// Strip the leading "./"
-	if strings.HasPrefix(title, "."+utils.Pathsep) {
-		title = title[1+len(utils.Pathsep):]
-	}
+	title = strings.TrimPrefix(title, dotSlash)
+
 	// Strip double "/" at the end, just keep one
-	// Replace "//" with just "/"
-	doubleP := utils.Pathsep + utils.Pathsep
 	if strings.Contains(title, doubleP) {
+		// Replace "//" with just "/"
 		title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
 	}
 
-	// Use the application title for the main page
-	//if title == "" {
-	//	title = versionString
-	//}
-
-	var htmldata []byte
-	if buf.Len() > 0 {
-		htmldata = []byte(utils.MessagePage(title, buf.String(), theme))
-	} else {
-		htmldata = []byte(utils.MessagePage(title, "Empty directory", theme))
+	// Check if the current page contents are empty
+	if buf.Len() == 0 {
+		buf.WriteString("Empty directory")
 	}
+
+	htmldata := utils.MessagePageBytes(title, buf.Bytes(), theme)
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {
@@ -75,6 +80,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 // dirname is the specific directory that is to be served (should never be ".")
 func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
 
+	// Check if we are instructed to quit after serving the first file
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
@@ -88,14 +94,17 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
 		return
 	}
+
 	// Handle the serving of index files, if needed
+	var filename string
 	for _, indexfile := range indexFilenames {
-		filename := filepath.Join(dirname, indexfile)
+		filename = filepath.Join(dirname, indexfile)
 		if ac.fs.Exists(filename) {
 			ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
 			return
 		}
 	}
+
 	// Serve a directory listing of no index file is found
 	ac.DirectoryListing(w, req, rootdir, dirname, theme)
 }
