@@ -104,7 +104,8 @@ func (p *parser) setError(err error) {
 }
 
 func (p *parser) updateGrouping() {
-	if p.hasGroup && p.groupingCount < 255 {
+	if p.hasGroup &&
+		0 < p.groupingCount && p.groupingCount < 255 {
 		p.GroupingSize[1] = p.GroupingSize[0]
 		p.GroupingSize[0] = uint8(p.groupingCount)
 	}
@@ -163,6 +164,7 @@ func (p *parser) parseSubPattern(s string) string {
 	s = p.parsePad(s, PadAfterPrefix)
 
 	s = p.parse(p.number, s)
+	p.updateGrouping()
 
 	s = p.parsePad(s, PadBeforeSuffix)
 	s = p.parseAffix(s)
@@ -294,6 +296,8 @@ func (p *parser) integer(r rune) state {
 			next = p.exponent
 		case '.':
 			next = p.fraction
+		case ',':
+			next = p.integer
 		}
 		p.updateGrouping()
 		return next

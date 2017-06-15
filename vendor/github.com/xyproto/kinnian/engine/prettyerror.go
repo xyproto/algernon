@@ -16,14 +16,6 @@ const (
 	postHighlight = "</font>"
 )
 
-// HighlightCode highlights a block of HTML by adding <pre><code> and styling
-func HighlightCode(htmlbody string) string {
-	// Change <pre><code to <pre class="prettyprint"><code
-	//htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
-	//htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
-	return htmlbody
-}
-
 // Write the contents of a ResponseRecorder to a ResponseWriter
 func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 	for key, values := range recorder.HeaderMap {

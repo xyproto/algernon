@@ -375,7 +375,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(utils.NoPageBytes(filename, ac.defaultTheme))
+		w.Write(utils.NoPage(filename, ac.defaultTheme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not

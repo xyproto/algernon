@@ -105,13 +105,6 @@ func LinkToStyleHTML(htmldata *[]byte, url string) {
 	}
 }
 
-// AddMetaKeywords add meta tag names to the given map
-func AddMetaKeywords(keywords map[string]string) {
-	for _, keyword := range MetaKeywords {
-		keywords[keyword] = ""
-	}
-}
-
 // InsertDoctype inserts <doctype html> to the HTML, if missing.
 // Does not check if the given data is HTML. Assumes it to be HTML.
 func InsertDoctype(htmldata []byte) []byte {

@@ -146,39 +146,40 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
-	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
+	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css"}
 
 	// Also prepare for receiving meta tag information
-	utils.AddMetaKeywords(given)
+	searchKeywords = append(searchKeywords, utils.MetaKeywords...)
 
 	// Extract keywords from the given data, and remove the lines with keywords
-	data = utils.ExtractKeywords(data, given)
+	var kwmap map[string][]byte
+	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
 
 	// Convert from Markdown to HTML
-	htmlbody := string(blackfriday.MarkdownCommon(data))
+	htmlbody := blackfriday.MarkdownCommon(data)
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
 	// Markdown or not. Submit a patch to blackfriday if it is.
 
-	h1title := ""
-	if strings.HasPrefix(htmlbody, "<p>#") {
-		fields := strings.Split(htmlbody, "<")
+	var h1title []byte
+	if bytes.HasPrefix(htmlbody, []byte("<p>#")) {
+		fields := bytes.Split(htmlbody, []byte("<"))
 		if len(fields) > 2 {
-			h1title = strings.TrimPrefix(fields[1][2:], "#")
-			htmlbody = htmlbody[len("<p>"+h1title):]
+			h1title = bytes.TrimPrefix(fields[1][2:], []byte("#"))
+			htmlbody = htmlbody[3+len(h1title):] // 3 is the length of <p>
 		}
 	}
 
 	// Checkboxes
-	htmlbody = strings.Replace(htmlbody, "<li>[ ] ", "<li><input type=\"checkbox\" disabled> ", utils.EveryInstance)
-	htmlbody = strings.Replace(htmlbody, "<li>[x] ", "<li><input type=\"checkbox\" disabled checked> ", utils.EveryInstance)
-	htmlbody = strings.Replace(htmlbody, "<li>[X] ", "<li><input type=\"checkbox\" disabled checked> ", utils.EveryInstance)
+	htmlbody = bytes.Replace(htmlbody, []byte("<li>[ ] "), []byte("<li><input type=\"checkbox\" disabled> "), utils.EveryInstance)
+	htmlbody = bytes.Replace(htmlbody, []byte("<li>[x] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
+	htmlbody = bytes.Replace(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
 
 	// If there is no given title, use the h1title
-	title := given["title"]
+	title := string(kwmap["title"])
 	if title == "" {
-		if h1title != "" {
-			title = h1title
+		if len(h1title) != 0 {
+			title = string(h1title)
 		} else {
 			// If no title has been provided, use the filename
 			title = filepath.Base(filename)
@@ -186,7 +187,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Find the theme that should be used
-	theme := given["theme"]
+	theme := string(kwmap["theme"])
 	if theme == "" {
 		theme = ac.defaultTheme
 	}
@@ -197,10 +198,10 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Check if a specific string should be replaced with the current theme
-	replaceWithTheme := given["replace_with_theme"]
-	if replaceWithTheme != "" {
+	replaceWithTheme := kwmap["replace_with_theme"]
+	if len(replaceWithTheme) != 0 {
 		// Replace all instances of the value given with "replace_with_theme: ..." with the current theme name
-		htmlbody = strings.Replace(htmlbody, replaceWithTheme, theme, utils.EveryInstance)
+		htmlbody = bytes.Replace(htmlbody, replaceWithTheme, []byte(theme), utils.EveryInstance)
 	}
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
@@ -240,7 +241,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Additional CSS file
-	additionalCSSfile := given["css"]
+	additionalCSSfile := string(kwmap["css"])
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
 		if ac.markdownMode && ac.fs.Exists(additionalCSSfile) {
@@ -257,24 +258,28 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 		}
 	}
 
-	codeStyle := given["codestyle"]
+	codeStyle := string(kwmap["codestyle"])
 	// Add syntax highlighting to the header, but only if "<code" is present
-	if strings.Contains(htmlbody, "<code") {
+	if bytes.Contains(htmlbody, []byte("<code")) {
 		if codeStyle == "" {
 			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[theme]))
 		} else if codeStyle != "none" {
 			head.WriteString(utils.HighlightHTML(codeStyle))
 		}
-		if codeStyle != "none" {
-			htmlbody = HighlightCode(htmlbody)
-		}
+		//if codeStyle != "none" {
+		//	htmlbody = HighlightCode(htmlbody)
+		//}
 	}
 
 	// Add meta tags, if metadata information has been declared
 	for _, keyword := range utils.MetaKeywords {
-		if given[keyword] != "" {
+		if len(kwmap[keyword]) != 0 {
 			// Add the meta tag
-			head.WriteString(fmt.Sprintf(`<meta name="%s" content="%s" />`, keyword, given[keyword]))
+			head.WriteString("<meta name=\"")
+			head.WriteString(keyword)
+			head.WriteString("\" content=\"")
+			head.Write(kwmap[keyword])
+			head.WriteString("\" />")
 		}
 	}
 
