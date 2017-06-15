@@ -1,4 +1,4 @@
-#Permissionbolt [![Build Status](https://travis-ci.org/xyproto/permissionbolt.svg?branch=master)](https://travis-ci.org/xyproto/permissionbolt) [![GoDoc](https://godoc.org/github.com/xyproto/permissionbolt?status.svg)](http://godoc.org/github.com/xyproto/permissionbolt) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissionbolt)
+# Permissionbolt [![Build Status](https://travis-ci.org/xyproto/permissionbolt.svg?branch=master)](https://travis-ci.org/xyproto/permissionbolt) [![GoDoc](https://godoc.org/github.com/xyproto/permissionbolt?status.svg)](http://godoc.org/github.com/xyproto/permissionbolt) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissionbolt)
 
 
 Middleware for keeping track of users, login states and permissions.
