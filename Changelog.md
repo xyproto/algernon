@@ -1,5 +1,18 @@
 # Changelog
 
+Changes from 1.4.4 to 1.4.5
+===========================
+
+* Performance improvements when rendering Markdown and directory listings
+* Refactoring out code to the `kinnian` package
+* Update samples and dependencies
+
+Changes from 1.4.3 to 1.4.4
+===========================
+
+* Refactoring code into packages
+* Update tests and documentation
+
 Changes from 1.4.2 to 1.4.3
 ===========================
 
