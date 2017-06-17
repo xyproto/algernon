@@ -57,6 +57,20 @@ func MessagePageBytes(title string, body []byte, theme string) []byte {
 	return buf.Bytes()
 }
 
+// SimpleHTMLPage provides a quick way to build a HTML page
+func SimpleHTMLPage(title, headline, inhead, body []byte) []byte {
+	var buf bytes.Buffer
+	buf.WriteString("<!doctype html><html><head><title>")
+	buf.Write(title)
+	buf.WriteString("</title>")
+	buf.Write(inhead)
+	buf.WriteString("<head><body><h1>")
+	buf.Write(headline)
+	buf.WriteString("</h1>")
+	buf.Write(body)
+	return buf.Bytes()
+}
+
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory
 // and a boolean that is true if the given URL is to a directory.
 func HTMLLink(text, url string, isDirectory bool) string {

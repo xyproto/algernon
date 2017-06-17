@@ -176,25 +176,25 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	htmlbody = bytes.Replace(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
 
 	// If there is no given title, use the h1title
-	title := string(kwmap["title"])
-	if title == "" {
+	title := kwmap["title"]
+	if len(title) == 0 {
 		if len(h1title) != 0 {
-			title = string(h1title)
+			title = h1title
 		} else {
 			// If no title has been provided, use the filename
-			title = filepath.Base(filename)
+			title = []byte(filepath.Base(filename))
 		}
 	}
 
 	// Find the theme that should be used
-	theme := string(kwmap["theme"])
-	if theme == "" {
-		theme = ac.defaultTheme
+	theme := kwmap["theme"]
+	if len(theme) == 0 {
+		theme = []byte(ac.defaultTheme)
 	}
 
 	// Theme aliases. Use a map if there are more than 1 aliases in the future.
-	if theme == "light" {
-		theme = "gray"
+	if string(theme) == "light" {
+		theme = []byte("gray")
 	}
 
 	// Check if a specific string should be replaced with the current theme
@@ -205,9 +205,10 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
-	if strings.Contains(theme, ".") {
-		utils.BuiltinThemes[theme] = "@import url(" + theme + ");"
-		utils.DefaultCodeStyles[theme] = utils.DefaultCustomCodeStyle
+	if bytes.Contains(theme, []byte(".")) {
+		st := string(theme)
+		utils.BuiltinThemes[st] = "@import url(" + st + ");"
+		utils.DefaultCodeStyles[st] = utils.DefaultCustomCodeStyle
 	}
 
 	var head bytes.Buffer
@@ -234,10 +235,14 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		head.WriteString(`<link href="` + utils.DefaultStyleFilename + `" rel="stylesheet" type="text/css">`)
+		head.WriteString(`<link href="`)
+		head.WriteString(utils.DefaultStyleFilename)
+		head.WriteString(`" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
-		head.WriteString("<style>" + utils.BuiltinThemes[theme] + "</style>")
+		head.WriteString("<style>")
+		head.WriteString(utils.BuiltinThemes[string(theme)])
+		head.WriteString("</style>")
 	}
 
 	// Additional CSS file
@@ -254,7 +259,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			cssdata := cssblock.MustData()
 			head.WriteString("<style>" + string(cssdata) + "</style>")
 		} else {
-			head.WriteString(`<link href="` + additionalCSSfile + `" rel="stylesheet" type="text/css">`)
+			head.WriteString(`<link href="`)
+			head.WriteString(additionalCSSfile)
+			head.WriteString(`" rel="stylesheet" type="text/css">`)
 		}
 	}
 
@@ -262,7 +269,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// Add syntax highlighting to the header, but only if "<code" is present
 	if bytes.Contains(htmlbody, []byte("<code")) {
 		if codeStyle == "" {
-			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[theme]))
+			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[string(theme)]))
 		} else if codeStyle != "none" {
 			head.WriteString(utils.HighlightHTML(codeStyle))
 		}
@@ -275,16 +282,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	for _, keyword := range utils.MetaKeywords {
 		if len(kwmap[keyword]) != 0 {
 			// Add the meta tag
-			head.WriteString("<meta name=\"")
+			head.WriteString(`<meta name="`)
 			head.WriteString(keyword)
-			head.WriteString("\" content=\"")
+			head.WriteString(`" content="`)
 			head.Write(kwmap[keyword])
-			head.WriteString("\" />")
+			head.WriteString(`" />`)
 		}
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
+	htmldata := utils.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {

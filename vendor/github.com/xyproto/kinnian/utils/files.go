@@ -131,7 +131,7 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 	commentStart := []byte("<!--")
 	commentEnd := []byte("-->")
 	var keywordColon []byte
-	var found map[string][]byte
+	found := make(map[string][]byte)
 	// Find and separate the lines starting with one of the keywords in the special map
 	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
 		// Check if the current line has one of the special keywords

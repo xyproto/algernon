@@ -1,5 +1,5 @@
 hash: ae19f2741b445c854d69ae5ae98ad59fe2cec30f1210a613c4067e2541951b94
-updated: 2017-06-16T01:19:49.645071693+02:00
+updated: 2017-06-17T17:55:29.287890806+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -29,7 +29,7 @@ imports:
 - name: github.com/getwe/figlet4go
   version: bc879344e874dd110753d17083a2a7acf3136683
 - name: github.com/go-sql-driver/mysql
-  version: a825be04c652d01442384e9dcdf2cdc3f1eda67f
+  version: 8fefef06da7707b5a3cda42195a6b409c9c9ab5c
 - name: github.com/juju/errors
   version: 8234c829496aaeae67c5c71235a2cbcc289e960a
 - name: github.com/klauspost/compress
@@ -106,7 +106,7 @@ imports:
 - name: github.com/xyproto/jpath
   version: c3c5db51d5cec049a9ef9cb0a76c2d589d4e2da5
 - name: github.com/xyproto/kinnian
-  version: 3a20c0bb076cfcdfbe854fa6d4cff934ce5f31c5
+  version: 64121ac6b065e5d5161b29b69f6b958b5dc4b831
   subpackages:
   - cachemode
   - console
@@ -163,7 +163,7 @@ imports:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: ddf80d0970594e2e4cccf5a98861cad3d9eaa4cd
+  version: 973f3f3bbd50e92b13faa6c53ec16f49b45e851c
   subpackages:
   - context
   - http2
