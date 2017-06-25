@@ -37,6 +37,7 @@ Documentation/tutorials
 
 Priority 3
 ----------
+- [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
 - [ ] Render JavaScript server-side by using [Goja](https://github.com/dop251/goja)
 - [ ] Add an option for using brotly compression instead of gzip.
