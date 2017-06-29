@@ -207,7 +207,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
 	if bytes.Contains(theme, []byte(".")) {
 		st := string(theme)
-		utils.BuiltinThemes[st] = "@import url(" + st + ");"
+		utils.BuiltinThemes[st] = []byte("@import url(" + st + ");")
 		utils.DefaultCodeStyles[st] = utils.DefaultCustomCodeStyle
 	}
 
@@ -241,7 +241,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	} else {
 		// If not, use the theme by inserting the CSS style directly
 		head.WriteString("<style>")
-		head.WriteString(utils.BuiltinThemes[string(theme)])
+		head.Write(utils.BuiltinThemes[string(theme)])
 		head.WriteString("</style>")
 	}
 

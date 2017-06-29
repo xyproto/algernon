@@ -38,6 +38,7 @@ var allErrors = []*errorInfo{
 	&errorInfo{errors.IsNotAssigned, errors.NotAssignedf, errors.NewNotAssigned, " not assigned"},
 	&errorInfo{errors.IsMethodNotAllowed, errors.MethodNotAllowedf, errors.NewMethodNotAllowed, ""},
 	&errorInfo{errors.IsBadRequest, errors.BadRequestf, errors.NewBadRequest, ""},
+	&errorInfo{errors.IsForbidden, errors.Forbiddenf, errors.NewForbidden, ""},
 }
 
 type errorTypeSuite struct{}

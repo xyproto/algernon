@@ -14,21 +14,22 @@ import (
     "github.com/didip/tollbooth"
     "github.com/didip/tollbooth/thirdparty/tollbooth_iris"
 
-    "github.com/kataras/iris"
-    "github.com/kataras/iris/context"
+    "gopkg.in/kataras/iris.v6"
+    "gopkg.in/kataras/iris.v6/adaptors/httprouter"
 )
 
 func main() {
     app := iris.New()
-
+    app.Adapt( httprouter.New() )
+    
     // Create a limiter struct.
     limiter := tollbooth.NewLimiter(1, time.Second)
 
-    app.GET("/", tollbooth_iris.LimitHandler(limiter), func(ctx context.Context) {
+    app.Get("/", tollbooth_iris.LimitHandler(limiter), func(ctx *iris.Context) {
         ctx.WriteString("Hello, world!")
     })
 
-    app.Run(iris.Addr(":8080"))
+    app.Listen(":8080")
 }
 
 ```
