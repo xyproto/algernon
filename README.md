@@ -15,7 +15,7 @@ Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass(
 Quick installation (development version)
 ----------------------------------------
 
-`go get github.com/xyproto/algernon`
+`go get -u github.com/xyproto/algernon`
 
 Technologies
 ------------
