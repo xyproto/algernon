@@ -18,7 +18,7 @@ var coFuncs = map[string]LGFunction{
 
 func coCreate(L *LState) int {
 	fn := L.CheckFunction(1)
-	newthread, _ := L.NewThread()
+	newthread := L.NewThread()
 	base := 0
 	newthread.stack.Push(callFrame{
 		Fn:         fn,

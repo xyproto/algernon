@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"sync/atomic"
 )
 
 type Logger struct {
@@ -113,7 +112,7 @@ func (logger *Logger) WithError(err error) *Entry {
 }
 
 func (logger *Logger) Debugf(format string, args ...interface{}) {
-	if logger.level() >= DebugLevel {
+	if logger.Level >= DebugLevel {
 		entry := logger.newEntry()
 		entry.Debugf(format, args...)
 		logger.releaseEntry(entry)
@@ -121,7 +120,7 @@ func (logger *Logger) Debugf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Infof(format string, args ...interface{}) {
-	if logger.level() >= InfoLevel {
+	if logger.Level >= InfoLevel {
 		entry := logger.newEntry()
 		entry.Infof(format, args...)
 		logger.releaseEntry(entry)
@@ -135,7 +134,7 @@ func (logger *Logger) Printf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Warnf(format string, args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warnf(format, args...)
 		logger.releaseEntry(entry)
@@ -143,7 +142,7 @@ func (logger *Logger) Warnf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Warningf(format string, args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warnf(format, args...)
 		logger.releaseEntry(entry)
@@ -151,7 +150,7 @@ func (logger *Logger) Warningf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Errorf(format string, args ...interface{}) {
-	if logger.level() >= ErrorLevel {
+	if logger.Level >= ErrorLevel {
 		entry := logger.newEntry()
 		entry.Errorf(format, args...)
 		logger.releaseEntry(entry)
@@ -159,7 +158,7 @@ func (logger *Logger) Errorf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Fatalf(format string, args ...interface{}) {
-	if logger.level() >= FatalLevel {
+	if logger.Level >= FatalLevel {
 		entry := logger.newEntry()
 		entry.Fatalf(format, args...)
 		logger.releaseEntry(entry)
@@ -168,7 +167,7 @@ func (logger *Logger) Fatalf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Panicf(format string, args ...interface{}) {
-	if logger.level() >= PanicLevel {
+	if logger.Level >= PanicLevel {
 		entry := logger.newEntry()
 		entry.Panicf(format, args...)
 		logger.releaseEntry(entry)
@@ -176,7 +175,7 @@ func (logger *Logger) Panicf(format string, args ...interface{}) {
 }
 
 func (logger *Logger) Debug(args ...interface{}) {
-	if logger.level() >= DebugLevel {
+	if logger.Level >= DebugLevel {
 		entry := logger.newEntry()
 		entry.Debug(args...)
 		logger.releaseEntry(entry)
@@ -184,7 +183,7 @@ func (logger *Logger) Debug(args ...interface{}) {
 }
 
 func (logger *Logger) Info(args ...interface{}) {
-	if logger.level() >= InfoLevel {
+	if logger.Level >= InfoLevel {
 		entry := logger.newEntry()
 		entry.Info(args...)
 		logger.releaseEntry(entry)
@@ -198,7 +197,7 @@ func (logger *Logger) Print(args ...interface{}) {
 }
 
 func (logger *Logger) Warn(args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warn(args...)
 		logger.releaseEntry(entry)
@@ -206,7 +205,7 @@ func (logger *Logger) Warn(args ...interface{}) {
 }
 
 func (logger *Logger) Warning(args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warn(args...)
 		logger.releaseEntry(entry)
@@ -214,7 +213,7 @@ func (logger *Logger) Warning(args ...interface{}) {
 }
 
 func (logger *Logger) Error(args ...interface{}) {
-	if logger.level() >= ErrorLevel {
+	if logger.Level >= ErrorLevel {
 		entry := logger.newEntry()
 		entry.Error(args...)
 		logger.releaseEntry(entry)
@@ -222,7 +221,7 @@ func (logger *Logger) Error(args ...interface{}) {
 }
 
 func (logger *Logger) Fatal(args ...interface{}) {
-	if logger.level() >= FatalLevel {
+	if logger.Level >= FatalLevel {
 		entry := logger.newEntry()
 		entry.Fatal(args...)
 		logger.releaseEntry(entry)
@@ -231,7 +230,7 @@ func (logger *Logger) Fatal(args ...interface{}) {
 }
 
 func (logger *Logger) Panic(args ...interface{}) {
-	if logger.level() >= PanicLevel {
+	if logger.Level >= PanicLevel {
 		entry := logger.newEntry()
 		entry.Panic(args...)
 		logger.releaseEntry(entry)
@@ -239,7 +238,7 @@ func (logger *Logger) Panic(args ...interface{}) {
 }
 
 func (logger *Logger) Debugln(args ...interface{}) {
-	if logger.level() >= DebugLevel {
+	if logger.Level >= DebugLevel {
 		entry := logger.newEntry()
 		entry.Debugln(args...)
 		logger.releaseEntry(entry)
@@ -247,7 +246,7 @@ func (logger *Logger) Debugln(args ...interface{}) {
 }
 
 func (logger *Logger) Infoln(args ...interface{}) {
-	if logger.level() >= InfoLevel {
+	if logger.Level >= InfoLevel {
 		entry := logger.newEntry()
 		entry.Infoln(args...)
 		logger.releaseEntry(entry)
@@ -261,7 +260,7 @@ func (logger *Logger) Println(args ...interface{}) {
 }
 
 func (logger *Logger) Warnln(args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warnln(args...)
 		logger.releaseEntry(entry)
@@ -269,7 +268,7 @@ func (logger *Logger) Warnln(args ...interface{}) {
 }
 
 func (logger *Logger) Warningln(args ...interface{}) {
-	if logger.level() >= WarnLevel {
+	if logger.Level >= WarnLevel {
 		entry := logger.newEntry()
 		entry.Warnln(args...)
 		logger.releaseEntry(entry)
@@ -277,7 +276,7 @@ func (logger *Logger) Warningln(args ...interface{}) {
 }
 
 func (logger *Logger) Errorln(args ...interface{}) {
-	if logger.level() >= ErrorLevel {
+	if logger.Level >= ErrorLevel {
 		entry := logger.newEntry()
 		entry.Errorln(args...)
 		logger.releaseEntry(entry)
@@ -285,7 +284,7 @@ func (logger *Logger) Errorln(args ...interface{}) {
 }
 
 func (logger *Logger) Fatalln(args ...interface{}) {
-	if logger.level() >= FatalLevel {
+	if logger.Level >= FatalLevel {
 		entry := logger.newEntry()
 		entry.Fatalln(args...)
 		logger.releaseEntry(entry)
@@ -294,7 +293,7 @@ func (logger *Logger) Fatalln(args ...interface{}) {
 }
 
 func (logger *Logger) Panicln(args ...interface{}) {
-	if logger.level() >= PanicLevel {
+	if logger.Level >= PanicLevel {
 		entry := logger.newEntry()
 		entry.Panicln(args...)
 		logger.releaseEntry(entry)
@@ -306,12 +305,4 @@ func (logger *Logger) Panicln(args ...interface{}) {
 //In these cases user can choose to disable the lock.
 func (logger *Logger) SetNoLock() {
 	logger.mu.Disable()
-}
-
-func (logger *Logger) level() Level {
-	return Level(atomic.LoadUint32((*uint32)(&logger.Level)))
-}
-
-func (logger *Logger) setLevel(level Level) {
-	atomic.StoreUint32((*uint32)(&logger.Level), uint32(level))
 }

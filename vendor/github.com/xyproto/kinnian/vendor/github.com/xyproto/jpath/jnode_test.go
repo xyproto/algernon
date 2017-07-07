@@ -337,7 +337,8 @@ func TestPath(t *testing.T) {
 			"sub_obj": {"a": 1}
 		}
 	}`))
-	n := js.GetNode("x")
+	var n *Node
+	n = js.GetNode("x")
 	assert.NotEqual(t, n, NilNode)
 	n = js.GetNode("x.test")
 	assert.NotEqual(t, n, NilNode)

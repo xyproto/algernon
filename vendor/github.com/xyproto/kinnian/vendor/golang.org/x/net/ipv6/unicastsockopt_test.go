@@ -29,15 +29,8 @@ func TestConnUnicastSocketOptions(t *testing.T) {
 	}
 	defer ln.Close()
 
-	errc := make(chan error, 1)
-	go func() {
-		c, err := ln.Accept()
-		if err != nil {
-			errc <- err
-			return
-		}
-		errc <- c.Close()
-	}()
+	done := make(chan bool)
+	go acceptor(t, ln, done)
 
 	c, err := net.Dial("tcp6", ln.Addr().String())
 	if err != nil {
@@ -47,9 +40,7 @@ func TestConnUnicastSocketOptions(t *testing.T) {
 
 	testUnicastSocketOptions(t, ipv6.NewConn(c))
 
-	if err := <-errc; err != nil {
-		t.Errorf("server: %v", err)
-	}
+	<-done
 }
 
 var packetConnUnicastSocketOptionTests = []struct {

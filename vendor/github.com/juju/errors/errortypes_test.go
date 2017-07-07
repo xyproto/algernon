@@ -27,18 +27,18 @@ type errorInfo struct {
 // allErrors holds information for all defined errors. When adding new
 // errors, add them here as well to include them in tests.
 var allErrors = []*errorInfo{
-	&errorInfo{errors.IsNotFound, errors.NotFoundf, errors.NewNotFound, " not found"},
-	&errorInfo{errors.IsUserNotFound, errors.UserNotFoundf, errors.NewUserNotFound, " user not found"},
-	&errorInfo{errors.IsUnauthorized, errors.Unauthorizedf, errors.NewUnauthorized, ""},
-	&errorInfo{errors.IsNotImplemented, errors.NotImplementedf, errors.NewNotImplemented, " not implemented"},
-	&errorInfo{errors.IsAlreadyExists, errors.AlreadyExistsf, errors.NewAlreadyExists, " already exists"},
-	&errorInfo{errors.IsNotSupported, errors.NotSupportedf, errors.NewNotSupported, " not supported"},
-	&errorInfo{errors.IsNotValid, errors.NotValidf, errors.NewNotValid, " not valid"},
-	&errorInfo{errors.IsNotProvisioned, errors.NotProvisionedf, errors.NewNotProvisioned, " not provisioned"},
-	&errorInfo{errors.IsNotAssigned, errors.NotAssignedf, errors.NewNotAssigned, " not assigned"},
-	&errorInfo{errors.IsMethodNotAllowed, errors.MethodNotAllowedf, errors.NewMethodNotAllowed, ""},
-	&errorInfo{errors.IsBadRequest, errors.BadRequestf, errors.NewBadRequest, ""},
-	&errorInfo{errors.IsForbidden, errors.Forbiddenf, errors.NewForbidden, ""},
+	{errors.IsNotFound, errors.NotFoundf, errors.NewNotFound, " not found"},
+	{errors.IsUserNotFound, errors.UserNotFoundf, errors.NewUserNotFound, " user not found"},
+	{errors.IsUnauthorized, errors.Unauthorizedf, errors.NewUnauthorized, ""},
+	{errors.IsNotImplemented, errors.NotImplementedf, errors.NewNotImplemented, " not implemented"},
+	{errors.IsAlreadyExists, errors.AlreadyExistsf, errors.NewAlreadyExists, " already exists"},
+	{errors.IsNotSupported, errors.NotSupportedf, errors.NewNotSupported, " not supported"},
+	{errors.IsNotValid, errors.NotValidf, errors.NewNotValid, " not valid"},
+	{errors.IsNotProvisioned, errors.NotProvisionedf, errors.NewNotProvisioned, " not provisioned"},
+	{errors.IsNotAssigned, errors.NotAssignedf, errors.NewNotAssigned, " not assigned"},
+	{errors.IsMethodNotAllowed, errors.MethodNotAllowedf, errors.NewMethodNotAllowed, ""},
+	{errors.IsBadRequest, errors.BadRequestf, errors.NewBadRequest, ""},
+	{errors.IsForbidden, errors.Forbiddenf, errors.NewForbidden, ""},
 }
 
 type errorTypeSuite struct{}

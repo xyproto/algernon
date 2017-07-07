@@ -1,4 +1,4 @@
-# JSON Path [![Build Status](https://travis-ci.org/xyproto/jpath.svg?branch=master)](https://travis-ci.org/xyproto/jpath) [![GoDoc](https://godoc.org/github.com/xyproto/jpath?status.svg)](http://godoc.org/github.com/xyproto/jpath)
+#JSON Path [![Build Status](https://travis-ci.org/xyproto/jpath.svg?branch=master)](https://travis-ci.org/xyproto/jpath) [![GoDoc](https://godoc.org/github.com/xyproto/jpath?status.svg)](http://godoc.org/github.com/xyproto/jpath)
 
 Interact with arbitrary JSON. Use simple JSON path expressions.
 
@@ -43,7 +43,7 @@ The `SetBranch` method for the `Node` struct also provides a way of accessing JS
 
 ### Utilities
 
-Four small utilities for interacting with JSON files are included. Note that these deals with strings only, not numbers or anything else!
+Four small utilities for interacting with JSON files are included:
 
 * jget - for retrieving a string value from a JSON file. Takes a filename and a simple JSON path expression.
   * Example: `jget books.json x[1].author`
@@ -61,7 +61,7 @@ Installation
 TODO
 ----
 
-* Extend the utilities to also support numbers and other types
+* Support values that are not strings when running `jget`
 * Support wildcards in the JSON path expressions (like `x[*].id`)
 
 

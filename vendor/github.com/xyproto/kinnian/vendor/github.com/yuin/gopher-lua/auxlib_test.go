@@ -109,7 +109,7 @@ func TestCheckThread(t *testing.T) {
 	L := NewState()
 	defer L.Close()
 	errorIfGFuncNotFail(t, L, func(L *LState) int {
-		th, _ := L.NewThread()
+		th := L.NewThread()
 		L.Push(th)
 		errorIfNotEqual(t, th, L.CheckThread(2))
 		L.Push(LNumber(10))

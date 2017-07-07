@@ -117,9 +117,6 @@ func (jf *JFile) AddJSON(JSONpath string, JSONdata []byte) error {
 // Returns ErrKeyNotFound if the key is not found.
 func (jf *JFile) DelKey(JSONpath string) error {
 	err := jf.rootnode.DelKey(JSONpath)
-	if err != nil {
-		return err
-	}
 	// Use the correct JSON function, depending on the pretty parameter
 	JSON := jf.rootnode.JSON
 	if jf.pretty {

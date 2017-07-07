@@ -233,7 +233,10 @@ func send_char(x, y int, ch rune) {
 func flush() error {
 	_, err := io.Copy(out, &outbuf)
 	outbuf.Reset()
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func send_clear() error {

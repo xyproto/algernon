@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"unsafe"
 )
 
 var ioFuncs = map[string]LGFunction{
@@ -241,7 +242,7 @@ func fileWriteAux(L *LState, file *lFile, idx int) int {
 	for i := idx; i <= top; i++ {
 		L.CheckTypes(i, LTNumber, LTString)
 		s := LVAsString(L.Get(i))
-		if _, err = out.Write(unsafeFastStringToReadOnlyBytes(s)); err != nil {
+		if _, err = out.Write(*(*[]byte)(unsafe.Pointer(&s))); err != nil {
 			goto errreturn
 		}
 	}

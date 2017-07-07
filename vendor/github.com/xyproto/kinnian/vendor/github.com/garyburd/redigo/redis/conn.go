@@ -128,7 +128,7 @@ func DialPassword(password string) DialOption {
 }
 
 // DialTLSConfig specifies the config to use when a TLS connection is dialed.
-// Has no effect when not dialing a TLS connection.
+//  Has no effect when not dialing a TLS connection.
 func DialTLSConfig(c *tls.Config) DialOption {
 	return DialOption{func(do *dialOptions) {
 		do.tlsConfig = c
@@ -370,10 +370,6 @@ func (c *conn) writeCommand(cmd string, args []interface{}) (err error) {
 			}
 		case nil:
 			err = c.writeString("")
-		case Argument:
-			var buf bytes.Buffer
-			fmt.Fprint(&buf, arg.RedisArg())
-			err = c.writeBytes(buf.Bytes())
 		default:
 			var buf bytes.Buffer
 			fmt.Fprint(&buf, arg)

@@ -46,26 +46,44 @@ var (
 //
 // The following example shows how to use a pool in a web application. The
 // application creates a pool at application startup and makes it available to
-// request handlers using a package level variable. The pool configuration used
-// here is an example, not a recommendation.
+// request handlers using a global variable. The pool configuration used here
+// is an example, not a recommendation.
 //
-//  func newPool(addr string) *redis.Pool {
-//    return &redis.Pool{
-//      MaxIdle: 3,
-//      IdleTimeout: 240 * time.Second,
-//      Dial: func () (redis.Conn, error) { return redis.Dial("tcp", addr) },
-//    }
+//  func newPool(server, password string) *redis.Pool {
+//      return &redis.Pool{
+//          MaxIdle: 3,
+//          IdleTimeout: 240 * time.Second,
+//          Dial: func () (redis.Conn, error) {
+//              c, err := redis.Dial("tcp", server)
+//              if err != nil {
+//                  return nil, err
+//              }
+//              if _, err := c.Do("AUTH", password); err != nil {
+//                  c.Close()
+//                  return nil, err
+//              }
+//              return c, err
+//          },
+//          TestOnBorrow: func(c redis.Conn, t time.Time) error {
+//              if time.Since(t) < time.Minute {
+//                  return nil
+//              }
+//              _, err := c.Do("PING")
+//              return err
+//          },
+//      }
 //  }
 //
 //  var (
-//    pool *redis.Pool
-//    redisServer = flag.String("redisServer", ":6379", "")
+//      pool *redis.Pool
+//      redisServer = flag.String("redisServer", ":6379", "")
+//      redisPassword = flag.String("redisPassword", "", "")
 //  )
 //
 //  func main() {
-//    flag.Parse()
-//    pool = newPool(*redisServer)
-//    ...
+//      flag.Parse()
+//      pool = newPool(*redisServer, *redisPassword)
+//      ...
 //  }
 //
 // A request handler gets a connection from the pool and closes the connection
@@ -74,44 +92,7 @@ var (
 //  func serveHome(w http.ResponseWriter, r *http.Request) {
 //      conn := pool.Get()
 //      defer conn.Close()
-//      ...
-//  }
-//
-// Use the Dial function to authenticate connections with the AUTH command or
-// select a database with the SELECT command:
-//
-//  pool := &redis.Pool{
-//    // Other pool configuration not shown in this example.
-//    Dial: func () (redis.Conn, error) {
-//      c, err := redis.Dial("tcp", server)
-//      if err != nil {
-//        return nil, err
-//      }
-//      if _, err := c.Do("AUTH", password); err != nil {
-//        c.Close()
-//        return nil, err
-//      }
-//      if _, err := c.Do("SELECT", db); err != nil {
-//        c.Close()
-//        return nil, err
-//      }
-//      return c, nil
-//    }
-//  }
-//
-// Use the TestOnBorrow function to check the health of an idle connection
-// before the connection is returned to the application. This example PINGs
-// connections that have been idle more than a minute:
-//
-//  pool := &redis.Pool{
-//    // Other pool configuration not shown in this example.
-//    TestOnBorrow: func(c redis.Conn, t time.Time) error {
-//      if time.Since(t) < time.Minute {
-//        return nil
-//      }
-//      _, err := c.Do("PING")
-//      return err
-//    },
+//      ....
 //  }
 //
 type Pool struct {
@@ -181,20 +162,12 @@ func (p *Pool) Get() Conn {
 	return &pooledConnection{p: p, c: c}
 }
 
-// ActiveCount returns the number of connections in the pool. The count includes idle connections and connections in use.
+// ActiveCount returns the number of active connections in the pool.
 func (p *Pool) ActiveCount() int {
 	p.mu.Lock()
 	active := p.active
 	p.mu.Unlock()
 	return active
-}
-
-// IdleCount returns the number of idle connections in the pool.
-func (p *Pool) IdleCount() int {
-	p.mu.Lock()
-	idle := p.idle.Len()
-	p.mu.Unlock()
-	return idle
 }
 
 // Close releases the resources used by the pool.

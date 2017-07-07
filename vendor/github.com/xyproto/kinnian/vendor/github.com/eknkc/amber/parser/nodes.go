@@ -1,9 +1,7 @@
 package parser
 
-import (
-	"regexp"
-	"strings"
-)
+import "regexp"
+import "strings"
 
 var selfClosingTags = [...]string{
 	"meta",
@@ -263,21 +261,19 @@ func newMixinCall(name, args string) *MixinCall {
 	mixinCall := new(MixinCall)
 	mixinCall.Name = name
 
-	if args != "" {
-		const t = "%s"
-		quoteExp := regexp.MustCompile(`"(.*?)"`)
-		delExp := regexp.MustCompile(`,\s`)
+	const t = "%s"
+	quoteExp := regexp.MustCompile(`"(.*?)"`)
+	delExp := regexp.MustCompile(`,\s`)
 
-		quotes := quoteExp.FindAllString(args, -1)
-		replaced := quoteExp.ReplaceAllString(args, t)
-		mixinCall.Args = delExp.Split(replaced, -1)
+	quotes := quoteExp.FindAllString(args, -1)
+	replaced := quoteExp.ReplaceAllString(args, t)
+	mixinCall.Args = delExp.Split(replaced, -1)
 
-		qi := 0
-		for i, arg := range mixinCall.Args {
-			if arg == t {
-				mixinCall.Args[i] = quotes[qi]
-				qi++
-			}
+	qi := 0
+	for i, arg := range mixinCall.Args {
+		if arg == t {
+			mixinCall.Args[i] = quotes[qi]
+			qi++
 		}
 	}
 

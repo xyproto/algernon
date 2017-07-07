@@ -209,7 +209,7 @@ GLOBL ·andMask<>(SB), (NOPTR+RODATA), $240
 #define polyMul polyMulStage1; polyMulStage2; polyMulStage3; polyMulReduceStage
 #define polyMulAVX2 polyMulStage1_AVX2; polyMulStage2_AVX2; polyMulStage3_AVX2; polyMulReduceStage
 // ----------------------------------------------------------------------------
-TEXT polyHashADInternal<>(SB), NOSPLIT, $0
+TEXT polyHashADInternal(SB), NOSPLIT, $0
 	// adp points to beginning of additional data
 	// itr2 holds ad length
 	XORQ acc0, acc0
@@ -278,7 +278,7 @@ TEXT ·chacha20Poly1305Open(SB), 0, $288-97
 	MOVQ ad+72(FP), adp
 
 	// Check for AVX2 support
-	CMPB ·useAVX2(SB), $1
+	CMPB runtime·support_avx2(SB), $1
 	JE   chacha20Poly1305Open_AVX2
 
 	// Special optimization, for very short buffers
@@ -315,7 +315,7 @@ openSSEPreparePolyKey:
 
 	// Hash AAD
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 
 openSSEMainLoop:
 	CMPQ inl, $256
@@ -476,7 +476,7 @@ openSSE128InnerCipherLoop:
 
 	// Hash
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 
 openSSE128Open:
 	CMPQ inl, $16
@@ -822,7 +822,7 @@ openAVX2PreparePolyKey:
 
 	// Hash AD + first 64 bytes
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 	XORQ itr1, itr1
 
 openAVX2InitialHash64:
@@ -1014,7 +1014,7 @@ openAVX2192InnerCipherLoop:
 openAVX2ShortOpen:
 	// Hash
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 
 openAVX2ShortOpenLoop:
 	CMPQ inl, $32
@@ -1484,7 +1484,8 @@ TEXT ·chacha20Poly1305Seal(SB), 0, $288-96
 	MOVQ src_len+56(FP), inl
 	MOVQ ad+72(FP), adp
 
-	CMPB ·useAVX2(SB), $1
+	// Check for AVX2 support
+	CMPB runtime·support_avx2(SB), $1
 	JE   chacha20Poly1305Seal_AVX2
 
 	// Special optimization, for very short buffers
@@ -1546,7 +1547,7 @@ sealSSEIntroLoop:
 
 	// Hash AAD
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 
 	MOVOU (0*16)(inp), A0; MOVOU (1*16)(inp), B0; MOVOU (2*16)(inp), C0; MOVOU (3*16)(inp), D0
 	PXOR  A0, A1; PXOR B0, B1; PXOR C0, C1; PXOR D0, D1
@@ -1690,7 +1691,7 @@ sealSSETail64:
 	MOVO  D1, ctr0Store
 
 sealSSETail64LoopA:
-	// Perform ChaCha rounds, while hashing the previously encrypted ciphertext
+	// Perform ChaCha rounds, while hashing the prevsiosly encrpyted ciphertext
 	polyAdd(0(oup))
 	polyMul
 	LEAQ 16(oup), oup
@@ -1724,7 +1725,7 @@ sealSSETail128:
 	MOVO A0, A1; MOVO B0, B1; MOVO C0, C1; MOVO D0, D1; PADDL ·sseIncMask<>(SB), D1; MOVO D1, ctr1Store
 
 sealSSETail128LoopA:
-	// Perform ChaCha rounds, while hashing the previously encrypted ciphertext
+	// Perform ChaCha rounds, while hashing the prevsiosly encrpyted ciphertext
 	polyAdd(0(oup))
 	polyMul
 	LEAQ 16(oup), oup
@@ -1770,7 +1771,7 @@ sealSSETail192:
 	MOVO A1, A2; MOVO B1, B2; MOVO C1, C2; MOVO D1, D2; PADDL ·sseIncMask<>(SB), D2; MOVO D2, ctr2Store
 
 sealSSETail192LoopA:
-	// Perform ChaCha rounds, while hashing the previously encrypted ciphertext
+	// Perform ChaCha rounds, while hashing the prevsiosly encrpyted ciphertext
 	polyAdd(0(oup))
 	polyMul
 	LEAQ 16(oup), oup
@@ -1851,7 +1852,7 @@ sealSSE128InnerCipherLoop:
 
 	// Hash
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 	XORQ itr1, itr1
 
 sealSSE128SealHash:
@@ -2026,7 +2027,7 @@ sealAVX2IntroLoop:
 
 	// Hash AD
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 
 	// Can store at least 320 bytes
 	VPXOR   (0*32)(inp), AA0, AA0
@@ -2289,7 +2290,7 @@ sealAVX2192InnerCipherLoop:
 sealAVX2ShortSeal:
 	// Hash aad
 	MOVQ ad_len+80(FP), itr2
-	CALL polyHashADInternal<>(SB)
+	CALL polyHashADInternal(SB)
 	XORQ itr1, itr1
 
 sealAVX2SealHash:
@@ -2694,21 +2695,13 @@ sealAVX2Tail512LoopB:
 
 	JMP sealAVX2SealHash
 
-// func cpuid(eaxArg, ecxArg uint32) (eax, ebx, ecx, edx uint32)
-TEXT ·cpuid(SB), NOSPLIT, $0-24
-	MOVL eaxArg+0(FP), AX
-	MOVL ecxArg+4(FP), CX
+// func haveSSSE3() bool
+TEXT ·haveSSSE3(SB), NOSPLIT, $0
+	XORQ AX, AX
+	INCL AX
 	CPUID
-	MOVL AX, eax+8(FP)
-	MOVL BX, ebx+12(FP)
-	MOVL CX, ecx+16(FP)
-	MOVL DX, edx+20(FP)
+	SHRQ $9, CX
+	ANDQ $1, CX
+	MOVB CX, ret+0(FP)
 	RET
 
-// func xgetbv() (eax, edx uint32)
-TEXT ·xgetbv(SB),NOSPLIT,$0-8
-	MOVL $0, CX
-	XGETBV
-	MOVL AX, eax+0(FP)
-	MOVL DX, edx+4(FP)
-	RET

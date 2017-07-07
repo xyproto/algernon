@@ -1,5 +1,5 @@
 // Package simplemaria offers a simple way to use a MySQL/MariaDB database.
-// This database backend is interchangeable with xyproto/simpleredis and
+// This database backend is interchangable with xyproto/simpleredis and
 // xyproto/simplebolt, since they all use xyproto/pinterface.
 package simplemaria
 
@@ -56,6 +56,7 @@ const (
 	keyCol   = "property"
 	valCol   = "value"
 	ownerCol = "owner"
+	kvCol    = "a_kv"
 )
 
 // Test if the local database server is up and running.
@@ -69,9 +70,6 @@ func TestConnectionHost(connectionString string) (err error) {
 	newConnectionString, _ := rebuildConnectionString(connectionString)
 	// Connect to the given host:port
 	db, err := sql.Open("mysql", newConnectionString)
-	if err != nil {
-		return err
-	}
 	defer db.Close()
 	err = db.Ping()
 	if Verbose {
@@ -88,9 +86,6 @@ func TestConnectionHost(connectionString string) (err error) {
 func TestConnectionHostWithDSN(connectionString string) (err error) {
 	// Connect to the given host:port
 	db, err := sql.Open("mysql", connectionString)
-	if err != nil {
-		return err
-	}
 	defer db.Close()
 	err = db.Ping()
 	if Verbose {

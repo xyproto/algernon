@@ -789,27 +789,6 @@ func (c *Compiler) visitMixin(mixin *parser.Mixin) {
 
 func (c *Compiler) visitMixinCall(mixinCall *parser.MixinCall) {
 	mixin := c.mixins[mixinCall.Name]
-
-	switch {
-	case mixin == nil:
-		panic(fmt.Sprintf("unknown mixin %q", mixinCall.Name))
-
-	case len(mixinCall.Args) < len(mixin.Args):
-		panic(fmt.Sprintf(
-			"not enough arguments in call to mixin %q (have: %d, want: %d)",
-			mixinCall.Name,
-			len(mixinCall.Args),
-			len(mixin.Args),
-		))
-	case len(mixinCall.Args) > len(mixin.Args):
-		panic(fmt.Sprintf(
-			"too many arguments in call to mixin %q (have: %d, want: %d)",
-			mixinCall.Name,
-			len(mixinCall.Args),
-			len(mixin.Args),
-		))
-	}
-
 	for i, arg := range mixin.Args {
 		c.write(fmt.Sprintf(`{{%s := %s}}`, arg, c.visitRawInterpolation(mixinCall.Args[i])))
 	}

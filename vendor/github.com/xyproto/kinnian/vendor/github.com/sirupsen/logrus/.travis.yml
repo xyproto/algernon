@@ -1,12 +1,9 @@
 language: go
 go:
-  - 1.6.x
-  - 1.7.x
-  - 1.8.x
+  - 1.6
+  - 1.7
   - tip
-env:
-  - GOMAXPROCS=4 GORACE=halt_on_error=1
 install:
-  - go get github.com/stretchr/testify/assert
+  - go get -t $(go list ./... | grep -v /examples/)
 script:
-  - go test -race -v .
+  - GOMAXPROCS=4 GORACE="halt_on_error=1" go test -race -v $(go list ./... | grep -v /examples/)

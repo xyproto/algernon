@@ -462,7 +462,7 @@ func TestLocales(t *testing.T) {
 	}{
 		{language.Make("en"), "123456.78", "123,456.78"},
 		{language.Make("de"), "123456.78", "123.456,78"},
-		{language.Make("de-CH"), "123456.78", "123'456.78"},
+		{language.Make("de-CH"), "123456.78", "123’456.78"},
 		{language.Make("fr"), "123456.78", "123 456,78"},
 		{language.Make("bn"), "123456.78", "১,২৩,৪৫৬.৭৮"},
 	}

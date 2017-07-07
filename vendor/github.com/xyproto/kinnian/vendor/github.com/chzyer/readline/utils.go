@@ -82,9 +82,7 @@ func Restore(fd int, state *State) error {
 	if err != nil {
 		// errno 0 means everything is ok :)
 		if err.Error() == "errno 0" {
-			return nil
-		} else {
-			return err
+			err = nil
 		}
 	}
 	return nil

@@ -32,10 +32,6 @@ type Operation struct {
 	*opVim
 }
 
-func (o *Operation) SetBuffer(what string) {
-	o.buf.Set([]rune(what))
-}
-
 type wrapWriter struct {
 	r      *Operation
 	t      *Terminal
@@ -100,15 +96,6 @@ func (o *Operation) ioloop() {
 		keepInSearchMode := false
 		keepInCompleteMode := false
 		r := o.t.ReadRune()
-		if o.cfg.FuncFilterInputRune != nil {
-			var process bool
-			r, process = o.cfg.FuncFilterInputRune(r)
-			if !process {
-				o.buf.Refresh(nil) // to refresh the line
-				continue           // ignore this rune
-			}
-		}
-
 		if r == 0 { // io.EOF
 			if o.buf.Len() == 0 {
 				o.buf.Clean()

@@ -150,18 +150,3 @@ local a, b = f()
 assert(a == 1 and b == "a")
 local a, b = f()
 assert(a == 2 and b == "b")
-
--- issue 91, 92
-local url = "www.aaa.bbb_abc123-321-cba_abc123"
-assert(string.match(url, ".-([%w-]*)[.]*") == "www")
-
-local s = "hello.world"
-assert(s:match("([^.]+).world") == "hello")
-
-local s = "hello-world"
-assert(s:match("([^-]+)-world") == "hello")
-
--- issue 93
-local t = {}
-local ok, msg = pcall(function() t.notfound() end)
-assert(not ok and string.find(msg, "attempt to call a non-function object", 1, true))

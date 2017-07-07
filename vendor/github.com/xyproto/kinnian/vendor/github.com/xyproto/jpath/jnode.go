@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// Version contains the version number. The API is stable within the same major version.
+// Stable API within the same major version number
 const Version = 1.0
 
 type (

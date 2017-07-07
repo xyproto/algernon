@@ -71,65 +71,6 @@ func Test_Mixin_MultiArguments(t *testing.T) {
 	}
 }
 
-func Test_Mixin_NameWithDashes(t *testing.T) {
-	res, err := run(`
-		mixin i-am-mixin($a, $b, $c, $d)
-			p #{$a} #{$b} #{$c} #{$d}
-
-		+i-am-mixin("a", "b", "c", A)`, map[string]int{"A": 2})
-
-	if err != nil {
-		t.Fatal(err.Error())
-	} else {
-		expect(res, `<p>a b c 2</p>`, t)
-	}
-}
-
-func Test_Mixin_Unknown(t *testing.T) {
-	_, err := run(`
-		mixin foo($a)
-			p #{$a}
-
-		+bar(1)`, nil)
-
-	expected := `unknown mixin "bar"`
-	if err == nil {
-		t.Fatalf(`Expected {%s} error.`, expected)
-	} else if !strings.Contains(err.Error(), expected) {
-		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
-	}
-}
-
-func Test_Mixin_NotEnoughArguments(t *testing.T) {
-	_, err := run(`
-		mixin foo($a)
-			p #{$a}
-
-		+foo()`, nil)
-
-	expected := `not enough arguments in call to mixin "foo" (have: 0, want: 1)`
-	if err == nil {
-		t.Fatalf(`Expected {%s} error.`, expected)
-	} else if !strings.Contains(err.Error(), expected) {
-		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
-	}
-}
-
-func Test_Mixin_TooManyArguments(t *testing.T) {
-	_, err := run(`
-		mixin foo($a)
-			p #{$a}
-
-		+foo("a", "b")`, nil)
-
-	expected := `too many arguments in call to mixin "foo" (have: 2, want: 1)`
-	if err == nil {
-		t.Fatalf(`Expected {%s} error.`, expected)
-	} else if !strings.Contains(err.Error(), expected) {
-		t.Fatalf("Error {%s} does not contains {%s}.", err.Error(), expected)
-	}
-}
-
 func Test_ClassName(t *testing.T) {
 	res, err := run(`div.test
 						p.test1.test2
@@ -155,14 +96,14 @@ func Test_Id(t *testing.T) {
 }
 
 func Test_Attribute(t *testing.T) {
-	res, err := run(`div[name="Test"][@foo.bar="baz"].testclass
+	res, err := run(`div[name="Test"][foo="bar"].testclass
 						p
 							[style="text-align: center; color: maroon"]`, nil)
 
 	if err != nil {
 		t.Fatal(err.Error())
 	} else {
-		expect(res, `<div @foo.bar="baz" class="testclass" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
+		expect(res, `<div class="testclass" foo="bar" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
 	}
 }
 
@@ -289,22 +230,6 @@ func Test_Multiple_File_Inheritance(t *testing.T) {
 	var res bytes.Buffer
 	t1c.Execute(&res, nil)
 	expect(strings.TrimSpace(res.String()), "<p>This is C</p>", t)
-}
-
-func Test_Recursion_In_Blocks(t *testing.T) {
-	tmpl, err := CompileDir("samples/", DefaultDirOptions, DefaultOptions)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	top, ok := tmpl["recursion.top"]
-	if !ok || top == nil {
-		t.Fatal("template not found.")
-	}
-
-	var res bytes.Buffer
-	top.Execute(&res, nil)
-	expect(strings.TrimSpace(res.String()), "content", t)
 }
 
 func Failing_Test_CompileDir(t *testing.T) {
