@@ -37,6 +37,7 @@ func recorderToString(recorder *httptest.ResponseRecorder) string {
 
 // Given a lowercase string for the language, return an approprite error page title
 func errorPageTitle(lang string) string {
+	// Special cases are only needed where capitalization is inappropriate ("CSS Error" vs "Css Error")
 	switch lang {
 	case "":
 		return "Error"
@@ -46,6 +47,8 @@ func errorPageTitle(lang string) string {
 		return "GCSS Error"
 	case "html":
 		return "HTML Error"
+	case "jsx":
+		return "JSX Error"
 	default:
 		return strings.Title(lang) + " Error"
 	}

@@ -212,25 +212,25 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".gcss":
-		w.Header().Add("Content-Type", "text/css; charset=utf-8")
 		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			w.Header().Add("Content-Type", "text/css; charset=utf-8")
 			// Render the GCSS page as CSS
 			ac.GCSSPage(w, req, filename, gcssblock.MustData())
 		}
 		return
 
 	case ".scss":
-		w.Header().Add("Content-Type", "text/css; charset=utf-8")
 		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
 			// Render the SASS page as CSS
+			w.Header().Add("Content-Type", "text/css; charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.MustData())
 		}
 		return
 
 	case ".jsx":
-		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
 			// Render the JSX page as JavaScript
+			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.MustData())
 		}
 		return
