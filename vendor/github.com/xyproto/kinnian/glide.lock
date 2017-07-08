@@ -1,5 +1,5 @@
-hash: 1c94124ce8338e1cdf6e2358f301908c53ecbddb9eb363a7cf5102c34fb0fb83
-updated: 2017-07-08T08:45:23.466638149Z
+hash: 8c74a72066c7ad43ba9e60d24b149635059e3f9b70595b730ecacfc72c67d9e0
+updated: 2017-07-08T14:15:00.923633556Z
 imports:
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -59,11 +59,6 @@ imports:
   version: dd1fe2071026ce53f36a39112e645b4d4f5793a4
   subpackages:
   - oid
-- name: github.com/mamaar/risotto
-  version: c3b4f4dbac6541f11ed5bc1b97d00ef06bbe34c0
-  subpackages:
-  - generator
-  - parser
 - name: github.com/mattetti/filebuffer
   version: 80f2c1c4dcf558a0cee1e4303225d17c6238e00a
 - name: github.com/mattn/go-colorable

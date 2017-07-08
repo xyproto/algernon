@@ -4,11 +4,8 @@ import:
 - package: github.com/didip/tollbooth
 - package: github.com/eknkc/amber
 - package: github.com/flosch/pongo2
-- package: github.com/mamaar/risotto
-  subpackages:
-  - generator
-  - parser
 - package: github.com/mitchellh/go-homedir
+- package: github.com/jvatic/goja-babel
 - package: github.com/natefinch/pie
 - package: github.com/russross/blackfriday
 - package: github.com/sirupsen/logrus
