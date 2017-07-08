@@ -1,5 +1,10 @@
+# Not needed!
+
+If you use Go 1.7 or later, there is no reason to use this package any more, since optimizations have been merged into the standard library.
+
+The following reposiitory and documentation is left for historical reasons (and to not break exisiting code).
+
 # crc32
-CRC32 hash with x64 optimizations
 
 This package is a drop-in replacement for the standard library `hash/crc32` package, that features SSE 4.2 optimizations on x64 platforms, for a 10x speedup.
 

@@ -4,7 +4,7 @@ package pinterface
 import "net/http"
 
 // Stable API within the same version number
-const Version = 3.0
+const Version = 4.0
 
 // Database interfaces
 
@@ -79,6 +79,8 @@ type IUserState interface {
 	Username(req *http.Request) string
 	CookieTimeout(username string) int64
 	SetCookieTimeout(cookieTime int64)
+	CookieSecret() string
+	SetCookieSecret(cookieSecret string)
 	PasswordAlgo() string
 	SetPasswordAlgo(algorithm string) error
 	HashPassword(username, password string) string

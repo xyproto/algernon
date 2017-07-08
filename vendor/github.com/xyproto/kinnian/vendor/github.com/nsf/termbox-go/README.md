@@ -25,6 +25,12 @@ There are also some interesting projects using termbox-go:
  - [gone](https://github.com/guillaumebreton/gone) is a CLI pomodoro® timer.
  - [Spoof.go](https://github.com/sabey/spoofgo) controllable movement spoofing from the cli
  - [lf](https://github.com/gokcehan/lf) is a terminal file manager
+ - [rat](https://github.com/ericfreese/rat) lets you compose shell commands to build terminal applications.
+ - [httplab](https://github.com/gchaincl/httplab) An interactive web server.
+ - [tetris](https://github.com/MichaelS11/tetris) Go Tetris with AI option
+ - [wot](https://github.com/kyu-suke/wot) Wait time during command is completed.
+ - [2048-go](https://github.com/1984weed/2048-go) is 2048 in Go
+ - [jv](https://github.com/maxzender/jv) helps you view JSON on the command-line.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

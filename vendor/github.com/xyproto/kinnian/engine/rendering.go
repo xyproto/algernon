@@ -12,8 +12,7 @@ import (
 
 	"github.com/eknkc/amber"
 	"github.com/flosch/pongo2"
-	"github.com/mamaar/risotto/generator"
-	"github.com/mamaar/risotto/parser"
+	"github.com/jvatic/goja-babel"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
@@ -110,22 +109,12 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		return 0 // number of results
 	}))
 
-	// Output text as rendered JSX
+	// Output text as rendered JSX for React
 	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
-		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
-		if err != nil {
-			if ac.debugMode {
-				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not parse JSX:\n\t"+err.Error()+"\n\n"+buf.String())
-			} else {
-				log.Errorf("Could not parse JSX:\n%s\n%s", err, buf.String())
-			}
-			return 0 // number of results
-		}
-		gen, err := generator.Generate(prog)
+		res, err := babel.Transform(&buf, ac.jsxOptions)
 		if err != nil {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
@@ -135,8 +124,8 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 			}
 			return 0 // number of results
 		}
-		if gen != nil {
-			io.Copy(w, gen)
+		if res != nil {
+			io.Copy(w, res)
 		}
 		return 0 // number of results
 	}))
@@ -576,31 +565,31 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 // JSXPage writes the given source bytes (in JSX) converted to JS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
-	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
+	var buf bytes.Buffer
+	buf.Write(jsxdata)
+
+	// Convert JSX to JS
+	res, err := babel.Transform(&buf, ac.jsxOptions)
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
-			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
+			log.Errorf("Could not generate javascript:\n%s\n%s", err, buf.String())
 		}
 		return
 	}
-	gen, err := generator.Generate(prog)
-	if err != nil {
-		if ac.debugMode {
-			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
-		} else {
-			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
-		}
-		return
-	}
-	if gen != nil {
-		data, err := ioutil.ReadAll(gen)
+	if res != nil {
+		data, err := ioutil.ReadAll(res)
 		if err != nil {
 			log.Error("Could not read bytes from JSX generator:", err)
 			return
 		}
-		// Write the generated data to the client
+
+		// Use "h" instead of "React.createElement" for hyperApp apps
+		if ac.hyperApp {
+			data = bytes.Replace(data, []byte("React.createElement"), []byte("h"), utils.EveryInstance)
+		}
+
 		DataToClient(w, req, filename, data)
 	}
 }

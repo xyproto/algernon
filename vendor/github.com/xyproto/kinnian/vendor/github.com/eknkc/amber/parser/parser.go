@@ -449,6 +449,8 @@ func findTopmostParentWithNamedBlock(p *Parser, name string) *Parser {
 		}
 		if top.parent.namedBlocks[name] != nil {
 			top = top.parent
+		} else {
+			return top
 		}
 	}
 }

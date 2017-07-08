@@ -9,7 +9,7 @@ This is a generic middleware to rate-limit HTTP requests.
 
 
 ## Five Minutes Tutorial
-```
+```go
 package main
 
 import (
@@ -32,8 +32,14 @@ func main() {
 ## Features
 
 1. Rate-limit by request's remote IP, path, methods, custom headers, & basic auth usernames.
-    ```
+    ```go
     limiter := tollbooth.NewLimiter(1, time.Second)
+
+    // or create a limiter with expirable token buckets
+    // This setting means:
+    // create a 1 request/second limiter and
+    // every token bucket in it will expire 1 hour after it was initially set.
+    limiter = tollbooth.NewLimiterExpiringBuckets(1, time.Second, time.Hour, 0)
 
     // Configure list of places to look for IP address.
     // By default it's: "RemoteAddr", "X-Forwarded-For", "X-Real-IP"

@@ -333,7 +333,7 @@ func StringMap(result interface{}, err error) (map[string]string, error) {
 		key, okKey := values[i].([]byte)
 		value, okValue := values[i+1].([]byte)
 		if !okKey || !okValue {
-			return nil, errors.New("redigo: ScanMap key not a bulk string value")
+			return nil, errors.New("redigo: StringMap key not a bulk string value")
 		}
 		m[string(key)] = string(value)
 	}
@@ -355,7 +355,7 @@ func IntMap(result interface{}, err error) (map[string]int, error) {
 	for i := 0; i < len(values); i += 2 {
 		key, ok := values[i].([]byte)
 		if !ok {
-			return nil, errors.New("redigo: ScanMap key not a bulk string value")
+			return nil, errors.New("redigo: IntMap key not a bulk string value")
 		}
 		value, err := Int(values[i+1], nil)
 		if err != nil {
@@ -381,7 +381,7 @@ func Int64Map(result interface{}, err error) (map[string]int64, error) {
 	for i := 0; i < len(values); i += 2 {
 		key, ok := values[i].([]byte)
 		if !ok {
-			return nil, errors.New("redigo: ScanMap key not a bulk string value")
+			return nil, errors.New("redigo: Int64Map key not a bulk string value")
 		}
 		value, err := Int64(values[i+1], nil)
 		if err != nil {
@@ -390,4 +390,36 @@ func Int64Map(result interface{}, err error) (map[string]int64, error) {
 		m[string(key)] = value
 	}
 	return m, nil
+}
+
+// Positions is a helper that converts an array of positions (lat, long)
+// into a [][2]float64. The GEOPOS command returns replies in this format.
+func Positions(result interface{}, err error) ([]*[2]float64, error) {
+	values, err := Values(result, err)
+	if err != nil {
+		return nil, err
+	}
+	positions := make([]*[2]float64, len(values))
+	for i := range values {
+		if values[i] == nil {
+			continue
+		}
+		p, ok := values[i].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("redigo: unexpected element type for interface slice, got type %T", values[i])
+		}
+		if len(p) != 2 {
+			return nil, fmt.Errorf("redigo: unexpected number of values for a member position, got %d", len(p))
+		}
+		lat, err := Float64(p[0], nil)
+		if err != nil {
+			return nil, err
+		}
+		long, err := Float64(p[1], nil)
+		if err != nil {
+			return nil, err
+		}
+		positions[i] = &[2]float64{lat, long}
+	}
+	return positions, nil
 }

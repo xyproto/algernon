@@ -378,6 +378,13 @@ func Unauthorizedf(format string, args ...interface{}) error
 Unauthorizedf returns an error which satisfies IsUnauthorized().
 
 
+## func Forbiddenf
+``` go
+func Forbiddenf(format string, args ...interface{}) error
+```
+Forbiddenf returns an error which satisfies IsForbidden().
+
+
 ## func Wrap
 ``` go
 func Wrap(other, newDescriptive error) error

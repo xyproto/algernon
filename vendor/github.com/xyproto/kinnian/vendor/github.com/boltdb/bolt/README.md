@@ -395,7 +395,7 @@ db.View(func(tx *bolt.Tx) error {
 	c := tx.Bucket([]byte("MyBucket")).Cursor()
 
 	prefix := []byte("1234")
-	for k, v := c.Seek(prefix); bytes.HasPrefix(k, prefix); k, v = c.Next() {
+	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
 		fmt.Printf("key=%s, value=%s\n", k, v)
 	}
 
@@ -767,6 +767,9 @@ Here are a few things to note when evaluating and using Bolt:
   transaction has been committed or rolled back then the memory they point to
   can be reused by a new page or can be unmapped from virtual memory and you'll
   see an `unexpected fault address` panic when accessing it.
+
+* Bolt uses an exclusive write lock on the database file so it cannot be
+  shared by multiple processes.
 
 * Be careful when using `Bucket.FillPercent`. Setting a high fill percent for
   buckets that have random inserts will cause your database to have very poor

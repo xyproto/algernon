@@ -1,5 +1,5 @@
 hash: ae19f2741b445c854d69ae5ae98ad59fe2cec30f1210a613c4067e2541951b94
-updated: 2017-07-07T14:44:58.558810727Z
+updated: 2017-07-08T13:26:54.630634159Z
 imports:
 - name: github.com/boltdb/bolt
   version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
@@ -11,6 +11,17 @@ imports:
   - config
   - errors
   - libstring
+- name: github.com/dlclark/regexp2
+  version: 902a5ce7a7812e2ba9f73b9d96c09d5136df39cd
+  subpackages:
+  - syntax
+- name: github.com/dop251/goja
+  version: 8f3380f012a7a699e478fcff1d0e46a6f2e1abc5
+  subpackages:
+  - ast
+  - file
+  - parser
+  - token
 - name: github.com/eknkc/amber
   version: 5fa7895500976542b0e28bb266f42ff1c7ce07f5
   subpackages:
@@ -22,7 +33,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/garyburd/redigo
-  version: 57f1cd7de6175c96b423e7ac2534ff2b39e2ef79
+  version: 9f3a0116c9f72c5a56f958206a43dc881b502c37
   subpackages:
   - internal
   - redis
@@ -32,6 +43,8 @@ imports:
   version: bf7f34fef176d890dfcc6e94319ac747291bc09a
 - name: github.com/juju/errors
   version: c7d06af17c68cd34c835053720b21f6549d9b0ee
+- name: github.com/jvatic/goja-babel
+  version: 192edd856d6bbfaf23e8ae2de1b739cdcc837ce4
 - name: github.com/klauspost/compress
   version: f3dce52e0576655d55fd69e74b63da96ad1108f3
   subpackages:
@@ -46,14 +59,6 @@ imports:
   version: dd1fe2071026ce53f36a39112e645b4d4f5793a4
   subpackages:
   - oid
-- name: github.com/mamaar/risotto
-  version: c3b4f4dbac6541f11ed5bc1b97d00ef06bbe34c0
-  subpackages:
-  - ast
-  - file
-  - generator
-  - parser
-  - token
 - name: github.com/mattetti/filebuffer
   version: 80f2c1c4dcf558a0cee1e4303225d17c6238e00a
 - name: github.com/mattn/go-colorable
@@ -106,7 +111,7 @@ imports:
 - name: github.com/xyproto/jpath
   version: c3c5db51d5cec049a9ef9cb0a76c2d589d4e2da5
 - name: github.com/xyproto/kinnian
-  version: 808644c4f7a4e55ff8a829d88a3bd3ca482bc134
+  version: f38d5600cdaa96fd725f87645eacbb5795274fb8
   subpackages:
   - cachemode
   - console
@@ -171,12 +176,18 @@ imports:
   - idna
   - lex/httplex
 - name: golang.org/x/sys
-  version: 6faef541c73732f438fb660a212750a9ba9f9362
+  version: 739734461d1c916b6c72a63d7efda2b27edb369f
   subpackages:
   - unix
 - name: golang.org/x/text
   version: cfdf022e86b4ecfb646e1efbd7db175dd623a8fa
   subpackages:
+  - cases
+  - collate
+  - internal
+  - internal/colltab
+  - internal/tag
+  - language
   - secure/bidirule
   - transform
   - unicode/bidi
