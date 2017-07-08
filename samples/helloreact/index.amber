@@ -2,7 +2,7 @@ doctype 5
 html
   head
     title React example
-    script[src="//cdnjs.cloudflare.com/ajax/libs/react/0.13.2/react.js"]
+    script[src="react.js"]
   body
     div[id="content"]
     script[src="hello.jsx"]
