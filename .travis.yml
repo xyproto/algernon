@@ -13,10 +13,5 @@ install:
 
 script:
   - go build
-  - ./test.sh
-
-#script:
-#  - go test
-
-#after_script:
+  - go test
 #  - ./test.sh
