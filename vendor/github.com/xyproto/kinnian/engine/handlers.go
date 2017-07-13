@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/didip/tollbooth"
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/utils"
 )
@@ -22,11 +21,6 @@ const (
 
 	// Pretty soon
 	defaultSoonDuration = time.Second * 3
-)
-
-var (
-	// List of filenames that should be displayed instead of a directory listing
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.amber", "index.tmpl", "index.po2"}
 )
 
 // ClientCanGzip checks if the client supports gzip compressed responses
@@ -211,30 +205,6 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		ac.PongoHandler(w, req, filename, ext)
 		return
 
-	case ".gcss":
-		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
-			// Render the GCSS page as CSS
-			ac.GCSSPage(w, req, filename, gcssblock.MustData())
-		}
-		return
-
-	case ".scss":
-		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the SASS page as CSS
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
-			ac.SCSSPage(w, req, filename, scssblock.MustData())
-		}
-		return
-
-	case ".jsx":
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the JSX page as JavaScript
-			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-			ac.JSXPage(w, req, filename, jsxblock.MustData())
-		}
-		return
-
 	case ".lua":
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
@@ -282,8 +252,40 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				log.Error("Error in ", filename+":", err)
 			}
 		}
-
 		return
+
+	case ".gcss":
+		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			w.Header().Add("Content-Type", "text/css; charset=utf-8")
+			// Render the GCSS page as CSS
+			ac.GCSSPage(w, req, filename, gcssblock.MustData())
+		}
+		return
+
+	case ".scss":
+		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the SASS page as CSS
+			w.Header().Add("Content-Type", "text/css; charset=utf-8")
+			ac.SCSSPage(w, req, filename, scssblock.MustData())
+		}
+		return
+
+	case ".jsx":
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the JSX page as JavaScript
+			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
+			ac.JSXPage(w, req, filename, jsxblock.MustData())
+		}
+		return
+
+	case ".happ", ".hyper": // hyperApp JSX -> JS, wrapped in HTML
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the JSX page as HTML with embedded JavaScript
+			w.Header().Add("Content-Type", "text/html; charset=utf-8")
+			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
+		}
+		return
+
 	case "", ".exe", ".com", ".elf", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2", ".tar.xz", ".txz", ".gz", ".zip", ".7z", ".rar", ".arj", ".lz":
 		// No extension, or binary file extension
 		// Set headers for downloading the file instead of displaying it in the browser.

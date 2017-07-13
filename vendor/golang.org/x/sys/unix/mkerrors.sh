@@ -173,6 +173,7 @@ struct ltchars {
 #include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/seccomp.h>
+#include <linux/sockios.h>
 #include <linux/wait.h>
 #include <linux/icmpv6.h>
 #include <linux/serial.h>

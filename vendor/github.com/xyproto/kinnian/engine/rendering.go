@@ -594,6 +594,47 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	}
 }
 
+func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
+	var (
+		htmlbuf bytes.Buffer
+		jsxbuf  bytes.Buffer
+	)
+
+	// Wrap the rendered HyperApp JSX in some HTML
+	htmlbuf.WriteString("<!doctype html><html><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+
+	// Convert JSX to JS
+	jsxbuf.Write(jsxdata)
+	res, err := babel.Transform(&jsxbuf, ac.jsxOptions)
+	if err != nil {
+		if ac.debugMode {
+			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+		} else {
+			log.Errorf("Could not generate javascript:\n%s\n%s", err, jsxbuf.String())
+		}
+		return
+	}
+	if res != nil {
+		data, err := ioutil.ReadAll(res)
+		if err != nil {
+			log.Error("Could not read bytes from JSX generator:", err)
+			return
+		}
+
+		// Use "h" instead of "React.createElement" for hyperApp apps
+		data = bytes.Replace(data, []byte("React.createElement"), []byte("h"), utils.EveryInstance)
+
+		// Insert the JS data
+		htmlbuf.Write(data)
+
+		// Tail of the HTML wrapper page
+		htmlbuf.WriteString("</script></body>")
+
+		// Output HTML + JS to browser
+		DataToClient(w, req, filename, htmlbuf.Bytes())
+	}
+}
+
 // SCSSPage writes the given source bytes (in SCSS) converted to CSS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {

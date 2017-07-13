@@ -67,7 +67,6 @@ Available flags:
   --postgres=DSN               Use the given PostgreSQL host/database.
   --postgresdb=NAME            Use the given PostgreSQL database name.
   -V, --verbose                Slightly more verbose logging.
-  -y, --hyperapp               Convert JSX to HyperApp JS instead of React JS
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + ac.defaultEventRefresh + `").
@@ -116,8 +115,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
-		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
-		hyperAppShort bool
+		noBannerShort, quitAfterFirstRequestShort, verboseModeShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -186,7 +184,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.defaultTheme, "theme", "gray", "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
-	flag.BoolVar(&ac.hyperApp, "hyperapp", false, "Use HyperApp JSX")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -205,7 +202,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&quitAfterFirstRequestShort, "z", false, "Quit after the first request")
 	flag.BoolVar(&ac.markdownMode, "m", false, "Markdown mode")
 	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
-	flag.BoolVar(&hyperAppShort, "y", false, "Use HyperApp JSX")
 
 	flag.Parse()
 
@@ -225,7 +221,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.quitAfterFirstRequest = ac.quitAfterFirstRequest || quitAfterFirstRequestShort
 	ac.verboseMode = ac.verboseMode || verboseModeShort
 	ac.noBanner = ac.noBanner || noBannerShort
-	ac.hyperApp = ac.hyperApp || hyperAppShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {

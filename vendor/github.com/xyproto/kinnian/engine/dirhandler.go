@@ -13,6 +13,9 @@ import (
 )
 
 var (
+	// List of filenames that should be displayed instead of a directory listing
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.amber", "index.tmpl", "index.po2", "index.happ", "index.hyper"}
+
 	doubleP  = utils.Pathsep + utils.Pathsep /* // */
 	dotSlash = "." + utils.Pathsep           /* ./ */
 )

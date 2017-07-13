@@ -1,8 +1,8 @@
-#PermissionSQL [![Build Status](https://travis-ci.org/xyproto/permissionsql.svg?branch=master)](https://travis-ci.org/xyproto/permissionsql) [![GoDoc](https://godoc.org/github.com/xyproto/permissionsql?status.svg)](http://godoc.org/github.com/xyproto/permissionsql)
+# PermissionSQL [![Build Status](https://travis-ci.org/xyproto/permissionsql.svg?branch=master)](https://travis-ci.org/xyproto/permissionsql) [![GoDoc](https://godoc.org/github.com/xyproto/permissionsql?status.svg)](http://godoc.org/github.com/xyproto/permissionsql)
 
 Middleware for keeping track of users, login states and permissions.
 
-Uses MariaDB/MySQL as a backend.
+Uses MariaDB/MySQL for the backend.
 
 
 Connecting
@@ -20,7 +20,7 @@ At first I tried combining the code for Redis database access and SQL database a
 
 I recommend using Redis and [permissions2](https://github.com/xyproto/permissions2) instead of this package, if possible. There is also [permissionbolt](https://github.com/xyproto/permissionbolt), which uses Bolt as a database (Bolt is written in Go).
 
-A PostgreSQL port of [simplemaria](https://github.com/xyproto/simplemaria) and [permissionsql](https://github.com/xyproto/permissionsql) that uses HSTORE is available as [simplehstore](https://github.com/xyproto/simplehstore) and [permissionHSTORE](https://github.com/xyproto/permissionHSTORE).
+A PostgreSQL port of [simplemaria](https://github.com/xyproto/simplemaria) and [permissionsql](https://github.com/xyproto/permissionsql) that uses HSTORE is available as [simplehstore](https://github.com/xyproto/simplehstore) and [pstore](https://github.com/xyproto/pstore).
 
 Features and limitations
 ------------------------
@@ -623,4 +623,3 @@ General information
 * Version: 2.0
 * License: MIT
 * Alexander F Rødseth
-
