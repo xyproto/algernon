@@ -601,7 +601,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	)
 
 	// Wrap the rendered HyperApp JSX in some HTML
-	htmlbuf.WriteString("<!doctype html><html><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+	htmlbuf.WriteString("<!doctype html><html><body><script src=\"https://unpkg.com/hyperapp\"></script><script>var { h, app } = hyperapp;")
 
 	// Convert JSX to JS
 	jsxbuf.Write(jsxdata)

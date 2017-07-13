@@ -1,5 +1,11 @@
 # Changelog
 
+Changes from 1.4.5 to 1.5
+=========================
+
+* Switch JSX rendering engine to one that uses [goja](https://github.com/dop251/goja)
+* Add support for HyperApp JSX apps with the `.happ` or `.hyper` extension
+
 Changes from 1.4.4 to 1.4.5
 ===========================
 
