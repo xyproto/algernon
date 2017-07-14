@@ -1,5 +1,13 @@
 # Changelog
 
+Changes from 1.5 to 1.5.1
+=========================
+
+* Add the `.hyper.js` and `.hyper.jsx` extensions for HyperApp applications
+* Style HyperApp applications if no style/theme/`style.gcss` is provided
+* Also support HyperApp applications when using the `--theme=...` flag
+* Add the `hprint` Lua function, for combining HyperApp and Lua
+
 Changes from 1.4.5 to 1.5
 =========================
 
