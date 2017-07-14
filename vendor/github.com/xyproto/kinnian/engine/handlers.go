@@ -113,7 +113,17 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	}
 
 	// Use the file extension for setting the mimetype
-	ext := strings.ToLower(filepath.Ext(filename))
+	lowercaseFilename := strings.ToLower(filename)
+	ext := filepath.Ext(lowercaseFilename)
+
+	// Filenames ending with .hyper.js or .hyper.jsx are special cases
+	if strings.HasSuffix(lowercaseFilename, ".hyper.js") {
+		ext = ".hyper.js"
+	} else if strings.HasSuffix(lowercaseFilename, ".hyper.jsx") {
+		ext = ".hyper.jsx"
+	}
+
+	// Serve the file in different ways based on the filename extension
 	switch ext {
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
@@ -141,7 +151,6 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 		return
 
-	// Markdown pages are handled differently
 	case ".md", ".markdown":
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
@@ -270,19 +279,20 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 		return
 
+	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the JSX page as HTML with embedded JavaScript
+			w.Header().Add("Content-Type", "text/html; charset=utf-8")
+			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
+		}
+		return
+
+	// This case must come after the .hyper.jsx case
 	case ".jsx":
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
 			// Render the JSX page as JavaScript
 			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.MustData())
-		}
-		return
-
-	case ".happ", ".hyper": // hyperApp JSX -> JS, wrapped in HTML
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the JSX page as HTML with embedded JavaScript
-			w.Header().Add("Content-Type", "text/html; charset=utf-8")
-			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
 		}
 		return
 

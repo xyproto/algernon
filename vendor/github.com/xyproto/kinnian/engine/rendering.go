@@ -130,6 +130,35 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		return 0 // number of results
 	}))
 
+	// Output text as rendered JSX for HyperApp
+	L.SetGlobal("hprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := convert.Arguments2buffer(L, true)
+		// Transform JSX to JavaScript and output the result.
+		res, err := babel.Transform(&buf, ac.jsxOptions)
+		if err != nil {
+			if ac.debugMode {
+				// TODO: Use a similar error page as for Lua
+				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not generate JavaScript:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		if res != nil {
+			data, err := ioutil.ReadAll(res)
+			if err != nil {
+				log.Error("Could not read bytes from JSX generator:", err)
+				return 0 // number of results
+			}
+
+			// Use "h" instead of "React.createElement" for hyperApp apps
+			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+			w.Write(data)
+		}
+		return 0 // number of results
+	}))
+
 }
 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
@@ -181,8 +210,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 		theme = []byte(ac.defaultTheme)
 	}
 
-	// Theme aliases. Use a map if there are more than 1 aliases in the future.
-	if string(theme) == "light" {
+	// Theme aliases. Use a map if there are more than 2 aliases in the future.
+	if (string(theme) == "default") || (string(theme) == "light") {
+		// Use the "gray" theme by default for Markdown
 		theme = []byte("gray")
 	}
 
@@ -414,7 +444,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if linkInGCSS {
 			// Link in stylesheet
 			htmldata := buf.Bytes()
-			utils.LinkToStyleHTML(&htmldata, utils.DefaultStyleFilename)
+			utils.StyleHTML(&htmldata, utils.DefaultStyleFilename)
 			buf.Reset()
 			_, err := buf.Write(htmldata)
 			if err != nil {
@@ -483,7 +513,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		utils.LinkToStyle(&amberdata, utils.DefaultStyleFilename)
+		utils.StyleAmber(&amberdata, utils.DefaultStyleFilename)
 	}
 
 	// Compile the given amber template
@@ -587,13 +617,15 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 
 		// Use "h" instead of "React.createElement" for hyperApp apps
 		if ac.hyperApp {
-			data = bytes.Replace(data, []byte("React.createElement"), []byte("h"), utils.EveryInstance)
+			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
 		}
 
 		DataToClient(w, req, filename, data)
 	}
 }
 
+// HyperAppPage writes the given source bytes (in JSX for HyperApp) converted to JS, to a writer.
+// The filename is only used in the error message, if any.
 func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
 	var (
 		htmlbuf bytes.Buffer
@@ -601,7 +633,49 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	)
 
 	// Wrap the rendered HyperApp JSX in some HTML
-	htmlbuf.WriteString("<!doctype html><html><body><script src=\"https://unpkg.com/hyperapp\"></script><script>var { h, app } = hyperapp;")
+	htmlbuf.WriteString("<!doctype html><html><head>")
+
+	// If style.gcss is present, use that style in <head>
+	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
+	if ac.fs.Exists(GCSSfilename) {
+		if ac.debugMode {
+			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
+			if err != nil {
+				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+				return
+			}
+			gcssdata := gcssblock.MustData()
+
+			// Try compiling the GCSS file first
+			errChan := make(chan error)
+			go ValidGCSS(gcssdata, errChan)
+			err = <-errChan
+			if err != nil {
+				// Invalid GCSS, return an error page
+				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				return
+			}
+		}
+		// Link to stylesheet (without checking if the GCSS file is valid first)
+		htmlbuf.WriteString(`<link href="`)
+		htmlbuf.WriteString(utils.DefaultStyleFilename)
+		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
+	} else {
+		// If not, use the default hyperapp theme by inserting the CSS style directly
+		theme := ac.defaultTheme
+
+		// Use the "bw" theme by default for HyperApp
+		if theme == "default" {
+			theme = "bw"
+		}
+
+		htmlbuf.WriteString("<style>")
+		htmlbuf.Write(utils.BuiltinThemes[string(theme)])
+		htmlbuf.WriteString("</style>")
+	}
+
+	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"
+	htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>var { h, app } = hyperapp;")
 
 	// Convert JSX to JS
 	jsxbuf.Write(jsxdata)
@@ -621,8 +695,8 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 			return
 		}
 
-		// Use "h" instead of "React.createElement" for hyperApp apps
-		data = bytes.Replace(data, []byte("React.createElement"), []byte("h"), utils.EveryInstance)
+		// Use "h" instead of "React.createElement"
+		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
 
 		// Insert the JS data
 		htmlbuf.Write(data)

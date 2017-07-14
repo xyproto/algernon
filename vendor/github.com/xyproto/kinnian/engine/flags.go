@@ -82,9 +82,9 @@ Available flags:
   -m                           View the given Markdown file in the browser.
                                Quits after the file has been served once.
                                ("-m" is equivalent to "-q -o -z").
-  --theme=NAME                 Builtin theme to use for Markdown, error pages and
-                               directory listings.
-                               Possible values are: "light", "dark" or "redbox".
+  --theme=NAME                 Builtin theme to use for Markdown, error pages,
+                               directory listings and HyperApp apps.
+                               Possible values are: "light", "dark", "bw" or "redbox".
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
@@ -181,7 +181,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.quitAfterFirstRequest, "quit", false, "Quit after the first request")
 	flag.BoolVar(&ac.noCache, "nocache", false, "Disable caching")
 	flag.BoolVar(&ac.noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
-	flag.StringVar(&ac.defaultTheme, "theme", "gray", "Theme for Markdown and directory listings")
+	flag.StringVar(&ac.defaultTheme, "theme", "default", "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 

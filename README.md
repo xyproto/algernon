@@ -340,7 +340,10 @@ aprint(...)
 // Output rendered GCSS to the browser/client. The given text is converted from GCSS to CSS. Takes a variable number of strings.
 gprint(...)
 
-// Output rendered JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
+// Output rendered HyperApp JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
+hprint(...)
+
+// Output rendered React JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 jprint(...)
 
 // Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
