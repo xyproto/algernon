@@ -10,6 +10,7 @@ import (
 	gt "go/token"
 	"html/template"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -33,6 +34,10 @@ var builtinFunctions = [...]string{
 	"html",
 	"unescaped",
 }
+
+const (
+	dollar = "__DOLLAR__"
+)
 
 // Compiler is the main interface of Amber Template Engine.
 // In order to use an Amber template, it is required to create a Compiler and
@@ -83,6 +88,10 @@ type Options struct {
 	// In this form, Amber emits line number comments in the output template. It is usable in debugging environments.
 	// Default: false
 	LineNumbers bool
+	// Setting the virtual filesystem to use
+	// If set, will attempt to use a virtual filesystem provided instead of os.
+	// Default: nil
+	VirtualFilesystem http.FileSystem
 }
 
 // DirOptions is used to provide options to directory compilation.
@@ -94,7 +103,7 @@ type DirOptions struct {
 }
 
 // DefaultOptions sets pretty-printing to true and line numbering to false.
-var DefaultOptions = Options{true, false}
+var DefaultOptions = Options{true, false, nil}
 
 // DefaultDirOptions sets expected file extension to ".amber" and recursive search for templates within a directory to true.
 var DefaultDirOptions = DirOptions{".amber", true}
@@ -167,7 +176,13 @@ func MustCompileFile(filename string, options Options) *template.Template {
 // in all subdirectories. The key then is the path e.g: "layouts/layout"
 func CompileDir(dirname string, dopt DirOptions, opt Options) (map[string]*template.Template, error) {
 	dir, err := os.Open(dirname)
-	if err != nil {
+	if err != nil && opt.VirtualFilesystem != nil {
+		vdir, err := opt.VirtualFilesystem.Open(dirname)
+		if err != nil {
+			return nil, err
+		}
+		dir = vdir.(*os.File)
+	} else if err != nil {
 		return nil, err
 	}
 	defer dir.Close()
@@ -249,6 +264,9 @@ func (c *Compiler) ParseData(input []byte, filename string) (err error) {
 
 	parser, err := parser.ByteParser(input)
 	parser.SetFilename(filename)
+	if c.VirtualFilesystem != nil {
+		parser.SetVirtualFilesystem(c.VirtualFilesystem)
+	}
 
 	if err != nil {
 		return
@@ -266,13 +284,15 @@ func (c *Compiler) ParseFile(filename string) (err error) {
 		}
 	}()
 
-	parser, err := parser.FileParser(filename)
-
+	p, err := parser.FileParser(filename)
+	if err != nil && c.VirtualFilesystem != nil {
+		p, err = parser.VirtualFileParser(filename, c.VirtualFilesystem)
+	}
 	if err != nil {
 		return
 	}
 
-	c.node = parser.Parse()
+	c.node = p.Parse()
 	c.filename = filename
 	return
 }
@@ -593,12 +613,12 @@ func (c *Compiler) visitRawInterpolation(value string) string {
 		value = "\"\""
 	}
 
-	value = strings.Replace(value, "$", "__DOLLAR__", -1)
+	value = strings.Replace(value, "$", dollar, -1)
 	expr, err := gp.ParseExpr(value)
 	if err != nil {
 		panic("Unable to parse expression.")
 	}
-	value = strings.Replace(c.visitExpression(expr), "__DOLLAR__", "$", -1)
+	value = strings.Replace(c.visitExpression(expr), dollar, "$", -1)
 	return value
 }
 
@@ -618,10 +638,10 @@ func (c *Compiler) visitExpression(outerexpr ast.Expr) string {
 	var exec func(ast.Expr)
 
 	exec = func(expr ast.Expr) {
-		switch expr.(type) {
+		switch expr := expr.(type) {
 		case *ast.BinaryExpr:
 			{
-				be := expr.(*ast.BinaryExpr)
+				be := expr
 
 				exec(be.Y)
 				exec(be.X)
@@ -676,7 +696,7 @@ func (c *Compiler) visitExpression(outerexpr ast.Expr) string {
 			}
 		case *ast.UnaryExpr:
 			{
-				ue := expr.(*ast.UnaryExpr)
+				ue := expr
 
 				exec(ue.X)
 
@@ -698,22 +718,22 @@ func (c *Compiler) visitExpression(outerexpr ast.Expr) string {
 				stack.PushFront(name)
 			}
 		case *ast.ParenExpr:
-			exec(expr.(*ast.ParenExpr).X)
+			exec(expr.X)
 		case *ast.BasicLit:
-			stack.PushFront(expr.(*ast.BasicLit).Value)
+			stack.PushFront(strings.Replace(expr.Value, dollar, "$", -1))
 		case *ast.Ident:
-			name := expr.(*ast.Ident).Name
-			if len(name) >= len("__DOLLAR__") && name[:len("__DOLLAR__")] == "__DOLLAR__" {
-				if name == "__DOLLAR__" {
+			name := expr.Name
+			if len(name) >= len(dollar) && name[:len(dollar)] == dollar {
+				if name == dollar {
 					stack.PushFront(`.`)
 				} else {
-					stack.PushFront(`$` + expr.(*ast.Ident).Name[len("__DOLLAR__"):])
+					stack.PushFront(`$` + expr.Name[len(dollar):])
 				}
 			} else {
-				stack.PushFront(`.` + expr.(*ast.Ident).Name)
+				stack.PushFront(`.` + expr.Name)
 			}
 		case *ast.SelectorExpr:
-			se := expr.(*ast.SelectorExpr)
+			se := expr
 			exec(se.X)
 			x := pop()
 
@@ -725,7 +745,7 @@ func (c *Compiler) visitExpression(outerexpr ast.Expr) string {
 			c.write(`{{` + name + ` := ` + x + `.` + se.Sel.Name + `}}`)
 			stack.PushFront(name)
 		case *ast.CallExpr:
-			ce := expr.(*ast.CallExpr)
+			ce := expr
 
 			for i := len(ce.Args) - 1; i >= 0; i-- {
 				exec(ce.Args[i])

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"strings"
 )
@@ -12,6 +13,7 @@ import (
 type Parser struct {
 	scanner      *scanner
 	filename     string
+	fs           http.FileSystem
 	currenttoken *token
 	namedBlocks  map[string]*NamedBlock
 	parent       *Parser
@@ -37,6 +39,10 @@ func (p *Parser) SetFilename(filename string) {
 	p.filename = filename
 }
 
+func (p *Parser) SetVirtualFilesystem(fs http.FileSystem) {
+	p.fs = fs
+}
+
 func FileParser(filename string) (*Parser, error) {
 	data, err := ioutil.ReadFile(filename)
 
@@ -46,6 +52,23 @@ func FileParser(filename string) (*Parser, error) {
 
 	parser := newParser(bytes.NewReader(data))
 	parser.filename = filename
+	return parser, nil
+}
+
+func VirtualFileParser(filename string, fs http.FileSystem) (*Parser, error) {
+	file, err := fs.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	parser := newParser(bytes.NewReader(data))
+	parser.filename = filename
+	parser.fs = fs
 	return parser, nil
 }
 
@@ -139,6 +162,9 @@ func (p *Parser) parseRelativeFile(filename string) *Parser {
 	}
 
 	parser, err := FileParser(filename)
+	if err != nil && p.fs != nil {
+		parser, err = VirtualFileParser(filename, p.fs)
+	}
 	if err != nil {
 		panic("Unable to read " + filename + ", Error: " + string(err.Error()))
 	}

@@ -339,6 +339,13 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 // HTTP requests
 func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
 
+	theme := ac.defaultTheme
+	// Theme aliases. Use a map if there are more than 2 aliases in the future.
+	if (theme == "default") || (theme == "light") {
+		// Use the "gray" theme by default for Markdown
+		theme = "gray"
+	}
+
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
 		// Rejecting requests is handled by the permission system, which
@@ -378,7 +385,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		// Share the directory or file
 		if hasdir {
-			ac.DirPage(w, req, servedir, dirname, ac.defaultTheme)
+			ac.DirPage(w, req, servedir, dirname, theme)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
@@ -387,7 +394,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(utils.NoPage(filename, ac.defaultTheme))
+		w.Write(utils.NoPage(filename, theme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not
@@ -396,7 +403,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 	} else {
 		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
-		limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", ac.defaultTheme)
+		limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

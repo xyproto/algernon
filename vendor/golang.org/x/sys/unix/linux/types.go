@@ -28,6 +28,7 @@ package unix
 #include <stdio.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -543,3 +544,5 @@ const _SC_PAGESIZE = C._SC_PAGESIZE
 // Terminal handling
 
 type Termios C.termios_t
+
+type Winsize C.struct_winsize

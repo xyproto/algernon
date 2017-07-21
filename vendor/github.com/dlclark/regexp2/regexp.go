@@ -264,7 +264,7 @@ func (re *Regexp) GetGroupNames() []string {
 	if re.capslist == nil {
 		result = make([]string, re.capsize)
 
-		for i := 0; i < re.capsize; i++ {
+		for i := 0; i < len(result); i++ {
 			result[i] = strconv.Itoa(i)
 		}
 	} else {
@@ -282,7 +282,7 @@ func (re *Regexp) GetGroupNumbers() []int {
 	if re.caps == nil {
 		result = make([]int, re.capsize)
 
-		for i := 0; i < re.capsize; i++ {
+		for i := 0; i < len(result); i++ {
 			result[i] = i
 		}
 	} else {

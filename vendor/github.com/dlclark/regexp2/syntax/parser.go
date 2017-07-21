@@ -3,6 +3,7 @@ package syntax
 import (
 	"fmt"
 	"math"
+	"os"
 	"sort"
 	"strconv"
 	"unicode"
@@ -92,6 +93,7 @@ const (
 	ErrIllegalEndEscape           = "illegal \\ at end of pattern"
 	ErrMalformedSlashP            = "malformed \\p{X} character escape"
 	ErrIncompleteSlashP           = "incomplete \\p{X} character escape"
+	ErrUnknownSlashP              = "unknown unicode category, script, or property '%v'"
 	ErrUnrecognizedEscape         = "unrecognized escape sequence \\%v"
 	ErrMissingControl             = "missing control character"
 	ErrUnrecognizedControl        = "unrecognized control character"
@@ -160,7 +162,7 @@ func Parse(re string, op RegexOptions) (*RegexTree, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RegexTree{
+	tree := &RegexTree{
 		root:       root,
 		caps:       p.caps,
 		capnumlist: p.capnumlist,
@@ -168,7 +170,13 @@ func Parse(re string, op RegexOptions) (*RegexTree, error) {
 		Capnames:   p.capnames,
 		Caplist:    p.capnamelist,
 		options:    op,
-	}, nil
+	}
+
+	if tree.options&Debug > 0 {
+		os.Stdout.WriteString(tree.Dump())
+	}
+
+	return tree, nil
 }
 
 func (p *parser) setPattern(pattern string) {
@@ -915,8 +923,13 @@ func (p *parser) scanGroupOpen() (*regexNode, error) {
 
 				if (capnum != -1 || proceed == true) && p.charsRight() > 0 && p.rightChar(0) == '-' {
 					p.moveRight(1)
-					ch = p.rightChar(0)
 
+					//no more chars left, no closing char, etc
+					if p.charsRight() == 0 {
+						return nil, p.getErr(ErrInvalidGroupName)
+					}
+
+					ch = p.rightChar(0)
 					if ch >= '0' && ch <= '9' {
 						if uncapnum, err = p.scanDecimal(); err != nil {
 							return nil, err
@@ -1013,7 +1026,10 @@ func (p *parser) scanGroupOpen() (*regexNode, error) {
 			p.moveLeft()
 
 			nt = ntGroup
-			p.scanOptions()
+			// disallow options in the children of a testgroup node
+			if p.group.t != ntTestgroup {
+				p.scanOptions()
+			}
 			if p.charsRight() == 0 {
 				goto BreakRecognize
 			}
@@ -1232,6 +1248,10 @@ func (p *parser) parseProperty() (string, error) {
 
 	if p.charsRight() == 0 || p.moveRightGetChar() != '}' {
 		return "", p.getErr(ErrIncompleteSlashP)
+	}
+
+	if !isValidUnicodeCat(capname) {
+		return "", p.getErr(ErrUnknownSlashP, capname)
 	}
 
 	return capname, nil
@@ -1615,7 +1635,7 @@ func (p *parser) scanControl() (rune, error) {
 		ch = (ch - ('a' - 'A'))
 	}
 	ch = (ch - '@')
-	if ch < ' ' {
+	if ch >= 0 && ch < ' ' {
 		return ch, nil
 	}
 

@@ -307,6 +307,18 @@ func Test_Recursion_In_Blocks(t *testing.T) {
 	expect(strings.TrimSpace(res.String()), "content", t)
 }
 
+func Test_Dollar_In_TagAttributes(t *testing.T) {
+	res, err := run(`input[placeholder="$ per "+kwh]`, map[string]interface{}{
+		"kwh": "kWh",
+	})
+
+	if err != nil {
+		t.Fatal(err.Error())
+	} else {
+		expect(res, `<input placeholder="$ per kWh" />`, t)
+	}
+}
+
 func Failing_Test_CompileDir(t *testing.T) {
 	tmpl, err := CompileDir("samples/", DefaultDirOptions, DefaultOptions)
 
@@ -408,7 +420,7 @@ func expect(cur, expected string, t *testing.T) {
 }
 
 func run(tpl string, data interface{}) (string, error) {
-	t, err := Compile(tpl, Options{false, false})
+	t, err := Compile(tpl, Options{false, false, nil})
 	if err != nil {
 		return "", err
 	}

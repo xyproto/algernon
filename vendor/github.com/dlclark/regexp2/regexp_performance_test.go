@@ -244,6 +244,7 @@ const (
 	easy1  = "A[AB]B[BC]C[CD]D[DE]E[EF]F[FG]G[GH]H[HI]I[IJ]J$"
 	medium = "[XYZ]ABCDEFGHIJKLMNOPQRSTUVWXYZ$"
 	hard   = "[ -~]*ABCDEFGHIJKLMNOPQRSTUVWXYZ$"
+	hard1  = "ABCD|CDEF|EFGH|GHIJ|IJKL|KLMN|MNOP|OPQR|QRST|STUV|UVWX|WXYZ"
 	parens = "([ -~])*(A)(B)(C)(D)(E)(F)(G)(H)(I)(J)(K)(L)(M)" +
 		"(N)(O)(P)(Q)(R)(S)(T)(U)(V)(W)(X)(Y)(Z)$"
 )
@@ -268,6 +269,11 @@ func BenchmarkMatchHard_1K(b *testing.B)    { benchmark(b, hard, 1<<10) }
 func BenchmarkMatchHard_32K(b *testing.B)   { benchmark(b, hard, 32<<10) }
 func BenchmarkMatchHard_1M(b *testing.B)    { benchmark(b, hard, 1<<20) }
 func BenchmarkMatchHard_32M(b *testing.B)   { benchmark(b, hard, 32<<20) }
+func BenchmarkMatchHard1_32(b *testing.B)   { benchmark(b, hard1, 32<<0) }
+func BenchmarkMatchHard1_1K(b *testing.B)   { benchmark(b, hard1, 1<<10) }
+func BenchmarkMatchHard1_32K(b *testing.B)  { benchmark(b, hard1, 32<<10) }
+func BenchmarkMatchHard1_1M(b *testing.B)   { benchmark(b, hard1, 1<<20) }
+func BenchmarkMatchHard1_32M(b *testing.B)  { benchmark(b, hard1, 32<<20) }
 
 // TestProgramTooLongForBacktrack tests that a regex which is too long
 // for the backtracker still executes properly.

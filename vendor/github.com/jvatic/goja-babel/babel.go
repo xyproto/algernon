@@ -92,7 +92,7 @@ func getTransformer() (*babelTransformer, error) {
 }
 
 func loadBabel(vm *goja.Runtime) (func(string, map[string]interface{}) (goja.Value, error), error) {
-	babelsrc, err := Asset("babel.js")
+	babelsrc, err := _Asset("babel.js")
 	if err != nil {
 		return nil, err
 	}

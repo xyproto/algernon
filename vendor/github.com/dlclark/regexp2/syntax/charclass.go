@@ -3,6 +3,7 @@ package syntax
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"sort"
 	"unicode"
 	"unicode/utf8"
@@ -34,10 +35,9 @@ const (
 
 var (
 	ecmaSpace = []rune{0x0009, 0x000e, 0x0020, 0x0021, 0x00a0, 0x00a1, 0x1680, 0x1681, 0x2000, 0x200b, 0x2028, 0x202a, 0x202f, 0x2030, 0x205f, 0x2060, 0x3000, 0x3001, 0xfeff, 0xff00}
-	ecmaWord = []rune{0x0030, 0x003a, 0x0041, 0x005b, 0x005f, 0x0060, 0x0061, 0x007b}
+	ecmaWord  = []rune{0x0030, 0x003a, 0x0041, 0x005b, 0x005f, 0x0060, 0x0061, 0x007b}
 	ecmaDigit = []rune{0x0030, 0x003a}
 )
-
 
 var (
 	AnyClass          = getCharSetFromOldString([]rune{0}, false)
@@ -64,6 +64,9 @@ var unicodeCategories = func() map[string]*unicode.RangeTable {
 		retVal[k] = v
 	}
 	for k, v := range unicode.Categories {
+		retVal[k] = v
+	}
+	for k, v := range unicode.Properties {
 		retVal[k] = v
 	}
 	return retVal
@@ -481,20 +484,26 @@ func (c *CharSet) addRanges(ranges []singleRange) {
 	c.canonicalize()
 }
 
-func (c *CharSet) addCategory(categoryName string, negate, caseInsensitive bool, pattern string) {
+func isValidUnicodeCat(catName string) bool {
+	_, ok := unicodeCategories[catName]
+	return ok
+}
 
-	if _, ok := unicodeCategories[categoryName]; ok {
-		if caseInsensitive && (categoryName == "Ll" || categoryName == "Lu" || categoryName == "Lt") {
-			// when RegexOptions.IgnoreCase is specified then {Ll} {Lu} and {Lt} cases should all match
-			c.addCategories(
-				category{cat: "Ll", negate: negate},
-				category{cat: "Lu", negate: negate},
-				category{cat: "Lt", negate: negate})
-		}
-		c.addCategories(category{cat: categoryName, negate: negate})
-	} else {
-		c.addRanges(setFromProperty(categoryName, negate, pattern).ranges)
+func (c *CharSet) addCategory(categoryName string, negate, caseInsensitive bool, pattern string) {
+	if !isValidUnicodeCat(categoryName) {
+		// unknown unicode category, script, or property "blah"
+		panic(fmt.Errorf("Unknown unicode category, script, or property '%v'", categoryName))
+
 	}
+
+	if caseInsensitive && (categoryName == "Ll" || categoryName == "Lu" || categoryName == "Lt") {
+		// when RegexOptions.IgnoreCase is specified then {Ll} {Lu} and {Lt} cases should all match
+		c.addCategories(
+			category{cat: "Ll", negate: negate},
+			category{cat: "Lu", negate: negate},
+			category{cat: "Lt", negate: negate})
+	}
+	c.addCategories(category{cat: categoryName, negate: negate})
 }
 
 func (c *CharSet) addSubtraction(sub *CharSet) {
@@ -772,8 +781,4 @@ func (c *CharSet) addLowercaseRange(chMin, chMax rune) {
 			c.addRange(chMinT, chMaxT)
 		}
 	}
-}
-
-func setFromProperty(capname string, negate bool, pattern string) *CharSet {
-	panic("not implemented")
 }

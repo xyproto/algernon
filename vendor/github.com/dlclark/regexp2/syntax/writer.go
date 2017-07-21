@@ -16,13 +16,12 @@ func Write(tree *RegexTree) (*Code, error) {
 	}
 
 	code, err := w.codeFromTree(tree)
-	if tree.options&Debug > 0 {
-		os.Stdout.WriteString(tree.Dump())
-		if code != nil {
-			os.Stdout.WriteString(code.Dump())
-			os.Stdout.WriteString("\n")
-		}
+
+	if tree.options&Debug > 0 && code != nil {
+		os.Stdout.WriteString(code.Dump())
+		os.Stdout.WriteString("\n")
 	}
+
 	return code, err
 }
 
@@ -44,6 +43,8 @@ type writer struct {
 const (
 	beforeChild nodeType = 64
 	afterChild           = 128
+	//MaxPrefixSize is the largest number of runes we'll use for a BoyerMoyer prefix
+	MaxPrefixSize = 50
 )
 
 // The top level RegexCode generator. It does a depth-first walk
@@ -125,7 +126,12 @@ func (w *writer) codeFromTree(tree *RegexTree) (*Code, error) {
 	rtl := (tree.options & RightToLeft) != 0
 
 	var bmPrefix *BmPrefix
-	if prefix != nil && len(prefix.PrefixStr) > 0 {
+	//TODO: benchmark string prefixes
+	if prefix != nil && len(prefix.PrefixStr) > 0 && MaxPrefixSize > 0 {
+		if len(prefix.PrefixStr) > MaxPrefixSize {
+			// limit prefix changes to 10k
+			prefix.PrefixStr = prefix.PrefixStr[:MaxPrefixSize]
+		}
 		bmPrefix = newBmPrefix(prefix.PrefixStr, prefix.CaseInsensitive, rtl)
 	} else {
 		bmPrefix = nil
