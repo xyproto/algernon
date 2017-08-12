@@ -656,8 +656,6 @@ type Sigset_t struct {
 
 const RNDGETENTCNT = 0x40045200
 
-const PERF_IOC_FLAG_GROUP = 0x1
-
 const _SC_PAGESIZE = 0x1e
 
 type Termios struct {
@@ -669,11 +667,4 @@ type Termios struct {
 	Cc     [23]uint8
 	Ispeed uint32
 	Ospeed uint32
-}
-
-type Winsize struct {
-	Row    uint16
-	Col    uint16
-	Xpixel uint16
-	Ypixel uint16
 }

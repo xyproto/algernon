@@ -506,17 +506,13 @@ func (cn *conn) checkIsInTransaction(intxn bool) {
 }
 
 func (cn *conn) Begin() (_ driver.Tx, err error) {
-	return cn.begin("")
-}
-
-func (cn *conn) begin(mode string) (_ driver.Tx, err error) {
 	if cn.bad {
 		return nil, driver.ErrBadConn
 	}
 	defer cn.errRecover(&err)
 
 	cn.checkIsInTransaction(false)
-	_, commandTag, err := cn.simpleExec("BEGIN" + mode)
+	_, commandTag, err := cn.simpleExec("BEGIN")
 	if err != nil {
 		return nil, err
 	}
@@ -1339,12 +1335,7 @@ func (rs *rows) Close() error {
 		switch err {
 		case nil:
 		case io.EOF:
-			// rs.Next can return io.EOF on both 'Z' (ready for query) and 'T' (row
-			// description, used with HasNextResultSet). We need to fetch messages until
-			// we hit a 'Z', which is done by waiting for done to be set.
-			if rs.done {
-				return nil
-			}
+			return nil
 		default:
 			return err
 		}

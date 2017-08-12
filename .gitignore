@@ -56,3 +56,6 @@ test.json
 
 # Generated files
 alg2docker/Dockerfile
+
+# Vendor backup
+_vendor-*/

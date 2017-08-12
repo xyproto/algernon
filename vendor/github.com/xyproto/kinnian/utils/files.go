@@ -119,40 +119,35 @@ func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byt
 	return special, regular
 }
 
-/*ExtractKeywords takes a source file as `data` and a list of keywords to
- * look for. Lines without keywords are returned, together with a map
- * from keywords to []bytes from the source `data`.
- *
+/*ExtractKeywords can, given a source file, extract keywords and values into the
+ * given map.
+ * The map must be filled with keywords to look for.
  * The keywords in the data must be on the form "keyword: value",
  * and can be within single-line HTML comments (<-- ... -->).
+ * Returns the data for the lines that does not contain any of the keywords.
  */
-func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[string][]byte) {
+func ExtractKeywords(data []byte, special map[string]string) []byte {
 	bnl := []byte("\n")
-	commentStart := []byte("<!--")
-	commentEnd := []byte("-->")
-	var keywordColon []byte
-	found := make(map[string][]byte)
 	// Find and separate the lines starting with one of the keywords in the special map
 	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
 		// Check if the current line has one of the special keywords
-		for _, keyword := range keywordsToLookFor {
-			keywordColon = append([]byte(keyword), ':')
+		for keyword := range special {
 			// Check for lines starting with the keyword and a ":"
-			if bytes.HasPrefix(byteline, keywordColon) {
+			if bytes.HasPrefix(byteline, []byte(keyword+":")) {
 				// Set (possibly overwrite) the value in the map, if the keyword is found.
 				// Trim the surrounding whitespace and skip the letters of the keyword itself.
-				found[keyword] = bytes.TrimSpace(byteline[len(keywordColon):])
+				special[keyword] = strings.TrimSpace(string(byteline)[len(keyword)+1:])
 				return true
 			}
 			// Check for lines that starts with "<!--", ends with "-->" and contains the keyword and a ":"
-			if bytes.HasPrefix(byteline, commentStart) && bytes.HasSuffix(byteline, commentEnd) {
+			if bytes.HasPrefix(byteline, []byte("<!--")) && bytes.HasSuffix(byteline, []byte("-->")) {
 				// Strip away the comment markers
-				stripped := bytes.TrimSpace(byteline[5 : len(byteline)-3])
+				stripped := strings.TrimSpace(string(byteline[5 : len(byteline)-3]))
 				// Check if one of the relevant keywords are present
-				if bytes.HasPrefix(stripped, keywordColon) {
+				if strings.HasPrefix(stripped, keyword+":") {
 					// Set (possibly overwrite) the value in the map, if the keyword is found.
 					// Trim the surrounding whitespace and skip the letters of the keyword itself.
-					found[keyword] = bytes.TrimSpace(stripped[len(keyword)+1:])
+					special[keyword] = strings.TrimSpace(stripped[len(keyword)+1:])
 					return true
 				}
 			}
@@ -162,7 +157,7 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 		return false
 	})
 	// Use the regular lines as the new data (remove the special lines)
-	return bytes.Join(regular, bnl), found
+	return bytes.Join(regular, bnl)
 }
 
 // DurationToMS converts time.Duration to milliseconds, as a string,

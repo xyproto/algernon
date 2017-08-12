@@ -128,9 +128,7 @@ mprint(...)
 aprint(...)
 // Output rendered CSS given GCSS. Takes a variable number of strings.
 gprint(...)
-// Output rendered JavaScript given JSX for HyperApp. Takes a variable number of strings.
-hprint(...)
-// Output rendered JavaScript given JSX for React. Takes a variable number of strings.
+// Output rendered JavaScript given JSX. Takes a variable number of strings.
 jprint(...)
 // Output (mainly) rendered HTML given Pongo2. Takes a variable number of strings.
 poprint(...)

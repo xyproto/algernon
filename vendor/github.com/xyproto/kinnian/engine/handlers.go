@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/didip/tollbooth"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/kinnian/utils"
 )
@@ -21,6 +22,11 @@ const (
 
 	// Pretty soon
 	defaultSoonDuration = time.Second * 3
+)
+
+var (
+	// List of filenames that should be displayed instead of a directory listing
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.amber", "index.tmpl", "index.po2"}
 )
 
 // ClientCanGzip checks if the client supports gzip compressed responses
@@ -113,17 +119,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	}
 
 	// Use the file extension for setting the mimetype
-	lowercaseFilename := strings.ToLower(filename)
-	ext := filepath.Ext(lowercaseFilename)
-
-	// Filenames ending with .hyper.js or .hyper.jsx are special cases
-	if strings.HasSuffix(lowercaseFilename, ".hyper.js") {
-		ext = ".hyper.js"
-	} else if strings.HasSuffix(lowercaseFilename, ".hyper.jsx") {
-		ext = ".hyper.jsx"
-	}
-
-	// Serve the file in different ways based on the filename extension
+	ext := strings.ToLower(filepath.Ext(filename))
 	switch ext {
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
@@ -151,6 +147,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 		return
 
+	// Markdown pages are handled differently
 	case ".md", ".markdown":
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
@@ -214,6 +211,30 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		ac.PongoHandler(w, req, filename, ext)
 		return
 
+	case ".gcss":
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
+		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the GCSS page as CSS
+			ac.GCSSPage(w, req, filename, gcssblock.MustData())
+		}
+		return
+
+	case ".scss":
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
+		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the SASS page as CSS
+			ac.SCSSPage(w, req, filename, scssblock.MustData())
+		}
+		return
+
+	case ".jsx":
+		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			// Render the JSX page as JavaScript
+			ac.JSXPage(w, req, filename, jsxblock.MustData())
+		}
+		return
+
 	case ".lua":
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
@@ -261,41 +282,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				log.Error("Error in ", filename+":", err)
 			}
 		}
-		return
 
-	case ".gcss":
-		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
-			// Render the GCSS page as CSS
-			ac.GCSSPage(w, req, filename, gcssblock.MustData())
-		}
 		return
-
-	case ".scss":
-		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the SASS page as CSS
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
-			ac.SCSSPage(w, req, filename, scssblock.MustData())
-		}
-		return
-
-	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the JSX page as HTML with embedded JavaScript
-			w.Header().Add("Content-Type", "text/html; charset=utf-8")
-			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
-		}
-		return
-
-	// This case must come after the .hyper.jsx case
-	case ".jsx":
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
-			// Render the JSX page as JavaScript
-			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
-			ac.JSXPage(w, req, filename, jsxblock.MustData())
-		}
-		return
-
 	case "", ".exe", ".com", ".elf", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2", ".tar.xz", ".txz", ".gz", ".zip", ".7z", ".rar", ".arj", ".lz":
 		// No extension, or binary file extension
 		// Set headers for downloading the file instead of displaying it in the browser.
@@ -339,13 +327,6 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 // HTTP requests
 func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
 
-	theme := ac.defaultTheme
-	// Theme aliases. Use a map if there are more than 2 aliases in the future.
-	if (theme == "default") || (theme == "light") {
-		// Use the "gray" theme by default for Markdown
-		theme = "gray"
-	}
-
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
 		// Rejecting requests is handled by the permission system, which
@@ -385,7 +366,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		// Share the directory or file
 		if hasdir {
-			ac.DirPage(w, req, servedir, dirname, theme)
+			ac.DirPage(w, req, servedir, dirname, ac.defaultTheme)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
@@ -394,7 +375,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(utils.NoPage(filename, theme))
+		fmt.Fprint(w, utils.NoPage(filename, ac.defaultTheme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not
@@ -403,7 +384,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 	} else {
 		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
 		limiter.MessageContentType = "text/html; charset=utf-8"
-		limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
+		limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", ac.defaultTheme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

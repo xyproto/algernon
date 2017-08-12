@@ -392,9 +392,7 @@ func (c *gcmCipher) readPacket(seqNum uint32, r io.Reader) ([]byte, error) {
 	c.incIV()
 
 	padding := plain[0]
-	if padding < 4 {
-		// padding is a byte, so it automatically satisfies
-		// the maximum size, which is 255.
+	if padding < 4 || padding >= 20 {
 		return nil, fmt.Errorf("ssh: illegal padding %d", padding)
 	}
 

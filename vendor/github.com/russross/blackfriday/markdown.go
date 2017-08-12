@@ -218,8 +218,7 @@ type parser struct {
 	// Footnotes need to be ordered as well as available to quickly check for
 	// presence. If a ref is also a footnote, it's stored both in refs and here
 	// in notes. Slice is nil if footnotes not enabled.
-	notes       []*reference
-	notesRecord map[string]struct{}
+	notes []*reference
 }
 
 func (p *parser) getRef(refid string) (ref *reference, found bool) {
@@ -240,11 +239,6 @@ func (p *parser) getRef(refid string) (ref *reference, found bool) {
 	// refs are case insensitive
 	ref, found = p.refs[strings.ToLower(refid)]
 	return ref, found
-}
-
-func (p *parser) isFootnote(ref *reference) bool {
-	_, ok := p.notesRecord[string(ref.link)]
-	return ok
 }
 
 //
@@ -382,7 +376,6 @@ func MarkdownOptions(input []byte, renderer Renderer, opts Options) []byte {
 
 	if extensions&EXTENSION_FOOTNOTES != 0 {
 		p.notes = make([]*reference, 0)
-		p.notesRecord = make(map[string]struct{})
 	}
 
 	first := firstPass(p, input)

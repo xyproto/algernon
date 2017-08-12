@@ -8,8 +8,8 @@ go:
 sudo: false
 
 install:
-  - curl -L -s https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz | tar zxC ./
-  - ./linux-amd64/glide install
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure
 
 script:
   - go build

@@ -12,7 +12,8 @@ import (
 
 	"github.com/eknkc/amber"
 	"github.com/flosch/pongo2"
-	"github.com/jvatic/goja-babel"
+	"github.com/mamaar/risotto/generator"
+	"github.com/mamaar/risotto/parser"
 	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
@@ -109,12 +110,22 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		return 0 // number of results
 	}))
 
-	// Output text as rendered JSX for React
+	// Output text as rendered JSX
 	L.SetGlobal("jprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
-		res, err := babel.Transform(&buf, ac.jsxOptions)
+		prog, err := parser.ParseFile(nil, "<input>", &buf, parser.IgnoreRegExpErrors)
+		if err != nil {
+			if ac.debugMode {
+				// TODO: Use a similar error page as for Lua
+				fmt.Fprint(w, "Could not parse JSX:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not parse JSX:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		gen, err := generator.Generate(prog)
 		if err != nil {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
@@ -124,37 +135,8 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 			}
 			return 0 // number of results
 		}
-		if res != nil {
-			io.Copy(w, res)
-		}
-		return 0 // number of results
-	}))
-
-	// Output text as rendered JSX for HyperApp
-	L.SetGlobal("hprint", L.NewFunction(func(L *lua.LState) int {
-		// Retrieve all the function arguments as a bytes.Buffer
-		buf := convert.Arguments2buffer(L, true)
-		// Transform JSX to JavaScript and output the result.
-		res, err := babel.Transform(&buf, ac.jsxOptions)
-		if err != nil {
-			if ac.debugMode {
-				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
-			} else {
-				log.Errorf("Could not generate JavaScript:\n%s\n%s", err, buf.String())
-			}
-			return 0 // number of results
-		}
-		if res != nil {
-			data, err := ioutil.ReadAll(res)
-			if err != nil {
-				log.Error("Could not read bytes from JSX generator:", err)
-				return 0 // number of results
-			}
-
-			// Use "h" instead of "React.createElement" for hyperApp apps
-			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
-			w.Write(data)
+		if gen != nil {
+			io.Copy(w, gen)
 		}
 		return 0 // number of results
 	}))
@@ -164,70 +146,67 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
-	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css"}
+	given := map[string]string{"title": "", "codestyle": "", "theme": "", "replace_with_theme": "", "css": ""}
 
 	// Also prepare for receiving meta tag information
-	searchKeywords = append(searchKeywords, utils.MetaKeywords...)
+	utils.AddMetaKeywords(given)
 
 	// Extract keywords from the given data, and remove the lines with keywords
-	var kwmap map[string][]byte
-	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
+	data = utils.ExtractKeywords(data, given)
 
 	// Convert from Markdown to HTML
-	htmlbody := blackfriday.MarkdownCommon(data)
+	htmlbody := string(blackfriday.MarkdownCommon(data))
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
 	// Markdown or not. Submit a patch to blackfriday if it is.
 
-	var h1title []byte
-	if bytes.HasPrefix(htmlbody, []byte("<p>#")) {
-		fields := bytes.Split(htmlbody, []byte("<"))
+	h1title := ""
+	if strings.HasPrefix(htmlbody, "<p>#") {
+		fields := strings.Split(htmlbody, "<")
 		if len(fields) > 2 {
-			h1title = bytes.TrimPrefix(fields[1][2:], []byte("#"))
-			htmlbody = htmlbody[3+len(h1title):] // 3 is the length of <p>
+			h1title = strings.TrimPrefix(fields[1][2:], "#")
+			htmlbody = htmlbody[len("<p>"+h1title):]
 		}
 	}
 
 	// Checkboxes
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[ ] "), []byte("<li><input type=\"checkbox\" disabled> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[x] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
+	htmlbody = strings.Replace(htmlbody, "<li>[ ] ", "<li><input type=\"checkbox\" disabled> ", utils.EveryInstance)
+	htmlbody = strings.Replace(htmlbody, "<li>[x] ", "<li><input type=\"checkbox\" disabled checked> ", utils.EveryInstance)
+	htmlbody = strings.Replace(htmlbody, "<li>[X] ", "<li><input type=\"checkbox\" disabled checked> ", utils.EveryInstance)
 
 	// If there is no given title, use the h1title
-	title := kwmap["title"]
-	if len(title) == 0 {
-		if len(h1title) != 0 {
+	title := given["title"]
+	if title == "" {
+		if h1title != "" {
 			title = h1title
 		} else {
 			// If no title has been provided, use the filename
-			title = []byte(filepath.Base(filename))
+			title = filepath.Base(filename)
 		}
 	}
 
 	// Find the theme that should be used
-	theme := kwmap["theme"]
-	if len(theme) == 0 {
-		theme = []byte(ac.defaultTheme)
+	theme := given["theme"]
+	if theme == "" {
+		theme = ac.defaultTheme
 	}
 
-	// Theme aliases. Use a map if there are more than 2 aliases in the future.
-	if (string(theme) == "default") || (string(theme) == "light") {
-		// Use the "gray" theme by default for Markdown
-		theme = []byte("gray")
+	// Theme aliases. Use a map if there are more than 1 aliases in the future.
+	if theme == "light" {
+		theme = "gray"
 	}
 
 	// Check if a specific string should be replaced with the current theme
-	replaceWithTheme := kwmap["replace_with_theme"]
-	if len(replaceWithTheme) != 0 {
+	replaceWithTheme := given["replace_with_theme"]
+	if replaceWithTheme != "" {
 		// Replace all instances of the value given with "replace_with_theme: ..." with the current theme name
-		htmlbody = bytes.Replace(htmlbody, replaceWithTheme, []byte(theme), utils.EveryInstance)
+		htmlbody = strings.Replace(htmlbody, replaceWithTheme, theme, utils.EveryInstance)
 	}
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
-	if bytes.Contains(theme, []byte(".")) {
-		st := string(theme)
-		utils.BuiltinThemes[st] = []byte("@import url(" + st + ");")
-		utils.DefaultCodeStyles[st] = utils.DefaultCustomCodeStyle
+	if strings.Contains(theme, ".") {
+		utils.BuiltinThemes[theme] = "@import url(" + theme + ");"
+		utils.DefaultCodeStyles[theme] = utils.DefaultCustomCodeStyle
 	}
 
 	var head bytes.Buffer
@@ -254,18 +233,14 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		head.WriteString(`<link href="`)
-		head.WriteString(utils.DefaultStyleFilename)
-		head.WriteString(`" rel="stylesheet" type="text/css">`)
+		head.WriteString(`<link href="` + utils.DefaultStyleFilename + `" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
-		head.WriteString("<style>")
-		head.Write(utils.BuiltinThemes[string(theme)])
-		head.WriteString("</style>")
+		head.WriteString("<style>" + utils.BuiltinThemes[theme] + "</style>")
 	}
 
 	// Additional CSS file
-	additionalCSSfile := string(kwmap["css"])
+	additionalCSSfile := given["css"]
 	if additionalCSSfile != "" {
 		// If serving a single Markdown file, include the CSS file inline in a style tag
 		if ac.markdownMode && ac.fs.Exists(additionalCSSfile) {
@@ -278,39 +253,33 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			cssdata := cssblock.MustData()
 			head.WriteString("<style>" + string(cssdata) + "</style>")
 		} else {
-			head.WriteString(`<link href="`)
-			head.WriteString(additionalCSSfile)
-			head.WriteString(`" rel="stylesheet" type="text/css">`)
+			head.WriteString(`<link href="` + additionalCSSfile + `" rel="stylesheet" type="text/css">`)
 		}
 	}
 
-	codeStyle := string(kwmap["codestyle"])
+	codeStyle := given["codestyle"]
 	// Add syntax highlighting to the header, but only if "<code" is present
-	if bytes.Contains(htmlbody, []byte("<code")) {
+	if strings.Contains(htmlbody, "<code") {
 		if codeStyle == "" {
-			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[string(theme)]))
+			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[theme]))
 		} else if codeStyle != "none" {
 			head.WriteString(utils.HighlightHTML(codeStyle))
 		}
-		//if codeStyle != "none" {
-		//	htmlbody = HighlightCode(htmlbody)
-		//}
+		if codeStyle != "none" {
+			htmlbody = HighlightCode(htmlbody)
+		}
 	}
 
 	// Add meta tags, if metadata information has been declared
 	for _, keyword := range utils.MetaKeywords {
-		if len(kwmap[keyword]) != 0 {
+		if given[keyword] != "" {
 			// Add the meta tag
-			head.WriteString(`<meta name="`)
-			head.WriteString(keyword)
-			head.WriteString(`" content="`)
-			head.Write(kwmap[keyword])
-			head.WriteString(`" />`)
+			head.WriteString(fmt.Sprintf(`<meta name="%s" content="%s" />`, keyword, given[keyword]))
 		}
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmldata := utils.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
+	htmldata := []byte(fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, head.String(), h1title, htmlbody))
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {
@@ -444,7 +413,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if linkInGCSS {
 			// Link in stylesheet
 			htmldata := buf.Bytes()
-			utils.StyleHTML(&htmldata, utils.DefaultStyleFilename)
+			utils.LinkToStyleHTML(&htmldata, utils.DefaultStyleFilename)
 			buf.Reset()
 			_, err := buf.Write(htmldata)
 			if err != nil {
@@ -513,7 +482,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		utils.StyleAmber(&amberdata, utils.DefaultStyleFilename)
+		utils.LinkToStyle(&amberdata, utils.DefaultStyleFilename)
 	}
 
 	// Compile the given amber template
@@ -595,117 +564,32 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 // JSXPage writes the given source bytes (in JSX) converted to JS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
-	var buf bytes.Buffer
-	buf.Write(jsxdata)
-
-	// Convert JSX to JS
-	res, err := babel.Transform(&buf, ac.jsxOptions)
+	prog, err := parser.ParseFile(nil, filename, jsxdata, parser.IgnoreRegExpErrors)
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
 		} else {
-			log.Errorf("Could not generate javascript:\n%s\n%s", err, buf.String())
+			log.Errorf("Could not compile JSX:\n%s\n%s", err, string(jsxdata))
 		}
 		return
 	}
-	if res != nil {
-		data, err := ioutil.ReadAll(res)
+	gen, err := generator.Generate(prog)
+	if err != nil {
+		if ac.debugMode {
+			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+		} else {
+			log.Errorf("Could not generate javascript:\n%s\n%s", err, string(jsxdata))
+		}
+		return
+	}
+	if gen != nil {
+		data, err := ioutil.ReadAll(gen)
 		if err != nil {
 			log.Error("Could not read bytes from JSX generator:", err)
 			return
 		}
-
-		// Use "h" instead of "React.createElement" for hyperApp apps
-		if ac.hyperApp {
-			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
-		}
-
+		// Write the generated data to the client
 		DataToClient(w, req, filename, data)
-	}
-}
-
-// HyperAppPage writes the given source bytes (in JSX for HyperApp) converted to JS, to a writer.
-// The filename is only used in the error message, if any.
-func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
-	var (
-		htmlbuf bytes.Buffer
-		jsxbuf  bytes.Buffer
-	)
-
-	// Wrap the rendered HyperApp JSX in some HTML
-	htmlbuf.WriteString("<!doctype html><html><head>")
-
-	// If style.gcss is present, use that style in <head>
-	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
-	if ac.fs.Exists(GCSSfilename) {
-		if ac.debugMode {
-			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
-			if err != nil {
-				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
-				return
-			}
-			gcssdata := gcssblock.MustData()
-
-			// Try compiling the GCSS file first
-			errChan := make(chan error)
-			go ValidGCSS(gcssdata, errChan)
-			err = <-errChan
-			if err != nil {
-				// Invalid GCSS, return an error page
-				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
-				return
-			}
-		}
-		// Link to stylesheet (without checking if the GCSS file is valid first)
-		htmlbuf.WriteString(`<link href="`)
-		htmlbuf.WriteString(utils.DefaultStyleFilename)
-		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
-	} else {
-		// If not, use the default hyperapp theme by inserting the CSS style directly
-		theme := ac.defaultTheme
-
-		// Use the "bw" theme by default for HyperApp
-		if theme == "default" {
-			theme = "bw"
-		}
-
-		htmlbuf.WriteString("<style>")
-		htmlbuf.Write(utils.BuiltinThemes[string(theme)])
-		htmlbuf.WriteString("</style>")
-	}
-
-	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"
-	htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>var { h, app } = hyperapp;")
-
-	// Convert JSX to JS
-	jsxbuf.Write(jsxdata)
-	res, err := babel.Transform(&jsxbuf, ac.jsxOptions)
-	if err != nil {
-		if ac.debugMode {
-			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
-		} else {
-			log.Errorf("Could not generate javascript:\n%s\n%s", err, jsxbuf.String())
-		}
-		return
-	}
-	if res != nil {
-		data, err := ioutil.ReadAll(res)
-		if err != nil {
-			log.Error("Could not read bytes from JSX generator:", err)
-			return
-		}
-
-		// Use "h" instead of "React.createElement"
-		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
-
-		// Insert the JS data
-		htmlbuf.Write(data)
-
-		// Tail of the HTML wrapper page
-		htmlbuf.WriteString("</script></body>")
-
-		// Output HTML + JS to browser
-		DataToClient(w, req, filename, htmlbuf.Bytes())
 	}
 }
 

@@ -2,19 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package blake2b implements the BLAKE2b hash algorithm defined by RFC 7693
-// and the extendable output function (XOF) BLAKE2Xb.
-//
-// For a detailed specification of BLAKE2b see https://blake2.net/blake2.pdf
-// and for BLAKE2Xb see https://blake2.net/blake2x.pdf
-//
-// If you aren't sure which function you need, use BLAKE2b (Sum512 or New512).
-// If you need a secret-key MAC (message authentication code), use the New512
-// function with a non-nil key.
-//
-// BLAKE2X is a construction to compute hash values larger than 64 bytes. It
-// can produce hash values between 0 and 4 GiB.
-package blake2b
+// Package blake2b implements the BLAKE2b hash algorithm as
+// defined in RFC 7693.
+package blake2b // import "golang.org/x/crypto/blake2b"
 
 import (
 	"encoding/binary"
@@ -181,13 +171,7 @@ func (d *digest) Write(p []byte) (n int, err error) {
 	return
 }
 
-func (d *digest) Sum(sum []byte) []byte {
-	var hash [Size]byte
-	d.finalize(&hash)
-	return append(sum, hash[:d.size]...)
-}
-
-func (d *digest) finalize(hash *[Size]byte) {
+func (d *digest) Sum(b []byte) []byte {
 	var block [BlockSize]byte
 	copy(block[:], d.block[:d.offset])
 	remaining := uint64(BlockSize - d.offset)
@@ -201,7 +185,10 @@ func (d *digest) finalize(hash *[Size]byte) {
 	h := d.h
 	hashBlocks(&h, &c, 0xFFFFFFFFFFFFFFFF, block[:])
 
-	for i, v := range h {
-		binary.LittleEndian.PutUint64(hash[8*i:], v)
+	var sum [Size]byte
+	for i, v := range h[:(d.size+7)/8] {
+		binary.LittleEndian.PutUint64(sum[8*i:], v)
 	}
+
+	return append(b, sum[:d.size]...)
 }

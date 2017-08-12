@@ -155,14 +155,14 @@ func Test_Id(t *testing.T) {
 }
 
 func Test_Attribute(t *testing.T) {
-	res, err := run(`div[name="Test"][@foo.bar="baz"].testclass
+	res, err := run(`div[name="Test"][@foo="bar"].testclass
 						p
 							[style="text-align: center; color: maroon"]`, nil)
 
 	if err != nil {
 		t.Fatal(err.Error())
 	} else {
-		expect(res, `<div @foo.bar="baz" class="testclass" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
+		expect(res, `<div @foo="bar" class="testclass" name="Test"><p style="text-align: center; color: maroon"></p></div>`, t)
 	}
 }
 
@@ -307,18 +307,6 @@ func Test_Recursion_In_Blocks(t *testing.T) {
 	expect(strings.TrimSpace(res.String()), "content", t)
 }
 
-func Test_Dollar_In_TagAttributes(t *testing.T) {
-	res, err := run(`input[placeholder="$ per "+kwh]`, map[string]interface{}{
-		"kwh": "kWh",
-	})
-
-	if err != nil {
-		t.Fatal(err.Error())
-	} else {
-		expect(res, `<input placeholder="$ per kWh" />`, t)
-	}
-}
-
 func Failing_Test_CompileDir(t *testing.T) {
 	tmpl, err := CompileDir("samples/", DefaultDirOptions, DefaultOptions)
 
@@ -420,7 +408,7 @@ func expect(cur, expected string, t *testing.T) {
 }
 
 func run(tpl string, data interface{}) (string, error) {
-	t, err := Compile(tpl, Options{false, false, nil})
+	t, err := Compile(tpl, Options{false, false})
 	if err != nil {
 		return "", err
 	}

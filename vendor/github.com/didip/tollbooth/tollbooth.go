@@ -17,25 +17,10 @@ func NewLimiter(max int64, ttl time.Duration) *config.Limiter {
 	return config.NewLimiter(max, ttl)
 }
 
-func NewLimiterExpiringBuckets(max int64, ttl, bucketDefaultExpirationTTL, bucketExpireJobInterval time.Duration) *config.Limiter {
-	return config.NewLimiterExpiringBuckets(max, ttl, bucketDefaultExpirationTTL, bucketExpireJobInterval)
-}
-
 // LimitByKeys keeps track number of request made by keys separated by pipe.
 // It returns HTTPError when limit is exceeded.
 func LimitByKeys(limiter *config.Limiter, keys []string) *errors.HTTPError {
 	if limiter.LimitReached(strings.Join(keys, "|")) {
-		return &errors.HTTPError{Message: limiter.Message, StatusCode: limiter.StatusCode}
-	}
-
-	return nil
-}
-
-// LimitByKeysWithCustomTokenBucketTTL keeps track number of request made by keys separated by pipe.
-// It returns HTTPError when limit is exceeded.
-// User can define a TTL for the key to expire
-func LimitByKeysWithCustomTokenBucketTTL(limiter *config.Limiter, keys []string, bucketExpireTTL time.Duration) *errors.HTTPError {
-	if limiter.LimitReachedWithCustomTokenBucketTTL(strings.Join(keys, "|"), bucketExpireTTL) {
 		return &errors.HTTPError{Message: limiter.Message, StatusCode: limiter.StatusCode}
 	}
 

@@ -16,6 +16,14 @@ const (
 	postHighlight = "</font>"
 )
 
+// HighlightCode highlights a block of HTML by adding <pre><code> and styling
+func HighlightCode(htmlbody string) string {
+	// Change <pre><code to <pre class="prettyprint"><code
+	//htmlbody = strings.Replace(htmlbody, "<pre><code", "<div style=\"width: 80%;\"><pre class=\"prettyprint\" style=\"background-color: "+hiBackgroundColor+";\"><code", -1)
+	//htmlbody = strings.Replace(htmlbody, "</code></pre>", "</code></pre></div>", -1)
+	return htmlbody
+}
+
 // Write the contents of a ResponseRecorder to a ResponseWriter
 func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
 	for key, values := range recorder.HeaderMap {
@@ -37,7 +45,6 @@ func recorderToString(recorder *httptest.ResponseRecorder) string {
 
 // Given a lowercase string for the language, return an approprite error page title
 func errorPageTitle(lang string) string {
-	// Special cases are only needed where capitalization is inappropriate ("CSS Error" vs "Css Error")
 	switch lang {
 	case "":
 		return "Error"
@@ -47,8 +54,6 @@ func errorPageTitle(lang string) string {
 		return "GCSS Error"
 	case "html":
 		return "HTML Error"
-	case "jsx":
-		return "JSX Error"
 	default:
 		return strings.Title(lang) + " Error"
 	}
@@ -143,42 +148,45 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 <html>
   <head>
     <title>` + title + `</title>
-    <link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
-    <style>
+	<link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
+	<style>
       body {
-        background-color: #f0f0f0;
-        color: #0b0b0b;
-        font-family: 'Lato', sans-serif;
-        font-weight: 300;
-        margin: 3.5em;
-        font-size: 1.3em;
+	    background-color: #f0f0f0;
+		color: #0b0b0b;
+		font-family: 'Lato', sans-serif;
+		font-weight: 300;
+		margin: 3.5em;
+		font-size: 1.3em;
       }
-      h1 {
-        color: #101010;
-      }
-      div {
-        margin-bottom: 35pt;
-      }
-      #right {
-        text-align: right;
-      }
-      #wrap {
-        white-space: pre-wrap;
-      }
-    </style>
+	  h1 {
+	    color: #101010;
+	  }
+	  div {
+	    margin-bottom: 35pt;
+	  }
+	  #right {
+        text-align:right;
+	  }
+	  #wrap {
+	    white-space: pre-wrap;
+	  }
+	</style>
   </head>
   <body>
     <div style="font-size: 3em; font-weight: bold;">` + title + `</div>
     Contents of ` + filename + `:
-    <div>
-      <pre><code class="` + langclass + `">` + code + `</code></pre>
-    </div>
+	<div>
+	  <pre><code class="` + langclass + `">` + code + `</code></pre>
+	</div>
     Error message:
     <div>
-      <pre id="wrap"><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
-    </div>
-    <div id="right">` + ac.versionString + `</div>
-`)
+	  <pre id="wrap"><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
+	</div>
+	<div id="right">
+	` + ac.versionString + `
+	</div>
+  </body>
+</html>`)
 
 	if ac.autoRefreshMode {
 		// Insert JavaScript for refreshing the page into the generated HTML

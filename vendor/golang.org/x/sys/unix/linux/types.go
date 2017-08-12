@@ -28,7 +28,6 @@ package unix
 #include <stdio.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -48,7 +47,6 @@ package unix
 #include <linux/filter.h>
 #include <linux/keyctl.h>
 #include <linux/netlink.h>
-#include <linux/perf_event.h>
 #include <linux/rtnetlink.h>
 #include <linux/icmpv6.h>
 #include <asm/termbits.h>
@@ -535,8 +533,6 @@ type Sigset_t C.sigset_t
 
 const RNDGETENTCNT = C.RNDGETENTCNT
 
-const PERF_IOC_FLAG_GROUP = C.PERF_IOC_FLAG_GROUP
-
 // sysconf information
 
 const _SC_PAGESIZE = C._SC_PAGESIZE
@@ -544,5 +540,3 @@ const _SC_PAGESIZE = C._SC_PAGESIZE
 // Terminal handling
 
 type Termios C.termios_t
-
-type Winsize C.struct_winsize

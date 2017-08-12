@@ -1991,11 +1991,3 @@ func TestRejectReadOnly(t *testing.T) {
 		dbt.mustExec("DROP TABLE test")
 	})
 }
-
-func TestPing(t *testing.T) {
-	runTests(t, dsn, func(dbt *DBTest) {
-		if err := dbt.db.Ping(); err != nil {
-			dbt.fail("Ping", "Ping", err)
-		}
-	})
-}

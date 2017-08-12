@@ -129,14 +129,14 @@ func (cm *ControlMessage) Parse(b []byte) error {
 		if lvl != iana.ProtocolIPv6 {
 			continue
 		}
-		switch {
-		case typ == ctlOpts[ctlTrafficClass].name && l >= ctlOpts[ctlTrafficClass].length:
+		switch typ {
+		case ctlOpts[ctlTrafficClass].name:
 			ctlOpts[ctlTrafficClass].parse(cm, m.Data(l))
-		case typ == ctlOpts[ctlHopLimit].name && l >= ctlOpts[ctlHopLimit].length:
+		case ctlOpts[ctlHopLimit].name:
 			ctlOpts[ctlHopLimit].parse(cm, m.Data(l))
-		case typ == ctlOpts[ctlPacketInfo].name && l >= ctlOpts[ctlPacketInfo].length:
+		case ctlOpts[ctlPacketInfo].name:
 			ctlOpts[ctlPacketInfo].parse(cm, m.Data(l))
-		case typ == ctlOpts[ctlPathMTU].name && l >= ctlOpts[ctlPathMTU].length:
+		case ctlOpts[ctlPathMTU].name:
 			ctlOpts[ctlPathMTU].parse(cm, m.Data(l))
 		}
 	}
