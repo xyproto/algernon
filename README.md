@@ -936,6 +936,11 @@ Other resources
 * GitBook draft: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 * [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
 
+Known bugs
+----------
+
+* Algernon uses too much memory when serving large static files. Will be fixed.
+
 General information
 -------------------
 
