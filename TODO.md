@@ -2,6 +2,8 @@
 
 Priority 1
 ----------
+- [ ] Write a module for caching that can cache chunks of files and stream files that does not
+      fit in memory directly from disk.
 - [ ] Introduce a separate package for dealing with Lua pools, Lua states and
       adding custom functios to some Lua states. All without using mutexes.
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
