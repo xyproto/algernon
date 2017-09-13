@@ -2,31 +2,33 @@
 
 Priority 1
 ----------
+- [ ] Look into the memory use when serving many large files in quick succession.
+- [ ] Add a flag for caching to the database backend instead of to memory.
+- [ ] Use fasthttp when using regular HTTP: https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp
 - [ ] Write a module for caching that can cache chunks of files and stream files that does not
       fit in memory directly from disk.
+- [ ] Feature for sending the access log to the database.
+- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
+
+Priority 2
+----------
+
+- [ ] Make Algernon compile with gccgo (some dependencies have issues)
+- [ ] Present directories with media files with a built-in page.
 - [ ] Introduce a separate package for dealing with Lua pools, Lua states and
       adding custom functios to some Lua states. All without using mutexes.
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
-- [ ] Feature for sending the access log to the database.
 - [ ] Port the layout and concept of werc to Algernon
       See: http://werc.cat-v.org/ and https://bitbucket.org/mischief/gowerc/src
 - [ ] User management interface + web REPL + stats + logs + import/export data
       + .alg launcher.
 - [ ] Algernon Application Hub.
-
-Priority 2
-----------
 - [ ] Support for websockets (port a small multiplayer game to test).
-- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
 - [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or
       [cli](https://github.com/urfave/cli)
 - [ ] Add support for Handlebars: [raymond](https://github.com/aymerick/raymond)
-- [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
-- [ ] Look into the memory use when serving many large files in quick succession.
-- [ ] Present directories with media files with a built-in page.
 - [ ] Server side support for [sw-delta](https://github.com/gmetais/sw-delta)
-- [ ] Make Algernon compile with gccgo (some dependencies have issues)
 
 Documentation/tutorials
 -----------------------
