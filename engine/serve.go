@@ -167,8 +167,8 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
-				log.Error("Not serving HTTPS: ", err)
-				log.Info("Use the -t flag for serving regular HTTP")
+				log.Error("Not serving HTTP/2 after all. Error: ", err)
+				log.Info("Use the -t flag for serving regular HTTP instead")
 				// If HTTPS failed (perhaps the key + cert are missing),
 				// serve plain HTTP instead
 				justServeRegularHTTP <- true
