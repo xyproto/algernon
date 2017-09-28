@@ -46,8 +46,8 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 			mux.HandleFunc(handlePath, wrappedHandleFunc)
 		} else {
 			limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second, nil)
-			limiter.MessageContentType = "text/html; charset=utf-8"
-			limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
+			limiter.SetMessage(utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme))
+			limiter.SetMessageContentType("text/html; charset=utf-8")
 			mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, wrappedHandleFunc))
 		}
 
