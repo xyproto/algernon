@@ -401,7 +401,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 	if ac.disableRateLimiting {
 		mux.HandleFunc(handlePath, allRequests)
 	} else {
-		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second)
+		limiter := tollbooth.NewLimiter(ac.limitRequests, time.Second, nil)
 		limiter.MessageContentType = "text/html; charset=utf-8"
 		limiter.Message = utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
