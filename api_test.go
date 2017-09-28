@@ -3,8 +3,9 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/bmizerany/assert"
-	"github.com/xyproto/kinnian/engine"
+	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt"
 	"github.com/xyproto/permissions2"
 	//"github.com/xyproto/permissionsql"
@@ -13,8 +14,9 @@ import (
 	"github.com/xyproto/simplebolt"
 	//"github.com/xyproto/simplehstore"
 	//"github.com/xyproto/simplemaria"
-	"github.com/xyproto/simpleredis"
 	"testing"
+
+	"github.com/xyproto/simpleredis"
 )
 
 // VersionInfo helps to keep track of package names and versions
@@ -47,5 +49,5 @@ func TestAPI(t *testing.T) {
 	//assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
 	//assert.Equal(t, New("pstore", pstore.Version, 3.0).Check(), nil)
 	assert.Equal(t, New("pinterface", pinterface.Version, 4.0).Check(), nil)
-	assert.Equal(t, New("kinnian", engine.Version, 2.0).Check(), nil)
+	assert.Equal(t, New("engine", engine.Version, 2.0).Check(), nil)
 }

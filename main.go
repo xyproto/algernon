@@ -6,7 +6,7 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/kinnian/engine"
+	"github.com/xyproto/algernon/engine"
 )
 
 const (
