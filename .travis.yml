@@ -4,4 +4,4 @@ go:
   - 1.9
 
 after_success:
-  - ./test.sh
+  - go build && ./test.sh
