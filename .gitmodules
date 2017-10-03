@@ -55,9 +55,6 @@
 [submodule "vendor/github.com/yuin/gopher-lua"]
 	path = vendor/github.com/yuin/gopher-lua
 	url = https://github.com/yuin/gopher-lua
-[submodule "vendor/github.com/xyproto/algernon"]
-	path = vendor/github.com/xyproto/algernon
-	url = https://github.com/xyproto/algernon
 [submodule "vendor/github.com/xyproto/datablock"]
 	path = vendor/github.com/xyproto/datablock
 	url = https://github.com/xyproto/datablock
