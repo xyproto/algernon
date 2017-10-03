@@ -1,5 +1,14 @@
 # Changelog
 
+Changes from 1.5.1 to 1.6
+=========================
+
+* Fix for excessive memory usage when serving and caching large files. Needs more testing.
+* Updated dependencies.
+* Should now be possible to compile with gccgo.
+* Revert the refactoring to a separate "kinnian" package, for easier development and dependency handling.
+* Vendor dependencies with manul (git submodules).
+
 Changes from 1.5 to 1.5.1
 =========================
 

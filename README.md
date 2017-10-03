@@ -8,7 +8,7 @@ theme: dark
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo_default_theme.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions. Uses no external libraries, only pure Go.
+Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions. Uses no external libraries, only pure Go.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
@@ -936,14 +936,9 @@ Other resources
 * GitBook draft: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 * [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
 
-Known bugs
-----------
-
-* Algernon uses too much memory when serving large static files. Will be fixed.
-
 General information
 -------------------
 
-* Version: 1.5.1
+* Version: 1.6
 * License: MIT
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;

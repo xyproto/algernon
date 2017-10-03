@@ -1,7 +1,7 @@
 # Maintainer: Alexander F Rødseth <xyproto@archlinux.org>
 
 pkgname=algernon
-pkgver=1.5.1
+pkgver=1.6
 pkgrel=1
 pkgdesc='Pure Go web server with Lua, Markdown, HTTP/2 and template support'
 arch=('x86_64' 'i686')

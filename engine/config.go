@@ -244,8 +244,9 @@ func New(versionString, description string) (*Config, error) {
 		// Compression speed over compactness
 		cacheCompressionSpeed: true,
 
-		// Maximum given file size for caching
-		cacheMaxGivenDataSize: 1 * utils.MiB,
+		// TODO: Make configurable
+		// Maximum given file size for caching, 7 MiB
+		cacheMaxGivenDataSize: 7 * utils.MiB,
 
 		// Mutex for rendering Pongo2 pages
 		pongomutex: &sync.RWMutex{},

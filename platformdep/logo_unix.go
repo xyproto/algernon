@@ -29,8 +29,11 @@ ANSI banner HOWTO
 
 */
 
-// Drawn in Inkscape
-const image = `H4sIAKy5IlUCA91XSQ6DMAy85wu95Ak4K4in9A38/1qpakMb2yQxSYXKjRGKZ8ZLjNb5c7u7efWrsXF7vizbCwlTDsQSYOzyRlAcrTQXG0UC6IMYO3N8FMMFQtEGFMVJuO3HENQS/8ArYhO3SzhW9pGthPhSiiXSeAKxQp7fD1PsZzAhogYTdTlRXzQAkS4D2FdZ9RLt9ZVZPmmdoiWTFecXYbIIIRJKSa2wuqJdLd0f5XknTOOU2xhhkI2hQ/VeBaBGgeNTmebA0lDpP6jrKKzreVxd97pdcWFjubjU0RAGsP85lu2gsZyiqbarNQzcE2r67syi4JvUyJc7vMsRV9PZ7e7Ka/DB7tn9h+ABr+hfa40MAAA=`
+// Drawn in GIMP. Grid.
+const image = `H4sIAK/e01kCA5OONrGwNrU2MjbMVVCQjjaxzJUeFaFYhAunIkMzQgKjekaDkt5BOSoymtlHM/toZh8VIZjZAT4BWy4xCQAA`
+
+// Blue and green circles. Drawn in Inkscape
+//const image = `H4sIAKy5IlUCA91XSQ6DMAy85wu95Ak4K4in9A38/1qpakMb2yQxSYXKjRGKZ8ZLjNb5c7u7efWrsXF7vizbCwlTDsQSYOzyRlAcrTQXG0UC6IMYO3N8FMMFQtEGFMVJuO3HENQS/8ArYhO3SzhW9pGthPhSiiXSeAKxQp7fD1PsZzAhogYTdTlRXzQAkS4D2FdZ9RLt9ZVZPmmdoiWTFecXYbIIIRJKSa2wuqJdLd0f5XknTOOU2xhhkI2hQ/VeBaBGgeNTmebA0lDpP6jrKKzreVxd97pdcWFjubjU0RAGsP85lu2gsZyiqbarNQzcE2r67syi4JvUyJc7vMsRV9PZ7e7Ka/DB7tn9h+ABr+hfa40MAAA=`
 
 // From a photo of Algernon Charles Swinburne, the poet
 //const image = `H4sICLDeClUCA2FsZ2Vybm9uLmFuc2kA1Vi5ccQwDMzZwiVXAgkCBDVXytVw/aeObM8IkLCCqcChdsQPi8X3ePN8yYuYPs/n483b53GM9B0yg+9WKUSI96tIqkH2q9Tssu1PYjH/SPgi4gb8M8z9zCrpAPJzn/INdXNFCKEUwgaZgBNobI6+AcgA7jOA+4zQWdqckfv8utwZFQo8S2+jC/Bnqxzrz5ZkB0FeoYB2KKEdtVQw4CsaH+7QxSkqehxsREK/9MjRlE56who2FMuGyAI5HUEo9dKYC0f/CDkNCGtAeOzIqhEiepw9yslRIyNSqwqbkq1/O6viJGiYaDndaAZxkrT8DSmHNYKVklNGMPAKhJsR7mwzYMwEwlUHSrcW3mUZDw3KiDNhdmxnQGxxcFrDjEUYQJbpYabq4YbXBidx29ZJdQEL9uFNVttvNQ9x2csJxBNwBTLjvNIR/SPkxGLlOB0oYFWOE+pEohkBnQPdZp9+f+BB2CknBRkD4b4BJouHB94ABEgtkghHUL6mJSHhIlJOytMazJSSxR8D/TTUVAL6d87ShLazyklSgVT4FahqJSSwA31Lan7lVNTzeiXsSAuKzYtyhfdSzYyigAGuYzFn556aN9SwT0lxcWdpa7hoqRbbmadtmTYcilCS2QcZ65ok5KmAUuxc+qd8AZBU6SmjGAAA`
@@ -75,7 +78,7 @@ func Banner(versionString, description string) string {
 	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, utils.EveryInstance)
-	s = insertText(s, tabs, 5, 2, "\x1b[32;1m"+versionString+"\x1b[0m", 1)
-	s = insertText(s, tabs, 7, 1, "\x1b[30;1m"+description+"\x1b[0m", 2)
+	s = insertText(s, tabs, 5, 2, "\x1b[31;1m"+versionString+"\x1b[0m", 1)
+	s = insertText(s, tabs, 6, 1, "\x1b[30;1m"+description+"\x1b[0m", 2)
 	return s
 }
