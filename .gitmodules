@@ -55,3 +55,102 @@
 [submodule "vendor/github.com/yuin/gopher-lua"]
 	path = vendor/github.com/yuin/gopher-lua
 	url = https://github.com/yuin/gopher-lua
+[submodule "vendor/github.com/xyproto/algernon"]
+	path = vendor/github.com/xyproto/algernon
+	url = https://github.com/xyproto/algernon
+[submodule "vendor/github.com/xyproto/datablock"]
+	path = vendor/github.com/xyproto/datablock
+	url = https://github.com/xyproto/datablock
+[submodule "vendor/github.com/xyproto/mime"]
+	path = vendor/github.com/xyproto/mime
+	url = https://github.com/xyproto/mime
+[submodule "vendor/github.com/xyproto/permissionbolt"]
+	path = vendor/github.com/xyproto/permissionbolt
+	url = https://github.com/xyproto/permissionbolt
+[submodule "vendor/github.com/xyproto/permissions2"]
+	path = vendor/github.com/xyproto/permissions2
+	url = https://github.com/xyproto/permissions2
+[submodule "vendor/github.com/xyproto/permissionsql"]
+	path = vendor/github.com/xyproto/permissionsql
+	url = https://github.com/xyproto/permissionsql
+[submodule "vendor/github.com/xyproto/pstore"]
+	path = vendor/github.com/xyproto/pstore
+	url = https://github.com/xyproto/pstore
+[submodule "vendor/github.com/xyproto/recwatch"]
+	path = vendor/github.com/xyproto/recwatch
+	url = https://github.com/xyproto/recwatch
+[submodule "vendor/github.com/xyproto/simpleredis"]
+	path = vendor/github.com/xyproto/simpleredis
+	url = https://github.com/xyproto/simpleredis
+[submodule "vendor/github.com/xyproto/term"]
+	path = vendor/github.com/xyproto/term
+	url = https://github.com/xyproto/term
+[submodule "vendor/github.com/xyproto/unzip"]
+	path = vendor/github.com/xyproto/unzip
+	url = https://github.com/xyproto/unzip
+[submodule "vendor/github.com/yosssi/gcss"]
+	path = vendor/github.com/yosssi/gcss
+	url = https://github.com/yosssi/gcss
+[submodule "vendor/golang.org/x/net"]
+	path = vendor/golang.org/x/net
+	url = https://go.googlesource.com/net
+[submodule "vendor/github.com/bmizerany/assert"]
+	path = vendor/github.com/bmizerany/assert
+	url = https://github.com/bmizerany/assert
+[submodule "vendor/github.com/xyproto/simplebolt"]
+	path = vendor/github.com/xyproto/simplebolt
+	url = https://github.com/xyproto/simplebolt
+[submodule "vendor/github.com/boltdb/bolt"]
+	path = vendor/github.com/boltdb/bolt
+	url = https://github.com/boltdb/bolt
+[submodule "vendor/github.com/fatih/color"]
+	path = vendor/github.com/fatih/color
+	url = https://github.com/fatih/color
+[submodule "vendor/github.com/fsnotify/fsnotify"]
+	path = vendor/github.com/fsnotify/fsnotify
+	url = https://github.com/fsnotify/fsnotify
+[submodule "vendor/github.com/garyburd/redigo"]
+	path = vendor/github.com/garyburd/redigo
+	url = https://github.com/garyburd/redigo
+[submodule "vendor/github.com/getwe/figlet4go"]
+	path = vendor/github.com/getwe/figlet4go
+	url = https://github.com/getwe/figlet4go
+[submodule "vendor/github.com/go-sql-driver/mysql"]
+	path = vendor/github.com/go-sql-driver/mysql
+	url = https://github.com/go-sql-driver/mysql
+[submodule "vendor/github.com/juju/ratelimit"]
+	path = vendor/github.com/juju/ratelimit
+	url = https://github.com/juju/ratelimit
+[submodule "vendor/github.com/lib/pq"]
+	path = vendor/github.com/lib/pq
+	url = https://github.com/lib/pq
+[submodule "vendor/github.com/mattetti/filebuffer"]
+	path = vendor/github.com/mattetti/filebuffer
+	url = https://github.com/mattetti/filebuffer
+[submodule "vendor/github.com/mattn/go-runewidth"]
+	path = vendor/github.com/mattn/go-runewidth
+	url = https://github.com/mattn/go-runewidth
+[submodule "vendor/github.com/nsf/termbox-go"]
+	path = vendor/github.com/nsf/termbox-go
+	url = https://github.com/nsf/termbox-go
+[submodule "vendor/github.com/shurcooL/sanitized_anchor_name"]
+	path = vendor/github.com/shurcooL/sanitized_anchor_name
+	url = https://github.com/shurcooL/sanitized_anchor_name
+[submodule "vendor/github.com/xyproto/cookie"]
+	path = vendor/github.com/xyproto/cookie
+	url = https://github.com/xyproto/cookie
+[submodule "vendor/github.com/xyproto/simplehstore"]
+	path = vendor/github.com/xyproto/simplehstore
+	url = https://github.com/xyproto/simplehstore
+[submodule "vendor/github.com/xyproto/simplemaria"]
+	path = vendor/github.com/xyproto/simplemaria
+	url = https://github.com/xyproto/simplemaria
+[submodule "vendor/golang.org/x/crypto"]
+	path = vendor/golang.org/x/crypto
+	url = https://go.googlesource.com/crypto
+[submodule "vendor/golang.org/x/sys"]
+	path = vendor/golang.org/x/sys
+	url = https://go.googlesource.com/sys
+[submodule "vendor/golang.org/x/text"]
+	path = vendor/golang.org/x/text
+	url = https://go.googlesource.com/text
