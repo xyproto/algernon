@@ -1,0 +1,57 @@
+[submodule "vendor/github.com/chzyer/readline"]
+	path = vendor/github.com/chzyer/readline
+	url = https://github.com/chzyer/readline
+[submodule "vendor/github.com/didip/tollbooth"]
+	path = vendor/github.com/didip/tollbooth
+	url = https://github.com/didip/tollbooth
+[submodule "vendor/github.com/dlclark/regexp2"]
+	path = vendor/github.com/dlclark/regexp2
+	url = https://github.com/dlclark/regexp2
+[submodule "vendor/github.com/dop251/goja"]
+	path = vendor/github.com/dop251/goja
+	url = https://github.com/dop251/goja
+[submodule "vendor/github.com/eknkc/amber"]
+	path = vendor/github.com/eknkc/amber
+	url = https://github.com/eknkc/amber
+[submodule "vendor/github.com/flosch/pongo2"]
+	path = vendor/github.com/flosch/pongo2
+	url = https://github.com/flosch/pongo2
+[submodule "vendor/github.com/juju/errors"]
+	path = vendor/github.com/juju/errors
+	url = https://github.com/juju/errors
+[submodule "vendor/github.com/jvatic/goja-babel"]
+	path = vendor/github.com/jvatic/goja-babel
+	url = https://github.com/jvatic/goja-babel
+[submodule "vendor/github.com/mitchellh/go-homedir"]
+	path = vendor/github.com/mitchellh/go-homedir
+	url = https://github.com/mitchellh/go-homedir
+[submodule "vendor/github.com/mitchellh/mapstructure"]
+	path = vendor/github.com/mitchellh/mapstructure
+	url = https://github.com/mitchellh/mapstructure
+[submodule "vendor/github.com/natefinch/pie"]
+	path = vendor/github.com/natefinch/pie
+	url = https://github.com/natefinch/pie
+[submodule "vendor/github.com/russross/blackfriday"]
+	path = vendor/github.com/russross/blackfriday
+	url = https://github.com/russross/blackfriday
+[submodule "vendor/github.com/sirupsen/logrus"]
+	path = vendor/github.com/sirupsen/logrus
+	url = https://github.com/sirupsen/logrus
+[submodule "vendor/github.com/tylerb/graceful"]
+	path = vendor/github.com/tylerb/graceful
+	url = https://github.com/tylerb/graceful
+[submodule "vendor/github.com/wellington/sass"]
+	path = vendor/github.com/wellington/sass
+	url = https://github.com/wellington/sass
+[submodule "vendor/github.com/xyproto/jpath"]
+	path = vendor/github.com/xyproto/jpath
+	url = https://github.com/xyproto/jpath
+[submodule "vendor/github.com/xyproto/pinterface"]
+	path = vendor/github.com/xyproto/pinterface
+	url = https://github.com/xyproto/pinterface
+[submodule "vendor/github.com/yuin/gluamapper"]
+	path = vendor/github.com/yuin/gluamapper
+	url = https://github.com/yuin/gluamapper
+[submodule "vendor/github.com/yuin/gopher-lua"]
+	path = vendor/github.com/yuin/gopher-lua
+	url = https://github.com/yuin/gopher-lua
