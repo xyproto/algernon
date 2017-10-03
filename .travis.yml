@@ -2,4 +2,6 @@ language: go
 
 go:
   - 1.9
-  - tip
+
+after_success:
+  - ./test.sh
