@@ -151,3 +151,6 @@
 [submodule "vendor/golang.org/x/text"]
 	path = vendor/golang.org/x/text
 	url = https://go.googlesource.com/text
+[submodule "vendor/github.com/kr/pretty"]
+	path = vendor/github.com/kr/pretty
+	url = https://github.com/kr/pretty
