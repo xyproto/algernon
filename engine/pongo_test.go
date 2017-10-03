@@ -28,7 +28,7 @@ func pongoPageTest(n int, t *testing.T) {
 	// Use a FileStat cache with different settings
 	ac.SetFileStatCache(datablock.NewFileStat(true, time.Minute*1))
 
-	ac.cache = datablock.NewFileCache(20000000, true, 64*utils.KiB, true)
+	ac.cache = datablock.NewFileCache(20000000, true, 64*utils.KiB, true, 0)
 
 	luablock, err := ac.cache.Read(luafilename, ac.shouldCache(".po2"))
 	assert.Equal(t, err, nil)

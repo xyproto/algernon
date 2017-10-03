@@ -74,7 +74,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) {
 
 	mux := http.NewServeMux()
 	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression, compress for size not for speed
-	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false)
+	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false, 0)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", ac.versionString)
 		ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)

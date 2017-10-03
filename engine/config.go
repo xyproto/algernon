@@ -121,6 +121,7 @@ type Config struct {
 	cacheCompression      bool
 	cacheMaxEntitySize    uint64
 	cacheCompressionSpeed bool // Compression speed over compactness
+	cacheMaxGivenDataSize uint64
 	noCache               bool
 	noHeaders             bool
 
@@ -243,6 +244,9 @@ func New(versionString, description string) (*Config, error) {
 		// Compression speed over compactness
 		cacheCompressionSpeed: true,
 
+		// Maximum given file size for caching
+		cacheMaxGivenDataSize: 1 * utils.MiB,
+
 		// Mutex for rendering Pongo2 pages
 		pongomutex: &sync.RWMutex{},
 
@@ -334,7 +338,7 @@ func (ac *Config) initFilesAndCache() error {
 	// Create a cache struct for reading files (contains functions that can
 	// be used for reading files, also when caching is disabled).
 	// The final argument is for compressing with "fast" instead of "best".
-	ac.cache = datablock.NewFileCache(ac.cacheSize, ac.cacheCompression, ac.cacheMaxEntitySize, ac.cacheCompressionSpeed)
+	ac.cache = datablock.NewFileCache(ac.cacheSize, ac.cacheCompression, ac.cacheMaxEntitySize, ac.cacheCompressionSpeed, ac.cacheMaxGivenDataSize)
 	return nil
 }
 
