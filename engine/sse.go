@@ -1,7 +1,5 @@
 package engine
 
-// +build gccgo
-
 import (
 	"bytes"
 	"fmt"
