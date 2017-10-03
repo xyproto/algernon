@@ -154,3 +154,6 @@
 [submodule "vendor/github.com/kr/pretty"]
 	path = vendor/github.com/kr/pretty
 	url = https://github.com/kr/pretty
+[submodule "vendor/github.com/kr/text"]
+	path = vendor/github.com/kr/text
+	url = https://github.com/kr/text
