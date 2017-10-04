@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# alg2docker 0.2
+# alg2docker 0.3
 #
 # Convert an Algernon application (.alg or .zip) to a Dockerfile
 #
@@ -13,7 +13,7 @@ email="$EMAIL"
 force="false"
 
 if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
-  echo 'alg2docker 0.2'
+  echo 'alg2docker 0.3'
   echo
   echo 'Convert an Algernon application (.alg or .zip) to a Dockerfile'
   echo
@@ -47,14 +47,9 @@ cat <<EOF > "$newfile"
 # * HTTP on port 80
 # * HTTPS+HTTP/2 on port 443
 
-FROM golang:alpine
+FROM golang:latest
 MAINTAINER !NAME <!EMAIL>
 
-RUN apk update && apk add bash curl git mercurial go && rm -rf /var/cache/apk/*
-RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
-ENV GOPATH /go
-ENV PATH /go/bin/:$PATH
-ENV CGO_ENABLED=0
 RUN go get github.com/xyproto/algernon
 
 # Add the .alg file
@@ -64,10 +59,11 @@ ADD !FILENAME !FILENAME
 # Should contain the HTTPS keys (cert.pem and key.pem)
 VOLUME /etc/algernon
 
-# Serve the .alg application, in a static, but fast, way
-CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "!FILENAME"]
+# Expose port 80 (HTTPS) and 443 (HTTPS or HTTP/2)
 EXPOSE 80 443
 
+# Serve the .alg application, in a static, but fast, way
+CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "!FILENAME"]
 EOF
 
 # Configure the Dockerfile
