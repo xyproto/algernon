@@ -123,8 +123,12 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	// Decide which protocol to listen to
 	switch {
 	case ac.productionMode:
+		host := ac.serverHost
+		if len(host) == 0 {
+			host = "localhost"
+		}
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		log.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
+		log.Info("Serving HTTP/2 on https://" + host + "/")
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
@@ -134,7 +138,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				log.Error(err)
 			}
 		}()
-		log.Info("Serving HTTP on http://" + ac.serverHost + "/")
+		log.Info("Serving HTTP on http://" + host + "/")
 		go func() {
 			HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+":80")
 			if err := HTTPserver.ListenAndServe(); err != nil {
