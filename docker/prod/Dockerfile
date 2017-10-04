@@ -1,16 +1,8 @@
 # Dockerfile for making Algernon serve HTTP on port 80 and HTTPS+HTTP/2 on port 443
 
-FROM golang:alpine
+FROM golang:latest
 MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
-RUN apk update && apk add bash curl git mercurial go && rm -rf /var/cache/apk/*
-# apk add subversion bzr openssh-client ca-certificates
-
-RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
-ENV GOPATH /go
-ENV PATH /go/bin/:$PATH
-
-ENV CGO_ENABLED=0
 RUN go get github.com/xyproto/algernon
 RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
 
@@ -18,6 +10,8 @@ VOLUME /srv/algernon
 VOLUME /etc/algernon
 
 WORKDIR /srv/algernon
+
+EXPOSE 80 443
 
 # -c assumes no files will be added or removed, for a slight increase in speed
 # --domain makes Algernon look for a folder named the same as the domain it serves
@@ -34,5 +28,3 @@ WORKDIR /srv/algernon
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
 CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem"]
-
-EXPOSE 80 443

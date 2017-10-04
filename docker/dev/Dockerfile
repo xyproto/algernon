@@ -1,16 +1,8 @@
 # Dockerfile for making Algernon serve HTTP on port 3000, in development mode
 
-FROM golang:alpine
+FROM golang:latest
 MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
-RUN apk update && apk add bash curl git mercurial go openssh-client && rm -rf /var/cache/apk/*
-# apk add subversion bzr ca-certificates
-
-RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
-ENV GOPATH /go
-ENV PATH /go/bin/:$PATH
-
-ENV CGO_ENABLED=0
 RUN go get github.com/xyproto/algernon
 RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
 
@@ -18,6 +10,8 @@ VOLUME /srv/algernon
 VOLUME /etc/algernon
 
 WORKDIR /srv/algernon
+
+EXPOSE 3000
 
 # -c assumes no files will be added or removed, for a slight increase in speed
 # --domain makes Algernon look for a folder named the same as the domain it serves
@@ -37,5 +31,3 @@ WORKDIR /srv/algernon
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
 CMD ["algernon", "--domain", "--server", "--dev", "--autorefresh"]
-
-EXPOSE 3000
