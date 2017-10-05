@@ -82,7 +82,8 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Builds with GCC > 7.2.0 (gcc-go), but there are some issues. Go >= 1.9 is recommended.
+* Builds with Go >= 1.9.
+* Building Algernon with gcc-go is not recommended (yet). There are issues that are not present when compiling with Go >= 1.9.
 
 Utilities
 ---------
