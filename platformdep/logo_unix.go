@@ -78,7 +78,7 @@ func Banner(versionString, description string) string {
 	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, utils.EveryInstance)
-	s = insertText(s, tabs, 5, 2, "\x1b[31;1m"+versionString+"\x1b[0m", 1)
+	s = insertText(s, tabs, 5, 2, "\x1b[34;1m"+versionString+"\x1b[0m", 1)
 	s = insertText(s, tabs, 6, 1, "\x1b[30;1m"+description+"\x1b[0m", 2)
 	return s
 }
