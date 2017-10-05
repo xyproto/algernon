@@ -3,6 +3,8 @@ package datastruct
 import (
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Identifier for the Set class in Lua
@@ -46,8 +48,8 @@ func kvToString(L *lua.LState) int {
 // kv:set(string, string) -> bool
 func kvSet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
-	key := L.ToString(2)
-	value := L.ToString(3)
+	key := L.CheckString(2)
+	value := L.CheckString(3)
 	L.Push(lua.LBool(nil == kv.Set(key, value)))
 	return 1 // Number of returned values
 }
@@ -56,7 +58,7 @@ func kvSet(L *lua.LState) int {
 // kv:get(string) -> string
 func kvGet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
-	key := L.ToString(2)
+	key := L.CheckString(2)
 	retval, err := kv.Get(key)
 	if err != nil {
 		retval = ""
@@ -71,10 +73,11 @@ func kvGet(L *lua.LState) int {
 // kv:inc(string) -> string
 func kvInc(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
-	key := L.ToString(2)
+	key := L.CheckString(2)
 	increased, err := kv.Inc(key)
 	if err != nil {
-		L.Push(lua.LString(""))
+		log.Error(err.Error())
+		L.Push(lua.LString("0"))
 		return 1
 	}
 	L.Push(lua.LString(increased))
@@ -85,7 +88,7 @@ func kvInc(L *lua.LState) int {
 // kv:del(string) -> bool
 func kvDel(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
-	value := L.ToString(2)
+	value := L.CheckString(2)
 	L.Push(lua.LBool(nil == kv.Del(value)))
 	return 1 // Number of returned values
 }
@@ -127,7 +130,7 @@ func LoadKeyValue(L *lua.LState, creator pinterface.ICreator) {
 
 	// The constructor for new KeyValues takes a name and an optional redis db index
 	L.SetGlobal("KeyValue", L.NewFunction(func(L *lua.LState) int {
-		name := L.ToString(1)
+		name := L.CheckString(1)
 
 		// Check if the optional argument is given
 		if L.GetTop() == 2 {

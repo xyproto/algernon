@@ -55,7 +55,7 @@ func setToString(L *lua.LState) int {
 // set:add(string)
 func setAdd(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.ToString(2)
+	value := L.CheckString(2)
 	set.Add(value)
 	return 0 // Number of returned values
 }
@@ -64,7 +64,7 @@ func setAdd(L *lua.LState) int {
 // set:del(string)
 func setDel(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.ToString(2)
+	value := L.CheckString(2)
 	set.Del(value)
 	return 0 // Number of returned values
 }
@@ -74,7 +74,7 @@ func setDel(L *lua.LState) int {
 // set:has(string) -> bool
 func setHas(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.ToString(2)
+	value := L.CheckString(2)
 	b, err := set.Has(value)
 	if err != nil {
 		b = false
@@ -134,7 +134,7 @@ func LoadSet(L *lua.LState, creator pinterface.ICreator) {
 
 	// The constructor for new sets takes a name and an optional redis db index
 	L.SetGlobal("Set", L.NewFunction(func(L *lua.LState) int {
-		name := L.ToString(1)
+		name := L.CheckString(1)
 
 		// Check if the optional argument is given
 		if L.GetTop() == 2 {

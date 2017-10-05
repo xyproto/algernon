@@ -55,7 +55,7 @@ func listToString(L *lua.LState) int {
 // list:add(string)
 func listAdd(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	value := L.ToString(2)
+	value := L.CheckString(2)
 	list.Add(value)
 	return 0 // Number of returned values
 }
@@ -139,7 +139,7 @@ func LoadList(L *lua.LState, creator pinterface.ICreator) {
 
 	// The constructor for new lists takes a name and an optional redis db index
 	L.SetGlobal("List", L.NewFunction(func(L *lua.LState) int {
-		name := L.ToString(1)
+		name := L.CheckString(1)
 
 		// Check if the optional argument is given
 		if L.GetTop() == 2 {

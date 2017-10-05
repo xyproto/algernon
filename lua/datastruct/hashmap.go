@@ -56,9 +56,9 @@ func hashToString(L *lua.LState) int {
 // hash:set(string, string, string) -> bool
 func hashSet(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
-	key := L.ToString(3)
-	value := L.ToString(4)
+	elementid := L.CheckString(2)
+	key := L.CheckString(3)
+	value := L.CheckString(4)
 	L.Push(lua.LBool(nil == hash.Set(elementid, key, value)))
 	return 1 // Number of returned values
 }
@@ -68,8 +68,8 @@ func hashSet(L *lua.LState) int {
 // hash:get(string, string) -> string
 func hashGet(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
-	key := L.ToString(3)
+	elementid := L.CheckString(2)
+	key := L.CheckString(3)
 	retval, err := hash.Get(elementid, key)
 	if err != nil {
 		retval = ""
@@ -83,8 +83,8 @@ func hashGet(L *lua.LState) int {
 // hash:has(string, string) -> bool
 func hashHas(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
-	key := L.ToString(3)
+	elementid := L.CheckString(2)
+	key := L.CheckString(3)
 	b, err := hash.Has(elementid, key)
 	if err != nil {
 		b = false
@@ -98,7 +98,7 @@ func hashHas(L *lua.LState) int {
 // hash:exists(string) -> bool
 func hashExists(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
+	elementid := L.CheckString(2)
 	b, err := hash.Exists(elementid)
 	if err != nil {
 		b = false
@@ -126,8 +126,8 @@ func hashGetAll(L *lua.LState) int {
 // hash:delkey(string, string) -> bool
 func hashDelKey(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
-	key := L.ToString(3)
+	elementid := L.CheckString(2)
+	key := L.CheckString(3)
 	L.Push(lua.LBool(nil == hash.DelKey(elementid, key)))
 	return 1 // Number of returned values
 }
@@ -137,7 +137,7 @@ func hashDelKey(L *lua.LState) int {
 // hash:del(string) -> bool
 func hashDel(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	elementid := L.ToString(2)
+	elementid := L.CheckString(2)
 	L.Push(lua.LBool(nil == hash.Del(elementid)))
 	return 1 // Number of returned values
 }
@@ -182,7 +182,7 @@ func LoadHash(L *lua.LState, creator pinterface.ICreator) {
 
 	// The constructor for new hash maps takes a name and an optional redis db index
 	L.SetGlobal("HashMap", L.NewFunction(func(L *lua.LState) int {
-		name := L.ToString(1)
+		name := L.CheckString(1)
 
 		// Check if the optional argument is given
 		if L.GetTop() == 2 {
