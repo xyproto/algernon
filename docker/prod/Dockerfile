@@ -1,6 +1,6 @@
 # Dockerfile for making Algernon serve HTTP on port 80 and HTTPS+HTTP/2 on port 443
 
-FROM golang:latest
+FROM golang
 MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
 RUN go get github.com/xyproto/algernon
