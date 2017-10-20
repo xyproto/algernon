@@ -157,3 +157,6 @@
 [submodule "vendor/github.com/kr/text"]
 	path = vendor/github.com/kr/text
 	url = https://github.com/kr/text
+[submodule "vendor/github.com/lucas-clemente/quic-go"]
+	path = vendor/github.com/lucas-clemente/quic-go
+	url = https://github.com/lucas-clemente/quic-go

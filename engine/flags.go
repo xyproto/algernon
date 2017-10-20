@@ -92,6 +92,7 @@ Available flags:
                                (same as -boltdb=/dev/null).
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
+  -q                           Serve just QUIC
 
 
   Examples
@@ -115,7 +116,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		serveJustHTTPShort, autoRefreshShort, productionModeShort,
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
-		noBannerShort, quitAfterFirstRequestShort, verboseModeShort bool
+		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
+		serveJustQUICShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -184,6 +186,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.defaultTheme, "theme", "default", "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
+	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -202,6 +205,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&quitAfterFirstRequestShort, "z", false, "Quit after the first request")
 	flag.BoolVar(&ac.markdownMode, "m", false, "Markdown mode")
 	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
+	flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
 
 	flag.Parse()
 
@@ -221,6 +225,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.quitAfterFirstRequest = ac.quitAfterFirstRequest || quitAfterFirstRequestShort
 	ac.verboseMode = ac.verboseMode || verboseModeShort
 	ac.noBanner = ac.noBanner || noBannerShort
+	ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {

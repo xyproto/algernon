@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lucas-clemente/quic-go/h2quic"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/http2"
@@ -30,7 +31,7 @@ func AtShutdown(shutdownFunction func()) {
 // GenerateShutdownFunction generates a function that will run the postponed
 // shutdown functions.  Note that gracefulServer can be nil. It's only used for
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
-func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
+func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server, quicServer *h2quic.Server) func() {
 	return func() {
 		mut.Lock()
 		defer mut.Unlock()
@@ -62,6 +63,10 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 				ac.fatalExit(errors.New("Interrupted"))
 			}
 		}
+		if quicServer != nil {
+			// TODO: To implement
+			//fmt.Println("DEBUG: Has QUIC server at shutdown!")
+		}
 
 		// One final flush
 		os.Stdout.Sync()
@@ -91,7 +96,7 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 		Timeout: ac.shutdownTimeout,
 	}
 	// Handle ctrl-c
-	gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(gracefulServer) // for investigating gracefulServer.Interrupted
+	gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(gracefulServer, nil) // for investigating gracefulServer.Interrupted
 	return gracefulServer
 }
 
@@ -122,6 +127,27 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// Decide which protocol to listen to
 	switch {
+	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
+		if strings.HasPrefix(ac.serverAddr, ":") {
+			log.Info("Serving QUIC on https://localhost" + ac.serverAddr + "/")
+		} else {
+			log.Info("Serving QUIC on https://" + ac.serverAddr + "/")
+		}
+		// Start serving over QUIC
+		go func() {
+			// TODO: Handle ctrl-c by fetching the quicServer struct and passing it to GenerateShutdownFunction.
+			//       This can be done once CloseGracefully in h2quic has been implemented:
+			//       https://github.com/lucas-clemente/quic-go/blob/master/h2quic/server.go#L257
+			//
+			// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
+			if err := h2quic.ListenAndServe(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
+				log.Error("Not serving QUIC after all. Error: ", err)
+				log.Info("Use the -t flag for serving regular HTTP instead")
+				// If QUIC failed (perhaps the key + cert are missing),
+				// serve plain HTTP instead
+				justServeRegularHTTP <- true
+			}
+		}()
 	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
 		if len(ac.serverHost) == 0 {
@@ -195,7 +221,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	if ac.openURLAfterServing {
 		// TODO: Better check for HTTP vs HTTPS when selecting the URL to open
 		//       when both are being served.
-		ac.OpenURL(ac.serverHost, ac.serverAddr, !ac.serveJustHTTP2)
+		ac.OpenURL(ac.serverHost, ac.serverAddr, !(ac.serveJustHTTP2 || ac.serveJustQUIC))
 	}
 
 	<-done // Wait for a "done" message from the REPL (or just keep waiting)

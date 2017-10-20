@@ -75,6 +75,9 @@ type Config struct {
 	// If only HTTP/2 or HTTP
 	serveJustHTTP2, serveJustHTTP bool
 
+	// If only QUIC
+	serveJustQUIC bool
+
 	// Configuration that may only be set in the server configuration script(s)
 	serverAddrLua          string
 	serverReadyFunctionLua func()
@@ -670,7 +673,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	}
 
 	// Run the shutdown functions if graceful does not
-	defer ac.GenerateShutdownFunction(nil)()
+	defer ac.GenerateShutdownFunction(nil, nil)()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS
 	return ac.Serve(mux, done, ready)
