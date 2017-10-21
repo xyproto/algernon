@@ -160,3 +160,6 @@
 [submodule "vendor/github.com/lucas-clemente/quic-go"]
 	path = vendor/github.com/lucas-clemente/quic-go
 	url = https://github.com/lucas-clemente/quic-go
+[submodule "vendor/github.com/radovskyb/watcher"]
+	path = vendor/github.com/radovskyb/watcher
+	url = https://github.com/radovskyb/watcher
