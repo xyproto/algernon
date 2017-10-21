@@ -4,30 +4,18 @@
 [submodule "vendor/github.com/didip/tollbooth"]
 	path = vendor/github.com/didip/tollbooth
 	url = https://github.com/didip/tollbooth
-[submodule "vendor/github.com/dlclark/regexp2"]
-	path = vendor/github.com/dlclark/regexp2
-	url = https://github.com/dlclark/regexp2
-[submodule "vendor/github.com/dop251/goja"]
-	path = vendor/github.com/dop251/goja
-	url = https://github.com/dop251/goja
 [submodule "vendor/github.com/eknkc/amber"]
 	path = vendor/github.com/eknkc/amber
 	url = https://github.com/eknkc/amber
 [submodule "vendor/github.com/flosch/pongo2"]
 	path = vendor/github.com/flosch/pongo2
 	url = https://github.com/flosch/pongo2
-[submodule "vendor/github.com/juju/errors"]
-	path = vendor/github.com/juju/errors
-	url = https://github.com/juju/errors
 [submodule "vendor/github.com/jvatic/goja-babel"]
 	path = vendor/github.com/jvatic/goja-babel
 	url = https://github.com/jvatic/goja-babel
 [submodule "vendor/github.com/mitchellh/go-homedir"]
 	path = vendor/github.com/mitchellh/go-homedir
 	url = https://github.com/mitchellh/go-homedir
-[submodule "vendor/github.com/mitchellh/mapstructure"]
-	path = vendor/github.com/mitchellh/mapstructure
-	url = https://github.com/mitchellh/mapstructure
 [submodule "vendor/github.com/natefinch/pie"]
 	path = vendor/github.com/natefinch/pie
 	url = https://github.com/natefinch/pie
@@ -73,9 +61,6 @@
 [submodule "vendor/github.com/xyproto/pstore"]
 	path = vendor/github.com/xyproto/pstore
 	url = https://github.com/xyproto/pstore
-[submodule "vendor/github.com/xyproto/recwatch"]
-	path = vendor/github.com/xyproto/recwatch
-	url = https://github.com/xyproto/recwatch
 [submodule "vendor/github.com/xyproto/simpleredis"]
 	path = vendor/github.com/xyproto/simpleredis
 	url = https://github.com/xyproto/simpleredis
@@ -91,15 +76,30 @@
 [submodule "vendor/golang.org/x/net"]
 	path = vendor/golang.org/x/net
 	url = https://go.googlesource.com/net
+[submodule "vendor/github.com/lucas-clemente/quic-go"]
+	path = vendor/github.com/lucas-clemente/quic-go
+	url = https://github.com/lucas-clemente/quic-go
+[submodule "vendor/github.com/radovskyb/watcher"]
+	path = vendor/github.com/radovskyb/watcher
+	url = https://github.com/radovskyb/watcher
+[submodule "vendor/github.com/xyproto/recwatch"]
+	path = vendor/github.com/xyproto/recwatch
+	url = https://github.com/xyproto/recwatch
+[submodule "vendor/github.com/bifurcation/mint"]
+	path = vendor/github.com/bifurcation/mint
+	url = https://github.com/bifurcation/mint
 [submodule "vendor/github.com/bmizerany/assert"]
 	path = vendor/github.com/bmizerany/assert
 	url = https://github.com/bmizerany/assert
-[submodule "vendor/github.com/xyproto/simplebolt"]
-	path = vendor/github.com/xyproto/simplebolt
-	url = https://github.com/xyproto/simplebolt
 [submodule "vendor/github.com/boltdb/bolt"]
 	path = vendor/github.com/boltdb/bolt
 	url = https://github.com/boltdb/bolt
+[submodule "vendor/github.com/dlclark/regexp2"]
+	path = vendor/github.com/dlclark/regexp2
+	url = https://github.com/dlclark/regexp2
+[submodule "vendor/github.com/dop251/goja"]
+	path = vendor/github.com/dop251/goja
+	url = https://github.com/dop251/goja
 [submodule "vendor/github.com/fatih/color"]
 	path = vendor/github.com/fatih/color
 	url = https://github.com/fatih/color
@@ -115,27 +115,48 @@
 [submodule "vendor/github.com/go-sql-driver/mysql"]
 	path = vendor/github.com/go-sql-driver/mysql
 	url = https://github.com/go-sql-driver/mysql
-[submodule "vendor/github.com/juju/ratelimit"]
-	path = vendor/github.com/juju/ratelimit
-	url = https://github.com/juju/ratelimit
+[submodule "vendor/github.com/hashicorp/golang-lru"]
+	path = vendor/github.com/hashicorp/golang-lru
+	url = https://github.com/hashicorp/golang-lru
+[submodule "vendor/github.com/juju/errors"]
+	path = vendor/github.com/juju/errors
+	url = https://github.com/juju/errors
+[submodule "vendor/github.com/kr/pretty"]
+	path = vendor/github.com/kr/pretty
+	url = https://github.com/kr/pretty
+[submodule "vendor/github.com/kr/text"]
+	path = vendor/github.com/kr/text
+	url = https://github.com/kr/text
 [submodule "vendor/github.com/lib/pq"]
 	path = vendor/github.com/lib/pq
 	url = https://github.com/lib/pq
+[submodule "vendor/github.com/lucas-clemente/aes12"]
+	path = vendor/github.com/lucas-clemente/aes12
+	url = https://github.com/lucas-clemente/aes12
+[submodule "vendor/github.com/lucas-clemente/fnv128a"]
+	path = vendor/github.com/lucas-clemente/fnv128a
+	url = https://github.com/lucas-clemente/fnv128a
+[submodule "vendor/github.com/lucas-clemente/quic-go-certificates"]
+	path = vendor/github.com/lucas-clemente/quic-go-certificates
+	url = https://github.com/lucas-clemente/quic-go-certificates
 [submodule "vendor/github.com/mattetti/filebuffer"]
 	path = vendor/github.com/mattetti/filebuffer
 	url = https://github.com/mattetti/filebuffer
 [submodule "vendor/github.com/mattn/go-runewidth"]
 	path = vendor/github.com/mattn/go-runewidth
 	url = https://github.com/mattn/go-runewidth
+[submodule "vendor/github.com/mitchellh/mapstructure"]
+	path = vendor/github.com/mitchellh/mapstructure
+	url = https://github.com/mitchellh/mapstructure
 [submodule "vendor/github.com/nsf/termbox-go"]
 	path = vendor/github.com/nsf/termbox-go
 	url = https://github.com/nsf/termbox-go
-[submodule "vendor/github.com/shurcooL/sanitized_anchor_name"]
-	path = vendor/github.com/shurcooL/sanitized_anchor_name
-	url = https://github.com/shurcooL/sanitized_anchor_name
 [submodule "vendor/github.com/xyproto/cookie"]
 	path = vendor/github.com/xyproto/cookie
 	url = https://github.com/xyproto/cookie
+[submodule "vendor/github.com/xyproto/simplebolt"]
+	path = vendor/github.com/xyproto/simplebolt
+	url = https://github.com/xyproto/simplebolt
 [submodule "vendor/github.com/xyproto/simplehstore"]
 	path = vendor/github.com/xyproto/simplehstore
 	url = https://github.com/xyproto/simplehstore
@@ -151,15 +172,3 @@
 [submodule "vendor/golang.org/x/text"]
 	path = vendor/golang.org/x/text
 	url = https://go.googlesource.com/text
-[submodule "vendor/github.com/kr/pretty"]
-	path = vendor/github.com/kr/pretty
-	url = https://github.com/kr/pretty
-[submodule "vendor/github.com/kr/text"]
-	path = vendor/github.com/kr/text
-	url = https://github.com/kr/text
-[submodule "vendor/github.com/lucas-clemente/quic-go"]
-	path = vendor/github.com/lucas-clemente/quic-go
-	url = https://github.com/lucas-clemente/quic-go
-[submodule "vendor/github.com/radovskyb/watcher"]
-	path = vendor/github.com/radovskyb/watcher
-	url = https://github.com/radovskyb/watcher
