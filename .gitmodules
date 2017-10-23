@@ -82,6 +82,12 @@
 [submodule "vendor/github.com/xyproto/quic-go"]
 	path = vendor/github.com/xyproto/quic-go
 	url = https://github.com/xyproto/quic-go
+[submodule "vendor/github.com/juju/ratelimit"]
+	path = vendor/github.com/juju/ratelimit
+	url = https://github.com/juju/ratelimit
+[submodule "vendor/github.com/shurcooL/sanitized_anchor_name"]
+	path = vendor/github.com/shurcooL/sanitized_anchor_name
+	url = https://github.com/shurcooL/sanitized_anchor_name
 [submodule "vendor/github.com/bifurcation/mint"]
 	path = vendor/github.com/bifurcation/mint
 	url = https://github.com/bifurcation/mint
@@ -127,15 +133,9 @@
 [submodule "vendor/github.com/lib/pq"]
 	path = vendor/github.com/lib/pq
 	url = https://github.com/lib/pq
-[submodule "vendor/github.com/lucas-clemente/aes12"]
-	path = vendor/github.com/lucas-clemente/aes12
-	url = https://github.com/lucas-clemente/aes12
 [submodule "vendor/github.com/lucas-clemente/fnv128a"]
 	path = vendor/github.com/lucas-clemente/fnv128a
 	url = https://github.com/lucas-clemente/fnv128a
-[submodule "vendor/github.com/lucas-clemente/quic-go"]
-	path = vendor/github.com/lucas-clemente/quic-go
-	url = https://github.com/lucas-clemente/quic-go
 [submodule "vendor/github.com/lucas-clemente/quic-go-certificates"]
 	path = vendor/github.com/lucas-clemente/quic-go-certificates
 	url = https://github.com/lucas-clemente/quic-go-certificates
@@ -151,6 +151,9 @@
 [submodule "vendor/github.com/nsf/termbox-go"]
 	path = vendor/github.com/nsf/termbox-go
 	url = https://github.com/nsf/termbox-go
+[submodule "vendor/github.com/xyproto/aes12"]
+	path = vendor/github.com/xyproto/aes12
+	url = https://github.com/xyproto/aes12
 [submodule "vendor/github.com/xyproto/cookie"]
 	path = vendor/github.com/xyproto/cookie
 	url = https://github.com/xyproto/cookie
@@ -172,12 +175,3 @@
 [submodule "vendor/golang.org/x/text"]
 	path = vendor/golang.org/x/text
 	url = https://go.googlesource.com/text
-[submodule "vendor/github.com/xyproto/aes12"]
-	path = vendor/github.com/xyproto/aes12
-	url = https://github.com/xyproto/aes12
-[submodule "vendor/github.com/juju/ratelimit"]
-	path = vendor/github.com/juju/ratelimit
-	url = https://github.com/juju/ratelimit
-[submodule "vendor/github.com/shurcooL/sanitized_anchor_name"]
-	path = vendor/github.com/shurcooL/sanitized_anchor_name
-	url = https://github.com/shurcooL/sanitized_anchor_name
