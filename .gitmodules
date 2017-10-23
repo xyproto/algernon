@@ -76,15 +76,12 @@
 [submodule "vendor/golang.org/x/net"]
 	path = vendor/golang.org/x/net
 	url = https://go.googlesource.com/net
-[submodule "vendor/github.com/lucas-clemente/quic-go"]
-	path = vendor/github.com/lucas-clemente/quic-go
-	url = https://github.com/lucas-clemente/quic-go
-[submodule "vendor/github.com/radovskyb/watcher"]
-	path = vendor/github.com/radovskyb/watcher
-	url = https://github.com/radovskyb/watcher
 [submodule "vendor/github.com/xyproto/recwatch"]
 	path = vendor/github.com/xyproto/recwatch
 	url = https://github.com/xyproto/recwatch
+[submodule "vendor/github.com/xyproto/quic-go"]
+	path = vendor/github.com/xyproto/quic-go
+	url = https://github.com/xyproto/quic-go
 [submodule "vendor/github.com/bifurcation/mint"]
 	path = vendor/github.com/bifurcation/mint
 	url = https://github.com/bifurcation/mint
@@ -136,6 +133,9 @@
 [submodule "vendor/github.com/lucas-clemente/fnv128a"]
 	path = vendor/github.com/lucas-clemente/fnv128a
 	url = https://github.com/lucas-clemente/fnv128a
+[submodule "vendor/github.com/lucas-clemente/quic-go"]
+	path = vendor/github.com/lucas-clemente/quic-go
+	url = https://github.com/lucas-clemente/quic-go
 [submodule "vendor/github.com/lucas-clemente/quic-go-certificates"]
 	path = vendor/github.com/lucas-clemente/quic-go-certificates
 	url = https://github.com/lucas-clemente/quic-go-certificates
