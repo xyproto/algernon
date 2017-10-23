@@ -172,3 +172,6 @@
 [submodule "vendor/golang.org/x/text"]
 	path = vendor/golang.org/x/text
 	url = https://go.googlesource.com/text
+[submodule "vendor/github.com/xyproto/aes12"]
+	path = vendor/github.com/xyproto/aes12
+	url = https://github.com/xyproto/aes12
