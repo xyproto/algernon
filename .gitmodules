@@ -175,3 +175,9 @@
 [submodule "vendor/github.com/xyproto/aes12"]
 	path = vendor/github.com/xyproto/aes12
 	url = https://github.com/xyproto/aes12
+[submodule "vendor/github.com/juju/ratelimit"]
+	path = vendor/github.com/juju/ratelimit
+	url = https://github.com/juju/ratelimit
+[submodule "vendor/github.com/shurcooL/sanitized_anchor_name"]
+	path = vendor/github.com/shurcooL/sanitized_anchor_name
+	url = https://github.com/shurcooL/sanitized_anchor_name
