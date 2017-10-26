@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -71,37 +72,6 @@ func Infostring(functionName string, args []string) string {
 		s += "\"" + strings.Join(args, "\", \"") + "\""
 	}
 	return s + ")"
-}
-
-// OneLevelOfIndentation finds one level of whitespace, given indented data
-// and a keyword to extract the whitespace in front of.
-//
-// Returns either an empty string or the whitespace that represents one step of
-// indentation in the given source code data.
-func OneLevelOfIndentation(data *[]byte, keyword string) string {
-	whitespace := ""
-	kwb := []byte(keyword)
-	// If there is a line that contains the given word, extract the whitespace
-	if bytes.Contains(*data, kwb) {
-		// Find the line that contains they keyword
-		var byteline []byte
-		found := false
-		// Try finding the line with keyword, using \n as the newline
-		for _, byteline = range bytes.Split(*data, []byte("\n")) {
-			if bytes.Contains(byteline, kwb) {
-				found = true
-				break
-			}
-		}
-		if found {
-			// Find the whitespace in front of the keyword
-			whitespaceBytes := byteline[:bytes.Index(byteline, kwb)]
-			// Whitespace for one level of indentation
-			whitespace = string(whitespaceBytes)
-		}
-	}
-	// Return an empty string, or whitespace for one level of indentation
-	return whitespace
 }
 
 // FilterIntoGroups filters []byte slices into two groups, depending on the given filter function
@@ -222,4 +192,16 @@ func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 	}
 	buf.WriteString(strings.Join(enabledFlags, ", "))
 	buf.WriteString("]\n")
+}
+
+// ReadString returns the contents of the given filename as a string.
+// Does not use the cache.  Returns an empty string if there were errors.
+func ReadString(filename string) string {
+	data, err := ioutil.ReadFile(filename)
+	if err == nil {
+		// No error, return the file as a string
+		return string(data)
+	}
+	// There were errors, return an empty string
+	return ""
 }

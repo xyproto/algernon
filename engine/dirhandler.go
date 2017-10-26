@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
+	"gopkg.in/gcfg.v1"
 )
 
 var (
@@ -19,6 +21,18 @@ var (
 	doubleP  = utils.Pathsep + utils.Pathsep /* // */
 	dotSlash = "." + utils.Pathsep           /* ./ */
 )
+
+const (
+	dirconfFilename = ".algernon"
+)
+
+// directory configuration file structure
+type DirConfig struct {
+	Main struct {
+		Title string
+		Theme string
+	}
+}
 
 // DirectoryListing serves the given directory as a web page with links the the contents
 func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
@@ -32,31 +46,42 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	// Fill the coming HTML body with a list of all the filenames in `dirname`
 	for _, filename := range utils.GetFilenames(dirname) {
 
-		// Find the full name
-		fullFilename = dirname
-
-		// Add a "/" after the directory name, if missing
-		if !strings.HasSuffix(fullFilename, utils.Pathsep) {
-			fullFilename += utils.Pathsep
+		if filename == dirconfFilename {
+			// Skip
+			continue
 		}
 
-		// Add the filename at the end
-		fullFilename += filename
+		// Find the full name
+		fullFilename = filepath.Join(dirname, filename)
 
 		// Remove the root directory from the link path
 		URLpath = fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(utils.HTMLLink(filename, URLpath, ac.fs.IsDir(fullFilename)))
+		buf.WriteString(themes.HTMLLink(filename, URLpath, ac.fs.IsDir(fullFilename)))
 	}
 
-	// Strip the leading "./"
-	title = strings.TrimPrefix(title, dotSlash)
+	// Read directory configuration, if present
+	fullDirConfFilename := filepath.Join(dirname, dirconfFilename)
+	if ac.fs.Exists(fullDirConfFilename) {
+		var dirConf DirConfig
+		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil {
+			if dirConf.Main.Title != "" {
+				title = dirConf.Main.Title
+			}
+			if dirConf.Main.Theme != "" {
+				theme = dirConf.Main.Theme
+			}
+		}
+	} else {
+		// Strip the leading "./" from the current directory
+		title = strings.TrimPrefix(title, dotSlash)
 
-	// Strip double "/" at the end, just keep one
-	if strings.Contains(title, doubleP) {
-		// Replace "//" with just "/"
-		title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
+		// Strip double "/" at the end, just keep one
+		if strings.Contains(title, doubleP) {
+			// Replace "//" with just "/"
+			title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
+		}
 	}
 
 	// Check if the current page contents are empty
@@ -64,7 +89,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		buf.WriteString("Empty directory")
 	}
 
-	htmldata := utils.MessagePageBytes(title, buf.Bytes(), theme)
+	htmldata := themes.MessagePageBytes(title, buf.Bytes(), theme)
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {

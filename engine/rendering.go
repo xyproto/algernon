@@ -18,6 +18,7 @@ import (
 	"github.com/wellington/sass/compiler"
 	"github.com/xyproto/algernon/console"
 	"github.com/xyproto/algernon/lua/convert"
+	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
@@ -167,7 +168,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css"}
 
 	// Also prepare for receiving meta tag information
-	searchKeywords = append(searchKeywords, utils.MetaKeywords...)
+	searchKeywords = append(searchKeywords, themes.MetaKeywords...)
 
 	// Extract keywords from the given data, and remove the lines with keywords
 	var kwmap map[string][]byte
@@ -211,7 +212,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Theme aliases. Use a map if there are more than 2 aliases in the future.
-	if (string(theme) == "default") || (string(theme) == "light") {
+	if string(theme) == "default" {
 		// Use the "gray" theme by default for Markdown
 		theme = []byte("gray")
 	}
@@ -226,14 +227,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
 	if bytes.Contains(theme, []byte(".")) {
 		st := string(theme)
-		utils.BuiltinThemes[st] = []byte("@import url(" + st + ");")
-		utils.DefaultCodeStyles[st] = utils.DefaultCustomCodeStyle
+		themes.NewTheme(st, []byte("@import url("+st+");"), themes.DefaultCustomCodeStyle)
 	}
 
 	var head bytes.Buffer
 
 	// If style.gcss is present, use that style in <head>
-	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
 	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
@@ -255,13 +255,11 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		head.WriteString(`<link href="`)
-		head.WriteString(utils.DefaultStyleFilename)
+		head.WriteString(themes.DefaultStyleFilename)
 		head.WriteString(`" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
-		head.WriteString("<style>")
-		head.Write(utils.BuiltinThemes[string(theme)])
-		head.WriteString("</style>")
+		head.Write(themes.StyleHead(string(theme)))
 	}
 
 	// Additional CSS file
@@ -288,9 +286,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// Add syntax highlighting to the header, but only if "<code" is present
 	if bytes.Contains(htmlbody, []byte("<code")) {
 		if codeStyle == "" {
-			head.WriteString(utils.HighlightHTML(utils.DefaultCodeStyles[string(theme)]))
+			head.WriteString(themes.HighlightHead(themes.ThemeToCodeStyle(string(theme))))
 		} else if codeStyle != "none" {
-			head.WriteString(utils.HighlightHTML(codeStyle))
+			head.WriteString(themes.HighlightHead(codeStyle))
 		}
 		//if codeStyle != "none" {
 		//	htmlbody = HighlightCode(htmlbody)
@@ -298,7 +296,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Add meta tags, if metadata information has been declared
-	for _, keyword := range utils.MetaKeywords {
+	for _, keyword := range themes.MetaKeywords {
 		if len(kwmap[keyword]) != 0 {
 			// Add the meta tag
 			head.WriteString(`<meta name="`)
@@ -310,7 +308,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmldata := utils.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
+	htmldata := themes.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefreshMode {
@@ -330,7 +328,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 
 	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
 	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
@@ -444,7 +442,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if linkInGCSS {
 			// Link in stylesheet
 			htmldata := buf.Bytes()
-			utils.StyleHTML(&htmldata, utils.DefaultStyleFilename)
+			themes.StyleHTML(&htmldata, themes.DefaultStyleFilename)
 			buf.Reset()
 			_, err := buf.Write(htmldata)
 			if err != nil {
@@ -475,7 +473,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		}
 
 		// If doctype is missing, add doctype for HTML5 at the top
-		changedBytes := utils.InsertDoctype(buf.Bytes())
+		changedBytes := themes.InsertDoctype(buf.Bytes())
 		buf.Reset()
 		buf.Write(changedBytes)
 
@@ -492,7 +490,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
 	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
@@ -513,7 +511,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		utils.StyleAmber(&amberdata, utils.DefaultStyleFilename)
+		themes.StyleAmber(&amberdata, themes.DefaultStyleFilename)
 	}
 
 	// Compile the given amber template
@@ -569,7 +567,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// If doctype is missing, add doctype for HTML5 at the top
-	changedBuf := bytes.NewBuffer(utils.InsertDoctype(buf.Bytes()))
+	changedBuf := bytes.NewBuffer(themes.InsertDoctype(buf.Bytes()))
 	buf = *changedBuf
 
 	// Write the rendered template to the client
@@ -636,7 +634,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	htmlbuf.WriteString("<!doctype html><html><head>")
 
 	// If style.gcss is present, use that style in <head>
-	GCSSfilename := filepath.Join(filepath.Dir(filename), utils.DefaultStyleFilename)
+	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
 	if ac.fs.Exists(GCSSfilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
@@ -658,7 +656,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		htmlbuf.WriteString(`<link href="`)
-		htmlbuf.WriteString(utils.DefaultStyleFilename)
+		htmlbuf.WriteString(themes.DefaultStyleFilename)
 		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the default hyperapp theme by inserting the CSS style directly
@@ -669,9 +667,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 			theme = "bw"
 		}
 
-		htmlbuf.WriteString("<style>")
-		htmlbuf.Write(utils.BuiltinThemes[string(theme)])
-		htmlbuf.WriteString("</style>")
+		htmlbuf.Write(themes.StyleHead(theme))
 	}
 
 	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"

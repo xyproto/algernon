@@ -11,6 +11,7 @@ import (
 
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 )
@@ -394,7 +395,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(utils.NoPage(filename, theme))
+		w.Write(themes.NoPage(filename, theme))
 	}
 
 	// Handle requests differently depending on if rate limiting is enabled or not
@@ -402,7 +403,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		mux.HandleFunc(handlePath, allRequests)
 	} else {
 		limiter := tollbooth.NewLimiter(ac.limitRequests, nil)
-		limiter.SetMessage(utils.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme))
+		limiter.SetMessage(themes.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme))
 		limiter.SetMessageContentType("text/html; charset=utf-8")
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
