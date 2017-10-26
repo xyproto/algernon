@@ -441,7 +441,7 @@ func (ac *Config) shouldCache(ext string) bool {
 	}
 }
 
-// MustServe serves files
+// MustServe sets up a server with handlers
 func (ac *Config) MustServe(mux *http.ServeMux) error {
 	var err error
 
@@ -460,14 +460,20 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		if ac.fs.Exists(serverFile) {
 			if ac.markdownMode {
 				// Serve the given Markdown file as a static HTTP server
-				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort)
+				if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
+					// Must serve
+					ac.fatalExit(serveErr)
+				}
 				return nil
 			}
 			// Switch based on the lowercase filename extension
 			switch strings.ToLower(filepath.Ext(serverFile)) {
 			case ".md", ".markdown":
 				// Serve the given Markdown file as a static HTTP server
-				ac.ServeStaticFile(serverFile, ac.defaultWebColonPort)
+				if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
+					// Must serve
+					ac.fatalExit(serveErr)
+				}
 				return nil
 			case ".zip", ".alg":
 				// Assume this to be a compressed Algernon application
@@ -502,6 +508,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames[:i], ac.serverConfigurationFilenames[i+1:]...)
 					}
 				}
+
 			default:
 				ac.singleFileMode = true
 			}

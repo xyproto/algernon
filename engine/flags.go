@@ -364,7 +364,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		if strings.Contains(secondArg, ":") {
 			ac.serverAddr = secondArg
 		} else if _, err := strconv.Atoi(secondArg); err == nil { // if no error
-		// Is a number. Interpret as the server address. TODO: Log a warning.
+			// Is a number. Interpret as the server address. TODO: Log a warning.
 			ac.serverAddr = ":" + secondArg
 		} else if len(flag.Args()) >= 3-shift {
 			ac.serverCert = flag.Args()[2-shift]

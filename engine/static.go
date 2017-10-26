@@ -65,7 +65,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 
 // ServeStaticFile is a convenience function for serving only a single file.
 // It can be used as a quick and easy way to view a README.md file.
-func (ac *Config) ServeStaticFile(filename, colonPort string) {
+func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 	log.Info("Single file mode. Not using the regular parameters.")
 
 	cancelChannel := make(chan bool, 1)
@@ -106,6 +106,8 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) {
 			}
 		}
 		// Several attempts failed
-		ac.fatalExit(errServe)
+		return errServe
+		//ac.fatalExit(errServe)
 	}
+	return nil
 }

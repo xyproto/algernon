@@ -2,9 +2,11 @@ package engine
 
 import (
 	"fmt"
+	"github.com/xyproto/unzip"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -213,6 +215,19 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	case ".po2", ".pongo2", ".tpl", ".tmpl":
 		ac.PongoHandler(w, req, filename, ext)
+		return
+
+	case ".alg":
+		// Assume this to be a compressed Algernon application
+		tempdir := ac.serverTempDir
+		if extractErr := unzip.Extract(filename, tempdir); extractErr == nil { // no error
+			firstname := path.Base(filename)
+			if strings.HasSuffix(filename, ".alg") {
+				firstname = path.Base(filename[:len(filename)-4])
+			}
+			serveDir := path.Join(tempdir, firstname)
+			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme)
+		}
 		return
 
 	case ".lua":
