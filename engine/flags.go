@@ -358,20 +358,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	shift := 0
 	if serverAddrChanged {
 		shift = 1
-	} else {
-		if len(flag.Args()) >= 2 {
-			secondArg := flag.Args()[1]
-			if strings.Contains(secondArg, ":") {
-				ac.serverAddr = secondArg
-			} else if _, err := strconv.Atoi(secondArg); err == nil { // if no error
-				ac.serverAddr = ":" + secondArg
-			} else {
-				ac.serverAddr = secondArg
-			}
-		}
 	}
-	if len(flag.Args()) >= 3-shift {
-		ac.serverCert = flag.Args()[2-shift]
+	if len(flag.Args()) >= 2 {
+		secondArg := flag.Args()[1]
+		if strings.Contains(secondArg, ":") {
+			ac.serverAddr = secondArg
+		} else if _, err := strconv.Atoi(secondArg); err == nil { // if no error
+		// Is a number. Interpret as the server address. TODO: Log a warning.
+			ac.serverAddr = ":" + secondArg
+		} else if len(flag.Args()) >= 3-shift {
+			ac.serverCert = flag.Args()[2-shift]
+		}
 	}
 	if len(flag.Args()) >= 4-shift {
 		ac.serverKey = flag.Args()[3-shift]
