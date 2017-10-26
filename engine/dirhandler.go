@@ -52,7 +52,15 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		}
 
 		// Find the full name
-		fullFilename = filepath.Join(dirname, filename)
+		fullFilename = dirname
+
+		// Add a "/" after the directory name, if missing
+		if !strings.HasSuffix(fullFilename, utils.Pathsep) {
+			fullFilename += utils.Pathsep
+		}
+
+		// Add the filename at the end
+		fullFilename += filename
 
 		// Remove the root directory from the link path
 		URLpath = fullFilename[len(rootdir)+1:]
