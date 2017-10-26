@@ -175,3 +175,6 @@
 [submodule "vendor/golang.org/x/text"]
 	path = vendor/golang.org/x/text
 	url = https://go.googlesource.com/text
+[submodule "vendor/gopkg.in/gcfg.v1"]
+	path = vendor/gopkg.in/gcfg.v1
+	url = https://gopkg.in/gcfg.v1
