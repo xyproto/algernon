@@ -154,7 +154,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	case ".md", ".markdown":
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the markdown page
 			ac.MarkdownPage(w, req, markdownblock.MustData(), filename)
 		}
@@ -265,7 +265,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".gcss":
-		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			w.Header().Add("Content-Type", "text/css; charset=utf-8")
 			// Render the GCSS page as CSS
 			ac.GCSSPage(w, req, filename, gcssblock.MustData())
@@ -273,7 +273,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".scss":
-		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the SASS page as CSS
 			w.Header().Add("Content-Type", "text/css; charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.MustData())
@@ -281,7 +281,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as HTML with embedded JavaScript
 			w.Header().Add("Content-Type", "text/html; charset=utf-8")
 			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
@@ -290,7 +290,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	// This case must come after the .hyper.jsx case
 	case ".jsx":
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as JavaScript
 			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.MustData())
@@ -317,7 +317,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	}
 
 	// Read the file (possibly in compressed format, straight from the cache)
-	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 		// Serve the file
 		dataBlock.ToClient(w, req, filename, ClientCanGzip(req), gzipThreshold)
 	}

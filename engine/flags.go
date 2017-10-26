@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/xyproto/algernon/cachemode"
+	"github.com/xyproto/datablock"
 )
 
 func generateUsageFunction(ac *Config) func() {
@@ -332,26 +334,55 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	// For backward compatibility with previous versions of Algernon
-
+	// TODO: Remove, in favor of a better config/flag system
+	serverAddrChanged := false
 	if len(flag.Args()) >= 1 {
-		ac.serverDirOrFilename = flag.Args()[0]
+		// Only override the default server directory if Algernon can find it
+		firstArg := flag.Args()[0]
+		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
+		if fs.IsDir(firstArg) || fs.Exists(firstArg) {
+			// Interpret as a file or directory. TODO: Log a warning.
+			ac.serverDirOrFilename = firstArg
+		} else if strings.Contains(firstArg, ":") {
+			// Interpret as the server address. TODO: Log a warning.
+			ac.serverAddr = firstArg
+			serverAddrChanged = true
+		} else if _, err := strconv.Atoi(firstArg); err == nil { // if no error
+			// Is a number. Interpret as the server address. TODO: Log a warning.
+			ac.serverAddr = ":" + firstArg
+			serverAddrChanged = true
+		}
 	}
-	if len(flag.Args()) >= 2 {
-		ac.serverAddr = flag.Args()[1]
+
+	// TODO: Replace the code below with something sane. Use a good config/flag package. Gah!
+	shift := 0
+	if serverAddrChanged {
+		shift = 1
+	} else {
+		if len(flag.Args()) >= 2 {
+			secondArg := flag.Args()[1]
+			if strings.Contains(secondArg, ":") {
+				ac.serverAddr = secondArg
+			} else if _, err := strconv.Atoi(secondArg); err == nil { // if no error
+				ac.serverAddr = ":" + secondArg
+			} else {
+				ac.serverAddr = secondArg
+			}
+		}
 	}
-	if len(flag.Args()) >= 3 {
-		ac.serverCert = flag.Args()[2]
+	if len(flag.Args()) >= 3-shift {
+		ac.serverCert = flag.Args()[2-shift]
 	}
-	if len(flag.Args()) >= 4 {
-		ac.serverKey = flag.Args()[3]
+	if len(flag.Args()) >= 4-shift {
+		ac.serverKey = flag.Args()[3-shift]
 	}
-	if len(flag.Args()) >= 5 {
-		ac.redisAddr = flag.Args()[4]
+	if len(flag.Args()) >= 5-shift {
+		ac.redisAddr = flag.Args()[4-shift]
 		ac.redisAddrSpecified = true
 	}
-	if len(flag.Args()) >= 6 {
+	if len(flag.Args()) >= 6-shift {
 		// Convert the dbindex from string to int
-		DBindex, err := strconv.Atoi(flag.Args()[5])
+		DBindex, err := strconv.Atoi(flag.Args()[5-shift])
 		if err != nil {
 			ac.redisDBindex = DBindex
 		}

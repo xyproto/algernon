@@ -73,7 +73,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	fullDirConfFilename := filepath.Join(dirname, dirconfFilename)
 	if ac.fs.Exists(fullDirConfFilename) {
 		var dirConf DirConfig
-		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil {
+		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil { // if no error
 			if dirConf.Main.Title != "" {
 				title = dirConf.Main.Title
 			}
