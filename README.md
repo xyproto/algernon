@@ -1,14 +1,14 @@
 <!--
 title: Algernon
 description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
-keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
+keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js, QUIC
 replace_with_theme: default_theme
 theme: dark
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo_default_theme.png" style="margin-left: 2em"></a>
 
-Web server with built-in support for HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions. Uses no external libraries, only pure Go.
+Web server with built-in support for HTTP/2, QUIC, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions. Uses no external libraries, only pure Go.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
@@ -20,7 +20,7 @@ Quick installation (development version)
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](hhttps://github.com/lucas-clemente/quic-gottps://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 
 Design decisions
@@ -28,14 +28,16 @@ Design decisions
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
   * If not, regular HTTP is used.
+  * QUIC is also supported.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is Lua code that is interpreted as a handler function for the current directory.
-    * index.md is Markdown code that is rendered as HTML.
     * index.html is HTML that is outputted with the correct Content-Type.
+    * index.md is Markdown code that is rendered as HTML.
     * index.txt is plain text that is outputted with the correct Content-Type.
-    * index.po2 is Pongo2 code that is rendered as HTML.
+    * index.pongo2, index.po2 or index.tmpl is Pongo2 code that is rendered as HTML.
     * index.amber is Amber code that is rendered as HTML.
+    * index.hyper.js or index.hyper.jsx is JSX+HyperApp code that is rendered as HTML
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
     * If a single Lua script is given as a commandline argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
     * style.gcss is GCSS code that is used as the style for all Pongo2, Amber and Markdown pages in the same directory.
@@ -47,6 +49,7 @@ Design decisions
     * GCSS: .gcss (rendered as CSS)
     * JSX: .jsx (rendered as JavaScript/ECMAScript)
     * Lua: .lua (a script that provides its own output and content type)
+    * HyperApp: .hyper.js or .hyper.jsx (rendered as HTML)
 * Other files are given a mimetype based on the extension.
 * Directories without an index file are shown as a directory listing, where the design is hardcoded.
 * UTF-8 is used whenever possible.
