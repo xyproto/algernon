@@ -226,6 +226,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				firstname = path.Base(filename[:len(filename)-4])
 			}
 			serveDir := path.Join(tempdir, firstname)
+			log.Warn(".alg apps must be given as an argument to algernon to be served correctly")
 			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme)
 		}
 		return
@@ -300,6 +301,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// Render the JSX page as HTML with embedded JavaScript
 			w.Header().Add("Content-Type", "text/html; charset=utf-8")
 			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
+		} else {
+			log.Error("Error when serving " + filename + ":" + err.Error())
 		}
 		return
 

@@ -94,7 +94,7 @@ Available flags:
                                (same as -boltdb=/dev/null).
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
-  -u                           Serve just QUIC
+  -u                           Serve over QUIC (experimental).
 
 
   Examples

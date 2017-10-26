@@ -2,15 +2,19 @@
 
 Priority 1
 ----------
-- [ ] Look into the memory use when serving many large files in quick succession.
+- [ ] Fix HyperApp support
+- [ ] Look into the rel-link sample
+- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
+
+Priority 2
+----------
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Use fasthttp when using regular HTTP: https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp
 - [ ] Write a module for caching that can cache chunks of files and stream files that does not
       fit in memory directly from disk.
 - [ ] Feature for sending the access log to the database.
-- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
 
-Priority 2
+Priority 3
 ----------
 
 - [ ] Make Algernon compile with gccgo (some dependencies have issues)
@@ -40,7 +44,7 @@ Documentation/tutorials
 - [ ] Document what the "current directory" is for various Lua functions that deals with files.
 - [ ] Document better the order of output calls when modifying the header to redirect.
 
-Priority 3
+Priority 4
 ----------
 - [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
