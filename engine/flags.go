@@ -75,6 +75,7 @@ Available flags:
   --limit=N                    Limit clients to N requests per second
                                (the default is ` + ac.defaultLimitString + `).
   --nolimit                    Disable rate limiting.
+  --nodb                       No database backend. (same as --boltdb=/dev/null).
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername=TEXT            Custom HTTP header value for the Server field.
@@ -90,8 +91,7 @@ Available flags:
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and
-                               disable all features that requires a database
-                               (same as -boltdb=/dev/null).
+                               disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
   -u                           Serve over QUIC (experimental).
@@ -124,6 +124,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		cacheModeString string
 		// Used if disabling cache compression
 		rawCache bool
+		// Used if disabling the database backend
+		noDatabase bool
 	)
 
 	// The usage function that provides more help (for --help or -h)
@@ -189,6 +191,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
+	flag.BoolVar(&noDatabase, "nodb", false, "No database backend")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -253,6 +256,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// May be overridden by devMode
 	if ac.serverMode {
 		ac.debugMode = false
+	}
+
+	if noDatabase {
+		ac.boltFilename = "/dev/null"
 	}
 
 	// TODO: If flags are set in addition to -p or -e, don't override those
