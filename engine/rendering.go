@@ -682,8 +682,13 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		return
 	}
 
-	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"
-	htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+	// Include the hyperapp javascript from unpkg.com
+	//htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+
+	// Embed the hyperapp script directly, for speed
+	htmlbuf.WriteString("</head><body><script>")
+	htmlbuf.Write(hyperAppJSBytes)
+	htmlbuf.WriteString("</script><script>")
 
 	if jsxGenerator != nil {
 		// Read from the generator
