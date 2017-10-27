@@ -26,7 +26,7 @@ const (
 	dirconfFilename = ".algernon"
 )
 
-// directory configuration file structure
+// DirConf keeps a directory listing configuration
 type DirConfig struct {
 	Main struct {
 		Title string

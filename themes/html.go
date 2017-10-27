@@ -85,7 +85,7 @@ func HighlightHead(codeStyle string) string {
 	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/` + HighlightJSversion + `/styles/` + codeStyle + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/` + HighlightJSversion + `/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
 }
 
-// MaterialHTML creates the HTML code for a material design framework called MUI (www.muicss.com)
+// MaterialHead creates the HTML code for a material design framework called MUI (www.muicss.com)
 func MaterialHead() string {
 	return `<link rel="stylesheet" href="//cdn.muicss.com/mui-` + MUIVersion + `/css/mui.min.css"><script src="//cdn.muicss.com/mui-` + MUIVersion + `/js/mui.min.js"></script>`
 }
