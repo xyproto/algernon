@@ -178,3 +178,6 @@
 [submodule "vendor/gopkg.in/gcfg.v1"]
 	path = vendor/gopkg.in/gcfg.v1
 	url = https://gopkg.in/gcfg.v1
+[submodule "vendor/gopkg.in/warnings.v0"]
+	path = vendor/gopkg.in/warnings.v0
+	url = https://gopkg.in/warnings.v0
