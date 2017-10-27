@@ -1,5 +1,20 @@
 # Changelog
 
+Changes from 1.6 to 1.7
+=======================
+
+* Experimental support for the QUIC protocol (HTTP over UDP, faster than HTTP/2).
+* Improvements toward compiling Algernon with GCC (`gcc-go`).
+* Updated the HyperApp support and samples to work with the latest version (0.15.1).
+* Updated the dockerfiles and scripts.
+* Updated the vendored dependencies with Manul.
+* Add "material" and "neon" themes.
+* Updated the documentation.
+* Add support for `.algernon` files for configuring directory listings (set a theme and title).
+* Support for having a port number as the only argument.
+* Add a `--nodb` flag, for not using any database backend (same as `--boltdb=/dev/null`).
+* Some refactoring.
+
 Changes from 1.5.1 to 1.6
 =========================
 
