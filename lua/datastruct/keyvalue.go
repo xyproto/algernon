@@ -49,7 +49,7 @@ func kvToString(L *lua.LState) int {
 func kvSet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
 	key := L.CheckString(2)
-	value := L.CheckString(3)
+	value := L.ToString(3)
 	L.Push(lua.LBool(nil == kv.Set(key, value)))
 	return 1 // Number of returned values
 }

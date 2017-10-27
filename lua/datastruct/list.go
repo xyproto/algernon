@@ -55,7 +55,7 @@ func listToString(L *lua.LState) int {
 // list:add(string)
 func listAdd(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	value := L.CheckString(2)
+	value := L.ToString(2)
 	list.Add(value)
 	return 0 // Number of returned values
 }

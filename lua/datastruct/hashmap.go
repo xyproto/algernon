@@ -58,7 +58,7 @@ func hashSet(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
 	elementid := L.CheckString(2)
 	key := L.CheckString(3)
-	value := L.CheckString(4)
+	value := L.ToString(4)
 	L.Push(lua.LBool(nil == hash.Set(elementid, key, value)))
 	return 1 // Number of returned values
 }

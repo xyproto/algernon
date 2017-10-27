@@ -55,7 +55,7 @@ func setToString(L *lua.LState) int {
 // set:add(string)
 func setAdd(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.CheckString(2)
+	value := L.ToString(2)
 	set.Add(value)
 	return 0 // Number of returned values
 }
@@ -64,7 +64,7 @@ func setAdd(L *lua.LState) int {
 // set:del(string)
 func setDel(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.CheckString(2)
+	value := L.ToString(2)
 	set.Del(value)
 	return 0 // Number of returned values
 }
@@ -74,7 +74,7 @@ func setDel(L *lua.LState) int {
 // set:has(string) -> bool
 func setHas(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	value := L.CheckString(2)
+	value := L.ToString(2)
 	b, err := set.Has(value)
 	if err != nil {
 		b = false
