@@ -1,14 +1,17 @@
 app({
-  state: 0,
-  view: (state, actions) => (
+  state: {
+    count: 0
+  },
+  view: (state, actions) =>
     <main>
-      <h1>{state}</h1>
-      <button onclick={actions.add}>+</button>
-      <button onclick={actions.sub} disabled={state <= 0}>-</button>
-    </main>
-  ),
+      <h1>{state.count}</h1>
+      <button
+        onclick={actions.down}
+        disabled={state.count <= 0}>ー</button>
+      <button onclick={actions.up}>＋</button>
+    </main>,
   actions: {
-    add: state => state + 1,
-    sub: state => state - 1
+    down: state => ({ count: state.count - 1 }),
+    up: state => ({ count: state.count + 1 })
   }
 })

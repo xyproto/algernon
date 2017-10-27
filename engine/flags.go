@@ -87,7 +87,8 @@ Available flags:
                                ("-m" is equivalent to "-q -o -z").
   --theme=NAME                 Builtin theme to use for Markdown, error pages,
                                directory listings and HyperApp apps.
-                               Possible values are: light, dark, bw, redbox, wing or material.
+                               Possible values are: light, dark, bw, redbox, wing,
+                               material or neon.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -x, --simple                 Serve as regular HTTP, enable server mode and

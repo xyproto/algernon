@@ -1,4 +1,7 @@
 app({
-  state: "Hi.",
-  view: state => h("h1", {}, state)
+  state: {
+    title: "Hello World!"
+  },
+  view: (state, actions) =>
+    <h1>{state.title}</h1>,
 })

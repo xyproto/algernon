@@ -58,7 +58,6 @@ Design decisions
 Features and limitations
 ------------------------
 
-* The HyperApp support is WIP for the development version.
 * Supports HTTP/2, with or without HTTPS (browsers may require HTTPS when using HTTP/2).
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.

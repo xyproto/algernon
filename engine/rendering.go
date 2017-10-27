@@ -662,20 +662,17 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		// If not, use the default hyperapp theme by inserting the CSS style directly
 		theme := ac.defaultTheme
 
-		// Use the "bw" theme by default for HyperApp
+		// Use the "neon" theme by default for HyperApp
 		if theme == "default" {
-			theme = "bw"
+			theme = "neon"
 		}
 
 		htmlbuf.Write(themes.StyleHead(theme))
 	}
 
-	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"
-	htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>var { h, app } = hyperapp;")
-
 	// Convert JSX to JS
 	jsxbuf.Write(jsxdata)
-	res, err := babel.Transform(&jsxbuf, ac.jsxOptions)
+	jsxGenerator, err := babel.Transform(&jsxbuf, ac.jsxOptions)
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
@@ -684,18 +681,29 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		}
 		return
 	}
-	if res != nil {
-		data, err := ioutil.ReadAll(res)
+
+	// Include the hyperapp javascript from unpkg.com and initialize "h" and "app"
+	htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+
+	if jsxGenerator != nil {
+		// Read from the generator
+		jsxData, err := ioutil.ReadAll(jsxGenerator)
 		if err != nil {
 			log.Error("Could not read bytes from JSX generator:", err)
 			return
 		}
 
 		// Use "h" instead of "React.createElement"
-		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+		jsxData = bytes.Replace(jsxData, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+
+		// If the file does not seem to contain the hyper app import: add it to the top of the script
+		// TODO: Consider making a more robust (and slower) check that splits the data into words first
+		if !bytes.Contains(jsxData, []byte("import { h,")) {
+			htmlbuf.WriteString("const { h, app } = hyperapp;")
+		}
 
 		// Insert the JS data
-		htmlbuf.Write(data)
+		htmlbuf.Write(jsxData)
 
 		// Tail of the HTML wrapper page
 		htmlbuf.WriteString("</script></body>")
