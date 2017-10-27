@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	versionString = "Algernon 1.6"
-	description   = "HTTP/2 Web Server"
+	versionString = "Algernon 1.7"
+	description   = "Web Server"
 )
 
 func main() {
