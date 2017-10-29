@@ -688,7 +688,9 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	// Embed the hyperapp script directly, for speed
 	htmlbuf.WriteString("</head><body><script>")
 	htmlbuf.Write(hyperAppJSBytes)
-	htmlbuf.WriteString("</script><script>")
+
+	// The HyperApp library + compiled JSX can live in the same script tag. No need for this:
+	//htmlbuf.WriteString("</script><script>")
 
 	if jsxGenerator != nil {
 		// Read from the generator
