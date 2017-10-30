@@ -90,7 +90,7 @@ type Config struct {
 	eventRefresh string // The duration of an event cycle
 
 	// Enable the event server and inject JavaScript to reload pages when sources change
-	autoRefreshMode bool
+	autoRefresh bool
 
 	// If only watching a single directory recursively
 	autoRefreshDir string
@@ -126,7 +126,10 @@ type Config struct {
 	cacheCompressionSpeed bool // Compression speed over compactness
 	cacheMaxGivenDataSize uint64
 	noCache               bool
-	noHeaders             bool
+
+	// HTTP headers
+	noHeaders       bool
+	stricterHeaders bool
 
 	// Output
 	quietMode bool
@@ -650,7 +653,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
 	// Can also be used when serving a single file.
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		ac.refreshDuration, err = time.ParseDuration(ac.eventRefresh)
 		if err != nil {
 			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh))

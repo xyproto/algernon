@@ -100,7 +100,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	htmldata := themes.MessagePageBytes(title, buf.Bytes(), theme)
 
 	// If the auto-refresh feature has been enabled
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = ac.InsertAutoRefresh(req, htmldata)
 	}

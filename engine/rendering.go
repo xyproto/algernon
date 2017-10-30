@@ -213,8 +213,8 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 
 	// Theme aliases. Use a map if there are more than 2 aliases in the future.
 	if string(theme) == "default" {
-		// Use the "gray" theme by default for Markdown
-		theme = []byte("gray")
+		// Use the "material" theme by default for Markdown
+		theme = []byte("material")
 	}
 
 	// Check if a specific string should be replaced with the current theme
@@ -311,7 +311,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	htmldata := themes.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
 
 	// If the auto-refresh feature has been enabled
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = ac.InsertAutoRefresh(req, htmldata)
 	}
@@ -456,7 +456,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		}
 
 		// If the auto-refresh feature has been enabled
-		if ac.autoRefreshMode {
+		if ac.autoRefresh {
 			// Insert JavaScript for refreshing the page into the generated HTML
 			changedBytes := ac.InsertAutoRefresh(req, buf.Bytes())
 
@@ -550,7 +550,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// If the auto-refresh feature has been enabled
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		changedBytes := ac.InsertAutoRefresh(req, buf.Bytes())
 

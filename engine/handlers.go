@@ -140,7 +140,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 
 		// If the auto-refresh feature has been enabled
-		if ac.autoRefreshMode {
+		if ac.autoRefresh {
 			// Get the bytes from the datablock
 			htmldata := htmlblock.MustData()
 			// Insert JavaScript for refreshing the page, into the HTML
@@ -345,10 +345,12 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 // ServerHeaders sets the HTTP headers that are set before anything else
 func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 	w.Header().Set("Server", ac.serverHeaderName)
-	if !ac.autoRefreshMode {
+	if !ac.autoRefresh {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+	}
+	if !ac.autoRefresh && ac.stricterHeaders {
 		w.Header().Set("Content-Security-Policy", "connect-src 'self'; object-src 'self'; form-action 'self'")
 	}
 	// w.Header().Set("X-Powered-By", name+"/"+version)
@@ -360,8 +362,8 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 	theme := ac.defaultTheme
 	// Theme aliases. Use a map if there are more than 2 aliases in the future.
-	if (theme == "default") || (theme == "light") {
-		// Use the "gray" theme by default for Markdown
+	if theme == "light" {
+		// The "light" theme is the "gray" theme
 		theme = "gray"
 	}
 

@@ -48,6 +48,7 @@ Available flags:
   --cachesize=N                Set the total cache size, in bytes.
   --nocache                    Another way to disable the caching.
   --noheaders                  Don't use the security-related HTTP headers.
+  --stricter                   Stricter HTTP headers (same origin policy).
   -n, --nobanner               Don't display a colorful banner at start.
   --ctrld                      Press ctrl-d twice to exit the REPL.
   --rawcache                   Disable cache compression.
@@ -159,7 +160,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.productionMode, "prod", false, "Production mode")
 	flag.BoolVar(&ac.debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&ac.verboseMode, "verbose", false, "Verbose logging")
-	flag.BoolVar(&ac.autoRefreshMode, "autorefresh", false, "Enable the auto-refresh feature")
+	flag.BoolVar(&ac.autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
 	flag.StringVar(&ac.eventRefresh, "eventrefresh", ac.defaultEventRefresh, "Event refresh interval (ie \""+ac.defaultEventRefresh+"\")")
@@ -188,6 +189,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.quitAfterFirstRequest, "quit", false, "Quit after the first request")
 	flag.BoolVar(&ac.noCache, "nocache", false, "Disable caching")
 	flag.BoolVar(&ac.noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
+	flag.BoolVar(&ac.stricterHeaders, "stricter", false, "Stricter HTTP headers")
 	flag.StringVar(&ac.defaultTheme, "theme", "default", "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
@@ -217,7 +219,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 
 	// Accept both long and short versions of some flags
 	ac.serveJustHTTP = ac.serveJustHTTP || serveJustHTTPShort
-	ac.autoRefreshMode = ac.autoRefreshMode || autoRefreshShort
+	ac.autoRefresh = ac.autoRefresh || autoRefreshShort
 	ac.debugMode = ac.debugMode || debugModeShort
 	ac.serverMode = ac.serverMode || serverModeShort
 	ac.useBolt = ac.useBolt || useBoltShort
@@ -296,7 +298,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 
 	// If a watch directory is given, enable the auto refresh feature
 	if ac.autoRefreshDir != "" {
-		ac.autoRefreshMode = true
+		ac.autoRefresh = true
 	}
 
 	// If nocache is given, disable the cache
@@ -309,7 +311,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.limitRequestsString = strconv.FormatInt(ac.limitRequests, 10)
 
 	// If auto-refresh is enabled, change the caching
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		if cacheModeString == "" {
 			// Disable caching by default, when auto-refresh is enabled
 			ac.cacheMode = cachemode.Off

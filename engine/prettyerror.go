@@ -180,7 +180,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
     <div id="right">` + ac.versionString + `</div>
 `)
 
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		// Insert JavaScript for refreshing the page into the generated HTML
 		htmldata = ac.InsertAutoRefresh(req, htmldata)
 	}

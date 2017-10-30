@@ -45,7 +45,7 @@ func (ac *Config) Info() string {
 	utils.WriteStatus(&buf, "Options", map[string]bool{
 		"Debug":        ac.debugMode,
 		"Production":   ac.productionMode,
-		"Auto-refresh": ac.autoRefreshMode,
+		"Auto-refresh": ac.autoRefresh,
 		"Dev":          ac.devMode,
 		"Server":       ac.serverMode,
 		"StatCache":    ac.cacheFileStat,
@@ -63,7 +63,7 @@ func (ac *Config) Info() string {
 		buf.WriteString("TLS certificate:\t" + ac.serverCert + "\n")
 		buf.WriteString("TLS key:\t\t" + ac.serverKey + "\n")
 	}
-	if ac.autoRefreshMode {
+	if ac.autoRefresh {
 		buf.WriteString("Event server:\t\t" + ac.eventAddr + "\n")
 	}
 	if ac.autoRefreshDir != "" {
