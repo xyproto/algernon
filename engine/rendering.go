@@ -317,7 +317,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Write the rendered Markdown page to the client
-	DataToClient(w, req, filename, htmldata)
+	ac.DataToClient(w, req, filename, htmldata)
 }
 
 // PongoPage write the given source bytes (ina Pongo2) converted to HTML, to a writer.
@@ -480,7 +480,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Write the rendered template to the client
-	DataToClient(w, req, filename, buf.Bytes())
+	ac.DataToClient(w, req, filename, buf.Bytes())
 }
 
 // AmberPage the given source bytes (in Amber) converted to HTML, to a writer.
@@ -571,7 +571,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	buf = *changedBuf
 
 	// Write the rendered template to the client
-	DataToClient(w, req, filename, buf.Bytes())
+	ac.DataToClient(w, req, filename, buf.Bytes())
 }
 
 // GCSSPage writes the given source bytes (in GCSS) converted to CSS, to a writer.
@@ -587,7 +587,7 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		return
 	}
 	// Write the resulting CSS to the client
-	DataToClient(w, req, filename, buf.Bytes())
+	ac.DataToClient(w, req, filename, buf.Bytes())
 }
 
 // JSXPage writes the given source bytes (in JSX) converted to JS, to a writer.
@@ -618,7 +618,7 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
 		}
 
-		DataToClient(w, req, filename, data)
+		ac.DataToClient(w, req, filename, data)
 	}
 }
 
@@ -716,7 +716,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		htmlbuf.WriteString("</script></body>")
 
 		// Output HTML + JS to browser
-		DataToClient(w, req, filename, htmlbuf.Bytes())
+		ac.DataToClient(w, req, filename, htmlbuf.Bytes())
 	}
 }
 
@@ -744,5 +744,5 @@ func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		return
 	}
 	// Write the resulting CSS to the client
-	DataToClient(w, req, filename, []byte(cssString))
+	ac.DataToClient(w, req, filename, []byte(cssString))
 }

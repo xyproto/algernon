@@ -207,6 +207,9 @@ type Config struct {
 
 	// Convert JSX to HyperApp JS or React JS?
 	hyperApp bool
+
+	// Support browsers that are too old to allow gzipped data
+	oldBrowsers bool
 }
 
 // ErrVersion is returned when the initialization quits because all that is done

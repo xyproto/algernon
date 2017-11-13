@@ -64,6 +64,7 @@ Available flags:
   --log=FILENAME               Log to a file instead of to the console.
   --internal=FILENAME          Internal log file (can be a bit verbose).
   -t, --httponly               Serve regular HTTP.
+  --oldbrowsers                Check for client support before sending gzipped data.
   --http2only                  Serve HTTP/2, without HTTPS.
   --maria=DSN                  Use the given MariaDB or MySQL host/database.
   --mariadb=NAME               Use the given MariaDB or MySQL database name.
@@ -195,6 +196,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
 	flag.BoolVar(&noDatabase, "nodb", false, "No database backend")
+	flag.BoolVar(&ac.oldBrowsers, "oldbrowsers", false, "Support really old browsers?")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

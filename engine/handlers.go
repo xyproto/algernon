@@ -27,8 +27,12 @@ const (
 )
 
 // ClientCanGzip checks if the client supports gzip compressed responses
-func ClientCanGzip(req *http.Request) bool {
-	return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
+func (ac *Config) ClientCanGzip(req *http.Request) bool {
+	if ac.oldBrowsers {
+		return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
+	}
+	// Modern browsers support gzip
+	return true
 }
 
 // PongoHandler renders and serves a Pongo2 template
@@ -146,10 +150,10 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// Insert JavaScript for refreshing the page, into the HTML
 			htmldata = ac.InsertAutoRefresh(req, htmldata)
 			// Write the data to the client
-			DataToClient(w, req, filename, htmldata)
+			ac.DataToClient(w, req, filename, htmldata)
 		} else {
 			// Serve the file
-			htmlblock.ToClient(w, req, filename, ClientCanGzip(req), gzipThreshold)
+			htmlblock.ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 		}
 
 		return
@@ -337,7 +341,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	// Read the file (possibly in compressed format, straight from the cache)
 	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 		// Serve the file
-		dataBlock.ToClient(w, req, filename, ClientCanGzip(req), gzipThreshold)
+		dataBlock.ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 	}
 
 }
