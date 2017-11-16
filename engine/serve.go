@@ -63,10 +63,10 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server, quic
 				ac.fatalExit(errors.New("Interrupted"))
 			}
 		}
-		if quicServer != nil {
-			// TODO: To implement
-			//fmt.Println("DEBUG: Has QUIC server at shutdown!")
-		}
+		// TODO: To implement
+		//if quicServer != nil {
+		//fmt.Println("DEBUG: Has QUIC server at shutdown!")
+		//}
 
 		// One final flush
 		os.Stdout.Sync()

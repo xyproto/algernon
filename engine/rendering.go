@@ -42,7 +42,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Convert the buffer to markdown and output the translated string
-		w.Write(blackfriday.MarkdownCommon([]byte(buf.String())))
+		w.Write(blackfriday.MarkdownCommon(buf.Bytes()))
 		return 0 // number of results
 	}))
 

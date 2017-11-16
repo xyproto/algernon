@@ -208,8 +208,8 @@ type Config struct {
 	// Convert JSX to HyperApp JS or React JS?
 	hyperApp bool
 
-	// Support browsers that are too old to allow gzipped data
-	oldBrowsers bool
+	// Support clients like "curl" that downloads uncompressed by default
+	curlSupport bool
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -222,6 +222,8 @@ var (
 // New creates a new server configuration based using the default values
 func New(versionString, description string) (*Config, error) {
 	ac := &Config{
+		curlSupport: true,
+
 		shutdownTimeout: 10 * time.Second,
 
 		defaultWebColonPort:       ":3000",

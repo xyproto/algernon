@@ -28,7 +28,10 @@ const (
 
 // ClientCanGzip checks if the client supports gzip compressed responses
 func (ac *Config) ClientCanGzip(req *http.Request) bool {
-	if ac.oldBrowsers {
+	// Curl does not use --compressed by default. This causes problems when
+	// serving gzipped contents when curl is run without --compressed!
+	// The wrong data, of the same size, will be downloaded. Beware!
+	if ac.curlSupport {
 		return strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")
 	}
 	// Modern browsers support gzip
