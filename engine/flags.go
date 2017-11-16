@@ -278,7 +278,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serverKey = "/etc/algernon/key.pem"
 		ac.cacheMode = cachemode.Production
 		ac.serverMode = true
-		ac.oldBrowsers = true
 	} else if ac.devMode {
 		// Change several defaults if development mode is enabled
 		ac.useBolt = true
