@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/algernon/cachemode"
+	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/datablock"
 )
 
@@ -190,7 +191,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.noCache, "nocache", false, "Disable caching")
 	flag.BoolVar(&ac.noHeaders, "noheaders", false, "Don't set any HTTP headers by default")
 	flag.BoolVar(&ac.stricterHeaders, "stricter", false, "Stricter HTTP headers")
-	flag.StringVar(&ac.defaultTheme, "theme", "default", "Theme for Markdown and directory listings")
+	flag.StringVar(&ac.defaultTheme, "theme", themes.DefaultTheme, "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")

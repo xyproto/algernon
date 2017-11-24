@@ -11,6 +11,9 @@ import (
 const (
 	// DefaultStyleFilename is the default stylesheet filename (GCSS)
 	DefaultStyleFilename = "style.gcss"
+
+	// Theme for Markdown and error pages
+	DefaultTheme = "default"
 )
 
 var (
