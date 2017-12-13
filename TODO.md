@@ -296,12 +296,6 @@ Maybe
 - [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place)
 - [ ] Rewrite in C++14 and rename the project to "FnuFnu"
 
-## Weirdness
-
-### Weirdness 1 - curl
-
-When serving a .tar.xz file with algernon (commit 188bd75dc734a056f5c092f90fb9cd0770ce741c), the md5sum is different when downloading with wget (correct contents) or with curl 7.56.1 (incorrect contents). This may be Algernon setting an unusual mime type for .tar.xz files and curl acting on this, somehow. **Fixed!**
-
 # Future
 
 ## Algernon 2
