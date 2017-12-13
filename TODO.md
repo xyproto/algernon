@@ -2,12 +2,14 @@
 
 Priority 1
 ----------
-- [ ] Fix HyperApp support
+- [ ] HyperApp support
 - [ ] Look into the rel-link sample
 - [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
 
 Priority 2
 ----------
+- [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/) database
+- [ ] Check if Badger works better than BoltDB together with gccgo
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Use fasthttp when using regular HTTP: https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp
 - [ ] Write a module for caching that can cache chunks of files and stream files that does not
@@ -298,4 +300,16 @@ Maybe
 
 ### Weirdness 1 - curl
 
-When serving a .tar.xz file with algernon (commit 188bd75dc734a056f5c092f90fb9cd0770ce741c), the md5sum is different when downloading with wget (correct contents) or with curl 7.56.1 (incorrect contents). This may be Algernon setting an unusual mime type for .tar.xz files and curl acting on this, somehow.
+When serving a .tar.xz file with algernon (commit 188bd75dc734a056f5c092f90fb9cd0770ce741c), the md5sum is different when downloading with wget (correct contents) or with curl 7.56.1 (incorrect contents). This may be Algernon setting an unusual mime type for .tar.xz files and curl acting on this, somehow. **Fixed!**
+
+# Future
+
+## Algernon 2
+
+* Find a better name
+* Use Badger instead of BoltDB (if it really is just as stable and 30x faster)
+* Use fasthttp from the start
+* Drop Amber and GCSS
+* Focus on templates, markdown and possibly microservices
+* Embed a different language than Lua, perhaps Anko
+* Support gccgo from the start
