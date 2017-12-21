@@ -12,7 +12,7 @@ const (
 	// DefaultStyleFilename is the default stylesheet filename (GCSS)
 	DefaultStyleFilename = "style.gcss"
 
-	// Theme for Markdown and error pages
+	// DefaultTheme is the default theme when rendering Markdown and for error pages
 	DefaultTheme = "default"
 )
 
