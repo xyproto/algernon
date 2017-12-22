@@ -1,5 +1,13 @@
 # Changelog
 
+Changes from 1.7 to 1.8
+=======================
+
+* Fix an issue with `curl` + `algernon` that was not present with `wget` + `algernon`, related to HTTP headers and compression.
+* Some refactoring and linting of the code.
+* Less strict HTTP headers by default.
+* Updated the vendored dependencies.
+
 Changes from 1.6 to 1.7
 =======================
 
