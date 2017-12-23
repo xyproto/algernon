@@ -181,3 +181,9 @@
 [submodule "vendor/gopkg.in/warnings.v0"]
 	path = vendor/gopkg.in/warnings.v0
 	url = https://gopkg.in/warnings.v0
+[submodule "vendor/github.com/lucas-clemente/aes12"]
+	path = vendor/github.com/lucas-clemente/aes12
+	url = https://github.com/lucas-clemente/aes12
+[submodule "vendor/github.com/lucas-clemente/quic-go"]
+	path = vendor/github.com/lucas-clemente/quic-go
+	url = https://github.com/lucas-clemente/quic-go

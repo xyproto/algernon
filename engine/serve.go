@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
-	"github.com/xyproto/quic-go/h2quic"
+	"github.com/lucas-clemente/quic-go/h2quic"
 	"golang.org/x/net/http2"
 )
 
