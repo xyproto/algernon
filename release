@@ -41,9 +41,10 @@ rm $name.exe
 for p in linux macos plan9 freebsd netbsd dragonfly openbsd linux_arm64 rpi; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
-  cp $name.1 $name.$p LICENSE "$name-$version-$p/"
-  gzip "$name-$version-$p/$name.1"
-  tar Jcf "$name-$version.$p.tar.xz" "$name-$version-$p/"
+  #cp $name.1 "$name-$version-$p/"
+  #gzip "$name-$version-$p/$name.1"
+  cp $name.$p LICENSE "$name-$version-$p/"
+  tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
 done
