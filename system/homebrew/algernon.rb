@@ -1,25 +1,26 @@
 class Algernon < Formula
   desc "Pure Go web server with Lua, Markdown, HTTP/2 and template support"
   homepage "http://algernon.roboticoverlords.org/"
-  url "https://github.com/xyproto/algernon/archive/1.6.tar.gz"
-  sha256 "cf67a0938153e8a15743f46c3164944c2f3f2ad6d3b45b862c26945c9f20cd49"
+  url "https://github.com/xyproto/algernon.git",
+      :tag => "1.8",
+      :revision => "93349dfc4d3daa5351c51551e8a8b9f0633bdc90"
+  sha256 "f1627ed11e84890befbf244828aff7a56a17157f721b445804e18b5461e3b8f3"
   version_scheme 1
   head "https://github.com/xyproto/algernon.git"
 
   bottle do
-    sha256 "c01c2947279e6bbc29eaca07a022cb3276d82d6f7ff6dfa9f1057e12ed764c91" => :sierra
-    sha256 "ac0d53e57be4a00dd8ade3c9ea384730d00ba4f540b5db64d697692a66935446" => :el_capitan
-    sha256 "0f6c5ee39192dc9f48f735fd8d68656cc50fda5234758490f5f53d41a85469cd" => :yosemite
+    cellar :any_skip_relocation
+    sha256 "75251e63866d6e338b1a81ee6d5d007e9f4f6f80801cabe80a918be7cea976b7" => :high_sierra
+    sha256 "1435aa8e578bc70ef7847ae191747e75140d04150b1cbf6d2f9f318f326e7453" => :sierra
+    sha256 "b2a1778124b34030e3bf5aaf4f9356f8a07b4d0db9841a4cadd1b70e4e380fad" => :el_capitan
   end
 
   depends_on "go" => :build
 
   def install
-    ENV["GLIDE_HOME"] = buildpath/"glide_home"
     ENV["GOPATH"] = buildpath
     (buildpath/"src/github.com/xyproto/algernon").install buildpath.children
     cd "src/github.com/xyproto/algernon" do
-      system "glide", "install"
       system "go", "build", "-o", "algernon"
 
       bin.install "desktop/mdview"
@@ -31,10 +32,10 @@ class Algernon < Formula
   test do
     begin
       pid = fork do
-        exec "#{bin}/algernon", "-s", "-q", "--httponly", "--boltdb", "my.db",
+        exec "#{bin}/algernon", "-s", "-q", "--httponly", "--boltdb", "tmp.db",
                                 "--addr", ":45678"
       end
-      sleep(1)
+      sleep 20
       output = shell_output("curl -sIm3 -o- http://localhost:45678")
       assert_match /200 OK.*Server: Algernon/m, output
     ensure
