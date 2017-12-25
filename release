@@ -54,7 +54,7 @@ for p in macos freebsd netbsd dragonfly openbsd; do
   #cp $name.1 "$name-$version-$p/"
   #gzip "$name-$version-$p/$name.1"
   cp $name.$p LICENSE "$name-$version-$p/"
-  tar zcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
+  tar zcf "$name-$version-$p.tar.gz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
 done
