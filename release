@@ -37,14 +37,24 @@ zip -q -r "$name-$version.zip" "$name-$version/"
 rm -r "$name-$version"
 rm $name.exe
 
-# Compress the other tarballs
-for p in linux macos plan9 freebsd netbsd dragonfly openbsd linux_arm64 rpi; do
+# Compress the Linux releases with xz
+for p in linux linux_arm64 rpi; do
   echo "Compressing $name-$version.$p.tar.xz"
+  mkdir "$name-$version-$p"
+  cp $name.$p LICENSE "$name-$version-$p/"
+  tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
+  rm -r "$name-$version-$p"
+  rm $name.$p
+done
+
+# Compress the other tarballs with gz
+for p in macos freebsd netbsd dragonfly openbsd; do
+  echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
   #cp $name.1 "$name-$version-$p/"
   #gzip "$name-$version-$p/$name.1"
   cp $name.$p LICENSE "$name-$version-$p/"
-  tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
+  tar zcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
 done
