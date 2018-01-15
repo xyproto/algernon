@@ -9,4 +9,4 @@ else
   echo FAIL
   exit 1
 fi
-kill $(ps -ef | grep algernon | grep :45678 | cut -d" " -f4)
+kill $(ps -ef | grep algernon | grep :45678 | cut -d" " -f4) 2>/dev/null
