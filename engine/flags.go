@@ -183,6 +183,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.serverHeaderName, "servername", ac.versionString, "Server header name")
 	flag.StringVar(&ac.profileCPU, "cpuprofile", "", "Write CPU profile to file")
 	flag.StringVar(&ac.profileMem, "memprofile", "", "Write memory profile to file")
+	flag.StringVar(&ac.traceFilename, "tracefile", "", "Write the trace to file")
 	flag.BoolVar(&ac.cacheFileStat, "statcache", false, "Cache os.Stat")
 	flag.BoolVar(&ac.serverAddDomain, "domain", false, "Look for files in the directory named the same as the hostname")
 	flag.BoolVar(&ac.simpleMode, "simple", false, "Serve a directory of files over HTTP")

@@ -59,3 +59,6 @@ alg2docker/Dockerfile
 
 # Vendor backup
 _vendor-*/
+
+# Tracing
+trace.out

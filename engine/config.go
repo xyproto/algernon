@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"runtime/trace"
 	"strconv"
 	"strings"
 	"sync"
@@ -146,6 +147,9 @@ type Config struct {
 
 	// Memory profile filename
 	profileMem string
+
+	// Trace filename
+	traceFilename string
 
 	// Assume files will not be removed from the server directory while
 	// Algernon is running. This allows caching of costly os.Stat calls.
@@ -330,6 +334,7 @@ func (ac *Config) initFilesAndCache() error {
 		AtShutdown(func() {
 			pprof.StopCPUProfile()
 			log.Info("Done profiling CPU usage")
+			f.Close()
 		})
 	}
 
@@ -344,6 +349,27 @@ func (ac *Config) initFilesAndCache() error {
 			defer f.Close()
 			log.Info("Saving heap profile to ", ac.profileMem)
 			pprof.WriteHeapProfile(f)
+		})
+	}
+
+	// Tracing
+	if ac.traceFilename != "" {
+
+		f, errTrace := os.Create(ac.traceFilename)
+		if errTrace != nil {
+			return errTrace
+		}
+		go func() {
+			log.Info("Tracing")
+			if err = trace.Start(f); err != nil {
+				panic(err)
+			}
+		}()
+		AtShutdown(func() {
+			pprof.StopCPUProfile()
+			trace.Stop()
+			log.Info("Done tracing")
+			f.Close()
 		})
 	}
 
