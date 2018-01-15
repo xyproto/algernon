@@ -943,6 +943,6 @@ Other resources
 General information
 -------------------
 
-* Version: 1.8
+* Version: 1.9
 * License: MIT
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;

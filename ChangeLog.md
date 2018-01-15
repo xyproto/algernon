@@ -1,5 +1,11 @@
 # Changelog
 
+Changes from 1.8 to 1.9
+=======================
+
+* Update vendored dependencies
+* Add support for "go tool trace"
+
 Changes from 1.7 to 1.8
 =======================
 
