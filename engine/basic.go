@@ -374,7 +374,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			return 0 // number of results
 		}
 		if err := L.DoFile(luaFilename); err != nil {
-			log.Errorf("Error running %s: %s\n", luaFilename, err.Error())
+			log.Errorf("Error running %s: %s\n", luaFilename, err)
 			return 0 // number of results
 		}
 		// Retrieve the returned value from the script

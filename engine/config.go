@@ -636,7 +636,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		}
 		withHandlerFunctions := true
 		if errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions); errLua != nil {
-			log.Error("Error in Lua server script: " + ac.luaServerFilename)
+			log.Errorf("Error in %s (interpreted as a server script):\n%s\n", ac.luaServerFilename, errLua)
 			return errLua
 		}
 	} else {
