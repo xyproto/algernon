@@ -2,6 +2,7 @@
 package engine
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -475,6 +476,15 @@ func (ac *Config) shouldCache(ext string) bool {
 	}
 }
 
+// hasHandlers checks if the given filename contains "handle(" or "handle ("
+func hasHandlers(fn string) bool {
+	if data, err := ioutil.ReadFile(fn); err != nil {
+		return false
+	} else {
+		return bytes.Contains(data, []byte("handle(")) || bytes.Contains(data, []byte("handle ("))
+	}
+}
+
 // MustServe sets up a server with handlers
 func (ac *Config) MustServe(mux *http.ServeMux) error {
 	var err error
@@ -593,7 +603,11 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if ac.singleFileMode && filepath.Ext(ac.serverDirOrFilename) == ".lua" {
 		ac.luaServerFilename = ac.serverDirOrFilename
 		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
-			log.Warn("Using " + ac.luaServerFilename + " as a standalone server!\nYou might wish to serve a directory instead.")
+			// Friendly message to new users
+			if !hasHandlers(ac.luaServerFilename) {
+				log.Warn("Found no handlers in " + ac.luaServerFilename)
+				log.Info("How to implement \"Hello, World!\" in " + ac.luaServerFilename + " file:\n\nhandle(\"/\", function()\n  print(\"Hello, World!\")\nend)\n")
+			}
 		}
 		ac.serverDirOrFilename = filepath.Dir(ac.serverDirOrFilename)
 		// Make it possible to read other files from the Lua script
