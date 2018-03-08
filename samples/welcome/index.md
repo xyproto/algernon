@@ -29,7 +29,6 @@ Samples
 Resources
 ---------
 
-* [Creating Web Applications with Algernon](https://www.gitbook.com/read/book/xyproto/creating-web-applications-with-algernon)
 * [GCSS documentation](https://github.com/yosssi/gcss/blob/master/README.md)
 * [Amber documentation](https://github.com/eknkc/amber/blob/master/README.md)
 * [Markdown documentation](https://daringfireball.net/projects/markdown/basics)

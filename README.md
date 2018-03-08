@@ -1,13 +1,15 @@
 <!--
 title: Algernon
 description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
-keywords: application server, lua, web server, http, http2, HTTP/2, go, golang, algernon, markdown, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js, QUIC
-theme: material
+keywords: web server, QUIC, lua, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
+theme: dark
 -->
 
 <a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon.gif" style="margin-left: 2em"></a>
 
-Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions. All in one little self-contained executable.
+Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
+
+All in one small self-contained executable.
 
 [![Build Status](https://travis-ci.org/xyproto/algernon.svg?branch=master)](https://travis-ci.org/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](http://godoc.org/github.com/xyproto/algernon) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/algernon)
 
@@ -27,7 +29,7 @@ Design decisions
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
   * If not, regular HTTP is used.
-  * QUIC is also supported.
+* QUIC ("HTTP over UDP", supported by Chromium) can be enabled with a flag.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is Lua code that is interpreted as a handler function for the current directory.
@@ -97,11 +99,13 @@ Installation
 ------------------
 
 ##### OS X
-  * `brew install algernon`
-  * Install [Homebrew](https://brew.sh), if needed.
+
+* `brew install algernon`
+* Install [Homebrew](https://brew.sh), if needed.
 
 ##### Arch Linux
-  * Install `algernon` from AUR, using your favorite AUR helper.
+
+* Install `algernon` from AUR, using your favorite AUR helper.
 
 ##### Any system where go is available
 
@@ -111,8 +115,8 @@ This method is using the latest commit from the master branch:
 
 If needed, first:
 
-  * Set the GOPATH. For example: `export GOPATH=~/go`
-  * Add $GOPATH/bin to the path. For example: `export PATH=$PATH:$GOPATH/bin`
+* Set the GOPATH. For example: `export GOPATH=~/go`
+* Add $GOPATH/bin to the path. For example: `export PATH=$PATH:$GOPATH/bin`
 
 Overview
 --------
@@ -937,7 +941,6 @@ Requirements
 Other resources
 ---------------
 
-* GitBook draft: [Creating Web Applications with Algernon](http://algernonbook.roboticoverlords.org/)
 * [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
 
 General information
