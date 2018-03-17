@@ -97,7 +97,7 @@ Available flags:
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
-  -u                           Serve over QUIC (experimental).
+  -u                           Serve over QUIC.
 
 
   Examples
@@ -107,6 +107,9 @@ Available flags:
 
   Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
     algernon -c --domain --server --cachesize 67108864 --prod /srv
+
+  Serve the current dir over QUIC, port 7000, no banner.
+  algernon -s -u -n . :7000
 
   Serve the current dir over HTTP, port 3000. No limits, cache or database.
     algernon -x
@@ -352,21 +355,25 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		// Only override the default server directory if Algernon can find it
 		firstArg := flag.Args()[0]
 		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
+		// Interpret as a file or directory
 		if fs.IsDir(firstArg) || fs.Exists(firstArg) {
-			// Interpret as a file or directory. TODO: Log a warning.
-			ac.serverDirOrFilename = firstArg
+			if strings.HasSuffix(firstArg, string(os.PathSeparator)) {
+				ac.serverDirOrFilename = firstArg[:len(firstArg)-1]
+			} else {
+				ac.serverDirOrFilename = firstArg
+			}
 		} else if strings.Contains(firstArg, ":") {
-			// Interpret as the server address. TODO: Log a warning.
+			// Interpret as the server address
 			ac.serverAddr = firstArg
 			serverAddrChanged = true
-		} else if _, err := strconv.Atoi(firstArg); err == nil { // if no error
-			// Is a number. Interpret as the server address. TODO: Log a warning.
+		} else if _, err := strconv.Atoi(firstArg); err == nil { // no error
+			// Is a number. Interpret as the server address
 			ac.serverAddr = ":" + firstArg
 			serverAddrChanged = true
 		}
 	}
 
-	// TODO: Replace the code below with something sane. Use a good config/flag package. Gah!
+	// TODO: Replace the code below with a good config/flag package.
 	shift := 0
 	if serverAddrChanged {
 		shift = 1
@@ -375,8 +382,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		secondArg := flag.Args()[1]
 		if strings.Contains(secondArg, ":") {
 			ac.serverAddr = secondArg
-		} else if _, err := strconv.Atoi(secondArg); err == nil { // if no error
-			// Is a number. Interpret as the server address. TODO: Log a warning.
+		} else if _, err := strconv.Atoi(secondArg); err == nil { // no error
+			// Is a number. Interpret as the server address.
 			ac.serverAddr = ":" + secondArg
 		} else if len(flag.Args()) >= 3-shift {
 			ac.serverCert = flag.Args()[2-shift]
