@@ -5,9 +5,9 @@ setheader("Cache-Control", "no-cache")
 comments = List("comments")
 
 if method() == "POST" then
-  -- Add the form data to the comment list, as JSON
-  comments:add(toJSON(formdata()))
+  -- Add the form data to the comment list, as JSON (NOTE: unsantizied)
+  comments:add(json(formdata()))
 else
   -- Combine all the JSON comments to a JSON document
-  print("["..table.concat(comments:getall(), ",").."]")
+  print(comments:json())
 end
