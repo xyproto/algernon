@@ -56,6 +56,8 @@ list:getlastn(number) -> table
 list:remove() -> bool
 // Clear the list. Returns true if successful.
 list:clear() -> bool
+// Return all list elements (expected to be JSON strings) as a JSON list
+list:json() -> string
 
 // Get or create a database-backed HashMap
 // (takes a name, returns a hash map object)
@@ -160,7 +162,7 @@ jfile:add([string, ]string) -> bool
 jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
 // Takes an optional number of spaces to indent the JSON data.
-JSON(table[, number]) -> string
+json(table[, number]) -> string
 // Create a JSON document node.
 JNode() -> userdata
 // Add JSON data to a node. The first argument is an optional JSON path.

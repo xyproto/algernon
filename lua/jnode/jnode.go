@@ -417,7 +417,8 @@ func LoadJSONFunctions(L *lua.LState) {
 	})
 
 	// Convert a table to JSON
-	L.SetGlobal("JSON", toJSON)
+	L.SetGlobal("json", toJSON)
+	L.SetGlobal("JSON", toJSON)   // Alias for backward compatibility
 	L.SetGlobal("toJSON", toJSON) // Alias for backward compatibility
 	L.SetGlobal("ToJSON", toJSON) // Alias for backward compatibility
 

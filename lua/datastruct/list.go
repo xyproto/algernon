@@ -9,7 +9,12 @@ import (
 )
 
 // Identifier for the List class in Lua
-const lListClass = "LIST"
+const (
+	lListClass = "LIST"
+
+	// Prefix when indenting JSON
+	indentPrefix = ""
+)
 
 // Get the first argument, "self", and cast it from userdata to a list.
 func checkList(L *lua.LState) pinterface.IList {
@@ -74,6 +79,22 @@ func listGetAll(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Return the list as a JSON list (assumes the elements to be in JSON already)
+// list::json() -> string
+func listJSON(L *lua.LState) int {
+	list := checkList(L) // arg 1
+	all, err := list.GetAll()
+	if err != nil {
+		// Return an empty JSON list
+		L.Push(lua.LString("[]"))
+		return 1 // Number of returned values
+	}
+
+	L.Push(lua.LString("[" + strings.Join(all, ",") + "]"))
+	return 1 // Number of returned values
+
+}
+
 // Get the last element of the list
 // The returned value can be empty
 // list::getlast() -> string
@@ -127,6 +148,7 @@ var listMethods = map[string]lua.LGFunction{
 	"getlastn":   listGetLastN,
 	"remove":     listRemove,
 	"clear":      listClear,
+	"json":       listJSON,
 }
 
 // LoadList makes functions related to HTTP requests and responses available to Lua scripts

@@ -395,7 +395,7 @@ jfile:delkey(string) -> bool
 // Convert a Lua table, where keys are strings and values are strings or numbers, to JSON.
 // Takes an optional number of spaces to indent the JSON data.
 // (Note that keys in JSON maps are always strings, ref. the JSON standard).
-JSON(table[, number]) -> string
+json(table[, number]) -> string
 
 // Create a JSON document node.
 JNode() -> userdata
@@ -580,6 +580,9 @@ list:remove() -> bool
 
 // Clear the list. Returns true on success.
 list:clear() -> bool
+
+// Return all list elements (expected to be JSON strings) as a JSON list
+list:json() -> string
 ~~~
 
 ##### HashMap
