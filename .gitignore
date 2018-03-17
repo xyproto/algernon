@@ -36,6 +36,7 @@ http2.log
 dump.rdb
 bolt.db
 comments.json
+samples/getip/ip.md
 
 # Plugin executables
 plugins/go/go
