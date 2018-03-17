@@ -151,9 +151,6 @@
 [submodule "vendor/github.com/nsf/termbox-go"]
 	path = vendor/github.com/nsf/termbox-go
 	url = https://github.com/nsf/termbox-go
-[submodule "vendor/github.com/xyproto/aes12"]
-	path = vendor/github.com/xyproto/aes12
-	url = https://github.com/xyproto/aes12
 [submodule "vendor/github.com/xyproto/cookie"]
 	path = vendor/github.com/xyproto/cookie
 	url = https://github.com/xyproto/cookie
@@ -187,3 +184,6 @@
 [submodule "vendor/github.com/lucas-clemente/quic-go"]
 	path = vendor/github.com/lucas-clemente/quic-go
 	url = https://github.com/lucas-clemente/quic-go
+[submodule "vendor/github.com/go-sourcemap/sourcemap"]
+	path = vendor/github.com/go-sourcemap/sourcemap
+	url = https://github.com/go-sourcemap/sourcemap
