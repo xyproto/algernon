@@ -2,42 +2,35 @@
 
 Priority 1
 ----------
-- [ ] HyperApp support
-- [ ] Look into the rel-link sample
-- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
+- [ ] No external links for syntax highlighting in themes (no external dependencies in general). #17
+- [ ] Make it possible to send the access log to the database.
+- [ ] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
+- [ ] Make it possible to send the error log to the database.
+- [ ] Profile the startup process and try to make it even faster.
+- [ ] Port the layout and concept of [werc](http://werc.cat-v.org/) to Algernon.  See also [gowerc](https://bitbucket.org/mischief/gowerc/src).
+- [ ] Make most methods in [onthefly](https://github.com/xyproto/onthefly) available to Algernon/Lua.
+- [ ] User management interface + web REPL + stats + logs + import/export data .alg launcher.
+- [ ] Present directories with media files with a built-in page.
+- [ ] Add an option for using brotly compression instead of gzip.
 
 Priority 2
 ----------
-- [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/) database
-- [ ] Check if Badger works better than BoltDB together with gccgo
+- [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
+- [ ] Add a Markdown style similar to this one: http://setconf.roboticoverlords.org/
+- [ ] Use fasthttp when using regular HTTP:[switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
+- [ ] Also support a configuration file using [configparser](https://github.com/alyu/configparser), for port, host, keys etc.
 - [ ] Add a flag for caching to the database backend instead of to memory.
-- [ ] Use fasthttp when using regular HTTP: https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp
-- [ ] Write a module for caching that can cache chunks of files and stream files that does not
-      fit in memory directly from disk.
-- [ ] Feature for sending the access log to the database.
-
-Priority 3
-----------
-
-- [ ] Make Algernon compile with gccgo (some dependencies have issues)
-- [ ] Present directories with media files with a built-in page.
-- [ ] Introduce a separate package for dealing with Lua pools, Lua states and
-      adding custom functios to some Lua states. All without using mutexes.
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
-- [ ] Port the layout and concept of werc to Algernon
-      See: http://werc.cat-v.org/ and https://bitbucket.org/mischief/gowerc/src
-- [ ] User management interface + web REPL + stats + logs + import/export data
-      + .alg launcher.
-- [ ] Algernon Application Hub.
-- [ ] Support for websockets (port a small multiplayer game to test).
-- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or
-      [cli](https://github.com/urfave/cli)
-- [ ] Add support for Handlebars: [raymond](https://github.com/aymerick/raymond)
-- [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
-- [ ] Server side support for [sw-delta](https://github.com/gmetais/sw-delta)
+- [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/) database.
+- [ ] Add support for gccgo, if Badger works better with gccgo than BoltDB.
+- [ ] Create a web page for uploading, reviewing, previewing and downloading Algernon Applications.
 
 Documentation/tutorials
 -----------------------
+- [ ] Add example for HyperApp + database usage
+- [ ] Use `peek` for recording a series of videos.
+- [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
 - [ ] Terminal recording demostrating creating a simple register+login site.
 - [ ] Terminal recording demonstrating the Lua interpreter.
 - [ ] Video tutorials and screencasts.
@@ -45,28 +38,23 @@ Documentation/tutorials
 - [ ] Create a docker image that comes with all the samples.
 - [ ] Document what the "current directory" is for various Lua functions that deals with files.
 - [ ] Document better the order of output calls when modifying the header to redirect.
-
-Priority 4
-----------
-- [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
-- [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
-- [ ] Render JavaScript server-side by using [Goja](https://github.com/dop251/goja)
-- [ ] Add an option for using brotly compression instead of gzip.
-- [ ] Larger selection of built-in Markdown styles, with a flag for dumping them as a style.gcss, for easy modification. Or use a system directory for this.
-- [ ] Use [cfilter](https://github.com/irfansharif/cfilter) for potentially faster cache lookups.
-- [ ] Add support for systemd reload, not just restart.
-- [ ] Support [HAML](https://github.com/travissimon/ghaml)?
 - [ ] Document how to read JSON from one place and output processed data somewhere else.
-- [ ] Also support a configuration file using github.com/alyu/configparser, for port, host, keys etc.
-- [ ] Output an access log in a goaccess.io friendly format
-
-Feature requests and issues for Go
-----------------------------------
-- [ ] Two identical lines in a row that is the same assignment should result in an error.
-- [ ] Constant byte slices should be allowed.
 
 Various
 -------
+- [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
+- [ ] Write a module for caching that can cache chunks of files and stream files that does not fit in memory directly from disk.
+- [ ] Add support for systemd reload, not just restart.
+- [ ] Render JavaScript server-side by using [Goja](https://github.com/dop251/goja)
+- [ ] Larger selection of built-in Markdown styles, with a flag for dumping them as a style.gcss, for easy modification. Or use a system directory for this.
+- [ ] Use [cfilter](https://github.com/irfansharif/cfilter) for potentially faster cache lookups.
+- [ ] Support [HAML](https://github.com/travissimon/ghaml)?
+- [ ] Introduce a separate package for dealing with Lua pools, Lua states and
+      adding custom functios to some Lua states. All without using mutexes.
+- [ ] Support for websockets (port a small multiplayer game to test).
+- [ ] Add support for Handlebars: [raymond](https://github.com/aymerick/raymond)
+- [ ] Check behavior of ctrl-c/ctrl-d on OS X vs Linux.
+- [ ] Server side support for [sw-delta](https://github.com/gmetais/sw-delta)
 - [ ] Add a flag to minify all transmitted CSS/HTML/JS/JSON/SVG/XML files
       https://github.com/tdewolff/minify
 - [ ] Draw inspiration from https://github.com/olebedev/go-starter-kit
@@ -122,15 +110,11 @@ Various
 - [ ] Create a utility for creating and running new projects, ala Meteor.
 - [ ] Add Lua functions for BSON and ION?
 - [ ] Add Lua methods for sending JSON with a custom HTTP verb
-
-Data control
-------------
 - [ ] Add simpleredis/simplebolt/simplemaria functions for exporting/importing data to JSON and offer these.
 
 Events
 ------
 - [ ] Better 404 page not found page for users visiting "/".
-- [ ] Consider using channels in a more clever way, to completely avoid sleeping. Possibly by sending channels over channels.
 - [ ] Consider only listening for changes after a file has been visited, then stop watching it after a while.
 - [ ] Use a regexp or a JavaScript minification package instead of replacing strings in insertAutoRefresh.
 - [ ] In genFileChangeEvents, check for CloseNotify for more graceful timeouts.
@@ -159,14 +143,14 @@ Plugins
 
 Additional security
 -------------------
-- [ ] Consider using https://github.com/unrolled/secure
+- [ ] Consider using [secure](https://github.com/unrolled/secure).
 - [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver".
 - [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Flag for disabling directory listings entirely.
 - [ ] OAuth 1
 - [ ] OAuth 2
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
-- [ ] Check if "*" or the server host should be used as parameter to the EventServer function
+- [ ] Check if `*` or the server host should be used as parameter to the EventServer function
 - [ ] Implement a warning when using cookies over regular HTTP.
 
 Logging
@@ -292,18 +276,18 @@ Maybe
       if timestamp changes, data is re-read.
 - [ ] web handlers should have access to setting up additional web handlers
 - [ ] Add a Lua function for removing all cache entries without a hit.
-- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code)
-- [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place)
-- [ ] Rewrite in C++14 and rename the project to "FnuFnu"
+- [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code).
+- [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place).
+- [ ] Rewrite in C++17 and rename the project to "FnuFnu".
 
 # Future
 
 ## Algernon 2
 
-* Find a better name
-* Use Badger instead of BoltDB (if it really is just as stable and 30x faster)
-* Use fasthttp from the start
-* Drop Amber and GCSS
-* Focus on templates, markdown and possibly microservices
-* Embed a different language than Lua, perhaps Anko
-* Support gccgo from the start
+* Use Badger instead of BoltDB (if it really is just as stable and 30x faster).
+* Use fasthttp from the start.
+* Drop Amber and GCSS.
+* Focus on templates, markdown and possibly microservices.
+* Embed a different language than Lua, perhaps Anko.
+* Support gccgo from the start.
+* Aim for a very small and specific usage pattern and try to optimize for that.
