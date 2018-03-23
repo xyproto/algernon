@@ -179,7 +179,7 @@ Screenshots
 Samples
 -------
 
-The sample collection can be downloaded from the `samples` directory in this repository, or here: [samplepack.zip](http://algernon.roboticoverlords.org/samplepack.zip).
+The sample collection can be downloaded from the `samples` directory in this repository, or here: [samplepack.zip](https://algernon.roboticoverlords.org/samplepack.zip).
 
 
 Getting started
@@ -924,6 +924,14 @@ Code is highlighted with [highlight.js](https://highlightjs.org/) and [several s
 The string that follows `replace_with_theme` will be used for replacing the current theme string (like `dark`) with the given string. This makes it possible to use one image (like `logo_default_theme.png`) for one theme and another image (`logo_dark.png`) for the dark theme.
 
 The theme can be `light`, `dark`, `redbox`, `bw`, `github`, `wing`, `material`, `neon`, `default` or a path to a CSS file. Or `style.gcss` can exist in the same directory.
+
+HTTPS certificates with Let's Encrypt and Algernon
+--------------------------------------------------
+
+Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of the above" web server, then start `algernon` with `--cert=/etc/letsencrypt/live/mydomain.yoga/cert.pem --key=/etc/letsencrypt/live/mydomain.yoga/privkey.pem` where `mydomain.yoga` is replaced with your own domain name.
+
+First make Algernon serve a directory for the domain, like `/srv/mydomain.yoga`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
+Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)).
 
 
 Releases
