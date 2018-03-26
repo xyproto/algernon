@@ -2,7 +2,5 @@
 
 package platformdep
 
-// DefaultOpenExecutable returns the default application for opening URLs
-func DefaultOpenExecutable() string {
-	return "xdg-open"
-}
+// DefaultOpenExecutable is the default application for opening URLs
+const DefaultOpenExecutable = "xdg-open"

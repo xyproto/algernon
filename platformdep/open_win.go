@@ -4,6 +4,4 @@ package platformdep
 
 // Not Linux, not BSDs
 
-func DefaultOpenExecutable() string {
-	return "explorer"
-}
+const DefaultOpenExecutable = "explorer"
