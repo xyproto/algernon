@@ -109,6 +109,9 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	// Channel to wait and see if we should just serve regular HTTP instead
 	justServeRegularHTTP := make(chan bool)
 
+	servingHTTPS := false
+	servingHTTP := false
+
 	// Goroutine that wait for a message to just serve regular HTTP, if needed
 	go func() {
 		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
@@ -117,9 +120,11 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Info("Serving HTTP on http://" + ac.serverAddr + "/")
 		}
+		servingHTTP = true
 		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(); err != nil {
+			servingHTTP = false
 			// If we can't serve regular HTTP on port 80, give up
 			ac.fatalExit(err)
 		}
@@ -133,6 +138,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Info("Serving QUIC on https://" + ac.serverAddr + "/")
 		}
+		servingHTTPS = true
 		// Start serving over QUIC
 		go func() {
 			// TODO: Handle ctrl-c by fetching the quicServer struct and passing it to GenerateShutdownFunction.
@@ -146,6 +152,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				// If QUIC failed (perhaps the key + cert are missing),
 				// serve plain HTTP instead
 				justServeRegularHTTP <- true
+				servingHTTPS = false
 			}
 		}()
 	case ac.productionMode:
@@ -155,12 +162,14 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
 		}
+		servingHTTPS = true
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
 			HTTPS2server := ac.NewGracefulServer(mux, true, ac.serverHost+":443")
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
+				servingHTTPS = false
 				log.Error(err)
 			}
 		}()
@@ -169,9 +178,11 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Info("Serving HTTP on http://" + ac.serverHost + "/")
 		}
+		servingHTTP = true
 		go func() {
 			HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+":80")
 			if err := HTTPserver.ListenAndServe(); err != nil {
+				servingHTTP = false
 				// If we can't serve regular HTTP on port 80, give up
 				ac.fatalExit(err)
 			}
@@ -182,12 +193,15 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + ac.serverAddr + "/")
 		}
+		servingHTTPS = true
 		go func() {
 			// Listen for HTTP/2 requests
 			HTTP2server := ac.NewGracefulServer(mux, true, ac.serverAddr)
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
+				servingHTTPS = false
 				justServeRegularHTTP <- true
+				log.Error(err)
 			}
 		}()
 	case !(ac.serveJustHTTP2 || ac.serveJustHTTP):
@@ -196,6 +210,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			log.Info("Serving HTTP/2 on https://" + ac.serverAddr + "/")
 		}
+		servingHTTPS = true
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := ac.NewGracefulServer(mux, true, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
@@ -203,12 +218,14 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
 				log.Error("Not serving HTTP/2 after all. Error: ", err)
 				log.Info("Use the -t flag for serving regular HTTP instead")
+				servingHTTPS = false
 				// If HTTPS failed (perhaps the key + cert are missing),
 				// serve plain HTTP instead
 				justServeRegularHTTP <- true
 			}
 		}()
 	default:
+		servingHTTP = true
 		justServeRegularHTTP <- true
 	}
 
@@ -219,9 +236,8 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// Open the URL, if specified
 	if ac.openURLAfterServing {
-		// TODO: Better check for HTTP vs HTTPS when selecting the URL to open
-		//       when both are being served.
-		ac.OpenURL(ac.serverHost, ac.serverAddr, !(ac.serveJustHTTP2 || ac.serveJustQUIC))
+		// Open the https:// URL if both http:// and https:// are being served
+		ac.OpenURL(ac.serverHost, ac.serverAddr, servingHTTPS)
 	}
 
 	<-done // Wait for a "done" message from the REPL (or just keep waiting)

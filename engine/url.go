@@ -7,15 +7,15 @@ import (
 )
 
 // OpenURL tries to open an URL with the system browser
-func (ac *Config) OpenURL(host, colonPort string, https bool) {
+func (ac *Config) OpenURL(host, colonPort string, httpsPrefix bool) {
 	if host == "" {
 		host = "localhost"
 	}
-	prot := "http://"
-	if https {
-		prot = "https://"
+	protocol := "http://"
+	if httpsPrefix {
+		protocol = "https://"
 	}
-	url := prot + host + colonPort
+	url := protocol + host + colonPort
 	log.Info("Running: " + ac.openExecutable + " " + url)
 	cmd := exec.Command(ac.openExecutable, url)
 	cmd.Run()

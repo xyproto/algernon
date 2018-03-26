@@ -268,7 +268,7 @@ func New(versionString, description string) (*Config, error) {
 		pongomutex: &sync.RWMutex{},
 
 		// Program for opening URLs
-		defaultOpenExecutable: platformdep.DefaultOpenExecutable(),
+		defaultOpenExecutable: platformdep.DefaultOpenExecutable,
 
 		// General information about Algernon
 		versionString: versionString,
