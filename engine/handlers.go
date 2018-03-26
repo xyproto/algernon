@@ -322,24 +322,34 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 		return
 
-	case "", ".exe", ".com", ".elf", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2", ".tar.xz", ".txz", ".gz", ".zip", ".7z", ".rar", ".arj", ".lz":
-		// No extension, or binary file extension
+	// Text files (most likely)
+	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt":
+		// Set headers for displaying it in the browser.
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	// A selection of source code files
+	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".js", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".sh", ".ts":
+		// Set headers for displaying it in the browser.
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	// Common binary file extensions
+	case ".7z", ".arj", ".com", ".elf", ".exe", ".gz", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
 		// Set headers for downloading the file instead of displaying it in the browser.
-		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", "attachment")
+
+	default:
+		// Set the correct Content-Type
+		if ac.mimereader != nil {
+			ac.mimereader.SetHeader(w, ext)
+		} else {
+			log.Error("Uninitialized mimereader!")
+		}
 
 	}
 
 	// TODO Add support for "prettifying"/HTML-ifying some file extensions:
 	// movies, music, source code etc. Wrap videos in the right html tags for playback, etc.
 	// This should be placed in a separate Go module.
-
-	// Set the correct Content-Type
-	if ac.mimereader != nil {
-		ac.mimereader.SetHeader(w, ext)
-	} else {
-		log.Error("Uninitialized mimereader!")
-	}
 
 	// Read the file (possibly in compressed format, straight from the cache)
 	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
