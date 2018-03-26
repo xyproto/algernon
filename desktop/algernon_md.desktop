@@ -4,8 +4,10 @@ Type=Application
 Name=Algernon
 GenericName=Web Server
 Comment=QUIC Web Server with Lua, Markdown and Pongo2 support
-Exec=algernon -u -o --theme=material /usr/share/doc
+Exec=algernon -m
 Icon=markdown
 Terminal=false
 StartupNotify=false
 Categories=Application;
+MimeType=text/markdown;
+NoDisplay=true
