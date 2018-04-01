@@ -297,7 +297,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	case ".scss":
 		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
-			// Render the SASS page as CSS
+			// Render the SASS page (with .scss extension) as CSS
 			w.Header().Add("Content-Type", "text/css; charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.MustData())
 		}
@@ -322,15 +322,24 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 		return
 
-	// Text files (most likely)
-	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt":
+	// Text and configuration files (most likely)
+	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt", ".yml", ".toml", ".gitignore", ".gitmodules", ".pem":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	// A selection of source code files
-	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".js", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".sh", ".ts":
+	// Source files that may be used by web pages
+	case ".js":
+		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
+
+	// Source code files for viewing
+	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".ts":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	// Source code files for downloading (some installers offer a .sh file with binary data embedded)
+	case ".sh":
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Disposition", "attachment")
 
 	// Common binary file extensions
 	case ".7z", ".arj", ".com", ".elf", ".exe", ".gz", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
@@ -368,7 +377,8 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 	}
 	if !ac.autoRefresh && ac.stricterHeaders {
-		w.Header().Set("Content-Security-Policy", "connect-src 'self'; object-src 'self'; form-action 'self'")
+		w.Header().Set("Content-Security-Policy",
+			"connect-src 'self'; object-src 'self'; form-action 'self'")
 	}
 	// w.Header().Set("X-Powered-By", name+"/"+version)
 }
