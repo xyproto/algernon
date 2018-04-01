@@ -12,6 +12,7 @@ Priority 1
 - [ ] User management interface + web REPL + stats + logs + import/export data .alg launcher.
 - [ ] Present directories with media files with a built-in page.
 - [ ] Add an option for using brotly compression instead of gzip.
+- [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
 
 Priority 2
 ----------
