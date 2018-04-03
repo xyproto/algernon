@@ -323,7 +323,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	// Text and configuration files (most likely)
-	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt", ".yml", ".toml", ".gitignore", ".gitmodules", ".pem":
+	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt", ".yml", ".yaml", ".tml", ".toml", ".gitignore", ".gitmodules", ".pem":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
@@ -332,14 +332,9 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
 
 	// Source code files for viewing
-	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".ts":
+	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".sh", ".ts":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-
-	// Source code files for downloading (some installers offer a .sh file with binary data embedded)
-	case ".sh":
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Set("Content-Disposition", "attachment")
 
 	// Common binary file extensions
 	case ".7z", ".arj", ".com", ".elf", ".exe", ".gz", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
