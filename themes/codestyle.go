@@ -1,8 +1,8 @@
 package themes
 
 const (
-	// DefaultCustomCodeStyle is the default highlight.js style for custom CSS
-	DefaultCustomCodeStyle = "github"
+	// DefaultCustomCodeStyle is the default chroma style for custom CSS
+	DefaultCustomCodeStyle = "algol"
 )
 
 // NewTheme adds a new built-in theme

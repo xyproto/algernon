@@ -20,6 +20,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
+	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
 	"github.com/yuin/gopher-lua"
 )
@@ -283,17 +284,6 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	codeStyle := string(kwmap["codestyle"])
-	// Add syntax highlighting to the header, but only if "<code" is present
-	if bytes.Contains(htmlbody, []byte("<code")) {
-		if codeStyle == "" {
-			head.WriteString(themes.HighlightHead(themes.ThemeToCodeStyle(string(theme))))
-		} else if codeStyle != "none" {
-			head.WriteString(themes.HighlightHead(codeStyle))
-		}
-		//if codeStyle != "none" {
-		//	htmlbody = HighlightCode(htmlbody)
-		//}
-	}
 
 	// Add meta tags, if metadata information has been declared
 	for _, keyword := range themes.MetaKeywords {
@@ -309,6 +299,30 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := themes.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
+
+	// Add syntax highlighting to the header, but only if "<pre" is present
+	if bytes.Contains(htmlbody, []byte("<pre")) {
+		// If codeStyle is not "none", highlight the current htmldata
+		if codeStyle == "" {
+			// Use the highlight style from the current theme
+			highlighted, err := splash.UnescapeSplash(htmldata, themes.ThemeToCodeStyle(string(theme)))
+			if err != nil {
+				log.Error(err)
+			} else {
+				// Only use the new and highlighted HTML if there were no errors
+				htmldata = highlighted
+			}
+		} else if codeStyle != "none" {
+			// Use the highlight style from codeStyle
+			highlighted, err := splash.UnescapeSplash(htmldata, codeStyle)
+			if err != nil {
+				log.Error(err)
+			} else {
+				// Only use the new HTML if there were no errors
+				htmldata = highlighted
+			}
+		}
+	}
 
 	// If the auto-refresh feature has been enabled
 	if ac.autoRefresh {
