@@ -82,17 +82,6 @@ func HTMLLink(text, url string, isDirectory bool) string {
 	return "<a href=\"/" + url + "\">" + text + "</a><br>"
 }
 
-// HighlightHead creates the HTML code for linking with a stylesheet for
-// highlighting <code> tags with the given highlight.js code style
-func HighlightHead(codeStyle string) string {
-	return `<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/` + HighlightJSversion + `/styles/` + codeStyle + `.min.css"><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/` + HighlightJSversion + `/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script>`
-}
-
-// MaterialHead creates the HTML code for a material design framework called MUI (www.muicss.com)
-func MaterialHead() string {
-	return `<link rel="stylesheet" href="//cdn.muicss.com/mui-` + MUIVersion + `/css/mui.min.css"><script src="//cdn.muicss.com/mui-` + MUIVersion + `/js/mui.min.js"></script>`
-}
-
 // StyleAmber modifies Amber source code so that a link to the given stylesheet URL is added
 func StyleAmber(amberdata *[]byte, url string) {
 	// If the given url is not already mentioned and the data contains "body"
