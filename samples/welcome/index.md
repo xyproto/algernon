@@ -18,7 +18,7 @@ Samples
 * [Styled Markdown](greetings)
 * [Simple TODO application](todo)
 * [Poem by Algernon Charles Swinburne](threejs)
-* [Using React with Algernon](react)
+* [Using React with Algernon](react_db)
 * [Hello Lua](lua)
 * [Counter](counter)
 * [Iterate](iterate)
