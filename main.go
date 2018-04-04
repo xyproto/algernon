@@ -1,4 +1,4 @@
-// HTTP/2 web server with built-in support for Lua, Markdown, GCSS, Amber and JSX.
+// QUIC web server with built-in support for Lua, Markdown, Pongo2 and JSX.
 package main
 
 import (
