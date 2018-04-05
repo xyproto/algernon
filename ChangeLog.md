@@ -3,8 +3,14 @@
 Changes from 1.8 to 1.9
 =======================
 
-* Update vendored dependencies
-* Add support for "go tool trace"
+* Update vendored dependencies.
+* Improve error messages.
+* Better support for giving a single Lua fila with handlers as an argument.
+* Update documentation and samples.
+* Add list:json() to make it easier to return JSON from a List. See `samples/react_db`.
+* Better handling of opening documents in the browser if no certs are given.
+* Update the default handling of files (view/download) based on mime type or extension.
+* Add support for "go tool trace".
 
 Changes from 1.7 to 1.8
 =======================
