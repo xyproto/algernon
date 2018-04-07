@@ -11,6 +11,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
 	"github.com/xyproto/algernon/lua/jnode"
+	"github.com/xyproto/algernon/lua/onthefly"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
@@ -72,6 +73,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// Cache
 	ac.LoadCacheFunctions(L)
+
+	// Pages and Tags
+	onthefly.Load(L)
 
 	// File uploads
 	upload.Load(L, w, req, filepath.Dir(filename))
@@ -183,6 +187,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// Cache
 	ac.LoadCacheFunctions(L)
+
+	// Pages and Tags
+	onthefly.Load(L)
 
 	if withHandlerFunctions {
 		// Lua HTTP handlers
