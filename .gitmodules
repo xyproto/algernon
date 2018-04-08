@@ -187,3 +187,9 @@
 [submodule "vendor/github.com/go-sourcemap/sourcemap"]
 	path = vendor/github.com/go-sourcemap/sourcemap
 	url = https://github.com/go-sourcemap/sourcemap
+[submodule "vendor/github.com/xyproto/splash"]
+	path = vendor/github.com/xyproto/splash
+	url = https://github.com/xyproto/splash
+[submodule "vendor/github.com/alecthomas/chroma"]
+	path = vendor/github.com/alecthomas/chroma
+	url = https://github.com/alecthomas/chroma
