@@ -78,6 +78,7 @@ Available flags:
                                (the default is ` + ac.defaultLimitString + `).
   --nolimit                    Disable rate limiting.
   --nodb                       No database backend. (same as --boltdb=/dev/null).
+  -l, --lua                    Don't serve anything, just present the Lua REPL.
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername=TEXT            Custom HTTP header value for the Server field.
@@ -125,7 +126,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
-		serveJustQUICShort bool
+		serveJustQUICShort, serveNothingShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -200,6 +201,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
 	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
 	flag.BoolVar(&noDatabase, "nodb", false, "No database backend")
+	flag.BoolVar(&ac.serveNothing, "lua", false, "Only present the Lua REPL")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -219,6 +221,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.markdownMode, "m", false, "Markdown mode")
 	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
 	flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
+	flag.BoolVar(&serveNothingShort, "l", false, "Only present the Lua REPL")
 
 	flag.Parse()
 
@@ -239,12 +242,19 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.verboseMode = ac.verboseMode || verboseModeShort
 	ac.noBanner = ac.noBanner || noBannerShort
 	ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
+	ac.serveNothing = ac.serveNothing || serveNothingShort // "Lua mode"
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {
 		ac.quietMode = true
 		ac.openURLAfterServing = true
 		ac.quitAfterFirstRequest = true
+	}
+
+	// If only using the Lua REPL, don't include the banner, and don't serve anything
+	if ac.serveNothing {
+		ac.noBanner = true
+		ac.debugMode = true
 	}
 
 	// Disable verbose mode if quiet mode has been enabled

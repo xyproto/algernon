@@ -80,6 +80,9 @@ type Config struct {
 	// If only QUIC
 	serveJustQUIC bool
 
+	// If only using the Lua REPL
+	serveNothing bool
+
 	// Configuration that may only be set in the server configuration script(s)
 	serverAddrLua          string
 	serverReadyFunctionLua func()
@@ -574,7 +577,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	}
 
 	// Dividing line between the banner and output from any of the configuration scripts
-	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode {
+	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 

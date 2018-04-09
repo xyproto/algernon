@@ -106,6 +106,12 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	// If we are not writing internal logs to a file, reduce the verbosity
 	http2.VerboseLogs = (ac.internalLogFilename != os.DevNull)
 
+	if ac.serveNothing {
+		ready <- true // Send a "ready" message to the REPL
+		<-done        // Wait for a "done" message from the REPL (or just keep waiting)
+		return nil    // Done
+	}
+
 	// Channel to wait and see if we should just serve regular HTTP instead
 	justServeRegularHTTP := make(chan bool)
 
