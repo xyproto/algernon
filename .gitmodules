@@ -193,3 +193,6 @@
 [submodule "vendor/github.com/alecthomas/chroma"]
 	path = vendor/github.com/alecthomas/chroma
 	url = https://github.com/alecthomas/chroma
+[submodule "vendor/github.com/danwakefield/fnmatch"]
+	path = vendor/github.com/danwakefield/fnmatch
+	url = https://github.com/danwakefield/fnmatch
