@@ -196,3 +196,6 @@
 [submodule "vendor/github.com/danwakefield/fnmatch"]
 	path = vendor/github.com/danwakefield/fnmatch
 	url = https://github.com/danwakefield/fnmatch
+[submodule "vendor/github.com/xyproto/onthefly"]
+	path = vendor/github.com/xyproto/onthefly
+	url = https://github.com/xyproto/onthefly
