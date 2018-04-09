@@ -676,7 +676,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Dividing line between the banner and output from any of the
 	// configuration scripts. Marks the end of the configuration output.
-	if ranServerReadyFunction && !ac.quietMode {
+	if ranServerReadyFunction && !ac.quietMode && !ac.serveNothing {
 		fmt.Println("--------------------------------------- - - · ·")
 	}
 
