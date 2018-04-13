@@ -13,6 +13,8 @@ Priority 1
 - [ ] Present directories with media files with a built-in page.
 - [ ] Add an option for using brotly compression instead of gzip.
 - [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
+- [ ] Add full support for `onthefly` in Lua.
+- [ ] Add support for `metatar` in Lua, to be able to offer a whole Arch Linux package repository from just a single .lua file, and a collection of PKGBUILD files, among other things.
 
 Priority 2
 ----------
