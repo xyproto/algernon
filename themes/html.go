@@ -26,7 +26,7 @@ var (
 // built-in themes.
 // Deprecated
 func MessagePage(title, body, theme string) string {
-	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s<head><body><h1>%s</h1>%s</body></html>", title, StyleHead(theme), title, body)
+	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s</head><body><h1>%s</h1>%s</body></html>", title, StyleHead(theme), title, body)
 }
 
 // StyleHead returns contents that goes in "<head>", as bytes.
@@ -50,7 +50,7 @@ func MessagePageBytes(title string, body []byte, theme string) []byte {
 	buf.WriteString(title)
 	buf.WriteString("</title>")
 	buf.Write(StyleHead(theme))
-	buf.WriteString("<head><body><h1>")
+	buf.WriteString("</head><body><h1>")
 	buf.WriteString(title)
 	buf.WriteString("</h1>")
 	buf.Write(body)
@@ -64,7 +64,7 @@ func SimpleHTMLPage(title, headline, inhead, body []byte) []byte {
 	buf.Write(title)
 	buf.WriteString("</title>")
 	buf.Write(inhead)
-	buf.WriteString("<head><body><h1>")
+	buf.WriteString("</head><body><h1>")
 	buf.Write(headline)
 	buf.WriteString("</h1>")
 	buf.Write(body)
