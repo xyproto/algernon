@@ -1,4 +1,4 @@
-// onthefly provides Lua functions for building HTML, XML and TinySVG documents
+// Package onthefly provides Lua functions for building HTML, XML and TinySVG documents
 package onthefly
 
 import (
