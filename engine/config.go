@@ -481,10 +481,8 @@ func (ac *Config) shouldCache(ext string) bool {
 
 // hasHandlers checks if the given filename contains "handle(" or "handle ("
 func hasHandlers(fn string) bool {
-	if data, err := ioutil.ReadFile(fn); err != nil {
-		return false
-	}
-	return bytes.Contains(data, []byte("handle(")) || bytes.Contains(data, []byte("handle ("))
+	data, err := ioutil.ReadFile(fn)
+	return err == nil && (bytes.Contains(data, []byte("handle(")) || bytes.Contains(data, []byte("handle (")))
 }
 
 // MustServe sets up a server with handlers
