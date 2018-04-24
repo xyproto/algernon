@@ -2,10 +2,10 @@
 title: Algernon
 description: Web server with built-in support for Lua, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
 keywords: web server, QUIC, lua, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
-theme: dark
+theme: material
 -->
 
-<a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon.gif" style="margin-left: 2em"></a>
+<a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo.png" style="margin-left: 2em"></a>
 
 Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
@@ -953,6 +953,8 @@ Other resources
 ---------------
 
 * [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
+
+Thanks to [Egon Elbre](https://twitter.com/egonelbre) for the two SVG drawings that I remixed into the current logo ([CC0](https://creativecommons.org/publicdomain/zero/1.0/) licensed).
 
 General information
 -------------------
