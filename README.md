@@ -111,7 +111,7 @@ Installation
 
 This method is using the latest commit from the master branch:
 
-`go get github.com/xyproto/algernon`
+`go get -u github.com/xyproto/algernon`
 
 If needed, first:
 
@@ -162,7 +162,7 @@ Screenshots
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_threejs.png">
 
 *One of the poems of Algernon Charles Swinburne, with three rotating tori in the background.*
-*Uses CSS3 for the gaussian blur and [three.js](http://threejs.org) for the 3D graphics.*
+*Uses CSS3 for the Gaussian blur and [three.js](http://threejs.org) for the 3D graphics.*
 
 ---
 
@@ -931,7 +931,7 @@ HTTPS certificates with Let's Encrypt and Algernon
 Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of the above" web server, then start `algernon` with `--cert=/etc/letsencrypt/live/mydomain.yoga/cert.pem --key=/etc/letsencrypt/live/mydomain.yoga/privkey.pem` where `mydomain.yoga` is replaced with your own domain name.
 
 First make Algernon serve a directory for the domain, like `/srv/mydomain.yoga`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
-Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)).
+Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates.
 
 
 Releases
