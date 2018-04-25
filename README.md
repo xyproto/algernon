@@ -5,7 +5,7 @@ keywords: web server, QUIC, lua, markdown, pongo2, application server, http, htt
 theme: material
 -->
 
-<a href="https://github.com/xyproto/algernon"><img src="https://raw.github.com/xyproto/algernon/master/img/algernon_logo.png" style="margin-left: 2em"></a>
+<a href="https://github.com/xyproto/algernon"><img src="//raw.github.com/xyproto/algernon/master/img/algernon_logo.png" style="margin-left: 2em"></a>
 
 Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB, Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
