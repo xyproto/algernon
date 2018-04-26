@@ -2,7 +2,7 @@
 
 Priority 1
 ----------
-- [ ] No external links for syntax highlighting in themes (no external dependencies in general). #17
+- [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
 - [ ] Make it possible to send the access log to the database.
 - [ ] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
 - [ ] Make it possible to send the error log to the database.
