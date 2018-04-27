@@ -288,7 +288,7 @@ Maybe
 ## Algernon 2
 
 * Use Badger instead of BoltDB (if it really is just as stable and 30x faster).
-* Use fasthttp from the start.
+* Use iris or fasthttp from the start.
 * Drop Amber and GCSS.
 * Focus on templates, markdown and possibly microservices.
 * Embed a different language than Lua, perhaps Anko.
