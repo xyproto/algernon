@@ -63,3 +63,6 @@ _vendor-*/
 
 # Tracing
 trace.out
+
+# base64 encoded temporary output
+output.b64

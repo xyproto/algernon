@@ -30,7 +30,7 @@ ANSI banner HOWTO
 */
 
 // gopher eyes
-const image = `H4sIAIJW6FoCA+2ZQY7DIAxF973CbHKEMbGBqEfpGXr/bdXNjBQT8YNsQiuW/Qugzw8EzrL8PDjf5R7W/FzeP7bnX7LtEpIVSNQwNFRCm9T/BKUrE72evC9FEPkCqvH3MLgt/2YmNX2uDj2admZYL1WzoB2S+PERJ6iB6VjNQw1jfSs7soing7DGXoWxc5K6OdlAlKKPs4Vh9GkaWwxF9jiyQJbzsICJpFqUxtrKxx2agGwSLDQ3OwQ6KipSlYsbdi9QljQFhXmmqaepnqzvLeoZx6xIhGnoUZABoNs01O6CVIA39XQG/AV2drvRlxpjw7+RjIh2UrbpjdTWGjEy1I8wGQSQjnpm1WQsddWAhJELcASI8jBEoZcqsJQrDS30oqxOBbcE+uJACTiy94mojjqvVbWhXv3wmAsbvekLiJ+pbmeBXcItCHV7hm0SaapowVT+PKjnTH0BdQv/LvEcAAA=`
+const image = `H4sIAJB76FoCA9WWTRKDIAxG91zBjUcQSBTGo/QM3n/bbvozfFRCRGp3nW+q5PEwZLhRWHm17LdxHG4Ut+GZJIHz9oeJtUu3xDGXk/NIGYKXG3NITgYCE0oTWhpD1LiBp5RuKGjQVdbf6Obre9AfT+lfZmBwAk7Yr8dPDUNHW1BhBl1yBn1xT3fRTUXNSxtZ9H+yJOdUIov6yXJcXh4oEMs7wXuvZqv8lUjISUEuaYOypL5iO7lGV3E/V3hjAoRAFS6tmy8yMxF1m5KsYLewQMIGApc+47mIgnGQ6u0ph6Q0CFEjSznSNkpyX81cHFQ4loWSLy+lbJSN0PdUmEM9JHMUdImgp0E14bTkYuSfuu6KgLzwGw8AAA==`
 
 // Drawn in GIMP. Just a white grid on black background.
 //const image = `H4sIAK/e01kCA5OONrGwNrU2MjbMVVCQjjaxzJUeFaFYhAunIkMzQgKjekaDkt5BOSoymtlHM/toZh8VIZjZAT4BWy4xCQAA`
@@ -81,7 +81,8 @@ func Banner(versionString, description string) string {
 	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, utils.EveryInstance)
-	s = insertText(s, tabs, 5, 2, "\x1b[34;1m"+versionString+"\x1b[0m", 1)
-	s = insertText(s, tabs, 6, 1, "\x1b[30;1m"+description+"\x1b[0m", 1)
+	// See https://github.com/shiena/ansicolor/blob/master/README.md for ANSI color code table
+	s = insertText(s, tabs, 5, 2, "\x1b[36m"+versionString+"\x1b[0m", 1)
+	s = insertText(s, tabs, 6, 1, "\x1b[90m"+description+"\x1b[0m", 1)
 	return s
 }

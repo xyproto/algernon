@@ -636,7 +636,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	ac.LoadLuaFunctionsForREPL(L, o)
 
 	// Getting ready
-	o.Println(o.LightBlue(ac.versionString))
+	o.Println(o.DarkCyan(ac.versionString))
 
 	<-ready // Wait for the server to be ready
 

@@ -6,7 +6,7 @@ Changes from 1.9 to 1.10
 * Syntax highlighting by using [chroma](https://github.com/alecthomas/chroma) instead of [highlight.js](https://highlightjs.org/).
 * No external dependencies, ref issue #17.
 * Add a mode for only using the Lua REPL with `-l` or `--lua`.
-* New logo for the webpage, and new ASCII banner on the command line.
+* New logo for the webpage, and new ANSI banner on the command line.
 * Minor fix for closing `</head>` tags.
 * Update vendored dependencies.
 
