@@ -1,9 +1,18 @@
 # Changelog
 
+Changes from 1.9 to 1.10
+========================
+
+* Syntax highlighting by using [chroma](https://github.com/alecthomas/chroma) instead of [highlight.js](https://highlightjs.org/).
+* No external dependencies, ref issue #17.
+* Add a mode for only using the Lua REPL with `-l` or `--lua`.
+* New logo for the webpage, and new ASCII banner on the command line.
+* Minor fix for closing `</head>` tags.
+* Update vendored dependencies.
+
 Changes from 1.8 to 1.9
 =======================
 
-* Update vendored dependencies.
 * Improve error messages.
 * Better support for giving a single Lua fila with handlers as an argument.
 * Update documentation and samples.
@@ -11,6 +20,7 @@ Changes from 1.8 to 1.9
 * Better handling of opening documents in the browser if no certs are given.
 * Update the default handling of files (view/download) based on mime type or extension.
 * Add support for "go tool trace".
+* Update vendored dependencies.
 
 Changes from 1.7 to 1.8
 =======================
@@ -18,31 +28,30 @@ Changes from 1.7 to 1.8
 * Fix an issue with `curl` + `algernon` that was not present with `wget` + `algernon`, related to HTTP headers and compression.
 * Some refactoring and linting of the code.
 * Less strict HTTP headers by default.
-* Updated the vendored dependencies.
+* Update vendored dependencies.
 
 Changes from 1.6 to 1.7
 =======================
 
 * Experimental support for the QUIC protocol (HTTP over UDP, faster than HTTP/2).
 * Improvements toward compiling Algernon with GCC (`gcc-go`).
-* Updated the HyperApp support and samples to work with the latest version (0.15.1).
-* Updated the dockerfiles and scripts.
-* Updated the vendored dependencies with Manul.
+* Update HyperApp support and samples to work with the latest version (0.15.1).
+* Update dockerfiles and scripts.
 * Add "material" and "neon" themes.
 * Updated the documentation.
 * Add support for `.algernon` files for configuring directory listings (set a theme and title).
 * Support for having a port number as the only argument.
 * Add a `--nodb` flag, for not using any database backend (same as `--boltdb=/dev/null`).
 * Some refactoring.
+* Update vendored dependencies.
 
 Changes from 1.5.1 to 1.6
 =========================
 
 * Fix for excessive memory usage when serving and caching large files. Needs more testing.
-* Updated dependencies.
 * Should now be possible to compile with gccgo.
 * Revert the refactoring to a separate "kinnian" package, for easier development and dependency handling.
-* Vendor dependencies with manul (git submodules).
+* Update vendored dependencies.
 
 Changes from 1.5 to 1.5.1
 =========================
@@ -63,30 +72,31 @@ Changes from 1.4.4 to 1.4.5
 
 * Performance improvements when rendering Markdown and directory listings
 * Refactoring out code to the `kinnian` package
-* Update samples and dependencies
+* Update samples.
+* Update vendored dependencies.
 
 Changes from 1.4.3 to 1.4.4
 ===========================
 
-* Refactoring code into packages
-* Update tests and documentation
+* Refactor code into packages.
+* Update tests and documentation.
 
 Changes from 1.4.2 to 1.4.3
 ===========================
 
-* Update dependencies and the dependency configuration
+* Update dependencies and the dependency configuration.
 
 Changes from 1.4.1 to 1.4.2
 ===========================
 
-* Update dependencies
-* Minor improvements to the code
-* Minor improvements to the documentation
+* Minor improvements to the code.
+* Minor improvements to the documentation.
+* Update dependencies.
 
 Changes from 1.4 to 1.4.1
 =========================
 
-* Updates to the Markdown styling: tables, colors and &lt;code&gt; tags
+* Update the Markdown styling: tables, colors and &lt;code&gt; tags
 * Split out file caching to a separate package: [datablock](https://github.com/xyproto/datablock)
 * Add an [example](https://github.com/xyproto/algernon/tree/master/samples/structure) for structuring a web site.
 * Add a Lua `preload()` function, for caching files before they are needed.
@@ -97,7 +107,7 @@ Changes from 1.4 to 1.4.1
 * Use BoltDB by default instead of Redis.
 * Add script for testing functionality (HTTP server + curl) that is ran by the CI system.
 * Fix issue when running some `.alg` files.
-* Refactoring.
+* Refactor.
 
 Changes from 1.3.2 to 1.4
 =========================
@@ -107,32 +117,32 @@ Changes from 1.3.2 to 1.4
 * Some refactoring: made the code simpler.
 * Move error checks before defer statements whenever possible.
 * Set headers so that browsers will download the most common binary formats instead of displaying them.
-* Update dependencies.
+* Update vendored dependencies.
 
 Changes from 1.3.1 to 1.3.2
 ===========================
 
-* Remove the dependency on readline. No external dependencies.
+* Remove the dependency on readline. No external C dependencies left.
 * The beginnings of better completion in the REPL.
-* Update the external dependencies using Glide.
+* Update dependencies using Glide.
 
 Changes from 1.3 to 1.3.1
 =========================
 
-* Less strict headers when using the auto-refresh feature
+* Less strict headers when using the auto-refresh feature.
 
 Changes from 1.2.1 to 1.3
 =========================
 
-* Support for streaming large files (http range)
-* Minor improvements to the samples
+* Support for streaming large files (HTTP range).
+* Minor improvements to the samples.
 
 Changes from 1.2 to 1.2.1
 =========================
 
-* Improve the REPL and the pprint function
-* Fix a race issue when setting up a handle function from Lua
-* Add a "Host" header to the header table
+* Improve the REPL and the pprint function.
+* Fix a race issue when setting up a handle function from Lua.
+* Add a "Host" header to the header table.
 
 Changes from 1.1 to 1.2
 =======================
@@ -198,4 +208,4 @@ Samples and documentation
 1.0
 ===
 
-* Release
+* Release.
