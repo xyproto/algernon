@@ -131,7 +131,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		mut.Unlock()
 		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
 		// Open the URL before the serving has started, in a short delay
-		if ac.openURLAfterServing {
+		if ac.openURLAfterServing && ac.luaServerFilename != "" {
 			go func() {
 				time.Sleep(waitBeforeOpen)
 				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
