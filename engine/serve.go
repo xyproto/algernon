@@ -130,6 +130,13 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		servingHTTP = true
 		mut.Unlock()
 		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
+		// Open the URL before the serving has started, in a short delay
+		if ac.openURLAfterServing {
+			go func() {
+				time.Sleep(waitBeforeOpen)
+				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
+			}()
+		}
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(); err != nil {
 			mut.Lock()

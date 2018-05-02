@@ -38,6 +38,11 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 				// Non-fatal error
 				log.Error("Handler for "+handlePath+" failed:", err)
 			}
+
+			// Then exit after the first request, if specified
+			if ac.quitAfterFirstRequest {
+				go ac.quitSoon("Quit after first request", defaultSoonDuration)
+			}
 		}
 
 		// Handle requests differently depending on if rate limiting is enabled or not
