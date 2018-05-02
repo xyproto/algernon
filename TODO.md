@@ -3,6 +3,7 @@
 Priority 1
 ----------
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
+- [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
 - [ ] Make it possible to send the access log to the database.
 - [ ] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
 - [ ] Make it possible to send the error log to the database.
