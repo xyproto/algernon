@@ -1,0 +1,1 @@
+handle("/", -> print "Hello, Moonscript!")
