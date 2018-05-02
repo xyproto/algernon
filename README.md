@@ -356,6 +356,10 @@ jprint(...)
 
 // Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
 poprint(...)
+
+// Output a simple HTML page with a message, title and theme.
+// The title and theme are optional.
+msgpage(string[, string][, string])
 ~~~
 
 

@@ -161,6 +161,34 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		return 0 // number of results
 	}))
 
+	// Output a simple message HTML page.
+	// The first argument is the message (ends up in the <body>).
+	// The seconds argument is an optional title.
+	// The third argument is an optional page style.
+	L.SetGlobal("msgpage", L.NewFunction(func(L *lua.LState) int {
+
+		title := ""
+		body := ""
+		if L.GetTop() < 2 {
+			// Uses an empty string if no first argument is given
+			body = L.ToString(1)
+		} else {
+			title = L.ToString(1)
+			body = L.ToString(2)
+		}
+
+		// The default theme for single page messages
+		theme := "redbox"
+		if L.GetTop() >= 3 {
+			theme = L.ToString(3)
+		}
+
+		// Write a simple HTML page to the client
+		w.Write([]byte(themes.MessagePage(title, body, theme)))
+
+		return 0 // number of results
+	}))
+
 }
 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title

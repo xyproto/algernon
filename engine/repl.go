@@ -136,6 +136,8 @@ hprint(...)
 jprint(...)
 // Output (mainly) rendered HTML given Pongo2. Takes a variable number of strings.
 poprint(...)
+// Output a simple HTML page with a message, title and theme.
+msgpage(string[, string][, string])
 
 Cache
 
