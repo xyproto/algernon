@@ -7,7 +7,7 @@ Priority 1
 - [ ] Make it possible to send the access log to the database.
 - [ ] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
 - [ ] Make it possible to send the error log to the database.
-- [ ] Profile the startup process and try to make it even faster.
+- [ ] Embed the [Fennel](https://github.com/bakpakin/Fennel) package (compiles to Lua) so that Fennel can be used on equal footing with Lua for Algernon projects.
 - [ ] Port the layout and concept of [werc](http://werc.cat-v.org/) to Algernon.  See also [gowerc](https://bitbucket.org/mischief/gowerc/src).
 - [ ] Make most methods in [onthefly](https://github.com/xyproto/onthefly) available to Algernon/Lua.
 - [ ] User management interface + web REPL + stats + logs + import/export data .alg launcher.
@@ -19,16 +19,17 @@ Priority 1
 
 Priority 2
 ----------
-- [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
-- [ ] Add a Markdown style similar to this one: http://setconf.roboticoverlords.org/
-- [ ] Use fasthttp when using regular HTTP:[switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
+- [ ] Create a web page for uploading, reviewing, previewing and downloading Algernon Applications.
+- [ ] Profile the startup process and try to make it even faster.
+- [ ] Use fasthttp or iris when using regular HTTP:[switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
 - [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
 - [ ] Also support a configuration file using [configparser](https://github.com/alyu/configparser), for port, host, keys etc.
+- [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
+- [ ] Add a Markdown style similar to this one: http://setconf.roboticoverlords.org/
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
 - [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/) database.
 - [ ] Add support for gccgo, if Badger works better with gccgo than BoltDB.
-- [ ] Create a web page for uploading, reviewing, previewing and downloading Algernon Applications.
 
 Documentation/tutorials
 -----------------------
