@@ -109,9 +109,6 @@
 [submodule "vendor/github.com/fsnotify/fsnotify"]
 	path = vendor/github.com/fsnotify/fsnotify
 	url = https://github.com/fsnotify/fsnotify
-[submodule "vendor/github.com/garyburd/redigo"]
-	path = vendor/github.com/garyburd/redigo
-	url = https://github.com/garyburd/redigo
 [submodule "vendor/github.com/getwe/figlet4go"]
 	path = vendor/github.com/getwe/figlet4go
 	url = https://github.com/getwe/figlet4go
@@ -199,3 +196,6 @@
 [submodule "vendor/github.com/xyproto/onthefly"]
 	path = vendor/github.com/xyproto/onthefly
 	url = https://github.com/xyproto/onthefly
+[submodule "vendor/github.com/gomodule/redigo"]
+	path = vendor/github.com/gomodule/redigo
+	url = https://github.com/gomodule/redigo
