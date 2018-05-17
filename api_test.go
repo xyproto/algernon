@@ -42,7 +42,7 @@ func (v *VersionInfo) Check() error {
 func TestAPI(t *testing.T) {
 	assert.Equal(t, New("simplebolt", simplebolt.Version, 3.0).Check(), nil)
 	assert.Equal(t, New("permissionbolt", permissionbolt.Version, 2.1).Check(), nil)
-	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.3).Check(), nil)
+	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.4).Check(), nil)
 	assert.Equal(t, New("permissions", permissions.Version, 2.5).Check(), nil)
 	//assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
 	//assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
