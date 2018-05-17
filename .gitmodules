@@ -94,9 +94,9 @@
 [submodule "vendor/github.com/bmizerany/assert"]
 	path = vendor/github.com/bmizerany/assert
 	url = https://github.com/bmizerany/assert
-[submodule "vendor/github.com/boltdb/bolt"]
-	path = vendor/github.com/boltdb/bolt
-	url = https://github.com/boltdb/bolt
+[submodule "vendor/github.com/coreos/bbolt"]
+	path = vendor/github.com/coreos/bbolt
+	url = https://github.com/coreos/bbolt
 [submodule "vendor/github.com/dlclark/regexp2"]
 	path = vendor/github.com/dlclark/regexp2
 	url = https://github.com/dlclark/regexp2

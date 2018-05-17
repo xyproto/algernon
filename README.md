@@ -21,7 +21,7 @@ Quick installation (development version)
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/boltdb/bolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](hhttps://github.com/lucas-clemente/quic-gottps://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](http://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](hhttps://github.com/lucas-clemente/quic-gottps://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 
 Design decisions
@@ -139,7 +139,7 @@ The JSX to JavaScript (ECMAscript) transpiler is built-in.
 
 Redis is fast, scalable and offers good [data persistence](http://redis.io/topics/persistence). This should be the preferred backend.
 
-Bolt is a [pure key/value store](https://github.com/boltdb/bolt), written in Go. It makes it easy to run Algernon without having to set up a database host first.
+Bolt is a [pure key/value store](https://github.com/coreos/bbolt), written in Go. It makes it easy to run Algernon without having to set up a database host first.
 MariaDB/MySQL support is included because of its widespread availability.
 
 PostgreSQL is a solid and fast database that is also supported.
