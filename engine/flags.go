@@ -77,7 +77,7 @@ Available flags:
   --limit=N                    Limit clients to N requests per second
                                (the default is ` + ac.defaultLimitString + `).
   --nolimit                    Disable rate limiting.
-  --nodb                       No database backend. (same as --boltdb=/dev/null).
+  --nodb                       No database backend. (same as --boltdb=` + os.DevNull + `).
   -l, --lua                    Don't serve anything, just present the Lua REPL.
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
@@ -277,7 +277,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	if noDatabase {
-		ac.boltFilename = "/dev/null"
+		ac.boltFilename = os.DevNull
 	}
 
 	// TODO: If flags are set in addition to -p or -e, don't override those
@@ -304,7 +304,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.cacheMode = cachemode.Development
 	} else if ac.simpleMode {
 		ac.useBolt = true
-		ac.boltFilename = "/dev/null"
+		ac.boltFilename = os.DevNull
 		ac.serveJustHTTP = true
 		ac.serverMode = true
 		ac.cacheMode = cachemode.Off

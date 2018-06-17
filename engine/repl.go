@@ -704,7 +704,6 @@ func (ac *Config) REPL(ready, done chan bool) error {
 				continue
 			}
 		}
-
 		if EOF {
 			if ac.ctrldTwice {
 				switch EOFcount {

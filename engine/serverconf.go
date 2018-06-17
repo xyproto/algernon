@@ -83,7 +83,7 @@ func (ac *Config) Info() string {
 	if len(ac.serverConfigurationFilenames) > 0 {
 		buf.WriteString(fmt.Sprintf("Server configuration:\t%v\n", ac.serverConfigurationFilenames))
 	}
-	if ac.internalLogFilename != "/dev/null" {
+	if ac.internalLogFilename != os.DevNull {
 		buf.WriteString("Internal log file:\t" + ac.internalLogFilename + "\n")
 	}
 	infoString := buf.String()
