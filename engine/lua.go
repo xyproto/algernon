@@ -42,6 +42,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		// Functions for serving files in the same directory as a script
 		ac.LoadServeFile(w, req, L, filename)
 
+		// Functions mainly for adding admin prefixes and configuring permissions
+		ac.LoadServerConfigFunctions(L, filename)
+
 		// Make the functions related to userstate available to the Lua script
 		users.Load(w, req, L, userstate)
 

@@ -141,6 +141,6 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 		}
 	}
 
-	// Serve a directory listing of no index file is found
+	// Serve a directory listing if no index file is found
 	ac.DirectoryListing(w, req, rootdir, dirname, theme)
 }
