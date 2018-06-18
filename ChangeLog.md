@@ -1,5 +1,12 @@
 # Changelog
 
+Changes from 1.10 to 1.10.1
+===========================
+
+* Workaround for a problem with the MINGW64 terminal + readline, on Windows.
+* Let Lua handlers also configure the server.
+* Release the Windows executable together with the samples.
+
 Changes from 1.9 to 1.10
 ========================
 

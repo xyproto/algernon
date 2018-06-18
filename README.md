@@ -967,6 +967,6 @@ Thanks to [Egon Elbre](https://twitter.com/egonelbre) for the two SVG drawings t
 General information
 -------------------
 
-* Version: 1.10
+* Version: 1.10.1
 * License: MIT
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
