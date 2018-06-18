@@ -619,11 +619,6 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		log.Error("Could not find a user directory to store the REPL history.")
 		historydir = "."
 	}
-	if runtime.GOOS == "windows" {
-		historyFilename = filepath.Join(historydir, "algernon", "repl.txt")
-	} else {
-		historyFilename = filepath.Join(historydir, ".algernon_history")
-	}
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -631,8 +626,17 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	defer L.Close()
 
 	// Colors and input
-	enableColors := runtime.GOOS != "windows"
+	windows := (runtime.GOOS == "windows")
+	mingw := windows && strings.HasPrefix(os.Getenv("TERM"), "xterm")
+	enableColors := !windows || mingw
 	o := term.NewTextOutput(enableColors, true)
+
+	// Command history file
+	if windows {
+		historyFilename = filepath.Join(historydir, "algernon", "repl.txt")
+	} else {
+		historyFilename = filepath.Join(historydir, ".algernon_history")
+	}
 
 	// Export a selection of functions to the Lua state
 	ac.LoadLuaFunctionsForREPL(L, o)
@@ -689,19 +693,24 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	for {
 		// Retrieve user input
 		EOF = false
-		if line, err = l.Readline(); err != nil {
-			if err == io.EOF {
-				if ac.debugMode {
-					o.Println(o.LightPurple(err.Error()))
+		if mingw {
+			// No support for EOF
+			line = term.Ask(prompt)
+		} else {
+			if line, err = l.Readline(); err != nil {
+				if err == io.EOF {
+					if ac.debugMode {
+						o.Println(o.LightPurple(err.Error()))
+					}
+					EOF = true
+				} else if err == readline.ErrInterrupt {
+					log.Warn("Interrupted")
+					done <- true
+					return nil
+				} else {
+					log.Error("Error reading line(" + err.Error() + ").")
+					continue
 				}
-				EOF = true
-			} else if err == readline.ErrInterrupt {
-				log.Warn("Interrupted")
-				done <- true
-				return nil
-			} else {
-				log.Error("Error reading line(" + err.Error() + ").")
-				continue
 			}
 		}
 		if EOF {
