@@ -2,6 +2,7 @@ package themes
 
 const (
 	// DefaultCustomCodeStyle is the default chroma style for custom CSS
+	// See: https://xyproto.github.io/splash/docs/all.html for an overview
 	DefaultCustomCodeStyle = "algol"
 )
 

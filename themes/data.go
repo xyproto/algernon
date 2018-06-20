@@ -4,7 +4,7 @@ var (
 	// builtinCodeStyles is a map of the themes names corresponding to chroma styles
 	// See the Chroma Style Gallery for more styles: https://xyproto.github.io/splash/docs/
 	// "default" currently points to "material"
-	builtinCodeStyles = map[string]string{"material": "github", "gray": "manni", "dark": "dracula", "redbox": "fruity", "bw": "bw", "wing": "tango", "neon": "api", "light": "monokailight"}
+	builtinCodeStyles = map[string]string{"material": "lovelace", "gray": "manni", "dark": "dracula", "redbox": "fruity", "bw": "bw", "wing": "tango", "neon": "api", "light": "monokailight"}
 
 	// Themes is a map over the available built-in CSS themes. Corresponds with the font themes below.
 	// "default" and "gray" are equal. "default" should never be used directly, but is here as a safeguard.

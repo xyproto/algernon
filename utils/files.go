@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"io/ioutil"
 	"math"
 	"os"
@@ -65,76 +64,6 @@ func GetFilenames(dirname string) []string {
 	return filenames
 }
 
-// Infostring builds up a string on the form "functionname(arg1, arg2, arg3)"
-func Infostring(functionName string, args []string) string {
-	s := functionName + "("
-	if len(args) > 0 {
-		s += "\"" + strings.Join(args, "\", \"") + "\""
-	}
-	return s + ")"
-}
-
-// FilterIntoGroups filters []byte slices into two groups, depending on the given filter function
-func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byte, [][]byte) {
-	var special, regular [][]byte
-	for _, byteline := range bytelines {
-		if filterfunc(byteline) {
-			// Special
-			special = append(special, byteline)
-		} else {
-			// Regular
-			regular = append(regular, byteline)
-		}
-	}
-	return special, regular
-}
-
-/*ExtractKeywords takes a source file as `data` and a list of keywords to
- * look for. Lines without keywords are returned, together with a map
- * from keywords to []bytes from the source `data`.
- *
- * The keywords in the data must be on the form "keyword: value",
- * and can be within single-line HTML comments (<-- ... -->).
- */
-func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[string][]byte) {
-	bnl := []byte("\n")
-	commentStart := []byte("<!--")
-	commentEnd := []byte("-->")
-	var keywordColon []byte
-	found := make(map[string][]byte)
-	// Find and separate the lines starting with one of the keywords in the special map
-	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
-		// Check if the current line has one of the special keywords
-		for _, keyword := range keywordsToLookFor {
-			keywordColon = append([]byte(keyword), ':')
-			// Check for lines starting with the keyword and a ":"
-			if bytes.HasPrefix(byteline, keywordColon) {
-				// Set (possibly overwrite) the value in the map, if the keyword is found.
-				// Trim the surrounding whitespace and skip the letters of the keyword itself.
-				found[keyword] = bytes.TrimSpace(byteline[len(keywordColon):])
-				return true
-			}
-			// Check for lines that starts with "<!--", ends with "-->" and contains the keyword and a ":"
-			if bytes.HasPrefix(byteline, commentStart) && bytes.HasSuffix(byteline, commentEnd) {
-				// Strip away the comment markers
-				stripped := bytes.TrimSpace(byteline[5 : len(byteline)-3])
-				// Check if one of the relevant keywords are present
-				if bytes.HasPrefix(stripped, keywordColon) {
-					// Set (possibly overwrite) the value in the map, if the keyword is found.
-					// Trim the surrounding whitespace and skip the letters of the keyword itself.
-					found[keyword] = bytes.TrimSpace(stripped[len(keyword)+1:])
-					return true
-				}
-			}
-
-		}
-		// Not special
-		return false
-	})
-	// Use the regular lines as the new data (remove the special lines)
-	return bytes.Join(regular, bnl), found
-}
-
 // DurationToMS converts time.Duration to milliseconds, as a string,
 // (just the number as a string, no "ms" suffix).
 func DurationToMS(d time.Duration, multiplier float64) string {
@@ -157,41 +86,6 @@ func roundf(x float64) float64 {
 // Round a float64 to the nearest integer
 func round(x float64) int64 {
 	return int64(roundf(x))
-}
-
-// WriteStatus writes a status message to a buffer, given a name and a bool
-func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
-
-	// Check that at least one of the bools are true
-
-	found := false
-	for _, value := range flags {
-		if value {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return
-	}
-
-	// Write the overview to the buffer
-
-	buf.WriteString(title + ":")
-	// Spartan way of lining up the columns
-	if len(title) < 7 {
-		buf.WriteString("\t")
-	}
-	buf.WriteString("\t\t[")
-	var enabledFlags []string
-	// Add all enabled flags to the list
-	for name, enabled := range flags {
-		if enabled {
-			enabledFlags = append(enabledFlags, name)
-		}
-	}
-	buf.WriteString(strings.Join(enabledFlags, ", "))
-	buf.WriteString("]\n")
 }
 
 // ReadString returns the contents of the given filename as a string.

@@ -23,10 +23,10 @@ var (
 
 // MessagePage is an easy way to output a HTML page only given a title, the body
 // (will be placed between the <body></body> tags) and the name of one of the
-// built-in themes.
+// built-in themes. Does not close <body> and <html>.
 // Deprecated
 func MessagePage(title, body, theme string) string {
-	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s</head><body><h1>%s</h1>%s</body></html>", title, StyleHead(theme), title, body)
+	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s</head><body><h1>%s</h1>%s", title, StyleHead(theme), title, body)
 }
 
 // StyleHead returns contents that goes in "<head>", as bytes.
