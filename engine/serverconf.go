@@ -75,7 +75,7 @@ func (ac *Config) Info() string {
 	if ac.disableRateLimiting {
 		buf.WriteString("Request limit:\t\tOff\n")
 	} else {
-		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec\n", ac.limitRequests))
+		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec per visitor\n", ac.limitRequests))
 	}
 	if ac.redisDBindex != 0 {
 		buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", ac.redisDBindex))
