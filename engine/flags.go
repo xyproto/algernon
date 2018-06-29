@@ -110,7 +110,7 @@ Available flags:
     algernon -c --domain --server --cachesize 67108864 --prod /srv
 
   Serve the current dir over QUIC, port 7000, no banner.
-  algernon -s -u -n . :7000
+    algernon -s -u -n . :7000
 
   Serve the current dir over HTTP, port 3000. No limits, cache or database.
     algernon -x
