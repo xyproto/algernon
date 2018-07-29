@@ -26,6 +26,7 @@ import (
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
+	"github.com/xyproto/recwatch"
 	"github.com/xyproto/unzip"
 )
 
@@ -705,12 +706,18 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
 			ac.refreshDuration, _ = time.ParseDuration(ac.defaultEventRefresh)
 		}
+		recwatch.SetVerbose(ac.verboseMode)
+		recwatch.LogError = func(err error) {
+			log.Error(err)
+		}
+		recwatch.FatalExit = ac.fatalExit
+		recwatch.Exists = ac.fs.Exists
 		if ac.autoRefreshDir != "" {
 			// Only watch the autoRefreshDir, recursively
-			ac.EventServer(ac.autoRefreshDir, "*")
+			recwatch.EventServer(ac.autoRefreshDir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		} else {
 			// Watch everything in the server directory, recursively
-			ac.EventServer(ac.serverDirOrFilename, "*")
+			recwatch.EventServer(ac.serverDirOrFilename, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		}
 	}
 

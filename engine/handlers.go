@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
+	"github.com/xyproto/recwatch"
 )
 
 const (
@@ -251,7 +252,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// The flush function writes the ResponseRecorder to the ResponseWriter
 			flushFunc := func() {
 				writeRecorder(w, recorder)
-				Flush(w)
+				recwatch.Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
 			if err := ac.RunLua(recorder, req, filename, flushFunc, httpStatus); err != nil {
@@ -277,7 +278,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		} else {
 			// The flush function just flushes the ResponseWriter
 			flushFunc := func() {
-				Flush(w)
+				recwatch.Flush(w)
 			}
 			// Run the lua script, with the flush feature
 			if err := ac.RunLua(w, req, filename, flushFunc, nil); err != nil {
