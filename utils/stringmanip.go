@@ -28,15 +28,19 @@ func FilterIntoGroups(bytelines [][]byte, filterfunc func([]byte) bool) ([][]byt
  * and can be within single-line HTML comments (<-- ... -->).
  */
 func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[string][]byte) {
+	var (
+		keywordColon      []byte
+		inCommentBlock    bool
+		singleLineComment bool
+		lineCounter       uint64
+	)
 	bnl := []byte("\n")
 	commentStart := []byte("<!--")
 	commentEnd := []byte("-->")
-	var keywordColon []byte
 	found := make(map[string][]byte)
-	inCommentBlock := false
-	singleLineComment := false
 	// Find and separate the lines starting with one of the keywords in the special map
 	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
+		lineCounter++
 		// Check if the current line has one of the special keywords
 		for _, keyword := range keywordsToLookFor {
 			strippedLine := bytes.TrimSpace(byteline)
@@ -47,9 +51,9 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 
 			// Check if we are in a HTML comment block
 			singleLineComment = false
-			if bytes.HasPrefix(strippedLine, commentStart) && bytes.HasSuffix(strippedLine, commentEnd)  {
+			if bytes.HasPrefix(strippedLine, commentStart) && bytes.HasSuffix(strippedLine, commentEnd) {
 				inCommentBlock = false
-				strippedLine = bytes.TrimSpace(strippedLine[len(commentStart):len(strippedLine)-len(commentEnd)])
+				strippedLine = bytes.TrimSpace(strippedLine[len(commentStart) : len(strippedLine)-len(commentEnd)])
 				singleLineComment = true
 			} else if bytes.HasPrefix(strippedLine, commentStart) {
 				inCommentBlock = true
@@ -76,13 +80,15 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 					found[keyword] = bytes.TrimSpace(strippedLine[len(keyword)+1:])
 					return true
 				}
-			}
-			// Check for lines starting with the keyword and a ":"
-			if inCommentBlock && bytes.HasPrefix(strippedLine, keywordColon) {
-				// Set (possibly overwrite) the value in the map, if the keyword is found.
-				// Trim the surrounding whitespace and skip the letters of the keyword itself.
-				found[keyword] = bytes.TrimSpace(strippedLine[len(keywordColon):])
-				return true
+				// Check for lines starting with the keyword and a ":"
+			} else if bytes.HasPrefix(strippedLine, keywordColon) {
+				// Check if the keyword was found either in a comment block, or on the first 10 lines
+				if inCommentBlock || lineCounter < 10 {
+					// Set (possibly overwrite) the value in the map, if the keyword is found.
+					// Trim the surrounding whitespace and skip the letters of the keyword itself.
+					found[keyword] = bytes.TrimSpace(strippedLine[len(keywordColon):])
+					return true
+				}
 			}
 		}
 		// Not special
@@ -135,4 +141,3 @@ func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 	buf.WriteString(strings.Join(enabledFlags, ", "))
 	buf.WriteString("]\n")
 }
-
