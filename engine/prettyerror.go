@@ -64,7 +64,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 	w.WriteHeader(http.StatusOK)
 
 	// HTTP content type
-	w.Header().Set("Content-Type", "text/html; encoding=UTF-8")
+	w.Header().Add("Content-Type", "text/html;charset=utf-8")
 
 	var (
 		// If there is code to be displayed

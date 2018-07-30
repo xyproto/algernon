@@ -41,7 +41,7 @@ func (ac *Config) ClientCanGzip(req *http.Request) bool {
 
 // PongoHandler renders and serves a Pongo2 template
 func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filename, ext string) {
-	w.Header().Add("Content-Type", "text/html; charset=utf-8")
+	w.Header().Add("Content-Type", "text/html;charset=utf-8")
 	pongoblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
 		if ac.debugMode {
@@ -139,7 +139,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
 	case ".html", ".htm":
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 
 		// Read the file (possibly in compressed format, straight from the cache)
 		htmlblock, err := ac.ReadAndLogErrors(w, filename, ext)
@@ -163,7 +163,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".md", ".markdown":
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the markdown page
 			ac.MarkdownPage(w, req, markdownblock.MustData(), filename)
@@ -171,7 +171,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		return
 
 	case ".amber", ".amb":
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 		amberblock, err := ac.ReadAndLogErrors(w, filename, ext)
 		if err != nil {
 			return
@@ -290,7 +290,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	case ".gcss":
 		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
+			w.Header().Add("Content-Type", "text/css;charset=utf-8")
 			// Render the GCSS page as CSS
 			ac.GCSSPage(w, req, filename, gcssblock.MustData())
 		}
@@ -299,7 +299,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	case ".scss":
 		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the SASS page (with .scss extension) as CSS
-			w.Header().Add("Content-Type", "text/css; charset=utf-8")
+			w.Header().Add("Content-Type", "text/css;charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.MustData())
 		}
 		return
@@ -307,7 +307,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as HTML with embedded JavaScript
-			w.Header().Add("Content-Type", "text/html; charset=utf-8")
+			w.Header().Add("Content-Type", "text/html;charset=utf-8")
 			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
 		} else {
 			log.Error("Error when serving " + filename + ":" + err.Error())
@@ -318,7 +318,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	case ".jsx":
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as JavaScript
-			w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
+			w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.MustData())
 		}
 		return
@@ -326,16 +326,16 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	// Text and configuration files (most likely)
 	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".ini", ".log", ".lst", ".me", ".nfo", ".readme", ".sub", ".txt", ".yml", ".yaml", ".tml", ".toml", ".gitignore", ".gitmodules", ".pem":
 		// Set headers for displaying it in the browser.
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 
 	// Source files that may be used by web pages
 	case ".js":
-		w.Header().Add("Content-Type", "text/javascript; charset=utf-8")
+		w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 
 	// Source code files for viewing
 	case ".ada", ".bash", ".c", ".cc", ".cl", ".clj", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".scm", ".sh", ".ts":
 		// Set headers for displaying it in the browser.
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 
 	// Common binary file extensions
 	case ".7z", ".arj", ".com", ".elf", ".exe", ".gz", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
@@ -447,7 +447,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 	} else {
 		limiter := tollbooth.NewLimiter(float64(ac.limitRequests), nil)
 		limiter.SetMessage(themes.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme))
-		limiter.SetMessageContentType("text/html; charset=utf-8")
+		limiter.SetMessageContentType("text/html;charset=utf-8")
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }

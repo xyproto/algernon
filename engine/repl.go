@@ -184,12 +184,12 @@ jnode:pretty() -> string
 // Return the JSON data, as a compact string.
 jnode:compact() -> string
 // Sends JSON data to the given URL. Returns the HTTP status code as a string.
-// The content type is set to "application/json; charset=utf-8".
+// The content type is set to "application/json;charset=utf-8".
 // The second argument is an optional authentication token that is used for the
 // Authorization header field. Uses HTTP POST.
 jnode:POST(string[, string]) -> string
 // Sends JSON data to the given URL. Returns the HTTP status code as a string.
-// The content type is set to "application/json; charset=utf-8".
+// The content type is set to "application/json;charset=utf-8".
 // The second argument is an optional authentication token that is used for the
 // Authorization header field. Uses HTTP PUT.
 jnode:PUT(string[, string]) -> string
