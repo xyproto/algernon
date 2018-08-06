@@ -343,13 +343,17 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		w.Header().Set("Content-Disposition", "attachment")
 
 	default:
-		// Set the correct Content-Type
-		if ac.mimereader != nil {
-			ac.mimereader.SetHeader(w, ext)
+		// If the filename starts with a ".", assume it's a plain text configuration file
+		if strings.HasPrefix(lowercaseFilename, ".") {
+			w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 		} else {
-			log.Error("Uninitialized mimereader!")
+			// Set the correct Content-Type
+			if ac.mimereader != nil {
+				ac.mimereader.SetHeader(w, ext)
+			} else {
+				log.Error("Uninitialized mimereader!")
+			}
 		}
-
 	}
 
 	// TODO Add support for "prettifying"/HTML-ifying some file extensions:
