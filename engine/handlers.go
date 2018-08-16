@@ -344,7 +344,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	default:
 		// If the filename starts with a ".", assume it's a plain text configuration file
-		if strings.HasPrefix(lowercaseFilename, ".") {
+		if strings.HasPrefix(filepath.Base(lowercaseFilename), ".") {
 			w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 		} else {
 			// Set the correct Content-Type
