@@ -23,7 +23,7 @@ const (
 	// Gzip content over this size
 	gzipThreshold = 4096
 
-	// Pretty soon
+	// Used for deciding how long to wait before quitting when only serving a single file and starting a browser
 	defaultSoonDuration = time.Second * 3
 )
 
@@ -283,7 +283,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// Run the lua script, with the flush feature
 			if err := ac.RunLua(w, req, filename, flushFunc, nil); err != nil {
 				// Output the non-fatal error message to the log
-				log.Error("Error in ", filename+":", err)
+				if strings.HasPrefix(err.Error(), filename) {
+					log.Error("Error at " + err.Error())
+				} else {
+					log.Error("Error in " + filename + ": " + err.Error())
+				}
 			}
 		}
 		return
@@ -396,12 +400,15 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
+
 		// Rejecting requests is handled by the permission system, which
 		// in turn requires a database backend.
 		if ac.perm != nil {
 			if ac.perm.Rejected(w, req) {
 				// Get and call the Permission Denied function
 				ac.perm.DenyFunction()(w, req)
+				// Log the denial
+				ac.LogAccess(req, http.StatusForbidden, 0)
 				// Reject the request by returning
 				return
 			}
@@ -434,18 +441,22 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		// Share the directory or file
 		if hasdir {
 			ac.DirPage(w, req, servedir, dirname, theme)
+			ac.LogAccess(req, http.StatusOK, 0)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
 			ac.FilePage(w, req, noslash, ac.defaultLuaDataFilename)
+			ac.LogAccess(req, http.StatusOK, 0)
 			return
 		}
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(themes.NoPage(filename, theme))
+		data := themes.NoPage(filename, theme)
+		ac.LogAccess(req, http.StatusNotFound, len(data))
+		w.Write(data)
 	}
 
-	// Handle requests differently depending on if rate limiting is enabled or not
+	// Handle requests differently depending on rate limiting being enabled or not
 	if ac.disableRateLimiting {
 		mux.HandleFunc(handlePath, allRequests)
 	} else {

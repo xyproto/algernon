@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.10.1 to master
+=============================
+
+* Support for logging to a NCSA and/or a Combined access log, with two new commandline flags: `--ncsa` and `--accesslog`.
+
 Changes from 1.10 to 1.10.1
 ===========================
 

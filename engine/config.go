@@ -121,6 +121,10 @@ type Config struct {
 	limitRequests       int64 // rate limit to this many requests per client per second
 	disableRateLimiting bool
 
+	// Access logs
+	commonAccessLogFilename   string // NCSA access log
+	combinedAccessLogFilename string // CLF access log
+
 	// For the version flag
 	showVersion bool
 
@@ -376,6 +380,33 @@ func (ac *Config) initFilesAndCache() error {
 			log.Info("Done tracing")
 			f.Close()
 		})
+	}
+
+	// Touch the common access log, if specified
+	if ac.commonAccessLogFilename != "" {
+		// Create if missing
+		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(EmptyCommonLogFormatLine())
+		if err != nil {
+			return err
+		}
+		f.Close()
+	}
+	// Touch the combined access log, if specified
+	if ac.combinedAccessLogFilename != "" {
+		// Create if missing
+		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(EmptyCombinedLogFormatLine())
+		if err != nil {
+			return err
+		}
+		f.Close()
 	}
 
 	// Create a cache struct for reading files (contains functions that can

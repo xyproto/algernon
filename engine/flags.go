@@ -94,6 +94,8 @@ Available flags:
                                material or neon.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
+  --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
+  --ncsa=FILENAME              Alternative access log filename. Logged in Common Log Format (NCSA).
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
@@ -202,6 +204,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
 	flag.BoolVar(&noDatabase, "nodb", false, "No database backend")
 	flag.BoolVar(&ac.serveNothing, "lua", false, "Only present the Lua REPL")
+	flag.StringVar(&ac.combinedAccessLogFilename, "accesslog", "", "Combined access log filename")
+	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

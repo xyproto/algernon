@@ -957,6 +957,27 @@ Requirements
 
 * go >= 1.9
 
+Access logs
+-----------
+
+Can log to a Combined Log Format access log with the `--accesslog` flag. This works nicely together with [goaccess](https://goaccess.io/).
+
+### Example usage
+
+Serve files in one directory:
+
+    algernon --accesslog=access.log -x
+
+Then visit the webpage once, to create one entry in the access.log.
+
+The wonderful [goaccess](https://goaccess.io) utility can then be used to view the access log, while it is being filled:
+
+    goaccess --no-global-config --log-format=COMBINED access.log
+
+If you have goaccess setup correctly, running goaccess without any flags should work too:
+
+    goaccess access.log
+
 Other resources
 ---------------
 
