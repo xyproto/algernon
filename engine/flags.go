@@ -70,6 +70,8 @@ Available flags:
   --mariadb=NAME               Use the given MariaDB or MySQL database name.
   --postgres=DSN               Use the given PostgreSQL host/database.
   --postgresdb=NAME            Use the given PostgreSQL database name.
+  --clear                      Clear the default URI prefixes that are used
+                               when handling permissions.
   -V, --verbose                Slightly more verbose logging.
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
@@ -114,7 +116,7 @@ Available flags:
   Serve the current dir over QUIC, port 7000, no banner.
     algernon -s -u -n . :7000
 
-  Serve the current dir over HTTP, port 3000. No limits, cache or database.
+  Serve the current dir over HTTP, port 3000. No limits, cache, permissions or database.
     algernon -x
 `)
 	}
@@ -206,6 +208,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.serveNothing, "lua", false, "Only present the Lua REPL")
 	flag.StringVar(&ac.combinedAccessLogFilename, "accesslog", "", "Combined access log filename")
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
+	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -313,6 +316,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serverMode = true
 		ac.cacheMode = cachemode.Off
 		ac.disableRateLimiting = true
+		ac.clearDefaultPathPrefixes = true
+		ac.noHeaders = true
 	}
 
 	// If a watch directory is given, enable the auto refresh feature

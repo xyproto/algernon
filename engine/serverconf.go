@@ -372,5 +372,9 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		log.Info("Database backend success: " + ac.dbName)
 	}
 
+	if perm != nil && ac.clearDefaultPathPrefixes {
+		perm.Clear()
+	}
+
 	return perm, nil
 }
