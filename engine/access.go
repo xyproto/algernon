@@ -12,20 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func EmptyCommonLogFormatLine() string {
-	// goaccess did not accept this as an "empty" line
-	//timestamp := strings.Replace(time.Now().Format("02/Jan/2006 15:04:05 -0700"), " ", ":", 1)
-	//return "- - - [" + timestamp + "] \"- - -\" - -\n"
-	return ""
-}
-
-func EmptyCombinedLogFormatLine() string {
-	// goaccess did not accept this as an "empty" line
-	//timestamp := strings.Replace(time.Now().Format("02/Jan/2006 15:04:05 -0700"), " ", ":", 1)
-	//return "- - - [" + timestamp + "] \"- - -\" - - \"-\" \"-\"\n"
-	return ""
-}
-
 // CommonLogFormat returns a line with the data that is available at the start
 // of a request handler. The log line is in NCSA format, the same log format
 // used by Apache. Fields where data is not available are indicated by a "-".

@@ -393,20 +393,12 @@ func (ac *Config) initFilesAndCache() error {
 		if err != nil {
 			return err
 		}
-		_, err = f.WriteString(EmptyCommonLogFormatLine())
-		if err != nil {
-			return err
-		}
 		f.Close()
 	}
 	// Touch the combined access log, if specified
 	if ac.combinedAccessLogFilename != "" {
 		// Create if missing
 		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-		if err != nil {
-			return err
-		}
-		_, err = f.WriteString(EmptyCombinedLogFormatLine())
 		if err != nil {
 			return err
 		}
