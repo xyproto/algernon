@@ -2,49 +2,51 @@
 
 Priority 1
 ----------
-- [ ] Integrate [boltBrowser](https://github.com/ShoshinNikita/boltBrowser).
-- [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
+- [ ] Flag for redirecting all `http://` traffic to `https://`.
 - [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
-- [ ] Make it possible to send the access log to the database.
-- [ ] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
-- [ ] Make it possible to send the error log to the database.
-- [ ] Embed the [Fennel](https://github.com/bakpakin/Fennel) package (compiles to Lua) so that Fennel can be used on equal footing with Lua for Algernon projects.
-- [ ] Port the layout and concept of [werc](http://werc.cat-v.org/) to Algernon.  See also [gowerc](https://bitbucket.org/mischief/gowerc/src).
-- [ ] Make most methods in [onthefly](https://github.com/xyproto/onthefly) available to Algernon/Lua.
-- [ ] User management interface + web REPL + stats + logs + import/export data .alg launcher.
-- [ ] Present directories with media files with a built-in page.
-- [ ] Add an option for using brotly compression instead of gzip.
-- [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
-- [ ] Add full support for `onthefly` in Lua.
-- [ ] Add support for `metatar` in Lua, to be able to offer a whole Arch Linux package repository from just a single .lua file, and a collection of PKGBUILD files, among other things.
+- [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
+- [ ] Profile the startup process and make it even faster.
 
 Priority 2
 ----------
+
+- [ ] Add support for `metatar` in Lua, to be able to offer a whole Arch Linux package repository from just a single .lua file, and a collection of PKGBUILD files.
+- [ ] Embed the [Fennel](https://github.com/bakpakin/Fennel) package (compiles to Lua) so that Fennel can be used on equal footing with Lua for Algernon projects.
+- [ ] Integrate [boltBrowser](https://github.com/ShoshinNikita/boltBrowser).
+- [ ] Port the layout and concept of [werc](http://werc.cat-v.org/) to Algernon.  See also [gowerc](https://bitbucket.org/mischief/gowerc/src).
+- [ ] Make it possible to send the access log to the database.
+- [x] Output an access log in a [goaccess.io](https://goaccess.io) friendly format.
+- [ ] Make it possible to send the error log to the database.
+- [ ] User management interface + web REPL + stats + logs + import/export data .alg launcher.
+- [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Create a web page for uploading, reviewing, previewing and downloading Algernon Applications.
-- [ ] Profile the startup process and try to make it even faster.
-- [ ] Use fasthttp or iris when using regular HTTP:[switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
-- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
-- [ ] Also support a configuration file using [configparser](https://github.com/alyu/configparser), for port, host, keys etc.
+- [ ] Make most methods in [onthefly](https://github.com/xyproto/onthefly) available to Algernon/Lua.
+- [ ] Present directories with media files with a built-in page.
+- [ ] Add an option for using **brotly** compression instead of **gzip**.
+- [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
+- [ ] Add a Lua function for upgrading a handler to a WebSocket handler, also using concurrency in Lua.
 - [ ] Add a Markdown style similar to this one: https://hyperapp.glitch.me/style.css
 - [ ] Add a Markdown style similar to this one: http://setconf.roboticoverlords.org/
-- [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
 - [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/) database.
 - [ ] Add support for gccgo, if Badger works better with gccgo than BoltDB.
+- [ ] Use fasthttp or iris when using regular HTTP:[switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
 
 Documentation/tutorials
 -----------------------
-- [ ] Add example for HyperApp + database usage
-- [ ] Use `peek` for recording a series of videos.
+- [ ] Add sample for using Vue.js + Algernon.
 - [ ] Look into using [slate](https://github.com/lord/slate) for documentation.
+- [ ] Add sample for registering users and logging in.
+- [ ] Add sample for HyperApp + database usage.
+- [ ] Terminal recording of Lua tutorial using `algernon --lua`.
 - [ ] Terminal recording demostrating creating a simple register+login site.
-- [ ] Terminal recording demonstrating the Lua interpreter.
-- [ ] Video tutorials and screencasts.
 - [ ] Update the book to be more similar to the python Flask documentation.
+- [ ] Video tutorials and screencasts.
 - [ ] Create a docker image that comes with all the samples.
 - [ ] Document what the "current directory" is for various Lua functions that deals with files.
 - [ ] Document better the order of output calls when modifying the header to redirect.
 - [ ] Document how to read JSON from one place and output processed data somewhere else.
+- [ ] `help functionname` should output the help text for only the given function name, if available.
 
 Various
 -------
@@ -280,7 +282,7 @@ Maybe
 - [ ] Lua function for reading the contents of a file in the script dir,
       but in a cached way. Timestamp, filename and data are stored in Redis,
       if timestamp changes, data is re-read.
-- [ ] web handlers should have access to setting up additional web handlers
+- [x] web handlers can set up additional web handlers
 - [ ] Add a Lua function for removing all cache entries without a hit.
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code).
 - [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place).
@@ -290,10 +292,12 @@ Maybe
 
 ## Algernon 2
 
-* Use Badger instead of BoltDB (if it really is just as stable and 30x faster).
-* Use iris or fasthttp from the start.
-* Drop Amber and GCSS.
-* Focus on templates, markdown and possibly microservices.
-* Embed a different language than Lua, perhaps Anko.
-* Support gccgo from the start.
-* Aim for a very small and specific usage pattern and try to optimize for that.
+- [ ] Use Badger instead of BoltDB (if it really is just as stable and 30x faster).
+- [ ] Use iris or fasthttp from the start.
+- [ ] Drop Amber and GCSS.
+- [ ] Focus on templates, markdown and possibly microservices.
+- [ ] Embed a different language than Lua, perhaps Anko.
+- [ ] Support gccgo from the start.
+- [ ] Aim for a very small and specific usage pattern and try to optimize for that.
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
+- [ ] Use [configparser](https://github.com/alyu/configparser) for a configuration file with port, host, keys etc.
