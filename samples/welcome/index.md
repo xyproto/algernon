@@ -25,6 +25,7 @@ Samples
 * [Bootstrap](bootstrap)
 * [Permissions](permissions)
 
+There are more samples in the `samples/` directory.
 
 Resources
 ---------
