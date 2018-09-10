@@ -143,12 +143,11 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 <html>
   <head>
     <title>` + title + `</title>
-    <link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
     <style>
       body {
         background-color: #f0f0f0;
         color: #0b0b0b;
-        font-family: 'Lato', sans-serif;
+        font-family: Lato,'Trebuchet MS',Helvetica,sans-serif;
         font-weight: 300;
         margin: 3.5em;
         font-size: 1.3em;

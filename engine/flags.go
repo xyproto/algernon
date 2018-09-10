@@ -93,7 +93,7 @@ Available flags:
   --theme=NAME                 Builtin theme to use for Markdown, error pages,
                                directory listings and HyperApp apps.
                                Possible values are: light, dark, bw, redbox, wing,
-                               material or neon.
+                               material, neon or werc.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
