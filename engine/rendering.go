@@ -43,7 +43,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Convert the buffer to markdown and output the translated string
-		w.Write(blackfriday.MarkdownCommon(buf.Bytes()))
+		w.Write(blackfriday.Run(buf.Bytes()))
 		return 0 // number of results
 	}))
 
@@ -204,7 +204,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
 
 	// Convert from Markdown to HTML
-	htmlbody := blackfriday.MarkdownCommon(data)
+	htmlbody := blackfriday.Run(data)
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
 	// Markdown or not. Submit a patch to blackfriday if it is.

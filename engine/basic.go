@@ -80,7 +80,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Convert the buffer to markdown and output the translated string
-		html := strings.TrimSpace(string(blackfriday.MarkdownCommon(buf.Bytes())))
+		html := strings.TrimSpace(string(blackfriday.Run(buf.Bytes())))
 		L.Push(lua.LString(html))
 		return 1 // number of results
 	}))
