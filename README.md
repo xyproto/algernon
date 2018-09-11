@@ -205,8 +205,16 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-* `cd $GOPATH/src/github.com/xyproto/algernon`
-* `go build`
+With Go 1.11, outside of `$GOPATH`:
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    env GO111MODULE=on go build
+
+With earlier versions of Go:
+
+    cd $GOPATH/src/github.com/xyproto/algernon
+    go build
 
 ##### The "bob" sample, over https
 
