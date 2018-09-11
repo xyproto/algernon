@@ -1,12 +1,17 @@
 language: go
 
 go:
+  - "1.6"
+  - "1.7"
+  - "1.8"
+  - "1.9"
+  - "1.10"
   - "1.11"
   - tip
 
 os:
   - linux
-  - osx
+    #  - osx
 
 dist: trusty
 sudo: false
