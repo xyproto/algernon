@@ -1,0 +1,16 @@
+language: go
+
+addons:
+  - postgresql: "9.6"
+
+services:
+  - postgresql
+
+before_script:
+  - psql -c "CREATE DATABASE test;" -U postgres
+
+go:
+  - 1.8
+  - 1.9
+  - "1.10"
+  - tip

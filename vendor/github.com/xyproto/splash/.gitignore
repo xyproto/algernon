@@ -1,0 +1,8 @@
+*.swp
+*.bak
+*~
+
+simple/simple
+output*.html
+
+docs/docs
