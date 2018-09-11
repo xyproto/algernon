@@ -23,6 +23,7 @@ require (
 	github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874 // indirect
+	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.0 // indirect
 	github.com/golang/mock v1.1.1 // indirect
@@ -88,6 +89,13 @@ require (
 	golang.org/x/text v0.3.0 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/appengine v1.1.0 // indirect
-	gopkg.in/gcfg.v1 v1.2.3
+	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/gcfg.v1 v1.2.3 // indirect
+	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.2.1 // indirect
 )

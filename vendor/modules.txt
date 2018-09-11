@@ -67,6 +67,8 @@ github.com/flosch/pongo2
 github.com/fsnotify/fsnotify
 # github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874
 github.com/getwe/figlet4go
+# github.com/go-gcfg/gcfg v1.2.3
+github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
@@ -224,7 +226,6 @@ golang.org/x/time/rate
 # google.golang.org/appengine v1.1.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
-gopkg.in/gcfg.v1
 gopkg.in/gcfg.v1/scanner
 gopkg.in/gcfg.v1/token
 gopkg.in/gcfg.v1/types

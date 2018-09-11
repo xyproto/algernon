@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-gcfg/gcfg"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
-	"gopkg.in/gcfg.v1"
 )
 
 var (
