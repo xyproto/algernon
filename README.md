@@ -86,8 +86,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Builds with Go >= 1.9.
-* Building Algernon with gcc-go is not recommended (yet). There are issues that are not present when compiling with Go >= 1.9.
+* Requires Go 1.9 or later. The package used for QUIC support fails to build with Go < 1.9, or with `gccgo` (GCC).
 
 Utilities
 ---------
@@ -986,12 +985,15 @@ If you have goaccess setup correctly, running goaccess without any flags should 
 
     goaccess access.log
 
+Logo license
+------------
+
+Thanks to [Egon Elbre](https://twitter.com/egonelbre) for the two SVG drawings that I remixed into the current logo ([CC0](https://creativecommons.org/publicdomain/zero/1.0/) licensed).
+
 Other resources
 ---------------
 
 * [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
-
-Thanks to [Egon Elbre](https://twitter.com/egonelbre) for the two SVG drawings that I remixed into the current logo ([CC0](https://creativecommons.org/publicdomain/zero/1.0/) licensed).
 
 General information
 -------------------
