@@ -50,6 +50,7 @@ Documentation/tutorials
 
 Various
 -------
+- [ ] Add a theme that looks like https://huytd.github.io
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
 - [ ] Write a module for caching that can cache chunks of files and stream files that does not fit in memory directly from disk.
 - [ ] Add support for systemd reload, not just restart.
