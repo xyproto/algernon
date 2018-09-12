@@ -1,9 +1,19 @@
 # Changelog
 
-Changes from 1.10.1 to master
+Changes from 1.10.1 to 1.11.0
 =============================
 
-* Support for logging to a NCSA and/or a Combined access log, with two new commandline flags: `--ncsa` and `--accesslog`.
+* Using the `go mod` system that came with Go 1.11.
+* Experimental support for simple logging to a NCSA and/or a Combined access log, with two new commandline flags.
+* Minor improvements to the help text and status messages.
+* No external resources are required by Algernon, not even external fonts, ref #17.
+* Refactoring: moved the event server to the recwatch package.
+* Remove an unneeded space when setting `Content-Type`.
+* Better keyword handling in Markdown documents.
+* Set a mimetype for configuration files starting with a `.`.
+* Add a flag for clearing the default path prefixes used by the permissions subsystem.
+* Update test script.
+* Minor changes to documentation and samples.
 
 Changes from 1.10 to 1.10.1
 ===========================

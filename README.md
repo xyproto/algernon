@@ -998,6 +998,6 @@ Other resources
 General information
 -------------------
 
-* Version: 1.10.1
+* Version: 1.11.0
 * License: MIT
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
