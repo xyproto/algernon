@@ -262,7 +262,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	var head bytes.Buffer
 
 	// If a favicon is specified, use that
-	favicon := kwmap["favicon"]
+	favicon := string(kwmap["favicon"])
 	if len(favicon) > 0 {
 		// Only support the most common mime formats for favicons
 		if strings.HasSuffix(favicon, ".ico") {
