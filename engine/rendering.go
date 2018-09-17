@@ -194,7 +194,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
-	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css"}
+	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css", "favicon"}
 
 	// Also prepare for receiving meta tag information
 	searchKeywords = append(searchKeywords, themes.MetaKeywords...)
@@ -260,6 +260,23 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	var head bytes.Buffer
+
+	// If a favicon is specified, use that
+	favicon := kwmap["favicon"]
+	if len(favicon) > 0 {
+		// Only support the most common mime formats for favicons
+		if strings.HasSuffix(favicon, ".ico") {
+			head.WriteString(`<link rel="shortcut icon" type="image/x-icon" href="` + favicon + `"/>\n`)
+		} else if strings.HasSuffix(favicon, ".bmp") {
+			head.WriteString(`<link rel="shortcut icon" type="image/bmp" href="` + favicon + `"/>\n`)
+		} else if strings.HasSuffix(favicon, ".gif") {
+			head.WriteString(`<link rel="shortcut icon" type="image/gif" href="` + favicon + `"/>\n`)
+		} else if strings.HasSuffix(favicon, ".jpg") {
+			head.WriteString(`<link rel="shortcut icon" type="image/jpeg" href="` + favicon + `"/>\n`)
+		} else {
+			head.WriteString(`<link rel="shortcut icon" type="image/png" href="` + favicon + `"/>\n`)
+		}
+	}
 
 	// If style.gcss is present, use that style in <head>
 	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
