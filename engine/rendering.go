@@ -262,20 +262,24 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	var head bytes.Buffer
 
 	// If a favicon is specified, use that
-	favicon := string(kwmap["favicon"])
+	favicon := kwmap["favicon"]
 	if len(favicon) > 0 {
+		head.WriteString(`<link rel="shortcut icon" type="image/`)
 		// Only support the most common mime formats for favicons
-		if strings.HasSuffix(favicon, ".ico") {
-			head.WriteString(`<link rel="shortcut icon" type="image/x-icon" href="` + favicon + `"/>\n`)
-		} else if strings.HasSuffix(favicon, ".bmp") {
-			head.WriteString(`<link rel="shortcut icon" type="image/bmp" href="` + favicon + `"/>\n`)
-		} else if strings.HasSuffix(favicon, ".gif") {
-			head.WriteString(`<link rel="shortcut icon" type="image/gif" href="` + favicon + `"/>\n`)
-		} else if strings.HasSuffix(favicon, ".jpg") {
-			head.WriteString(`<link rel="shortcut icon" type="image/jpeg" href="` + favicon + `"/>\n`)
+		if bytes.HasSuffix(favicon, []byte(".ico")) {
+			head.WriteString("x-icon")
+		} else if bytes.HasSuffix(favicon, []byte(".bmp")) {
+			head.WriteString("bmp")
+		} else if bytes.HasSuffix(favicon, []byte(".gif")) {
+			head.WriteString("gif")
+		} else if bytes.HasSuffix(favicon, []byte(".jpg")) {
+			head.WriteString("jpeg")
 		} else {
-			head.WriteString(`<link rel="shortcut icon" type="image/png" href="` + favicon + `"/>\n`)
+			head.WriteString("png")
 		}
+		head.WriteString(`" href="`)
+		head.Write(favicon)
+		head.WriteString(`"/>`)
 	}
 
 	// If style.gcss is present, use that style in <head>
