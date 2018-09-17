@@ -223,6 +223,11 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	htmlbody = bytes.Replace(htmlbody, []byte("<li>[x] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
 	htmlbody = bytes.Replace(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
 
+	// These should work by default, but does not.
+	// TOOD: Look into how blackfriday handles this.
+	htmlbody = bytes.Replace(htmlbody, []byte("&amp;gt;"), []byte("&gt;"), utils.EveryInstance)
+	htmlbody = bytes.Replace(htmlbody, []byte("&amp;lt;"), []byte("&lt;"), utils.EveryInstance)
+
 	// If there is no given title, use the h1title
 	title := kwmap["title"]
 	if len(title) == 0 {
