@@ -1,2 +1,3 @@
 #!/bin/sh
-docker build --no-cache -t algernon_interactive interactive/
+cd ..
+docker build --no-cache -t algernon_interactive -f docker/interactive/Dockerfile .

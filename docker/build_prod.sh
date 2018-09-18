@@ -1,2 +1,3 @@
 #!/bin/sh
-docker build --no-cache -t algernon_prod prod/
+cd ..
+docker build --no-cache -t algernon_prod -f docker/prod/Dockerfile .

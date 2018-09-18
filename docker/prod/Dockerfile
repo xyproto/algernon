@@ -1,16 +1,25 @@
 # Dockerfile for making Algernon serve HTTP on port 80 and HTTPS+HTTP/2 on port 443
-
-FROM golang
+FROM golang:alpine as gobuilder
 MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
 
-RUN go get github.com/xyproto/algernon
-RUN ln -s "$GOPATH/bin/algernon" /usr/bin/algernon
+# Prepare the needed files
+COPY . "$GOPATH/src/github.com/xyproto/algernon"
+WORKDIR "$GOPATH/src/github.com/xyproto/algernon"
 
+# Build Algernon
+RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/algernon
+
+# Start from scratch, only copy in the Algernon executable
+FROM scratch
+COPY --from=gobuilder /go/bin/algernon /go/bin/algernon
+
+# Prepare directories
+COPY --from=gobuilder /tmp /tmp
 VOLUME /srv/algernon
 VOLUME /etc/algernon
-
 WORKDIR /srv/algernon
 
+# Expose ports for HTTP and HTTPS
 EXPOSE 80 443
 
 # -c assumes no files will be added or removed, for a slight increase in speed
@@ -27,4 +36,4 @@ EXPOSE 80 443
 #
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
-CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem"]
+CMD ["/go/bin/algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem"]
