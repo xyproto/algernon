@@ -41,4 +41,5 @@ EXPOSE 3000
 #
 # For "--domain" to work, there should be at least a /srv/algernon/localhost directory.
 #
-CMD ["/go/bin/algernon", "--domain", "--server", "--dev", "--autorefresh", "--dir", "/srv/algernon", ":3000"]
+ENTRYPOINT ["/go/bin/algernon", "--domain", "--server", "--dev", "--autorefresh", "--dir", "/srv/algernon", ":3000"]
+CMD ["/go/bin/algernon"]
