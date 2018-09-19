@@ -13,7 +13,7 @@ RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsu
 FROM scratch
 COPY --from=gobuilder /bin/algernon /bin/algernon
 COPY --from=gobuilder /tmp /tmp
-WORKDIR /tmp
 
 # Only start the Lua interpreter
-CMD ["/bin/algernon", "--conf", "/dev/null", "--lua"]
+ENTRYPOINT ["/bin/algernon", "--lua"]
+CMD ["/bin/algernon", "--lua"]
