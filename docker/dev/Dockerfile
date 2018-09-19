@@ -39,4 +39,6 @@ EXPOSE 3000
 #
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
-CMD ["/go/bin/algernon", "--domain", "--server", "--dev", "--autorefresh"]
+# For "--domain" to work, there should be at least a /srv/algernon/localhost directory.
+#
+CMD ["/go/bin/algernon", "--domain", "--server", "--dev", "--autorefresh", "--dir", "/srv/algernon", ":3000"]

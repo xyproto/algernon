@@ -36,4 +36,4 @@ EXPOSE 80 443
 #
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
-CMD ["/go/bin/algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem"]
+CMD ["/go/bin/algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "--dir", "/srv/algernon"]
