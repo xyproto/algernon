@@ -21,16 +21,13 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
-	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.0 // indirect
 	github.com/golang/mock v1.1.1 // indirect
-	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
-	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/juju/errors v0.0.0-20180806074554-22422dad46e1 // indirect
 	github.com/juju/loggo v0.0.0-20180524022052-584905176618 // indirect
 	github.com/juju/testing v0.0.0-20180820040200-b0b89ba330f2 // indirect
@@ -48,8 +45,7 @@ require (
 	github.com/mitchellh/mapstructure v1.0.0 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/nsf/termbox-go v0.0.0-20180819125858-b66b20ab708e // indirect
-	github.com/onsi/ginkgo v1.6.0 // indirect
-	github.com/onsi/gomega v1.4.1 // indirect
+	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
@@ -75,27 +71,22 @@ require (
 	github.com/xyproto/simplebolt v0.0.0-20180517193407-3933e7ecf0bf
 	github.com/xyproto/simplehstore v0.0.0-20180419221416-e02905469021 // indirect
 	github.com/xyproto/simplemaria v0.0.0-20180616120446-f9ca57f2074c // indirect
-	github.com/xyproto/simpleredis v0.0.0-20180505135304-2f4b48d695d6
+	github.com/xyproto/simpleredis v0.0.0-20180914135211-400f7b9284b8
 	github.com/xyproto/splash v0.0.0-20180806122730-f047d352ed87
 	github.com/xyproto/term v0.0.0-20180502080334-71331061d202
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-	github.com/yuin/gopher-lua v0.0.0-20180827083657-b942cacc89fe
-	golang.org/x/crypto v0.0.0-20180904163835-0709b304e793 // indirect
-	golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e // indirect
-	golang.org/x/text v0.3.0 // indirect
+	github.com/yuin/gopher-lua v0.0.0-20180918061612-799fa34954fb
+	golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b // indirect
+	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3
+	golang.org/x/sys v0.0.0-20180918153733-ee1b12c67af4 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
-	google.golang.org/appengine v1.1.0 // indirect
+	google.golang.org/appengine v1.2.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
-	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
 )
