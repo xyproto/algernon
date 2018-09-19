@@ -262,6 +262,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	if ac.serveNothing {
 		ac.noBanner = true
 		ac.debugMode = true
+		ac.serverConfScript = ""
 	}
 
 	// Disable verbose mode if quiet mode has been enabled
@@ -429,7 +430,9 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	// Add the serverConfScript to the list of configuration scripts to be read and executed
-	ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, ac.serverConfScript)
+	if ac.serverConfScript != "" && ac.serverConfScript != os.DevNull {
+		ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, ac.serverConfScript)
+	}
 
 	ac.serverHost = host
 }
