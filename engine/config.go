@@ -693,7 +693,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// If no configuration files were being ran successfully,
 	// output basic server information.
 	if len(ac.serverConfigurationFilenames) == 0 {
-		if !ac.quietMode {
+		if !ac.quietMode && !ac.serveNothing {
 			fmt.Println(ac.Info())
 		}
 		ranServerReadyFunction = true
