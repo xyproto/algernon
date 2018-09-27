@@ -107,8 +107,9 @@ func Infostring(functionName string, args []string) string {
 	return s + ")"
 }
 
-// WriteStatus writes a status message to a buffer, given a name and a bool
-func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
+// WriteStatus writes status messages to a string Builder
+// The flags argument contains the flag names, and if they are enabled or not
+func WriteStatus(sb *strings.Builder, title string, flags map[string]bool) {
 
 	// Check that at least one of the bools are true
 	found := false
@@ -123,13 +124,13 @@ func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 	}
 
 	// Write the overview to the buffer
-	buf.WriteString(title + ":")
+	sb.WriteString(title + ":")
 
 	// Spartan way of lining up the columns
 	if len(title) < 7 {
-		buf.WriteString("\t")
+		sb.WriteString("\t")
 	}
-	buf.WriteString("\t\t[")
+	sb.WriteString("\t\t[")
 
 	var enabledFlags []string
 	// Add all enabled flags to the list
@@ -138,6 +139,6 @@ func WriteStatus(buf *bytes.Buffer, title string, flags map[string]bool) {
 			enabledFlags = append(enabledFlags, name)
 		}
 	}
-	buf.WriteString(strings.Join(enabledFlags, ", "))
-	buf.WriteString("]\n")
+	sb.WriteString(strings.Join(enabledFlags, ", "))
+	sb.WriteString("]\n")
 }

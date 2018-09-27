@@ -1,13 +1,13 @@
 package engine
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
@@ -22,27 +22,27 @@ import (
 
 // Info returns a string with various info about the current configuration
 func (ac *Config) Info() string {
-	var buf bytes.Buffer
+	var sb strings.Builder
 
 	if !ac.singleFileMode {
-		buf.WriteString("Server directory:\t" + ac.serverDirOrFilename + "\n")
+		sb.WriteString("Server directory:\t" + ac.serverDirOrFilename + "\n")
 	} else {
-		buf.WriteString("Filename:\t\t" + ac.serverDirOrFilename + "\n")
+		sb.WriteString("Filename:\t\t" + ac.serverDirOrFilename + "\n")
 	}
 	if !ac.productionMode {
-		buf.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
+		sb.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
 	} // else port 80 and 443
 	if ac.dbName == "" {
-		buf.WriteString("Database:\t\tDisabled\n")
+		sb.WriteString("Database:\t\tDisabled\n")
 	} else {
-		buf.WriteString("Database:\t\t" + ac.dbName + "\n")
+		sb.WriteString("Database:\t\t" + ac.dbName + "\n")
 	}
 	if ac.luaServerFilename != "" {
-		buf.WriteString("Server filename:\t" + ac.luaServerFilename + "\n")
+		sb.WriteString("Server filename:\t" + ac.luaServerFilename + "\n")
 	}
 
 	// Write the status of flags that can be toggled
-	utils.WriteStatus(&buf, "Options", map[string]bool{
+	utils.WriteStatus(&sb, "Options", map[string]bool{
 		"Debug":        ac.debugMode,
 		"Production":   ac.productionMode,
 		"Auto-refresh": ac.autoRefresh,
@@ -51,44 +51,42 @@ func (ac *Config) Info() string {
 		"StatCache":    ac.cacheFileStat,
 	})
 
-	buf.WriteString("Cache mode:\t\t" + ac.cacheMode.String() + "\n")
+	sb.WriteString("Cache mode:\t\t" + ac.cacheMode.String() + "\n")
 	if ac.cacheSize != 0 {
-		buf.WriteString(fmt.Sprintf("Cache size:\t\t%d bytes\n", ac.cacheSize))
+		sb.WriteString(fmt.Sprintf("Cache size:\t\t%d bytes\n", ac.cacheSize))
 	}
 
 	if ac.serverLogFile != "" {
-		buf.WriteString("Log file:\t\t" + ac.serverLogFile + "\n")
+		sb.WriteString("Log file:\t\t" + ac.serverLogFile + "\n")
 	}
 	if !(ac.serveJustHTTP2 || ac.serveJustHTTP) {
-		buf.WriteString("TLS certificate:\t" + ac.serverCert + "\n")
-		buf.WriteString("TLS key:\t\t" + ac.serverKey + "\n")
+		sb.WriteString("TLS certificate:\t" + ac.serverCert + "\n")
+		sb.WriteString("TLS key:\t\t" + ac.serverKey + "\n")
 	}
 	if ac.autoRefresh {
-		buf.WriteString("Event server:\t\t" + ac.eventAddr + "\n")
+		sb.WriteString("Event server:\t\t" + ac.eventAddr + "\n")
 	}
 	if ac.autoRefreshDir != "" {
-		buf.WriteString("Only watching:\t\t" + ac.autoRefreshDir + "\n")
+		sb.WriteString("Only watching:\t\t" + ac.autoRefreshDir + "\n")
 	}
 	if ac.redisAddr != ac.defaultRedisColonPort {
-		buf.WriteString("Redis address:\t\t" + ac.redisAddr + "\n")
+		sb.WriteString("Redis address:\t\t" + ac.redisAddr + "\n")
 	}
 	if ac.disableRateLimiting {
-		buf.WriteString("Request limit:\t\tOff\n")
+		sb.WriteString("Request limit:\t\tOff\n")
 	} else {
-		buf.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec per visitor\n", ac.limitRequests))
+		sb.WriteString(fmt.Sprintf("Request limit:\t\t%d/sec per visitor\n", ac.limitRequests))
 	}
 	if ac.redisDBindex != 0 {
-		buf.WriteString(fmt.Sprintf("Redis database index:\t%d\n", ac.redisDBindex))
+		sb.WriteString(fmt.Sprintf("Redis database index:\t%d\n", ac.redisDBindex))
 	}
 	if len(ac.serverConfigurationFilenames) > 0 {
-		buf.WriteString(fmt.Sprintf("Server configuration:\t%v\n", ac.serverConfigurationFilenames))
+		sb.WriteString(fmt.Sprintf("Server configuration:\t%v\n", ac.serverConfigurationFilenames))
 	}
 	if ac.internalLogFilename != os.DevNull {
-		buf.WriteString("Internal log file:\t" + ac.internalLogFilename + "\n")
+		sb.WriteString("Internal log file:\t" + ac.internalLogFilename + "\n")
 	}
-	infoString := buf.String()
-	// Return without the final newline
-	return infoString[:len(infoString)-1]
+	return strings.TrimSpace(sb.String())
 }
 
 // LoadServerConfigFunctions makes functions related to server configuration and
