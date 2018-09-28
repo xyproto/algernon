@@ -37,15 +37,31 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 	bnl := []byte("\n")
 	commentStart := []byte("<!--")
 	commentEnd := []byte("-->")
+	backtick := []byte("`")
 	found := make(map[string][]byte)
+
+	if bytes.Contains(data, backtick) {
+	}
+
+	var stopLooking = false
 	// Find and separate the lines starting with one of the keywords in the special map
 	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
 		lineCounter++
+		if stopLooking {
+			return false
+		}
 		// Check if the current line has one of the special keywords
 		for _, keyword := range keywordsToLookFor {
 			strippedLine := bytes.TrimSpace(byteline)
 			if len(strippedLine) == 0 {
 				// Empty line
+				return false
+			}
+
+			// If we encounter a backtick (`), stop looking for keywords (due to Markdown formatting of code)
+			if bytes.Contains(strippedLine, backtick) {
+				// Contains a backtick
+				stopLooking = true
 				return false
 			}
 

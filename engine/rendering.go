@@ -199,7 +199,8 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// Also prepare for receiving meta tag information
 	searchKeywords = append(searchKeywords, themes.MetaKeywords...)
 
-	// Extract keywords from the given data, and remove the lines with keywords
+	// Extract keywords from the given data, and remove the lines with keywords,
+	// but only the first time that keyword occurs.
 	var kwmap map[string][]byte
 	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
 
