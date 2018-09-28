@@ -86,7 +86,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go 1.9 or later. The package used for QUIC support fails to build with Go < 1.9, or with `gccgo` (GCC).
+* Requires Go 1.10 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
 
 Utilities
 ---------
