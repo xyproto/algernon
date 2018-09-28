@@ -10,6 +10,7 @@ Priority 1
 Priority 2
 ----------
 
+- [ ] Let `-m` shut down Algernon after N seconds of inactivity after the first request, to be able to serve content for single markdown files too. Or find a better method.
 - [ ] Add support for `metatar` in Lua, to be able to offer a whole Arch Linux package repository from just a single .lua file, and a collection of PKGBUILD files.
 - [ ] Embed the [Fennel](https://github.com/bakpakin/Fennel) package (compiles to Lua) so that Fennel can be used on equal footing with Lua for Algernon projects.
 - [ ] Integrate [boltBrowser](https://github.com/ShoshinNikita/boltBrowser).
