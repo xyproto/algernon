@@ -6,7 +6,7 @@ go:
 
 os:
   - linux
-  - osx
+    #  - osx
 
 dist: trusty
 sudo: false
