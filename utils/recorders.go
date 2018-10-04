@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Write the contents of a ResponseRecorder to a ResponseWriter.
-// Also flushes the recorder and returns the written bytes.
+// WriteRecorder writes to a ResponseWriter from a ResponseRecorder.
+// Also flushes the recorder and returns how many bytes were written.
 func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) int64 {
 	for key, values := range recorder.HeaderMap {
 		for _, value := range values {
@@ -26,8 +26,8 @@ func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) i
 	return bytesWritten
 }
 
-// Discards the HTTP headers and return the recorder body as a string.
-// Also flushes the recorder.
+// RecorderToString discards the HTTP headers and return the recorder body as
+// a string. Also flushes the recorder.
 func RecorderToString(recorder *httptest.ResponseRecorder) string {
 	var buf bytes.Buffer
 	recorder.Body.WriteTo(&buf)

@@ -67,7 +67,5 @@ trace.out
 # base64 encoded temporary output
 output.b64
 
-# access logs
-access.log
-common.log
-combined.log
+# logs
+*.log

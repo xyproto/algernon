@@ -410,9 +410,9 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 				// Get and call the Permission Denied function
 				ac.perm.DenyFunction()(wr, req)
 				// Write the recorded response to the actual ResponseWriter
-				writtenBytes := utils.WriteRecorder(w, wr)
+				bytesWritten := utils.WriteRecorder(w, wr)
 				// Log the response
-				ac.LogAccess(req, http.StatusForbidden, writtenBytes)
+				ac.LogAccess(req, http.StatusForbidden, bytesWritten)
 				// Reject the request by just returning
 				return
 			}
@@ -442,15 +442,25 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 			ac.ServerHeaders(w)
 		}
 
+		// Set up a "fake" ResponseWriter
+		wr := httptest.NewRecorder()
+
 		// Share the directory or file
 		if hasdir {
-			ac.DirPage(w, req, servedir, dirname, theme)
-			ac.LogAccess(req, http.StatusOK, 0)
+			// Get the directory page
+			ac.DirPage(wr, req, servedir, dirname, theme)
+			// Write the recorded response to the actual ResponseWriter
+			bytesWritten := utils.WriteRecorder(w, wr)
+			// Log the access
+			ac.LogAccess(req, http.StatusOK, bytesWritten)
 			return
 		} else if !hasdir && hasfile {
 			// Share a single file instead of a directory
-			ac.FilePage(w, req, noslash, ac.defaultLuaDataFilename)
-			ac.LogAccess(req, http.StatusOK, 0)
+			ac.FilePage(wr, req, noslash, ac.defaultLuaDataFilename)
+			// Write the recorded response to the actual ResponseWriter
+			bytesWritten := utils.WriteRecorder(w, wr)
+			// Log the access
+			ac.LogAccess(req, http.StatusOK, bytesWritten)
 			return
 		}
 		// Not found
