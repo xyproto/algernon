@@ -251,7 +251,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			httpStatus := &FutureStatus{}
 			// The flush function writes the ResponseRecorder to the ResponseWriter
 			flushFunc := func() {
-				writeRecorder(w, recorder)
+				utils.WriteRecorder(w, recorder)
 				recwatch.Flush(w)
 			}
 			// Run the lua script, without the possibility to flush
@@ -273,7 +273,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 					w.WriteHeader(httpStatus.code)
 				}
 				// Then write to the ResponseWriter
-				writeRecorder(w, recorder)
+				utils.WriteRecorder(w, recorder)
 			}
 		} else {
 			// The flush function just flushes the ResponseWriter
@@ -405,11 +405,15 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		// in turn requires a database backend.
 		if ac.perm != nil {
 			if ac.perm.Rejected(w, req) {
+				// Set up a "fake" ResponseWriter
+				wr := httptest.NewRecorder()
 				// Get and call the Permission Denied function
-				ac.perm.DenyFunction()(w, req)
-				// Log the denial
-				ac.LogAccess(req, http.StatusForbidden, 0)
-				// Reject the request by returning
+				ac.perm.DenyFunction()(wr, req)
+				// Write the recorded response to the actual ResponseWriter
+				writtenBytes := utils.WriteRecorder(w, wr)
+				// Log the response
+				ac.LogAccess(req, http.StatusForbidden, writtenBytes)
+				// Reject the request by just returning
 				return
 			}
 		}
@@ -452,7 +456,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		// Not found
 		w.WriteHeader(http.StatusNotFound)
 		data := themes.NoPage(filename, theme)
-		ac.LogAccess(req, http.StatusNotFound, len(data))
+		ac.LogAccess(req, http.StatusNotFound, int64(len(data)))
 		w.Write(data)
 	}
 

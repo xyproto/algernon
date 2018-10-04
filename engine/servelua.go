@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/xyproto/algernon/utils"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -56,7 +57,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		ac.FilePage(recorder, req, serveFilename, dataFilename)
 
 		// Return the recorder as a string
-		L.Push(lua.LString(recorderToString(recorder)))
+		L.Push(lua.LString(utils.RecorderToString(recorder)))
 		return 1 // Number of results
 	}))
 

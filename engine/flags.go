@@ -105,7 +105,7 @@ Available flags:
   -u                           Serve over QUIC.
 
 
-  Examples
+Example usage:
 
   For auto-refreshing a webpage while developing:
     algernon --dev --httponly --debug --autorefresh --bolt --server . :4000
@@ -113,10 +113,11 @@ Available flags:
   Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
     algernon -c --domain --server --cachesize 67108864 --prod /srv
 
-  Serve the current dir over QUIC, port 7000, no banner.
+  Serve the current dir over QUIC, port 7000, no banner:
     algernon -s -u -n . :7000
 
-  Serve the current dir over HTTP, port 3000. No limits, cache, permissions or database.
+  Serve the current directory over HTTP, port 3000. No limits, cache,
+  permissions or database connections:
     algernon -x
 `)
 	}

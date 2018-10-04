@@ -3,7 +3,6 @@ package engine
 import (
 	"bytes"
 	"net/http"
-	"net/http/httptest"
 	"strconv"
 	"strings"
 
@@ -15,25 +14,6 @@ const (
 	preHighlight  = "<font style='color: red !important'>"
 	postHighlight = "</font>"
 )
-
-// Write the contents of a ResponseRecorder to a ResponseWriter
-func writeRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) {
-	for key, values := range recorder.HeaderMap {
-		for _, value := range values {
-			w.Header().Set(key, value)
-		}
-	}
-	recorder.Body.WriteTo(w)
-	recorder.Flush()
-}
-
-// Discards the HTTP headers and returns the recorder body as a string
-func recorderToString(recorder *httptest.ResponseRecorder) string {
-	var buf bytes.Buffer
-	recorder.Body.WriteTo(&buf)
-	recorder.Flush()
-	return buf.String()
-}
 
 // Given a lowercase string for the language, return an approprite error page title
 func errorPageTitle(lang string) string {
