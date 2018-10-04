@@ -40,14 +40,14 @@ func (v *VersionInfo) Check() error {
 }
 
 func TestAPI(t *testing.T) {
-	assert.Equal(t, New("simplebolt", simplebolt.Version, 3.0).Check(), nil)
-	assert.Equal(t, New("permissionbolt", permissionbolt.Version, 2.1).Check(), nil)
-	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.4).Check(), nil)
-	assert.Equal(t, New("permissions", permissions.Version, 2.5).Check(), nil)
+	assert.Equal(t, New("simplebolt", simplebolt.Version, 3.2).Check(), nil)
+	assert.Equal(t, New("permissionbolt", permissionbolt.Version, 2.4).Check(), nil)
+	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.6).Check(), nil)
+	assert.Equal(t, New("permissions2", permissions.Version, 2.6).Check(), nil)
 	//assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
 	//assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
 	//assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
 	//assert.Equal(t, New("pstore", pstore.Version, 3.0).Check(), nil)
-	assert.Equal(t, New("pinterface", pinterface.Version, 4.0).Check(), nil)
+	assert.Equal(t, New("pinterface", pinterface.Version, 5.0).Check(), nil)
 	assert.Equal(t, New("engine", engine.Version, 2.0).Check(), nil)
 }
