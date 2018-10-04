@@ -15,7 +15,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 3.0
+	Version = 3.2
 )
 
 type (
@@ -103,7 +103,7 @@ func (l *List) Add(value string) error {
 }
 
 // Get all elements of a list
-func (l *List) GetAll() (results []string, err error) {
+func (l *List) All() (results []string, err error) {
 	if l.name == nil {
 		return nil, ErrDoesNotExist
 	}
@@ -119,8 +119,13 @@ func (l *List) GetAll() (results []string, err error) {
 	})
 }
 
+// Deprecated
+func (l *List) GetAll() ([]string, error) {
+	return l.All()
+}
+
 // Get the last element of a list
-func (l *List) GetLast() (result string, err error) {
+func (l *List) Last() (result string, err error) {
 	if l.name == nil {
 		return "", ErrDoesNotExist
 	}
@@ -137,8 +142,13 @@ func (l *List) GetLast() (result string, err error) {
 	})
 }
 
+// Deprecated
+func (l *List) GetLast() (string, error) {
+	return l.Last()
+}
+
 // Get the last N elements of a list
-func (l *List) GetLastN(n int) (results []string, err error) {
+func (l *List) LastN(n int) (results []string, err error) {
 	if l.name == nil {
 		return nil, ErrDoesNotExist
 	}
@@ -169,6 +179,11 @@ func (l *List) GetLastN(n int) (results []string, err error) {
 		})
 		return nil // Return from View function
 	})
+}
+
+// Deprecated
+func (l *List) GetLastN(n int) ([]string, error) {
+	return l.LastN(n)
 }
 
 // Remove this list
@@ -261,7 +276,7 @@ func (s *Set) Has(value string) (exists bool, err error) {
 }
 
 // Get all values of the set
-func (s *Set) GetAll() (values []string, err error) {
+func (s *Set) All() (values []string, err error) {
 	if s.name == nil {
 		return nil, ErrDoesNotExist
 	}
@@ -275,6 +290,11 @@ func (s *Set) GetAll() (values []string, err error) {
 			return nil // Return from ForEach function
 		})
 	})
+}
+
+// Deprecated
+func (s *Set) GetAll() ([]string, error) {
+	return s.All()
 }
 
 // Remove an element from the set
@@ -361,7 +381,7 @@ func (h *HashMap) Set(elementid, key, value string) (err error) {
 }
 
 // Get all elementid's for all hash elements
-func (h *HashMap) GetAll() (results []string, err error) {
+func (h *HashMap) All() (results []string, err error) {
 	if h.name == nil {
 		return nil, ErrDoesNotExist
 	}
@@ -386,6 +406,11 @@ func (h *HashMap) GetAll() (results []string, err error) {
 			return nil // Continue ForEach
 		})
 	})
+}
+
+// Deprecated
+func (h *HashMap) GetAll() ([]string, error) {
+	return h.All()
 }
 
 // Get a value from a hashmap given the element id (for instance a user id) and the key (for instance "password")
@@ -423,6 +448,27 @@ func (h *HashMap) Has(elementid, key string) (found bool, err error) {
 			found = true
 		}
 		return nil // Return from View function
+	})
+}
+
+// Keys returns all names of all keys of a given owner.
+func (h *HashMap) Keys(owner string) ([]string, error) {
+	var props []string
+	return props, (*bolt.DB)(h.db).View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(h.name))
+		if bucket == nil {
+			return ErrBucketNotFound
+		}
+		// Loop through the keys
+		return bucket.ForEach(func(byteKey, _ []byte) error {
+			combinedKey := string(byteKey)
+			if strings.HasPrefix(combinedKey, owner+":") {
+				// Store the right side of the bucket key, after ":"
+				fields := strings.SplitN(combinedKey, ":", 2)
+				props = append(props, string(fields[1]))
+			}
+			return nil // Continue ForEach
+		})
 	})
 }
 

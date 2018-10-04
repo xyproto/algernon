@@ -731,18 +731,11 @@ Password hashing
 * For backwards compatibility, old password hashes with the length of a sha256 hash will be checked with sha256. To disable this behavior, and only ever use bcrypt, add this line: `userstate.SetPasswordAlgo("bcrypt")`
 
 
-Additional resources
---------------------
-
-* Here is a short code snippet for retrieving the underlying Bolt database: https://gist.github.com/xyproto/87d95ea79ad1019d3599
-
-
 Coding style
 ------------
 
 * log.Fatal or panic shall only be used for problems that may occur when starting the application, like not being able to connect to the database. The rest of the functions should return errors instead, so that they can be handled.
 * The code shall always be formatted with `go fmt`.
-
 
 Online API Documentation
 ------------------------
@@ -750,10 +743,51 @@ Online API Documentation
 [godoc.org](http://godoc.org/github.com/xyproto/permissionbolt)
 
 
+Retrieving the underlying Bolt database
+---------------------------------------
+
+Here is a short example application for retrieving the underlying Bolt database:
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/coreos/bbolt"
+	"github.com/xyproto/permissionbolt"
+	"os"
+)
+
+func main() {
+	perm, err := permissionbolt.NewWithConf("/tmp/_tmp_bolt.db")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not open Bolt database: %s\n", err)
+		os.Exit(1)
+	}
+	ustate := perm.UserState()
+
+	// A bit of checking is needed, since the database backend is interchangeable
+	pustate, ok := ustate.(*permissionbolt.UserState)
+	if !ok {
+		fmt.Fprintln(os.Stderr, "Not using the BoltDB database backend!")
+		os.Exit(1)
+	}
+
+	// Retrieve the Bolt Database from the permissionbolt.UserState
+	db := (*bolt.DB)(pustate.Database())
+
+	fmt.Printf("%v (%T)\n", db, db)
+}
+```
+
+<!--
+* Here is a short code snippet for retrieving the underlying Bolt database: https://gist.github.com/xyproto/87d95ea79ad1019d3599
+-->
+
 General information
 -------------------
 
-* Version: 2.3
+* Version: 2.4.0
 * License: MIT
-* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
+* Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 

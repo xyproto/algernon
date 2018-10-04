@@ -47,7 +47,7 @@ func newList(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserD
 // tostring(list) -> string
 func listToString(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	all, err := list.GetAll()
+	all, err := list.All()
 	if err != nil {
 		L.Push(lua.LString(""))
 		return 1 // Number of returned values
@@ -67,9 +67,9 @@ func listAdd(L *lua.LState) int {
 
 // Get all members of the list
 // list::getall() -> table
-func listGetAll(L *lua.LState) int {
+func listAll(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	all, err := list.GetAll()
+	all, err := list.All()
 	if err != nil {
 		// Return an empty table
 		L.Push(L.NewTable())
@@ -83,7 +83,7 @@ func listGetAll(L *lua.LState) int {
 // list::json() -> string
 func listJSON(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	all, err := list.GetAll()
+	all, err := list.All()
 	if err != nil {
 		// Return an empty JSON list
 		L.Push(lua.LString("[]"))
@@ -98,9 +98,9 @@ func listJSON(L *lua.LState) int {
 // Get the last element of the list
 // The returned value can be empty
 // list::getlast() -> string
-func listGetLast(L *lua.LState) int {
+func listLast(L *lua.LState) int {
 	list := checkList(L) // arg 1
-	value, err := list.GetLast()
+	value, err := list.Last()
 	if err != nil {
 		value = ""
 	}
@@ -110,10 +110,10 @@ func listGetLast(L *lua.LState) int {
 
 // Get the N last elements of the list
 // list::getlastn(number) -> table
-func listGetLastN(L *lua.LState) int {
+func listLastN(L *lua.LState) int {
 	list := checkList(L)    // arg 1
 	n := int(L.ToNumber(2)) // arg 2
-	results, err := list.GetLastN(n)
+	results, err := list.LastN(n)
 	if err != nil {
 		// Return an empty table
 		L.Push(L.NewTable())
@@ -143,9 +143,9 @@ func listClear(L *lua.LState) int {
 var listMethods = map[string]lua.LGFunction{
 	"__tostring": listToString,
 	"add":        listAdd,
-	"getall":     listGetAll,
-	"getlast":    listGetLast,
-	"getlastn":   listGetLastN,
+	"getall":     listAll,
+	"getlast":    listLast,
+	"getlastn":   listLastN,
 	"remove":     listRemove,
 	"clear":      listClear,
 	"json":       listJSON,

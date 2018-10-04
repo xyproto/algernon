@@ -12,7 +12,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.4
+	Version = 2.6
 
 	// The default [url]:port that Redis is running at
 	defaultRedisServer = ":6379"
@@ -258,7 +258,7 @@ func (rl *List) Add(value string) error {
 }
 
 // Get all elements of a list
-func (rl *List) GetAll() ([]string, error) {
+func (rl *List) All() ([]string, error) {
 	conn := rl.pool.Get(rl.dbindex)
 	result, err := redis.Values(conn.Do("LRANGE", rl.id, "0", "-1"))
 	strs := make([]string, len(result))
@@ -268,8 +268,13 @@ func (rl *List) GetAll() ([]string, error) {
 	return strs, err
 }
 
+// Deprecated
+func (rl *List) GetAll() ([]string, error) {
+	return rl.All()
+}
+
 // Get the last element of a list
-func (rl *List) GetLast() (string, error) {
+func (rl *List) Last() (string, error) {
 	conn := rl.pool.Get(rl.dbindex)
 	result, err := redis.Values(conn.Do("LRANGE", rl.id, "-1", "-1"))
 	if len(result) == 1 {
@@ -278,8 +283,13 @@ func (rl *List) GetLast() (string, error) {
 	return "", err
 }
 
+// Deprecated
+func (rl *List) GetLast() (string, error) {
+	return rl.Last()
+}
+
 // Get the last N elements of a list
-func (rl *List) GetLastN(n int) ([]string, error) {
+func (rl *List) LastN(n int) ([]string, error) {
 	conn := rl.pool.Get(rl.dbindex)
 	result, err := redis.Values(conn.Do("LRANGE", rl.id, "-"+strconv.Itoa(n), "-1"))
 	strs := make([]string, len(result))
@@ -287,6 +297,11 @@ func (rl *List) GetLastN(n int) ([]string, error) {
 		strs[i] = getString(result, i)
 	}
 	return strs, err
+}
+
+// Deprecated
+func (rl *List) GetLastN(n int) ([]string, error) {
+	return rl.LastN(n)
 }
 
 // Remove the first occurrence of an element from the list
@@ -363,7 +378,7 @@ func (rs *Set) Has(value string) (bool, error) {
 }
 
 // Get all elements of the set
-func (rs *Set) GetAll() ([]string, error) {
+func (rs *Set) All() ([]string, error) {
 	conn := rs.pool.Get(rs.dbindex)
 	result, err := redis.Values(conn.Do("SMEMBERS", rs.id))
 	strs := make([]string, len(result))
@@ -371,6 +386,11 @@ func (rs *Set) GetAll() ([]string, error) {
 		strs[i] = getString(result, i)
 	}
 	return strs, err
+}
+
+// Deprecated
+func (rs *Set) GetAll() ([]string, error) {
+	return rs.All()
 }
 
 // Remove a random member from the set
@@ -484,6 +504,17 @@ func (rh *HashMap) Has(elementid, key string) (bool, error) {
 	return redis.Bool(retval, err)
 }
 
+// Keys returns the keys of the given elementid.
+func (rh *HashMap) Keys(elementid string) ([]string, error) {
+	conn := rh.pool.Get(rh.dbindex)
+	result, err := redis.Values(conn.Do("HKEYS", rh.id+":"+elementid))
+	strs := make([]string, len(result))
+	for i := 0; i < len(result); i++ {
+		strs[i] = getString(result, i)
+	}
+	return strs, err
+}
+
 // Check if a given elementid exists as a hash map at all
 func (rh *HashMap) Exists(elementid string) (bool, error) {
 	// TODO: key is not meant to be a wildcard, check for "*"
@@ -491,7 +522,7 @@ func (rh *HashMap) Exists(elementid string) (bool, error) {
 }
 
 // Get all elementid's for all hash elements
-func (rh *HashMap) GetAll() ([]string, error) {
+func (rh *HashMap) All() ([]string, error) {
 	conn := rh.pool.Get(rh.dbindex)
 	result, err := redis.Values(conn.Do("KEYS", rh.id+":*"))
 	strs := make([]string, len(result))
@@ -500,6 +531,11 @@ func (rh *HashMap) GetAll() ([]string, error) {
 		strs[i] = getString(result, i)[idlen+1:]
 	}
 	return strs, err
+}
+
+// Deprecated
+func (rh *HashMap) GetAll() ([]string, error) {
+	return rh.All()
 }
 
 // Remove a key for an entry in a hashmap (for instance the email field for a user)
