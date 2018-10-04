@@ -42,7 +42,7 @@ func newSet(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUserDa
 // tostring(set) -> string
 func setToString(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	all, err := set.GetAll()
+	all, err := set.All()
 	if err != nil {
 		L.Push(lua.LString(""))
 		return 1 // Number of returned values
@@ -85,9 +85,9 @@ func setHas(L *lua.LState) int {
 
 // Get all members of the set
 // set:getall() -> table
-func setGetAll(L *lua.LState) int {
+func setAll(L *lua.LState) int {
 	set := checkSet(L) // arg 1
-	all, err := set.GetAll()
+	all, err := set.All()
 	if err != nil {
 		// Return an empty table
 		L.Push(L.NewTable())
@@ -119,7 +119,7 @@ var setMethods = map[string]lua.LGFunction{
 	"add":        setAdd,
 	"del":        setDel,
 	"has":        setHas,
-	"getall":     setGetAll,
+	"getall":     setAll,
 	"remove":     setRemove,
 	"clear":      setClear,
 }

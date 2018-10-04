@@ -101,6 +101,6 @@ Debian:
 Version, license and author
 ---------------------------
 
-* Version: 2.4
+* Version: 2.6.0
 * License: MIT
-* Author: Alexander F Rødseth
+* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

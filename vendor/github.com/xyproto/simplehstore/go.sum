@@ -1,0 +1,8 @@
+github.com/lib/pq v1.0.0 h1:X5PMW56eZitiTeO7tKzZxFCSpbFZJtkMMooicw2us9A=
+github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
+github.com/xyproto/cookie v0.0.0-20171003173729-8ce3defb0907 h1:9qqWk6/29cweeD27aMqGSdk/3/Zp9/wKTQLhXfR3ix0=
+github.com/xyproto/cookie v0.0.0-20171003173729-8ce3defb0907/go.mod h1:Jkc0U5QghR0GdJHVetkXRYMciw3dGqpLR69uw8vutsY=
+github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684 h1:NFSurCu+HqTKLlURDwnZL2J6GQv4WKzGBuFdrO8Rimc=
+github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684/go.mod h1:BzQLxcJwPQpzFgOyNEL02hGO5T4VqXB1BX+lp5bE040=
+golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4 h1:Vk3wNqEZwyGyei9yq5ekj7frek2u7HUfffJ1/opblzc=
+golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

@@ -42,7 +42,7 @@ func newHashMap(L *lua.LState, creator pinterface.ICreator, id string) (*lua.LUs
 // tostring(hash) -> string
 func hashToString(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	all, err := hash.GetAll()
+	all, err := hash.All()
 	if err != nil {
 		L.Push(lua.LString(""))
 		return 1 // Number of returned values
@@ -109,15 +109,30 @@ func hashExists(L *lua.LState) int {
 
 // Get all keys of the hash map
 // hash::getall() -> table
-func hashGetAll(L *lua.LState) int {
+func hashAll(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
-	all, err := hash.GetAll()
+	all, err := hash.All()
 	if err != nil {
 		// Return an empty table
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
 	L.Push(convert.Strings2table(L, all))
+	return 1 // Number of returned values
+}
+
+// Get all subkeys of the hash map
+// hash::keys() -> table
+func hashKeys(L *lua.LState) int {
+	hash := checkHash(L) // arg 1
+	elementid := L.CheckString(2)
+	keys, err := hash.Keys(elementid)
+	if err != nil {
+		// Return an empty table
+		L.Push(L.NewTable())
+		return 1 // Number of returned values
+	}
+	L.Push(convert.Strings2table(L, keys))
 	return 1 // Number of returned values
 }
 
@@ -165,7 +180,8 @@ var hashMethods = map[string]lua.LGFunction{
 	"get":        hashGet,
 	"has":        hashHas,
 	"exists":     hashExists,
-	"getall":     hashGetAll,
+	"getall":     hashAll,
+	"keys":       hashKeys,
 	"delkey":     hashDelKey,
 	"del":        hashDel,
 	"remove":     hashRemove,

@@ -17,7 +17,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.3
+	Version = 2.4
 )
 
 var (
@@ -276,8 +276,8 @@ func (l *List) Add(value string) error {
 	return err
 }
 
-// GetAll retrieves all elements of a list
-func (l *List) GetAll() ([]string, error) {
+// All retrieves all elements of a list
+func (l *List) All() ([]string, error) {
 	var (
 		values []string
 		value  string
@@ -304,8 +304,13 @@ func (l *List) GetAll() ([]string, error) {
 	return values, err
 }
 
-// GetLast retrieves the last element of a list
-func (l *List) GetLast() (string, error) {
+// Deprecated
+func (l *List) GetAll() ([]string, error) {
+	return l.All()
+}
+
+// Last retrieves the last element of a list
+func (l *List) Last() (string, error) {
 	var value string
 	// Fetches the item with the largest id.
 	// Faster than "ORDER BY id DESC limit 1" for large tables.
@@ -333,10 +338,15 @@ func (l *List) GetLast() (string, error) {
 	return value, nil
 }
 
-// GetLastN retrieves the N last elements of a list. If there are too few
+// Deprecated
+func (l *List) GetLast() (string, error) {
+	return l.Last()
+}
+
+// LastN retrieves the N last elements of a list. If there are too few
 // available elements, the values that were found are returned, together
 // with a TooFewElementsError.
-func (l *List) GetLastN(n int) ([]string, error) {
+func (l *List) LastN(n int) ([]string, error) {
 	var (
 		values []string
 		value  string
@@ -366,6 +376,11 @@ func (l *List) GetLastN(n int) ([]string, error) {
 		return values, ErrTooFewResults
 	}
 	return values, nil
+}
+
+// Deprecated
+func (l *List) GetLastN(n int) ([]string, error) {
+	return l.LastN(n)
 }
 
 // Remove this list
@@ -447,8 +462,8 @@ func (s *Set) Has(value string) (bool, error) {
 	return counter > 0, nil
 }
 
-// GetAll returns all elements in the set
-func (s *Set) GetAll() ([]string, error) {
+// All returns all elements in the set
+func (s *Set) All() ([]string, error) {
 	var (
 		values []string
 		value  string
@@ -470,6 +485,11 @@ func (s *Set) GetAll() ([]string, error) {
 	}
 	err = rows.Err()
 	return values, err
+}
+
+// Deprecated
+func (s *Set) GetAll() ([]string, error) {
+	return s.All()
 }
 
 // Del removes an element from the set
@@ -632,8 +652,8 @@ func (h *HashMap) Exists(owner string) (bool, error) {
 	return counter > 0, nil
 }
 
-// GetAll returns all owners for all hash map elements
-func (h *HashMap) GetAll() ([]string, error) {
+// All returns all owners for all hash map elements
+func (h *HashMap) All() ([]string, error) {
 	var (
 		values []string
 		value  string
@@ -658,6 +678,37 @@ func (h *HashMap) GetAll() ([]string, error) {
 	}
 	err = rows.Err()
 	return values, err
+}
+
+// Deprecated
+func (h *HashMap) GetAll() ([]string, error) {
+	return h.All()
+}
+
+// Keys returns all keys for a given owner
+func (h *HashMap) Keys(owner string) ([]string, error) {
+	rows, err := h.host.db.Query(fmt.Sprintf("SELECT skeys(attr) FROM %s WHERE %s = %s", h.table, ownerCol, singleQuote(owner)))
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var (
+		values []string
+		value  string
+	)
+	for rows.Next() {
+		err = rows.Scan(&value)
+		values = append(values, value)
+		if err != nil {
+			// Unusual, worthy of panic
+			panic(err.Error())
+		}
+	}
+	if err := rows.Err(); err != nil {
+		// Unusual, worthy of panic
+		panic(err.Error())
+	}
+	return values, nil
 }
 
 // DelKey removes a key of an owner in a hashmap (for instance the email field for a user)

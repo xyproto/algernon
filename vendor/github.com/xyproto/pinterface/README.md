@@ -11,6 +11,6 @@ Interfaces for:
 General information
 -------------------
 
-* Version 2.0
+* Version 5.0.0
 * License: MIT
 * Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;

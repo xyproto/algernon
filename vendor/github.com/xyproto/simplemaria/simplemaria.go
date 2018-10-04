@@ -16,7 +16,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 3.0
+	Version = 3.1
 )
 
 // Host represents a specific database at a database host
@@ -230,7 +230,7 @@ func (l *List) Add(value string) error {
 }
 
 // Get all elements of a list
-func (l *List) GetAll() ([]string, error) {
+func (l *List) All() ([]string, error) {
 	rows, err := l.host.db.Query("SELECT " + listCol + " FROM " + l.table + " ORDER BY id")
 	if err != nil {
 		return []string{}, err
@@ -258,8 +258,13 @@ func (l *List) GetAll() ([]string, error) {
 	return values, nil
 }
 
+// Deprecated
+func (l *List) GetAll() ([]string, error) {
+	return l.All()
+}
+
 // Get the last element of a list
-func (l *List) GetLast() (string, error) {
+func (l *List) Last() (string, error) {
 	// Fetches the item with the largest id.
 	// Faster than "ORDER BY id DESC limit 1" for large tables.
 	rows, err := l.host.db.Query("SELECT " + listCol + " FROM " + l.table + " WHERE id = (SELECT MAX(id) FROM " + l.table + ")")
@@ -286,8 +291,13 @@ func (l *List) GetLast() (string, error) {
 	return value, nil
 }
 
+// Deprecated
+func (l *List) GetLast() (string, error) {
+	return l.Last()
+}
+
 // Get the last N elements of a list
-func (l *List) GetLastN(n int) ([]string, error) {
+func (l *List) LastN(n int) ([]string, error) {
 	rows, err := l.host.db.Query("SELECT " + listCol + " FROM (SELECT * FROM " + l.table + " ORDER BY id DESC limit " + strconv.Itoa(n) + ")sub ORDER BY id ASC")
 	if err != nil {
 		return []string{}, err
@@ -316,6 +326,11 @@ func (l *List) GetLastN(n int) ([]string, error) {
 		return []string{}, errors.New("Too few elements in table at GetLastN")
 	}
 	return values, nil
+}
+
+// Deprecated
+func (l *List) GetLastN(n int) ([]string, error) {
+	return l.LastN(n)
 }
 
 // Remove this list
@@ -392,7 +407,7 @@ func (s *Set) Has(value string) (bool, error) {
 }
 
 // Get all elements of the set
-func (s *Set) GetAll() ([]string, error) {
+func (s *Set) All() ([]string, error) {
 	rows, err := s.host.db.Query("SELECT " + setCol + " FROM " + s.table)
 	if err != nil {
 		return []string{}, err
@@ -418,6 +433,11 @@ func (s *Set) GetAll() ([]string, error) {
 		panic(err.Error())
 	}
 	return values, nil
+}
+
+// Deprecated
+func (s *Set) GetAll() ([]string, error) {
+	return s.All()
 }
 
 // Remove an element from the set
@@ -572,8 +592,39 @@ func (h *HashMap) Exists(owner string) (bool, error) {
 }
 
 // Get all owners (not keys, not values) for all hash elements
-func (h *HashMap) GetAll() ([]string, error) {
+func (h *HashMap) All() ([]string, error) {
 	rows, err := h.host.db.Query("SELECT " + ownerCol + " FROM " + h.table)
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var (
+		values []string
+		value  string
+	)
+	for rows.Next() {
+		err = rows.Scan(&value)
+		values = append(values, value)
+		if err != nil {
+			// Unusual, worthy of panic
+			panic(err.Error())
+		}
+	}
+	if err := rows.Err(); err != nil {
+		// Unusual, worthy of panic
+		panic(err.Error())
+	}
+	return values, nil
+}
+
+// Deprecated
+func (h *HashMap) GetAll() ([]string, error) {
+	return h.All()
+}
+
+// Get all keys for a given owner
+func (h *HashMap) Keys(owner string) ([]string, error) {
+	rows, err := h.host.db.Query("SELECT "+keyCol+" FROM "+h.table+" WHERE "+ownerCol+"= ?", owner)
 	if err != nil {
 		return []string{}, err
 	}

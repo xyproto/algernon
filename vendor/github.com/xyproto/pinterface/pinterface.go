@@ -4,15 +4,15 @@ package pinterface
 import "net/http"
 
 // Stable API within the same version number
-const Version = 4.0
+const Version = 5.0
 
 // Database interfaces
 
 type IList interface {
 	Add(value string) error
-	GetAll() ([]string, error)
-	GetLast() (string, error)
-	GetLastN(n int) ([]string, error)
+	All() ([]string, error)        // GetAll in version 4.0
+	Last() (string, error)         // GetLast in version 4.0
+	LastN(n int) ([]string, error) // GetLastN in version 4.0
 	Remove() error
 	Clear() error
 }
@@ -20,7 +20,7 @@ type IList interface {
 type ISet interface {
 	Add(value string) error
 	Has(value string) (bool, error)
-	GetAll() ([]string, error)
+	All() ([]string, error) // GetAll in version 4.0
 	Del(value string) error
 	Remove() error
 	Clear() error
@@ -31,7 +31,8 @@ type IHashMap interface {
 	Get(owner, key string) (string, error)
 	Has(owner, key string) (bool, error)
 	Exists(owner string) (bool, error)
-	GetAll() ([]string, error)
+	All() ([]string, error) // GetAll in version 4.0
+	Keys(owner string) ([]string, error)
 	DelKey(owner, key string) error
 	Del(key string) error
 	Remove() error
@@ -47,7 +48,8 @@ type IKeyValue interface {
 	Clear() error
 }
 
-// Interface for making it possible to depend on different versions of the permission package, or other packages that implement userstates.
+// Interface for making it possible to depend on different versions of the permission package,
+// or other packages that implement userstates.
 type IUserState interface {
 	UserRights(req *http.Request) bool
 	HasUser(username string) bool

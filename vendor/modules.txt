@@ -84,6 +84,8 @@ github.com/hashicorp/golang-lru/simplelru
 github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 github.com/jvatic/goja-babel
+# github.com/konsorten/go-windows-terminal-sequences v0.0.0-20180402223658-b729f2633dfe
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/pretty v0.1.0
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
@@ -117,7 +119,7 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-homedir v1.0.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.0.0
+# github.com/mitchellh/mapstructure v1.1.1
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
@@ -131,7 +133,7 @@ github.com/russross/blackfriday
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.0.6
+# github.com/sirupsen/logrus v1.1.0
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -160,25 +162,25 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20180416111744-3025da175761
+# github.com/xyproto/permissionbolt v0.0.0-20181004131838-a475f7fcef96
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20180624141902-7e95477c484b
+# github.com/xyproto/permissions2 v0.0.0-20181004132527-5f4ea507f358
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354
 github.com/xyproto/permissionsql
-# github.com/xyproto/pinterface v0.0.0-20170615103324-05fa0e308066
+# github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 github.com/xyproto/pinterface
 # github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb
 github.com/xyproto/pstore
 # github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
 github.com/xyproto/recwatch
-# github.com/xyproto/simplebolt v0.0.0-20180517193407-3933e7ecf0bf
+# github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f
 github.com/xyproto/simplebolt
-# github.com/xyproto/simplehstore v0.0.0-20180419221416-e02905469021
+# github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e
 github.com/xyproto/simplehstore
-# github.com/xyproto/simplemaria v0.0.0-20180616120446-f9ca57f2074c
+# github.com/xyproto/simplemaria v0.0.0-20181004164500-44e2d899007e
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis v0.0.0-20180914135211-400f7b9284b8
+# github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20180806122730-f047d352ed87
 github.com/xyproto/splash
@@ -195,19 +197,19 @@ github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
+# golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3
+# golang.org/x/net v0.0.0-20181003013248-f5e5bdd77824
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20180918153733-ee1b12c67af4
+# golang.org/x/sys v0.0.0-20181003145944-af653ce8b74f
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
