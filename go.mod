@@ -52,7 +52,7 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 	github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb
 	github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
-	github.com/xyproto/sheepcounter v0.0.0-20181005091639-f724f0634879
+	github.com/xyproto/sheepcounter v1.1.0
 	github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f
 	github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e // indirect
 	github.com/xyproto/simplemaria v0.0.0-20181004164500-44e2d899007e // indirect

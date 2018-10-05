@@ -10,8 +10,11 @@ type SheepCounter struct {
 	bytesWritten          int64
 }
 
-// NewSheepCounter creates a struct that wraps an existing http.ResponseWriter
-func NewSheepCounter(w http.ResponseWriter) *SheepCounter {
+// NewSheepCounter is a deprecated alias for the New function
+var NewSheepCounter = New
+
+// New creates a struct that wraps an existing http.ResponseWriter
+func New(w http.ResponseWriter) *SheepCounter {
 	return &SheepCounter{w, 0}
 }
 

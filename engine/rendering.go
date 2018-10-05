@@ -399,10 +399,10 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 // The filename is only used in error messages, if any.
 func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap) {
 	var (
-		buf bytes.Buffer
+		buf                   bytes.Buffer
 		linkInGCSS, linkInCSS bool
-		GCSSFilename = filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
-		CSSFilename = filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+		GCSSFilename          = filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
+		CSSFilename           = filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	)
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
@@ -575,8 +575,8 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
 	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	if ac.fs.Exists(CSSFilename) {
-        // Link to stylesheet (without checking if the GCSS file is valid first)
-        themes.StyleAmber(&amberdata, themes.DefaultCSSFilename)
+		// Link to stylesheet (without checking if the GCSS file is valid first)
+		themes.StyleAmber(&amberdata, themes.DefaultCSSFilename)
 	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))

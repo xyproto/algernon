@@ -407,7 +407,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		if ac.perm != nil {
 			if ac.perm.Rejected(w, req) {
 				// Prepare to count bytes written
-				sc := sheepcounter.NewSheepCounter(w)
+				sc := sheepcounter.New(w)
 				// Get and call the Permission Denied function
 				ac.perm.DenyFunction()(sc, req)
 				// Log the response
@@ -444,7 +444,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		// Share the directory or file
 		if hasdir {
 			// Prepare to count bytes written
-			sc := sheepcounter.NewSheepCounter(w)
+			sc := sheepcounter.New(w)
 			// Get the directory page
 			ac.DirPage(sc, req, servedir, dirname, theme)
 			// Log the access
@@ -452,7 +452,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 			return
 		} else if !hasdir && hasfile {
 			// Prepare to count bytes written
-			sc := sheepcounter.NewSheepCounter(w)
+			sc := sheepcounter.New(w)
 			// Share a single file instead of a directory
 			ac.FilePage(sc, req, noslash, ac.defaultLuaDataFilename)
 			// Log the access
