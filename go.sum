@@ -185,6 +185,8 @@ github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb h1:7Ay68DcGW/LxKH0J
 github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb/go.mod h1:vE3WRPzPBtCfLxJXdaubMhbUt9NXUBIRiWwXHM2FNtU=
 github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15 h1:P2yHdqS7tJBl/Gc82tToPCrr/ZgwFdxWRJwWtXIwSa4=
 github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15/go.mod h1:xDevAIVgdw5O1rWgqc+C+9RLoABPpKBdGyDKDMwklsQ=
+github.com/xyproto/sheepcounter v0.0.0-20181005091639-f724f0634879 h1:IjB+b0EruW9pTPLKBRCw4isI65x6cEfalXT1zYWLnxI=
+github.com/xyproto/sheepcounter v0.0.0-20181005091639-f724f0634879/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f h1:qtp3TMYUA+Bv1vPEwRpjdq0NIik89Al5QdamqWNhpfE=
 github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f/go.mod h1:E/j80yRqYacgLGrLmssLPDBqjAW+E+fMV5Wb+IogcLE=
 github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e h1:N11IJONcDCxYbIgWm7QbqHqh1Zv+V7hYW3vsgWx2Ftw=

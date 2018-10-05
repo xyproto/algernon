@@ -174,6 +174,8 @@ github.com/xyproto/pinterface
 github.com/xyproto/pstore
 # github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
 github.com/xyproto/recwatch
+# github.com/xyproto/sheepcounter v0.0.0-20181005091639-f724f0634879
+github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e
