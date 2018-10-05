@@ -1,9 +1,9 @@
 title: Milligram
 favicon: favicon.ico
 
-# Markdown + CSS
+# Markdown + GCSS
 
-This example uses Markdown in combination with a CSS file.
+This example uses Markdown in combination with a GCSS file that imports a CSS file.
 
 This particular CSS theme is from [Milligram](https://milligram.io).
 
