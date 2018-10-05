@@ -289,10 +289,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// If style.gcss is present, use that style in <head>
-	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
-	if ac.fs.Exists(GCSSfilename) {
+	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
+	if ac.fs.Exists(CSSFilename) {
+		// Link to stylesheet (without checking if the CSS file is valid first)
+		head.WriteString(`<link href="`)
+		head.WriteString(themes.DefaultCSSFilename)
+		head.WriteString(`" rel="stylesheet" type="text/css">`)
+	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
-			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
+			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -305,13 +311,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.PrettyError(w, req, GCSSFilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		head.WriteString(`<link href="`)
-		head.WriteString(themes.DefaultStyleFilename)
+		head.WriteString(themes.DefaultGCSSFilename)
 		head.WriteString(`" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the theme by inserting the CSS style directly
@@ -392,15 +398,19 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 // PongoPage write the given source bytes (ina Pongo2) converted to HTML, to a writer.
 // The filename is only used in error messages, if any.
 func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename string, pongodata []byte, funcs template.FuncMap) {
+	var (
+		buf bytes.Buffer
+		linkInGCSS, linkInCSS bool
+		GCSSFilename = filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
+		CSSFilename = filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+	)
 
-	var buf bytes.Buffer
-
-	linkInGCSS := false
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
-	if ac.fs.Exists(GCSSfilename) {
+	if ac.fs.Exists(CSSFilename) {
+		linkInCSS = true
+	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
-			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
+			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -413,7 +423,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.PrettyError(w, req, GCSSFilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
@@ -508,10 +518,14 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	// Check if we are dealing with HTML
 	if bytes.Contains(buf.Bytes(), []byte("<html>")) {
 
-		if linkInGCSS {
+		if linkInCSS || linkInGCSS {
 			// Link in stylesheet
 			htmldata := buf.Bytes()
-			themes.StyleHTML(&htmldata, themes.DefaultStyleFilename)
+			if linkInCSS {
+				themes.StyleHTML(&htmldata, themes.DefaultCSSFilename)
+			} else if linkInGCSS {
+				themes.StyleHTML(&htmldata, themes.DefaultGCSSFilename)
+			}
 			buf.Reset()
 			_, err := buf.Write(htmldata)
 			if err != nil {
@@ -545,7 +559,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		changedBytes := themes.InsertDoctype(buf.Bytes())
 		buf.Reset()
 		buf.Write(changedBytes)
-
 	}
 
 	// Write the rendered template to the client
@@ -559,10 +572,14 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	var buf bytes.Buffer
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
-	if ac.fs.Exists(GCSSfilename) {
+	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
+	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+	if ac.fs.Exists(CSSFilename) {
+        // Link to stylesheet (without checking if the GCSS file is valid first)
+        themes.StyleAmber(&amberdata, themes.DefaultCSSFilename)
+	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
-			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
+			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -575,12 +592,12 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.PrettyError(w, req, GCSSFilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		themes.StyleAmber(&amberdata, themes.DefaultStyleFilename)
+		themes.StyleAmber(&amberdata, themes.DefaultGCSSFilename)
 	}
 
 	// Compile the given amber template
@@ -703,10 +720,16 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	htmlbuf.WriteString("<!doctype html><html><head>")
 
 	// If style.gcss is present, use that style in <head>
-	GCSSfilename := filepath.Join(filepath.Dir(filename), themes.DefaultStyleFilename)
-	if ac.fs.Exists(GCSSfilename) {
+	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
+	if ac.fs.Exists(CSSFilename) {
+		// Link to stylesheet (without checking if the GCSS file is valid first)
+		htmlbuf.WriteString(`<link href="`)
+		htmlbuf.WriteString(themes.DefaultCSSFilename)
+		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
+	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
-			gcssblock, err := ac.cache.Read(GCSSfilename, ac.shouldCache(".gcss"))
+			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
@@ -719,13 +742,13 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 			err = <-errChan
 			if err != nil {
 				// Invalid GCSS, return an error page
-				ac.PrettyError(w, req, GCSSfilename, gcssdata, err.Error(), "gcss")
+				ac.PrettyError(w, req, GCSSFilename, gcssdata, err.Error(), "gcss")
 				return
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		htmlbuf.WriteString(`<link href="`)
-		htmlbuf.WriteString(themes.DefaultStyleFilename)
+		htmlbuf.WriteString(themes.DefaultGCSSFilename)
 		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
 	} else {
 		// If not, use the default hyperapp theme by inserting the CSS style directly

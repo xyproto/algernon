@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	// DefaultStyleFilename is the default stylesheet filename (GCSS)
-	DefaultStyleFilename = "style.gcss"
+	// DefaultGCSSFilename is the default CSS stylesheett
+	DefaultCSSFilename = "style.css"
+
+	// DefaultGCSSFilename is the default GCSS stylesheet
+	DefaultGCSSFilename = "style.gcss"
 
 	// DefaultTheme is the default theme when rendering Markdown and for error pages
 	DefaultTheme = "default"
