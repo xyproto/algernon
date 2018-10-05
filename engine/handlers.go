@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/xyproto/sheepcounter"
 	"github.com/xyproto/unzip"
 	"html/template"
 	"net/http"
@@ -405,14 +406,12 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		// in turn requires a database backend.
 		if ac.perm != nil {
 			if ac.perm.Rejected(w, req) {
-				// Set up a "fake" ResponseWriter
-				wr := httptest.NewRecorder()
+				// Prepare to count bytes written
+				sc := sheepcounter.NewSheepCounter(w)
 				// Get and call the Permission Denied function
-				ac.perm.DenyFunction()(wr, req)
-				// Write the recorded response to the actual ResponseWriter
-				bytesWritten := utils.WriteRecorder(w, wr)
+				ac.perm.DenyFunction()(sc, req)
 				// Log the response
-				ac.LogAccess(req, http.StatusForbidden, bytesWritten)
+				ac.LogAccess(req, http.StatusForbidden, sc.Counter())
 				// Reject the request by just returning
 				return
 			}
@@ -442,25 +441,22 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 			ac.ServerHeaders(w)
 		}
 
-		// Set up a "fake" ResponseWriter
-		wr := httptest.NewRecorder()
-
 		// Share the directory or file
 		if hasdir {
+			// Prepare to count bytes written
+			sc := sheepcounter.NewSheepCounter(w)
 			// Get the directory page
-			ac.DirPage(wr, req, servedir, dirname, theme)
-			// Write the recorded response to the actual ResponseWriter
-			bytesWritten := utils.WriteRecorder(w, wr)
+			ac.DirPage(sc, req, servedir, dirname, theme)
 			// Log the access
-			ac.LogAccess(req, http.StatusOK, bytesWritten)
+			ac.LogAccess(req, http.StatusOK, sc.Counter())
 			return
 		} else if !hasdir && hasfile {
+			// Prepare to count bytes written
+			sc := sheepcounter.NewSheepCounter(w)
 			// Share a single file instead of a directory
-			ac.FilePage(wr, req, noslash, ac.defaultLuaDataFilename)
-			// Write the recorded response to the actual ResponseWriter
-			bytesWritten := utils.WriteRecorder(w, wr)
+			ac.FilePage(sc, req, noslash, ac.defaultLuaDataFilename)
 			// Log the access
-			ac.LogAccess(req, http.StatusOK, bytesWritten)
+			ac.LogAccess(req, http.StatusOK, sc.Counter())
 			return
 		}
 		// Not found
