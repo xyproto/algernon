@@ -30,8 +30,12 @@ import (
 	"github.com/xyproto/unzip"
 )
 
-// Version number. Stable API within major version numbers.
-const Version = 2.0
+const (
+	// Version number. Stable API within major version numbers.
+	Version = 2.0
+
+	dividerLine = "················································································"
+)
 
 // Config is the main structure for the Algernon server.
 // It contains all the state and settings.
@@ -603,7 +607,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Dividing line between the banner and output from any of the configuration scripts
 	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
-		fmt.Println("--------------------------------------- - - · ·")
+		fmt.Println(dividerLine)
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
@@ -702,7 +706,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Dividing line between the banner and output from any of the
 	// configuration scripts. Marks the end of the configuration output.
 	if ranServerReadyFunction && !ac.quietMode && !ac.serveNothing {
-		fmt.Println("--------------------------------------- - - · ·")
+		fmt.Println(dividerLine)
 	}
 
 	// Direct internal logging elsewhere
