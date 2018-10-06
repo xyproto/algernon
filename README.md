@@ -1002,4 +1002,4 @@ General information
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
-<img src="img/gophereyes.png" align="right">
+<a href="https://algernon.roboticoverlords.org"><img alt="0-0" src="img/gophereyes.png" align="right"></a>
