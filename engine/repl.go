@@ -698,16 +698,17 @@ func (ac *Config) REPL(ready, done chan bool) error {
 			line = term.Ask(prompt)
 		} else {
 			if line, err = l.Readline(); err != nil {
-				if err == io.EOF {
+				switch {
+				case err == io.EOF:
 					if ac.debugMode {
 						o.Println(o.LightPurple(err.Error()))
 					}
 					EOF = true
-				} else if err == readline.ErrInterrupt {
+				case err == readline.ErrInterrupt:
 					log.Warn("Interrupted")
 					done <- true
 					return nil
-				} else {
+				default:
 					log.Error("Error reading line(" + err.Error() + ").")
 					continue
 				}

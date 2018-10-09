@@ -16,7 +16,7 @@ import (
 
 // List of functions to run at shutdown
 var (
-	shutdownFunctions [](func())
+	shutdownFunctions []func()
 	mut               sync.Mutex
 	completed         bool
 )

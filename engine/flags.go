@@ -293,14 +293,15 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	//       when -p or -e is set.
 
 	// Change several defaults if production mode is enabled
-	if ac.productionMode {
+	switch {
+	case ac.productionMode:
 		// Use system directories
 		ac.serverDirOrFilename = "/srv/algernon"
 		ac.serverCert = "/etc/algernon/cert.pem"
 		ac.serverKey = "/etc/algernon/key.pem"
 		ac.cacheMode = cachemode.Production
 		ac.serverMode = true
-	} else if ac.devMode {
+	case ac.devMode:
 		// Change several defaults if development mode is enabled
 		ac.useBolt = true
 		ac.serveJustHTTP = true
@@ -311,7 +312,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			ac.limitRequests = 700 // Increase the rate limit considerably
 		}
 		ac.cacheMode = cachemode.Development
-	} else if ac.simpleMode {
+	case ac.simpleMode:
 		ac.useBolt = true
 		ac.boltFilename = os.DevNull
 		ac.serveJustHTTP = true

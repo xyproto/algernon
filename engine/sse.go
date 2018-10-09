@@ -49,12 +49,13 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 		js = strings.Replace(js, "  ", " ", utils.EveryInstance)
 	}
 	// Place the script at the end of the body, if there is a body
-	if bytes.Contains(htmldata, []byte("</body>")) {
+	switch {
+	case bytes.Contains(htmldata, []byte("</body>")):
 		return bytes.Replace(htmldata, []byte("</body>"), []byte(js+"</body>"), 1)
-	} else if bytes.Contains(htmldata, []byte("<head>")) {
+	case bytes.Contains(htmldata, []byte("<head>")):
 		// If not, place the script in the <head>, if there is a head
 		return bytes.Replace(htmldata, []byte("<head>"), []byte("<head>"+js), 1)
-	} else if bytes.Contains(htmldata, []byte("<html>")) {
+	case bytes.Contains(htmldata, []byte("<html>")):
 		// If not, place the script in the <html> as a new <head>
 		return bytes.Replace(htmldata, []byte("<html>"), []byte("<html><head>"+js+"</head>"), 1)
 	}

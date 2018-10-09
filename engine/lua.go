@@ -312,20 +312,22 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 					// Return the first of the returned arguments, as a string
 					if L2.GetTop() >= 1 {
 						lv := L2.Get(-1)
-						if tbl, ok := lv.(*lua.LTable); ok {
+						tbl, isTable := lv.(*lua.LTable)
+						switch {
+						case isTable:
 							// lv was a Lua Table
 							retval = convert.Table2interfacemap(tbl)
 							if ac.debugMode && ac.verboseMode {
 								log.Info(utils.Infostring(functionName, args) + " -> (map)")
 							}
-						} else if lv.Type() == lua.LTString {
+						case lv.Type() == lua.LTString:
 							// lv is a Lua String
 							retstr := L2.ToString(1)
 							retval = retstr
 							if ac.debugMode && ac.verboseMode {
 								log.Info(utils.Infostring(functionName, args) + " -> \"" + retstr + "\"")
 							}
-						} else {
+						default:
 							retval = ""
 							log.Warn("The return type of " + utils.Infostring(functionName, args) + " can't be converted")
 						}

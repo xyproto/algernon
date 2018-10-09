@@ -274,15 +274,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	if len(favicon) > 0 {
 		head.WriteString(`<link rel="shortcut icon" type="image/`)
 		// Only support the most common mime formats for favicons
-		if bytes.HasSuffix(favicon, []byte(".ico")) {
+		switch {
+		case bytes.HasSuffix(favicon, []byte(".ico")):
 			head.WriteString("x-icon")
-		} else if bytes.HasSuffix(favicon, []byte(".bmp")) {
+		case bytes.HasSuffix(favicon, []byte(".bmp")):
 			head.WriteString("bmp")
-		} else if bytes.HasSuffix(favicon, []byte(".gif")) {
+		case bytes.HasSuffix(favicon, []byte(".gif")):
 			head.WriteString("gif")
-		} else if bytes.HasSuffix(favicon, []byte(".jpg")) {
+		case bytes.HasSuffix(favicon, []byte(".jpg")):
 			head.WriteString("jpeg")
-		} else {
+		default:
 			head.WriteString("png")
 		}
 		head.WriteString(`" href="`)
