@@ -294,12 +294,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// If style.gcss is present, use that style in <head>
 	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
-	if ac.fs.Exists(CSSFilename) {
+	switch {
+	case ac.fs.Exists(CSSFilename):
 		// Link to stylesheet (without checking if the CSS file is valid first)
 		head.WriteString(`<link href="`)
 		head.WriteString(themes.DefaultCSSFilename)
 		head.WriteString(`" rel="stylesheet" type="text/css">`)
-	} else if ac.fs.Exists(GCSSFilename) {
+	case ac.fs.Exists(GCSSFilename):
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
@@ -322,7 +323,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 		head.WriteString(`<link href="`)
 		head.WriteString(themes.DefaultGCSSFilename)
 		head.WriteString(`" rel="stylesheet" type="text/css">`)
-	} else {
+	default:
 		// If not, use the theme by inserting the CSS style directly
 		head.Write(themes.StyleHead(string(theme)))
 	}
@@ -725,12 +726,13 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	// If style.gcss is present, use that style in <head>
 	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
-	if ac.fs.Exists(CSSFilename) {
+	switch {
+	case ac.fs.Exists(CSSFilename):
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		htmlbuf.WriteString(`<link href="`)
 		htmlbuf.WriteString(themes.DefaultCSSFilename)
 		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
-	} else if ac.fs.Exists(GCSSFilename) {
+	case ac.fs.Exists(GCSSFilename):
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
 			if err != nil {
@@ -753,7 +755,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		htmlbuf.WriteString(`<link href="`)
 		htmlbuf.WriteString(themes.DefaultGCSSFilename)
 		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
-	} else {
+	default:
 		// If not, use the default hyperapp theme by inserting the CSS style directly
 		theme := ac.defaultTheme
 
