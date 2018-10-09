@@ -86,34 +86,36 @@ func HTMLLink(text, url string, isDirectory bool) string {
 }
 
 // StyleAmber modifies Amber source code so that a link to the given stylesheet URL is added
-func StyleAmber(amberdata *[]byte, url string) {
+func StyleAmber(amberdata []byte, url string) []byte {
 	// If the given url is not already mentioned and the data contains "body"
-	if !bytes.Contains(*amberdata, []byte(url)) && bytes.Contains(*amberdata, []byte("html")) && bytes.Contains(*amberdata, []byte("body")) {
+	if !bytes.Contains(amberdata, []byte(url)) && bytes.Contains(amberdata, []byte("html")) && bytes.Contains(amberdata, []byte("body")) {
 		// Extract one level of indendation
-		whitespace := OneLevelOfIndentation(amberdata, "body")
+		whitespace := OneLevelOfIndentation(&amberdata, "body")
 		// Check if there already is a head section
-		if bytes.Contains(*amberdata, []byte("head")) {
+		if bytes.Contains(amberdata, []byte("head")) {
 			// Add a link to the stylesheet
-			*amberdata = bytes.Replace(*amberdata, []byte("head\n"), []byte("head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
+			return bytes.Replace(amberdata, []byte("head\n"), []byte("head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
 
-		} else if bytes.Contains(*amberdata, []byte("body")) {
+		} else if bytes.Contains(amberdata, []byte("body")) {
 
 			// Add a link to the stylesheet
-			*amberdata = bytes.Replace(*amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
+			return bytes.Replace(amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
 		}
 	}
+	return amberdata
 }
 
 // StyleHTML modifies HTML source code so that a link to the given stylesheet URL is added
-func StyleHTML(htmldata *[]byte, url string) {
+func StyleHTML(htmldata []byte, url string) []byte {
 	// If the given url is not already mentioned and the data contains "body"
-	if !bytes.Contains(*htmldata, []byte(url)) && bytes.Contains(*htmldata, []byte("body")) {
-		if bytes.Contains(*htmldata, []byte("</head>")) {
-			*htmldata = bytes.Replace(*htmldata, []byte("</head>"), []byte("  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>"), 1)
-		} else if bytes.Contains(*htmldata, []byte("<body>")) {
-			*htmldata = bytes.Replace(*htmldata, []byte("<body>"), []byte("  <head>\n  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>\n  <body>"), 1)
+	if !bytes.Contains(htmldata, []byte(url)) && bytes.Contains(htmldata, []byte("body")) {
+		if bytes.Contains(htmldata, []byte("</head>")) {
+			return bytes.Replace(htmldata, []byte("</head>"), []byte("  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>"), 1)
+		} else if bytes.Contains(htmldata, []byte("<body>")) {
+			return bytes.Replace(htmldata, []byte("<body>"), []byte("  <head>\n  <link rel=\"stylesheet\" href=\""+url+"\">\n  </head>\n  <body>"), 1)
 		}
 	}
+	return htmldata
 }
 
 // InsertDoctype inserts <doctype html> to the HTML, if missing.

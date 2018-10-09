@@ -72,26 +72,26 @@ func (ac *Config) LogAccess(req *http.Request, statusCode int, byteSize int64) {
 	if ac.commonAccessLogFilename != "" {
 		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			log.Warn("Can not open " + ac.commonAccessLogFilename + ": " + err.Error())
+			log.Warnf("Can not open %s: %s", ac.commonAccessLogFilename, err)
 			return
 		}
 		defer f.Close()
 		_, err = f.WriteString(ac.CommonLogFormat(req, statusCode, byteSize) + "\n")
 		if err != nil {
-			log.Warn("Can not write to " + ac.commonAccessLogFilename + ": " + err.Error())
+			log.Warnf("Can not write to %s: %s", ac.commonAccessLogFilename, err)
 			return
 		}
 	}
 	if ac.combinedAccessLogFilename != "" {
 		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			log.Warn("Can not open " + ac.combinedAccessLogFilename + ": " + err.Error())
+			log.Warnf("Can not open %s: %s", ac.combinedAccessLogFilename, err)
 			return
 		}
 		defer f.Close()
 		_, err = f.WriteString(ac.CombinedLogFormat(req, statusCode, byteSize) + "\n")
 		if err != nil {
-			log.Warn("Can not write to " + ac.combinedAccessLogFilename + ": " + err.Error())
+			log.Warnf("Can not write to %s: %s", ac.combinedAccessLogFilename, err)
 			return
 		}
 	}

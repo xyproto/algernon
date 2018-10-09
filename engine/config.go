@@ -421,7 +421,7 @@ func (ac *Config) setupLogging() {
 	if ac.serverLogFile != "" {
 		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if errJSONLog != nil {
-			log.Warn("Could not log to", ac.serverLogFile, ":", errJSONLog.Error())
+			log.Warnf("Could not log to %s: %s", ac.serverLogFile, errJSONLog)
 		} else {
 			// Log to the given log filename
 			log.SetFormatter(&log.JSONFormatter{})
@@ -637,7 +637,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
 			// Friendly message to new users
 			if !hasHandlers(ac.luaServerFilename) {
-				log.Warn("Found no handlers in " + ac.luaServerFilename)
+				log.Warnf("Found no handlers in %s", ac.luaServerFilename)
 				log.Info("How to implement \"Hello, World!\" in " + ac.luaServerFilename + " file:\n\nhandle(\"/\", function()\n  print(\"Hello, World!\")\nend)\n")
 			}
 		}
@@ -733,7 +733,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if ac.autoRefresh {
 		ac.refreshDuration, err = time.ParseDuration(ac.eventRefresh)
 		if err != nil {
-			log.Warn(fmt.Sprintf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh))
+			log.Warnf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh)
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
 			ac.refreshDuration, _ = time.ParseDuration(ac.defaultEventRefresh)
 		}

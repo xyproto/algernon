@@ -524,9 +524,9 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 			// Link in stylesheet
 			htmldata := buf.Bytes()
 			if linkInCSS {
-				themes.StyleHTML(&htmldata, themes.DefaultCSSFilename)
+				htmldata = themes.StyleHTML(htmldata, themes.DefaultCSSFilename)
 			} else if linkInGCSS {
-				themes.StyleHTML(&htmldata, themes.DefaultGCSSFilename)
+				htmldata = themes.StyleHTML(htmldata, themes.DefaultGCSSFilename)
 			}
 			buf.Reset()
 			_, err := buf.Write(htmldata)
@@ -578,7 +578,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	if ac.fs.Exists(CSSFilename) {
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		themes.StyleAmber(&amberdata, themes.DefaultCSSFilename)
+		amberdata = themes.StyleAmber(amberdata, themes.DefaultCSSFilename)
 	} else if ac.fs.Exists(GCSSFilename) {
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
@@ -599,7 +599,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		themes.StyleAmber(&amberdata, themes.DefaultGCSSFilename)
+		amberdata = themes.StyleAmber(amberdata, themes.DefaultGCSSFilename)
 	}
 
 	// Compile the given amber template
