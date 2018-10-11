@@ -17,21 +17,15 @@ require (
 	github.com/dop251/goja v0.0.0-20180719220425-ef8c030e3c96 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fatih/color v1.7.0 // indirect
-	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
 	github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
-	github.com/gobwas/httphead v0.0.0-20180130184737-2c6c146eadee // indirect
-	github.com/gobwas/pool v0.2.0 // indirect
-	github.com/gobwas/ws v1.0.0
 	github.com/golang/mock v1.1.1 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181004151105-1babbf986f6f // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/kr/pty v1.1.3 // indirect
 	github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f // indirect
 	github.com/lucas-clemente/quic-go v0.10.0
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
@@ -49,7 +43,6 @@ require (
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
-	github.com/xeipuuv/gojsonschema v0.0.0-20181006164115-f58b4a9e3d67 // indirect
 	github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
@@ -72,7 +65,7 @@ require (
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 	github.com/yuin/gopher-lua v0.0.0-20181008131706-f6fcaab0c612
 	golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941 // indirect
-	golang.org/x/net v0.0.0-20181005035420-146acd28ed58
+	golang.org/x/net v0.0.0-20181011144130-49bb7cea24b1
 	golang.org/x/sys v0.0.0-20181005133103-4497e2df6f9e // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
