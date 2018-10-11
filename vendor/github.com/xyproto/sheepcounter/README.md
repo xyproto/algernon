@@ -39,7 +39,7 @@ func main() {
 
 # General information
 
-* Version: 1.2.0
+* Version: 1.3.0
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * License: MIT
 

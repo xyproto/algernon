@@ -60,3 +60,8 @@ func (sc *SheepCounter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 	return w.Hijack()
 }
+
+// ReponseWriter returns a pointer to the wrapped http.ResponseWriter
+func (sc *SheepCounter) ResponseWriter() *http.ResponseWriter {
+	return &sc.wrappedResponseWriter
+}
