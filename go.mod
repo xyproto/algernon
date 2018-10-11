@@ -27,6 +27,7 @@ require (
 	github.com/gobwas/ws v1.0.0
 	github.com/golang/mock v1.1.1 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181004151105-1babbf986f6f // indirect
+	github.com/gorilla/websocket v1.4.0
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect

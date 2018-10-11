@@ -34,7 +34,7 @@ const (
 	// Version number. Stable API within major version numbers.
 	Version = 2.0
 
-	dividerLine = "················································································"
+	dividerLine = "·················································································"
 )
 
 // Config is the main structure for the Algernon server.

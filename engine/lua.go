@@ -80,6 +80,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 	// Pages and Tags
 	onthefly.Load(L)
 
+	// WebSocket
+	//websocket.Load(L, w, req)
+
 	// File uploads
 	upload.Load(L, w, req, filepath.Dir(filename))
 }

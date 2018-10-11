@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/didip/tollbooth"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
@@ -244,6 +245,46 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 
+		// Check for the magical websocket filename: ws.lua
+		if strings.HasSuffix(filename, "ws.lua") {
+			if ac.debugMode {
+				// TODO: This is suboptimal. Don't setup a recorder when about to use websockets instead.
+				log.Error("Can only use WebSockets when not in debug mode")
+			}
+			upgrader := websocket.Upgrader{}
+			log.Info("ws.lua is used for handling websockets!")
+			// Upgrade the wrapped sheepcounter connection to websockets
+			// TODO: Place this functionality directly in sheepcounter
+			var err error
+			var conn *websocket.Conn
+			log.Infof("type of w before anything: %T", w)
+			if sc, ok := w.(*sheepcounter.SheepCounter); ok {
+				log.Info("sheepcounter: true")
+				rw := sc.ResponseWriter()
+				rw2 := rw.(http.ResponseWriter)
+				log.Infof("type of rw2 before upgrade: %T", rw2)
+				conn, err = upgrader.Upgrade(rw2, req, nil)
+				log.Infof("type of rw2 after upgrade: %T", rw2)
+			} else {
+				log.Info("sheepcounter: false")
+				log.Infof("type of w before upgrade: %T", w)
+				conn, err = upgrader.Upgrade(w, req, nil)
+				log.Infof("type of w after upgrade: %T", w)
+			}
+
+            // THE PROBLEM HERE IS ONLY WHEN USING DEBUG MODE
+			// since this makes the incoming ResponseWriter a
+			// httptest.ResponseRecorder!!!!
+			// And websocket upgrade does not support this.
+
+			if err != nil {
+				log.Errorf("Could not upgrade connection to WebSockets: %s", err)
+				return
+			}
+			log.Infof("websocket upgrade: OK, type: %T", conn)
+			return
+		}
+
 		// If debug mode is enabled
 		if ac.debugMode {
 			// Use a buffered ResponseWriter for delaying the output
@@ -335,6 +376,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 
 	// Source files that may be used by web pages
 	case ".js":
+		// TODO: Document why .Add is used here instead of .Set
 		w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 
 	// Source code files for viewing
