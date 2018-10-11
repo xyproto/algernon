@@ -175,7 +175,7 @@ var pageMethods = map[string]lua.LGFunction{
 	"__tostring": pageString,
 }
 
-// Load makes functions related onthefly.Page nodes available to the given Lua state
+// Load makes functions related to onthefly.Page nodes available to the given Lua state
 func Load(L *lua.LState) {
 
 	// Register the Page class and the methods that belongs with it.
