@@ -7,7 +7,6 @@ import (
 )
 
 // Extra Lua functions
-
 const luacode = `
 -- Given the name of a python script in the same directory,
 -- return the outputted lines as a table
@@ -58,7 +57,6 @@ end
 // the given Lua state struct: py, run and dir
 func Load(L *lua.LState) {
 	if err := L.DoString(luacode); err != nil {
-		log.Error("Could not load Lua extras!")
-		log.Error(err)
+		log.Errorf("Could not load extra Lua functions: %s", err)
 	}
 }
