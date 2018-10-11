@@ -227,7 +227,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	htmlbody = bytes.Replace(htmlbody, []byte("<li><p>[x] "), []byte("<li><p><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
 
 	// These should work by default, but does not.
-	// TOOD: Look into how blackfriday handles this.
+	// TODO: Look into how blackfriday handles this.
 	htmlbody = bytes.Replace(htmlbody, []byte("&amp;gt;"), []byte("&gt;"), utils.EveryInstance)
 	htmlbody = bytes.Replace(htmlbody, []byte("&amp;lt;"), []byte("&lt;"), utils.EveryInstance)
 
