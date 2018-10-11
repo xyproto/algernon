@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// DefaultGCSSFilename is the default CSS stylesheett
+	// DefaultCSSFilename is the default CSS stylesheet
 	DefaultCSSFilename = "style.css"
 
 	// DefaultGCSSFilename is the default GCSS stylesheet

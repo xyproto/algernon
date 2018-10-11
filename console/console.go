@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Output is for enabling or disabling output to stdout
 type Output struct {
 	enabled    bool
 	stdout     *os.File
