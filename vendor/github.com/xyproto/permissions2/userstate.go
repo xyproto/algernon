@@ -62,7 +62,7 @@ func NewUserStateSimple2() (*UserState, error) {
 // Calls log.Fatal if things go wrong.
 func NewUserStateWithPassword(hostname, password string) *UserState {
 	// db index 0, initialize random generator after generating the cookie secret, password
-	connectTo := hostname
+	var connectTo string
 	switch {
 	case (password == "") && (strings.Count(hostname, ":") == 0):
 		connectTo = hostname + ":6379"
@@ -81,7 +81,7 @@ func NewUserStateWithPassword(hostname, password string) *UserState {
 // Returns an error if things go wrong.
 func NewUserStateWithPassword2(hostname, password string) (*UserState, error) {
 	// db index 0, initialize random generator after generating the cookie secret, password
-	connectTo := hostname
+	var connectTo string
 	if (password == "") && (strings.Count(hostname, ":") == 0) {
 		connectTo = hostname + ":6379"
 	} else if strings.Count(hostname, ":") > 0 {

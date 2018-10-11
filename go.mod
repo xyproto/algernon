@@ -55,7 +55,7 @@ require (
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
 	github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
 	github.com/xyproto/permissionbolt v0.0.0-20181004131838-a475f7fcef96
-	github.com/xyproto/permissions2 v0.0.0-20181009120857-244fa9735b06
+	github.com/xyproto/permissions2 v0.0.0-20181011131022-2a1a3aec098a
 	github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 	github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb

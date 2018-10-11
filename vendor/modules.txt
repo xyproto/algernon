@@ -174,7 +174,7 @@ github.com/xyproto/mime
 github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v0.0.0-20181004131838-a475f7fcef96
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20181009120857-244fa9735b06
+# github.com/xyproto/permissions2 v0.0.0-20181011131022-2a1a3aec098a
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354
 github.com/xyproto/permissionsql

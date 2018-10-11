@@ -195,6 +195,8 @@ github.com/xyproto/permissions2 v0.0.0-20181004132527-5f4ea507f358 h1:TI5BInwhQk
 github.com/xyproto/permissions2 v0.0.0-20181004132527-5f4ea507f358/go.mod h1:d3u2g9Ok9c241j5UBK8E6OZSi0cf1ZI4IQOZ5Rpl/BY=
 github.com/xyproto/permissions2 v0.0.0-20181009120857-244fa9735b06 h1:laZnt+VipRfd8LMOeFXv5C4/xx+2q4X77QuIiboquaw=
 github.com/xyproto/permissions2 v0.0.0-20181009120857-244fa9735b06/go.mod h1:d3u2g9Ok9c241j5UBK8E6OZSi0cf1ZI4IQOZ5Rpl/BY=
+github.com/xyproto/permissions2 v0.0.0-20181011131022-2a1a3aec098a h1:H+kzWHD98qD8iKQdksa1Nf1mXePon7GCYhiUMdYGMHM=
+github.com/xyproto/permissions2 v0.0.0-20181011131022-2a1a3aec098a/go.mod h1:d3u2g9Ok9c241j5UBK8E6OZSi0cf1ZI4IQOZ5Rpl/BY=
 github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354 h1:RUttzBM6XiWzFmISHG1XNwiI7Bz7+F4IezvMZUAa4TM=
 github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354/go.mod h1:WUVz2M7NKCtkIlXN/9X7VpHSMCOmqrfPS6RQxeNLv9c=
 github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684 h1:NFSurCu+HqTKLlURDwnZL2J6GQv4WKzGBuFdrO8Rimc=
