@@ -1,0 +1,23 @@
+sudo: required
+
+language: go
+
+services:
+  - docker
+
+os:
+  - linux
+
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - 1.x
+
+install:
+  - go get github.com/gobwas/pool
+  - go get github.com/gobwas/httphead
+
+script:
+  - make test
+  - make autobahn 

@@ -22,7 +22,7 @@ var (
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
 
 	// ErrNotFound is used as an error if not finding what is being searched for
-	ErrNotFound = errors.New("Not found")
+	ErrNotFound = errors.New("not found")
 )
 
 // Used for dealing with the user state, users and passwords.
@@ -63,11 +63,12 @@ func NewUserStateSimple2() (*UserState, error) {
 func NewUserStateWithPassword(hostname, password string) *UserState {
 	// db index 0, initialize random generator after generating the cookie secret, password
 	connectTo := hostname
-	if (password == "") && (strings.Count(hostname, ":") == 0) {
+	switch {
+	case (password == "") && (strings.Count(hostname, ":") == 0):
 		connectTo = hostname + ":6379"
-	} else if strings.Count(hostname, ":") > 0 {
+	case strings.Count(hostname, ":") > 0:
 		connectTo = password + "@" + hostname
-	} else {
+	default:
 		connectTo = password + "@" + hostname + ":6379"
 	}
 	// Create a new UserState with database index 0, "true" for seeding the
@@ -177,7 +178,7 @@ func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserSta
 	if err := simpleredis.TestConnectionHost(redisHostPort); err != nil {
 		errorMessage := err.Error()
 		if errorMessage == "dial tcp :6379: getsockopt: connection refused" {
-			return nil, errors.New("Unable to connect to Redis server on port 6379.")
+			return nil, errors.New("unable to connect to Redis server on port 6379")
 		}
 		return nil, err
 	}
@@ -219,7 +220,7 @@ func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserSta
 
 	if pool.Ping() != nil {
 		defer pool.Close()
-		return nil, fmt.Errorf("Wrong hostname, port or password. (%s does not reply to PING)\n", redisHostPort)
+		return nil, fmt.Errorf("wrong hostname, port or password. (%s does not reply to PING)", redisHostPort)
 	}
 
 	return state, nil
@@ -285,12 +286,12 @@ func (state *UserState) HasEmail(email string) (string, error) {
 		return "", err
 	}
 	for _, username := range usernames {
-		if user_email, err := state.Email(username); err != nil {
+		userEmail, err := state.Email(username)
+		if err != nil {
 			return "", err
-		} else {
-			if user_email == email {
-				return username, nil
-			}
+		}
+		if userEmail == email {
+			return username, nil
 		}
 	}
 	return "", ErrNotFound
@@ -677,7 +678,7 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
-		return "", errors.New("All existing users are already confirmed.")
+		return "", errors.New("all existing users are already confirmed")
 	}
 
 	// Find the username by looking up the confirmationCode on unconfirmed users
@@ -697,11 +698,11 @@ func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (str
 
 	// Check that the user is there
 	if username == "" {
-		return username, errors.New("The confirmation code is no longer valid.")
+		return username, errors.New("the confirmation code is no longer valid")
 	}
 	hasUser := state.HasUser(username)
 	if !hasUser {
-		return username, errors.New("The user that is to be confirmed no longer exists.")
+		return username, errors.New("the user that is to be confirmed no longer exists")
 	}
 
 	return username, nil
@@ -742,7 +743,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 		confirmationCode = cookie.RandomHumanFriendlyString(length)
 		if length > maxConfirmationCodeLength {
 			// This should never happen
-			return confirmationCode, errors.New("Too many generated confirmation codes are not unique!")
+			return confirmationCode, errors.New("too many generated confirmation codes are not unique")
 		}
 	}
 	return confirmationCode, nil
@@ -760,10 +761,10 @@ NEXT:
 				continue NEXT // check the next letter in the username
 			}
 		}
-		return errors.New("Only letters, numbers and underscore are allowed in usernames.")
+		return errors.New("only letters, numbers and underscore are allowed in usernames")
 	}
 	if username == password {
-		return errors.New("Username and password must be different, try another password.")
+		return errors.New("username and password must be different, try another password")
 	}
 	return nil
 }

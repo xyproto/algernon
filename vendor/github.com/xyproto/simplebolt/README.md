@@ -66,6 +66,6 @@ Version, license and author
 ---------------------------
 
 * License: MIT
-* API version: 3.2.0
+* Version: 3.2.0
 * Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
 

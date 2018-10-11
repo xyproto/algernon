@@ -1,6 +1,6 @@
 # SheepCounter [![Build Status](https://travis-ci.org/xyproto/sheepcounter.svg?branch=master)](https://travis-ci.org/xyproto/sheepcounter) [![GoDoc](https://godoc.org/github.com/xyproto/sheepcounter?status.svg)](http://godoc.org/github.com/xyproto/sheepcounter) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/sheepcounter)
 
-A http.ResponseWriter that can count the bytes written to the client so far.
+A `http.ResponseWriter` that can count the bytes written to the client so far.
 
 # Why?
 
@@ -39,7 +39,7 @@ func main() {
 
 # General information
 
-* Version: 1.1.0
+* Version: 1.2.0
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * License: MIT
 
