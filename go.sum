@@ -211,6 +211,8 @@ github.com/xyproto/sheepcounter v1.2.0 h1:VX/XPywqT4PmMD4TdCziE2UDBzjKNKS76Sq0RL
 github.com/xyproto/sheepcounter v1.2.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/sheepcounter v1.3.0 h1:fR87Ku9TJaYwEkU5kTVSa4tf5UWloSH3dRZFJcZVxgI=
 github.com/xyproto/sheepcounter v1.3.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
+github.com/xyproto/sheepcounter v1.4.0 h1:uLLvf2dz+M3B0Z8xbLaKuHTgHYJ7B/RdxpKJIA781RQ=
+github.com/xyproto/sheepcounter v1.4.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f h1:qtp3TMYUA+Bv1vPEwRpjdq0NIik89Al5QdamqWNhpfE=
 github.com/xyproto/simplebolt v0.0.0-20181004130618-617dc386952f/go.mod h1:E/j80yRqYacgLGrLmssLPDBqjAW+E+fMV5Wb+IogcLE=
 github.com/xyproto/simplebolt v0.0.0-20181004172231-10e17ad97c5e h1:c2BbB3Y4M6e+HvpkpZC3CymgOeBR+efUan9CTxnc7Cc=
