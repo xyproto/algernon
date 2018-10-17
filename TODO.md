@@ -2,6 +2,7 @@
 
 Priority 1
 ----------
+- [ ] Refresh all files at USR1 signal.
 - [ ] Flag for redirecting all `http://` traffic to `https://`.
 - [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
