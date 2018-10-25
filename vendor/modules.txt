@@ -74,23 +74,13 @@ github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.4.0
 github.com/go-sql-driver/mysql
-# github.com/gobwas/httphead v0.0.0-20180130184737-2c6c146eadee
-github.com/gobwas/httphead
-# github.com/gobwas/pool v0.2.0
-github.com/gobwas/pool/pbufio
-github.com/gobwas/pool
-github.com/gobwas/pool/pbytes
-github.com/gobwas/pool/internal/pmath
-# github.com/gobwas/ws v1.0.0
-github.com/gobwas/ws
-github.com/gobwas/ws/wsutil
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/redis
 github.com/gomodule/redigo/internal
 # github.com/hashicorp/golang-lru v0.5.0
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/juju/errors v0.0.0-20180806074554-22422dad46e1
+# github.com/juju/errors v0.0.0-20181012004132-a4583d0a56ea
 github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 github.com/jvatic/goja-babel
@@ -184,7 +174,7 @@ github.com/xyproto/pinterface
 github.com/xyproto/pstore
 # github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
 github.com/xyproto/recwatch
-# github.com/xyproto/sheepcounter v1.4.0
+# github.com/xyproto/sheepcounter v1.5.0
 github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v0.0.0-20181004172231-10e17ad97c5e
 github.com/xyproto/simplebolt
@@ -204,24 +194,24 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20181008131706-f6fcaab0c612
+# github.com/yuin/gopher-lua v0.0.0-20181024100033-f7ea7b13e9a5
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941
+# golang.org/x/crypto v0.0.0-20181024171144-74cb1d3d52f4
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181005035420-146acd28ed58
+# golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20181005133103-4497e2df6f9e
+# golang.org/x/sys v0.0.0-20181025063200-d989b31c8746
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0

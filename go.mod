@@ -4,7 +4,7 @@ require (
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38 // indirect
 	github.com/alecthomas/chroma v0.5.0 // indirect
 	github.com/alecthomas/colour v0.0.0-20160524082231-60882d9e2721 // indirect
-	github.com/alecthomas/repr v0.0.0-20180920225502-7ed41413b477 // indirect
+	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1 // indirect
 	github.com/bifurcation/mint v0.0.0-20180715133206-93c51c6ce115 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cheekybits/genny v1.0.0 // indirect
@@ -23,6 +23,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/golang/mock v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
+	github.com/juju/errors v0.0.0-20181012004132-a4583d0a56ea // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
@@ -53,7 +54,7 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 	github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb
 	github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
-	github.com/xyproto/sheepcounter v1.4.0
+	github.com/xyproto/sheepcounter v1.5.0
 	github.com/xyproto/simplebolt v0.0.0-20181004172231-10e17ad97c5e
 	github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e // indirect
 	github.com/xyproto/simplemaria v0.0.0-20181004164500-44e2d899007e // indirect
@@ -63,10 +64,10 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-	github.com/yuin/gopher-lua v0.0.0-20181008131706-f6fcaab0c612
-	golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941 // indirect
-	golang.org/x/net v0.0.0-20181011144130-49bb7cea24b1
-	golang.org/x/sys v0.0.0-20181005133103-4497e2df6f9e // indirect
+	github.com/yuin/gopher-lua v0.0.0-20181024100033-f7ea7b13e9a5
+	golang.org/x/crypto v0.0.0-20181024171144-74cb1d3d52f4 // indirect
+	golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519
+	golang.org/x/sys v0.0.0-20181025063200-d989b31c8746 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
