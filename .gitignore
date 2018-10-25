@@ -69,3 +69,7 @@ output.b64
 
 # logs
 *.log
+
+# profiling
+*.cpu
+*.mem
