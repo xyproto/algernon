@@ -123,7 +123,7 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/nsf/termbox-go v0.0.0-20180819125858-b66b20ab708e
+# github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed
 github.com/nsf/termbox-go
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
@@ -194,24 +194,24 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20181024100033-f7ea7b13e9a5
+# github.com/yuin/gopher-lua v0.0.0-20181031023651-12c4817b42c5
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20181024171144-74cb1d3d52f4
+# golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519
+# golang.org/x/net v0.0.0-20181029044818-c44066c5c816
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20181025063200-d989b31c8746
+# golang.org/x/sys v0.0.0-20181030150119-7e31e0c00fa0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0

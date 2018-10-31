@@ -17,16 +17,19 @@ require (
 	github.com/dop251/goja v0.0.0-20180719220425-ef8c030e3c96 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fatih/color v1.7.0 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
 	github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/golang/mock v1.1.1 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/juju/errors v0.0.0-20181012004132-a4583d0a56ea // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f // indirect
 	github.com/lucas-clemente/quic-go v0.10.0
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
@@ -35,7 +38,7 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/nsf/termbox-go v0.0.0-20180819125858-b66b20ab708e // indirect
+	github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
@@ -43,7 +46,9 @@ require (
 	github.com/sirupsen/logrus v1.1.1
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
+	github.com/ugorji/go/codec v0.0.0-20181022190402-e5e69e061d4f // indirect
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
+	github.com/xeipuuv/gojsonschema v0.0.0-20181016150526-f3a9dae5b194 // indirect
 	github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
@@ -64,10 +69,10 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-	github.com/yuin/gopher-lua v0.0.0-20181024100033-f7ea7b13e9a5
-	golang.org/x/crypto v0.0.0-20181024171144-74cb1d3d52f4 // indirect
-	golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519
-	golang.org/x/sys v0.0.0-20181025063200-d989b31c8746 // indirect
+	github.com/yuin/gopher-lua v0.0.0-20181031023651-12c4817b42c5
+	golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16 // indirect
+	golang.org/x/net v0.0.0-20181029044818-c44066c5c816
+	golang.org/x/sys v0.0.0-20181030150119-7e31e0c00fa0 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
