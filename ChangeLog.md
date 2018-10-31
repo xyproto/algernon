@@ -1,5 +1,18 @@
 # Changelog
 
+Changes from 1.11.0 to 1.12.0
+=============================
+
+* Favicon support when serving Markdown files.
+* More minimal `--lua` mode.
+* Using the new `strings.Builder` in Go.
+* Better Markdown keyword handling.
+* Update vendored dependencies.
+* Include transmitted bytes in the access log.
+* Detect `style.css` in addition to `style.gcss`.
+* Better Markdown checkbox support.
+* Some refactoring and linting.
+
 Changes from 1.10.1 to 1.11.0
 =============================
 
