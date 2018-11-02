@@ -251,8 +251,8 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
-				log.Error("Not serving HTTP/2 after all. Error: ", err)
-				log.Info("Use the -t flag for serving regular HTTP instead")
+				log.Errorf("%s. Not serving HTTP/2.", err)
+				log.Info("Use the -t flag for serving regular HTTP.")
 				mut.Lock()
 				servingHTTPS = false
 				mut.Unlock()
