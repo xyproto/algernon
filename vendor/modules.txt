@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.5.0
+# github.com/alecthomas/chroma v0.6.0
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -59,14 +59,10 @@ github.com/dop251/goja/token
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/fatih/color v1.7.0
-github.com/fatih/color
 # github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/getwe/figlet4go v0.0.0-20160909034824-bc879344e874
-github.com/getwe/figlet4go
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
@@ -111,10 +107,6 @@ github.com/lucas-clemente/quic-go/internal/wire
 github.com/lucas-clemente/quic-go-certificates
 # github.com/mattetti/filebuffer v0.0.0-20171024213321-3a1e8e5a6548
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.0.9
-github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.4
-github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.3
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-homedir v1.0.0
@@ -133,7 +125,7 @@ github.com/russross/blackfriday
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.1.1
+# github.com/sirupsen/logrus v1.2.0
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -186,7 +178,7 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20180806122730-f047d352ed87
 github.com/xyproto/splash
-# github.com/xyproto/term v0.0.0-20180502080334-71331061d202
+# github.com/xyproto/term v0.0.0-20181102095811-abbba14d6880
 github.com/xyproto/term
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
@@ -205,13 +197,13 @@ golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181029044818-c44066c5c816
+# golang.org/x/net v0.0.0-20181102091132-c10e9556a7bc
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20181030150119-7e31e0c00fa0
+# golang.org/x/sys v0.0.0-20181031143558-9b800f95dbbc
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -227,7 +219,7 @@ golang.org/x/text/internal/colltab
 golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
 golang.org/x/time/rate
-# google.golang.org/appengine v1.2.0
+# google.golang.org/appengine v1.3.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
