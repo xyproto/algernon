@@ -1,6 +1,8 @@
 module github.com/xyproto/algernon
 
 require (
+	github.com/Joker/jade v1.0.0 // indirect
+	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
 	github.com/bifurcation/mint v0.0.0-20181105071958-a14404e9a861 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cheekybits/genny v1.0.0 // indirect
@@ -10,29 +12,38 @@ require (
 	github.com/didip/tollbooth v4.0.0+incompatible
 	github.com/dop251/goja v0.0.0-20181103134557-c7a914b98225 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/golang/mock v1.1.1 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/juju/errors v0.0.0-20181012004132-a4583d0a56ea // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
+	github.com/klauspost/compress v1.4.1 // indirect
+	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f // indirect
 	github.com/lucas-clemente/quic-go v0.10.0
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
 	github.com/mattetti/filebuffer v0.0.0-20171024213321-3a1e8e5a6548 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
+	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
 	github.com/sirupsen/logrus v1.2.0
+	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
+	github.com/ugorji/go/codec v0.0.0-20181022190402-e5e69e061d4f // indirect
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
+	github.com/xeipuuv/gojsonschema v0.0.0-20181112162635-ac52e6811b56 // indirect
 	github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
