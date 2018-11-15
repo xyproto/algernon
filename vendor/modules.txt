@@ -29,7 +29,7 @@ github.com/alecthomas/chroma/lexers/v
 github.com/alecthomas/chroma/lexers/w
 github.com/alecthomas/chroma/lexers/x
 github.com/alecthomas/chroma/lexers/y
-# github.com/bifurcation/mint v0.0.0-20180715133206-93c51c6ce115
+# github.com/bifurcation/mint v0.0.0-20181105071958-a14404e9a861
 github.com/bifurcation/mint
 github.com/bifurcation/mint/syntax
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
@@ -50,7 +50,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.1.6
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20180719220425-ef8c030e3c96
+# github.com/dop251/goja v0.0.0-20181103134557-c7a914b98225
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -68,7 +68,7 @@ github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
-# github.com/go-sql-driver/mysql v1.4.0
+# github.com/go-sql-driver/mysql v1.4.1
 github.com/go-sql-driver/mysql
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/redis
@@ -176,7 +176,7 @@ github.com/xyproto/simplehstore
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
 github.com/xyproto/simpleredis
-# github.com/xyproto/splash v0.0.0-20180806122730-f047d352ed87
+# github.com/xyproto/splash v0.0.0-20181102100648-7bb75b9c7398
 github.com/xyproto/splash
 # github.com/xyproto/term v0.0.0-20181102095811-abbba14d6880
 github.com/xyproto/term
@@ -186,24 +186,23 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20181031023651-12c4817b42c5
+# github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16
+# golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181102091132-c10e9556a7bc
+# golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20181031143558-9b800f95dbbc
+# golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -217,7 +216,7 @@ golang.org/x/text/internal
 golang.org/x/text/transform
 golang.org/x/text/internal/colltab
 golang.org/x/text/internal/tag
-# golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
+# golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate
 # google.golang.org/appengine v1.3.0
 google.golang.org/appengine/cloudsql

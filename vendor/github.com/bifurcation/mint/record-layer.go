@@ -197,7 +197,7 @@ func (c *cipherState) overhead() int {
 	return c.cipher.Overhead()
 }
 
-func (r *RecordLayer) encrypt(cipher *cipherState, seq uint64, pt *TLSPlaintext, padLen int) *TLSPlaintext {
+func (r *RecordLayer) encrypt(cipher *cipherState, seq uint64, header []byte, pt *TLSPlaintext, padLen int) []byte {
 	assert(r.direction == directionWrite)
 	logf(logTypeIO, "%s Encrypt seq=[%x]", r.label, seq)
 	// Expand the fragment to hold contentType, padding, and overhead
@@ -205,25 +205,20 @@ func (r *RecordLayer) encrypt(cipher *cipherState, seq uint64, pt *TLSPlaintext,
 	plaintextLen := originalLen + 1 + padLen
 	ciphertextLen := plaintextLen + cipher.overhead()
 
-	// Assemble the revised plaintext
-	out := &TLSPlaintext{
-
-		contentType: RecordTypeApplicationData,
-		fragment:    make([]byte, ciphertextLen),
-	}
-	copy(out.fragment, pt.fragment)
-	out.fragment[originalLen] = byte(pt.contentType)
+	ciphertext := make([]byte, ciphertextLen)
+	copy(ciphertext, pt.fragment)
+	ciphertext[originalLen] = byte(pt.contentType)
 	for i := 1; i <= padLen; i++ {
-		out.fragment[originalLen+i] = 0
+		ciphertext[originalLen+i] = 0
 	}
 
 	// Encrypt the fragment
-	payload := out.fragment[:plaintextLen]
-	cipher.cipher.Seal(payload[:0], cipher.computeNonce(seq), payload, nil)
-	return out
+	payload := ciphertext[:plaintextLen]
+	cipher.cipher.Seal(payload[:0], cipher.computeNonce(seq), payload, header)
+	return ciphertext
 }
 
-func (r *RecordLayer) decrypt(pt *TLSPlaintext, seq uint64) (*TLSPlaintext, int, error) {
+func (r *RecordLayer) decrypt(seq uint64, header []byte, pt *TLSPlaintext) (*TLSPlaintext, int, error) {
 	assert(r.direction == directionRead)
 	logf(logTypeIO, "%s Decrypt seq=[%x]", r.label, seq)
 	if len(pt.fragment) < r.cipher.overhead() {
@@ -238,7 +233,7 @@ func (r *RecordLayer) decrypt(pt *TLSPlaintext, seq uint64) (*TLSPlaintext, int,
 	}
 
 	// Decrypt
-	_, err := r.cipher.cipher.Open(out.fragment[:0], r.cipher.computeNonce(seq), pt.fragment, nil)
+	_, err := r.cipher.cipher.Open(out.fragment[:0], r.cipher.computeNonce(seq), pt.fragment, header)
 	if err != nil {
 		logf(logTypeIO, "%s AEAD decryption failure [%x]", r.label, pt)
 		return nil, 0, DecryptError("tls.record.decrypt: AEAD decrypt failed")
@@ -391,7 +386,7 @@ func (r *RecordLayer) nextRecord(allowOldEpoch bool) (*TLSPlaintext, error) {
 
 	if cipher.cipher != nil {
 		logf(logTypeIO, "%s RecordLayer.ReadRecord epoch=[%s] seq=[%x] [%d] ciphertext=[%x]", r.label, cipher.epoch.label(), seq, pt.contentType, pt.fragment)
-		pt, _, err = r.decrypt(pt, seq)
+		pt, _, err = r.decrypt(seq, header, pt)
 		if err != nil {
 			logf(logTypeIO, "%s Decryption failed", r.label)
 			return nil, err
@@ -421,36 +416,48 @@ func (r *RecordLayer) WriteRecordWithPadding(pt *TLSPlaintext, padLen int) error
 
 func (r *RecordLayer) writeRecordWithPadding(pt *TLSPlaintext, cipher *cipherState, padLen int) error {
 	seq := cipher.combineSeq(r.datagram)
-	if cipher.cipher != nil {
-		logf(logTypeIO, "%s RecordLayer.WriteRecord epoch=[%s] seq=[%x] [%d] plaintext=[%x]", r.label, cipher.epoch.label(), cipher.seq, pt.contentType, pt.fragment)
-		pt = r.encrypt(cipher, seq, pt, padLen)
-	} else if padLen > 0 {
-		return fmt.Errorf("tls.record: Padding can only be done on encrypted records")
-	}
-
-	if len(pt.fragment) > maxFragmentLen {
-		return fmt.Errorf("tls.record: Record size too big")
-	}
-
 	length := len(pt.fragment)
+	var contentType RecordType
+	if cipher.cipher != nil {
+		length += 1 + padLen + cipher.cipher.Overhead()
+		contentType = RecordTypeApplicationData
+	} else {
+		contentType = pt.contentType
+	}
 	var header []byte
 
 	if !r.datagram {
-		header = []byte{byte(pt.contentType),
+		header = []byte{byte(contentType),
 			byte(r.version >> 8), byte(r.version & 0xff),
 			byte(length >> 8), byte(length)}
 	} else {
 		header = make([]byte, 13)
 		version := dtlsConvertVersion(r.version)
-		copy(header, []byte{byte(pt.contentType),
+		copy(header, []byte{byte(contentType),
 			byte(version >> 8), byte(version & 0xff),
 		})
 		encodeUint(seq, 8, header[3:])
 		encodeUint(uint64(length), 2, header[11:])
 	}
-	record := append(header, pt.fragment...)
 
-	logf(logTypeIO, "%s RecordLayer.WriteRecord epoch=[%s] seq=[%x] [%d] ciphertext=[%x]", r.label, cipher.epoch.label(), cipher.seq, pt.contentType, pt.fragment)
+	var ciphertext []byte
+	if cipher.cipher != nil {
+		logf(logTypeIO, "%s RecordLayer.WriteRecord epoch=[%s] seq=[%x] [%d] plaintext=[%x]", r.label, cipher.epoch.label(), cipher.seq, pt.contentType, pt.fragment)
+		ciphertext = r.encrypt(cipher, seq, header, pt, padLen)
+	} else {
+		if padLen > 0 {
+			return fmt.Errorf("tls.record: Padding can only be done on encrypted records")
+		}
+		ciphertext = pt.fragment
+	}
+
+	if len(ciphertext) > maxFragmentLen {
+		return fmt.Errorf("tls.record: Record size too big")
+	}
+
+	record := append(header, ciphertext...)
+
+	logf(logTypeIO, "%s RecordLayer.WriteRecord epoch=[%s] seq=[%x] [%d] ciphertext=[%x]", r.label, cipher.epoch.label(), cipher.seq, contentType, ciphertext)
 
 	cipher.incrementSequenceNumber()
 	_, err := r.conn.Write(record)

@@ -89,7 +89,7 @@ func (state clientStateStart) Next(hr handshakeMessageReader) (HandshakeState, [
 	logf(logTypeHandshake, "opts: %+v", state.Opts)
 
 	// supported_versions, supported_groups, signature_algorithms, server_name
-	sv := SupportedVersionsExtension{HandshakeType: HandshakeTypeClientHello, Versions: []uint16{supportedVersion}}
+	sv := SupportedVersionsExtension{HandshakeType: HandshakeTypeClientHello, Versions: []uint16{tls13Version}}
 	sni := ServerNameExtension(state.Opts.ServerName)
 	sg := SupportedGroupsExtension{Groups: state.Config.Groups}
 	sa := SignatureAlgorithmsExtension{Algorithms: state.Config.SignatureSchemes}
@@ -132,6 +132,15 @@ func (state clientStateStart) Next(hr handshakeMessageReader) (HandshakeState, [
 		err := ch.Extensions.Add(&CookieExtension{Cookie: state.cookie})
 		if err != nil {
 			logf(logTypeHandshake, "[ClientStateStart] Error adding ALPN extension [%v]", err)
+			return nil, nil, AlertInternalError
+		}
+	}
+
+	if len(state.Config.PSKModes) != 0 {
+		kem := &PSKKeyExchangeModesExtension{KEModes: state.Config.PSKModes}
+		err = ch.Extensions.Add(kem)
+		if err != nil {
+			logf(logTypeHandshake, "Error adding PSKKeyExchangeModes extension: %v", err)
 			return nil, nil, AlertInternalError
 		}
 	}
@@ -188,12 +197,6 @@ func (state clientStateStart) Next(hr handshakeMessageReader) (HandshakeState, [
 		// Signal supported PSK key exchange modes
 		if len(state.Config.PSKModes) == 0 {
 			logf(logTypeHandshake, "PSK selected, but no PSKModes")
-			return nil, nil, AlertInternalError
-		}
-		kem := &PSKKeyExchangeModesExtension{KEModes: state.Config.PSKModes}
-		err = ch.Extensions.Add(kem)
-		if err != nil {
-			logf(logTypeHandshake, "Error adding PSKKeyExchangeModes extension: %v", err)
 			return nil, nil, AlertInternalError
 		}
 
@@ -354,7 +357,7 @@ func (state clientStateWaitSH) Next(hr handshakeMessageReader) (HandshakeState, 
 		logf(logTypeHandshake, "[ClientStateWaitSH] no supported_versions extension")
 		return nil, nil, AlertMissingExtension
 	}
-	if supportedVersions.Versions[0] != supportedVersion {
+	if supportedVersions.Versions[0] != tls13Version {
 		logf(logTypeHandshake, "[ClientStateWaitSH] unsupported version [%x]", supportedVersions.Versions[0])
 		return nil, nil, AlertProtocolVersion
 	}
@@ -416,6 +419,7 @@ func (state clientStateWaitSH) Next(hr handshakeMessageReader) (HandshakeState, 
 		// mode. In DTLS, we also need to bump the sequence number.
 		// This is a pre-existing defect in Mint. Issue #175.
 		logf(logTypeHandshake, "[ClientStateWaitSH] -> [ClientStateStart]")
+		state.hsCtx.SetVersion(tls12Version) // Everything after this should be 1.2.
 		return clientStateStart{
 			Config:            state.Config,
 			Opts:              state.Opts,
