@@ -18,6 +18,13 @@ Quick installation (development version)
 
 `go get -u github.com/xyproto/algernon`
 
+Experimental build with support for TLS 1.3
+-------------------------------------------
+
+Compiled with Go master 2018-11-15 for 64-bit Linux:
+
+* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.0-TLS-1.3/algernon) (statically compiled ELF file, 23.9 MB)
+
 Technologies
 ------------
 
