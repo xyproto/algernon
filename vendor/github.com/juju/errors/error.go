@@ -143,6 +143,10 @@ func (e *Err) Format(s fmt.State, verb rune) {
 		fallthrough
 	case 's':
 		fmt.Fprintf(s, "%s", e.Error())
+	case 'q':
+		fmt.Fprintf(s, "%q", e.Error())
+	default:
+		fmt.Fprintf(s, "%%!%c(%T=%s)", verb, e, e.Error())
 	}
 }
 
