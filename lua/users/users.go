@@ -7,6 +7,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
+	log "github.com/sirupsen/logrus"
 )
 
 // Load makes functions related to users and permissions available to Lua scripts
@@ -147,18 +148,16 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		L.Push(table)
 		return 1 // number of results
 	}))
-	// Get a confirmation code that can be given to a user, or an empty string
-	// Takes a username
+	// Get the existing confirmation code for a given user, or an empty string.
 	L.SetGlobal("ConfirmationCode", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
 		pw, err := userstate.ConfirmationCode(username)
-		var result lua.LString
 		if err != nil {
-			result = lua.LString("")
-		} else {
-			result = lua.LString(pw)
+			log.Error(err)
+			L.Push(lua.LString(""))
+			return 1 // number of results
 		}
-		L.Push(result)
+		L.Push(lua.LString(pw))
 		return 1 // number of results
 	}))
 	// Add a user to the list of unconfirmed users, returns nothing

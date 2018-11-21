@@ -727,7 +727,7 @@ PasswordHash(string) -> string
 // Get all unconfirmed usernames
 AllUnconfirmedUsernames() -> table
 
-// Get a confirmation code that can be given to a user,
+// Get the existing confirmation code for a given user,
 // or an empty string. Takes a username.
 ConfirmationCode(string) -> string
 

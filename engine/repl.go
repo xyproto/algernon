@@ -299,7 +299,7 @@ Email(string) -> string
 PasswordHash(string) -> string
 // Get all unconfirmed usernames
 AllUnconfirmedUsernames() -> table
-// Get a confirmation code that can be given to a user,
+// Get the existing confirmation code for a given user,
 // or an empty string. Takes a username.
 ConfirmationCode(string) -> string
 // Add a user to the list of unconfirmed users.
