@@ -267,7 +267,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 		themes.NewTheme(st, []byte("@import url("+st+");"), themes.DefaultCustomCodeStyle)
 	}
 
-	var head bytes.Buffer
+	var head strings.Builder
 
 	// If a favicon is specified, use that
 	favicon := kwmap["favicon"]
@@ -363,7 +363,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmldata := themes.SimpleHTMLPage(title, h1title, head.Bytes(), htmlbody)
+	htmldata := themes.SimpleHTMLPage(title, h1title, []byte(head.String()), htmlbody)
 
 	// Add syntax highlighting to the header, but only if "<pre" is present
 	if bytes.Contains(htmlbody, []byte("<pre")) {
@@ -520,7 +520,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Check if we are dealing with HTML
-	if bytes.Contains(buf.Bytes(), []byte("<html>")) {
+	if strings.Contains(buf.String(), "<html>") {
 
 		if linkInCSS || linkInGCSS {
 			// Link in stylesheet
@@ -566,7 +566,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Write the rendered template to the client
-	ac.DataToClient(w, req, filename, buf.Bytes())
+	ac.DataToClient(w, req, filename, []byte(buf.String()))
 }
 
 // AmberPage the given source bytes (in Amber) converted to HTML, to a writer.
@@ -716,7 +716,7 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 // The filename is only used in the error message, if any.
 func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
 	var (
-		htmlbuf bytes.Buffer
+		htmlbuf strings.Builder
 		jsxbuf  bytes.Buffer
 	)
 
@@ -813,7 +813,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		htmlbuf.WriteString("</script></body>")
 
 		// Output HTML + JS to browser
-		ac.DataToClient(w, req, filename, htmlbuf.Bytes())
+		ac.DataToClient(w, req, filename, []byte(htmlbuf.String()))
 	}
 }
 
