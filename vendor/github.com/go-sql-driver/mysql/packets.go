@@ -154,15 +154,15 @@ func (mc *mysqlConn) writePacket(data []byte) error {
 
 // Handshake Initialization Packet
 // http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake
-func (mc *mysqlConn) readHandshakePacket() (data []byte, plugin string, err error) {
-	data, err = mc.readPacket()
+func (mc *mysqlConn) readHandshakePacket() ([]byte, string, error) {
+	data, err := mc.readPacket()
 	if err != nil {
 		// for init we can rewrite this to ErrBadConn for sql.Driver to retry, since
 		// in connection initialization we don't risk retrying non-idempotent actions.
 		if err == ErrInvalidConn {
 			return nil, "", driver.ErrBadConn
 		}
-		return
+		return nil, "", err
 	}
 
 	if data[0] == iERR {
@@ -198,6 +198,7 @@ func (mc *mysqlConn) readHandshakePacket() (data []byte, plugin string, err erro
 	}
 	pos += 2
 
+	plugin := ""
 	if len(data) > pos {
 		// character set [1 byte]
 		// status flags [2 bytes]
@@ -235,6 +236,8 @@ func (mc *mysqlConn) readHandshakePacket() (data []byte, plugin string, err erro
 		return b[:], plugin, nil
 	}
 
+	plugin = defaultAuthPlugin
+
 	// make a memory safe copy of the cipher slice
 	var b [8]byte
 	copy(b[:], authData)
@@ -243,7 +246,7 @@ func (mc *mysqlConn) readHandshakePacket() (data []byte, plugin string, err erro
 
 // Client Authentication Packet
 // http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse
-func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string) error {
+func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, addNUL bool, plugin string) error {
 	// Adjust client flags based on server support
 	clientFlags := clientProtocol41 |
 		clientSecureConn |
@@ -269,8 +272,7 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 
 	// encode length of the auth plugin data
 	var authRespLEIBuf [9]byte
-	authRespLen := len(authResp)
-	authRespLEI := appendLengthEncodedInteger(authRespLEIBuf[:0], uint64(authRespLen))
+	authRespLEI := appendLengthEncodedInteger(authRespLEIBuf[:0], uint64(len(authResp)))
 	if len(authRespLEI) > 1 {
 		// if the length can not be written in 1 byte, it must be written as a
 		// length encoded integer
@@ -278,6 +280,9 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 	}
 
 	pktLen := 4 + 4 + 1 + 23 + len(mc.cfg.User) + 1 + len(authRespLEI) + len(authResp) + 21 + 1
+	if addNUL {
+		pktLen++
+	}
 
 	// To specify a db name
 	if n := len(mc.cfg.DBName); n > 0 {
@@ -348,6 +353,10 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 	// Auth Data [length encoded integer]
 	pos += copy(data[pos:], authRespLEI)
 	pos += copy(data[pos:], authResp)
+	if addNUL {
+		data[pos] = 0x00
+		pos++
+	}
 
 	// Databasename [null terminated string]
 	if len(mc.cfg.DBName) > 0 {
@@ -358,15 +367,17 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 
 	pos += copy(data[pos:], plugin)
 	data[pos] = 0x00
-	pos++
 
 	// Send Auth packet
-	return mc.writePacket(data[:pos])
+	return mc.writePacket(data)
 }
 
 // http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::AuthSwitchResponse
-func (mc *mysqlConn) writeAuthSwitchPacket(authData []byte) error {
+func (mc *mysqlConn) writeAuthSwitchPacket(authData []byte, addNUL bool) error {
 	pktLen := 4 + len(authData)
+	if addNUL {
+		pktLen++
+	}
 	data := mc.buf.takeSmallBuffer(pktLen)
 	if data == nil {
 		// cannot take the buffer. Something must be wrong with the connection
@@ -376,6 +387,10 @@ func (mc *mysqlConn) writeAuthSwitchPacket(authData []byte) error {
 
 	// Add the auth data [EOF]
 	copy(data[4:], authData)
+	if addNUL {
+		data[pktLen-1] = 0x00
+	}
+
 	return mc.writePacket(data)
 }
 
@@ -467,7 +482,7 @@ func (mc *mysqlConn) readAuthResult() ([]byte, string, error) {
 		return data[1:], "", err
 
 	case iEOF:
-		if len(data) == 1 {
+		if len(data) < 1 {
 			// https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::OldAuthSwitchRequest
 			return nil, "mysql_old_password", nil
 		}
@@ -1246,7 +1261,7 @@ func (rows *binaryRows) readRow(dest []driver.Value) error {
 						rows.rs.columns[i].decimals,
 					)
 				}
-				dest[i], err = formatBinaryTime(data[pos:pos+int(num)], dstlen)
+				dest[i], err = formatBinaryDateTime(data[pos:pos+int(num)], dstlen, true)
 			case rows.mc.parseTime:
 				dest[i], err = parseBinaryDateTime(num, data[pos:], rows.mc.cfg.Loc)
 			default:
@@ -1266,7 +1281,7 @@ func (rows *binaryRows) readRow(dest []driver.Value) error {
 						)
 					}
 				}
-				dest[i], err = formatBinaryDateTime(data[pos:pos+int(num)], dstlen)
+				dest[i], err = formatBinaryDateTime(data[pos:pos+int(num)], dstlen, false)
 			}
 
 			if err == nil {

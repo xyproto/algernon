@@ -68,7 +68,7 @@ github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
-# github.com/go-sql-driver/mysql v1.4.1
+# github.com/go-sql-driver/mysql v1.4.0
 github.com/go-sql-driver/mysql
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/redis
@@ -154,9 +154,9 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20181004131838-a475f7fcef96
+# github.com/xyproto/permissionbolt v0.0.0-20181129230056-7da3551b9d5f
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20181011131022-2a1a3aec098a
+# github.com/xyproto/permissions2 v0.0.0-20181129225925-22c4abeadf9f
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20180417082023-59c2446b3354
 github.com/xyproto/permissionsql
@@ -191,18 +191,18 @@ github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
+# golang.org/x/crypto v0.0.0-20181127143415-eb0de9b17e85
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
+# golang.org/x/net v0.0.0-20181129055619-fae4c4e3ad76
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b
+# golang.org/x/sys v0.0.0-20181128092732-4ed8d59d0b35
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -218,7 +218,7 @@ golang.org/x/text/internal/colltab
 golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate
-# google.golang.org/appengine v1.3.0
+# google.golang.org/appengine v1.2.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
