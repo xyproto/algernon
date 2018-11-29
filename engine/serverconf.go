@@ -42,7 +42,7 @@ func (ac *Config) Info() string {
 	}
 
 	// Write the status of flags that can be toggled
-	utils.WriteStatus(sb, "Options", map[string]bool{
+	utils.WriteStatus(&sb, "Options", map[string]bool{
 		"Debug":        ac.debugMode,
 		"Production":   ac.productionMode,
 		"Auto-refresh": ac.autoRefresh,

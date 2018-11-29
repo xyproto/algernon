@@ -126,7 +126,7 @@ func Infostring(functionName string, args []string) string {
 
 // WriteStatus writes status messages to a string Builder
 // The flags argument contains the flag names, and if they are enabled or not
-func WriteStatus(sb strings.Builder, title string, flags map[string]bool) {
+func WriteStatus(sb *strings.Builder, title string, flags map[string]bool) {
 
 	// Check that at least one of the bools are true
 	found := false
@@ -141,7 +141,8 @@ func WriteStatus(sb strings.Builder, title string, flags map[string]bool) {
 	}
 
 	// Write the overview to the buffer
-	sb.WriteString(title + ":")
+	sb.WriteString(title)
+	sb.WriteString(":")
 
 	// Spartan way of lining up the columns
 	if len(title) < 7 {
