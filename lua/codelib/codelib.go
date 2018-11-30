@@ -60,11 +60,12 @@ func libSet(L *lua.LState) int {
 		L.ArgError(2, "namespace expected")
 	}
 	code := L.ToString(3)
-	if code == "" {
-		log.Warn("Empty Lua code given to codelib:set")
-		L.Push(lua.LBool(false))
-		return 1
-	}
+	// Empty string is fine, for clearing a key
+	//if code == "" {
+	//	log.Warn("Empty Lua code given to codelib:set")
+	//	L.Push(lua.LBool(false))
+	//	return 1
+	//}
 	L.Push(lua.LBool(nil == lualib.Set(namespace, code)))
 	return 1 // number of results
 }
