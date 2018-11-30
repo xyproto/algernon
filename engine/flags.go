@@ -433,7 +433,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 
 	// Add the serverConfScript to the list of configuration scripts to be read and executed
 	if ac.serverConfScript != "" && ac.serverConfScript != os.DevNull {
-		ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, ac.serverConfScript)
+		ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, ac.serverConfScript, filepath.Join(ac.serverDirOrFilename, ac.serverConfScript))
 	}
 
 	ac.serverHost = host
