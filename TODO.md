@@ -7,6 +7,7 @@ Priority 1
 - [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
 - [ ] Profile the startup process and make it even faster.
+- [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
 
 Priority 2
 ----------
