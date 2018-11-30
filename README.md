@@ -368,7 +368,7 @@ hprint(...)
 // Output rendered React JSX to the browser/client. The given text is converted from JSX to JavaScript. Takes a variable number of strings.
 jprint(...)
 
-// Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. Takes a variable number of strings.
+// Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. The first argument is the Pongo2 template and the second argument is a table. The keys in the table can be referred to in the template.
 poprint(...)
 
 // Output a simple HTML page with a message, title and theme.

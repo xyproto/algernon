@@ -70,11 +70,22 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// Output text as rendered Pongo2
 	L.SetGlobal("poprint", L.NewFunction(func(L *lua.LState) int {
+		// Use the first argument as the template and the second argument as the data map
+		templateString := L.CheckString(1)
+		mapSS, mapSI, _, _ := convert.Table2maps(L.CheckTable(2))
+		pongoMap := make(pongo2.Context)
+		for k, v := range mapSI {
+			pongoMap[k] = v
+		}
+		for k, v := range mapSS {
+			pongoMap[k] = v
+		}
+
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Use the buffer as a template.
 		// Options are "Pretty printing, but without line numbers."
-		tpl, err := pongo2.FromBytes(buf.Bytes())
+		tpl, err := pongo2.FromString(templateString)
 		if err != nil {
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
@@ -84,7 +95,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 			return 0 // number of results
 		}
 		// nil is the template context (variables etc in a map)
-		if err := tpl.ExecuteWriter(nil, w); err != nil {
+		if err := tpl.ExecuteWriter(pongoMap, w); err != nil {
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {

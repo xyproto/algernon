@@ -134,8 +134,8 @@ gprint(...)
 hprint(...)
 // Output rendered JavaScript given JSX for React. Takes a variable number of strings.
 jprint(...)
-// Output (mainly) rendered HTML given Pongo2. Takes a variable number of strings.
-poprint(...)
+// Output a Pongo2 template and key/value table as rendered HTML. Use "{{ key }}" to insert a key.
+poprint(string, string)
 // Output a simple HTML page with a message, title and theme.
 msgpage(string[, string][, string])
 
