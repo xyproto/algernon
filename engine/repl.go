@@ -135,7 +135,7 @@ hprint(...)
 // Output rendered JavaScript given JSX for React. Takes a variable number of strings.
 jprint(...)
 // Output a Pongo2 template and key/value table as rendered HTML. Use "{{ key }}" to insert a key.
-poprint(string, string)
+poprint(string[, table])
 // Output a simple HTML page with a message, title and theme.
 msgpage(string[, string][, string])
 
@@ -418,6 +418,8 @@ scriptdir([string]) -> string
 serverdir([string]) -> string
 // Serve a file that exists in the same directory as the script.
 serve(string)
+// Serve a Pongo2 template file, with an optional table with key/values.
+serve2(string[, table)
 // Return the rendered contents of a file that exists in the same directory
 // as the script. Takes a filename.
 render(string) -> string

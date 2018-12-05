@@ -329,6 +329,9 @@ error(number[, string])
 // Serve a file that exists in the same directory as the script. Takes a filename.
 serve(string)
 
+// Serve a Pongo2 template file, with an optional table with template key/values.
+serve2(string[, table)
+
 // Return the rendered contents of a file that exists in the same directory as the script. Takes a filename.
 render(string) -> string
 
@@ -369,7 +372,7 @@ hprint(...)
 jprint(...)
 
 // Output rendered HTML to the browser/client. The given text is converted from Pongo2 to HTML. The first argument is the Pongo2 template and the second argument is a table. The keys in the table can be referred to in the template.
-poprint(...)
+poprint(string[, table])
 
 // Output a simple HTML page with a message, title and theme.
 // The title and theme are optional.

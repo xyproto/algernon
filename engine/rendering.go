@@ -70,15 +70,20 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// Output text as rendered Pongo2
 	L.SetGlobal("poprint", L.NewFunction(func(L *lua.LState) int {
+		pongoMap := make(pongo2.Context)
+
 		// Use the first argument as the template and the second argument as the data map
 		templateString := L.CheckString(1)
-		mapSS, mapSI, _, _ := convert.Table2maps(L.CheckTable(2))
-		pongoMap := make(pongo2.Context)
-		for k, v := range mapSI {
-			pongoMap[k] = v
-		}
-		for k, v := range mapSS {
-			pongoMap[k] = v
+
+		// If a table is given as the second argument, fill pongoMap with keys and values
+		if L.GetTop() >= 2 {
+			mapSS, mapSI, _, _ := convert.Table2maps(L.CheckTable(2))
+			for k, v := range mapSI {
+				pongoMap[k] = v
+			}
+			for k, v := range mapSS {
+				pongoMap[k] = v
+			}
 		}
 
 		// Retrieve all the function arguments as a bytes.Buffer

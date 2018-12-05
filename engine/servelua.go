@@ -1,13 +1,18 @@
 package engine
 
 import (
-	"github.com/xyproto/algernon/utils"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
+
+	"github.com/flosch/pongo2"
+	"github.com/xyproto/algernon/lua/convert"
+	"github.com/xyproto/algernon/utils"
+	"github.com/yuin/gopher-lua"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
 )
 
 // LoadServeFile exposes functions for serving other files to Lua
@@ -32,6 +37,61 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		}
 		ac.FilePage(w, req, serveFilename, dataFilename)
 		return 0 // Number of results
+	}))
+
+	// Output text as rendered Pongo2, using a po2 file and an optional table
+	L.SetGlobal("pongo2", L.NewFunction(func(L *lua.LState) int {
+		scriptdir := filepath.Dir(filename)
+
+		// Use the first argument as the template and the second argument as the data map
+		templateFilename := filepath.Join(scriptdir, L.CheckString(1))
+		ext := filepath.Ext(strings.ToLower(templateFilename))
+
+		templateData, err := ac.cache.Read(templateFilename, ac.shouldCache(ext))
+		if err != nil {
+			if ac.debugMode {
+				fmt.Fprintf(w, "Unable to read %s: %s", templateFilename, err)
+			} else {
+				log.Errorf("Unable to read %s: %s", templateFilename, err)
+			}
+			return 0 // number of restuls
+		}
+		templateString := templateData.String()
+
+		// If a table is given as the second argument, fill pongoMap with keys and values
+		pongoMap := make(pongo2.Context)
+		if L.GetTop() >= 2 {
+			mapSS, mapSI, _, _ := convert.Table2maps(L.CheckTable(2))
+			for k, v := range mapSI {
+				pongoMap[k] = v
+			}
+			for k, v := range mapSS {
+				pongoMap[k] = v
+			}
+		}
+
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := convert.Arguments2buffer(L, true)
+		// Use the buffer as a template.
+		// Options are "Pretty printing, but without line numbers."
+		tpl, err := pongo2.FromString(templateString)
+		if err != nil {
+			if ac.debugMode {
+				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+		// nil is the template context (variables etc in a map)
+		if err := tpl.ExecuteWriter(pongoMap, w); err != nil {
+			if ac.debugMode {
+				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
+			}
+		}
+		return 0 // number of results
 	}))
 
 	// Get the rendered contents of a file in the scriptdir. Discards HTTP headers.
