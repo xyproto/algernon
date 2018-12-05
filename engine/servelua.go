@@ -40,7 +40,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 	}))
 
 	// Output text as rendered Pongo2, using a po2 file and an optional table
-	L.SetGlobal("pongo2", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("serve2", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 
 		// Use the first argument as the template and the second argument as the data map
