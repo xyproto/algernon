@@ -19,6 +19,16 @@ const (
 
 var (
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
+
+	ErrCookieGetUsername        = errors.New("Could not retrieve the username from browser cookie")
+	ErrCookieEmptyUsername      = errors.New("Can't set cookie for empty username")
+	ErrCookieUserMissing        = errors.New("Can't store cookie for non-existsing user")
+	ErrOutOfConfirmationCodes   = errors.New("Too many generated confirmation codes are not unique")
+	ErrAllUsersConfirmedAlready = errors.New("All existing users are already confirmed")
+	ErrConfirmationCodeExpired  = errors.New("The confirmation code is no longer valid")
+	ErrMissingUserAtConfirm     = errors.New("The user that is to be confirmed no longer exists")
+	ErrInvalidCharacters        = errors.New("Only letters, numbers and underscore are allowed in usernames")
+	ErrUsernameAsPassword       = errors.New("Username and password must be different, try another password")
 )
 
 type UserState struct {
@@ -87,7 +97,7 @@ func NewUserStateWithDSN(connectionString string, database_name string, randomse
 
 	if err := host.Ping(); err != nil {
 		defer host.Close()
-		return nil, fmt.Errorf("Error when pinging %s: %s\n", connectionString, err.Error())
+		return nil, fmt.Errorf("Error when pinging %s: %s", connectionString, err)
 	}
 
 	return state, nil
@@ -141,7 +151,7 @@ func NewUserState(connectionString string, randomseed bool) (*UserState, error) 
 
 	if err := host.Ping(); err != nil {
 		defer host.Close()
-		return nil, fmt.Errorf("Error when pinging %s: %s\n", connectionString, err.Error())
+		return nil, fmt.Errorf("Error when pinging %s: %s", connectionString, err)
 	}
 
 	return state, nil
@@ -246,17 +256,18 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 	if ok && (username != "") {
 		return username, nil
 	}
-	return "", errors.New("Could not retrieve the username from browser cookie")
+	return "", ErrCookieGetUsername
+
 }
 
 // Store the given username in a cookie in the browser, if possible.
 // The user must exist.
 func (state *UserState) SetUsernameCookie(w http.ResponseWriter, username string) error {
 	if username == "" {
-		return errors.New("Can't set cookie for empty username")
+		return ErrCookieEmptyUsername
 	}
 	if !state.HasUser(username) {
-		return errors.New("Can't store cookie for non-existsing user")
+		return ErrCookieUserMissing
 	}
 	// Create a cookie that lasts for a while ("timeout" seconds),
 	// this is the equivivalent of a session for a given username.
@@ -481,9 +492,8 @@ func (state *UserState) CorrectPassword(username, password string) bool {
 	case "bcrypt+": // for backwards compatibility with sha256
 		if is_sha256(hash) && correct_sha256(hash, state.cookieSecret, username, password) {
 			return true
-		} else {
-			return correct_bcrypt(hash, password)
 		}
+		return correct_bcrypt(hash, password)
 	}
 	return false
 }
@@ -513,7 +523,7 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
-		return "", errors.New("All existing users are already confirmed.")
+		return "", ErrAllUsersConfirmedAlready
 	}
 
 	// Find the username by looking up the confirmationcode on unconfirmed users
@@ -533,11 +543,10 @@ func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (str
 
 	// Check that the user is there
 	if username == "" {
-		return username, errors.New("The confirmation code is no longer valid.")
+		return username, ErrConfirmationCodeExpired
 	}
-	hasUser := state.HasUser(username)
-	if !hasUser {
-		return username, errors.New("The user that is to be confirmed no longer exists.")
+	if !state.HasUser(username) {
+		return username, ErrMissingUserAtConfirm
 	}
 
 	return username, nil
@@ -554,11 +563,11 @@ func (state *UserState) Confirm(username string) {
 
 // Take a confirmation code and mark the corresponding unconfirmed user as confirmed.
 func (state *UserState) ConfirmUserByConfirmationCode(confirmationcode string) error {
-	if username, err := state.FindUserByConfirmationCode(confirmationcode); err != nil {
+	username, err := state.FindUserByConfirmationCode(confirmationcode)
+	if err != nil {
 		return err
-	} else {
-		state.Confirm(username)
 	}
+	state.Confirm(username)
 	return nil
 }
 
@@ -578,7 +587,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 		confirmationCode = cookie.RandomHumanFriendlyString(length)
 		if length > maxConfirmationCodeLength {
 			// This should never happen
-			return confirmationCode, errors.New("Too many generated confirmation codes are not unique!")
+			return confirmationCode, ErrOutOfConfirmationCodes
 		}
 	}
 	return confirmationCode, nil
@@ -596,10 +605,10 @@ NEXT:
 				continue NEXT // check the next letter in the username
 			}
 		}
-		return errors.New("Only letters, numbers and underscore are allowed in usernames.")
+		return ErrInvalidCharacters
 	}
 	if username == password {
-		return errors.New("Username and password must be different, try another password.")
+		return ErrUsernameAsPassword
 	}
 	return nil
 }
