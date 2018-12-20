@@ -342,7 +342,7 @@ formdata() -> table
 urldata([string]) -> table
 
 // Redirect to an absolute or relative URL. May take an HTTP status code that will be used when redirecting.
-redirect(string[, string])
+redirect(string[, number])
 
 // Permanent redirect to an absolute or relative URL. Uses status code 302.
 permanent_redirect(string)
@@ -686,8 +686,11 @@ Lua functions for handling users and permissions
 // Check if the current user has "user" rights
 UserRights() -> bool
 
-// Check if the given username exists
+// Check if the given username exists (does not look at the list of unconfirmed users)
 HasUser(string) -> bool
+
+// Check if the given username exists in the list of unconfirmed users
+HasUnconfirmedUser(string) -> bool
 
 // Get the value from the given boolean field
 // Takes a username and field name
@@ -736,6 +739,7 @@ ConfirmationCode(string) -> string
 
 // Add a user to the list of unconfirmed users
 // Takes a username and a confirmation code
+// Remember to also add a user, when registering new users.
 AddUnconfirmed(string, string)
 
 // Remove a user from the list of unconfirmed users

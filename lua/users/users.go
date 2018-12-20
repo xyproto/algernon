@@ -4,10 +4,10 @@ package users
 import (
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
 	"github.com/yuin/gopher-lua"
-	log "github.com/sirupsen/logrus"
 )
 
 // Load makes functions related to users and permissions available to Lua scripts
@@ -25,6 +25,27 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		L.Push(lua.LBool(userstate.HasUser(username)))
 		return 1 // number of results
 	}))
+	// Check if the given unconfirmed username exists, returns bool
+	// Takes a username
+	L.SetGlobal("HasUnconfirmedUser", L.NewFunction(func(L *lua.LState) int {
+		username := L.ToString(1)
+		found := false
+		unconfirmedUsernames, err := userstate.AllUnconfirmedUsernames()
+		if err != nil {
+			log.Warn("Could not read the lsit of unconfirmed usernames.")
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		for _, unconfirmedUsername := range unconfirmedUsernames {
+			if unconfirmedUsername == username {
+				found = true
+				break
+			}
+		}
+		L.Push(lua.LBool(found))
+		return 1 // number of results
+	}))
+
 	// Get the value from the given boolean field, returns bool
 	// Takes a username and field name
 	L.SetGlobal("BooleanField", L.NewFunction(func(L *lua.LState) int {
@@ -314,6 +335,7 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		username, err := userstate.FindUserByConfirmationCode(confirmationCode)
 		var result lua.LString
 		if err != nil {
+			log.Warn(err)
 			result = lua.LString("")
 		} else {
 			result = lua.LString(username)

@@ -269,8 +269,10 @@ Handling users and permissions
 
 // Check if the current user has "user" rights
 UserRights() -> bool
-// Check if the given username exists
+// Check if the given username exists (does not check unconfirmed users)
 HasUser(string) -> bool
+// Check if the given username exists in the list of unconfirmed users
+HasUnconfirmedUser(string) -> bool
 // Get the value from the given boolean field
 // Takes a username and field name
 BooleanField(string, string) -> bool
@@ -304,6 +306,7 @@ AllUnconfirmedUsernames() -> table
 ConfirmationCode(string) -> string
 // Add a user to the list of unconfirmed users.
 // Takes a username and a confirmation code.
+// Remember to also add a user, when registering new users.
 AddUnconfirmed(string, string)
 // Remove a user from the list of unconfirmed users. Takes a username.
 RemoveUnconfirmed(string)
@@ -427,7 +430,7 @@ render(string) -> string
 // in the URL ("/some/page?x=7" makes "x" with the value "7" available).
 formdata() -> table
 // Redirect to an absolute or relative URL. Also takes a HTTP status code.
-redirect(string[, string])
+redirect(string[, number])
 // Permanently redirect to an absolute or relative URL. Uses status code 302.
 permanent_redirect(string)
 // Transmit what has been outputted so far, to the client.
