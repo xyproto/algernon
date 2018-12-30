@@ -13,7 +13,7 @@ Related projects
 General information
 -------------------
 
-* Version: 2.1.0
+* Version: 2.2.0
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 

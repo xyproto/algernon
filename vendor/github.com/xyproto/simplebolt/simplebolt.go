@@ -19,7 +19,7 @@ const (
 )
 
 type (
-	// A Bolt database
+	// Database represents Bolt database
 	Database bolt.DB
 
 	// Used for each of the datatypes
@@ -28,25 +28,42 @@ type (
 		name []byte    // the bucket name
 	}
 
-	// The wrapped datatypes
-	List     boltBucket
-	Set      boltBucket
-	HashMap  boltBucket
+	// List is a Bolt bucket, with methods for acting like a list
+	List boltBucket
+
+	// Set is a Bolt bucket, with methods for acting like a set, only allowing unique keys
+	Set boltBucket
+
+	// HashMap is a Bolt bucket, with methods for acting like a hash map (with an ID and then key=>value)
+	HashMap boltBucket
+
+	// KeyValue is a Bolt bucket, with methods for acting like a key=>value store
 	KeyValue boltBucket
 )
 
 var (
+	// ErrBucketNotFound may be returned if a no Bolt bucket was found
 	ErrBucketNotFound = errors.New("Bucket not found")
-	ErrKeyNotFound    = errors.New("Key not found")
-	ErrDoesNotExist   = errors.New("Does not exist")
-	ErrFoundIt        = errors.New("Found it")
-	ErrExistsInSet    = errors.New("Element already exists in set")
-	ErrInvalidID      = errors.New("Element ID can not contain \":\"")
+
+	// ErrKeyNotFound will be returned if the key was not found in a HashMap or KeyValue struct
+	ErrKeyNotFound = errors.New("Key not found")
+
+	// ErrDoesNotExist will be returned if an element was not found. Used in List, Set, HashMap and KeyValue.
+	ErrDoesNotExist = errors.New("Does not exist")
+
+	// ErrExistsInSet is only returned if an element is added to a Set, but it already exists
+	ErrExistsInSet = errors.New("Element already exists in set")
+
+	// ErrInvalidID is only returned if adding an element to a HashMap that contains a colon (:)
+	ErrInvalidID = errors.New("Element ID can not contain \":\"")
+
+	// ErrFoundIt is only used internally, for breaking out of Bolt DB style for-loops
+	ErrFoundIt = errors.New("Found it")
 )
 
 /* --- Database functions --- */
 
-// Create a new bolt database
+// New creates a new Bolt database struct, using the given file or creating a new file, as needed
 func New(filename string) (*Database, error) {
 	// Use a timeout, in case the database file is already in use
 	db, err := bolt.Open(filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -69,7 +86,7 @@ func (db *Database) Ping() error {
 
 /* --- List functions --- */
 
-// Create a new list
+// NewList loads or creates a new List struct, with the given ID
 func NewList(db *Database, id string) (*List, error) {
 	name := []byte(id)
 	if err := (*bolt.DB)(db).Update(func(tx *bolt.Tx) error {
@@ -102,7 +119,7 @@ func (l *List) Add(value string) error {
 	})
 }
 
-// Get all elements of a list
+// All returns all elements in the list
 func (l *List) All() (results []string, err error) {
 	if l.name == nil {
 		return nil, ErrDoesNotExist
@@ -119,7 +136,7 @@ func (l *List) All() (results []string, err error) {
 	})
 }
 
-// Deprecated
+// GetAll is deprecated, please use .All() instead
 func (l *List) GetAll() ([]string, error) {
 	return l.All()
 }
@@ -214,7 +231,7 @@ func (l *List) Clear() error {
 
 /* --- Set functions --- */
 
-// Create a new key/value if it does not already exist
+// NewSet loads or creates a new Set struct, with the given ID
 func NewSet(db *Database, id string) (*Set, error) {
 	name := []byte(id)
 	if err := (*bolt.DB)(db).Update(func(tx *bolt.Tx) error {
@@ -275,7 +292,7 @@ func (s *Set) Has(value string) (exists bool, err error) {
 	})
 }
 
-// Get all values of the set
+// All returns all elements in the set
 func (s *Set) All() (values []string, err error) {
 	if s.name == nil {
 		return nil, ErrDoesNotExist
@@ -292,7 +309,7 @@ func (s *Set) All() (values []string, err error) {
 	})
 }
 
-// Deprecated
+// GetAll is deprecated, please use .All() instead
 func (s *Set) GetAll() ([]string, error) {
 	return s.All()
 }
@@ -347,7 +364,7 @@ func (s *Set) Clear() error {
 
 /* --- HashMap functions --- */
 
-// Create a new HashMap
+// NewHashMap loads or creates a new HashMap struct, with the given ID
 func NewHashMap(db *Database, id string) (*HashMap, error) {
 	name := []byte(id)
 	if err := (*bolt.DB)(db).Update(func(tx *bolt.Tx) error {
@@ -380,7 +397,7 @@ func (h *HashMap) Set(elementid, key, value string) (err error) {
 	})
 }
 
-// Get all elementid's for all hash elements
+// All returns all ID's, for all hash elements
 func (h *HashMap) All() (results []string, err error) {
 	if h.name == nil {
 		return nil, ErrDoesNotExist
@@ -408,7 +425,7 @@ func (h *HashMap) All() (results []string, err error) {
 	})
 }
 
-// Deprecated
+// GetAll is deprecated, please use .All() instead
 func (h *HashMap) GetAll() ([]string, error) {
 	return h.All()
 }
@@ -563,7 +580,7 @@ func (h *HashMap) Clear() error {
 
 /* --- KeyValue functions --- */
 
-// Create a new key/value if it does not already exist
+// NewKeyValue loads or creates a new KeyValue struct, with the given ID
 func NewKeyValue(db *Database, id string) (*KeyValue, error) {
 	name := []byte(id)
 	if err := (*bolt.DB)(db).Update(func(tx *bolt.Tx) error {

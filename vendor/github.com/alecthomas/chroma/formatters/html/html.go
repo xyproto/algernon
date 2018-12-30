@@ -129,7 +129,7 @@ func (f *Formatter) restyle(style *chroma.Style) (*chroma.Style, error) {
 // We deliberately don't use html/template here because it is two orders of magnitude slower (benchmarked).
 //
 // OTOH we need to be super careful about correct escaping...
-func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []*chroma.Token) (err error) { // nolint: gocyclo
+func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.Token) (err error) { // nolint: gocyclo
 	style, err = f.restyle(style)
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []*chroma
 
 	wrapInTable := f.lineNumbers && f.lineNumbersInTable
 
-	lines := splitTokensIntoLines(tokens)
+	lines := chroma.SplitTokensIntoLines(tokens)
 	lineDigits := len(fmt.Sprintf("%d", len(lines)))
 	highlightIndex := 0
 
@@ -389,27 +389,4 @@ func compressStyle(s string) string {
 		out = append(out, p)
 	}
 	return strings.Join(out, ";")
-}
-
-func splitTokensIntoLines(tokens []*chroma.Token) (out [][]*chroma.Token) {
-	line := []*chroma.Token{}
-	for _, token := range tokens {
-		for strings.Contains(token.Value, "\n") {
-			parts := strings.SplitAfterN(token.Value, "\n", 2)
-			// Token becomes the tail.
-			token.Value = parts[1]
-
-			// Append the head to the line and flush the line.
-			clone := token.Clone()
-			clone.Value = parts[0]
-			line = append(line, clone)
-			out = append(out, line)
-			line = nil
-		}
-		line = append(line, token)
-	}
-	if len(line) > 0 {
-		out = append(out, line)
-	}
-	return
 }

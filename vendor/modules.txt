@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.6.0
+# github.com/alecthomas/chroma v0.6.2
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -59,7 +59,7 @@ github.com/dop251/goja/token
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/flosch/pongo2 v0.0.0-20180809100617-24195e6d38b0
+# github.com/flosch/pongo2 v0.0.0-20181225140029-79872a7b2769
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
@@ -123,7 +123,7 @@ github.com/patrickmn/go-cache
 github.com/russross/blackfriday
 # github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 github.com/shopspring/decimal
-# github.com/shurcooL/sanitized_anchor_name v0.0.0-20170918181015-86672fcb3f95
+# github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
 # github.com/sirupsen/logrus v1.2.0
 github.com/sirupsen/logrus
@@ -144,7 +144,7 @@ github.com/wellington/sass/builtin/list
 github.com/wellington/sass/builtin/strops
 github.com/wellington/sass/builtin/url
 github.com/wellington/sass/strops
-# github.com/xyproto/cookie v0.0.0-20181211105748-06da9c042302
+# github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff
 github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 github.com/xyproto/datablock
@@ -164,11 +164,13 @@ github.com/xyproto/permissionsql
 github.com/xyproto/pinterface
 # github.com/xyproto/pstore v0.0.0-20180419224055-65a49d4318bb
 github.com/xyproto/pstore
+# github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
+github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.5.0
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v0.0.0-20181004172231-10e17ad97c5e
+# github.com/xyproto/simplebolt v0.0.0-20181228102315-e801859f2d01
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e
 github.com/xyproto/simplehstore
@@ -197,12 +199,12 @@ golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181217023233-e147a9138326
+# golang.org/x/net v0.0.0-20181220203305-927f97764cc3
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20181218192612-074acd46bca6
+# golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -218,7 +220,7 @@ golang.org/x/text/internal/colltab
 golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate
-# google.golang.org/appengine v1.3.0
+# google.golang.org/appengine v1.4.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
