@@ -1012,7 +1012,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.12.0
+* Version: 1.12.1
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
