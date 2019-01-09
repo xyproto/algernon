@@ -673,18 +673,19 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	ac.serverConfigurationFilenames = unique(ac.serverConfigurationFilenames)
 
-	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
-		colorstring.Println("[dark_gray]" + repeat("-", 49) + "[reset]")
-	}
+	// Color scheme
+	arrowColor := "[bold][blue]"
+	filenameColor := "[bold][white]"
+	luaOutputColor := "[dark_gray]"
+	dashLineColor := "[red]"
 
 	// Create a Colorize struct that will not reset colors after colorizing
 	// strings meant for the terminal.
 	c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
-	// Color scheme
-	arrowColor := "[bold][blue]"
-	filenameColor := "[reset]"
-	luaOutputColor := "[bold][yellow]"
+	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.serveNothing {
+		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
+	}
 
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
@@ -760,8 +761,8 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Separator between the output of the configuration scripts and
 	// the rest of the server output.
-	if ranServerReadyFunction && !ac.quietMode && !ac.serveNothing {
-		colorstring.Println("[dark_gray]" + repeat("-", 49) + "[reset]")
+	if ranServerReadyFunction && (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.serveNothing {
+		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
 	}
 
 	// Direct internal logging elsewhere

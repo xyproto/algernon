@@ -654,7 +654,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	// Start the read, eval, print loop
 	var (
 		line     string
-		prompt   = o.LightGreen("lua> ")
+		prompt   = o.LightCyan("lua> ")
 		EOF      bool
 		EOFcount int
 	)
