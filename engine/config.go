@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/jvatic/goja-babel"
+	"github.com/mitchellh/colorstring"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/pool"
@@ -33,8 +34,6 @@ import (
 const (
 	// Version number. Stable API within major version numbers.
 	Version = 2.0
-
-	dividerLine = "················································································"
 )
 
 // Config is the main structure for the Algernon server.
@@ -517,6 +516,36 @@ func hasHandlers(fn string) bool {
 	return err == nil && (bytes.Contains(data, []byte("handle(")) || bytes.Contains(data, []byte("handle (")))
 }
 
+// has checks if a given slice of strings contains a given string
+func has(sl []string, e string) bool {
+	for _, s := range sl {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}
+
+// repeat a string n number of times
+func repeat(s string, n int) string {
+	var sb strings.Builder
+	for i := 0; i < n; i++ {
+		sb.WriteString(s)
+	}
+	return sb.String()
+}
+
+// unique removes all repeated elements from a slice of strings
+func unique(sl []string) []string {
+	var nl []string
+	for _, s := range sl {
+		if !has(nl, s) {
+			nl = append(nl, s)
+		}
+	}
+	return nl
+}
+
 // MustServe sets up a server with handlers
 func (ac *Config) MustServe(mux *http.ServeMux) error {
 	var err error
@@ -571,9 +600,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 				// directory, register them.
 				for _, filename := range ac.serverConfigurationFilenames {
 					configFilename := filepath.Join(ac.serverDirOrFilename, filename)
-					if ac.fs.Exists(configFilename) {
-						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
-					}
+					ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
 				}
 				// Disregard all configuration files from the current directory
 				// (filenames without a path separator), since we are serving a
@@ -603,11 +630,6 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
 		// Output a colorful ansi logo if a proper terminal is available
 		fmt.Println(platformdep.Banner(ac.versionString, ac.description))
-	}
-
-	// Dividing line between the banner and output from any of the configuration scripts
-	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
-		fmt.Println(dividerLine)
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
@@ -646,16 +668,37 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.singleFileMode = false
 	}
 
+	ac.serverConfigurationFilenames = unique(ac.serverConfigurationFilenames)
+
+	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
+		colorstring.Println("[dark_gray]" + repeat("-", 79) + "[reset]")
+	}
+
+	// Create a Colorize struct that will not reset colors after colorizing
+	// strings meant for the terminal.
+	c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
+
+	// Color scheme
+	arrowColor := "[blue]"
+	filenameColor := "[reset]"
+	luaOutputColor := "[bold][yellow]"
+
 	// Read server configuration script, if present.
 	// The scripts may change global variables.
 	var ranConfigurationFilenames []string
-	for _, filename := range ac.serverConfigurationFilenames {
+	for _, filename := range unique(ac.serverConfigurationFilenames) {
 		if ac.fs.Exists(filename) {
-			if ac.verboseMode {
-				log.Info("Running configuration file: " + filename)
+			// Dividing line between the banner and output from any of the configuration scripts
+			if !ac.quietMode && !ac.serveNothing {
+				// Output the configuration filename
+				colorstring.Println(arrowColor + "-> " + filenameColor + filename + "[reset]")
+				fmt.Print(c.Color(luaOutputColor))
+			} else if ac.verboseMode {
+				log.Info("Running Lua configuration file: " + filename)
 			}
 			withHandlerFunctions := true
-			if errConf := ac.RunConfiguration(filename, mux, withHandlerFunctions); errConf != nil {
+			errConf := ac.RunConfiguration(filename, mux, withHandlerFunctions)
+			if errConf != nil {
 				if ac.perm != nil {
 					log.Error("Could not use configuration script: " + filename)
 					return errConf
@@ -677,11 +720,16 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Run the standalone Lua server, if specified
 	if ac.luaServerFilename != "" {
 		// Run the Lua server file and set up handlers
-		if ac.verboseMode {
-			fmt.Println("Running Lua Server File")
+		if !ac.quietMode && !ac.serveNothing {
+			// Output the configuration filename
+			colorstring.Println(arrowColor + "-> " + filenameColor + ac.luaServerFilename + "[reset]")
+			fmt.Print(c.Color(luaOutputColor))
+		} else if ac.verboseMode {
+			fmt.Println("Running Lua configuration file: " + ac.luaServerFilename)
 		}
 		withHandlerFunctions := true
-		if errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions); errLua != nil {
+		errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions)
+		if errLua != nil {
 			log.Errorf("Error in %s (interpreted as a server script):\n%s\n", ac.luaServerFilename, errLua)
 			return errLua
 		}
@@ -694,6 +742,10 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// (and can be set by both)
 	ranServerReadyFunction := ac.finalConfiguration(ac.serverHost)
 
+	if !ac.quietMode && !ac.serveNothing {
+		fmt.Print(c.Color("[reset]"))
+	}
+
 	// If no configuration files were being ran successfully,
 	// output basic server information.
 	if len(ac.serverConfigurationFilenames) == 0 {
@@ -703,10 +755,10 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ranServerReadyFunction = true
 	}
 
-	// Dividing line between the banner and output from any of the
-	// configuration scripts. Marks the end of the configuration output.
+	// Separator between the output of the configuration scripts and
+	// the rest of the server output.
 	if ranServerReadyFunction && !ac.quietMode && !ac.serveNothing {
-		fmt.Println(dividerLine)
+		colorstring.Println("[dark_gray]" + repeat("-", 79) + "[reset]")
 	}
 
 	// Direct internal logging elsewhere
