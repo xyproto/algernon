@@ -329,7 +329,7 @@ func (ac *Config) initFilesAndCache() error {
 	// Set several configuration variables, based on the given flags and arguments
 	ac.handleFlags(ac.serverTempDir)
 
-	// Version
+	// Version (--version)
 	if ac.showVersion {
 		if !ac.quietMode {
 			fmt.Println(ac.versionString)
@@ -630,6 +630,9 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
 		// Output a colorful ansi logo if a proper terminal is available
 		fmt.Println(platformdep.Banner(ac.versionString, ac.description))
+	} else if !ac.quietMode {
+		timestamp := time.Now().Format("2006-01-02 15:04")
+		colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
@@ -671,7 +674,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	ac.serverConfigurationFilenames = unique(ac.serverConfigurationFilenames)
 
 	if len(ac.serverConfigurationFilenames) > 0 && !ac.quietMode && !ac.serveNothing {
-		colorstring.Println("[dark_gray]" + repeat("-", 79) + "[reset]")
+		colorstring.Println("[dark_gray]" + repeat("-", 49) + "[reset]")
 	}
 
 	// Create a Colorize struct that will not reset colors after colorizing
@@ -679,7 +682,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
 	// Color scheme
-	arrowColor := "[blue]"
+	arrowColor := "[bold][blue]"
 	filenameColor := "[reset]"
 	luaOutputColor := "[bold][yellow]"
 
@@ -758,7 +761,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Separator between the output of the configuration scripts and
 	// the rest of the server output.
 	if ranServerReadyFunction && !ac.quietMode && !ac.serveNothing {
-		colorstring.Println("[dark_gray]" + repeat("-", 79) + "[reset]")
+		colorstring.Println("[dark_gray]" + repeat("-", 49) + "[reset]")
 	}
 
 	// Direct internal logging elsewhere

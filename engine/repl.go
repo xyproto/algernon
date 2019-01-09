@@ -646,9 +646,6 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	// Export a selection of functions to the Lua state
 	ac.LoadLuaFunctionsForREPL(L, o)
 
-	// Getting ready
-	o.Println(o.DarkCyan(ac.versionString))
-
 	<-ready // Wait for the server to be ready
 
 	// Tell the user that the server is ready

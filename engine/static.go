@@ -19,7 +19,7 @@ const (
 
 	maxAttemptsAtIncreasingPortNumber = 128
 
-	waitBeforeOpen = time.Millisecond * 200
+	delayBeforeLaunchingBrowser = time.Millisecond * 200
 )
 
 // nextPort increases the port number by 1
@@ -44,7 +44,7 @@ func (ac *Config) openAfter(wait time.Duration, hostname, colonPort string, http
 		// Got a message on the cancelChannel:
 		// don't open the URL with an external application.
 		return
-	case <-time.After(waitBeforeOpen):
+	case <-time.After(delayBeforeLaunchingBrowser):
 		// Got timeout, assume the port was not busy
 		ac.OpenURL(hostname, colonPort, https)
 	}
@@ -59,7 +59,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 	log.Info("Serving " + filename + " on http://" + hostname + colonPort)
 
 	if ac.openURLAfterServing {
-		go ac.openAfter(waitBeforeOpen, hostname, colonPort, false, cancelChannel)
+		go ac.openAfter(delayBeforeLaunchingBrowser, hostname, colonPort, false, cancelChannel)
 	}
 }
 

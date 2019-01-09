@@ -133,7 +133,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// Open the URL before the serving has started, in a short delay
 		if ac.openURLAfterServing && ac.luaServerFilename != "" {
 			go func() {
-				time.Sleep(waitBeforeOpen)
+				time.Sleep(delayBeforeLaunchingBrowser)
 				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
 			}()
 		}
