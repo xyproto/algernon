@@ -50,7 +50,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.1.6
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20181125163413-2dd08a5fc665
+# github.com/dop251/goja v0.0.0-20190105122144-6d5bf35058fa
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -109,13 +109,15 @@ github.com/lucas-clemente/quic-go-certificates
 github.com/mattetti/filebuffer
 # github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
+# github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286
+github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.0.0
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed
+# github.com/nsf/termbox-go v0.0.0-20190104133558-0938b5187e61
 github.com/nsf/termbox-go
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
@@ -125,7 +127,7 @@ github.com/russross/blackfriday
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.2.0
+# github.com/sirupsen/logrus v1.3.0
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -188,23 +190,23 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20181214045814-db9ae37725ec
+# github.com/yuin/gopher-lua v0.0.0-20181231133414-1e6e6e1918e0
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+# golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20181220203305-927f97764cc3
+# golang.org/x/net v0.0.0-20190108225652-1e06a53dbb7e
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb
+# golang.org/x/sys v0.0.0-20190108104531-7fbe1cd0fcc2
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0

@@ -62,7 +62,7 @@ _* | *_ | _)
 	;;
 aix_ppc)
 	mkerrors="$mkerrors -maix32"
-	mksyscall="./mksyscall_aix_ppc.pl -aix"
+	mksyscall="go run mksyscall_aix_ppc.go -aix"
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
 aix_ppc64)
@@ -120,6 +120,11 @@ freebsd_arm)
 	# Let the type of C char be signed for making the bare syscall
 	# API consistent across platforms.
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs -- -fsigned-char"
+	;;
+freebsd_arm64)
+	mkerrors="$mkerrors -m64"
+	mksysnum="go run mksysnum.go 'http://svn.freebsd.org/base/stable/10/sys/kern/syscalls.master'"
+	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
 netbsd_386)
 	mkerrors="$mkerrors -m32"
