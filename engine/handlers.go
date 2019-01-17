@@ -338,7 +338,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 
 	// Source code files for viewing
-	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh", ".ts":
+	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 
