@@ -222,15 +222,10 @@ With earlier versions of Go:
     cd $GOPATH/src/github.com/xyproto/algernon
     go build
 
-##### The "bob" sample, over https
+##### Launch the "welcome" page
 
-* Run `./bob.sh` to start serving the "bob" sample.
-* Visit `https://localhost:3000/` (*note*: it's `https`)
-
-##### All the samples, over http, with auto-refresh enabled
-
-* Run `./samples.sh` to start serving the sample directory.
-* Visit `http://localhost:3000/` (*note*: it's `http`)
+* Run `./welcome.sh` to start serving the "welcome" sample.
+* Visit `http://localhost:3000/`
 
 ##### Create your own Algernon application, for regular HTTP
 
