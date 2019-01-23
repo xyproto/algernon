@@ -14,8 +14,8 @@ Features and limitations
 
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
-* Requires Go 1.3 or later.
-* The latest version of `gccgo` (7.2.0) is able to compile `simplebolt`, but it does not appear to be able to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
+* Requires Go 1.9 or later.
+* Does not support `gccgo`. Two recent versions of `gccgo` (7.2.0 and 8.2.1) are able to compile `simplebolt`, but does not appear to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
 
 Example usage
 -------------
@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-	// New bolt database
+	// New bolt database struct
 	db, err := simplebolt.New("bolt.db")
 	if err != nil {
 		log.Fatalf("Could not create database! %s", err)
@@ -66,6 +66,6 @@ Version, license and author
 ---------------------------
 
 * License: MIT
-* Version: 3.2.0
+* Version: 3.2.1
 * Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
 

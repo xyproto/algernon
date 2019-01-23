@@ -6,7 +6,7 @@ A `http.ResponseWriter` that can count the bytes written to the client so far.
 
 If you want to create an access log of how many bytes are sent to which clients, one method would be to write data to a buffer, count the bytes and then send the data to the client. This may be problematic for large files, since it eats up a lot of memory. It is also costly performance wise, since the data would then have to be counted while or after the data is sent to the client.
 
-A better way is to store use the number returned by the `Write` function directly. This is not straightforward with `http.ResponseWriter` without wrapping it somehow, which is what this module does. A lightweight struct wraps both a `http.ResponseWriter` and an `int64`, for keeping track of the written bytes.
+A better way is to store use the number returned by the `Write` function directly. This is not straightforward with `http.ResponseWriter` without wrapping it somehow, which is what this module does. A lightweight struct wraps both a `http.ResponseWriter` and an `uint64`, for keeping track of the written bytes.
 
 # Example use
 
@@ -39,6 +39,6 @@ func main() {
 
 # General information
 
-* Version: 1.5.0
+* Version: 1.6.0
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * License: MIT

@@ -206,7 +206,7 @@ func (l *List) GetLastN(n int) ([]string, error) {
 // Remove this list
 func (l *List) Remove() error {
 	err := (*bolt.DB)(l.db).Update(func(tx *bolt.Tx) error {
-		return tx.DeleteBucket([]byte(l.name))
+		return tx.DeleteBucket(l.name)
 	})
 	// Mark as removed by setting the name to nil
 	l.name = nil
@@ -339,7 +339,7 @@ func (s *Set) Del(value string) error {
 // Remove this set
 func (s *Set) Remove() error {
 	err := (*bolt.DB)(s.db).Update(func(tx *bolt.Tx) error {
-		return tx.DeleteBucket([]byte(s.name))
+		return tx.DeleteBucket(s.name)
 	})
 	// Mark as removed by setting the name to nil
 	s.name = nil
@@ -472,7 +472,7 @@ func (h *HashMap) Has(elementid, key string) (found bool, err error) {
 func (h *HashMap) Keys(owner string) ([]string, error) {
 	var props []string
 	return props, (*bolt.DB)(h.db).View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(h.name))
+		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
 		}
@@ -555,7 +555,7 @@ func (h *HashMap) Del(elementid string) error {
 // Remove this hashmap
 func (h *HashMap) Remove() error {
 	err := (*bolt.DB)(h.db).Update(func(tx *bolt.Tx) error {
-		return tx.DeleteBucket([]byte(h.name))
+		return tx.DeleteBucket(h.name)
 	})
 	// Mark as removed by setting the name to nil
 	h.name = nil
@@ -680,7 +680,7 @@ func (kv *KeyValue) Inc(key string) (val string, err error) {
 // Remove this key/value
 func (kv *KeyValue) Remove() error {
 	err := (*bolt.DB)(kv.db).Update(func(tx *bolt.Tx) error {
-		return tx.DeleteBucket([]byte(kv.name))
+		return tx.DeleteBucket(kv.name)
 	})
 	// Mark as removed by setting the name to nil
 	kv.name = nil

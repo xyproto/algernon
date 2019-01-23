@@ -91,7 +91,7 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f
 github.com/lucas-clemente/aes12
-# github.com/lucas-clemente/quic-go v0.10.0
+# github.com/lucas-clemente/quic-go v0.10.1
 github.com/lucas-clemente/quic-go/h2quic
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/internal/protocol
@@ -117,7 +117,7 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/nsf/termbox-go v0.0.0-20190104133558-0938b5187e61
+# github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
 github.com/nsf/termbox-go
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
@@ -170,9 +170,9 @@ github.com/xyproto/pstore
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v0.0.0-20180729181334-fff9aff58e15
 github.com/xyproto/recwatch
-# github.com/xyproto/sheepcounter v1.5.0
+# github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v0.0.0-20181228102315-e801859f2d01
+# github.com/xyproto/simplebolt v0.0.0-20190123204607-7180c4d60559
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e
 github.com/xyproto/simplehstore
@@ -190,23 +190,23 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20181231133414-1e6e6e1918e0
+# github.com/yuin/gopher-lua v0.0.0-20190115140932-732aa6820ec4
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
+# golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20190108225652-1e06a53dbb7e
+# golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20190108104531-7fbe1cd0fcc2
+# golang.org/x/sys v0.0.0-20190123074212-c6b37f3e9285
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
