@@ -2,11 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"github.com/xyproto/sheepcounter"
-	"github.com/xyproto/unzip"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -14,10 +13,13 @@ import (
 
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/recwatch"
+	"github.com/xyproto/sheepcounter"
+	"github.com/xyproto/unzip"
 )
 
 const (
@@ -26,6 +28,10 @@ const (
 
 	// Used for deciding how long to wait before quitting when only serving a single file and starting a browser
 	defaultSoonDuration = time.Second * 3
+
+	// Maximum file size for reading it into memory, even temporarily: 42 MiB
+	// Over this size, the file will be streamed directly instead.
+	maxReadSize = 42 * utils.MiB
 )
 
 // ClientCanGzip checks if the client supports gzip compressed responses
@@ -328,6 +334,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 		return
 
+	// --- End of special handlers that returns early ---
+
 	// Text and configuration files (most likely)
 	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".gitignore", ".gitmodules", ".ini", ".log", ".lst", ".me", ".nfo", ".pem", ".readme", ".sub", ".tml", ".toml", ".txt", ".yaml", ".yml":
 		// Set headers for displaying it in the browser.
@@ -343,7 +351,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 
 	// Common binary file extensions
-	case ".7z", ".arj", ".bin", ".com", ".dat", ".db", ".elf", ".exe", ".gz", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
+	case ".7z", ".arj", ".bin", ".com", ".dat", ".db", ".elf", ".exe", ".gz", ".iso", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
 		// Set headers for downloading the file instead of displaying it in the browser.
 		w.Header().Set("Content-Disposition", "attachment")
 
@@ -365,12 +373,38 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	// movies, music, source code etc. Wrap videos in the right html tags for playback, etc.
 	// This should be placed in a separate Go module.
 
+	// TODO: Modify ac.fs to also cache .Size(), .Name() and .ModTime()
+
+	// Check the size of the file
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Error("Could not open " + filename + "! " + err.Error())
+		return
+	}
+	defer f.Close()
+	fInfo, err := f.Stat()
+	if err != nil {
+		log.Error("Could not stat " + filename + "! " + err.Error())
+		return
+	}
+
+	// Check if the file is so large that it needs to be streamed directly
+	fileSize := fInfo.Size()
+	if fileSize > maxReadSize {
+		//log.Info("STREAMED DIRECTLY")
+		go http.ServeContent(w, req, fInfo.Name(), fInfo.ModTime(), f)
+		return
+	}
+	//log.Info("NOT STREAMED DIRECTLY")
+
 	// Read the file (possibly in compressed format, straight from the cache)
 	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 		// Serve the file
 		dataBlock.ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
+	} else {
+		log.Error("Could not serve " + filename + " with datablock.ToClient: " + err.Error())
+		return
 	}
-
 }
 
 // ServerHeaders sets the HTTP headers that are set before anything else

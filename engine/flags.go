@@ -318,6 +318,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serveJustHTTP = true
 		ac.serverMode = true
 		ac.cacheMode = cachemode.Off
+		ac.noCache = true
 		ac.disableRateLimiting = true
 		ac.clearDefaultPathPrefixes = true
 		ac.noHeaders = true
