@@ -1,0 +1,16 @@
+language: go
+
+go:
+  - "1.11"
+  - tip
+
+os:
+  - linux
+
+dist: trusty
+sudo: false
+install: true
+
+script:
+  - env GO111MODULE=off go build
+  - env GO111MODULE=off go test

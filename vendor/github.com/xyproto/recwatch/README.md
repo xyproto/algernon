@@ -1,10 +1,12 @@
 # recwatch
 
+[![Build Status](https://travis-ci.org/xyproto/recwatch.svg?branch=master)](https://travis-ci.org/xyproto/recwatch)
+
 Watch filesystem changes recursively.
 
 `recwatch` started out as a fork of [looper](https://github.com/nathany/looper) (by Nathan Youngman), but most of the code is now original.
 
-## Features and limitations
+## Features
 
 * Can be used for watching filesystem changes recursively.
 * Can be used for setting up a SSE ([server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)) server, for serving filesystem changes as events.
@@ -26,8 +28,7 @@ import (
 )
 
 func plural(passed time.Duration) string {
-	sec := passed.Seconds()
-	if sec < 1 || sec >= 2 {
+	if passed.Seconds() != 1 {
 		return "s"
 	}
 	return ""
@@ -53,7 +54,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		for _ = range c {
+		for range c {
 			// ctrl-c was pressed
 			quit = true
 			log.Println("ctrl-c was pressed, cleaning up")
@@ -97,6 +98,6 @@ func main() {
 
 ## General info
 
-* Version: 0.2
+* Version: 0.3.0
 * License: Simplified BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

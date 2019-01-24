@@ -19,7 +19,7 @@ type RecursiveWatcher struct {
 func NewRecursiveWatcher(path string) (*RecursiveWatcher, error) {
 	folders := Subfolders(path)
 	if len(folders) == 0 {
-		return nil, errors.New("No directories to watch.")
+		return nil, errors.New("no directories to watch")
 	}
 
 	watcher, err := fsnotify.NewWatcher()
