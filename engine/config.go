@@ -57,6 +57,9 @@ type Config struct {
 	defaultCacheMaxEntitySize uint64        // 64 KB
 	defaultStatCacheRefresh   time.Duration // Refresh the stat cache, if the stat cache feature is enabled
 
+	// Default size for when a static file is large enough to not be read into memory
+	defaultLargeFileSize uint64 // 42 MiB
+
 	// Default rate limit, as a string
 	defaultLimitString string
 
@@ -139,6 +142,12 @@ type Config struct {
 	cacheCompressionSpeed bool // Compression speed over compactness
 	cacheMaxGivenDataSize uint64
 	noCache               bool
+
+	// Large file support (threshold for not reading into memory)
+	largeFileSize uint64
+
+	// Timeout when writing to a client, in seconds
+	writeTimeout uint64
 
 	// HTTP headers
 	noHeaders       bool
@@ -256,6 +265,9 @@ func New(versionString, description string) (*Config, error) {
 		defaultCacheSize:          1 * utils.MiB,   // 1 MiB
 		defaultCacheMaxEntitySize: 64 * utils.KiB,  // 64 KB
 		defaultStatCacheRefresh:   time.Minute * 1, // Refresh the stat cache, if the stat cache feature is enabled
+
+		// When is a static file large enought to not read into memory when serving
+		defaultLargeFileSize: 42 * utils.MiB, // 42 MiB
 
 		// Default rate limit, as a string
 		defaultLimitString: strconv.Itoa(10),

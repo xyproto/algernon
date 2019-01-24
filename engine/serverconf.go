@@ -86,6 +86,12 @@ func (ac *Config) Info() string {
 	if ac.internalLogFilename != os.DevNull {
 		sb.WriteString("Internal log file:\t" + ac.internalLogFilename + "\n")
 	}
+	if ac.largeFileSize > 0 {
+		sb.WriteString(fmt.Sprintf("Large file threshold:\t%v bytes\n", ac.largeFileSize))
+	}
+	if ac.writeTimeout > 0 {
+		sb.WriteString(fmt.Sprintf("Large file timeout:\t%v sec\n", ac.writeTimeout))
+	}
 	return strings.TrimSpace(sb.String())
 }
 

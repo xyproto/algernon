@@ -83,7 +83,7 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 		// The timeout values is also the maximum time it can take
 		// for a complete page of Server-Sent Events (SSE).
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
 
 		MaxHeaderBytes: 1 << 20,
 	}

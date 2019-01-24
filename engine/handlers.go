@@ -28,10 +28,6 @@ const (
 
 	// Used for deciding how long to wait before quitting when only serving a single file and starting a browser
 	defaultSoonDuration = time.Second * 3
-
-	// Maximum file size for reading it into memory, even temporarily: 42 MiB
-	// Over this size, the file will be streamed directly instead.
-	maxReadSize = 42 * utils.MiB
 )
 
 // ClientCanGzip checks if the client supports gzip compressed responses
@@ -389,13 +385,18 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	}
 
 	// Check if the file is so large that it needs to be streamed directly
-	fileSize := fInfo.Size()
-	if fileSize > maxReadSize {
-		//log.Info("STREAMED DIRECTLY")
-		go http.ServeContent(w, req, fInfo.Name(), fInfo.ModTime(), f)
+	fileSize := uint64(fInfo.Size())
+	// Cache size can be set to a low number to trigger this behavior
+	if fileSize > ac.largeFileSize {
+		//log.Info("Streaming " + filename + " directly...")
+
+		// http.ServeContent will first seek to the end of the file, then
+		// serve the file. The alternative here is to use io.Copy(w, f),
+		// but io.Copy does not support ranges.
+		http.ServeContent(w, req, fInfo.Name(), fInfo.ModTime(), f)
+
 		return
 	}
-	//log.Info("NOT STREAMED DIRECTLY")
 
 	// Read the file (possibly in compressed format, straight from the cache)
 	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error

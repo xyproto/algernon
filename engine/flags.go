@@ -80,6 +80,8 @@ Available flags:
                                (the default is ` + ac.defaultLimitString + `).
   --nolimit                    Disable rate limiting.
   --nodb                       No database backend. (same as --boltdb=` + os.DevNull + `).
+  --largesize=N                Threshold for not reading static files into memory, in bytes.
+  --timeout=N                  Timeout when serving files, in seconds.
   -l, --lua                    Don't serve anything, just present the Lua REPL.
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
@@ -187,6 +189,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.showVersion, "version", false, "Version")
 	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
 	flag.Uint64Var(&ac.cacheSize, "cachesize", ac.defaultCacheSize, "Cache size, in bytes")
+	flag.Uint64Var(&ac.largeFileSize, "largesize", ac.defaultLargeFileSize, "Threshold for not reading static files into memory, in bytes")
+	flag.Uint64Var(&ac.writeTimeout, "timeout", 10, "Timeout when writing to a client, in seconds")
 	flag.BoolVar(&ac.quietMode, "quiet", false, "Quiet")
 	flag.BoolVar(&rawCache, "rawcache", false, "Disable cache compression")
 	flag.StringVar(&ac.serverHeaderName, "servername", ac.versionString, "Server header name")
@@ -322,6 +326,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.disableRateLimiting = true
 		ac.clearDefaultPathPrefixes = true
 		ac.noHeaders = true
+		ac.writeTimeout = 3600 * 24
 	}
 
 	// If a watch directory is given, enable the auto refresh feature
