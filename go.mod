@@ -12,22 +12,16 @@ require (
 	github.com/dop251/goja v0.0.0-20190105122144-6d5bf35058fa // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/flosch/pongo2 v0.0.0-20181225140029-79872a7b2769
-	github.com/gin-contrib/sse v0.0.0-20190124093953-61b50c2ef482 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/golang/mock v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
-	github.com/iris-contrib/formBinder v0.0.0-20190104093907-fbd5963f41e1 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
-	github.com/kataras/iris v11.1.1+incompatible // indirect
-	github.com/kataras/pio v0.0.0-20190103105442-ea782b38602d // indirect
-	github.com/kr/pty v1.1.3 // indirect
 	github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f // indirect
 	github.com/lucas-clemente/quic-go v0.10.1
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
 	github.com/mattetti/filebuffer v0.0.0-20171024213321-3a1e8e5a6548 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
-	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
@@ -38,12 +32,10 @@ require (
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.3.0
-	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
-	github.com/xeipuuv/gojsonschema v1.1.0 // indirect
 	github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff // indirect
 	github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
@@ -65,12 +57,11 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-	github.com/yuin/gopher-lua v0.0.0-20190115140932-732aa6820ec4
+	github.com/yuin/gopher-lua v0.0.0-20190125051437-7b9317363aa9
 	golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b // indirect
-	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
+	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
-	golang.org/x/tools v0.0.0-20190124192049-a78a3054ec8e // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect

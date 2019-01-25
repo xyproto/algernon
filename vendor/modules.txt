@@ -190,7 +190,7 @@ github.com/xyproto/unzip
 github.com/yosssi/gcss
 # github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20190115140932-732aa6820ec4
+# github.com/yuin/gopher-lua v0.0.0-20190125051437-7b9317363aa9
 github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
@@ -201,7 +201,7 @@ golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
+# golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
