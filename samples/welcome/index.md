@@ -1,4 +1,6 @@
+<!--
 title: Algernon Server
+-->
 
 # Algernon Server
 
@@ -10,7 +12,6 @@ Your local Algernon server is up and running.
 You can find this Markdown file in the `samples/welcome` directory.
 
 Try changing `index.md` in your favorite editor and watch this page refresh instantly as you save.
-
 
 Samples
 -------
@@ -35,5 +36,7 @@ Resources
 * [Markdown documentation](https://daringfireball.net/projects/markdown/basics)
 * [Algernon web page](http://algernon.roboticoverlords.org/)
 * [Algernon project page](https://github.com/xyproto/algernon/)
+* [Learn Markdown in Y minutes](https://learnxinyminutes.com/docs/markdown/)
 * [Markdown tutorial](http://markdowntutorial.com/)
+* [Learn Lua in Y minutes](https://learnxinyminutes.com/docs/lua/)
 * [Lua crash course](http://luatut.com/crash_course.html)
