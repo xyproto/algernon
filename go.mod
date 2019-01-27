@@ -23,7 +23,7 @@ require (
 	github.com/mattetti/filebuffer v0.0.0-20171024213321-3a1e8e5a6548 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286
-	github.com/mitchellh/go-homedir v1.0.0
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
