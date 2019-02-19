@@ -1,3 +1,5 @@
+# This is an experimental fork of yuin/gluamapper
+
 ===============================================================================
 gluamapper: maps a GopherLua table to a Go struct
 ===============================================================================

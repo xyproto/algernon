@@ -150,6 +150,13 @@ github.com/wellington/sass/strops
 github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
 github.com/xyproto/datablock
+# github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
+github.com/xyproto/gluamapper
+# github.com/xyproto/gopher-lua v0.0.0-20190219142724-64197c4adb8b
+github.com/xyproto/gopher-lua
+github.com/xyproto/gopher-lua/ast
+github.com/xyproto/gopher-lua/parse
+github.com/xyproto/gopher-lua/pm
 # github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
@@ -188,13 +195,6 @@ github.com/xyproto/term
 github.com/xyproto/unzip
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-github.com/yuin/gluamapper
-# github.com/yuin/gopher-lua v0.0.0-20190125051437-7b9317363aa9
-github.com/yuin/gopher-lua
-github.com/yuin/gopher-lua/ast
-github.com/yuin/gopher-lua/parse
-github.com/yuin/gopher-lua/pm
 # golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
@@ -206,7 +206,7 @@ golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20190124100055-b90733256f2e
+# golang.org/x/sys v0.0.0-20190219092855-153ac476189d
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0

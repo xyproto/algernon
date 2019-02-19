@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/term"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 const (

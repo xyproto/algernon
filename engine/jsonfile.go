@@ -10,7 +10,7 @@ import (
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/jpath"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // For dealing with JSON documents and strings

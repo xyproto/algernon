@@ -5,7 +5,7 @@ import (
 
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/pinterface"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // Identifier for the Set class in Lua

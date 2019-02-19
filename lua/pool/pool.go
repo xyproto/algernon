@@ -4,11 +4,11 @@ package pool
 import (
 	"sync"
 
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // The LState pool pattern, as recommended by the author of gopher-lua:
-// https://github.com/yuin/gopher-lua#the-lstate-pool-pattern
+// https://github.com/xyproto/gopher-lua#the-lstate-pool-pattern
 
 // LStatePool is a pool of Lua states, with a mutex
 type LStatePool struct {

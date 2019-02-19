@@ -22,7 +22,7 @@ import (
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.

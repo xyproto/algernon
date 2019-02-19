@@ -11,7 +11,7 @@ import (
 
 	"github.com/natefinch/pie"
 	"github.com/xyproto/term"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 type luaPlugin struct {

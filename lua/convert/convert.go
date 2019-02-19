@@ -9,8 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/jpath"
-	"github.com/yuin/gluamapper"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gluamapper"
+	"github.com/xyproto/gopher-lua"
 )
 
 var (

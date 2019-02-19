@@ -10,7 +10,7 @@ import (
 	"github.com/flosch/pongo2"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 
 	log "github.com/sirupsen/logrus"
 )

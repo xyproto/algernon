@@ -1,7 +1,11 @@
 package lua
 
-const defaultArrayCap = 32
-const defaultHashCap = 32
+import "sync"
+
+const (
+	defaultArrayCap = 32
+	defaultHashCap  = 32
+)
 
 type lValueArraySorter struct {
 	L      *LState
@@ -36,6 +40,7 @@ func newLTable(acap int, hcap int) *LTable {
 		hcap = 0
 	}
 	tb := &LTable{}
+	tb.mut = &sync.RWMutex{}
 	tb.Metatable = LNil
 	if acap != 0 {
 		tb.array = make([]LValue, 0, acap)
@@ -190,6 +195,8 @@ func (tb *LTable) RawSetInt(key int, value LValue) {
 
 // RawSetString sets a given LValue to a given string index without the __newindex metamethod.
 func (tb *LTable) RawSetString(key string, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	if tb.strdict == nil {
 		tb.strdict = make(map[string]LValue, defaultHashCap)
 	}

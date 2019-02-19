@@ -5,9 +5,7 @@ require (
 	github.com/bifurcation/mint v0.0.0-20181105071958-a14404e9a861 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/chzyer/logex v1.1.10 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1 // indirect
 	github.com/didip/tollbooth v4.0.0+incompatible
 	github.com/dop251/goja v0.0.0-20190105122144-6d5bf35058fa // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
@@ -38,6 +36,8 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff // indirect
 	github.com/xyproto/datablock v0.0.0-20180830133147-8c3914e5c4fe
+	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
+	github.com/xyproto/gopher-lua v0.0.0-20190219143855-a85cc57f8d36
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
 	github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
@@ -56,8 +56,6 @@ require (
 	github.com/xyproto/term v0.0.0-20181102095811-abbba14d6880
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
-	github.com/yuin/gopher-lua v0.0.0-20190125051437-7b9317363aa9
 	golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b // indirect
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
