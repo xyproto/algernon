@@ -21,7 +21,7 @@ Quick installation (development version)
 Static build with support for TLS 1.3
 -------------------------------------
 
-* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.2/algernon-1.12.2-linux-x86_64-static.tar.gz) (statically compiled ELF, 9.5 MB download)
+* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.3/algernon-x86_64-linux-static) (statically compiled ELF)
 
 See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for other platforms and architectures.
 
