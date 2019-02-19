@@ -8,6 +8,7 @@ Priority 1
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to "/ws".
 - [ ] Profile the startup process and make it even faster.
 - [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
+- [ ] Make calling Lua scripts thread safe, either by modifying gopher-lua or by creating a way of calling Lua over channels.
 
 Priority 2
 ----------
