@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/pinterface"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/pinterface"
 )
 
 // Identifier for the List class in Lua

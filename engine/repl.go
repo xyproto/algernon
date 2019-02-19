@@ -17,8 +17,8 @@ import (
 	"github.com/xyproto/algernon/lua/datastruct"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
-	"github.com/xyproto/term"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/term"
 )
 
 const (

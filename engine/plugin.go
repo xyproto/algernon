@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/natefinch/pie"
-	"github.com/xyproto/term"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/term"
 )
 
 type luaPlugin struct {

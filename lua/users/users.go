@@ -6,8 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/pinterface"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/pinterface"
 )
 
 // Load makes functions related to users and permissions available to Lua scripts

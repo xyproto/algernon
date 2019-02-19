@@ -10,8 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/jpath"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/jpath"
 )
 
 const (
