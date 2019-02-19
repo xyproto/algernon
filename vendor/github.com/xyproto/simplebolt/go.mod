@@ -1,8 +1,8 @@
 module github.com/xyproto/simplebolt
 
 require (
-	github.com/boltdb/bolt v1.3.1 // indirect
-	github.com/coreos/bbolt v1.3.0
+	github.com/etcd-io/bbolt v1.3.2
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
-	golang.org/x/sys v0.0.0-20190123074212-c6b37f3e9285 // indirect
+	go.etcd.io/bbolt v1.3.2 // indirect
+	golang.org/x/sys v0.0.0-20190219092855-153ac476189d // indirect
 )

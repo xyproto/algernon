@@ -226,17 +226,17 @@ func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserSta
 	return state, nil
 }
 
-// Get the Host (for qualifying for the IUserState interface)
+// Host gets the Host (for qualifying for the IUserState interface)
 func (state *UserState) Host() pinterface.IHost {
 	return state.pool
 }
 
-// Get the Redis database index.
+// DatabaseIndex gets the Redis database index.
 func (state *UserState) DatabaseIndex() int {
 	return state.dbindex
 }
 
-// Get the Redis connection pool.
+// Pool gets the Redis connection pool.
 func (state *UserState) Pool() *simpleredis.ConnectionPool {
 	return state.pool
 }
@@ -246,7 +246,7 @@ func (state *UserState) Close() {
 	state.pool.Close()
 }
 
-// Check if the current user is logged in and has user rights.
+// UserRights checks if the current user is logged in and has user rights.
 func (state *UserState) UserRights(req *http.Request) bool {
 	username, err := state.UsernameCookie(req)
 	if err != nil {
@@ -255,7 +255,7 @@ func (state *UserState) UserRights(req *http.Request) bool {
 	return state.IsLoggedIn(username)
 }
 
-// Check if the given username exists.
+// HasUser checks if the given username exists.
 func (state *UserState) HasUser(username string) bool {
 	val, err := state.usernames.Has(username)
 	if err != nil {
@@ -265,7 +265,7 @@ func (state *UserState) HasUser(username string) bool {
 	return val
 }
 
-// Check if the given username exists.
+// HasUser2 checks if the given username exists.
 func (state *UserState) HasUser2(username string) (bool, error) {
 	val, err := state.usernames.Has(username)
 	if err != nil {
@@ -297,7 +297,7 @@ func (state *UserState) HasEmail(email string) (string, error) {
 	return "", ErrNotFound
 }
 
-// Return the boolean value for a given username and field name.
+// BooleanField returns the boolean value for a given username and field name.
 // If the user or field is missing, false will be returned.
 // Useful for states where it makes sense that the returned value is not true
 // unless everything is in order.
@@ -322,12 +322,12 @@ func (state *UserState) SetBooleanField(username, fieldname string, val bool) {
 	state.users.Set(username, fieldname, strval)
 }
 
-// Check if the given username is confirmed.
+// IsConfirmed checks if the given username is confirmed.
 func (state *UserState) IsConfirmed(username string) bool {
 	return state.BooleanField(username, "confirmed")
 }
 
-// Checks if the given username is logged in.
+// IsLoggedIn checks if the given username is logged in.
 func (state *UserState) IsLoggedIn(username string) bool {
 	if !state.HasUser(username) {
 		return false
@@ -340,7 +340,7 @@ func (state *UserState) IsLoggedIn(username string) bool {
 	return status == "true"
 }
 
-// Check if the current user is logged in and has administrator rights.
+// AdminRights checks if the current user is logged in and has administrator rights.
 func (state *UserState) AdminRights(req *http.Request) bool {
 	username, err := state.UsernameCookie(req)
 	if err != nil {
@@ -349,7 +349,7 @@ func (state *UserState) AdminRights(req *http.Request) bool {
 	return state.IsLoggedIn(username) && state.IsAdmin(username)
 }
 
-// Check if the given username is an administrator.
+// IsAdmin checks if the given username is an administrator.
 func (state *UserState) IsAdmin(username string) bool {
 	if !state.HasUser(username) {
 		return false
@@ -361,7 +361,7 @@ func (state *UserState) IsAdmin(username string) bool {
 	return status == "true"
 }
 
-// Retrieve the username that is stored in a cookie in the browser, if available.
+// UsernameCookie retrieves the username that is stored in a cookie in the browser, if available.
 func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 	username, ok := cookie.SecureCookie(req, "user", state.cookieSecret)
 	if ok && (username != "") {
@@ -435,23 +435,23 @@ func (state *UserState) AllUnconfirmedUsernames() ([]string, error) {
 	return state.unconfirmed.GetAll()
 }
 
-// Get the confirmation code for a specific user.
+// ConfirmationCode gets the confirmation code for a specific user.
 func (state *UserState) ConfirmationCode(username string) (string, error) {
 	return state.users.Get(username, "confirmationCode")
 }
 
-// Get the users HashMap.
+// Users gets the users HashMap.
 func (state *UserState) Users() pinterface.IHashMap {
 	return state.users
 }
 
-// Add a user that is registered but not confirmed.
+// AddUnconfirmed adds a user that is registered but not confirmed.
 func (state *UserState) AddUnconfirmed(username, confirmationCode string) {
 	state.unconfirmed.Add(username)
 	state.users.Set(username, "confirmationCode", confirmationCode)
 }
 
-// Remove a user that is registered but not confirmed.
+// RemoveUnconfirmed removes a user that is registered but not confirmed.
 func (state *UserState) RemoveUnconfirmed(username string) {
 	state.unconfirmed.Del(username)
 	state.users.DelKey(username, "confirmationCode")
@@ -462,7 +462,7 @@ func (state *UserState) MarkConfirmed(username string) {
 	state.users.Set(username, "confirmed", "true")
 }
 
-// Remove user and login status.
+// RemoveUser removes user and login status.
 func (state *UserState) RemoveUser(username string) {
 	state.usernames.Del(username)
 	// Remove additional data as well
@@ -561,7 +561,7 @@ func (state *UserState) Username(req *http.Request) string {
 	return username
 }
 
-// Get how long a login cookie should last, in seconds.
+// CookieTimeout gets how long a login cookie should last, in seconds.
 func (state *UserState) CookieTimeout(username string) int64 {
 	return state.cookieTime
 }
@@ -571,7 +571,7 @@ func (state *UserState) SetCookieTimeout(cookieTime int64) {
 	state.cookieTime = cookieTime
 }
 
-// Get cookie secret
+// CookieSecret gets cookie secret
 func (state *UserState) CookieSecret() string {
 	return state.cookieSecret
 }
@@ -581,7 +581,7 @@ func (state *UserState) SetCookieSecret(cookieSecret string) {
 	state.cookieSecret = cookieSecret
 }
 
-// Get the current password hashing algorithm.
+// PasswordAlgo gets the current password hashing algorithm.
 func (state *UserState) PasswordAlgo() string {
 	return state.passwordAlgorithm
 }
@@ -625,7 +625,7 @@ func (state *UserState) storedHash(username string) []byte {
 	return []byte(hashString)
 }
 
-// Check if a password is correct. username is needed because it is part of the hash.
+// CorrectPassword checks if a password is correct. username is needed because it is part of the hash.
 func (state *UserState) CorrectPassword(username, password string) bool {
 
 	if !state.HasUser(username) {
@@ -708,7 +708,7 @@ func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (str
 	return username, nil
 }
 
-// Remove the username from the list of unconfirmed users and mark the user as confirmed.
+// Confirm removes the username from the list of unconfirmed users and mark the user as confirmed.
 func (state *UserState) Confirm(username string) {
 	// Remove from the list of unconfirmed usernames
 	state.RemoveUnconfirmed(username)
@@ -717,7 +717,7 @@ func (state *UserState) Confirm(username string) {
 	state.MarkConfirmed(username)
 }
 
-// Take a confirmation code and mark the corresponding unconfirmed user as confirmed.
+// ConfirmUserByConfirmationCode takes a confirmation code and mark the corresponding unconfirmed user as confirmed.
 func (state *UserState) ConfirmUserByConfirmationCode(confirmationCode string) error {
 	username, err := state.FindUserByConfirmationCode(confirmationCode)
 	if err != nil {
@@ -749,7 +749,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 	return confirmationCode, nil
 }
 
-// Check that the given username and password are different.
+// ValidUsernamePassword checks that the given username and password are different.
 // Also check if the chosen username only contains letters, numbers and/or underscore.
 // Use the "CorrectPassword" function for checking if the password is correct.
 func ValidUsernamePassword(username, password string) error {
@@ -769,7 +769,7 @@ NEXT:
 	return nil
 }
 
-// Return a struct for creating data structures with
+// Creator returns a struct for creating data structures with
 func (state *UserState) Creator() pinterface.ICreator {
 	return simpleredis.NewCreator(state.pool, state.dbindex)
 }

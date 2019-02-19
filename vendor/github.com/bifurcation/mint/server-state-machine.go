@@ -785,7 +785,7 @@ func (state serverStateWaitEOED) State() State {
 func (state serverStateWaitEOED) Next(hr handshakeMessageReader) (HandshakeState, []HandshakeAction, Alert) {
 	for {
 		logf(logTypeHandshake, "Server reading early data...")
-		assert(state.hsCtx.hIn.conn.cipher.epoch == EpochEarlyData)
+		assert(state.hsCtx.hIn.conn.Epoch() == EpochEarlyData)
 		t, err := state.hsCtx.hIn.conn.PeekRecordType(!state.hsCtx.hIn.nonblocking)
 		if err == AlertWouldBlock {
 			return nil, nil, AlertWouldBlock

@@ -161,7 +161,7 @@ func (state clientStateStart) Next(hr handshakeMessageReader) (HandshakeState, [
 	var offeredPSK PreSharedKey
 	var earlyHash crypto.Hash
 	var earlySecret []byte
-	var clientEarlyTrafficKeys keySet
+	var clientEarlyTrafficKeys KeySet
 	var clientHello *HandshakeMessage
 	if key, ok := state.Config.PSKs.Get(state.Opts.ServerName); ok {
 		offeredPSK = key

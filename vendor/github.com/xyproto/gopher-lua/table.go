@@ -140,6 +140,8 @@ func (tb *LTable) Remove(pos int) LValue {
 // It is recommended to use `RawSetString` or `RawSetInt` for performance
 // if you already know the given LValue is a string or number.
 func (tb *LTable) RawSet(key LValue, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	switch v := key.(type) {
 	case LNumber:
 		if isArrayKey(v) {
@@ -162,15 +164,21 @@ func (tb *LTable) RawSet(key LValue, value LValue) {
 			return
 		}
 	case LString:
+		tb.mut.Unlock()
 		tb.RawSetString(string(v), value)
+		tb.mut.Lock()
 		return
 	}
 
+	tb.mut.Unlock()
 	tb.RawSetH(key, value)
+	tb.mut.Lock()
 }
 
 // RawSetInt sets a given LValue at a position `key` without the __newindex metamethod.
 func (tb *LTable) RawSetInt(key int, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	if key < 1 || key >= MaxArrayIndex {
 		tb.RawSetH(LNumber(key), value)
 		return
@@ -246,6 +254,8 @@ func (tb *LTable) RawSetH(key LValue, value LValue) {
 
 // RawGet returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGet(key LValue) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	switch v := key.(type) {
 	case LNumber:
 		if isArrayKey(v) {
@@ -278,6 +288,8 @@ func (tb *LTable) RawGet(key LValue) LValue {
 
 // RawGetInt returns an LValue at position `key` without __index metamethod.
 func (tb *LTable) RawGetInt(key int) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.array == nil {
 		return LNil
 	}
@@ -290,6 +302,8 @@ func (tb *LTable) RawGetInt(key int) LValue {
 
 // RawGet returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGetH(key LValue) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if s, sok := key.(LString); sok {
 		if tb.strdict == nil {
 			return LNil
@@ -310,6 +324,8 @@ func (tb *LTable) RawGetH(key LValue) LValue {
 
 // RawGetString returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGetString(key string) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.strdict == nil {
 		return LNil
 	}
@@ -321,6 +337,8 @@ func (tb *LTable) RawGetString(key string) LValue {
 
 // ForEach iterates over this table of elements, yielding each in turn to a given function.
 func (tb *LTable) ForEach(cb func(LValue, LValue)) {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.array != nil {
 		for i, v := range tb.array {
 			if v != LNil {

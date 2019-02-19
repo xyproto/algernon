@@ -72,12 +72,12 @@ func (perm *Permissions) SetDenyFunction(f http.HandlerFunc) {
 	perm.denied = f
 }
 
-// Get the current http.HandlerFunc for when permissions are denied
+// DenyFunction gets the current http.HandlerFunc for when permissions are denied
 func (perm *Permissions) DenyFunction() http.HandlerFunc {
 	return perm.denied
 }
 
-// Retrieve the UserState struct
+// UserState retrieves the UserState struct
 func (perm *Permissions) UserState() pinterface.IUserState {
 	return perm.state
 }
@@ -123,7 +123,7 @@ func PermissionDenied(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Permission denied.", http.StatusForbidden)
 }
 
-// Check if a given request should be rejected.
+// Rejected checks if a given request should be rejected.
 func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
 	path := req.URL.Path // the path of the url that the user wish to visit
 

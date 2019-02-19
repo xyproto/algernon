@@ -29,7 +29,7 @@ github.com/alecthomas/chroma/lexers/v
 github.com/alecthomas/chroma/lexers/w
 github.com/alecthomas/chroma/lexers/x
 github.com/alecthomas/chroma/lexers/y
-# github.com/bifurcation/mint v0.0.0-20181105071958-a14404e9a861
+# github.com/bifurcation/mint v0.0.0-20181105073638-824af6541065
 github.com/bifurcation/mint
 github.com/bifurcation/mint/syntax
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
@@ -38,8 +38,6 @@ github.com/bmizerany/assert
 github.com/cheekybits/genny/generic
 # github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 github.com/chzyer/readline
-# github.com/coreos/bbolt v1.3.0
-github.com/coreos/bbolt
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
 # github.com/didip/tollbooth v4.0.0+incompatible
@@ -59,6 +57,8 @@ github.com/dop251/goja/token
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
+# github.com/etcd-io/bbolt v1.3.2
+github.com/etcd-io/bbolt
 # github.com/flosch/pongo2 v0.0.0-20181225140029-79872a7b2769
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
@@ -76,7 +76,7 @@ github.com/gomodule/redigo/internal
 # github.com/hashicorp/golang-lru v0.5.0
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/juju/errors v0.0.0-20181118221551-089d3ea4e4d5
+# github.com/juju/errors v0.0.0-20190207033735-e65537c515d7
 github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
 github.com/jvatic/goja-babel
@@ -91,7 +91,7 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f
 github.com/lucas-clemente/aes12
-# github.com/lucas-clemente/quic-go v0.10.1
+# github.com/lucas-clemente/quic-go v0.10.1-no-integrationtests
 github.com/lucas-clemente/quic-go/h2quic
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/internal/protocol
@@ -109,7 +109,7 @@ github.com/lucas-clemente/quic-go-certificates
 github.com/mattetti/filebuffer
 # github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
-# github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286
+# github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
@@ -152,7 +152,7 @@ github.com/xyproto/cookie
 github.com/xyproto/datablock
 # github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
 github.com/xyproto/gluamapper
-# github.com/xyproto/gopher-lua v0.0.0-20190219142724-64197c4adb8b
+# github.com/xyproto/gopher-lua v0.0.0-20190219143855-a85cc57f8d36
 github.com/xyproto/gopher-lua
 github.com/xyproto/gopher-lua/ast
 github.com/xyproto/gopher-lua/parse
@@ -165,7 +165,7 @@ github.com/xyproto/mime
 github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v0.0.0-20181129230056-7da3551b9d5f
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20181129225925-22c4abeadf9f
+# github.com/xyproto/permissions2 v0.0.0-20190219060541-f47b0751729e
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20181211084859-62470623e918
 github.com/xyproto/permissionsql
@@ -179,7 +179,7 @@ github.com/xyproto/randomstring
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v0.0.0-20190123204607-7180c4d60559
+# github.com/xyproto/simplebolt v0.0.0-20190219145457-752add4550da
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e
 github.com/xyproto/simplehstore
@@ -195,13 +195,13 @@ github.com/xyproto/term
 github.com/xyproto/unzip
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b
+# golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-# golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
+# golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
@@ -209,7 +209,7 @@ golang.org/x/net/idna
 # golang.org/x/sys v0.0.0-20190219092855-153ac476189d
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
 golang.org/x/text/cases
 golang.org/x/text/collate
 golang.org/x/text/language
@@ -219,6 +219,8 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/internal
 golang.org/x/text/transform
 golang.org/x/text/internal/colltab
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate

@@ -66,6 +66,6 @@ Version, license and author
 ---------------------------
 
 * License: MIT
-* Version: 3.2.1
+* Version: 3.4.0
 * Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
 

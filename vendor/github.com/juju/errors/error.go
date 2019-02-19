@@ -90,7 +90,7 @@ func (e *Err) Underlying() error {
 	return e.previous
 }
 
-// The Cause of an error is the most recent error in the error stack that
+// Cause returns the most recent error in the error stack that
 // meets one of these criteria: the original error that was raised; the new
 // error that was passed into the Wrap function; the most recently masked
 // error; or nil if the error itself is considered the Cause.  Normally this
