@@ -22,19 +22,14 @@
     <header>
       <h1>{{ title }}</h1>
     </header>
-
     <p>
       Single item: <span class="value">{{ something }}</span>
     </p>
-
     <p>
-      List: <span class="value">[
-      {% for k, v in somelist %}
-      {% if k > 1 %},{% endif %}
-      {{v}}
-      {% endfor %}
-      ]</span>
+      List 1: <span class="value">[ {% for k, v in somelist %}{{ v }} {% endfor %}]</span>
     </p>
-
+    <p>
+      List 2: <span class="value">[ {% for k, v in anotherlist %}{{ v }} {% endfor %}]</span>
+    </p>
   </body>
 </html>
