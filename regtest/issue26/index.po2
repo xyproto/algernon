@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{{ title }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="img/favicon.ico" />
+    <style>
+      body {
+        margin: 3em;
+        color: white;
+        background-color: #204050;
+        font-size: 2em;
+        font-family: monospace;
+      }
+      .value {
+        color: #e0f040;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>{{ title }}</h1>
+    </header>
+
+    <p>
+      Single item: <span class="value">{{ something }}</span>
+    </p>
+
+    <p>
+      List: <span class="value">[
+      {% for k, v in somelist %}
+      {% if k > 1 %},{% endif %}
+      {{v}}
+      {% endfor %}
+      ]</span>
+    </p>
+
+  </body>
+</html>

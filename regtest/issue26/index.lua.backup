@@ -1,0 +1,1 @@
+serve2("index.po2", {something="hello", somelist={ "A", "B", "C" }})
