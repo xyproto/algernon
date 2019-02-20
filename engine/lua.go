@@ -316,7 +316,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 						switch {
 						case isTable:
 							// lv was a Lua Table
-							retval = convert.Table2interfacemap(tbl)
+							retval = convert.Table2interfaceMap(tbl)
 							if ac.debugMode && ac.verboseMode {
 								log.Info(utils.Infostring(functionName, args) + " -> (map)")
 							}

@@ -60,14 +60,14 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 
 		// If a table is given as the second argument, fill pongoMap with keys and values
 		pongoMap := make(pongo2.Context)
-		if L.GetTop() >= 2 {
-			mapSS, mapSI, _, _ := convert.Table2maps(L.CheckTable(2))
-			for k, v := range mapSI {
-				pongoMap[k] = v
-			}
-			for k, v := range mapSS {
-				pongoMap[k] = v
-			}
+
+		if L.GetTop() == 2 {
+			luaTable := L.CheckTable(2)
+			pongoMap = pongo2.Context(convert.Table2interfaceMap(luaTable))
+			//fmt.Println("PONGOMAP", pongoMap, "LUA TABLE", luaTable)
+		} else if L.GetTop() > 2 {
+			log.Error("Too many arguments given to the serve2 function")
+			return 0 // number of restuls
 		}
 
 		// Retrieve all the function arguments as a bytes.Buffer

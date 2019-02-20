@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/gluamapper"
@@ -23,7 +24,9 @@ var (
 func PprintToWriter(w io.Writer, value lua.LValue) {
 	switch v := value.(type) {
 	case *lua.LTable:
-		m, isAnArray, err := Table2mapinterface(v)
+		t := (*lua.LTable)(v)
+		// Even if t.Len() is 0, the table may be full of elements
+		m, isAnArray, err := Table2interfaceMapGlua(t)
 		if err != nil {
 			//log.Info("try: for k,v in pairs(t) do pprint(k,v) end")
 			// Could not convert to a map
@@ -48,8 +51,9 @@ func PprintToWriter(w io.Writer, value lua.LValue) {
 			buf.WriteTo(w)
 			return
 		}
-		// A go map
-		fmt.Fprint(w, fmt.Sprintf("%#v", m)[29:])
+		// A go map, but with "interface{}" hidden
+		// TODO: Also hide double quotes, but only when they surround the keys in the map
+		fmt.Fprint(w, strings.Replace(fmt.Sprintf("%#v", m)[29:], ":[]interface {}", "=", -1), "\"", "", -1)
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function
@@ -204,7 +208,10 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 }
 
 // Table2interfacemap converts a Lua table to a map[string]interface{}
-func Table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
+// If values are also tables, they are also attempted converted to map[string]interface{}
+func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
+
+	// Even if luaTable.Len() is 0, the table may be full of things
 
 	// Initialize possible maps we want to convert to
 	everything := make(map[string]interface{})
@@ -215,14 +222,19 @@ func Table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
 
-		// Convert the keys and values to strings or ints
+		// Convert the keys and values to strings or ints or maps
 		skey, hasSkey = tkey.(lua.LString)
 		nkey, hasNkey = tkey.(lua.LNumber)
+
 		svalue, hasSvalue = tvalue.(lua.LString)
 		nvalue, hasNvalue = tvalue.(lua.LNumber)
+		secondTableValue, hasTvalue := tvalue.(*lua.LTable)
 
 		// Store the right keys and values in the right maps
-		if hasSkey && hasSvalue {
+		if hasSkey && hasTvalue {
+			// Recursive call if the value is another table that can be converted to a string->interface{} map
+			everything[skey.String()] = Table2interfaceMap(secondTableValue)
+		} else if hasSkey && hasSvalue {
 			everything[skey.String()] = svalue.String()
 		} else if hasSkey && hasNvalue {
 			floatVal := float64(nvalue)
@@ -271,13 +283,14 @@ func Table2interfacemap(luaTable *lua.LTable) map[string]interface{} {
 
 // Table2mapinterface converts a Lua table to a map by using gluamapper.
 // If the map really is an array (all the keys are indices), return true.
-func Table2mapinterface(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
+func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
 	var (
 		m         = make(map[interface{}]interface{})
 		opt       = gluamapper.Option{}
 		indices   []uint64
 		i, length uint64
 	)
+
 	// Catch a problem that may occur when converting the map value with gluamapper.ToGoValue
 	defer func() {
 		if r := recover(); r != nil {

@@ -395,7 +395,7 @@ func LoadJSONFunctions(L *lua.LState) {
 		//
 
 		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
-		mapinterface := convert.Table2interfacemap(table)
+		mapinterface := convert.Table2interfaceMap(table)
 
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {
