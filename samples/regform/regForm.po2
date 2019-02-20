@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{{ sitename }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style/nes.min.css" />
+    <link rel="shortcut icon" href="img/favicon.ico" />
+    <style>
+      body {
+        margin: 1em;
+        image-rendering: crisp-edges;
+        image-rendering: -moz-crisp-edges;
+      }
+      div {
+        margin: 1em;
+      }
+      .fieldStar {
+        display: flex;
+      }
+      .fieldStar .icon {
+        margin-left: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><i class="snes-logo brand"></i>{{ sitename }}</h1>
+    </header>
+
+    <!-- the form action is replaced by the form validator -->
+    <form id="registerForm" name="registerForm" action="/error" method="POST">
+
+      <section class="form container with-title is-rounded is-center">
+
+        <h2 class="title">Register</h2>
+
+        <div class="field">
+          <label for="username">Username</label>
+          <p class="fieldStar">
+            <input type="text" class="input" id="username" name="username">
+            <i id="usernameStar" class="icon star is-medium"></i>
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="password1">Password</label>
+          <p class="fieldStar">
+            <input type="password" class="input" id="password1" name="password1">
+            <i id="password1Star" class="icon heart is-medium"></i>
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="password2">Password (again)</label>
+          <p class="fieldStar">
+            <input type="password" class="input" id="password2" name="password2">
+            <i id="password2Star" class="icon like is-medium"></i>
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <p class="fieldStar">
+            <input type="email" class="input" id="email" name="email">
+            <img src="img/emerald.png" alt="Emerald" id="emailStar" class="icon is-medium"></i>
+          </p>
+        </div>
+
+        <div>
+          <button class="btn is-primary" id="registerButton">Register</button>
+        </div>
+
+      </section>
+
+    </form>
+
+    <script src="js/formValidation.js" registrationURL="{{ regPostURL }}"></script>
+
+  </body>
+</html>

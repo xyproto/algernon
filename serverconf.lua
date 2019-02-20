@@ -35,3 +35,31 @@ DenyHandler(function ()
   print("<strong>HTTP "..method()..[[</strong> <font color="red">denied</font> for ]]..urlpath().." (based on the current permission settings).")
   print([[</body></html>]])
 end)
+
+-- Global configuration
+fields = {
+  sitename = "Sample Page",
+}
+
+-- Store global variables as Lua code in the database.
+-- Any other Lua file may load them with: CodeLib():import("globals")
+OnReady(function()
+
+  -- Prepare a CodeLib object and clear the "globals" key
+  codelib = CodeLib()
+
+  -- Store the configuration strings as Lua code under the key "globals".
+  local first = true
+  for k, v in pairs(fields) do
+    luaCode = k .. "=\"" .. v .. "\""
+    if first then
+      codelib:set("globals", luaCode)
+      first = false
+    else
+      codelib:add("globals", luaCode)
+    end
+  end
+
+  print(codelib:get("globals"))
+
+end)

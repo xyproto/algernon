@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{{ sitename }} - {{ title }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/style/nes.min.css" />
+    <link rel="shortcut icon" href="/img/favicon.ico" />
+    <style>
+      body {
+        margin: 1em;
+        image-rendering: crisp-edges;
+        image-rendering: -moz-crisp-edges;
+      }
+      div {
+        margin: 1em;
+      }
+      .fieldStar {
+        display: flex;
+      }
+      .fieldStar .icon {
+        margin-left: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><i class="snes-logo brand"></i>{{ sitename }}</h1>
+    </header>
+    <form id="confirmForm" name="confirmForm" action="/login" method="GET">
+      <section class="form">
+        <div class="container">
+          <h2 class="title">{{ title }}</h2>
+          <p>{{ msg }}</p>
+          <div class="field">
+            <label for="confirmation">Confirmation code:</label>
+            <input type="text" name="confirmation" id="confirmation" class="input">
+          </div>
+          <button id="confirmButton" name="confirmButton" type="button" class="btn is-primary">Confirm</button>
+          <script>
+          var confirmationField = document.getElementById("confirmation");
+          confirmationField.onfocus = function() {
+            confirmationField.classList.add('is-success');
+          }
+          confirmationField.onblur = function() {
+            confirmationField.classList.remove('is-success');
+          }
+          </script>
+        </div>
+      </section>
+    </form>
+  </body>
+</html>
+
