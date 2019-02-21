@@ -38,7 +38,7 @@ end)
 
 -- Global configuration
 fields = {
-  sitename = "Sample Page",
+  sitename = "Sample Site",
 }
 
 -- Store global variables as Lua code in the database.
