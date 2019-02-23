@@ -554,6 +554,40 @@ func outputHelp(o *term.TextOutput, helpText string) {
 	o.Println(usageMessage)
 }
 
+// Output syntax highlighted help about a specific topic or function
+func outputHelpAbout(o *term.TextOutput, helpText, topic string) {
+	switch topic {
+	case "help":
+		o.Println(o.DarkGray("Output general help or help about a specific topic."))
+		return
+	case "webhelp":
+		o.Println(o.DarkGray("Output help about web-related functions."))
+		return
+	case "confighelp":
+		o.Println(o.DarkGray("Output help about configuration-related functions."))
+		return
+	case "quit", "exit", "shutdown", "halt":
+		o.Println(o.DarkGray("Quit Algernon."))
+		return
+	}
+	comment := ""
+	for _, line := range strings.Split(helpText, "\n") {
+		if strings.HasPrefix(line, topic) {
+			// Output help text, with some surrounding blank lines
+			o.Println("\n" + highlight(o, line))
+			o.Println("\n" + o.DarkGray(comment) + "\n")
+			return
+		}
+		// Gather comments until a non-comment is encountered
+		if strings.HasPrefix(line, "//") {
+			comment += strings.TrimSpace(line[2:] + "\n")
+		} else {
+			comment = ""
+		}
+	}
+	o.Println(o.DarkGray("Found no help for: ") + o.White(topic))
+}
+
 // Take all functions mentioned in the given help text string and add them to the readline completer
 func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.PrefixCompleter) {
 	for _, line := range strings.Split(helpText, "\n") {
@@ -754,6 +788,15 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		case "zalgo":
 			// Easter egg
 			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑̈ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
+		default:
+			if strings.HasPrefix(line, "help(") {
+				topic := line[5:]
+				if strings.HasSuffix(topic, ")") {
+					topic = topic[:len(topic)-1]
+				}
+				outputHelpAbout(o, generalHelpText+webHelpText+configHelpText, topic)
+				continue
+			}
 		}
 
 		// If the line starts with print, don't touch it
