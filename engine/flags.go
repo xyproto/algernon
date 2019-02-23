@@ -270,6 +270,15 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serverConfScript = ""
 	}
 
+	// Check if IGNOREEOF is set
+	ignoreEOF, err := strconv.Atoi(os.Getenv("IGNOREEOF"))
+	if err != nil {
+		ignoreEOF = 0
+	}
+	if ignoreEOF > 1 {
+		ac.ctrldTwice = true
+	}
+
 	// Disable verbose mode if quiet mode has been enabled
 	if ac.quietMode {
 		ac.verboseMode = false
