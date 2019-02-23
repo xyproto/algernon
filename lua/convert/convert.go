@@ -207,7 +207,7 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 	return mapSS, mapSI, mapIS, mapII
 }
 
-// Table2interfacemap converts a Lua table to a map[string]interface{}
+// Table2interfaceMap converts a Lua table to a map[string]interface{}
 // If values are also tables, they are also attempted converted to map[string]interface{}
 func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
 
@@ -281,7 +281,7 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
 	return everything
 }
 
-// Table2mapinterface converts a Lua table to a map by using gluamapper.
+// Table2interfaceMapGlua converts a Lua table to a map by using gluamapper.
 // If the map really is an array (all the keys are indices), return true.
 func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
 	var (
@@ -299,6 +299,8 @@ func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[interface{}]interf
 			return
 		}
 	}()
+
+	// Do the actual conversion
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
 		if i, isNum := tkey.(lua.LNumber); isNum {
 			indices = append(indices, uint64(i))
@@ -307,6 +309,7 @@ func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[interface{}]interf
 		m[gluamapper.ToGoValue(tkey, opt)] = gluamapper.ToGoValue(tvalue, opt)
 		length++
 	})
+
 	// Report back as a map, not an array, if there are no elements
 	if length == 0 {
 		return m, false, nil
