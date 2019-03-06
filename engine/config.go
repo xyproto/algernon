@@ -75,6 +75,9 @@ type Config struct {
 	// Default filename for a Lua script that provides data to a template
 	defaultLuaDataFilename string
 
+	// Default port for connecting to a running FastCGI server
+	defaultFastCGIColonPort     string
+
 	// List of configuration filenames to check
 	serverConfigurationFilenames []string
 
@@ -239,6 +242,10 @@ type Config struct {
 	// Indicate if path prefixes like "/admin" should be cleared,
 	// or if the default settings should be kept.
 	clearDefaultPathPrefixes bool
+
+	// For connecting to a running FastCGI server
+	fastCGIAddr string
+
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -280,6 +287,9 @@ func New(versionString, description string) (*Config, error) {
 
 		// Default filename for a Lua script that provides data to a template
 		defaultLuaDataFilename: "data.lua",
+
+		// Default FastCGI port
+		defaultFastCGIColonPort: ":9000",
 
 		// List of configuration filenames to check
 		serverConfigurationFilenames: []string{"/etc/algernon/serverconf.lua", "/etc/algernon/server.lua"},

@@ -86,6 +86,7 @@ Available flags:
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername=TEXT            Custom HTTP header value for the Server field.
+  --fastcgi=[HOST][:PORT]      Connect to a FastCGI server, for serving .php files.
   -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `, or with the
                                given application.
   -z, --quit                   Quit after the first request has been served.
@@ -175,6 +176,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
+	flag.StringVar(&ac.fastCGIAddr, "fastcgiserver", "", "FastCGI [host][:port] (ie \""+ac.defaultFastCGIColonPort+"\")")
 	flag.StringVar(&ac.eventRefresh, "eventrefresh", ac.defaultEventRefresh, "Event refresh interval (ie \""+ac.defaultEventRefresh+"\")")
 	flag.BoolVar(&ac.serverMode, "server", false, "Server mode (disable interactive mode)")
 	flag.StringVar(&ac.mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")

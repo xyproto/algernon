@@ -228,6 +228,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		ac.PongoHandler(w, req, filename, ext)
 		return
 
+	case ".php":
+		// TESTING 1-2-3
+		fmt.Fprintf(w, "FASTCGI MODE: %s\n", "enabled")
+		return
+
 	case ".alg":
 		// Assume this to be a compressed Algernon application
 		tempdir := ac.serverTempDir
