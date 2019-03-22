@@ -55,6 +55,8 @@ Documentation/tutorials
 
 Various
 -------
+- [ ] Add support for [zygomys](https://github.com/glycerine/zygomys) on equal footing with Lua.
+- [ ] Add fastcgi support, for connecting to fastcgi servers and use them for serving content?
 - [ ] Add a theme that looks like https://huytd.github.io
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
 - [ ] Write a module for caching that can cache chunks of files and stream files that does not fit in memory directly from disk.
