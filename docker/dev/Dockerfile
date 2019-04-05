@@ -1,6 +1,6 @@
 # Dockerfile for making Algernon serve HTTP on port 3000, in development mode
 FROM golang:alpine as gobuilder
-MAINTAINER Alexander F Rødseth <xyproto@archlinux.org>
+MAINTAINER Alexander F. Rødseth <xyproto@archlinux.org>
 
 # Prepare the needed files
 COPY . "$GOPATH/src/github.com/xyproto/algernon"
