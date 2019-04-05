@@ -28,3 +28,4 @@ examples/negroni/negroni
 examples/martini/martini
 examples/gin/gin
 examples/macaron/macaron
+examples/http/http

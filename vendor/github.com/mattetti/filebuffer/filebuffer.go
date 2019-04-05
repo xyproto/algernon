@@ -1,4 +1,4 @@
-// Package filebuffer is a package implementing a few file like interfaces
+// filebuffer is a package implementing a few file like interfaces
 // backed by a byte buffer.
 // Implemented interfaces:
 //

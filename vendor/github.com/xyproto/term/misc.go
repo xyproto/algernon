@@ -2,7 +2,6 @@ package term
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -95,9 +94,18 @@ func trimnewlines(s string) string {
 
 // Repeat a string n number of times
 func Repeat(text string, n int) string {
-	var buf bytes.Buffer
+	var sb strings.Builder
 	for i := 0; i < n; i++ {
-		buf.WriteString(text)
+		sb.WriteString(text)
 	}
-	return buf.String()
+	return sb.String()
+}
+
+// Repeat a rune n number of times
+func RepeatRune(r rune, n int) string {
+	var sb strings.Builder
+	for i := 0; i < n; i++ {
+		sb.WriteRune(r)
+	}
+	return sb.String()
 }
