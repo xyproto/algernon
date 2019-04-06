@@ -3,15 +3,23 @@ FROM golang:alpine as gobuilder
 MAINTAINER Alexander F. Rødseth <xyproto@archlinux.org>
 
 # Prepare the needed files
-COPY . "$GOPATH/src/github.com/xyproto/algernon"
-WORKDIR "$GOPATH/src/github.com/xyproto/algernon"
+COPY . /algernon
+WORKDIR /algernon
 
 # Build Algernon
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/algernon
+RUN GOOS=linux \
+    GOARCH=amd64 \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -a \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
 
 # Start from scratch, only copy in the Algernon executable
 FROM scratch
-COPY --from=gobuilder /go/bin/algernon /go/bin/algernon
+COPY --from=gobuilder /bin/algernon /bin/algernon
 
 # Prepare directories
 COPY --from=gobuilder /tmp /tmp
@@ -28,5 +36,5 @@ EXPOSE 4000
 # "--log", "/var/log/algernon.log" can be used for logging errors
 #
 # The final parameter is the directory or file to serve, for instance /srv/algernon
-ENTRYPOINT ["/go/bin/algernon", "--domain", "--dev", "--autorefresh", "--addr", "--dir", "/srv/algernon", ":4000"]
-CMD ["/go/bin/algernon"]
+ENTRYPOINT ["/bin/algernon", "--domain", "--dev", "--autorefresh", "--addr", "--dir", "/srv/algernon", ":4000"]
+CMD ["/bin/algernon"]

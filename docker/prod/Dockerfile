@@ -3,15 +3,23 @@ FROM golang:alpine as gobuilder
 MAINTAINER Alexander F. Rødseth <xyproto@archlinux.org>
 
 # Prepare the needed files
-COPY . "$GOPATH/src/github.com/xyproto/algernon"
-WORKDIR "$GOPATH/src/github.com/xyproto/algernon"
+COPY . /algernon
+WORKDIR /algernon
 
 # Build Algernon
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/algernon
+RUN GOOS=linux \
+    GOARCH=amd64 \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -a \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
 
 # Start from scratch, only copy in the Algernon executable
 FROM scratch
-COPY --from=gobuilder /go/bin/algernon /go/bin/algernon
+COPY --from=gobuilder /bin/algernon /bin/algernon
 
 # Prepare directories
 COPY --from=gobuilder /tmp /tmp
@@ -36,5 +44,5 @@ EXPOSE 80 443
 #
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
-ENTRYPOINT ["/go/bin/algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "--dir", "/srv/algernon"]
-CMD ["/go/bin/algernon"]
+ENTRYPOINT ["/bin/algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "--dir", "/srv/algernon"]
+CMD ["/bin/algernon"]
