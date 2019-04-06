@@ -127,7 +127,11 @@ If needed, first:
 Overview
 --------
 
-Running Algernon (screenshot from an earlier version):
+Running Algernon:
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_gopher.png">
+
+Screenshot of an erlier version:
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
