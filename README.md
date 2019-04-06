@@ -25,6 +25,8 @@ Static build with support for TLS 1.3
 
 See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for other platforms and architectures.
 
+The docker image is a total of 9MB.
+
 Technologies
 ------------
 
