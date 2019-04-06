@@ -971,7 +971,7 @@ Releases
 Requirements
 ------------
 
-* go >= 1.9
+* go >= 1.12
 
 Access logs
 -----------
