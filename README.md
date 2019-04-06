@@ -248,6 +248,7 @@ With earlier versions of Go:
 * Create a self-signed certificate, just for testing:
  * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
  * Press return at all the prompts, but enter `localhost` at *Common Name*.
+ * For production, store the keys in a directory with as strict permissions as possible, then specify them with the `--cert` and `--key` flags.
 * Start `algernon`.
 * Visit `https://localhost:3000/`.
 * If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
