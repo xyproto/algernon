@@ -217,15 +217,17 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-With Go 1.12, outside of `$GOPATH`:
+With Go 1.12:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
-    env GO111MODULE=on go build
+    go build -mod=vendor
 
 With earlier versions of Go:
 
-    cd $GOPATH/src/github.com/xyproto/algernon
+    # make sure GOPATH is set
+    git clone https://github.com/xyproto/algernon "$GOPATH/src/github.com/xyproto/algernon"
+    cd "$GOPATH/src/github.com/xyproto/algernon"
     go build
 
 ##### Launch the "welcome" page
