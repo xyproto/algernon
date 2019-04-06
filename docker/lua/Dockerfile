@@ -17,6 +17,8 @@ RUN GOOS=linux \
       -ldflags="-w -s" \
       -o /bin/algernon
 
+RUN apk add upx && upx /bin/algernon
+
 # Start from scratch, only copy in the Algernon executable
 FROM scratch
 COPY --from=gobuilder /bin/algernon /bin/algernon
