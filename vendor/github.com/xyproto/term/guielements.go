@@ -19,17 +19,17 @@ func DrawBox(r *Box, extrude bool) *Rect {
 		FG1 = BOXDARK
 		FG2 = BOXLIGHT
 	}
-	WriteRune(x, y, TLCHAR, FG1, BOXBG)
-	Write(x+1, y, RepeatRune(HCHAR, width-2), FG1, BOXBG)
-	WriteRune(x+width-1, y, TRCHAR, FG1, BOXBG)
+	Write(x, y, TLCHAR, FG1, BOXBG)
+	Write(x+1, y, Repeat(HCHAR, width-2), FG1, BOXBG)
+	Write(x+width-1, y, TRCHAR, FG1, BOXBG)
 	for i := y + 1; i < y+height; i++ {
-		WriteRune(x, i, VCHAR, FG1, BOXBG)
-		Write(x+1, i, RepeatRune(' ', width-2), FG1, BOXBG)
-		WriteRune(x+width-1, i, VCHAR2, FG2, BOXBG)
+		Write(x, i, VCHAR, FG1, BOXBG)
+		Write(x+1, i, Repeat(" ", width-2), FG1, BOXBG)
+		Write(x+width-1, i, VCHAR2, FG2, BOXBG)
 	}
-	WriteRune(x, y+height-1, BLCHAR, FG1, BOXBG)
-	Write(x+1, y+height-1, RepeatRune(HCHAR2, width-2), FG2, BOXBG)
-	WriteRune(x+width-1, y+height-1, BRCHAR, FG2, BOXBG)
+	Write(x, y+height-1, BLCHAR, FG1, BOXBG)
+	Write(x+1, y+height-1, Repeat(HCHAR2, width-2), FG2, BOXBG)
+	Write(x+width-1, y+height-1, BRCHAR, FG2, BOXBG)
 	return &Rect{x, y, width, height}
 }
 

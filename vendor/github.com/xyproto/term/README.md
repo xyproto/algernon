@@ -80,5 +80,5 @@ General information
 -------------------
 
 * License: MIT
-* Author: Alexander F. Rødseth &lt;rodseth@gmail.com&gt;
-* Version: 0.2.2
+* Author: Alexander F Rødseth &lt;rodseth@gmail.com&gt;
+* Version: 0.2

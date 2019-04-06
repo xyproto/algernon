@@ -1,5 +1,7 @@
 package lua
 
+import "sync"
+
 const (
 	defaultArrayCap = 32
 	defaultHashCap  = 32
@@ -38,6 +40,7 @@ func newLTable(acap int, hcap int) *LTable {
 		hcap = 0
 	}
 	tb := &LTable{}
+	tb.mut = &sync.RWMutex{}
 	tb.Metatable = LNil
 	if acap != 0 {
 		tb.array = make([]LValue, 0, acap)
@@ -53,8 +56,6 @@ func (tb *LTable) Len() int {
 	if tb.array == nil {
 		return 0
 	}
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	var prev LValue = LNil
 	for i := len(tb.array) - 1; i >= 0; i-- {
 		v := tb.array[i]
@@ -74,8 +75,6 @@ func (tb *LTable) Append(value LValue) {
 	if tb.array == nil {
 		tb.array = make([]LValue, 0, defaultArrayCap)
 	}
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
 	tb.array = append(tb.array, value)
 }
 
@@ -92,8 +91,6 @@ func (tb *LTable) Insert(i int, value LValue) {
 		tb.RawSet(LNumber(i), value)
 		return
 	}
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
 	i -= 1
 	tb.array = append(tb.array, LNil)
 	copy(tb.array[i+1:], tb.array[i:])
@@ -105,8 +102,6 @@ func (tb *LTable) MaxN() int {
 	if tb.array == nil {
 		return 0
 	}
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	for i := len(tb.array) - 1; i >= 0; i-- {
 		if tb.array[i] != LNil {
 			return i + 1
@@ -120,8 +115,6 @@ func (tb *LTable) Remove(pos int) LValue {
 	if tb.array == nil {
 		return LNil
 	}
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
 	larray := len(tb.array)
 	if larray == 0 {
 		return LNil
@@ -147,10 +140,11 @@ func (tb *LTable) Remove(pos int) LValue {
 // It is recommended to use `RawSetString` or `RawSetInt` for performance
 // if you already know the given LValue is a string or number.
 func (tb *LTable) RawSet(key LValue, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	switch v := key.(type) {
 	case LNumber:
 		if isArrayKey(v) {
-			tb.mut.Lock()
 			if tb.array == nil {
 				tb.array = make([]LValue, 0, defaultArrayCap)
 			}
@@ -167,18 +161,24 @@ func (tb *LTable) RawSet(key LValue, value LValue) {
 			case index < alen:
 				tb.array[index] = value
 			}
-			tb.mut.Unlock()
 			return
 		}
 	case LString:
+		tb.mut.Unlock()
 		tb.RawSetString(string(v), value)
+		tb.mut.Lock()
 		return
 	}
+
+	tb.mut.Unlock()
 	tb.RawSetH(key, value)
+	tb.mut.Lock()
 }
 
 // RawSetInt sets a given LValue at a position `key` without the __newindex metamethod.
 func (tb *LTable) RawSetInt(key int, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	if key < 1 || key >= MaxArrayIndex {
 		tb.RawSetH(LNumber(key), value)
 		return
@@ -186,8 +186,6 @@ func (tb *LTable) RawSetInt(key int, value LValue) {
 	if tb.array == nil {
 		tb.array = make([]LValue, 0, 32)
 	}
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
 	index := key - 1
 	alen := len(tb.array)
 	switch {
@@ -205,6 +203,8 @@ func (tb *LTable) RawSetInt(key int, value LValue) {
 
 // RawSetString sets a given LValue to a given string index without the __newindex metamethod.
 func (tb *LTable) RawSetString(key string, value LValue) {
+	tb.mut.Lock()
+	defer tb.mut.Unlock()
 	if tb.strdict == nil {
 		tb.strdict = make(map[string]LValue, defaultHashCap)
 	}
@@ -212,9 +212,6 @@ func (tb *LTable) RawSetString(key string, value LValue) {
 		tb.keys = []LValue{}
 		tb.k2i = map[LValue]int{}
 	}
-
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
 
 	if value == LNil {
 		// TODO tb.keys and tb.k2i should also be removed
@@ -243,9 +240,6 @@ func (tb *LTable) RawSetH(key LValue, value LValue) {
 		tb.k2i = map[LValue]int{}
 	}
 
-	tb.mut.Lock()
-	defer tb.mut.Unlock()
-
 	if value == LNil {
 		// TODO tb.keys and tb.k2i should also be removed
 		delete(tb.dict, key)
@@ -260,14 +254,14 @@ func (tb *LTable) RawSetH(key LValue, value LValue) {
 
 // RawGet returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGet(key LValue) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	switch v := key.(type) {
 	case LNumber:
 		if isArrayKey(v) {
 			if tb.array == nil {
 				return LNil
 			}
-			tb.mut.RLock()
-			defer tb.mut.RUnlock()
 			index := int(v) - 1
 			if index >= len(tb.array) {
 				return LNil
@@ -278,8 +272,6 @@ func (tb *LTable) RawGet(key LValue) LValue {
 		if tb.strdict == nil {
 			return LNil
 		}
-		tb.mut.RLock()
-		defer tb.mut.RUnlock()
 		if ret, ok := tb.strdict[string(v)]; ok {
 			return ret
 		}
@@ -288,8 +280,6 @@ func (tb *LTable) RawGet(key LValue) LValue {
 	if tb.dict == nil {
 		return LNil
 	}
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	if v, ok := tb.dict[key]; ok {
 		return v
 	}
@@ -298,12 +288,12 @@ func (tb *LTable) RawGet(key LValue) LValue {
 
 // RawGetInt returns an LValue at position `key` without __index metamethod.
 func (tb *LTable) RawGetInt(key int) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.array == nil {
 		return LNil
 	}
 	index := int(key) - 1
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	if index >= len(tb.array) || index < 0 {
 		return LNil
 	}
@@ -312,12 +302,12 @@ func (tb *LTable) RawGetInt(key int) LValue {
 
 // RawGet returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGetH(key LValue) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if s, sok := key.(LString); sok {
 		if tb.strdict == nil {
 			return LNil
 		}
-		tb.mut.RLock()
-		defer tb.mut.RUnlock()
 		if v, vok := tb.strdict[string(s)]; vok {
 			return v
 		}
@@ -326,8 +316,6 @@ func (tb *LTable) RawGetH(key LValue) LValue {
 	if tb.dict == nil {
 		return LNil
 	}
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	if v, ok := tb.dict[key]; ok {
 		return v
 	}
@@ -336,11 +324,11 @@ func (tb *LTable) RawGetH(key LValue) LValue {
 
 // RawGetString returns an LValue associated with a given key without __index metamethod.
 func (tb *LTable) RawGetString(key string) LValue {
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.strdict == nil {
 		return LNil
 	}
-	tb.mut.RLock()
-	defer tb.mut.RUnlock()
 	if v, vok := tb.strdict[string(key)]; vok {
 		return v
 	}
@@ -349,8 +337,8 @@ func (tb *LTable) RawGetString(key string) LValue {
 
 // ForEach iterates over this table of elements, yielding each in turn to a given function.
 func (tb *LTable) ForEach(cb func(LValue, LValue)) {
-	//tb.mut.RLock()
-	//defer tb.mut.RUnlock()
+	tb.mut.RLock()
+	defer tb.mut.RUnlock()
 	if tb.array != nil {
 		for i, v := range tb.array {
 			if v != LNil {
@@ -382,8 +370,6 @@ func (tb *LTable) Next(key LValue) (LValue, LValue) {
 		init = true
 	}
 
-	//tb.mut.RLock()
-	//defer tb.mut.RUnlock()
 	if init || key != LNumber(0) {
 		if kv, ok := key.(LNumber); ok && isInteger(kv) && int(kv) >= 0 && kv < LNumber(MaxArrayIndex) {
 			index := int(kv)

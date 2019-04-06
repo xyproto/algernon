@@ -1,7 +1,6 @@
 package logrus
 
 import (
-	"context"
 	"io"
 	"os"
 	"sync"
@@ -125,13 +124,6 @@ func (logger *Logger) WithError(err error) *Entry {
 	return entry.WithError(err)
 }
 
-// Add a context to the log entry.
-func (logger *Logger) WithContext(ctx context.Context) *Entry {
-	entry := logger.newEntry()
-	defer logger.releaseEntry(entry)
-	return entry.WithContext(ctx)
-}
-
 // Overrides the time of the log entry.
 func (logger *Logger) WithTime(t time.Time) *Entry {
 	entry := logger.newEntry()
@@ -208,7 +200,7 @@ func (logger *Logger) Info(args ...interface{}) {
 
 func (logger *Logger) Print(args ...interface{}) {
 	entry := logger.newEntry()
-	entry.Print(args...)
+	entry.Info(args...)
 	logger.releaseEntry(entry)
 }
 
@@ -264,7 +256,7 @@ func (logger *Logger) Warnln(args ...interface{}) {
 }
 
 func (logger *Logger) Warningln(args ...interface{}) {
-	logger.Warnln(args...)
+	logger.Warn(args...)
 }
 
 func (logger *Logger) Errorln(args ...interface{}) {

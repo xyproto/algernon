@@ -44,9 +44,8 @@ func Literator(tokens ...Token) Iterator {
 	}
 }
 
-// SplitTokensIntoLines splits tokens containing newlines in two.
 func SplitTokensIntoLines(tokens []Token) (out [][]Token) {
-	var line []Token // nolint: prealloc
+	var line []Token
 	for _, token := range tokens {
 		for strings.Contains(token.Value, "\n") {
 			parts := strings.SplitAfterN(token.Value, "\n", 2)

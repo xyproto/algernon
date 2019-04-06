@@ -13,7 +13,6 @@ var CSharp = internal.Register(MustNewLexer(
 		Filenames: []string{"*.cs"},
 		MimeTypes: []string{"text/x-csharp"},
 		DotAll:    true,
-		EnsureNL:  true,
 	},
 	Rules{
 		"root": {

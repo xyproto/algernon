@@ -1,4 +1,4 @@
-# Chroma — A general purpose syntax highlighter in pure Go [![Golang Documentation](https://godoc.org/github.com/alecthomas/chroma?status.svg)](https://godoc.org/github.com/alecthomas/chroma) [![Build Status](https://travis-ci.org/alecthomas/chroma.svg)](https://travis-ci.org/alecthomas/chroma) [![Gitter chat](https://badges.gitter.im/alecthomas.svg)](https://gitter.im/alecthomas/Lobby)
+# Chroma - A general purpose syntax highlighter in pure Go [![](https://godoc.org/github.com/alecthomas/chroma?status.svg)](http://godoc.org/github.com/alecthomas/chroma) [![Build Status](https://travis-ci.org/alecthomas/chroma.png)](https://travis-ci.org/alecthomas/chroma) [![Gitter chat](https://badges.gitter.im/alecthomas.png)](https://gitter.im/alecthomas/Lobby)
 
 > **NOTE:** As Chroma has just been released, its API is still in flux. That said, the high-level interface should not change significantly.
 
@@ -31,13 +31,13 @@ translators for Pygments lexers and styles.
 
 Prefix | Language
 :----: | --------
-A | ABNF, ActionScript, ActionScript 3, Ada, Angular2, ANTLR, ApacheConf, APL, AppleScript, Arduino, Awk
+A | ABNF, ActionScript, ActionScript 3, Ada, Angular2, ANTLR, ApacheConf, APL, AppleScript, Awk
 B | Ballerina, Base Makefile, Bash, Batchfile, BlitzBasic, BNF, Brainfuck
 C | C, C#, C++, Cassandra CQL, CFEngine3, cfstatement/ColdFusion, CMake, COBOL, CSS, Cap'n Proto, Ceylon, ChaiScript, Cheetah, Clojure, CoffeeScript, Common Lisp, Coq, Crystal, Cython
 D | Dart, Diff, Django/Jinja, Docker, DTD
 E | EBNF, Elixir, Elm, EmacsLisp, Erlang
 F | Factor, Fish, Forth, Fortran, FSharp
-G | GAS, GDScript, GLSL, Genshi, Genshi HTML, Genshi Text, Gnuplot, Go, Go HTML Template, Go Text Template, GraphQL, Groovy
+G | GAS, GDScript, GLSL, Genshi, Genshi HTML, Genshi Text, Gnuplot, Go, Go HTML Template, Go Text Template, Groovy
 H | Handlebars, Haskell, Haxe, Hexdump, HTML, HTTP, Hy 
 I | Idris, INI, Io
 J | Java, JavaScript, JSON, Jsx, Julia, Jungle
@@ -190,7 +190,7 @@ In many cases lexers can be automatically converted directly from Pygments by
 using the included Python 3 script `pygments2chroma.py`. I use something like
 the following:
 
-```sh
+```
 python3 ~/Projects/chroma/_tools/pygments2chroma.py \
   pygments.lexers.jvm.KotlinLexer \
   > ~/Projects/chroma/lexers/kotlin.go \
@@ -213,23 +213,13 @@ Chroma styles use the [same syntax](http://pygments.org/docs/styles/) as Pygment
 
 All Pygments styles have been converted to Chroma using the `_tools/style.py` script.
 
-When you work with one of [Chroma's styles](https://github.com/alecthomas/chroma/tree/master/styles), know that the `chroma.Background` token type provides the default style for tokens. It does so by defining a foreground color and background color. 
-
-For example, this gives each token name not defined in the style a default color of `#f8f8f8` and uses `#000000` for the highlighted code block's background:
-
-~~~go
-chroma.Background: "#f8f8f2 bg:#000000",
-~~~
-
-Also, token types in a style file are hierarchical. For instance, when `CommentSpecial` is not defined, Chroma uses the token style from `Comment`. So when several comment tokens use the same color, you'll only need to define `Comment` and override the one that has a different color.
-
 For a quick overview of the available styles and how they look, check out the [Chroma Style Gallery](https://xyproto.github.io/splash/docs/).
 
 ## Command-line interface
 
 A command-line interface to Chroma is included. It can be installed with:
 
-```sh
+```
 go get -u github.com/alecthomas/chroma/cmd/chroma
 ```
 

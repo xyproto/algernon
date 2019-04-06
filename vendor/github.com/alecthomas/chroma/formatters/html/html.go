@@ -99,10 +99,41 @@ func (f *Formatter) Format(w io.Writer, style *chroma.Style, iterator chroma.Ite
 	return f.writeHTML(w, style, iterator.Tokens())
 }
 
+func brightenOrDarken(colour chroma.Colour, factor float64) chroma.Colour {
+	if colour.Brightness() < 0.5 {
+		return colour.Brighten(factor)
+	}
+	return colour.Brighten(-factor)
+}
+
+// Ensure that style entries exist for highlighting, etc.
+func (f *Formatter) restyle(style *chroma.Style) (*chroma.Style, error) {
+	builder := style.Builder()
+	bg := builder.Get(chroma.Background)
+	// If we don't have a line highlight colour, make one that is 10% brighter/darker than the background.
+	if !style.Has(chroma.LineHighlight) {
+		highlight := chroma.StyleEntry{Background: bg.Background}
+		highlight.Background = brightenOrDarken(highlight.Background, 0.1)
+		builder.AddEntry(chroma.LineHighlight, highlight)
+	}
+	// If we don't have line numbers, use the text colour but 20% brighter/darker
+	if !style.Has(chroma.LineNumbers) {
+		text := chroma.StyleEntry{Colour: bg.Colour}
+		text.Colour = brightenOrDarken(text.Colour, 0.5)
+		builder.AddEntry(chroma.LineNumbers, text)
+		builder.AddEntry(chroma.LineNumbersTable, text)
+	}
+	return builder.Build()
+}
+
 // We deliberately don't use html/template here because it is two orders of magnitude slower (benchmarked).
 //
 // OTOH we need to be super careful about correct escaping...
 func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.Token) (err error) { // nolint: gocyclo
+	style, err = f.restyle(style)
+	if err != nil {
+		return err
+	}
 	css := f.styleToCSS(style)
 	if !f.Classes {
 		for t, style := range css {
@@ -113,10 +144,7 @@ func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.
 		fmt.Fprint(w, "<html>\n")
 		if f.Classes {
 			fmt.Fprint(w, "<style type=\"text/css\">\n")
-			err = f.WriteCSS(w, style)
-			if err != nil {
-				return err
-			}
+			f.WriteCSS(w, style)
 			fmt.Fprintf(w, "body { %s; }\n", css[chroma.Background])
 			fmt.Fprint(w, "</style>")
 		}
@@ -246,7 +274,7 @@ func (f *Formatter) styleAttr(styles map[chroma.TokenType]string, tt chroma.Toke
 		if cls == "" {
 			return ""
 		}
-		return fmt.Sprintf(` class="%s"`, cls)
+		return string(fmt.Sprintf(` class="%s"`, cls))
 	}
 	if _, ok := styles[tt]; !ok {
 		tt = tt.SubCategory()
