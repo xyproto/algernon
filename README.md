@@ -93,7 +93,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go 1.12 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
+* Requires Go 1.11 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
 
 Utilities
 ---------
@@ -211,7 +211,7 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-With Go 1.12, outside of `$GOPATH`:
+With Go 1.11, outside of `$GOPATH`:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
@@ -971,7 +971,7 @@ Releases
 Requirements
 ------------
 
-* go >= 1.12
+* go >= 1.11
 
 Access logs
 -----------
