@@ -60,6 +60,12 @@ github.com/etcd-io/bbolt
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
+# github.com/gdamore/encoding v1.0.0
+github.com/gdamore/encoding
+# github.com/gdamore/tcell v1.1.1
+github.com/gdamore/tcell/termbox
+github.com/gdamore/tcell
+github.com/gdamore/tcell/terminfo
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
@@ -94,6 +100,8 @@ github.com/lucas-clemente/quic-go/internal/congestion
 github.com/lucas-clemente/quic-go/internal/flowcontrol
 github.com/lucas-clemente/quic-go/internal/handshake
 github.com/lucas-clemente/quic-go/internal/wire
+# github.com/lucasb-eyer/go-colorful v0.0.0-20181028223441-12d3b2882a08
+github.com/lucasb-eyer/go-colorful
 # github.com/marten-seemann/qtls v0.2.3
 github.com/marten-seemann/qtls
 # github.com/mattetti/filebuffer v1.0.0
@@ -108,8 +116,6 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/nsf/termbox-go v0.0.0-20190325093121-288510b9734e
-github.com/nsf/termbox-go
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/russross/blackfriday v2.0.0+incompatible
@@ -180,7 +186,7 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 github.com/xyproto/splash
-# github.com/xyproto/term v0.2.2
+# github.com/xyproto/term v0.3.0
 github.com/xyproto/term
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
@@ -217,7 +223,9 @@ golang.org/x/text/transform
 golang.org/x/text/internal/colltab
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
+golang.org/x/text/encoding
 golang.org/x/text/internal/tag
+golang.org/x/text/encoding/internal/identifier
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
 # google.golang.org/appengine v1.5.0

@@ -18,7 +18,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/nsf/termbox-go v0.0.0-20190325093121-288510b9734e // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -45,7 +44,7 @@ require (
 	github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e // indirect
 	github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
-	github.com/xyproto/term v0.2.2
+	github.com/xyproto/term v0.3.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5 // indirect

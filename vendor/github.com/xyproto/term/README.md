@@ -13,7 +13,7 @@ Features and limitations
 ------------------------
 
 * Provides an easy way to get started drawing colorful characters at any position (X,Y) in a terminal.
-* Uses ncurses and the termbox-go module.
+* Uses ncurses and the [gdamore/tcell](https://github.com/gdamore/tcell) module.
 
 Simple example
 --------------
@@ -81,4 +81,4 @@ General information
 
 * License: MIT
 * Author: Alexander F. Rødseth &lt;rodseth@gmail.com&gt;
-* Version: 0.2.2
+* Version: 0.3.0
