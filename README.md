@@ -16,6 +16,14 @@ All in one small self-contained executable.
 Quick installation (development version)
 ----------------------------------------
 
+### With Modules - Go 1.11 or higher
+
+    git clone https://github.com/xyproto/algernon ;# clone outside of GOPATH
+    cd algernon
+    go install
+
+### Without Modules - Go before 1.11
+
 `go get -u github.com/xyproto/algernon`
 
 Static build with support for TLS 1.3
