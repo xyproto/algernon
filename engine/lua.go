@@ -39,6 +39,11 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		// Retrieve the userstate
 		userstate := ac.perm.UserState()
 
+		// Set the cookie secret, if set
+		if ac.cookieSecret != "" {
+			userstate.SetCookieSecret(ac.cookieSecret)
+		}
+
 		// Functions for serving files in the same directory as a script
 		ac.LoadServeFile(w, req, L, filename)
 
