@@ -790,10 +790,6 @@ SetLoggedOut(string)
 // Takes a username
 Login(string)
 
-// Log in a user, both on the server and with a cookie
-// Takes a username. Returns true if the cookie was set successfully.
-CookieLogin(string) -> bool
-
 // Log out a user, on the server (which is enough)
 // Takes a username
 Logout(string)
