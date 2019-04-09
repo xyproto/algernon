@@ -12,6 +12,7 @@ import (
 
 // Load makes functions related to users and permissions available to Lua scripts
 func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
+
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments
 	L.SetGlobal("UserRights", L.NewFunction(func(L *lua.LState) int {
@@ -269,6 +270,7 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		L.Push(lua.LString(username))
 		return 1 // number of results
 	}))
+
 	// Get the current cookie timeout
 	// Takes a username
 	L.SetGlobal("CookieTimeout", L.NewFunction(func(L *lua.LState) int {
@@ -281,6 +283,19 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	L.SetGlobal("SetCookieTimeout", L.NewFunction(func(L *lua.LState) int {
 		timeout := int64(L.ToNumber(1))
 		userstate.SetCookieTimeout(timeout)
+		return 0 // number of results
+	}))
+	// Get the current cookie secret
+	// Takes nothing, returns a string
+	L.SetGlobal("CookieSecret", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(userstate.CookieSecret()))
+		return 1 // number of results
+	}))
+	// Set the current cookie secret
+	// Takes a string, returns nothing
+	L.SetGlobal("SetCookieSecret", L.NewFunction(func(L *lua.LState) int {
+		secret := L.ToString(1)
+		userstate.SetCookieSecret(secret)
 		return 0 // number of results
 	}))
 	// Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
