@@ -334,6 +334,10 @@ Username() -> string
 CookieTimeout(string) -> number
 // Set the current cookie timeout. Takes a timeout, in seconds.
 SetCookieTimeout(number)
+// Get the current server-wide cookie secret, for persistent logins
+CookieSecret() -> string
+// Set the current server-side cookie secret, for persistent logins
+SetCookieSecret(string)
 // Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 PasswordAlgo() -> string
 // Set the current password hashing algorithm (bcrypt, bcrypt+ or sha256)

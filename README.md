@@ -805,6 +805,15 @@ CookieTimeout(string) -> number
 // Takes a timeout number, measured in seconds
 SetCookieTimeout(number)
 
+// Get the current server-wide cookie secret. This is used when setting
+// and getting browser cookies when users log in.
+CookieSecret() -> string
+
+// Set the current server-side cookie secret. This is used when setting
+// and getting browser cookies when users log in. Using the same secret
+// makes browser cookies usable across server restarts.
+SetCookieSecret(string)
+
 // Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 PasswordAlgo() -> string
 
