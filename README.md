@@ -902,6 +902,12 @@ OnReady(function)
 
 // Use a Lua file for setting up HTTP handlers instead of using the directory structure.
 ServerFile(string) -> bool
+
+// Get the cookie secret from the server configuration.
+CookieSecret() -> string
+
+// Set the cookie secret that will be used when setting and getting browser cookies.
+SetCookieSecret(string)
 ~~~
 
 Functions that are only available for Lua server files
