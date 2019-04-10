@@ -16,15 +16,22 @@ All in one small self-contained executable.
 Quick installation (development version)
 ----------------------------------------
 
-### With Modules - Go 1.11 or higher
+### Go 1.12 or later
 
-    git clone https://github.com/xyproto/algernon ;# clone outside of GOPATH
+Clone algernon outside of `GOPATH`:
+
+    git clone https://github.com/xyproto/algernon
     cd algernon
-    go install
+    go build -mod=vendor
 
-### Without Modules - Go before 1.11
+### Go 1.11
 
-`go get -u github.com/xyproto/algernon`
+Use to go111 branch:
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    git checkout go111
+    GO111MODULES=off go build
 
 Static build with support for TLS 1.3
 -------------------------------------
