@@ -30,6 +30,8 @@ github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964/go.mod h1:Xd9
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/ddliu/go-httpclient v0.5.1 h1:ys4KozrhBaGdI1yuWIFwNNILqhnMU9ozTvRNfCTorvs=
+github.com/ddliu/go-httpclient v0.5.1/go.mod h1:8QVbjq00YK2f2MQyiKuWMdaKOFRcoD9VuubkNCNOuZo=
 github.com/didip/tollbooth v4.0.0+incompatible h1:ayQZYuF5QOxx3NdYRNuRVFLv9/2b64JtSUlewb+0TMo=
 github.com/didip/tollbooth v4.0.0+incompatible/go.mod h1:A9b0665CE6l1KmzpDws2++elm/CsuWBMa5Jv4WY0PEY=
 github.com/dlclark/regexp2 v1.1.6 h1:CqB4MjHw0MFCDj+PHHjiESmHX+N7t0tJzKvC6M97BRg=

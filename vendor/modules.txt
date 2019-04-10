@@ -37,6 +37,8 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
+# github.com/ddliu/go-httpclient v0.5.1
+github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.0+incompatible
 github.com/didip/tollbooth
 github.com/didip/tollbooth/errors

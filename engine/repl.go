@@ -200,6 +200,35 @@ jnode:send(string[, string]) -> string
 jnode:GET(string) -> string
 // Alias for jnode:GET
 jnode:receive(string) -> string
+// Convert from a simple Lua table to a JSON string
+JSON(table) -> string
+
+HTTP Requests
+
+// Create a new HTTP Client object
+HTTPClient() -> userdata
+// Select Accept-Language (ie. "en-us")
+hc:SetLanguage(string)
+// Set the request timeout (in milliseconds)
+hc:SetTimeout(number)
+// Set a cookie (name and value)
+hc:SetCookie(string, string)
+// Set the user agent (ie. "curl")
+hc:SetUserAgent(string)
+// Perform a HTTP GET request. First comes the URL, then an optional table with
+// URL paramets, then an optional table with HTTP headers.
+hc:Get(string, [table], [table]) -> string
+// Perform a HTTP POST request. It's the same arguments as for hc:Get, except
+// the fourth optional argument is the POST body.
+hc:Post(string, [table], [table], [string]) -> string
+// Like hc:Get, except the first argument is the HTTP method (like "PUT")
+hc:Do(string, string, [table], [table]) -> string
+// Shorthand for HTTPClient():Get()
+GET(string, [table], [table]) -> string
+// Shorthand for HTTPClient():Post()
+POST(string, [table], [table], [string]) -> string
+// Shorthand for HTTPClient():Do()
+DO(string, string, [table], [table]) -> string
 
 Plugins
 

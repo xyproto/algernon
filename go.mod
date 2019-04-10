@@ -3,6 +3,7 @@ module github.com/xyproto/algernon
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/ddliu/go-httpclient v0.5.1
 	github.com/didip/tollbooth v4.0.0+incompatible
 	github.com/dop251/goja v0.0.0-20190301185519-64be363d126e // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
