@@ -387,6 +387,9 @@ func LoadJSONFunctions(L *lua.LState) {
 			err error
 		)
 		table := L.ToTable(1)
+		if table == nil {
+			L.ArgError(1, "Expected a table as the first argument")
+		}
 
 		//
 		// NOTE:
