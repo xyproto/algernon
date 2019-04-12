@@ -26,12 +26,12 @@ Clone algernon outside of `GOPATH`:
 
 ### Go 1.11
 
-Use to go111 branch:
+Use the go111 branch:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     git checkout go111
-    GO111MODULES=off go build
+    GO111MODULE=off go build
 
 Static build with support for TLS 1.3
 -------------------------------------
