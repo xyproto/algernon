@@ -16,14 +16,6 @@ All in one small self-contained executable.
 Quick installation (development version)
 ----------------------------------------
 
-### Go 1.12 or later
-
-Clone algernon outside of `GOPATH`:
-
-    git clone https://github.com/xyproto/algernon
-    cd algernon
-    go build -mod=vendor
-
 ### Go 1.11
 
 Use the `go111` branch:
