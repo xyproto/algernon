@@ -26,12 +26,7 @@ Clone algernon outside of `GOPATH`:
 
 ### Go 1.11
 
-Use the `go111` branch:
-
-    git clone https://github.com/xyproto/algernon
-    cd algernon
-    git checkout go111
-    env GO111MODULE=off go build
+See `README.md` in the `go111` branch.
 
 Static build with support for TLS 1.3
 -------------------------------------
@@ -232,18 +227,15 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-With Go 1.12:
+Go 1.12 or later:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
 
-With earlier versions of Go:
+Go 1.11:
 
-    # make sure GOPATH is set
-    git clone https://github.com/xyproto/algernon "$GOPATH/src/github.com/xyproto/algernon"
-    cd "$GOPATH/src/github.com/xyproto/algernon"
-    go build
+    See `README.md` in the `go111` branch.
 
 ##### Launch the "welcome" page
 
