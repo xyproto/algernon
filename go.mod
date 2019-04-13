@@ -1,7 +1,6 @@
 module github.com/xyproto/algernon
 
 require (
-	github.com/alecthomas/chroma v0.6.2 // indirect
 	github.com/bifurcation/mint v0.0.0-20181105073638-824af6541065 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cheekybits/genny v1.0.0 // indirect
@@ -22,7 +21,6 @@ require (
 	github.com/lucas-clemente/quic-go v0.10.1-no-integrationtests
 	github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced // indirect
 	github.com/mattetti/filebuffer v0.0.0-20171024213321-3a1e8e5a6548 // indirect
-	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
@@ -32,9 +30,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.3.0
-	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6

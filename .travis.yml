@@ -11,7 +11,5 @@ sudo: false
 install: true
 
 script:
-  - unset GOPATH
-  - unset GO111MODULE
-  - go build -mod=vendor
-  - go test -mod=vendor
+  - GO111MODULE=off go build
+  - GO111MODULE=off go test
