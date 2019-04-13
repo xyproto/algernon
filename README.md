@@ -16,19 +16,36 @@ All in one small self-contained executable.
 Quick installation (development version)
 ----------------------------------------
 
-`go get -u github.com/xyproto/algernon`
+### Go 1.12 or later
+
+Clone algernon outside of `GOPATH`:
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    go build -mod=vendor
+
+### Go 1.11
+
+Use the `go111` branch:
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    git checkout go111
+    env GO111MODULE=off go build
 
 Static build with support for TLS 1.3
 -------------------------------------
 
-* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.3/algernon-x86_64-static-linux.tar.gz) (statically compiled ELF)
+* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.4/algernon-1.12.4-static_linux.tar.gz) (statically compiled ELF)
 
 See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for other platforms and architectures.
+
+The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB.
 
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](hhttps://github.com/lucas-clemente/quic-gottps://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 
 Design decisions
@@ -127,7 +144,11 @@ If needed, first:
 Overview
 --------
 
-Running Algernon (screenshot from an earlier version):
+Running Algernon:
+
+<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_gopher.png">
+
+Screenshot of an erlier version:
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
@@ -211,15 +232,11 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-With Go 1.11, outside of `$GOPATH`:
+With Go 1.11:
 
-    git clone https://github.com/xyproto/algernon
-    cd algernon
-    env GO111MODULE=on go build
-
-With earlier versions of Go:
-
-    cd $GOPATH/src/github.com/xyproto/algernon
+    # make sure GOPATH is set
+    git clone https://github.com/xyproto/algernon "$GOPATH/src/github.com/xyproto/algernon"
+    cd "$GOPATH/src/github.com/xyproto/algernon"
     go build
 
 ##### Launch the "welcome" page
@@ -248,6 +265,7 @@ With earlier versions of Go:
 * Create a self-signed certificate, just for testing:
  * `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3000 -nodes`
  * Press return at all the prompts, but enter `localhost` at *Common Name*.
+ * For production, store the keys in a directory with as strict permissions as possible, then specify them with the `--cert` and `--key` flags.
 * Start `algernon`.
 * Visit `https://localhost:3000/`.
 * If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
@@ -457,7 +475,52 @@ jnode:GET(string) -> string
 
 // Alias for jnode:GET
 jnode:receive(string) -> string
+
+// Convert from a simple Lua table to a JSON string
+JSON(table) -> string
 ~~~
+Lua functions for making HTTP requests
+--------------------------------------
+
+Quick example: `GET("http://ix.io/1FTw")`
+
+~~~c
+// Create a new HTTP Client object
+HTTPClient() -> userdata
+
+// Select Accept-Language (ie. "en-us")
+hc:SetLanguage(string)
+
+// Set the request timeout (in milliseconds)
+hc:SetTimeout(number)
+
+// Set a cookie (name and value)
+hc:SetCookie(string, string)
+
+// Set the user agent (ie. "curl")
+hc:SetUserAgent(string)
+
+// Perform a HTTP GET request. First comes the URL, then an optional table with
+// URL paramets, then an optional table with HTTP headers.
+hc:Get(string, [table], [table]) -> string
+
+// Perform a HTTP POST request. It's the same arguments as for hc:Get, except
+// the fourth optional argument is the POST body.
+hc:Post(string, [table], [table], [string]) -> string
+
+// Like hc:Get, except the first argument is the HTTP method (like "PUT")
+hc:Do(string, string, [table], [table]) -> string
+
+// Shorthand for HTTPClient():Get()
+GET(string, [table], [table]) -> string
+
+// Shorthand for HTTPClient():Post()
+POST(string, [table], [table], [string]) -> string
+
+// Shorthand for HTTPClient():Do()
+DO(string, string, [table], [table]) -> string
+~~~
+
 
 
 Lua functions for plugins
@@ -541,7 +604,6 @@ ClearCache()
 // Load a file into the cache, returns true on success.
 preload(string) -> bool
 ~~~
-
 
 Lua functions for data structures
 ---------------------------------
@@ -773,10 +835,6 @@ SetLoggedOut(string)
 // Takes a username
 Login(string)
 
-// Log in a user, both on the server and with a cookie
-// Takes a username. Returns true if the cookie was set successfully.
-CookieLogin(string) -> bool
-
 // Log out a user, on the server (which is enough)
 // Takes a username
 Logout(string)
@@ -791,6 +849,15 @@ CookieTimeout(string) -> number
 // Set the current cookie timeout
 // Takes a timeout number, measured in seconds
 SetCookieTimeout(number)
+
+// Get the current server-wide cookie secret. This is used when setting
+// and getting browser cookies when users log in.
+CookieSecret() -> string
+
+// Set the current server-side cookie secret. This is used when setting
+// and getting browser cookies when users log in. Using the same secret
+// makes browser cookies usable across server restarts.
+SetCookieSecret(string)
 
 // Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 PasswordAlgo() -> string
@@ -880,6 +947,12 @@ OnReady(function)
 
 // Use a Lua file for setting up HTTP handlers instead of using the directory structure.
 ServerFile(string) -> bool
+
+// Get the cookie secret from the server configuration.
+CookieSecret() -> string
+
+// Set the cookie secret that will be used when setting and getting browser cookies.
+SetCookieSecret(string)
 ~~~
 
 Functions that are only available for Lua server files

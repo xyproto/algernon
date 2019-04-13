@@ -200,6 +200,35 @@ jnode:send(string[, string]) -> string
 jnode:GET(string) -> string
 // Alias for jnode:GET
 jnode:receive(string) -> string
+// Convert from a simple Lua table to a JSON string
+JSON(table) -> string
+
+HTTP Requests
+
+// Create a new HTTP Client object
+HTTPClient() -> userdata
+// Select Accept-Language (ie. "en-us")
+hc:SetLanguage(string)
+// Set the request timeout (in milliseconds)
+hc:SetTimeout(number)
+// Set a cookie (name and value)
+hc:SetCookie(string, string)
+// Set the user agent (ie. "curl")
+hc:SetUserAgent(string)
+// Perform a HTTP GET request. First comes the URL, then an optional table with
+// URL paramets, then an optional table with HTTP headers.
+hc:Get(string, [table], [table]) -> string
+// Perform a HTTP POST request. It's the same arguments as for hc:Get, except
+// the fourth optional argument is the POST body.
+hc:Post(string, [table], [table], [string]) -> string
+// Like hc:Get, except the first argument is the HTTP method (like "PUT")
+hc:Do(string, string, [table], [table]) -> string
+// Shorthand for HTTPClient():Get()
+GET(string, [table], [table]) -> string
+// Shorthand for HTTPClient():Post()
+POST(string, [table], [table], [string]) -> string
+// Shorthand for HTTPClient():Do()
+DO(string, string, [table], [table]) -> string
 
 Plugins
 
@@ -326,9 +355,6 @@ SetLoggedIn(string)
 SetLoggedOut(string)
 // Log in a user, both on the server and with a cookie. Takes a username.
 Login(string)
-// Log in a user, both on the server and with a cookie.
-// Takes a username. Returns true if the cookie was set successfully.
-CookieLogin(string) -> bool
 // Log out a user, on the server (which is enough). Takes a username.
 Logout(string)
 // Get the current username, from the cookie
@@ -337,6 +363,10 @@ Username() -> string
 CookieTimeout(string) -> number
 // Set the current cookie timeout. Takes a timeout, in seconds.
 SetCookieTimeout(number)
+// Get the current server-wide cookie secret, for persistent logins
+CookieSecret() -> string
+// Set the current server-side cookie secret, for persistent logins
+SetCookieSecret(string)
 // Get the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
 PasswordAlgo() -> string
 // Set the current password hashing algorithm (bcrypt, bcrypt+ or sha256)
@@ -455,6 +485,11 @@ DenyHandler(function)
 OnReady(function)
 // Use a Lua file for setting up HTTP handlers instead of using the directory structure.
 ServerFile(string) -> bool
+// Get the cookie secret from the server configuration.
+CookieSecret() -> string
+// Set the cookie secret that will be used when setting and getting browser cookies.
+SetCookieSecret(string)
+
 `
 	exitMessage = "bye"
 )

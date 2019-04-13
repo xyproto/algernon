@@ -1,7 +1,7 @@
 package term
 
 import (
-	"github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell/termbox"
 )
 
 // Only a few selected colors are included here, for providing

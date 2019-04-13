@@ -40,6 +40,8 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
+# github.com/ddliu/go-httpclient v0.5.1
+github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.0+incompatible
 github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
@@ -63,6 +65,12 @@ github.com/etcd-io/bbolt
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
+# github.com/gdamore/encoding v1.0.0
+github.com/gdamore/encoding
+# github.com/gdamore/tcell v1.1.1
+github.com/gdamore/tcell/termbox
+github.com/gdamore/tcell
+github.com/gdamore/tcell/terminfo
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
@@ -117,8 +125,6 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
-github.com/nsf/termbox-go
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/russross/blackfriday v2.0.0+incompatible
@@ -189,7 +195,7 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20181102100648-7bb75b9c7398
 github.com/xyproto/splash
-# github.com/xyproto/term v0.0.0-20181102095811-abbba14d6880
+# github.com/xyproto/term v0.3.0
 github.com/xyproto/term
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
@@ -206,11 +212,7 @@ golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-<<<<<<< HEAD
 # golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67
-=======
-# golang.org/x/sys v0.0.0-20190219092855-153ac476189d
->>>>>>> parent of 7ec53b32... Update dependencies
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
@@ -225,6 +227,7 @@ golang.org/x/text/transform
 golang.org/x/text/internal/colltab
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
+golang.org/x/text/encoding
 golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate

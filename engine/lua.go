@@ -10,6 +10,7 @@ import (
 	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
+	"github.com/xyproto/algernon/lua/httpclient"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/onthefly"
 	"github.com/xyproto/algernon/lua/pure"
@@ -38,6 +39,11 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 		// Retrieve the userstate
 		userstate := ac.perm.UserState()
+
+		// Set the cookie secret, if set
+		if ac.cookieSecret != "" {
+			userstate.SetCookieSecret(ac.cookieSecret)
+		}
 
 		// Functions for serving files in the same directory as a script
 		ac.LoadServeFile(w, req, L, filename)
@@ -82,6 +88,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// File uploads
 	upload.Load(L, w, req, filepath.Dir(filename))
+
+	// HTTP Client
+	httpclient.Load(L, ac.serverHeaderName)
 }
 
 // RunLua uses a Lua file as the HTTP handler. Also has access to the userstate
@@ -193,6 +202,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// Pages and Tags
 	onthefly.Load(L)
+
+	// HTTP Client
+	httpclient.Load(L, ac.serverHeaderName)
 
 	if withHandlerFunctions {
 		// Lua HTTP handlers

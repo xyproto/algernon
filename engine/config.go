@@ -239,6 +239,9 @@ type Config struct {
 	// Indicate if path prefixes like "/admin" should be cleared,
 	// or if the default settings should be kept.
 	clearDefaultPathPrefixes bool
+
+	// Secret to be used when setting and getting user login cookies
+	cookieSecret string
 }
 
 // ErrVersion is returned when the initialization quits because all that is done

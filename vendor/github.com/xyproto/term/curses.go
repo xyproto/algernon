@@ -1,7 +1,7 @@
 package term
 
 import (
-	"github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell/termbox"
 )
 
 // Default color/attribute settings

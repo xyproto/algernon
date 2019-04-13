@@ -1,6 +1,3 @@
 module github.com/xyproto/term
 
-require (
-	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed
-)
+require github.com/gdamore/tcell v1.1.1

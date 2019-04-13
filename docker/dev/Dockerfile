@@ -3,15 +3,25 @@ FROM golang:alpine as gobuilder
 MAINTAINER Alexander F. Rødseth <xyproto@archlinux.org>
 
 # Prepare the needed files
-COPY . "$GOPATH/src/github.com/xyproto/algernon"
-WORKDIR "$GOPATH/src/github.com/xyproto/algernon"
+COPY . /algernon
+WORKDIR /algernon
 
 # Build Algernon
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /go/bin/algernon
+RUN GOOS=linux \
+    GOARCH=amd64 \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -a \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
+
+RUN apk add upx && upx /bin/algernon
 
 # Start from scratch, only copy in the Algernon executable
 FROM scratch
-COPY --from=gobuilder /go/bin/algernon /go/bin/algernon
+COPY --from=gobuilder /bin/algernon /bin/algernon
 
 # Prepare directories
 COPY --from=gobuilder /tmp /tmp
@@ -41,5 +51,5 @@ EXPOSE 3000
 #
 # For "--domain" to work, there should be at least a /srv/algernon/localhost directory.
 #
-ENTRYPOINT ["/go/bin/algernon", "--domain", "--server", "--dev", "--autorefresh", "--dir", "/srv/algernon", ":3000"]
-CMD ["/go/bin/algernon"]
+ENTRYPOINT ["/bin/algernon", "--domain", "--server", "--dev", "--autorefresh", "--dir", "/srv/algernon", ":3000"]
+CMD ["/bin/algernon"]

@@ -85,7 +85,7 @@ Available flags:
   -l, --lua                    Don't serve anything, just present the Lua REPL.
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
-  --servername=TEXT            Custom HTTP header value for the Server field.
+  --servername=STRING          Custom HTTP header value for the Server field.
   -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `, or with the
                                given application.
   -z, --quit                   Quit after the first request has been served.
@@ -100,6 +100,7 @@ Available flags:
                                Only use if served files will not be removed.
   --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
   --ncsa=FILENAME              Alternative access log filename. Logged in Common Log Format (NCSA).
+  --cookiesecret=STRING        Secret that will be used for login cookies.
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
@@ -214,6 +215,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.combinedAccessLogFilename, "accesslog", "", "Combined access log filename")
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
+	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")

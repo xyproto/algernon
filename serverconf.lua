@@ -62,4 +62,7 @@ OnReady(function()
 
   print(codelib:get("globals"))
 
+  --SetCookieSecret("asdfasdf")
+  --print("Cookie secret = " .. CookieSecret())
+
 end)

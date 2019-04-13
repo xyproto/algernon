@@ -6,6 +6,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/ddliu/go-httpclient v0.5.1
 	github.com/didip/tollbooth v4.0.0+incompatible
 	github.com/dop251/goja v0.0.0-20190105122144-6d5bf35058fa // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
@@ -26,7 +27,8 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
+	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
@@ -54,8 +56,8 @@ require (
 	github.com/xyproto/simplebolt v0.0.0-20190219145457-752add4550da
 	github.com/xyproto/simplehstore v0.0.0-20181004171731-44c8a3a3ce5e // indirect
 	github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
-	github.com/xyproto/splash v0.0.0-20181102100648-7bb75b9c7398
-	github.com/xyproto/term v0.0.0-20181102095811-abbba14d6880
+	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
+	github.com/xyproto/term v0.3.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5 // indirect
