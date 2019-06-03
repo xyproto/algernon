@@ -37,7 +37,7 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
-# github.com/ddliu/go-httpclient v0.5.1
+# github.com/ddliu/go-httpclient v0.6.2
 github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.0+incompatible
 github.com/didip/tollbooth
@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.1.6
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20190301185519-64be363d126e
+# github.com/dop251/goja v0.0.0-20190531205255-a1cf0d55797f
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -58,7 +58,7 @@ github.com/eknkc/amber
 github.com/eknkc/amber/parser
 # github.com/etcd-io/bbolt v1.3.2
 github.com/etcd-io/bbolt
-# github.com/flosch/pongo2 v0.0.0-20181225140029-79872a7b2769
+# github.com/flosch/pongo2 v0.0.0-20190505152737-8914e1cf9164
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
@@ -80,9 +80,9 @@ github.com/gomodule/redigo/redis
 github.com/gomodule/redigo/internal
 # github.com/juju/errors v0.0.0-20190207033735-e65537c515d7
 github.com/juju/errors
-# github.com/jvatic/goja-babel v0.0.0-20170714233534-00569a238089
+# github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 github.com/jvatic/goja-babel
-# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/pretty v0.1.0
 github.com/kr/pretty
@@ -91,7 +91,7 @@ github.com/kr/text
 # github.com/lib/pq v1.0.0
 github.com/lib/pq
 github.com/lib/pq/oid
-# github.com/lucas-clemente/quic-go v0.11.0
+# github.com/lucas-clemente/quic-go v0.11.2
 github.com/lucas-clemente/quic-go/h2quic
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/internal/protocol
@@ -126,7 +126,7 @@ github.com/russross/blackfriday
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.4.1
+# github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -174,7 +174,7 @@ github.com/xyproto/pinterface
 github.com/xyproto/pstore
 # github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
 github.com/xyproto/randomstring
-# github.com/xyproto/recwatch v0.0.0-20190124180410-f96d3a80bdf1
+# github.com/xyproto/recwatch v0.0.0-20190430084729-06a25e4116db
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
@@ -194,7 +194,7 @@ github.com/xyproto/term
 github.com/xyproto/unzip
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5
+# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/hkdf
@@ -205,12 +205,12 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/cryptobyte/asn1
-# golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
+# golang.org/x/net v0.0.0-20190603091049-60506f45cf65
 golang.org/x/net/http2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20190403152447-81d4e9dc473e
+# golang.org/x/sys v0.0.0-20190422165155-953cdadca894
 golang.org/x/sys/unix
 golang.org/x/sys/cpu
 # golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
@@ -230,7 +230,7 @@ golang.org/x/text/internal/tag
 golang.org/x/text/encoding/internal/identifier
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# google.golang.org/appengine v1.5.0
+# google.golang.org/appengine v1.3.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner

@@ -15,30 +15,30 @@ const DefaultPoolSize = 1
 type babelTransformer struct {
 	Runtime   *goja.Runtime
 	Transform func(string, map[string]interface{}) (goja.Value, error)
-	Ready     chan struct{}
 }
 
 func (t *babelTransformer) Done() {
-	t.Ready <- struct{}{}
+	globalpool <- t
 }
 
-var mux sync.RWMutex
-var pool []*babelTransformer
+var once = &sync.Once{}
+var globalpool chan *babelTransformer
 
-func Init(poolSize int) error {
-	mux.Lock()
-	defer mux.Unlock()
-	pool = make([]*babelTransformer, poolSize)
-	for i := 0; i < poolSize; i++ {
-		vm := goja.New()
-		transformFn, err := loadBabel(vm)
-		if err != nil {
-			return err
+func Init(poolSize int) (err error) {
+	once.Do(func() {
+		globalpool = make(chan *babelTransformer, poolSize)
+		for i := 0; i < poolSize; i++ {
+			vm := goja.New()
+			transformFn, e := loadBabel(vm)
+			if e != nil {
+				err = e
+				return
+			}
+			globalpool <- &babelTransformer{Runtime: vm, Transform: transformFn}
 		}
-		pool[i] = &babelTransformer{Runtime: vm, Transform: transformFn, Ready: make(chan struct{}, 1)}
-		pool[i].Ready <- struct{}{} // Transformer available for use
-	}
-	return nil
+	})
+
+	return err
 }
 
 func Transform(src io.Reader, opts map[string]interface{}) (io.Reader, error) {
@@ -72,22 +72,14 @@ func TransformString(src string, opts map[string]interface{}) (string, error) {
 
 func getTransformer() (*babelTransformer, error) {
 	// Make sure we have a pool created
-	if len(pool) == 0 {
+	if len(globalpool) == 0 {
 		if err := Init(DefaultPoolSize); err != nil {
 			return nil, err
 		}
 	}
-	mux.RLock()
-	defer mux.RUnlock()
 	for {
-		// find first available transformer
-		for _, t := range pool {
-			select {
-			case <-t.Ready:
-				return t, nil
-			default:
-			}
-		}
+		t := <-globalpool
+		return t, nil
 	}
 }
 

@@ -14,6 +14,12 @@ Watch filesystem changes recursively.
 ## Example use
 
 ```go
+recwatch.EventServer(pathToWatch, "*", eventAddr, eventPath, refreshDuration)
+```
+
+In a larger context:
+
+```go
 package main
 
 import (

@@ -1,13 +1,16 @@
-// Copyright 2014-2018 Liu Dong <ddliuhb@gmail.com>.
+// Copyright 2014-2019 Liu Dong <ddliuhb@gmail.com>.
 // Licensed under the MIT license.
 
 // Powerful and easy to use http client
 package httpclient
 
+import "sync"
+
 // The default client for convenience
 var defaultClient = &HttpClient{
 	reuseTransport: true,
 	reuseJar:       true,
+	lock:           new(sync.Mutex),
 }
 
 var Defaults = defaultClient.Defaults

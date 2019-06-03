@@ -1,5 +1,9 @@
 ## Changelog
 
+### v0.6.2 (2019-03-08)
+
+Fix concurrency issue.
+
 ### v0.6.0 (2018-02-23)
 
 More request method support.

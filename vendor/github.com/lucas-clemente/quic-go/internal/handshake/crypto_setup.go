@@ -16,6 +16,9 @@ import (
 	"github.com/marten-seemann/qtls"
 )
 
+// TLS unexpected_message alert
+const alertUnexpectedMessage uint8 = 10
+
 type messageType uint8
 
 // TLS handshake message types.
@@ -207,7 +210,7 @@ func newCryptoSetup(
 		messageChan:            make(chan []byte, 100),
 		receivedReadKey:        make(chan struct{}),
 		receivedWriteKey:       make(chan struct{}),
-		writeRecord:            make(chan struct{}),
+		writeRecord:            make(chan struct{}, 1),
 		closeChan:              make(chan struct{}),
 	}
 	qtlsConf := tlsConfigToQtlsConfig(tlsConf, cs, extHandler)
@@ -302,10 +305,10 @@ func (h *cryptoSetup) checkEncryptionLevel(msgType messageType, encLevel protoco
 	case typeNewSessionTicket:
 		expected = protocol.Encryption1RTT
 	default:
-		return fmt.Errorf("unexpected handshake message: %d", msgType)
+		return qerr.CryptoError(alertUnexpectedMessage, fmt.Sprintf("unexpected handshake message: %d", msgType))
 	}
 	if encLevel != expected {
-		return fmt.Errorf("expected handshake message %s to have encryption level %s, has %s", msgType, expected, encLevel)
+		return qerr.CryptoError(alertUnexpectedMessage, fmt.Sprintf("expected handshake message %s to have encryption level %s, has %s", msgType, expected, encLevel))
 	}
 	return nil
 }
@@ -355,7 +358,8 @@ func (h *cryptoSetup) handleMessageForServer(msgType messageType) bool {
 		}
 		return true
 	default:
-		panic("unexpected handshake message")
+		h.messageErrChan <- qerr.CryptoError(alertUnexpectedMessage, fmt.Sprintf("unexpected handshake message: %d", msgType))
+		return false
 	}
 }
 
@@ -411,7 +415,8 @@ func (h *cryptoSetup) handleMessageForClient(msgType messageType) bool {
 		h.conn.HandlePostHandshakeMessage()
 		return false
 	default:
-		panic("unexpected handshake message: ")
+		h.messageErrChan <- qerr.CryptoError(alertUnexpectedMessage, fmt.Sprintf("unexpected handshake message: %d", msgType))
+		return false
 	}
 }
 
@@ -479,13 +484,6 @@ func (h *cryptoSetup) SetWriteKey(suite *qtls.CipherSuite, trafficSecret []byte)
 
 // WriteRecord is called when TLS writes data
 func (h *cryptoSetup) WriteRecord(p []byte) (int, error) {
-	defer func() {
-		select {
-		case h.writeRecord <- struct{}{}:
-		default:
-		}
-	}()
-
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
@@ -496,6 +494,11 @@ func (h *cryptoSetup) WriteRecord(p []byte) (int, error) {
 		if !h.clientHelloWritten && h.perspective == protocol.PerspectiveClient {
 			h.clientHelloWritten = true
 			close(h.clientHelloWrittenChan)
+		} else {
+			// We need additional signaling to properly detect HelloRetryRequests.
+			// For servers: when the ServerHello is written.
+			// For clients: when a reply is sent in response to a ServerHello.
+			h.writeRecord <- struct{}{}
 		}
 		return n, err
 	case protocol.EncryptionHandshake:
