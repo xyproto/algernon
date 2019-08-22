@@ -12,7 +12,7 @@ const (
 	Version = 2.6
 )
 
-// The structure that keeps track of the permissions for various path prefixes
+// Permissions is a structure that keeps track of the permissions for various path prefixes
 type Permissions struct {
 	state              *UserState
 	adminPathPrefixes  []string
@@ -22,13 +22,13 @@ type Permissions struct {
 	denied             http.HandlerFunc
 }
 
-// Initialize a Permissions struct with all the default settings.
+// New will initialize a Permissions struct with all the default settings.
 // This will also connect to the redis host at localhost:6379.
 func New() *Permissions {
 	return NewPermissions(NewUserStateSimple())
 }
 
-// Initialize a Permissions struct with all the default settings.
+// New2 will initialize a Permissions struct with all the default settings.
 // This will also connect to the redis host at localhost:6379.
 func New2() (*Permissions, error) {
 	userstate, err := NewUserStateSimple2()
@@ -38,13 +38,13 @@ func New2() (*Permissions, error) {
 	return NewPermissions(userstate), nil
 }
 
-// Initialize a Permissions struct with Redis DB index and host:port
+// NewWithRedisConf will initialize a Permissions struct with Redis DB index and host:port.
 // Calls log.Fatal if something goes wrong.
 func NewWithRedisConf(dbindex int, hostPort string) *Permissions {
 	return NewPermissions(NewUserState(dbindex, true, hostPort))
 }
 
-// Initialize a Permissions struct with Redis DB index and host:port
+// NewWithRedisConf2 will initialize a Permissions struct with Redis DB index and host:port.
 // Returns an error if something goes wrong.
 func NewWithRedisConf2(dbindex int, hostPort string) (*Permissions, error) {
 	userstate, err := NewUserState2(dbindex, true, hostPort)
@@ -54,25 +54,33 @@ func NewWithRedisConf2(dbindex int, hostPort string) (*Permissions, error) {
 	return NewPermissions(userstate), nil
 }
 
-// Initialize a Permissions struct with the given UserState and
+// NewPermissions will initialize a Permissions struct with the given UserState and
 // a few default paths for admin/user/public path prefixes.
 func NewPermissions(state *UserState) *Permissions {
 	// default permissions
 	return &Permissions{state,
 		[]string{"/admin"},         // admin path prefixes
 		[]string{"/repo", "/data"}, // user path prefixes
-		[]string{"/", "/login", "/register", "/favicon.ico", "/style", "/img", "/js",
-			"/favicon.ico", "/robots.txt", "/sitemap_index.xml"}, // public
+		[]string{"/",
+			"/login",
+			"/register",
+			"/favicon.ico",
+			"/style",
+			"/img",
+			"/js",
+			"/favicon.ico",
+			"/robots.txt",
+			"/sitemap_index.xml"}, // public
 		true,
 		PermissionDenied}
 }
 
-// Specify the http.HandlerFunc for when the permissions are denied
+// SetDenyFunction can be used for specifying a http.HandlerFunc that will be used when the permissions are denied.
 func (perm *Permissions) SetDenyFunction(f http.HandlerFunc) {
 	perm.denied = f
 }
 
-// DenyFunction gets the current http.HandlerFunc for when permissions are denied
+// DenyFunction returns the current http.HandlerFunc, for when permissions are denied.
 func (perm *Permissions) DenyFunction() http.HandlerFunc {
 	return perm.denied
 }
@@ -82,7 +90,7 @@ func (perm *Permissions) UserState() pinterface.IUserState {
 	return perm.state
 }
 
-// Set everything to public
+// Clear sets every URL path prefix permission to "public"
 func (perm *Permissions) Clear() {
 	perm.adminPathPrefixes = []string{}
 	perm.userPathPrefixes = []string{}
@@ -103,22 +111,22 @@ func (perm *Permissions) AddPublicPath(prefix string) {
 	perm.publicPathPrefixes = append(perm.publicPathPrefixes, prefix)
 }
 
-// Set all url path prefixes that are for the logged in administrator pages
+// SetAdminPath can be used for setting all URL path prefixes that are for the logged in administrator pages.
 func (perm *Permissions) SetAdminPath(pathPrefixes []string) {
 	perm.adminPathPrefixes = pathPrefixes
 }
 
-// Set all url path prefixes that are for the logged in user pages
+// SetUserPath can be used for setting all URL path prefixes that are for the logged in user pages.
 func (perm *Permissions) SetUserPath(pathPrefixes []string) {
 	perm.userPathPrefixes = pathPrefixes
 }
 
-// Set all url path prefixes that are for the public pages
+// SetPublicPath can be used for setting all URL path prefixes that are for the public pages.
 func (perm *Permissions) SetPublicPath(pathPrefixes []string) {
 	perm.publicPathPrefixes = pathPrefixes
 }
 
-// The default "permission denied" http handler.
+// PermissionDenied is the default "permission denied" http handler.
 func PermissionDenied(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Permission denied.", http.StatusForbidden)
 }
@@ -128,45 +136,40 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 	path := req.URL.Path // the path of the url that the user wish to visit
 
 	// If it's not "/" and set to be public regardless of permissions
-	if !(perm.rootIsPublic && path == "/") {
-
-		// Reject if it is an admin page and user does not have admin permissions
-		for _, prefix := range perm.adminPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				if !perm.state.AdminRights(req) {
-					// Reject
-					return true
-				}
-			}
-		}
-
-		// Reject if it's a user page and the user does not have user rights
-		for _, prefix := range perm.userPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				if !perm.state.UserRights(req) {
-					// Reject
-					return true
-				}
-			}
-		}
-
-		// Reject if it's not a public page
-		found := false
-		for _, prefix := range perm.publicPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			// Reject
-			return true
-		}
-
+	if perm.rootIsPublic && path == "/" {
+		return false
 	}
 
-	// Not rejected
-	return false
+	// Reject if it is an admin page and user does not have admin permissions
+	for _, prefix := range perm.adminPathPrefixes {
+		if strings.HasPrefix(path, prefix) {
+			if !perm.state.AdminRights(req) {
+				// Reject
+				return true
+			}
+		}
+	}
+
+	// Reject if it's a user page and the user does not have user rights
+	for _, prefix := range perm.userPathPrefixes {
+		if strings.HasPrefix(path, prefix) {
+			if !perm.state.UserRights(req) {
+				// Reject
+				return true
+			}
+		}
+	}
+
+	// Reject if it's not a public page
+	found := false
+	for _, prefix := range perm.publicPathPrefixes {
+		if strings.HasPrefix(path, prefix) {
+			found = true
+			break
+		}
+	}
+
+	return !found
 }
 
 // Middleware handler (compatible with Negroni)

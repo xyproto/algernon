@@ -25,8 +25,10 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
-// Used for dealing with the user state, users and passwords.
+// UserState is a struct for dealing with the user state, users and passwords.
 // Can also be used for retrieving the underlying Redis connection pool.
+// The default password hashing algorithm is "bcrypt+", which is the same as
+// "bcrypt", but with backwards compatibility for checking sha256 hashes.
 type UserState struct {
 	// see: http://redis.io/topics/data-types
 	users             *simpleredis.HashMap        // Hash map of users, with several different fields per user ("loggedin", "confirmed", "email" etc)
@@ -36,30 +38,30 @@ type UserState struct {
 	dbindex           int                         // Redis database index
 	cookieSecret      string                      // Secret for storing secure cookies
 	cookieTime        int64                       // How long a cookie should last, in seconds
-	passwordAlgorithm string                      // The hashing algorithm to utilize default: "bcrypt+" allowed: ("sha256", "bcrypt", "bcrypt+")
+	passwordAlgorithm string                      // Password hashing algorithm ("sha256", "bcrypt" or "bcrypt+").
 }
 
-// Create a new *UserState that can be used for managing users.
-// The random number generator will be seeded after generating the cookie secret.
-// A connection pool for the local Redis server (dbindex 0) will be created.
-// Calls log.Fatal if things go wrong.
+// NewUserStateSimple will create a new *UserState that can be used for
+// managing users. The random number generator will be seeded after generating
+// the cookie secret. A connection pool for the local Redis server (dbindex 0)
+// will be created. Calls log.Fatal if things go wrong.
 func NewUserStateSimple() *UserState {
 	// db index 0, initialize random generator after generating the cookie secret
 	return NewUserState(0, true, defaultRedisServer)
 }
 
-// Create a new *UserState that can be used for managing users.
-// The random number generator will be seeded after generating the cookie secret.
-// A connection pool for the local Redis server (dbindex 0) will be created.
-// Returns an error if things go wrong.
+// NewUserStateSimple2 will create a new *UserState that can be used for
+// managing users. The random number generator will be seeded after generating
+// the cookie secret. A connection pool for the local Redis server (dbindex 0)
+// will be created. Returns an error if things go wrong.
 func NewUserStateSimple2() (*UserState, error) {
 	// db index 0, initialize random generator after generating the cookie secret
 	return NewUserState2(0, true, defaultRedisServer)
 }
 
-// Same as NewUserStateSimple, but takes a hostname and a password.
-// Use NewUserState for control over the database index and port number.
-// Calls log.Fatal if things go wrong.
+// NewUserStateWithPassword is the same as NewUserStateSimple, but also takes
+// a Redis hostname and a Redis password. Use NewUserState for control over the
+// database index and port number. Calls log.Fatal if things go wrong.
 func NewUserStateWithPassword(hostname, password string) *UserState {
 	// db index 0, initialize random generator after generating the cookie secret, password
 	var connectTo string
@@ -76,9 +78,9 @@ func NewUserStateWithPassword(hostname, password string) *UserState {
 	return NewUserState(0, true, connectTo)
 }
 
-// Same as NewUserStateSimple, but takes a hostname and a password.
-// Use NewUserState for control over the database index and port number.
-// Returns an error if things go wrong.
+// NewUserStateWithPassword2 is the same as NewUserStateSimple2, but takes
+// a hostname and a password. Use NewUserState2 for control over the database
+// index and port number. Returns an error if things go wrong.
 func NewUserStateWithPassword2(hostname, password string) (*UserState, error) {
 	// db index 0, initialize random generator after generating the cookie secret, password
 	var connectTo string
@@ -94,12 +96,13 @@ func NewUserStateWithPassword2(hostname, password string) (*UserState, error) {
 	return NewUserState2(0, true, connectTo)
 }
 
-// Create a new *UserState that can be used for managing users.
-// dbindex is the Redis database index (0 is a good default value).
-// If randomseed is true, the random number generator will be seeded after generating the cookie secret (true is a good default value).
-// redisHostPort is host:port for the desired Redis server (can be blank for localhost)
-// Also creates a new ConnectionPool.
-// Calls log.Fatal if things go wrong.
+// NewUserState will create a new *UserState that can be used for managing
+// users. dbindex is the Redis database index (0 is a good default value).
+// If randomseed is true, the random number generator will be seeded after
+// generating the cookie secret (true is a good default value).
+// redisHostPort is host:port for the desired Redis server (can be blank for
+// localhost). Also creates a new ConnectionPool. Calls log.Fatal if things
+// go wrong.
 func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState {
 	var pool *simpleredis.ConnectionPool
 
@@ -160,7 +163,7 @@ func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState
 	return state
 }
 
-// Create a new *UserState that can be used for managing users.
+// NewUserState2 will create a new *UserState that can be used for managing users.
 // dbindex is the Redis database index (0 is a good default value).
 // If randomseed is true, the random number generator will be seeded after generating the cookie secret (true is a good default value).
 // redisHostPort is host:port for the desired Redis server (can be blank for localhost)
@@ -313,7 +316,7 @@ func (state *UserState) BooleanField(username, fieldname string) bool {
 	return value == "true"
 }
 
-// Store a boolean value for the given username and custom fieldname.
+// SetBooleanField can store a boolean value for the given username and custom fieldname.
 func (state *UserState) SetBooleanField(username, fieldname string, val bool) {
 	strval := "false"
 	if val {
@@ -457,7 +460,7 @@ func (state *UserState) RemoveUnconfirmed(username string) {
 	state.users.DelKey(username, "confirmationCode")
 }
 
-// Mark a user as confirmed.
+// MarkConfirmed can mark a user as confirmed.
 func (state *UserState) MarkConfirmed(username string) {
 	state.users.Set(username, "confirmed", "true")
 }
@@ -470,27 +473,27 @@ func (state *UserState) RemoveUser(username string) {
 	state.users.DelKey(username, "loggedin")
 }
 
-// Mark user as an administrator.
+// SetAdminStatus can make a user an administrator.
 func (state *UserState) SetAdminStatus(username string) {
 	state.users.Set(username, "admin", "true")
 }
 
-// Mark user as a regular user.
+// RemoveAdminStatus can remove administrator status from a user.
 func (state *UserState) RemoveAdminStatus(username string) {
 	state.users.Set(username, "admin", "false")
 }
 
-// SetToken sets a token for a user, for a given expiry time
+// SetToken sets a token for a user, for a given expiry time.
 func (state *UserState) SetToken(username, token string, expire time.Duration) {
 	state.users.SetExpire(username, "token", token, expire)
 }
 
-// GetToken retrieves the token for a user
+// GetToken retrieves the token for a user.
 func (state *UserState) GetToken(username string) (string, error) {
 	return state.users.Get(username, "token")
 }
 
-// RemoveToken takes a username and removes the associated token
+// RemoveToken takes a username and removes the associated token.
 func (state *UserState) RemoveToken(username string) {
 	state.users.DelKey(username, "token")
 }
@@ -517,42 +520,42 @@ func (state *UserState) addUserUnchecked(username, passwordHash, email string) {
 	}
 }
 
-// Creates a user and hashes the password, does not check for rights.
+// AddUser creates a user and hashes the password, does not check for rights.
 // The given data must be valid.
 func (state *UserState) AddUser(username, password, email string) {
 	passwordHash := state.HashPassword(username, password)
 	state.addUserUnchecked(username, passwordHash, email)
 }
 
-// Mark the user as logged in. Use the Login function instead, unless cookies are not involved.
+// SetLoggedIn will mark the user as logged in. Use the Login function instead, unless cookies are not involved.
 func (state *UserState) SetLoggedIn(username string) {
 	state.users.Set(username, "loggedin", "true")
 }
 
-// Mark the user as logged out.
+// SetLoggedOut will mark the user as logged out.
 func (state *UserState) SetLoggedOut(username string) {
 	state.users.Set(username, "loggedin", "false")
 }
 
-// Convenience function for logging a user in and storing the username in a cookie.
+// Login is a convenience function for logging a user in and storing the username in a cookie.
 // Returns an error if the cookie could not be set.
 func (state *UserState) Login(w http.ResponseWriter, username string) error {
 	state.SetLoggedIn(username)
 	return state.SetUsernameCookie(w, username)
 }
 
-// Try to clear the user cookie by setting it to expired.
-// Some browsers *may* be configured to keep cookies even after this.
+// ClearCookie will try to clear the user cookie by setting it to expired.
+// Some browsers *may* be configured to keep cookies even after this, but that is highly unusual.
 func (state *UserState) ClearCookie(w http.ResponseWriter) {
 	cookie.ClearCookie(w, "user", "/")
 }
 
-// Convenience function for logging a user out.
+// Logout is a convenience function for logging a user out. This is the same as SetLoggedOut.
 func (state *UserState) Logout(username string) {
 	state.SetLoggedOut(username)
 }
 
-// Convenience function that will return a username (from the browser cookie) or an empty string.
+// Username is a convenience function that will return a username (from the browser cookie) or an empty string.
 func (state *UserState) Username(req *http.Request) string {
 	username, err := state.UsernameCookie(req)
 	if err != nil {
@@ -566,17 +569,17 @@ func (state *UserState) CookieTimeout(username string) int64 {
 	return state.cookieTime
 }
 
-// Set how long a login cookie should last, in seconds.
+// SetCookieTimeout will set how long a login cookie should last, in seconds.
 func (state *UserState) SetCookieTimeout(cookieTime int64) {
 	state.cookieTime = cookieTime
 }
 
-// CookieSecret gets cookie secret
+// CookieSecret returns the current cookie secret.
 func (state *UserState) CookieSecret() string {
 	return state.cookieSecret
 }
 
-// Set cookie secret
+// SetCookieSecret will set the secret that is used when generating secure cookies.
 func (state *UserState) SetCookieSecret(cookieSecret string) {
 	state.cookieSecret = cookieSecret
 }
@@ -586,7 +589,7 @@ func (state *UserState) PasswordAlgo() string {
 	return state.passwordAlgorithm
 }
 
-// Set the password hashing algorithm that should be used.
+// SetPasswordAlgo can set the password hashing algorithm that should be used.
 // The default is "bcrypt+".
 // Possible values are:
 //    bcrypt  -> Store and check passwords with the bcrypt hash.
@@ -604,7 +607,7 @@ func (state *UserState) SetPasswordAlgo(algorithm string) error {
 	return nil
 }
 
-// Hash the password (takes a username as well, it can be used for salting).
+// HashPassword will hash the password (takes a username as well, it can be used for salting when using sha256).
 func (state *UserState) HashPassword(username, password string) string {
 	switch state.passwordAlgorithm {
 	case "sha256":
@@ -616,7 +619,7 @@ func (state *UserState) HashPassword(username, password string) string {
 	return ""
 }
 
-// Return the stored hash, or an empty byte slice.
+// storedHash returns the stored hash, or an empty byte slice.
 func (state *UserState) storedHash(username string) []byte {
 	hashString, err := state.PasswordHash(username)
 	if err != nil {
@@ -674,7 +677,8 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 	return false
 }
 
-// Given a unique confirmation code, find the corresponding username.
+// FindUserByConfirmationCode can find the corresponding username in the list
+// of unconfirmed users, given a unique confirmation code.
 func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
@@ -727,12 +731,14 @@ func (state *UserState) ConfirmUserByConfirmationCode(confirmationCode string) e
 	return nil
 }
 
-// Set the minimum length of the user confirmation code. The default is 20.
+// SetMinimumConfirmationCodeLength will set the minimum length of the user
+// confirmation code. The default is 20.
 func (state *UserState) SetMinimumConfirmationCodeLength(length int) {
 	minConfirmationCodeLength = length
 }
 
-// Generate a unique confirmation code that can be used for confirming users.
+// GenerateUniqueConfirmationCode will generate a unique confirmation code that
+// can be used for confirming users after users have registered.
 func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 	const maxConfirmationCodeLength = 100 // when are the generated confirmation codes unreasonably long
 	length := minConfirmationCodeLength

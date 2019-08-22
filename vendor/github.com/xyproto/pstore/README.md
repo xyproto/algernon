@@ -1,4 +1,4 @@
-# pstore [![Build Status](https://travis-ci.org/xyproto/pstore.svg?branch=master)](https://travis-ci.org/xyproto/pstore) [![GoDoc](https://godoc.org/github.com/xyproto/pstore?status.svg)](http://godoc.org/github.com/xyproto/pstore) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/pstore)
+# pstore [![Build Status](https://travis-ci.org/xyproto/pstore.svg?branch=master)](https://travis-ci.org/xyproto/pstore) [![GoDoc](https://godoc.org/github.com/xyproto/pstore?status.svg)](http://godoc.org/github.com/xyproto/pstore) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/pstore)](https://goreportcard.com/report/github.com/xyproto/pstore)
 
 Middleware for keeping track of users, login states and permissions.
 

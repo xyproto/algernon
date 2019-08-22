@@ -16,6 +16,7 @@ Features and limitations
 * Deals mainly with strings.
 * Requires Go 1.9 or later.
 * Does not support `gccgo`. Two recent versions of `gccgo` (7.2.0 and 8.2.1) are able to compile `simplebolt`, but does not appear to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
+* Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
 Example usage
 -------------

@@ -57,8 +57,13 @@ type Conn struct {
 	secureRenegotiation bool
 	// ekm is a closure for exporting keying material.
 	ekm func(label string, context []byte, length int) ([]byte, error)
+	// For the client:
 	// resumptionSecret is the resumption_master_secret for handling
 	// NewSessionTicket messages. nil if config.SessionTicketsDisabled.
+	// For the server:
+	// resumptionSecret is the resumption_master_secret for generating
+	// NewSessionTicket messages. Only used when the alternative record
+	// layer is set. nil if config.SessionTicketsDisabled.
 	resumptionSecret []byte
 
 	// clientFinishedIsFirst is true if the client sent the first Finished
@@ -161,7 +166,7 @@ type halfConn struct {
 
 	trafficSecret []byte // current TLS 1.3 traffic secret
 
-	setKeyCallback func(suite *CipherSuite, trafficSecret []byte)
+	setKeyCallback func(encLevel EncryptionLevel, suite *CipherSuite, trafficSecret []byte)
 }
 
 func (hc *halfConn) setErrorLocked(err error) error {
@@ -193,9 +198,9 @@ func (hc *halfConn) changeCipherSpec() error {
 	return nil
 }
 
-func (hc *halfConn) exportKey(suite *cipherSuiteTLS13, trafficSecret []byte) {
+func (hc *halfConn) exportKey(encLevel EncryptionLevel, suite *cipherSuiteTLS13, trafficSecret []byte) {
 	if hc.setKeyCallback != nil {
-		hc.setKeyCallback(&CipherSuite{suite}, trafficSecret)
+		hc.setKeyCallback(encLevel, &CipherSuite{suite}, trafficSecret)
 	}
 }
 

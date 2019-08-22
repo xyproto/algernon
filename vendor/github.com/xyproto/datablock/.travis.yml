@@ -1,8 +1,17 @@
 language: go
 
 go:
-  - 1.8
-  - tip
+  - "1.12"
+
+os:
+  - linux
+
+dist: trusty
+sudo: false
+install: true
 
 script:
-  - go test
+  - unset GOPATH
+  - unset GO111MODULE
+  - go build -mod=vendor
+  - go test -mod=vendor

@@ -1,11 +1,10 @@
-# Permissions2 [![Build Status](https://travis-ci.org/xyproto/permissions2.svg?branch=master)](https://travis-ci.org/xyproto/permissions2) [![GoDoc](https://godoc.org/github.com/xyproto/permissions2?status.svg)](http://godoc.org/github.com/xyproto/permissions2) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissions2)
+# Permissions2 [![Build Status](https://travis-ci.org/xyproto/permissions2.svg?branch=master)](https://travis-ci.org/xyproto/permissions2) [![GoDoc](https://godoc.org/github.com/xyproto/permissions2?status.svg)](http://godoc.org/github.com/xyproto/permissions2) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/permissions2)](https://goreportcard.com/report/github.com/xyproto/permissions2)
 
 Middleware for keeping track of users, login states and permissions.
 
 ## Online API Documentation
 
 [godoc.org](http://godoc.org/github.com/xyproto/permissions2)
-
 
 ## Features and limitations
 
@@ -19,7 +18,7 @@ Middleware for keeping track of users, login states and permissions.
 * Tries to keep things simple.
 * Only supports *public*, *user* and *admin* permissions out of the box, but offers functionality for implementing more fine grained permissions, if so desired.
 * The default permissions can be cleared with the `Clear()` function.
-* Supports [Negroni](https://github.com/urfave/negroni), [Iris](https://github.com/kataras/iris), [Martini](https://github.com/go-martini/martini), [Gin](https://github.com/gin-gonic/gin), [Goji](https://github.com/zenazn/goji) and plain `net/http`.
+* Supports [Negroni](https://github.com/urfave/negroni), [Martini](https://github.com/go-martini/martini), [Gin](https://github.com/gin-gonic/gin), [Goji](https://github.com/zenazn/goji) and plain `net/http`.
 * Should also work with other frameworks, since the standard `http.HandlerFunc` is used everywhere.
 
 ## Requirements
@@ -133,131 +132,6 @@ func main() {
 	n.Run(":3000")
 }
 ~~~
-
-### Example for [Iris](https://github.com/kataras/iris)
-
-~~~ go
-package main
-
-import (
-	"fmt"
-	"log"
-	"net/http"
-	"strings"
-
-	"github.com/kataras/iris"
-	"github.com/xyproto/permissions2"
-	"github.com/xyproto/pinterface"
-)
-
-// PermissionMiddleware returns an new iris.Handler function that
-// uses the given perm value to reject or accept HTTP requests.
-// `pinterface.IPermissions` is used instead of `*permissions.Permissions`
-// in order to be compatible with not only `permissions2`, but also
-// other database backends, like `permissionbolt`, which uses BoltDB.
-func PermissionMiddleware(perm pinterface.IPermissions) iris.Handler {
-	return func(ctx iris.Context) {
-		w := ctx.ResponseWriter()
-		req := ctx.Request()
-		// Check if the user has the right admin/user rights
-		if perm.Rejected(w, req) {
-			// Stop the request from executing further
-			ctx.StopExecution()
-			// Let the user know, by calling the custom "permission denied" function
-			perm.DenyFunction()(w, req)
-			return
-		}
-		// Serve the next handler if permissions were granted
-		ctx.Next()
-	}
-}
-
-func main() {
-	app := iris.New()
-
-	// New permission struct
-	perm, err := permissions.New2()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// Blank slate, no default permissions
-	//perm.Clear()
-
-	// Enable the permissions middleware
-	app.Use(PermissionMiddleware(perm))
-
-	// Get the userstate, used in the handlers below
-	userstate := perm.UserState()
-
-	app.Get("/", func(ctx iris.Context) {
-		w := ctx.ResponseWriter()
-		req := ctx.Request()
-		fmt.Fprintf(w, "Has user bob: %v\n", userstate.HasUser("bob"))
-		fmt.Fprintf(w, "Logged in on server: %v\n", userstate.IsLoggedIn("bob"))
-		fmt.Fprintf(w, "Is confirmed: %v\n", userstate.IsConfirmed("bob"))
-		fmt.Fprintf(w, "Username stored in cookies (or blank): %v\n", userstate.Username(req))
-		fmt.Fprintf(w, "Current user is logged in, has a valid cookie and *user rights*: %v\n", userstate.UserRights(req))
-		fmt.Fprintf(w, "Current user is logged in, has a valid cookie and *admin rights*: %v\n", userstate.AdminRights(req))
-		fmt.Fprintf(w, "\nTry: /register, /confirm, /remove, /login, /logout, /makeadmin, /clear, /data and /admin")
-	})
-
-	app.Get("/register", func(ctx iris.Context) {
-		userstate.AddUser("bob", "hunter1", "bob@zombo.com")
-		fmt.Fprintf(ctx.ResponseWriter(), "User bob was created: %v\n", userstate.HasUser("bob"))
-	})
-
-	app.Get("/confirm", func(ctx iris.Context) {
-		userstate.MarkConfirmed("bob")
-		fmt.Fprintf(ctx.ResponseWriter(), "User bob was confirmed: %v\n", userstate.IsConfirmed("bob"))
-	})
-
-	app.Get("/remove", func(ctx iris.Context) {
-		userstate.RemoveUser("bob")
-		fmt.Fprintf(ctx.ResponseWriter(), "User bob was removed: %v\n", !userstate.HasUser("bob"))
-	})
-
-	app.Get("/login", func(ctx iris.Context) {
-		userstate.Login(ctx.ResponseWriter(), "bob")
-		fmt.Fprintf(ctx.ResponseWriter(), "bob is now logged in: %v\n", userstate.IsLoggedIn("bob"))
-	})
-
-	app.Get("/logout", func(ctx iris.Context) {
-		userstate.Logout("bob")
-		fmt.Fprintf(ctx.ResponseWriter(), "bob is now logged out: %v\n", !userstate.IsLoggedIn("bob"))
-	})
-
-	app.Get("/makeadmin", func(ctx iris.Context) {
-		userstate.SetAdminStatus("bob")
-		fmt.Fprintf(ctx.ResponseWriter(), "bob is now administrator: %v\n", userstate.IsAdmin("bob"))
-	})
-
-	app.Get("/clear", func(ctx iris.Context) {
-		userstate.ClearCookie(ctx.ResponseWriter())
-		fmt.Fprintf(ctx.ResponseWriter(), "Clearing cookie")
-	})
-
-	app.Get("/data", func(ctx iris.Context) {
-		fmt.Fprintf(ctx.ResponseWriter(), "Success!\n\nUser page that only logged in users must see.")
-	})
-
-	app.Get("/admin", func(ctx iris.Context) {
-		fmt.Fprintf(ctx.ResponseWriter(), "Success!\n\nSuper secret information that only logged in administrators must see.\n\n")
-		if usernames, err := userstate.AllUsernames(); err == nil {
-			fmt.Fprintf(ctx.ResponseWriter(), "list of all users: "+strings.Join(usernames, ", "))
-		}
-	})
-
-	// Custom handler for when permissions are denied
-	perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
-		http.Error(w, "Permission denied!", http.StatusForbidden)
-	})
-
-	// Serve
-	app.Run(iris.Addr(":3000"))
-}
-~~~
-
 
 ### Example for [Martini](https://github.com/go-martini/martini)
 
@@ -772,12 +646,13 @@ if err != nil {
 fmt.Printf("%s is %s: %s\n", username, propertyName, propertyValue)
 ```
 
+This method can also be used for deleting users, by for example setting a `deleted` property to `true`.
+
 ## Passing userstate between functions, files and to other Go packages
 
 Using the `pinterface.IUserState` interface (from the [pinterface](https://github.com/xyproto/pinterface) package) makes it possible to pass UserState structs between functions, also in other packages. By using this, it is possible to seamlessly change the database backend from, for instance, Redis ([permissions2](https://github.com/xyproto/permissions2)) to BoltDB ([permissionbolt](https://github.com/xyproto/permissionbolt)).
 
 [pstore](https://github.com/xyproto/pstore), [permissionsql](https://github.com/xyproto/permissionsql), [permissionbolt](https://github.com/xyproto/permissionbolt) and [permissions2](https://github.com/xyproto/permissions2) are interchangeable.
-
 
 ## Retrieving the underlying Redis database
 
@@ -823,5 +698,5 @@ Note that the `redigo` repository was recently moved to `https://github.com/gomo
 
 * Version: 2.6.0
 * License: MIT
-* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
+* Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 

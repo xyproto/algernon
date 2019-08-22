@@ -728,6 +728,11 @@ func (this *HttpClient) PutJson(url string, data interface{}) (*Response, error)
 	return this.sendJson("PUT", url, data)
 }
 
+// Patch json data
+func (this *HttpClient) PatchJson(url string, data interface{}) (*Response, error) {
+	return this.sendJson("PATCH", url, data)
+}
+
 // The OPTIONS request
 func (this *HttpClient) Options(url string, params ...map[string]string) (*Response, error) {
 	for _, p := range params {

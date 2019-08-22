@@ -1,6 +1,6 @@
 // +build linux
 
-// Copyright 2017 The TCell Authors
+// Copyright 2019 The TCell Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use file except in compliance with the License.
@@ -20,18 +20,18 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
-type termiosPrivate syscall.Termios
+type termiosPrivate struct {
+	tio *unix.Termios
+}
 
 func (t *tScreen) termioInit() error {
 	var e error
-	var newtios termiosPrivate
-	var fd uintptr
-	var tios uintptr
-	var ioc uintptr
-	t.tiosp = &termiosPrivate{}
+	var raw *unix.Termios
+	var tio *unix.Termios
 
 	if t.in, e = os.OpenFile("/dev/tty", os.O_RDONLY, 0); e != nil {
 		goto failed
@@ -40,41 +40,38 @@ func (t *tScreen) termioInit() error {
 		goto failed
 	}
 
-	tios = uintptr(unsafe.Pointer(t.tiosp))
-	ioc = uintptr(syscall.TCGETS)
-	fd = uintptr(t.out.Fd())
-	if _, _, e1 := syscall.Syscall6(syscall.SYS_IOCTL, fd, ioc, tios, 0, 0, 0); e1 != 0 {
-		e = e1
+	tio, e = unix.IoctlGetTermios(int(t.out.Fd()), unix.TCGETS)
+	if e != nil {
 		goto failed
 	}
 
-	// On this platform, the baud rate is stored
-	// directly as an integer in termios.c_ospeed.
-	t.baud = int(t.tiosp.Ospeed)
-	newtios = *t.tiosp
-	newtios.Iflag &^= syscall.IGNBRK | syscall.BRKINT | syscall.PARMRK |
-		syscall.ISTRIP | syscall.INLCR | syscall.IGNCR |
-		syscall.ICRNL | syscall.IXON
-	newtios.Oflag &^= syscall.OPOST
-	newtios.Lflag &^= syscall.ECHO | syscall.ECHONL | syscall.ICANON |
-		syscall.ISIG | syscall.IEXTEN
-	newtios.Cflag &^= syscall.CSIZE | syscall.PARENB
-	newtios.Cflag |= syscall.CS8
+	t.tiosp = &termiosPrivate{tio: tio}
+
+	// make a local copy, to make it raw
+	raw = &unix.Termios{
+		Cflag: tio.Cflag,
+		Oflag: tio.Oflag,
+		Iflag: tio.Iflag,
+		Lflag: tio.Lflag,
+		Cc:    tio.Cc,
+	}
+	raw.Iflag &^= (unix.IGNBRK | unix.BRKINT | unix.PARMRK | unix.ISTRIP |
+		unix.INLCR | unix.IGNCR | unix.ICRNL | unix.IXON)
+	raw.Oflag &^= unix.OPOST
+	raw.Lflag &^= (unix.ECHO | unix.ECHONL | unix.ICANON | unix.ISIG |
+		unix.IEXTEN)
+	raw.Cflag &^= (unix.CSIZE | unix.PARENB)
+	raw.Cflag |= unix.CS8
 
 	// This is setup for blocking reads.  In the past we attempted to
 	// use non-blocking reads, but now a separate input loop and timer
 	// copes with the problems we had on some systems (BSD/Darwin)
 	// where close hung forever.
-	newtios.Cc[syscall.VMIN] = 1
-	newtios.Cc[syscall.VTIME] = 0
+	raw.Cc[unix.VMIN] = 1
+	raw.Cc[unix.VTIME] = 0
 
-	tios = uintptr(unsafe.Pointer(&newtios))
-
-	// Well this kind of sucks, because we don't have TCSETSF, but only
-	// TCSETS.  This can leave some output unflushed.
-	ioc = uintptr(syscall.TCSETS)
-	if _, _, e1 := syscall.Syscall6(syscall.SYS_IOCTL, fd, ioc, tios, 0, 0, 0); e1 != 0 {
-		e = e1
+	e = unix.IoctlSetTermios(int(t.out.Fd()), unix.TCSETS, raw)
+	if e != nil {
 		goto failed
 	}
 
@@ -102,14 +99,11 @@ func (t *tScreen) termioFini() {
 
 	<-t.indoneq
 
-	if t.out != nil {
-		fd := uintptr(t.out.Fd())
-		// XXX: We'd really rather do TCSETSF here!
-		ioc := uintptr(syscall.TCSETS)
-		tios := uintptr(unsafe.Pointer(t.tiosp))
-		syscall.Syscall6(syscall.SYS_IOCTL, fd, ioc, tios, 0, 0, 0)
+	if t.out != nil && t.tiosp != nil {
+		unix.IoctlSetTermios(int(t.out.Fd()), unix.TCSETSF, t.tiosp.tio)
 		t.out.Close()
 	}
+
 	if t.in != nil {
 		t.in.Close()
 	}
@@ -117,13 +111,9 @@ func (t *tScreen) termioFini() {
 
 func (t *tScreen) getWinSize() (int, int, error) {
 
-	fd := uintptr(t.out.Fd())
-	dim := [4]uint16{}
-	dimp := uintptr(unsafe.Pointer(&dim))
-	ioc := uintptr(syscall.TIOCGWINSZ)
-	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL,
-		fd, ioc, dimp, 0, 0, 0); err != 0 {
+	wsz, err := unix.IoctlGetWinsize(int(t.out.Fd()), unix.TIOCGWINSZ)
+	if err != nil {
 		return -1, -1, err
 	}
-	return int(dim[1]), int(dim[0]), nil
+	return int(wsz.Col), int(wsz.Row), nil
 }

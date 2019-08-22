@@ -346,11 +346,11 @@ func (hs *clientHandshakeStateTLS13) establishHandshakeKeys() error {
 
 	clientSecret := hs.suite.deriveSecret(handshakeSecret,
 		clientHandshakeTrafficLabel, hs.transcript)
-	c.out.exportKey(hs.suite, clientSecret)
+	c.out.exportKey(EncryptionHandshake, hs.suite, clientSecret)
 	c.out.setTrafficSecret(hs.suite, clientSecret)
 	serverSecret := hs.suite.deriveSecret(handshakeSecret,
 		serverHandshakeTrafficLabel, hs.transcript)
-	c.in.exportKey(hs.suite, serverSecret)
+	c.in.exportKey(EncryptionHandshake, hs.suite, serverSecret)
 	c.in.setTrafficSecret(hs.suite, serverSecret)
 
 	err := c.config.writeKeyLog(keyLogLabelClientHandshake, hs.hello.random, clientSecret)
@@ -391,6 +391,18 @@ func (hs *clientHandshakeStateTLS13) readServerParameters() error {
 	if len(encryptedExtensions.alpnProtocol) != 0 && len(hs.hello.alpnProtocols) == 0 {
 		c.sendAlert(alertUnsupportedExtension)
 		return errors.New("tls: server advertised unrequested ALPN extension")
+	}
+	if c.config.EnforceNextProtoSelection {
+		if len(encryptedExtensions.alpnProtocol) == 0 {
+			// the server didn't select an ALPN
+			c.sendAlert(alertNoApplicationProtocol)
+			return errors.New("ALPN negotiation failed")
+		}
+		if _, fallback := mutualProtocol([]string{encryptedExtensions.alpnProtocol}, hs.c.config.NextProtos); fallback {
+			// the protocol selected by the server was not offered
+			c.sendAlert(alertNoApplicationProtocol)
+			return errors.New("ALPN negotiation failed")
+		}
 	}
 	c.clientProtocol = encryptedExtensions.alpnProtocol
 
@@ -508,7 +520,7 @@ func (hs *clientHandshakeStateTLS13) readServerFinished() error {
 		clientApplicationTrafficLabel, hs.transcript)
 	serverSecret := hs.suite.deriveSecret(hs.masterSecret,
 		serverApplicationTrafficLabel, hs.transcript)
-	c.in.exportKey(hs.suite, serverSecret)
+	c.in.exportKey(EncryptionApplication, hs.suite, serverSecret)
 	c.in.setTrafficSecret(hs.suite, serverSecret)
 
 	err = c.config.writeKeyLog(keyLogLabelClientTraffic, hs.hello.random, hs.trafficSecret)
@@ -620,7 +632,7 @@ func (hs *clientHandshakeStateTLS13) sendClientFinished() error {
 		return err
 	}
 
-	c.out.exportKey(hs.suite, hs.trafficSecret)
+	c.out.exportKey(EncryptionApplication, hs.suite, hs.trafficSecret)
 	c.out.setTrafficSecret(hs.suite, hs.trafficSecret)
 
 	if !c.config.SessionTicketsDisabled && c.config.ClientSessionCache != nil {

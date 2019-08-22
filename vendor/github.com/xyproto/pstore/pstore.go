@@ -1,4 +1,4 @@
-// pstore provides a way to keep track of users, login states and permissions.
+// Package pstore provides a way to keep track of users, login states and permissions.
 package pstore
 
 import (
@@ -23,7 +23,7 @@ const (
 	Version = 3.0
 )
 
-// Initialize a Permissions struct with all the default settings.
+// New will initialize a Permissions struct with all the default settings.
 // This will also connect to the database host at port 3306.
 func New() (*Permissions, error) {
 	state, err := NewUserStateSimple()
@@ -33,7 +33,7 @@ func New() (*Permissions, error) {
 	return NewPermissions(state), nil
 }
 
-// Initialize a Permissions struct with a database connection string
+// NewWithConf will initialize a Permissions struct with a database connection string.
 func NewWithConf(connectionString string) (*Permissions, error) {
 	state, err := NewUserState(connectionString, true)
 	if err != nil {
@@ -42,7 +42,7 @@ func NewWithConf(connectionString string) (*Permissions, error) {
 	return NewPermissions(state), nil
 }
 
-// Initialize a Permissions struct with a DSN
+// NewWithDSN will initialize a Permissions struct with a DSN
 func NewWithDSN(connectionString string, databaseName string) (*Permissions, error) {
 	state, err := NewUserStateWithDSN(connectionString, databaseName, true)
 	if err != nil {
@@ -51,7 +51,7 @@ func NewWithDSN(connectionString string, databaseName string) (*Permissions, err
 	return NewPermissions(state), nil
 }
 
-// Initialize a Permissions struct with the given UserState and
+// NewPermissions will initialize a Permissions struct with the given UserState and
 // a few default paths for admin/user/public path prefixes.
 func NewPermissions(state *UserState) *Permissions {
 	// default permissions
@@ -64,63 +64,69 @@ func NewPermissions(state *UserState) *Permissions {
 		PermissionDenied}
 }
 
-// Specify the http.HandlerFunc for when the permissions are denied
+// SetDenyFunction can be used to specify a http.HandlerFunc for when the permissions are denied
 func (perm *Permissions) SetDenyFunction(f http.HandlerFunc) {
 	perm.denied = f
 }
 
-// Get the current http.HandlerFunc for when permissions are denied
+// DenyFunction can be used to retrieve the currently configured http.HandlerFunc for when permissions are denied
 func (perm *Permissions) DenyFunction() http.HandlerFunc {
 	return perm.denied
 }
 
-// Retrieve the UserState struct
+// UserState will return the UserState struct
 func (perm *Permissions) UserState() pinterface.IUserState {
 	return perm.state
 }
 
-// Set everything to public
+// Clear will treat all URLs as public
 func (perm *Permissions) Clear() {
 	perm.adminPathPrefixes = []string{}
 	perm.userPathPrefixes = []string{}
 }
 
-// Add an URL path prefix that is a page for the logged in administrators
+// AddAdminPath will add an URL prefix that will enforce that URLs starting
+// with that prefix will only be for logged in administrators
 func (perm *Permissions) AddAdminPath(prefix string) {
 	perm.adminPathPrefixes = append(perm.adminPathPrefixes, prefix)
 }
 
-// Add an URL path prefix that is a page for the logged in users
+// AddUserPath will add an URL prefix that will enforce that URLs starting
+// with that prefix will only be for logged in users
 func (perm *Permissions) AddUserPath(prefix string) {
 	perm.userPathPrefixes = append(perm.userPathPrefixes, prefix)
 }
 
-// Add an URL path prefix that is a public page
+// AddPublicPath will add an URL prefix that will enforce that URLs starting
+// with that prefix will be public. This overrides the other prefixes.
 func (perm *Permissions) AddPublicPath(prefix string) {
 	perm.publicPathPrefixes = append(perm.publicPathPrefixes, prefix)
 }
 
-// Set all URL path prefixes that are for the logged in administrator pages
+// SetAdminPath will add URL prefixes that will enforce that URLs starting
+// with those prefixes will only be for logged in administrators
 func (perm *Permissions) SetAdminPath(pathPrefixes []string) {
 	perm.adminPathPrefixes = pathPrefixes
 }
 
-// Set all URL path prefixes that are for the logged in user pages
+// SetUserPath will add URL prefixes that will enforce that URLs starting
+// with those prefixes will only be for logged in users
 func (perm *Permissions) SetUserPath(pathPrefixes []string) {
 	perm.userPathPrefixes = pathPrefixes
 }
 
-// Set all URL path prefixes that are for the public pages
+// SetPublicPath will add URL prefixes that will enforce that URLs starting
+// with those prefixes will be public. This overrides the other prefixes.
 func (perm *Permissions) SetPublicPath(pathPrefixes []string) {
 	perm.publicPathPrefixes = pathPrefixes
 }
 
-// The default "permission denied" http handler.
+// PermissionDenied is the default "permission denied" http handler.
 func PermissionDenied(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "Permission denied.", http.StatusForbidden)
 }
 
-// Check if a given request should be rejected.
+// Rejected will check if a given request should be rejected.
 func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
 
 	path := req.URL.Path // the path of the URL that the user wish to visit
@@ -160,7 +166,7 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 	return !found
 }
 
-// Middleware handler (compatible with Negroni)
+// ServeHTTP is the middleware handler (compatible with Negroni)
 func (perm *Permissions) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 
 	// Check if the user has the right admin/user rights

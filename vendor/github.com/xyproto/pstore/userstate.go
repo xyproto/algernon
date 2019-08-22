@@ -19,7 +19,9 @@ const (
 
 var (
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
-	ErrNotFound               = errors.New("Not found")
+
+	// ErrNotFound is returned if HasEmail does not find the given e-mail address
+	ErrNotFound = errors.New("Not found")
 )
 
 // UserState keeps track of all usernames, passwords and information about users
@@ -455,7 +457,7 @@ func (state *UserState) SetPasswordAlgo(algorithm string) error {
 	case "sha256", "bcrypt", "bcrypt+":
 		state.passwordAlgorithm = algorithm
 	default:
-		return errors.New("Permissions: " + algorithm + " is an unsupported encryption algorithm")
+		return errors.New("permissions: " + algorithm + " is an unsupported encryption algorithm")
 	}
 	return nil
 }
@@ -543,7 +545,7 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
-		return "", errors.New("All existing users are already confirmed.")
+		return "", errors.New("all existing users are already confirmed")
 	}
 
 	// Find the username by looking up the confirmationcode on unconfirmed users
@@ -563,11 +565,11 @@ func (state *UserState) FindUserByConfirmationCode(confirmationcode string) (str
 
 	// Check that the user is there
 	if username == "" {
-		return username, errors.New("The confirmation code is no longer valid.")
+		return username, errors.New("the confirmation code is no longer valid")
 	}
 	hasUser := state.HasUser(username)
 	if !hasUser {
-		return username, errors.New("The user that is to be confirmed no longer exists.")
+		return username, errors.New("the user that is to be confirmed no longer exists")
 	}
 
 	return username, nil
@@ -612,7 +614,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 		confirmationCode = cookie.RandomHumanFriendlyString(length)
 		if length > maxConfirmationCodeLength {
 			// This should never happen
-			return confirmationCode, errors.New("Too many generated confirmation codes are not unique!")
+			return confirmationCode, errors.New("too many generated confirmation codes are not unique")
 		}
 	}
 	return confirmationCode, nil
@@ -631,10 +633,10 @@ NEXT:
 				continue NEXT // check the next letter in the username
 			}
 		}
-		return errors.New("Only letters, numbers and underscore are allowed in usernames.")
+		return errors.New("only letters, numbers and underscore are allowed in usernames")
 	}
 	if username == password {
-		return errors.New("Username and password must be different, try another password.")
+		return errors.New("username and password must be different, try another password")
 	}
 	return nil
 }

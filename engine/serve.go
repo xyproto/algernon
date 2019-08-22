@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go/h2quic"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/http2"
+	"github.com/lucas-clemente/quic-go/http3"
 )
 
 // List of functions to run at shutdown
@@ -31,7 +31,7 @@ func AtShutdown(shutdownFunction func()) {
 // GenerateShutdownFunction generates a function that will run the postponed
 // shutdown functions.  Note that gracefulServer can be nil. It's only used for
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
-func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server, quicServer *h2quic.Server) func() {
+func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server, quicServer *http3.Server) func() {
 	return func() {
 		mut.Lock()
 		defer mut.Unlock()
@@ -165,7 +165,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			//       https://github.com/lucas-clemente/quic-go/blob/master/h2quic/server.go#L257
 			//
 			// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
-			if err := h2quic.ListenAndServe(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
+			if err := http3.ListenAndServe(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
 				log.Error("Not serving QUIC after all. Error: ", err)
 				log.Info("Use the -t flag for serving regular HTTP instead")
 				// If QUIC failed (perhaps the key + cert are missing),

@@ -2,6 +2,7 @@ package quic
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -28,7 +29,7 @@ type packetHandler interface {
 
 type unknownPacketHandler interface {
 	handlePacket(*receivedPacket)
-	closeWithError(error) error
+	setCloseError(error)
 }
 
 type packetHandlerManager interface {
@@ -84,12 +85,12 @@ type server struct {
 	// If it is started with Listen, we take a packet conn as a parameter.
 	createdPacketConn bool
 
-	cookieGenerator *handshake.CookieGenerator
+	tokenGenerator *handshake.TokenGenerator
 
 	sessionHandler packetHandlerManager
 
 	// set as a member, so they can be set in the tests
-	newSession func(connection, sessionRunner, protocol.ConnectionID /* original connection ID */, protocol.ConnectionID /* destination connection ID */, protocol.ConnectionID /* source connection ID */, *Config, *tls.Config, *handshake.TransportParameters, utils.Logger, protocol.VersionNumber) (quicSession, error)
+	newSession func(connection, sessionRunner, protocol.ConnectionID /* original connection ID */, protocol.ConnectionID /* destination connection ID */, protocol.ConnectionID /* source connection ID */, *Config, *tls.Config, *handshake.TransportParameters, *handshake.TokenGenerator, utils.Logger, protocol.VersionNumber) (quicSession, error)
 
 	serverError error
 	errorChan   chan struct{}
@@ -127,10 +128,11 @@ func ListenAddr(addr string, tlsConf *tls.Config, config *Config) (Listener, err
 }
 
 // Listen listens for QUIC connections on a given net.PacketConn.
-// A single PacketConn only be used for a single call to Listen.
+// A single net.PacketConn only be used for a single call to Listen.
 // The PacketConn can be used for simultaneous calls to Dial.
 // QUIC connection IDs are used for demultiplexing the different connections.
 // The tls.Config must not be nil and must contain a certificate configuration.
+// Furthermore, it must define an application control (using NextProtos).
 // The quic.Config may be nil, in that case the default values will be used.
 func Listen(conn net.PacketConn, tlsConf *tls.Config, config *Config) (Listener, error) {
 	return listen(conn, tlsConf, config)
@@ -138,8 +140,8 @@ func Listen(conn net.PacketConn, tlsConf *tls.Config, config *Config) (Listener,
 
 func listen(conn net.PacketConn, tlsConf *tls.Config, config *Config) (*server, error) {
 	// TODO(#1655): only require that tls.Config.Certificates or tls.Config.GetCertificate is set
-	if tlsConf == nil || len(tlsConf.Certificates) == 0 {
-		return nil, errors.New("quic: Certificates not set in tls.Config")
+	if tlsConf == nil {
+		return nil, errors.New("quic: tls.Config not set")
 	}
 	config = populateServerConfig(config)
 	for _, v := range config.Versions {
@@ -176,29 +178,33 @@ func (s *server) setup() error {
 		onHandshakeCompleteImpl: func(sess Session) {
 			go func() {
 				atomic.AddInt32(&s.sessionQueueLen, 1)
-				defer atomic.AddInt32(&s.sessionQueueLen, -1)
 				select {
 				case s.sessionQueue <- sess:
 					// blocks until the session is accepted
 				case <-sess.Context().Done():
+					atomic.AddInt32(&s.sessionQueueLen, -1)
 					// don't pass sessions that were already closed to Accept()
 				}
 			}()
 		},
 	}
-	cookieGenerator, err := handshake.NewCookieGenerator()
+	tokenGenerator, err := handshake.NewTokenGenerator()
 	if err != nil {
 		return err
 	}
-	s.cookieGenerator = cookieGenerator
+	s.tokenGenerator = tokenGenerator
 	return nil
 }
 
-var defaultAcceptCookie = func(clientAddr net.Addr, cookie *Cookie) bool {
-	if cookie == nil {
+var defaultAcceptToken = func(clientAddr net.Addr, token *Token) bool {
+	if token == nil {
 		return false
 	}
-	if time.Now().After(cookie.SentTime.Add(protocol.CookieExpiryTime)) {
+	validity := protocol.TokenValidity
+	if token.IsRetryToken {
+		validity = protocol.RetryTokenValidity
+	}
+	if time.Now().After(token.SentTime.Add(validity)) {
 		return false
 	}
 	var sourceAddr string
@@ -207,7 +213,7 @@ var defaultAcceptCookie = func(clientAddr net.Addr, cookie *Cookie) bool {
 	} else {
 		sourceAddr = clientAddr.String()
 	}
-	return sourceAddr == cookie.RemoteAddr
+	return sourceAddr == token.RemoteAddr
 }
 
 // populateServerConfig populates fields in the quic.Config with their default values, if none are set
@@ -221,9 +227,9 @@ func populateServerConfig(config *Config) *Config {
 		versions = protocol.SupportedVersions
 	}
 
-	vsa := defaultAcceptCookie
-	if config.AcceptCookie != nil {
-		vsa = config.AcceptCookie
+	verifyToken := defaultAcceptToken
+	if config.AcceptToken != nil {
+		verifyToken = config.AcceptToken
 	}
 
 	handshakeTimeout := protocol.DefaultHandshakeTimeout
@@ -264,7 +270,7 @@ func populateServerConfig(config *Config) *Config {
 		Versions:                              versions,
 		HandshakeTimeout:                      handshakeTimeout,
 		IdleTimeout:                           idleTimeout,
-		AcceptCookie:                          vsa,
+		AcceptToken:                           verifyToken,
 		KeepAlive:                             config.KeepAlive,
 		MaxReceiveStreamFlowControlWindow:     maxReceiveStreamFlowControlWindow,
 		MaxReceiveConnectionFlowControlWindow: maxReceiveConnectionFlowControlWindow,
@@ -272,14 +278,18 @@ func populateServerConfig(config *Config) *Config {
 		MaxIncomingUniStreams:                 maxIncomingUniStreams,
 		ConnectionIDLength:                    connIDLen,
 		StatelessResetKey:                     config.StatelessResetKey,
+		QuicTracer:                            config.QuicTracer,
 	}
 }
 
 // Accept returns newly openend sessions
-func (s *server) Accept() (Session, error) {
+func (s *server) Accept(ctx context.Context) (Session, error) {
 	var sess Session
 	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	case sess = <-s.sessionQueue:
+		atomic.AddInt32(&s.sessionQueueLen, -1)
 		return sess, nil
 	case <-s.errorChan:
 		return nil, s.serverError
@@ -293,10 +303,6 @@ func (s *server) Close() error {
 	if s.closed {
 		return nil
 	}
-	return s.closeWithMutex()
-}
-
-func (s *server) closeWithMutex() error {
 	s.sessionHandler.CloseServer()
 	if s.serverError == nil {
 		s.serverError = errors.New("server closed")
@@ -312,14 +318,15 @@ func (s *server) closeWithMutex() error {
 	return err
 }
 
-func (s *server) closeWithError(e error) error {
+func (s *server) setCloseError(e error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.closed {
-		return nil
+		return
 	}
+	s.closed = true
 	s.serverError = e
-	return s.closeWithMutex()
+	close(s.errorChan)
 }
 
 // Addr returns the server's network address
@@ -384,19 +391,20 @@ func (s *server) handleInitialImpl(p *receivedPacket, hdr *wire.Header) (quicSes
 		return nil, nil, errors.New("too short connection ID")
 	}
 
-	var cookie *Cookie
+	var token *Token
 	var origDestConnectionID protocol.ConnectionID
 	if len(hdr.Token) > 0 {
-		c, err := s.cookieGenerator.DecodeToken(hdr.Token)
+		c, err := s.tokenGenerator.DecodeToken(hdr.Token)
 		if err == nil {
-			cookie = &Cookie{
-				RemoteAddr: c.RemoteAddr,
-				SentTime:   c.SentTime,
+			token = &Token{
+				IsRetryToken: c.IsRetryToken,
+				RemoteAddr:   c.RemoteAddr,
+				SentTime:     c.SentTime,
 			}
 			origDestConnectionID = c.OriginalDestConnectionID
 		}
 	}
-	if !s.config.AcceptCookie(p.remoteAddr, cookie) {
+	if !s.config.AcceptToken(p.remoteAddr, token) {
 		// Log the Initial packet now.
 		// If no Retry is sent, the packet will be logged by the session.
 		(&wire.ExtendedHeader{Header: *hdr}).Log(s.logger)
@@ -443,8 +451,9 @@ func (s *server) createNewSession(
 		InitialMaxStreamDataUni:        protocol.InitialMaxStreamData,
 		InitialMaxData:                 protocol.InitialMaxData,
 		IdleTimeout:                    s.config.IdleTimeout,
-		MaxBidiStreams:                 uint64(s.config.MaxIncomingStreams),
-		MaxUniStreams:                  uint64(s.config.MaxIncomingUniStreams),
+		MaxBidiStreamNum:               protocol.StreamNum(s.config.MaxIncomingStreams),
+		MaxUniStreamNum:                protocol.StreamNum(s.config.MaxIncomingUniStreams),
+		MaxAckDelay:                    protocol.MaxAckDelayInclGranularity,
 		AckDelayExponent:               protocol.AckDelayExponent,
 		DisableMigration:               true,
 		StatelessResetToken:            &token,
@@ -459,6 +468,7 @@ func (s *server) createNewSession(
 		s.config,
 		s.tlsConf,
 		params,
+		s.tokenGenerator,
 		s.logger,
 		version,
 	)
@@ -470,7 +480,7 @@ func (s *server) createNewSession(
 }
 
 func (s *server) sendRetry(remoteAddr net.Addr, hdr *wire.Header) error {
-	token, err := s.cookieGenerator.NewToken(remoteAddr, hdr.DestConnectionID)
+	token, err := s.tokenGenerator.NewRetryToken(remoteAddr, hdr.DestConnectionID)
 	if err != nil {
 		return err
 	}
@@ -486,7 +496,8 @@ func (s *server) sendRetry(remoteAddr net.Addr, hdr *wire.Header) error {
 	replyHdr.DestConnectionID = hdr.SrcConnectionID
 	replyHdr.OrigDestConnectionID = hdr.DestConnectionID
 	replyHdr.Token = token
-	s.logger.Debugf("Changing connection ID to %s.\n-> Sending Retry", connID)
+	s.logger.Debugf("Changing connection ID to %s.", connID)
+	s.logger.Debugf("-> Sending Retry")
 	replyHdr.Log(s.logger)
 	buf := &bytes.Buffer{}
 	if err := replyHdr.Write(buf, hdr.Version); err != nil {

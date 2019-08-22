@@ -10,6 +10,12 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
+// ErrInvalidReservedBits is returned when the reserved bits are incorrect.
+// When this error is returned, parsing continues, and an ExtendedHeader is returned.
+// This is necessary because we need to decrypt the packet in that case,
+// in order to avoid a timing side-channel.
+var ErrInvalidReservedBits = errors.New("invalid reserved bits")
+
 // ExtendedHeader is the header of a QUIC packet.
 type ExtendedHeader struct {
 	Header
@@ -19,7 +25,7 @@ type ExtendedHeader struct {
 	PacketNumberLen protocol.PacketNumberLen
 	PacketNumber    protocol.PacketNumber
 
-	KeyPhase int
+	KeyPhase protocol.KeyPhaseBit
 }
 
 func (h *ExtendedHeader) parse(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
@@ -39,26 +45,30 @@ func (h *ExtendedHeader) parse(b *bytes.Reader, v protocol.VersionNumber) (*Exte
 }
 
 func (h *ExtendedHeader) parseLongHeader(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
-	if h.typeByte&0xc != 0 {
-		return nil, errors.New("5th and 6th bit must be 0")
-	}
 	if err := h.readPacketNumber(b); err != nil {
 		return nil, err
 	}
-	return h, nil
+	var err error
+	if h.typeByte&0xc != 0 {
+		err = ErrInvalidReservedBits
+	}
+	return h, err
 }
 
 func (h *ExtendedHeader) parseShortHeader(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
-	if h.typeByte&0x18 != 0 {
-		return nil, errors.New("4th and 5th bit must be 0")
+	h.KeyPhase = protocol.KeyPhaseZero
+	if h.typeByte&0x4 > 0 {
+		h.KeyPhase = protocol.KeyPhaseOne
 	}
-
-	h.KeyPhase = int(h.typeByte&0x4) >> 2
 
 	if err := h.readPacketNumber(b); err != nil {
 		return nil, err
 	}
-	return h, nil
+	var err error
+	if h.typeByte&0x18 != 0 {
+		err = ErrInvalidReservedBits
+	}
+	return h, err
 }
 
 func (h *ExtendedHeader) readPacketNumber(b *bytes.Reader) error {
@@ -73,6 +83,15 @@ func (h *ExtendedHeader) readPacketNumber(b *bytes.Reader) error {
 
 // Write writes the Header.
 func (h *ExtendedHeader) Write(b *bytes.Buffer, ver protocol.VersionNumber) error {
+	if h.DestConnectionID.Len() > protocol.MaxConnIDLen {
+		return fmt.Errorf("invalid connection ID length: %d bytes", h.DestConnectionID.Len())
+	}
+	if h.SrcConnectionID.Len() > protocol.MaxConnIDLen {
+		return fmt.Errorf("invalid connection ID length: %d bytes", h.SrcConnectionID.Len())
+	}
+	if h.OrigDestConnectionID.Len() > protocol.MaxConnIDLen {
+		return fmt.Errorf("invalid connection ID length: %d bytes", h.OrigDestConnectionID.Len())
+	}
 	if h.IsLongHeader {
 		return h.writeLongHeader(b, ver)
 	}
@@ -92,28 +111,21 @@ func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, v protocol.VersionNumb
 		packetType = 0x3
 	}
 	firstByte := 0xc0 | packetType<<4
-	if h.Type == protocol.PacketTypeRetry {
-		odcil, err := encodeSingleConnIDLen(h.OrigDestConnectionID)
-		if err != nil {
-			return err
-		}
-		firstByte |= odcil
-	} else { // Retry packets don't have a packet number
+	if h.Type != protocol.PacketTypeRetry {
+		// Retry packets don't have a packet number
 		firstByte |= uint8(h.PacketNumberLen - 1)
 	}
 
 	b.WriteByte(firstByte)
 	utils.BigEndian.WriteUint32(b, uint32(h.Version))
-	connIDLen, err := encodeConnIDLen(h.DestConnectionID, h.SrcConnectionID)
-	if err != nil {
-		return err
-	}
-	b.WriteByte(connIDLen)
+	b.WriteByte(uint8(h.DestConnectionID.Len()))
 	b.Write(h.DestConnectionID.Bytes())
+	b.WriteByte(uint8(h.SrcConnectionID.Len()))
 	b.Write(h.SrcConnectionID.Bytes())
 
 	switch h.Type {
 	case protocol.PacketTypeRetry:
+		b.WriteByte(uint8(h.OrigDestConnectionID.Len()))
 		b.Write(h.OrigDestConnectionID.Bytes())
 		b.Write(h.Token)
 		return nil
@@ -129,7 +141,9 @@ func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, v protocol.VersionNumb
 // TODO: add support for the key phase
 func (h *ExtendedHeader) writeShortHeader(b *bytes.Buffer, v protocol.VersionNumber) error {
 	typeByte := 0x40 | uint8(h.PacketNumberLen-1)
-	typeByte |= byte(h.KeyPhase << 2)
+	if h.KeyPhase == protocol.KeyPhaseOne {
+		typeByte |= byte(1 << 2)
+	}
 
 	b.WriteByte(typeByte)
 	b.Write(h.DestConnectionID.Bytes())
@@ -147,7 +161,7 @@ func (h *ExtendedHeader) writePacketNumber(b *bytes.Buffer) error {
 // GetLength determines the length of the Header.
 func (h *ExtendedHeader) GetLength(v protocol.VersionNumber) protocol.ByteCount {
 	if h.IsLongHeader {
-		length := 1 /* type byte */ + 4 /* version */ + 1 /* conn id len byte */ + protocol.ByteCount(h.DestConnectionID.Len()+h.SrcConnectionID.Len()) + protocol.ByteCount(h.PacketNumberLen) + utils.VarIntLen(uint64(h.Length))
+		length := 1 /* type byte */ + 4 /* version */ + 1 /* dest conn ID len */ + protocol.ByteCount(h.DestConnectionID.Len()) + 1 /* src conn ID len */ + protocol.ByteCount(h.SrcConnectionID.Len()) + protocol.ByteCount(h.PacketNumberLen) + utils.VarIntLen(uint64(h.Length))
 		if h.Type == protocol.PacketTypeInitial {
 			length += utils.VarIntLen(uint64(len(h.Token))) + protocol.ByteCount(len(h.Token))
 		}
@@ -176,29 +190,6 @@ func (h *ExtendedHeader) Log(logger utils.Logger) {
 		}
 		logger.Debugf("\tLong Header{Type: %s, DestConnectionID: %s, SrcConnectionID: %s, %sPacketNumber: %#x, PacketNumberLen: %d, Length: %d, Version: %s}", h.Type, h.DestConnectionID, h.SrcConnectionID, token, h.PacketNumber, h.PacketNumberLen, h.Length, h.Version)
 	} else {
-		logger.Debugf("\tShort Header{DestConnectionID: %s, PacketNumber: %#x, PacketNumberLen: %d, KeyPhase: %d}", h.DestConnectionID, h.PacketNumber, h.PacketNumberLen, h.KeyPhase)
+		logger.Debugf("\tShort Header{DestConnectionID: %s, PacketNumber: %#x, PacketNumberLen: %d, KeyPhase: %s}", h.DestConnectionID, h.PacketNumber, h.PacketNumberLen, h.KeyPhase)
 	}
-}
-
-func encodeConnIDLen(dest, src protocol.ConnectionID) (byte, error) {
-	dcil, err := encodeSingleConnIDLen(dest)
-	if err != nil {
-		return 0, err
-	}
-	scil, err := encodeSingleConnIDLen(src)
-	if err != nil {
-		return 0, err
-	}
-	return scil | dcil<<4, nil
-}
-
-func encodeSingleConnIDLen(id protocol.ConnectionID) (byte, error) {
-	len := id.Len()
-	if len == 0 {
-		return 0, nil
-	}
-	if len < 4 || len > 18 {
-		return 0, fmt.Errorf("invalid connection ID length: %d bytes", len)
-	}
-	return byte(len - 3), nil
 }

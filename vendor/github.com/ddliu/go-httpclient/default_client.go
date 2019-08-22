@@ -24,6 +24,7 @@ var PostJson = defaultClient.PostJson
 var PostMultipart = defaultClient.PostMultipart
 var Put = defaultClient.Put
 var PutJson = defaultClient.PutJson
+var PatchJson = defaultClient.PatchJson
 var Options = defaultClient.Options
 var Connect = defaultClient.Connect
 var Trace = defaultClient.Trace

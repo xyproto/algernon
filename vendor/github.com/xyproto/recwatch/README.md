@@ -6,18 +6,21 @@ Watch filesystem changes recursively.
 
 `recwatch` started out as a fork of [looper](https://github.com/nathany/looper) (by Nathan Youngman), but most of the code is now original.
 
-## Features
+## Features and limitations
 
 * Can be used for watching filesystem changes recursively.
 * Can be used for setting up a SSE ([server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)) server, for serving filesystem changes as events.
+* Filenames beginning with `.` or `_` are ignored.
 
-## Example use
+## Example usage
+
+### Short example
 
 ```go
 recwatch.EventServer(pathToWatch, "*", eventAddr, eventPath, refreshDuration)
 ```
 
-In a larger context:
+### Longer example
 
 ```go
 package main
@@ -40,6 +43,7 @@ func plural(passed time.Duration) string {
 	return ""
 }
 
+// Some errors are ignored since this is just a quick example
 func main() {
 	eventAddr := "0.0.0.0:5555"
 	eventPath := "/"
