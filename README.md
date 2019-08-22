@@ -42,6 +42,22 @@ Technologies
 
 Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/lucas-clemente/quic-go) for serving over QUIC, [blackfriday](https://github.com/russross/blackfriday) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
+Q&A
+---
+
+Q:
+
+> What is the benefit of using this? In what scenario would this excel? Thanks. - [mtw@HN](https://news.ycombinator.com/item?id=19583144)).
+
+A:
+
+> Good question. I'm not sure if it excels in any scenario. There are specialized web servers that excel at caching or at raw performance. There are dedicated backends for popular front-end toolkits like Vue or React. There are dedicated editors that excel at editing and previewing Markdown, or HTML.
+>
+> I guess the main benefit is that Algernon covers a lot of ground, with a minimum of configuration, while being powerful enough to have a plugin system and support for programming in Lua. There is an auto-refresh feature that uses Server Sent Events, when editing Markdown or web pages. There is also support for the latest in Web technologies, like HTTP/2, QUIC and TLS 1.3. The caching system is decent. And the use of Go ensures that also smaller platforms like NetBSD and systems like Raspberry Pi are covered. There are no external dependencies, so Algernon can run on any system that Go can support.
+>
+> The main benefit is that is is versatile, fresh, and covers many platforms and use cases.
+>
+> For a more specific description of a potential benefit, a more specific use case would be needed.
 
 Design decisions
 ----------------
