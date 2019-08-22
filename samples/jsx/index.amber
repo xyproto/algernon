@@ -2,8 +2,8 @@ doctype 5
 html
   head
     title #{title}
-    script[src="react.production.min.js"]
-    script[src="react-dom.production.min.js"]
+    script[src="js/react.production.min.js"]
+    script[src="js/react-dom.production.min.js"]
   body
     div[id="example"]
     script[src="jsx.lua?msg=" + message]
