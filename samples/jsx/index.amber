@@ -2,7 +2,8 @@ doctype 5
 html
   head
     title #{title}
-    script[src="//cdnjs.cloudflare.com/ajax/libs/react/0.13.2/react.js"]
+    script[src="react.production.min.js"]
+    script[src="react-dom.production.min.js"]
   body
     div[id="example"]
     script[src="jsx.lua?msg=" + message]
