@@ -47,7 +47,7 @@ Q&A
 
 Q:
 
-> What is the benefit of using this? In what scenario would this excel? Thanks. - [mtw@HN](https://news.ycombinator.com/item?id=19583144)).
+> What is the benefit of using this? In what scenario would this excel? Thanks. -- [mtw@HN](https://news.ycombinator.com/item?id=19583144).
 
 A:
 
