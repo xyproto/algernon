@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lucas-clemente/quic-go/http3"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/http2"
-	"github.com/lucas-clemente/quic-go/http3"
 )
 
 // List of functions to run at shutdown

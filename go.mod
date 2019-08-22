@@ -16,7 +16,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d // indirect
 	github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
-	github.com/lib/pq v1.2.0 // indirect
+	github.com/lib/pq v1.2.0
 	github.com/lucas-clemente/quic-go v0.12.0
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0

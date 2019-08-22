@@ -13,6 +13,7 @@ import (
 	"github.com/xyproto/algernon/lua/httpclient"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/onthefly"
+	"github.com/xyproto/algernon/lua/pquery"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
@@ -64,6 +65,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 		// For saving and loading Lua functions
 		codelib.Load(L, creator)
+
+		// For executing PostgreSQL queries, if available
+		pquery.Load(L, ac.perm)
 	}
 
 	// For handling JSON data
@@ -184,6 +188,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 		// For saving and loading Lua functions
 		codelib.Load(L, creator)
+
+		// For executing PostgreSQL queries, if available
+		pquery.Load(L, ac.perm)
 	}
 
 	// For handling JSON data

@@ -274,6 +274,8 @@ sleep(number)
 unixnano() -> number
 // Convert Markdown to HTML
 markdown(string) -> string
+// Query a PostgreSQL database with a query and a connection string
+PQ([string], [string]) -> table
 
 Extra
 
