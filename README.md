@@ -311,9 +311,6 @@ unixnano() -> number
 // Convert Markdown to HTML
 markdown(string) -> string
 
-// Query a PostgreSQL database with a query and a [connection string](https://www.calhoun.io/connecting-to-a-postgresql-database-with-gos-database-sql-package/).
-PQ([string], [string]) -> table
-
 // Return the directory where the REPL or script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 scriptdir([string]) -> string
 
@@ -496,6 +493,7 @@ jnode:receive(string) -> string
 // Convert from a simple Lua table to a JSON string
 JSON(table) -> string
 ~~~
+
 Lua functions for making HTTP requests
 --------------------------------------
 
@@ -751,6 +749,16 @@ kv:remove() -> bool
 // Clear the KeyValue. Returns true on success.
 kv:clear() -> bool
 ~~~
+
+Lua functions for external databases
+------------------------------------
+
+~~~c
+// Query a PostgreSQL database with a query and a connection string
+PQ([string], [string]) -> table
+~~~
+
+You can read more about connection strings in Go [here](https://www.calhoun.io/connecting-to-a-postgresql-database-with-gos-database-sql-package/).
 
 
 Lua functions for handling users and permissions
