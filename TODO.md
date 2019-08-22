@@ -24,6 +24,7 @@ Priority 2
 - [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
 - [ ] Add a Lua function for upgrading a handler to a WebSocket handler, also using concurrency in Lua.
 - [ ] Add support for `gccgo` by changing dependencies and/or report an issue with `gccgo`.
+- [ ] Add support for pushing from emacs "writefreely mode" to Algernon with this [API](https://developers.write.as/docs/api/).
 
 Languages other than Lua
 ------------------------
