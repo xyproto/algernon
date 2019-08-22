@@ -1081,7 +1081,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.12.4
+* Version: 1.12.5
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
