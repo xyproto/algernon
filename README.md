@@ -754,11 +754,11 @@ Lua functions for external databases
 ------------------------------------
 
 ~~~c
-// Query a PostgreSQL database with a query and a connection string
+// Query a PostgreSQL database with a SQL query and a connection string
 PQ([string], [string]) -> table
 ~~~
 
-You can read more about connection strings in Go [here](https://www.calhoun.io/connecting-to-a-postgresql-database-with-gos-database-sql-package/).
+The default connection string is `host=localhost port=5432 user=postgres dbname=test sslmode=disable` and the default SQL query is `SELECT version()`. Database connections are re-used if they still answer to `.Ping()`, for the same connection string.
 
 
 Lua functions for handling users and permissions
