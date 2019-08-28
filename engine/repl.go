@@ -275,6 +275,7 @@ unixnano() -> number
 // Convert Markdown to HTML
 markdown(string) -> string
 // Query a PostgreSQL database with a query and a connection string
+// Default connection string: "host=localhost port=5432 user=postgres dbname=test sslmode=disable"
 PQ([string], [string]) -> table
 
 Extra
