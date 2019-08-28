@@ -35,14 +35,14 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 
 		// Check if the optional argument is given
 		query := defaultQuery
-		if L.GetTop() == 1 {
+		if L.GetTop() >= 1 {
 			query = L.ToString(1)
 			if query == "" {
 				query = defaultQuery
 			}
 		}
 		connectionString := defaultConnectionString
-		if L.GetTop() == 2 {
+		if L.GetTop() >= 2 {
 			connectionString = L.ToString(2)
 		}
 
