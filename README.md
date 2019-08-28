@@ -1097,6 +1097,13 @@ Logo license
 
 Thanks to [Egon Elbre](https://twitter.com/egonelbre) for the two SVG drawings that I remixed into the current logo ([CC0](https://creativecommons.org/publicdomain/zero/1.0/) licensed).
 
+Listening to port 80 without running as root
+--------------------------------------------
+
+For Linux:
+
+    sudo setcap cap_net_bind_service=+ep /usr/bin/algernon
+
 Other resources
 ---------------
 
