@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20190814175915-bb8ee191fdd3
+# github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -64,7 +64,7 @@ github.com/flosch/pongo2
 github.com/fsnotify/fsnotify
 # github.com/gdamore/encoding v1.0.0
 github.com/gdamore/encoding
-# github.com/gdamore/tcell v1.2.1-0.20190805162843-ae1dc54d2c70
+# github.com/gdamore/tcell v1.2.0
 github.com/gdamore/tcell
 github.com/gdamore/tcell/termbox
 github.com/gdamore/tcell/terminfo
@@ -118,7 +118,7 @@ github.com/lucas-clemente/quic-go/quictrace/pb
 github.com/lucasb-eyer/go-colorful
 # github.com/marten-seemann/qpack v0.1.0
 github.com/marten-seemann/qpack
-# github.com/marten-seemann/qtls v0.3.2
+# github.com/marten-seemann/qtls v0.4.0
 github.com/marten-seemann/qtls
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
@@ -136,7 +136,7 @@ github.com/natefinch/pie
 github.com/patrickmn/go-cache
 # github.com/russross/blackfriday v2.0.0+incompatible
 github.com/russross/blackfriday
-# github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
+# github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
@@ -176,7 +176,7 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20190822155338-a3db82decd7a
+# github.com/xyproto/permissionbolt v0.0.0-20190822174405-70061863efdb
 github.com/xyproto/permissionbolt
 # github.com/xyproto/permissions2 v0.0.0-20190729074010-6510c7590749
 github.com/xyproto/permissions2
@@ -202,13 +202,13 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 github.com/xyproto/splash
-# github.com/xyproto/term v0.3.1-0.20190822162330-fddaac69bf95
+# github.com/xyproto/term v0.3.0
 github.com/xyproto/term
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
+# golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20poly1305
@@ -219,12 +219,12 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+# golang.org/x/net v0.0.0-20190916140828-c8589233b77d
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+# golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
@@ -244,7 +244,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# google.golang.org/appengine v1.6.1
+# google.golang.org/appengine v1.6.2
 google.golang.org/appengine/cloudsql
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
