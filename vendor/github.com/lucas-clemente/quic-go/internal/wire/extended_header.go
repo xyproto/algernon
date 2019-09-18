@@ -22,10 +22,10 @@ type ExtendedHeader struct {
 
 	typeByte byte
 
+	KeyPhase protocol.KeyPhaseBit
+
 	PacketNumberLen protocol.PacketNumberLen
 	PacketNumber    protocol.PacketNumber
-
-	KeyPhase protocol.KeyPhaseBit
 }
 
 func (h *ExtendedHeader) parse(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
@@ -44,7 +44,7 @@ func (h *ExtendedHeader) parse(b *bytes.Reader, v protocol.VersionNumber) (*Exte
 	return h.parseShortHeader(b, v)
 }
 
-func (h *ExtendedHeader) parseLongHeader(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
+func (h *ExtendedHeader) parseLongHeader(b *bytes.Reader, _ protocol.VersionNumber) (*ExtendedHeader, error) {
 	if err := h.readPacketNumber(b); err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (h *ExtendedHeader) parseLongHeader(b *bytes.Reader, v protocol.VersionNumb
 	return h, err
 }
 
-func (h *ExtendedHeader) parseShortHeader(b *bytes.Reader, v protocol.VersionNumber) (*ExtendedHeader, error) {
+func (h *ExtendedHeader) parseShortHeader(b *bytes.Reader, _ protocol.VersionNumber) (*ExtendedHeader, error) {
 	h.KeyPhase = protocol.KeyPhaseZero
 	if h.typeByte&0x4 > 0 {
 		h.KeyPhase = protocol.KeyPhaseOne
@@ -73,11 +73,34 @@ func (h *ExtendedHeader) parseShortHeader(b *bytes.Reader, v protocol.VersionNum
 
 func (h *ExtendedHeader) readPacketNumber(b *bytes.Reader) error {
 	h.PacketNumberLen = protocol.PacketNumberLen(h.typeByte&0x3) + 1
-	pn, err := utils.BigEndian.ReadUintN(b, uint8(h.PacketNumberLen))
-	if err != nil {
-		return err
+	switch h.PacketNumberLen {
+	case protocol.PacketNumberLen1:
+		n, err := b.ReadByte()
+		if err != nil {
+			return err
+		}
+		h.PacketNumber = protocol.PacketNumber(n)
+	case protocol.PacketNumberLen2:
+		n, err := utils.BigEndian.ReadUint16(b)
+		if err != nil {
+			return err
+		}
+		h.PacketNumber = protocol.PacketNumber(n)
+	case protocol.PacketNumberLen3:
+		n, err := utils.BigEndian.ReadUint24(b)
+		if err != nil {
+			return err
+		}
+		h.PacketNumber = protocol.PacketNumber(n)
+	case protocol.PacketNumberLen4:
+		n, err := utils.BigEndian.ReadUint32(b)
+		if err != nil {
+			return err
+		}
+		h.PacketNumber = protocol.PacketNumber(n)
+	default:
+		return fmt.Errorf("invalid packet number length: %d", h.PacketNumberLen)
 	}
-	h.PacketNumber = protocol.PacketNumber(pn)
 	return nil
 }
 
@@ -98,7 +121,7 @@ func (h *ExtendedHeader) Write(b *bytes.Buffer, ver protocol.VersionNumber) erro
 	return h.writeShortHeader(b, ver)
 }
 
-func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, v protocol.VersionNumber) error {
+func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, _ protocol.VersionNumber) error {
 	var packetType uint8
 	switch h.Type {
 	case protocol.PacketTypeInitial:
@@ -138,8 +161,7 @@ func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, v protocol.VersionNumb
 	return h.writePacketNumber(b)
 }
 
-// TODO: add support for the key phase
-func (h *ExtendedHeader) writeShortHeader(b *bytes.Buffer, v protocol.VersionNumber) error {
+func (h *ExtendedHeader) writeShortHeader(b *bytes.Buffer, _ protocol.VersionNumber) error {
 	typeByte := 0x40 | uint8(h.PacketNumberLen-1)
 	if h.KeyPhase == protocol.KeyPhaseOne {
 		typeByte |= byte(1 << 2)
@@ -151,10 +173,18 @@ func (h *ExtendedHeader) writeShortHeader(b *bytes.Buffer, v protocol.VersionNum
 }
 
 func (h *ExtendedHeader) writePacketNumber(b *bytes.Buffer) error {
-	if h.PacketNumberLen == protocol.PacketNumberLenInvalid || h.PacketNumberLen > protocol.PacketNumberLen4 {
+	switch h.PacketNumberLen {
+	case protocol.PacketNumberLen1:
+		b.WriteByte(uint8(h.PacketNumber))
+	case protocol.PacketNumberLen2:
+		utils.BigEndian.WriteUint16(b, uint16(h.PacketNumber))
+	case protocol.PacketNumberLen3:
+		utils.BigEndian.WriteUint24(b, uint32(h.PacketNumber))
+	case protocol.PacketNumberLen4:
+		utils.BigEndian.WriteUint32(b, uint32(h.PacketNumber))
+	default:
 		return fmt.Errorf("invalid packet number length: %d", h.PacketNumberLen)
 	}
-	utils.BigEndian.WriteUintN(b, uint8(h.PacketNumberLen), uint64(h.PacketNumber))
 	return nil
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/marten-seemann/qpack"
+	"github.com/onsi/ginkgo"
 )
 
 // allows mocking of quic.Listen and quic.ListenAddr
@@ -28,6 +29,20 @@ var (
 )
 
 const nextProtoH3 = "h3-22"
+
+type requestError struct {
+	err       error
+	streamErr errorCode
+	connErr   errorCode
+}
+
+func newStreamError(code errorCode, err error) requestError {
+	return requestError{err: err, streamErr: code}
+}
+
+func newConnError(code errorCode, err error) requestError {
+	return requestError{err: err, connErr: code}
+}
 
 // Server is a HTTP2 server listening for QUIC connections.
 type Server struct {
@@ -39,9 +54,9 @@ type Server struct {
 
 	port uint32 // used atomically
 
-	listenerMutex sync.Mutex
-	listener      quic.Listener
-	closed        bool
+	mutex     sync.Mutex
+	listeners map[*quic.Listener]struct{}
+	closed    utils.AtomicBool
 
 	supportedVersionsAsString string
 
@@ -73,46 +88,52 @@ func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
 }
 
 // Serve an existing UDP connection.
+// It is possible to reuse the same connection for outgoing connections.
+// Closing the server does not close the packet conn.
 func (s *Server) Serve(conn net.PacketConn) error {
 	return s.serveImpl(s.TLSConfig, conn)
 }
 
-func (s *Server) serveImpl(tlsConfig *tls.Config, conn net.PacketConn) error {
+func (s *Server) serveImpl(tlsConf *tls.Config, conn net.PacketConn) error {
+	if s.closed.Get() {
+		return http.ErrServerClosed
+	}
 	if s.Server == nil {
 		return errors.New("use of http3.Server without http.Server")
 	}
 	s.logger = utils.DefaultLogger.WithPrefix("server")
-	s.listenerMutex.Lock()
-	if s.closed {
-		s.listenerMutex.Unlock()
-		return errors.New("Server is already closed")
-	}
-	if s.listener != nil {
-		s.listenerMutex.Unlock()
-		return errors.New("ListenAndServe may only be called once")
-	}
 
-	if tlsConfig == nil {
-		tlsConfig = &tls.Config{}
+	if tlsConf == nil {
+		tlsConf = &tls.Config{}
+	} else {
+		tlsConf = tlsConf.Clone()
 	}
-
-	if !strSliceContains(tlsConfig.NextProtos, nextProtoH3) {
-		tlsConfig.NextProtos = append(tlsConfig.NextProtos, nextProtoH3)
+	// Replace existing ALPNs by H3
+	tlsConf.NextProtos = []string{nextProtoH3}
+	if tlsConf.GetConfigForClient != nil {
+		getConfigForClient := tlsConf.GetConfigForClient
+		tlsConf.GetConfigForClient = func(ch *tls.ClientHelloInfo) (*tls.Config, error) {
+			conf, err := getConfigForClient(ch)
+			if err != nil || conf == nil {
+				return conf, err
+			}
+			conf.NextProtos = []string{nextProtoH3}
+			return conf, nil
+		}
 	}
 
 	var ln quic.Listener
 	var err error
 	if conn == nil {
-		ln, err = quicListenAddr(s.Addr, tlsConfig, s.QuicConfig)
+		ln, err = quicListenAddr(s.Addr, tlsConf, s.QuicConfig)
 	} else {
-		ln, err = quicListen(conn, tlsConfig, s.QuicConfig)
+		ln, err = quicListen(conn, tlsConf, s.QuicConfig)
 	}
 	if err != nil {
-		s.listenerMutex.Unlock()
 		return err
 	}
-	s.listener = ln
-	s.listenerMutex.Unlock()
+	s.addListener(&ln)
+	defer s.removeListener(&ln)
 
 	for {
 		sess, err := ln.Accept(context.Background())
@@ -121,6 +142,24 @@ func (s *Server) serveImpl(tlsConfig *tls.Config, conn net.PacketConn) error {
 		}
 		go s.handleConn(sess)
 	}
+}
+
+// We store a pointer to interface in the map set. This is safe because we only
+// call trackListener via Serve and can track+defer untrack the same pointer to
+// local variable there. We never need to compare a Listener from another caller.
+func (s *Server) addListener(l *quic.Listener) {
+	s.mutex.Lock()
+	if s.listeners == nil {
+		s.listeners = make(map[*quic.Listener]struct{})
+	}
+	s.listeners[l] = struct{}{}
+	s.mutex.Unlock()
+}
+
+func (s *Server) removeListener(l *quic.Listener) {
+	s.mutex.Lock()
+	delete(s.listeners, l)
+	s.mutex.Unlock()
 }
 
 func (s *Server) handleConn(sess quic.Session) {
@@ -143,11 +182,20 @@ func (s *Server) handleConn(sess quic.Session) {
 			s.logger.Debugf("Accepting stream failed: %s", err)
 			return
 		}
-		// TODO: handle error
 		go func() {
-			if err := s.handleRequest(str, decoder); err != nil {
+			defer ginkgo.GinkgoRecover()
+			if rerr := s.handleRequest(str, decoder); rerr.err != nil || rerr.streamErr != 0 || rerr.connErr != 0 {
 				s.logger.Debugf("Handling request failed: %s", err)
-				str.CancelWrite(quic.ErrorCode(errorGeneralProtocolError))
+				if rerr.streamErr != 0 {
+					str.CancelWrite(quic.ErrorCode(rerr.streamErr))
+				}
+				if rerr.connErr != 0 {
+					var reason string
+					if rerr.err != nil {
+						reason = rerr.err.Error()
+					}
+					sess.CloseWithError(quic.ErrorCode(rerr.connErr), reason)
+				}
 				return
 			}
 			str.Close()
@@ -155,34 +203,38 @@ func (s *Server) handleConn(sess quic.Session) {
 	}
 }
 
-// TODO: improve error handling.
-// Most (but not all) of the errors occurring here are connection-level erros.
-func (s *Server) handleRequest(str quic.Stream, decoder *qpack.Decoder) error {
+func (s *Server) maxHeaderBytes() uint64 {
+	if s.Server.MaxHeaderBytes <= 0 {
+		return http.DefaultMaxHeaderBytes
+	}
+	return uint64(s.Server.MaxHeaderBytes)
+}
+
+func (s *Server) handleRequest(str quic.Stream, decoder *qpack.Decoder) requestError {
 	frame, err := parseNextFrame(str)
 	if err != nil {
-		str.CancelWrite(quic.ErrorCode(errorRequestCanceled))
-		return err
+		return newStreamError(errorRequestIncomplete, err)
 	}
 	hf, ok := frame.(*headersFrame)
 	if !ok {
-		str.CancelWrite(quic.ErrorCode(errorUnexpectedFrame))
-		return errors.New("expected first frame to be a headers frame")
+		return newConnError(errorUnexpectedFrame, errors.New("expected first frame to be a HEADERS frame"))
 	}
-	// TODO: check length
+	if hf.Length > s.maxHeaderBytes() {
+		return newStreamError(errorFrameError, fmt.Errorf("HEADERS frame too large: %d bytes (max: %d)", hf.Length, s.maxHeaderBytes()))
+	}
 	headerBlock := make([]byte, hf.Length)
 	if _, err := io.ReadFull(str, headerBlock); err != nil {
-		str.CancelWrite(quic.ErrorCode(errorIncompleteRequest))
-		return err
+		return newStreamError(errorRequestIncomplete, err)
 	}
 	hfs, err := decoder.DecodeFull(headerBlock)
 	if err != nil {
 		// TODO: use the right error code
-		str.CancelWrite(quic.ErrorCode(errorGeneralProtocolError))
-		return err
+		return newConnError(errorGeneralProtocolError, err)
 	}
 	req, err := requestFromHeaders(hfs)
 	if err != nil {
-		return err
+		// TODO: use the right error code
+		return newStreamError(errorGeneralProtocolError, err)
 	}
 	req.Body = newRequestBody(str)
 
@@ -227,21 +279,24 @@ func (s *Server) handleRequest(str quic.Stream, decoder *qpack.Decoder) error {
 	if !readEOF {
 		str.CancelRead(quic.ErrorCode(errorEarlyResponse))
 	}
-	return nil
+	return requestError{}
 }
 
 // Close the server immediately, aborting requests and sending CONNECTION_CLOSE frames to connected clients.
 // Close in combination with ListenAndServe() (instead of Serve()) may race if it is called before a UDP socket is established.
 func (s *Server) Close() error {
-	s.listenerMutex.Lock()
-	defer s.listenerMutex.Unlock()
-	s.closed = true
-	if s.listener != nil {
-		err := s.listener.Close()
-		s.listener = nil
-		return err
+	s.closed.Set(true)
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var err error
+	for ln := range s.listeners {
+		if cerr := (*ln).Close(); cerr != nil && err == nil {
+			err = cerr
+		}
 	}
-	return nil
+	return err
 }
 
 // CloseGracefully shuts down the server gracefully. The server sends a GOAWAY frame first, then waits for either timeout to trigger, or for all running requests to complete.
@@ -374,13 +429,4 @@ func ListenAndServe(addr, certFile, keyFile string, handler http.Handler) error 
 		// Cannot close the HTTP server or wait for requests to complete properly :/
 		return err
 	}
-}
-
-func strSliceContains(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }

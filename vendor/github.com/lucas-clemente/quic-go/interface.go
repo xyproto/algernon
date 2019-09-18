@@ -27,6 +27,23 @@ type Token struct {
 	SentTime     time.Time
 }
 
+// A ClientToken is a token received by the client.
+// It can be used to skip address validation on future connection attempts.
+type ClientToken struct {
+	data []byte
+}
+
+type TokenStore interface {
+	// Pop searches for a ClientToken associated with the given key.
+	// Since tokens are not supposed to be reused, it must remove the token from the cache.
+	// It returns nil when no token is found.
+	Pop(key string) (token *ClientToken)
+
+	// Put adds a token to the cache with the given key. It might get called
+	// multiple times in a connection.
+	Put(key string, token *ClientToken)
+}
+
 // An ErrorCode is an application-defined error code.
 // Valid values range between 0 and MAX_UINT62.
 type ErrorCode = protocol.ApplicationErrorCode
@@ -171,6 +188,19 @@ type Session interface {
 	ConnectionState() tls.ConnectionState
 }
 
+// An EarlySession is a session that is handshaking.
+// Data sent during the handshake is encrypted using the forward secure keys.
+// When using client certificates, the client's identity is only verified
+// after completion of the handshake.
+type EarlySession interface {
+	Session
+
+	// Blocks until the handshake completes (or fails).
+	// Data sent before completion of the handshake is encrypted with 1-RTT keys.
+	// Note that the client's identity hasn't been verified yet.
+	HandshakeComplete() context.Context
+}
+
 // Config contains all configuration data needed for a QUIC server or client.
 type Config struct {
 	// The QUIC versions that can be negotiated.
@@ -201,6 +231,11 @@ type Config struct {
 	//   * else, that it was issued within the last 24 hours.
 	// This option is only valid for the server.
 	AcceptToken func(clientAddr net.Addr, token *Token) bool
+	// The TokenStore stores tokens received from the server.
+	// Tokens are used to skip address validation on future connection attempts.
+	// The key used to store tokens is the ServerName from the tls.Config, if set
+	// otherwise the token is associated with the server's IP address.
+	TokenStore TokenStore
 	// MaxReceiveStreamFlowControlWindow is the maximum stream-level flow control window for receiving data.
 	// If this value is zero, it will default to 1 MB for the server and 6 MB for the client.
 	MaxReceiveStreamFlowControlWindow uint64
@@ -233,4 +268,15 @@ type Listener interface {
 	Addr() net.Addr
 	// Accept returns new sessions. It should be called in a loop.
 	Accept(context.Context) (Session, error)
+}
+
+// An EarlyListener listens for incoming QUIC connections,
+// and returns them before the handshake completes.
+type EarlyListener interface {
+	// Close the server. All active sessions will be closed.
+	Close() error
+	// Addr returns the local network addr that the server is listening on.
+	Addr() net.Addr
+	// Accept returns new early sessions. It should be called in a loop.
+	Accept(context.Context) (EarlySession, error)
 }

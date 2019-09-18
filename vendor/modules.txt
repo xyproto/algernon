@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.6.6
+# github.com/alecthomas/chroma v0.6.7-0.20190917131142-b964bce980ef
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -44,7 +44,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2 v1.2.0
+# github.com/dlclark/regexp2 v1.2.1-0.20190806043828-5a37df65fb8b
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
 # github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733
@@ -62,19 +62,6 @@ github.com/etcd-io/bbolt
 github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/gdamore/encoding v1.0.0
-github.com/gdamore/encoding
-# github.com/gdamore/tcell v1.2.0
-github.com/gdamore/tcell
-github.com/gdamore/tcell/termbox
-github.com/gdamore/tcell/terminfo
-github.com/gdamore/tcell/terminfo/a/ansi
-github.com/gdamore/tcell/terminfo/base
-github.com/gdamore/tcell/terminfo/dynamic
-github.com/gdamore/tcell/terminfo/v/vt100
-github.com/gdamore/tcell/terminfo/v/vt102
-github.com/gdamore/tcell/terminfo/v/vt220
-github.com/gdamore/tcell/terminfo/x/xterm
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
@@ -87,6 +74,12 @@ github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
+# github.com/hpcloud/tail v1.0.0
+github.com/hpcloud/tail
+github.com/hpcloud/tail/ratelimiter
+github.com/hpcloud/tail/util
+github.com/hpcloud/tail/watch
+github.com/hpcloud/tail/winfile
 # github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d
 github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
@@ -97,11 +90,11 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
-# github.com/lib/pq v1.2.0
+# github.com/lib/pq v1.2.1-0.20190813065522-78223426e7c6
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/lucas-clemente/quic-go v0.12.0
+# github.com/lucas-clemente/quic-go v0.7.1-0.20190917080620-9e6bff0b9872
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/http3
 github.com/lucas-clemente/quic-go/internal/ackhandler
@@ -114,16 +107,15 @@ github.com/lucas-clemente/quic-go/internal/utils
 github.com/lucas-clemente/quic-go/internal/wire
 github.com/lucas-clemente/quic-go/quictrace
 github.com/lucas-clemente/quic-go/quictrace/pb
-# github.com/lucasb-eyer/go-colorful v1.0.2
-github.com/lucasb-eyer/go-colorful
+# github.com/marten-seemann/chacha20 v0.2.0
+github.com/marten-seemann/chacha20
+github.com/marten-seemann/chacha20/internal/subtle
 # github.com/marten-seemann/qpack v0.1.0
 github.com/marten-seemann/qpack
 # github.com/marten-seemann/qtls v0.4.0
 github.com/marten-seemann/qtls
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
-# github.com/mattn/go-runewidth v0.0.4
-github.com/mattn/go-runewidth
 # github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
@@ -132,17 +124,39 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/patrickmn/go-cache v2.1.0+incompatible
+# github.com/onsi/ginkgo v1.10.1
+github.com/onsi/ginkgo
+github.com/onsi/ginkgo/config
+github.com/onsi/ginkgo/internal/codelocation
+github.com/onsi/ginkgo/internal/containernode
+github.com/onsi/ginkgo/internal/failer
+github.com/onsi/ginkgo/internal/leafnodes
+github.com/onsi/ginkgo/internal/remote
+github.com/onsi/ginkgo/internal/spec
+github.com/onsi/ginkgo/internal/spec_iterator
+github.com/onsi/ginkgo/internal/specrunner
+github.com/onsi/ginkgo/internal/suite
+github.com/onsi/ginkgo/internal/testingtproxy
+github.com/onsi/ginkgo/internal/writer
+github.com/onsi/ginkgo/reporters
+github.com/onsi/ginkgo/reporters/stenographer
+github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
+github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
+github.com/onsi/ginkgo/types
+# github.com/patrickmn/go-cache v2.1.1-0.20180815053127-5633e0862627+incompatible
 github.com/patrickmn/go-cache
+# github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
+github.com/pkg/term
+github.com/pkg/term/termios
 # github.com/russross/blackfriday v2.0.0+incompatible
 github.com/russross/blackfriday
 # github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.4.3-0.20190807103436-de736cf91b92
 github.com/sirupsen/logrus
-# github.com/tylerb/graceful v1.2.15
+# github.com/tylerb/graceful v1.2.16-0.20170221171003-d72b0151351a
 github.com/tylerb/graceful
 # github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 github.com/wellington/sass/ast
@@ -159,6 +173,8 @@ github.com/wellington/sass/parser
 github.com/wellington/sass/scanner
 github.com/wellington/sass/strops
 github.com/wellington/sass/token
+# github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9
+github.com/xyproto/ask
 # github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff
 github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
@@ -190,7 +206,7 @@ github.com/xyproto/pstore
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v0.0.0-20190815131735-c8f6c928dd10
 github.com/xyproto/recwatch
-# github.com/xyproto/sheepcounter v1.6.0
+# github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v0.0.0-20190613081550-5b2ecc9405cb
 github.com/xyproto/simplebolt
@@ -202,11 +218,13 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 github.com/xyproto/splash
-# github.com/xyproto/term v0.3.0
-github.com/xyproto/term
+# github.com/xyproto/textoutput v1.6.0
+github.com/xyproto/textoutput
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/yosssi/gcss v0.1.0
+# github.com/xyproto/vt100 v1.3.0
+github.com/xyproto/vt100
+# github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
 github.com/yosssi/gcss
 # golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
 golang.org/x/crypto/bcrypt
@@ -219,7 +237,7 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20190916140828-c8589233b77d
+# golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -230,8 +248,6 @@ golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
 golang.org/x/text/cases
 golang.org/x/text/collate
-golang.org/x/text/encoding
-golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/internal
 golang.org/x/text/internal/colltab
 golang.org/x/text/internal/language
@@ -246,9 +262,13 @@ golang.org/x/text/unicode/norm
 golang.org/x/time/rate
 # google.golang.org/appengine v1.6.2
 google.golang.org/appengine/cloudsql
+# gopkg.in/fsnotify.v1 v1.4.7
+gopkg.in/fsnotify.v1
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
 gopkg.in/gcfg.v1/token
 gopkg.in/gcfg.v1/types
+# gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
+gopkg.in/tomb.v1
 # gopkg.in/warnings.v0 v0.1.2
 gopkg.in/warnings.v0

@@ -6,12 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"sort"
 	"time"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 type transportParameterID uint16
 
@@ -41,13 +46,14 @@ type TransportParameters struct {
 	MaxAckDelay      time.Duration
 	AckDelayExponent uint8
 
+	DisableMigration bool
+
 	MaxPacketSize protocol.ByteCount
 
 	MaxUniStreamNum  protocol.StreamNum
 	MaxBidiStreamNum protocol.StreamNum
 
-	IdleTimeout      time.Duration
-	DisableMigration bool
+	IdleTimeout time.Duration
 
 	StatelessResetToken  *[16]byte
 	OriginalConnectionID protocol.ConnectionID
@@ -134,6 +140,9 @@ func (p *TransportParameters) Unmarshal(data []byte, sentBy protocol.Perspective
 	if !readMaxAckDelay {
 		p.MaxAckDelay = protocol.DefaultMaxAckDelay
 	}
+	if p.MaxPacketSize == 0 {
+		p.MaxPacketSize = protocol.MaxByteCount
+	}
 
 	// check that every transport parameter was sent at most once
 	sort.Slice(parameterIDs, func(i, j int) bool { return parameterIDs[i] < parameterIDs[j] })
@@ -192,6 +201,9 @@ func (p *TransportParameters) readNumericTransportParameter(
 		if maxAckDelay >= protocol.MaxMaxAckDelay {
 			return fmt.Errorf("invalid value for max_ack_delay: %dms (maximum %dms)", maxAckDelay/time.Millisecond, (protocol.MaxMaxAckDelay-time.Millisecond)/time.Millisecond)
 		}
+		if maxAckDelay < 0 {
+			maxAckDelay = utils.InfDuration
+		}
 		p.MaxAckDelay = maxAckDelay
 	default:
 		return fmt.Errorf("TransportParameter BUG: transport parameter %d not found", paramID)
@@ -203,6 +215,14 @@ func (p *TransportParameters) readNumericTransportParameter(
 func (p *TransportParameters) Marshal() []byte {
 	b := &bytes.Buffer{}
 	b.Write([]byte{0, 0}) // length. Will be replaced later
+
+	// add a greased value
+	utils.BigEndian.WriteUint16(b, uint16(27+31*rand.Intn(100)))
+	len := rand.Intn(16)
+	randomData := make([]byte, len)
+	rand.Read(randomData)
+	utils.BigEndian.WriteUint16(b, uint16(len))
+	b.Write(randomData)
 
 	// initial_max_stream_data_bidi_local
 	p.marshalVarintParam(b, initialMaxStreamDataBidiLocalParameterID, uint64(p.InitialMaxStreamDataBidiLocal))

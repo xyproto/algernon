@@ -20,6 +20,7 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
+	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/patrickmn/go-cache v2.1.1-0.20180815053127-5633e0862627+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.16-0.20170221171003-d72b0151351a
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
+	github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
@@ -44,12 +46,12 @@ require (
 	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
-	github.com/xyproto/term v0.3.1-0.20190916143418-4f508d89747a
+	github.com/xyproto/textoutput v1.6.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
+	github.com/xyproto/vt100 v1.3.0 // indirect
 	github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
-	golang.org/x/net v0.0.0-20190916140828-c8589233b77d
-	golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3 // indirect
+	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/appengine v1.6.2 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect

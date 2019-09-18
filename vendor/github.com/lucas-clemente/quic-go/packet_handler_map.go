@@ -65,18 +65,30 @@ func newPacketHandlerMap(
 
 func (h *packetHandlerMap) Add(id protocol.ConnectionID, handler packetHandler) {
 	h.mutex.Lock()
-	h.handlers[string(id)] = handler
+	h.addLocked(id, handler)
 	h.mutex.Unlock()
+}
+
+func (h *packetHandlerMap) addLocked(id protocol.ConnectionID, handler packetHandler) {
+	h.handlers[string(id)] = handler
 }
 
 func (h *packetHandlerMap) Remove(id protocol.ConnectionID) {
+	h.mutex.Lock()
 	h.removeByConnectionIDAsString(string(id))
+	h.mutex.Unlock()
+}
+
+func (h *packetHandlerMap) ReplaceWithClosed(id protocol.ConnectionID, handler packetHandler) {
+	h.mutex.Lock()
+	h.removeByConnectionIDAsString(string(id))
+	h.addLocked(id, handler)
+	h.mutex.Unlock()
+	h.retireByConnectionIDAsString(string(id))
 }
 
 func (h *packetHandlerMap) removeByConnectionIDAsString(id string) {
-	h.mutex.Lock()
 	delete(h.handlers, id)
-	h.mutex.Unlock()
 }
 
 func (h *packetHandlerMap) Retire(id protocol.ConnectionID) {
@@ -85,7 +97,9 @@ func (h *packetHandlerMap) Retire(id protocol.ConnectionID) {
 
 func (h *packetHandlerMap) retireByConnectionIDAsString(id string) {
 	time.AfterFunc(h.deleteRetiredSessionsAfter, func() {
+		h.mutex.Lock()
 		h.removeByConnectionIDAsString(id)
+		h.mutex.Unlock()
 	})
 }
 
@@ -111,15 +125,14 @@ func (h *packetHandlerMap) CloseServer() {
 	h.mutex.Lock()
 	h.server = nil
 	var wg sync.WaitGroup
-	for id, handler := range h.handlers {
+	for _, handler := range h.handlers {
 		if handler.getPerspective() == protocol.PerspectiveServer {
 			wg.Add(1)
-			go func(id string, handler packetHandler) {
+			go func(handler packetHandler) {
 				// session.Close() blocks until the CONNECTION_CLOSE has been sent and the run-loop has stopped
 				_ = handler.Close()
-				h.retireByConnectionIDAsString(id)
 				wg.Done()
-			}(id, handler)
+			}(handler)
 		}
 	}
 	h.mutex.Unlock()
@@ -223,7 +236,7 @@ func (h *packetHandlerMap) maybeHandleStatelessReset(data []byte) bool {
 	if data[0]&0x80 != 0 {
 		return false
 	}
-	if len(data) < protocol.MinStatelessResetSize {
+	if len(data) < 17 /* type byte + 16 bytes for the reset token */ {
 		return false
 	}
 
@@ -264,7 +277,7 @@ func (h *packetHandlerMap) maybeSendStatelessReset(p *receivedPacket, connID pro
 	}
 	token := h.GetStatelessResetToken(connID)
 	h.logger.Debugf("Sending stateless reset to %s (connection ID: %s). Token: %#x", p.remoteAddr, connID, token)
-	data := make([]byte, 23)
+	data := make([]byte, protocol.MinStatelessResetSize-16, protocol.MinStatelessResetSize)
 	rand.Read(data)
 	data[0] = (data[0] & 0x7f) | 0x40
 	data = append(data, token[:]...)

@@ -33,6 +33,7 @@ type receiveStream struct {
 	finalOffset protocol.ByteCount
 
 	currentFrame       []byte
+	currentFrameDone   func()
 	currentFrameIsLast bool // is the currentFrame the last frame on this stream
 	readPosInFrame     int
 
@@ -185,7 +186,11 @@ func (s *receiveStream) readImpl(p []byte) (bool /*stream completed */, int, err
 
 func (s *receiveStream) dequeueNextFrame() {
 	var offset protocol.ByteCount
-	offset, s.currentFrame = s.frameQueue.Pop()
+	// We're done with the last frame. Release the buffer.
+	if s.currentFrameDone != nil {
+		s.currentFrameDone()
+	}
+	offset, s.currentFrame, s.currentFrameDone = s.frameQueue.Pop()
 	s.currentFrameIsLast = offset+protocol.ByteCount(len(s.currentFrame)) >= s.finalOffset
 	s.readPosInFrame = 0
 }
@@ -237,7 +242,7 @@ func (s *receiveStream) handleStreamFrameImpl(frame *wire.StreamFrame) (bool /* 
 	if s.canceledRead {
 		return frame.FinBit, nil
 	}
-	if err := s.frameQueue.Push(frame.Data, frame.Offset); err != nil {
+	if err := s.frameQueue.Push(frame.Data, frame.Offset, frame.PutBack); err != nil {
 		return false, err
 	}
 	s.signalRead()
@@ -271,7 +276,7 @@ func (s *receiveStream) handleResetStreamFrameImpl(frame *wire.ResetStreamFrame)
 	s.resetRemotely = true
 	s.resetRemotelyErr = streamCanceledError{
 		errorCode: frame.ErrorCode,
-		error:     fmt.Errorf("Stream %d was reset with error code %d", s.streamID, frame.ErrorCode),
+		error:     fmt.Errorf("stream %d was reset with error code %d", s.streamID, frame.ErrorCode),
 	}
 	s.signalRead()
 	return true, nil
