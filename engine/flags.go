@@ -73,7 +73,7 @@ Available flags:
   --clear                      Clear the default URI prefixes that are used
                                when handling permissions.
   -V, --verbose                Slightly more verbose logging.
-  --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
+  --eventserver=[HOST][:PORT]  SSE server address (filesystem changes as events).
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + ac.defaultEventRefresh + `").
   --limit=N                    Limit clients to N requests per second
@@ -83,6 +83,7 @@ Available flags:
   --largesize=N                Threshold for not reading static files into memory, in bytes.
   --timeout=N                  Timeout when serving files, in seconds.
   -l, --lua                    Don't serve anything, just present the Lua REPL.
+  --luapath                    Lua module directory (the default is ` + ac.defaultLuaModuleDirectory + `).
   -s, --server                 Server mode (disable debug + interactive mode).
   -q, --quiet                  Don't output anything to stdout or stderr.
   --servername=STRING          Custom HTTP header value for the Server field.
@@ -216,6 +217,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
+	flag.StringVar(&ac.luaModuleDirectory, "luapath", ac.defaultLuaModuleDirectory, "Lua module directory")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -454,6 +456,24 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	ac.serverHost = host
+
+	// Get the absolute path of the Lua module directory, and quit with an error if it doesn't exist
+	luaDir, err := filepath.Abs(ac.luaModuleDirectory)
+	if err != nil {
+		// Unlikely
+		ac.fatalExit(err)
+	}
+	fileInfo, err := os.Stat(luaDir)
+	if err != nil {
+		// Unlikely
+		ac.fatalExit(err)
+	}
+	if !fileInfo.IsDir() {
+		// Not a directory
+		ac.fatalExit(fmt.Errorf("%s is not a directory", luaDir))
+	}
+	// All is well
+	ac.luaModuleDirectory = luaDir
 }
 
 // Set the values that has not been set by flags nor scripts (and can be set by both)

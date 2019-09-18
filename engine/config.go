@@ -75,6 +75,9 @@ type Config struct {
 	// Default filename for a Lua script that provides data to a template
 	defaultLuaDataFilename string
 
+	// Default directory for loading Lua modules
+	defaultLuaModuleDirectory string
+
 	// List of configuration filenames to check
 	serverConfigurationFilenames []string
 
@@ -242,6 +245,9 @@ type Config struct {
 
 	// Secret to be used when setting and getting user login cookies
 	cookieSecret string
+
+	// Lua module directory
+	luaModuleDirectory string
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -253,6 +259,18 @@ var (
 
 // New creates a new server configuration based using the default values
 func New(versionString, description string) (*Config, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		// Unlikely
+		log.Error("Could not get current working directory")
+		pwd = "."
+	}
+	absPwd, err := filepath.Abs(pwd)
+	if err != nil {
+		// Unlikely
+		log.Error("Could not get absolute path of the current working directory")
+		pwd = "."
+	}
 	ac := &Config{
 		curlSupport: true,
 
@@ -283,6 +301,9 @@ func New(versionString, description string) (*Config, error) {
 
 		// Default filename for a Lua script that provides data to a template
 		defaultLuaDataFilename: "data.lua",
+
+		// Default Lua module directory
+		defaultLuaModuleDirectory: absPwd,
 
 		// List of configuration filenames to check
 		serverConfigurationFilenames: []string{"/etc/algernon/serverconf.lua", "/etc/algernon/server.lua"},

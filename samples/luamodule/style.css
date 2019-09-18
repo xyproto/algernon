@@ -1,0 +1,11 @@
+body {
+  background: #c0c0e0;
+  font-size: 2.0em;
+  margin: 4em;
+  color: black;
+  font-family: Georgia, Serif;
+}
+
+h1, h2 {
+  font-family: Helvetica, Sans-Serif;
+}

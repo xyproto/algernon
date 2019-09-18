@@ -1,9 +1,9 @@
 package engine
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
-
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -24,6 +24,14 @@ import (
 // LoadCommonFunctions adds most of the available Lua functions in algernon to
 // the given Lua state struct
 func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus) {
+
+	curdir := filepath.Dir(filename)
+
+	// Set the Lua module path in the gopher-lua module
+	if err := ac.setLuaModulePath(curdir); err != nil {
+		// Unlikely
+		log.Error(err)
+	}
 
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
@@ -72,7 +80,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// For handling JSON data
 	jnode.LoadJSONFunctions(L)
-	ac.LoadJFile(L, filepath.Dir(filename))
+	ac.LoadJFile(L, curdir)
 	jnode.Load(L)
 
 	// Extras
@@ -152,6 +160,23 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 	return L.DoFile(filename)
 }
 
+// set LuaLDir and LuaPathDefault in the gopher-lua module
+func (ac *Config) setLuaModulePath(curdir string) error {
+	// Directory with the files that are to be served
+	absdir, err := filepath.Abs(curdir)
+	if err != nil {
+		return err
+	}
+
+	// Set the path for Lua modules
+	lua.LuaLDir = absdir // ac.luaModuleDirectory
+	lua.LuaPathDefault = absdir + "/?.lua;" + absdir + "/?/init.lua;" + ac.serverDirOrFilename + "/?.lua;" + lua.LuaLDir + "/?/init.lua"
+
+	fmt.Println("SETTING LUA DIRECTORIES TO " + lua.LuaPathDefault)
+
+	return nil
+}
+
 // RunConfiguration runs a Lua file as a configuration script. Also has access
 // to the userstate and permissions. Returns an error if there was a problem
 // with running the lua script, otherwise nil. perm can be nil, but then several
@@ -162,6 +187,13 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 //
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
 func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
+
+	curdir := filepath.Dir(filename)
+
+	// Set the Lua module path in the gopher-lua module
+	if err := ac.setLuaModulePath(curdir); err != nil {
+		return err
+	}
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
@@ -195,7 +227,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// For handling JSON data
 	jnode.LoadJSONFunctions(L)
-	ac.LoadJFile(L, filepath.Dir(filename))
+	ac.LoadJFile(L, curdir)
 	jnode.Load(L)
 
 	// Extras

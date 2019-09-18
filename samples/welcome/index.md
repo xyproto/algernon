@@ -25,6 +25,7 @@ Samples
 * [Iterate](iterate)
 * [Bootstrap](bootstrap)
 * [Permissions](permissions)
+* [Using a Lua module](luamodule)
 
 There are more samples in the `samples/` directory.
 
