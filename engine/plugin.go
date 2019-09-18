@@ -11,7 +11,7 @@ import (
 
 	"github.com/natefinch/pie"
 	"github.com/xyproto/gopher-lua"
-	"github.com/xyproto/term"
+	"github.com/xyproto/textoutput"
 )
 
 type luaPlugin struct {
@@ -30,7 +30,7 @@ func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
 
 // LoadPluginFunctions takes a Lua state and a TextOutput
 // (the TextOutput struct should be nil if not in a REPL)
-func (ac *Config) LoadPluginFunctions(L *lua.LState, o *term.TextOutput) {
+func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 
 	// Expose the functionality of a given plugin (executable file).
 	// If on Windows, ".exe" is added to the path.

@@ -18,7 +18,8 @@ import (
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/gopher-lua"
-	"github.com/xyproto/term"
+	"github.com/xyproto/textoutput"
+	"github.com/xyproto/ask"
 )
 
 const (
@@ -564,7 +565,7 @@ func colorSplit(line, sep string, colorFunc1, colorFuncSep, colorFunc2 func(stri
 }
 
 // Syntax highlight the given line
-func highlight(o *term.TextOutput, line string) string {
+func highlight(o *textoutput.TextOutput, line string) string {
 	unprocessed := line
 	unprocessed, comment := colorSplit(unprocessed, "//", nil, o.DarkGray, o.DarkGray, false)
 	module, unprocessed := colorSplit(unprocessed, ":", o.LightGreen, o.DarkRed, nil, true)
@@ -585,7 +586,7 @@ func highlight(o *term.TextOutput, line string) string {
 }
 
 // Output syntax highlighted help text, with an additional usage message
-func outputHelp(o *term.TextOutput, helpText string) {
+func outputHelp(o *textoutput.TextOutput, helpText string) {
 	for _, line := range strings.Split(helpText, "\n") {
 		o.Println(highlight(o, line))
 	}
@@ -593,7 +594,7 @@ func outputHelp(o *term.TextOutput, helpText string) {
 }
 
 // Output syntax highlighted help about a specific topic or function
-func outputHelpAbout(o *term.TextOutput, helpText, topic string) {
+func outputHelpAbout(o *textoutput.TextOutput, helpText, topic string) {
 	switch topic {
 	case "help":
 		o.Println(o.DarkGray("Output general help or help about a specific topic."))
@@ -641,7 +642,7 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 }
 
 // LoadLuaFunctionsForREPL exports the various Lua functions that might be needed in the REPL
-func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *term.TextOutput) {
+func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *textoutput.TextOutput) {
 
 	// Server configuration functions
 	ac.LoadServerConfigFunctions(L, "")
@@ -706,7 +707,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	windows := (runtime.GOOS == "windows")
 	mingw := windows && strings.HasPrefix(os.Getenv("TERM"), "xterm")
 	enableColors := !windows || mingw
-	o := term.NewTextOutput(enableColors, true)
+	o := textoutput.NewTextOutput(enableColors, true)
 
 	// Command history file
 	if windows {
@@ -769,7 +770,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		EOF = false
 		if mingw {
 			// No support for EOF
-			line = term.Ask(prompt)
+			line = ask.Ask(prompt)
 		} else {
 			if line, err = l.Readline(); err != nil {
 				switch {

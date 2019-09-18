@@ -3,12 +3,12 @@
 package platformdep
 
 import (
-	"github.com/xyproto/term"
+	"github.com/xyproto/ask"
 )
 
 // GetInput asks the user for keyboard input
 func GetInput(prompt string) (string, error) {
-	return term.Ask(prompt), nil
+	return ask.Ask(prompt), nil
 }
 
 // IgnoreTerminalResizeSignal does nothing for non-UNIX-related platforms
