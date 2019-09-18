@@ -1,6 +1,7 @@
 package vt100
 
 import (
+	"bytes"
 	"fmt"
 	"image/color"
 	"os"
@@ -369,4 +370,9 @@ func (ac AttributeColor) Ints() []int {
 func TrueColor(fg color.Color, text string) string {
 	c := color.NRGBAModel.Convert(fg).(color.NRGBA)
 	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", c.R, c.G, c.B, text)
+}
+
+// Equal checks if two colors have the same attributes, in the same order.
+func (ac AttributeColor) Equal(other AttributeColor) bool {
+	return bytes.Equal(ac, other)
 }

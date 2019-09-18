@@ -222,7 +222,7 @@ github.com/xyproto/splash
 github.com/xyproto/textoutput
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.3.0
+# github.com/xyproto/vt100 v1.4.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
 github.com/yosssi/gcss

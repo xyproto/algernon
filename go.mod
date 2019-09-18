@@ -48,7 +48,7 @@ require (
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 	github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
-	github.com/xyproto/vt100 v1.3.0 // indirect
+	github.com/xyproto/vt100 v1.4.0 // indirect
 	github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab
