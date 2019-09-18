@@ -227,7 +227,6 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = "<off>"
 		i++
 		rs[i] = off
-		i++
 	} else {
 		for key := range vt100.LightColorMap {
 			rs[i] = "<" + key + ">"
@@ -242,7 +241,6 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = "<off>"
 		i++
 		rs[i] = ""
-		i++
 	}
 	o.lightReplacer = strings.NewReplacer(rs...)
 	// Initialize the replacer for the dark color scheme, while reusing the rs slice
@@ -261,7 +259,6 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = "<off>"
 		i++
 		rs[i] = off
-		i++
 	} else {
 		for key := range vt100.DarkColorMap {
 			rs[i] = "<" + key + ">"
@@ -276,7 +273,6 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = "<off>"
 		i++
 		rs[i] = ""
-		i++
 	}
 	o.darkReplacer = strings.NewReplacer(rs...)
 }

@@ -226,8 +226,8 @@ github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6/go.mod h1:ncYBwTYU
 github.com/xeipuuv/gojsonpointer v0.0.0-20190809123943-df4f5c81cb3b/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
 github.com/xeipuuv/gojsonschema v1.1.0/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4myDekKRoLuqhs=
-github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9 h1:AZ9nAzefmOwIVJpwNVWkV2wwoycftC820cQtt3et0q8=
-github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9/go.mod h1:gpFNH7P6xC6XCLqkN7ig/sgx8r1GHB87O+FwVJohdd4=
+github.com/xyproto/ask v1.0.0 h1:9Rd14jRqlv89x7klrdYXYrXxZGsE/b49/8edPMAf60w=
+github.com/xyproto/ask v1.0.0/go.mod h1:GTF2UyZg4J/JFVrY8jrfbk00yljvpDWra9gHiSuwI90=
 github.com/xyproto/cookie v0.0.0-20171003173729-8ce3defb0907/go.mod h1:Jkc0U5QghR0GdJHVetkXRYMciw3dGqpLR69uw8vutsY=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff h1:G+UgV5480yPnIK9+aaz4Tx0l7hu8lcDuXc9SfTbK1+w=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff/go.mod h1:+c0/g8lVJKAi+uZ/kPHqSzf2UsSI2If03smY6xITgtM=
@@ -272,8 +272,8 @@ github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0 h1:fNauyX/GEXR
 github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0/go.mod h1:v1Rr7lzv9F8H/sMg5RRvU1oMi9/Fjx6xzhOJgFLnuhs=
 github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528 h1:QZLz9fJ3l0rVzcOtgcAfAdMcGWoZqwxiwv1G8unw4KI=
 github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528/go.mod h1:HVyR4Il31o4eciTa66/G74XhIc4A9NTDgyRb0dm8Xlk=
-github.com/xyproto/textoutput v1.6.0 h1:ws81ByvmFzMesRzb9njIOcrBsQ42mfRgIAD1owxd5mE=
-github.com/xyproto/textoutput v1.6.0/go.mod h1:TqmkzuwiSBd4jNRrL1mM86bN1oFdX/wtjSozkwYMrXE=
+github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1 h1:R9Gvue0IrUsuYqPW81Bt1bYTEL+8qzD7IXKgz4a58IA=
+github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1/go.mod h1:TqmkzuwiSBd4jNRrL1mM86bN1oFdX/wtjSozkwYMrXE=
 github.com/xyproto/unzip v0.0.0-20150601123358-823950573952 h1:pCgYs8AOzRpEmdM55hrSnd+TZOr+1/m9Y9KkFIZPwiU=
 github.com/xyproto/unzip v0.0.0-20150601123358-823950573952/go.mod h1:ygEdojOpwX5uG71ECHji5sod2rpZ+9hqNeAZD50S84Q=
 github.com/xyproto/vt100 v1.2.1 h1:ByPOKhp5rGPimc57XYxz9/OZaPvefcEtTBBd9/YfnQ4=

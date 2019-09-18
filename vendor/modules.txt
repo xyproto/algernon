@@ -173,7 +173,7 @@ github.com/wellington/sass/parser
 github.com/wellington/sass/scanner
 github.com/wellington/sass/strops
 github.com/wellington/sass/token
-# github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9
+# github.com/xyproto/ask v1.0.0
 github.com/xyproto/ask
 # github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff
 github.com/xyproto/cookie
@@ -218,7 +218,7 @@ github.com/xyproto/simplemaria
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 github.com/xyproto/splash
-# github.com/xyproto/textoutput v1.6.0
+# github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1
 github.com/xyproto/textoutput
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip

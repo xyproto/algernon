@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.13
+go 1.12
 
 require (
 	github.com/alecthomas/chroma v0.6.7-0.20190917131142-b964bce980ef // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.16-0.20170221171003-d72b0151351a
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
-	github.com/xyproto/ask v0.0.0-20190918144319-83ee1a8907a9
+	github.com/xyproto/ask v1.0.0
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
@@ -46,7 +46,7 @@ require (
 	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
-	github.com/xyproto/textoutput v1.6.0
+	github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/xyproto/vt100 v1.3.0 // indirect
 	github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
