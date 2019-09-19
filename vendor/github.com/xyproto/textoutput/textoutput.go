@@ -22,6 +22,31 @@ func NewTextOutput(color, enabled bool) *TextOutput {
 	return o
 }
 
+// OutputTags will output text that may have tags like "<blue>", "</blue>" or "<off>" for
+// enabling or disabling color attributes. Respects the color/enabled settings
+// of this TextOutput.
+func (o *TextOutput) OutputTags(colors ...string) {
+	if o.enabled {
+		fmt.Println(o.Tags(colors...))
+	}
+}
+
+// Given a line with words and several color strings, color the words
+// in the order of the colors. The last color will color the rest of the
+// words.
+func (o *TextOutput) OutputWords(line string, colors ...string) {
+	if o.enabled {
+		fmt.Println(o.Words(line, colors...))
+	}
+}
+
+// Write a message to stdout if output is enabled
+func (o *TextOutput) Println(msg ...interface{}) {
+	if o.enabled {
+		fmt.Println(msg...)
+	}
+}
+
 // Write an error message in red to stderr if output is enabled
 func (o *TextOutput) Err(msg string) {
 	if o.enabled {
@@ -148,13 +173,6 @@ func (o *TextOutput) Words(line string, colors ...string) string {
 	return line
 }
 
-// Write a message to stdout if output is enabled
-func (o *TextOutput) Println(msg ...interface{}) {
-	if o.enabled {
-		fmt.Println(msg...)
-	}
-}
-
 // Change the color state in the terminal emulator
 func (o *TextOutput) ColorOn(attribute1, attribute2 int) string {
 	if !o.color {
@@ -177,11 +195,9 @@ func (o *TextOutput) LightTags(colors ...string) string {
 	return o.lightReplacer.Replace(strings.Join(colors, ""))
 }
 
-// Same as LightTags, but outputs the text instead of returning it
-func (o *TextOutput) Tags(colors ...string) {
-	if o.enabled {
-		fmt.Println(o.LightTags(colors...))
-	}
+// Same as LightTags
+func (o *TextOutput) Tags(colors ...string) string {
+	return o.LightTags(colors...)
 }
 
 // Replace <blue> with starting a light blue color attribute and <off> with using the default attributes.

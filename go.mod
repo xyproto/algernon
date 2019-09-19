@@ -12,8 +12,10 @@ require (
 	github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
+	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
+	github.com/golang/mock v1.3.1 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 	github.com/lib/pq v1.2.1-0.20190813065522-78223426e7c6
 	github.com/lucas-clemente/quic-go v0.7.1-0.20190917080620-9e6bff0b9872
@@ -21,6 +23,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/onsi/ginkgo v1.10.1 // indirect
+	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/patrickmn/go-cache v2.1.1-0.20180815053127-5633e0862627+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337 // indirect
@@ -44,16 +47,16 @@ require (
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v0.0.0-20190613081550-5b2ecc9405cb
 	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
-	github.com/xyproto/simpleredis v0.0.0-20181004131423-f2c3a2cf62d0
+	github.com/xyproto/simpleredis v0.0.0-20190919091103-4dd4111d2407
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
-	github.com/xyproto/textoutput v1.6.1-0.20190918101307-b915067fd2b1
+	github.com/xyproto/textoutput v1.7.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
-	github.com/xyproto/vt100 v1.4.0 // indirect
 	github.com/yosssi/gcss v0.1.1-0.20141012140205-39677598ea4f
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/appengine v1.6.2 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
