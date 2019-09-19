@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/ecdsa"
-	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/subtle"
 	"crypto/x509"
@@ -86,6 +85,7 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, ecdheParameters, error) {
 	possibleCipherSuites := config.cipherSuites()
 	hello.cipherSuites = make([]uint16, 0, len(possibleCipherSuites))
 
+NextCipherSuite:
 	for _, suiteId := range possibleCipherSuites {
 		for _, suite := range cipherSuites {
 			if suite.id != suiteId {
@@ -94,10 +94,10 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, ecdheParameters, error) {
 			// Don't advertise TLS 1.2-only cipher suites unless
 			// we're attempting TLS 1.2.
 			if hello.vers < VersionTLS12 && suite.flags&suiteTLS12 != 0 {
-				break
+				continue
 			}
 			hello.cipherSuites = append(hello.cipherSuites, suiteId)
-			break
+			continue NextCipherSuite
 		}
 	}
 
@@ -578,7 +578,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			return fmt.Errorf("tls: client certificate private key of type %T does not implement crypto.Signer", chainToSend.PrivateKey)
 		}
 
-		signatureAlgorithm, sigType, hashFunc, err := pickSignatureAlgorithm(key.Public(), certReq.supportedSignatureAlgorithms, supportedSignatureAlgorithmsTLS12, c.vers)
+		signatureAlgorithm, sigType, hashFunc, err := pickSignatureAlgorithm(key.Public(), certReq.supportedSignatureAlgorithms, hs.hello.supportedSignatureAlgorithms, c.vers)
 		if err != nil {
 			c.sendAlert(alertInternalError)
 			return err
@@ -587,7 +587,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		if certVerify.hasSignatureAlgorithm {
 			certVerify.signatureAlgorithm = signatureAlgorithm
 		}
-		signed, err := hs.finishedHash.hashForClientCertificate(sigType, hashFunc, hs.masterSecret)
+		digest, err := hs.finishedHash.hashForClientCertificate(sigType, hashFunc, hs.masterSecret)
 		if err != nil {
 			c.sendAlert(alertInternalError)
 			return err
@@ -596,7 +596,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		if sigType == signatureRSAPSS {
 			signOpts = &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash, Hash: hashFunc}
 		}
-		certVerify.signature, err = key.Sign(c.config.rand(), signed, signOpts)
+		certVerify.signature, err = key.Sign(c.config.rand(), digest, signOpts)
 		if err != nil {
 			c.sendAlert(alertInternalError)
 			return err
@@ -832,7 +832,11 @@ func (c *Conn) verifyServerCertificate(certificates [][]byte) error {
 			DNSName:       c.config.ServerName,
 			Intermediates: x509.NewCertPool(),
 		}
-		for _, cert := range certs[1:] {
+
+		for i, cert := range certs {
+			if i == 0 {
+				continue
+			}
 			opts.Intermediates.AddCert(cert)
 		}
 		var err error
@@ -851,7 +855,7 @@ func (c *Conn) verifyServerCertificate(certificates [][]byte) error {
 	}
 
 	switch certs[0].PublicKey.(type) {
-	case *rsa.PublicKey, *ecdsa.PublicKey, ed25519.PublicKey:
+	case *rsa.PublicKey, *ecdsa.PublicKey:
 		break
 	default:
 		c.sendAlert(alertUnsupportedCertificate)
@@ -874,13 +878,13 @@ var (
 // certificateRequestInfoFromMsg generates a CertificateRequestInfo from a TLS
 // <= 1.2 CertificateRequest, making an effort to fill in missing information.
 func certificateRequestInfoFromMsg(certReq *certificateRequestMsg) *CertificateRequestInfo {
-	var rsaAvail, ecAvail bool
+	var rsaAvail, ecdsaAvail bool
 	for _, certType := range certReq.certificateTypes {
 		switch certType {
 		case certTypeRSASign:
 			rsaAvail = true
 		case certTypeECDSASign:
-			ecAvail = true
+			ecdsaAvail = true
 		}
 	}
 
@@ -894,23 +898,25 @@ func certificateRequestInfoFromMsg(certReq *certificateRequestMsg) *CertificateR
 		// case we use a plausible list based on the acceptable
 		// certificate types.
 		switch {
-		case rsaAvail && ecAvail:
+		case rsaAvail && ecdsaAvail:
 			cri.SignatureSchemes = tls11SignatureSchemes
 		case rsaAvail:
 			cri.SignatureSchemes = tls11SignatureSchemesRSA
-		case ecAvail:
+		case ecdsaAvail:
 			cri.SignatureSchemes = tls11SignatureSchemesECDSA
 		}
 		return cri
 	}
 
-	// Filter the signature schemes based on the certificate types.
+	// In TLS 1.2, the signature schemes apply to both the certificate chain and
+	// the leaf key, while the certificate types only apply to the leaf key.
 	// See RFC 5246, Section 7.4.4 (where it calls this "somewhat complicated").
+	// Filter the signature schemes based on the certificate type.
 	cri.SignatureSchemes = make([]SignatureScheme, 0, len(certReq.supportedSignatureAlgorithms))
 	for _, sigScheme := range certReq.supportedSignatureAlgorithms {
 		switch signatureFromSignatureScheme(sigScheme) {
-		case signatureECDSA, signatureEd25519:
-			if ecAvail {
+		case signatureECDSA:
+			if ecdsaAvail {
 				cri.SignatureSchemes = append(cri.SignatureSchemes, sigScheme)
 			}
 		case signatureRSAPSS, signaturePKCS1v15:

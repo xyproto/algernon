@@ -7,7 +7,7 @@ that its output matches `<name>.exported`.
 
 Run the tests as normal:
 ```go
-go test ./lexers
+go run ./lexers
 ```
 
 ## Updating the existing tests

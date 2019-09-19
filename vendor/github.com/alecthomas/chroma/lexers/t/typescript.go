@@ -13,7 +13,6 @@ var TypeScript = internal.Register(MustNewLexer(
 		Filenames: []string{"*.ts", "*.tsx"},
 		MimeTypes: []string{"text/x-typescript"},
 		DotAll:    true,
-		EnsureNL:  true,
 	},
 	Rules{
 		"commentsandwhitespace": {

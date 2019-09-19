@@ -31,15 +31,11 @@ func parseNewConnectionIDFrame(r *bytes.Reader, _ protocol.VersionNumber) (*NewC
 	if err != nil {
 		return nil, err
 	}
-	if ret > seq {
-		//nolint:stylecheck
-		return nil, fmt.Errorf("Retire Prior To value (%d) larger than Sequence Number (%d)", ret, seq)
-	}
 	connIDLen, err := r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
-	if connIDLen > protocol.MaxConnIDLen {
+	if connIDLen < 4 || connIDLen > 18 {
 		return nil, fmt.Errorf("invalid connection ID length: %d", connIDLen)
 	}
 	connID, err := protocol.ReadConnectionID(r, int(connIDLen))
@@ -66,7 +62,7 @@ func (f *NewConnectionIDFrame) Write(b *bytes.Buffer, _ protocol.VersionNumber) 
 	utils.WriteVarInt(b, f.SequenceNumber)
 	utils.WriteVarInt(b, f.RetirePriorTo)
 	connIDLen := f.ConnectionID.Len()
-	if connIDLen > protocol.MaxConnIDLen {
+	if connIDLen < 4 || connIDLen > 18 {
 		return fmt.Errorf("invalid connection ID length: %d", connIDLen)
 	}
 	b.WriteByte(uint8(connIDLen))

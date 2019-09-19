@@ -80,7 +80,7 @@ var Scss = internal.Register(MustNewLexer(
 			{`[\w-]+`, NameTag, nil},
 			{`#\{`, LiteralStringInterpol, Push("interpolation")},
 			{`&`, Keyword, nil},
-			{`[~^*!&\[\]()<>|+=@:,./?-]`, Operator, nil},
+			{`[~^*!&\[\]()<>|+=@:;,./?-]`, Operator, nil},
 			{`"`, LiteralStringDouble, Push("string-double")},
 			{`'`, LiteralStringSingle, Push("string-single")},
 			{`\n`, Text, nil},
@@ -92,9 +92,9 @@ var Scss = internal.Register(MustNewLexer(
 			{`"`, LiteralStringDouble, Pop(1)},
 		},
 		"string-single": {
-			{`(\\.|#(?=[^\n{])|[^\n'#])+`, LiteralStringSingle, nil},
+			{`(\\.|#(?=[^\n{])|[^\n'#])+`, LiteralStringDouble, nil},
 			{`#\{`, LiteralStringInterpol, Push("interpolation")},
-			{`'`, LiteralStringSingle, Pop(1)},
+			{`'`, LiteralStringDouble, Pop(1)},
 		},
 		"string-url": {
 			{`(\\#|#(?=[^\n{])|[^\n#)])+`, LiteralStringOther, nil},

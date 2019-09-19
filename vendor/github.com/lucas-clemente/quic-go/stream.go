@@ -5,11 +5,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go/internal/ackhandler"
 	"github.com/lucas-clemente/quic-go/internal/flowcontrol"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/wire"
 )
+
+const errorCodeStopping protocol.ApplicationErrorCode = 0
 
 // The streamSender is notified by the stream about various events.
 type streamSender interface {
@@ -50,7 +51,7 @@ type streamI interface {
 	// for sending
 	hasData() bool
 	handleStopSendingFrame(*wire.StopSendingFrame)
-	popStreamFrame(maxBytes protocol.ByteCount) (*ackhandler.Frame, bool)
+	popStreamFrame(maxBytes protocol.ByteCount) (*wire.StreamFrame, bool)
 	handleMaxStreamDataFrame(*wire.MaxStreamDataFrame)
 }
 

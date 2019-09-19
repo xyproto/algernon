@@ -70,6 +70,7 @@ type cryptoSetup struct {
 
 	runner handshakeRunner
 
+	closed    bool
 	alertChan chan uint8
 	// handshakeDone is closed as soon as the go routine running qtls.Handshake() returns
 	handshakeDone chan struct{}
@@ -282,13 +283,19 @@ func (h *cryptoSetup) RunHandshake() {
 }
 
 func (h *cryptoSetup) onError(alert uint8, message string) {
+
 	h.runner.OnError(qerr.CryptoError(alert, message))
 }
 
-// Close closes the crypto setup.
-// It aborts the handshake, if it is still running.
-// It must only be called once.
 func (h *cryptoSetup) Close() error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	if h.closed {
+		return nil
+	}
+	h.closed = true
+
 	close(h.closeChan)
 	// wait until qtls.Handshake() actually returned
 	<-h.handshakeDone
@@ -307,7 +314,7 @@ func (h *cryptoSetup) HandleMessage(data []byte, encLevel protocol.EncryptionLev
 	}
 	h.messageChan <- data
 	if encLevel == protocol.Encryption1RTT {
-		h.handlePostHandshakeMessage()
+		h.handlePostHandshakeMessage(data)
 	}
 	switch h.perspective {
 	case protocol.PerspectiveClient:
@@ -456,7 +463,7 @@ func (h *cryptoSetup) maybeSendSessionTicket() {
 	}
 }
 
-func (h *cryptoSetup) handlePostHandshakeMessage() {
+func (h *cryptoSetup) handlePostHandshakeMessage(data []byte) {
 	// make sure the handshake has already completed
 	<-h.handshakeDone
 
@@ -491,21 +498,21 @@ func (h *cryptoSetup) ReadHandshakeMessage() ([]byte, error) {
 	return msg, nil
 }
 
-func (h *cryptoSetup) SetReadKey(encLevel qtls.EncryptionLevel, suite *qtls.CipherSuiteTLS13, trafficSecret []byte) {
+func (h *cryptoSetup) SetReadKey(encLevel qtls.EncryptionLevel, suite *qtls.CipherSuite, trafficSecret []byte) {
 	h.mutex.Lock()
 	switch encLevel {
 	case qtls.EncryptionHandshake:
 		h.readEncLevel = protocol.EncryptionHandshake
 		h.handshakeOpener = newLongHeaderOpener(
 			createAEAD(suite, trafficSecret),
-			newHeaderProtector(suite, trafficSecret, true),
+			createHeaderProtector(suite, trafficSecret),
 		)
-		h.logger.Debugf("Installed Handshake Read keys (using %s)", cipherSuiteName(suite.ID))
+		h.logger.Debugf("Installed Handshake Read keys")
 	case qtls.EncryptionApplication:
 		h.readEncLevel = protocol.Encryption1RTT
 		h.aead.SetReadKey(suite, trafficSecret)
 		h.has1RTTOpener = true
-		h.logger.Debugf("Installed 1-RTT Read keys (using %s)", cipherSuiteName(suite.ID))
+		h.logger.Debugf("Installed 1-RTT Read keys")
 	default:
 		panic("unexpected read encryption level")
 	}
@@ -513,21 +520,21 @@ func (h *cryptoSetup) SetReadKey(encLevel qtls.EncryptionLevel, suite *qtls.Ciph
 	h.receivedReadKey <- struct{}{}
 }
 
-func (h *cryptoSetup) SetWriteKey(encLevel qtls.EncryptionLevel, suite *qtls.CipherSuiteTLS13, trafficSecret []byte) {
+func (h *cryptoSetup) SetWriteKey(encLevel qtls.EncryptionLevel, suite *qtls.CipherSuite, trafficSecret []byte) {
 	h.mutex.Lock()
 	switch encLevel {
 	case qtls.EncryptionHandshake:
 		h.writeEncLevel = protocol.EncryptionHandshake
 		h.handshakeSealer = newLongHeaderSealer(
 			createAEAD(suite, trafficSecret),
-			newHeaderProtector(suite, trafficSecret, true),
+			createHeaderProtector(suite, trafficSecret),
 		)
-		h.logger.Debugf("Installed Handshake Write keys (using %s)", cipherSuiteName(suite.ID))
+		h.logger.Debugf("Installed Handshake Write keys")
 	case qtls.EncryptionApplication:
 		h.writeEncLevel = protocol.Encryption1RTT
 		h.aead.SetWriteKey(suite, trafficSecret)
 		h.has1RTTSealer = true
-		h.logger.Debugf("Installed 1-RTT Write keys (using %s)", cipherSuiteName(suite.ID))
+		h.logger.Debugf("Installed 1-RTT Write keys")
 	default:
 		panic("unexpected write encryption level")
 	}

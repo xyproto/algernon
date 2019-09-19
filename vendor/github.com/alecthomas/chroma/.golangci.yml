@@ -14,7 +14,6 @@ linters:
     - lll
     - gocyclo
     - dupl
-    - gochecknoglobals
 
 linters-settings:
   govet:

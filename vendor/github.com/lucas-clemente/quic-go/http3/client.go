@@ -17,7 +17,6 @@ import (
 )
 
 const defaultUserAgent = "quic-go HTTP/3"
-const defaultMaxResponseHeaderBytes = 10 * 1 << 20 // 10 MB
 
 var defaultQuicConfig = &quic.Config{KeepAlive: true}
 
@@ -25,7 +24,6 @@ var dialAddr = quic.DialAddr
 
 type roundTripperOpts struct {
 	DisableCompression bool
-	MaxHeaderBytes     int64
 }
 
 // client is a HTTP3 client doing requests
@@ -57,11 +55,10 @@ func newClient(
 ) *client {
 	if tlsConf == nil {
 		tlsConf = &tls.Config{}
-	} else {
-		tlsConf = tlsConf.Clone()
 	}
-	// Replace existing ALPNs by H3
-	tlsConf.NextProtos = []string{nextProtoH3}
+	if !strSliceContains(tlsConf.NextProtos, nextProtoH3) {
+		tlsConf.NextProtos = append(tlsConf.NextProtos, nextProtoH3)
+	}
 	if quicConfig == nil {
 		quicConfig = defaultQuicConfig
 	}
@@ -98,6 +95,7 @@ func (c *client) dial() error {
 		}
 	}()
 
+	// TODO: send a SETTINGS frame
 	return nil
 }
 
@@ -123,14 +121,8 @@ func (c *client) Close() error {
 	return c.session.Close()
 }
 
-func (c *client) maxHeaderBytes() uint64 {
-	if c.opts.MaxHeaderBytes <= 0 {
-		return defaultMaxResponseHeaderBytes
-	}
-	return uint64(c.opts.MaxHeaderBytes)
-}
-
-// RoundTrip executes a request and returns a response
+// Roundtrip executes a request and returns a response
+// TODO: handle request cancelations
 func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 	if req.URL.Scheme != "https" {
 		return nil, errors.New("http3: unsupported scheme")
@@ -152,63 +144,31 @@ func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	rsp, rerr := c.doRequest(req, str)
-	if rerr.streamErr != 0 {
-		str.CancelWrite(quic.ErrorCode(rerr.streamErr))
-	}
-	if rerr.connErr != 0 {
-		var reason string
-		if rerr.err != nil {
-			reason = rerr.err.Error()
-		}
-		c.session.CloseWithError(quic.ErrorCode(rerr.connErr), reason)
-	}
-	return rsp, rerr.err
-}
-
-func (c *client) doRequest(req *http.Request, str quic.Stream) (*http.Response, requestError) {
-	// Request Cancellation:
-	// This go routine keeps running even after RoundTrip() returns.
-	// It is shut down when the application is done processing the body.
-	reqDone := make(chan struct{})
-	go func() {
-		select {
-		case <-req.Context().Done():
-			str.CancelWrite(quic.ErrorCode(errorRequestCanceled))
-			str.CancelRead(quic.ErrorCode(errorRequestCanceled))
-		case <-reqDone:
-		}
-	}()
-
 	var requestGzip bool
 	if !c.opts.DisableCompression && req.Method != "HEAD" && req.Header.Get("Accept-Encoding") == "" && req.Header.Get("Range") == "" {
 		requestGzip = true
 	}
 	if err := c.requestWriter.WriteRequest(str, req, requestGzip); err != nil {
-		return nil, newStreamError(errorInternalError, err)
+		return nil, err
 	}
 
 	frame, err := parseNextFrame(str)
 	if err != nil {
-		return nil, newStreamError(errorFrameError, err)
+		return nil, err
 	}
 	hf, ok := frame.(*headersFrame)
 	if !ok {
-		return nil, newConnError(errorUnexpectedFrame, errors.New("expected first frame to be a HEADERS frame"))
+		return nil, errors.New("not a HEADERS frame")
 	}
-	if hf.Length > c.maxHeaderBytes() {
-		return nil, newStreamError(errorFrameError, fmt.Errorf("HEADERS frame too large: %d bytes (max: %d)", hf.Length, c.maxHeaderBytes()))
-	}
+	// TODO: check size
 	headerBlock := make([]byte, hf.Length)
 	if _, err := io.ReadFull(str, headerBlock); err != nil {
-		return nil, newStreamError(errorRequestIncomplete, err)
+		return nil, err
 	}
 	hfs, err := c.decoder.DecodeFull(headerBlock)
 	if err != nil {
-		// TODO: use the right error code
-		return nil, newConnError(errorGeneralProtocolError, err)
+		return nil, err
 	}
-
 	res := &http.Response{
 		Proto:      "HTTP/3",
 		ProtoMajor: 3,
@@ -219,7 +179,7 @@ func (c *client) doRequest(req *http.Request, str quic.Stream) (*http.Response, 
 		case ":status":
 			status, err := strconv.Atoi(hf.Value)
 			if err != nil {
-				return nil, newStreamError(errorGeneralProtocolError, errors.New("malformed non-numeric status pseudo header"))
+				return nil, errors.New("malformed non-numeric status pseudo header")
 			}
 			res.StatusCode = status
 			res.Status = hf.Value + " " + http.StatusText(status)
@@ -227,7 +187,7 @@ func (c *client) doRequest(req *http.Request, str quic.Stream) (*http.Response, 
 			res.Header.Add(hf.Name, hf.Value)
 		}
 	}
-	respBody := newResponseBody(str, reqDone)
+	respBody := newResponseBody(&responseBody{str})
 	if requestGzip && res.Header.Get("Content-Encoding") == "gzip" {
 		res.Header.Del("Content-Encoding")
 		res.Header.Del("Content-Length")
@@ -238,5 +198,5 @@ func (c *client) doRequest(req *http.Request, str quic.Stream) (*http.Response, 
 		res.Body = respBody
 	}
 
-	return res, requestError{}
+	return res, nil
 }

@@ -13,68 +13,58 @@ import (
 // A StreamFrame of QUIC
 type StreamFrame struct {
 	StreamID       protocol.StreamID
-	Offset         protocol.ByteCount
-	Data           []byte
 	FinBit         bool
 	DataLenPresent bool
-
-	fromPool bool
+	Offset         protocol.ByteCount
+	Data           []byte
 }
 
-func parseStreamFrame(r *bytes.Reader, _ protocol.VersionNumber) (*StreamFrame, error) {
+func parseStreamFrame(r *bytes.Reader, version protocol.VersionNumber) (*StreamFrame, error) {
 	typeByte, err := r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 
 	hasOffset := typeByte&0x4 > 0
-	fin := typeByte&0x1 > 0
-	hasDataLen := typeByte&0x2 > 0
+	frame := &StreamFrame{
+		FinBit:         typeByte&0x1 > 0,
+		DataLenPresent: typeByte&0x2 > 0,
+	}
 
 	streamID, err := utils.ReadVarInt(r)
 	if err != nil {
 		return nil, err
 	}
-	var offset uint64
+	frame.StreamID = protocol.StreamID(streamID)
 	if hasOffset {
-		offset, err = utils.ReadVarInt(r)
+		offset, err := utils.ReadVarInt(r)
 		if err != nil {
 			return nil, err
 		}
+		frame.Offset = protocol.ByteCount(offset)
 	}
 
 	var dataLen uint64
-	if hasDataLen {
+	if frame.DataLenPresent {
 		var err error
 		dataLen, err = utils.ReadVarInt(r)
 		if err != nil {
 			return nil, err
 		}
+		// shortcut to prevent the unnecessary allocation of dataLen bytes
+		// if the dataLen is larger than the remaining length of the packet
+		// reading the packet contents would result in EOF when attempting to READ
+		if dataLen > uint64(r.Len()) {
+			return nil, io.EOF
+		}
 	} else {
 		// The rest of the packet is data
 		dataLen = uint64(r.Len())
 	}
-
-	var frame *StreamFrame
-	if dataLen < protocol.MinStreamFrameBufferSize {
-		frame = &StreamFrame{Data: make([]byte, dataLen)}
-	} else {
-		frame = GetStreamFrame()
-		// The STREAM frame can't be larger than the StreamFrame we obtained from the buffer,
-		// since those StreamFrames have a buffer length of the maximum packet size.
-		if dataLen > uint64(cap(frame.Data)) {
-			return nil, io.EOF
-		}
-		frame.Data = frame.Data[:dataLen]
-	}
-
-	frame.StreamID = protocol.StreamID(streamID)
-	frame.Offset = protocol.ByteCount(offset)
-	frame.FinBit = fin
-	frame.DataLenPresent = hasDataLen
-
 	if dataLen != 0 {
+		frame.Data = make([]byte, dataLen)
 		if _, err := io.ReadFull(r, frame.Data); err != nil {
+			// this should never happen, since we already checked the dataLen earlier
 			return nil, err
 		}
 	}
@@ -153,38 +143,26 @@ func (f *StreamFrame) MaxDataLen(maxSize protocol.ByteCount, version protocol.Ve
 }
 
 // MaybeSplitOffFrame splits a frame such that it is not bigger than n bytes.
-// It returns if the frame was actually split.
-// The frame might not be split if:
-// * the size is large enough to fit the whole frame
-// * the size is too small to fit even a 1-byte frame. In that case, the frame returned is nil.
-func (f *StreamFrame) MaybeSplitOffFrame(maxSize protocol.ByteCount, version protocol.VersionNumber) (*StreamFrame, bool /* was splitting required */) {
+// If n >= len(frame), nil is returned and nothing is modified.
+func (f *StreamFrame) MaybeSplitOffFrame(maxSize protocol.ByteCount, version protocol.VersionNumber) (*StreamFrame, error) {
 	if maxSize >= f.Length(version) {
-		return nil, false
+		return nil, nil
 	}
 
 	n := f.MaxDataLen(maxSize, version)
 	if n == 0 {
-		return nil, true
+		return nil, errors.New("too small")
+	}
+	newFrame := &StreamFrame{
+		FinBit:         false,
+		StreamID:       f.StreamID,
+		Offset:         f.Offset,
+		Data:           f.Data[:n],
+		DataLenPresent: f.DataLenPresent,
 	}
 
-	new := GetStreamFrame()
-	new.StreamID = f.StreamID
-	new.Offset = f.Offset
-	new.FinBit = false
-	new.DataLenPresent = f.DataLenPresent
-
-	// swap the data slices
-	new.Data, f.Data = f.Data, new.Data
-	new.fromPool, f.fromPool = f.fromPool, new.fromPool
-
-	f.Data = f.Data[:protocol.ByteCount(len(new.Data))-n]
-	copy(f.Data, new.Data[n:])
-	new.Data = new.Data[:n]
+	f.Data = f.Data[n:]
 	f.Offset += n
 
-	return new, true
-}
-
-func (f *StreamFrame) PutBack() {
-	putStreamFrame(f)
+	return newFrame, nil
 }
