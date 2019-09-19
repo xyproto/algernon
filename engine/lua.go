@@ -172,7 +172,9 @@ func (ac *Config) setLuaModulePath(curdir string) error {
 	lua.LuaLDir = absdir // ac.luaModuleDirectory
 	lua.LuaPathDefault = absdir + "/?.lua;" + absdir + "/?/init.lua;" + ac.serverDirOrFilename + "/?.lua;" + lua.LuaLDir + "/?/init.lua"
 
-	fmt.Println("SETTING LUA DIRECTORIES TO " + lua.LuaPathDefault)
+	fmt.Println("LUA DIRECTORIES")
+	fmt.Println("lua.LuaLDir", lua.LuaLDir)
+	fmt.Println("lua.LuaPathDefault", lua.LuaPathDefault)
 
 	return nil
 }
