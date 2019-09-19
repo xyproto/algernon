@@ -2,6 +2,7 @@
 
 Priority 1
 ----------
+- [ ] Add an example for writing a simple JSON/REST server.
 - [ ] Resolve all issues in the issue tracker.
 - [ ] Refresh all files, cache and certificates when receiving the USR1 signal.
 - [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
