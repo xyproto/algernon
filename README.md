@@ -13,6 +13,11 @@ Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperA
 
 All in one small self-contained executable.
 
+Distro Packages
+---------------
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/algernon.svg)](https://repology.org/project/algernon/versions)
+
 Quick installation (development version)
 ----------------------------------------
 
