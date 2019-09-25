@@ -46,19 +46,20 @@ var errUnsupportedVersion = errors.New("unsupported version")
 
 // The Header is the version independent part of the header
 type Header struct {
+	IsLongHeader bool
+	typeByte     byte
+	Type         protocol.PacketType
+
 	Version          protocol.VersionNumber
 	SrcConnectionID  protocol.ConnectionID
 	DestConnectionID protocol.ConnectionID
 
-	IsLongHeader bool
-	Type         protocol.PacketType
-	Length       protocol.ByteCount
+	Length protocol.ByteCount
 
 	Token                []byte
 	SupportedVersions    []protocol.VersionNumber // sent in a Version Negotiation Packet
 	OrigDestConnectionID protocol.ConnectionID    // sent in the Retry packet
 
-	typeByte  byte
 	parsedLen protocol.ByteCount // how many bytes were read while parsing this header
 }
 
@@ -214,9 +215,11 @@ func (h *Header) parseLongHeader(b *bytes.Reader) error {
 
 func (h *Header) parseVersionNegotiationPacket(b *bytes.Reader) error {
 	if b.Len() == 0 {
+		//nolint:stylecheck
 		return errors.New("Version Negotiation packet has empty version list")
 	}
 	if b.Len()%4 != 0 {
+		//nolint:stylecheck
 		return errors.New("Version Negotiation packet has a version list with an invalid length")
 	}
 	h.SupportedVersions = make([]protocol.VersionNumber, b.Len()/4)
