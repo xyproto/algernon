@@ -43,7 +43,7 @@ func setKeyUpdateInterval() {
 }
 
 type updatableAEAD struct {
-	suite *qtls.CipherSuiteTLS13
+	suite cipherSuite
 
 	keyPhase          protocol.KeyPhase
 	largestAcked      protocol.PacketNumber
@@ -59,16 +59,14 @@ type updatableAEAD struct {
 	numSentWithCurrentKey   uint64
 	rcvAEAD                 cipher.AEAD
 	sendAEAD                cipher.AEAD
-	// caches cipher.AEAD.Overhead(). This speeds up calls to Overhead().
-	aeadOverhead int
 
 	nextRcvAEAD           cipher.AEAD
 	nextSendAEAD          cipher.AEAD
 	nextRcvTrafficSecret  []byte
 	nextSendTrafficSecret []byte
 
-	headerDecrypter headerProtector
-	headerEncrypter headerProtector
+	hpDecrypter cipher.Block
+	hpEncrypter cipher.Block
 
 	rttStats *congestion.RTTStats
 
@@ -76,6 +74,7 @@ type updatableAEAD struct {
 
 	// use a single slice to avoid allocations
 	nonceBuf []byte
+	hpMask   []byte
 }
 
 var _ ShortHeaderOpener = &updatableAEAD{}
@@ -92,19 +91,19 @@ func newUpdatableAEAD(rttStats *congestion.RTTStats, logger utils.Logger) *updat
 	}
 }
 
-func (a *updatableAEAD) rollKeys(now time.Time) {
+func (a *updatableAEAD) rollKeys() {
 	a.keyPhase++
 	a.firstRcvdWithCurrentKey = protocol.InvalidPacketNumber
 	a.firstSentWithCurrentKey = protocol.InvalidPacketNumber
 	a.numRcvdWithCurrentKey = 0
 	a.numSentWithCurrentKey = 0
 	a.prevRcvAEAD = a.rcvAEAD
-	a.prevRcvAEADExpiry = now.Add(3 * a.rttStats.PTO())
+	a.prevRcvAEADExpiry = time.Now().Add(3 * a.rttStats.PTO())
 	a.rcvAEAD = a.nextRcvAEAD
 	a.sendAEAD = a.nextSendAEAD
 
-	a.nextRcvTrafficSecret = a.getNextTrafficSecret(a.suite.Hash, a.nextRcvTrafficSecret)
-	a.nextSendTrafficSecret = a.getNextTrafficSecret(a.suite.Hash, a.nextSendTrafficSecret)
+	a.nextRcvTrafficSecret = a.getNextTrafficSecret(a.suite.Hash(), a.nextRcvTrafficSecret)
+	a.nextSendTrafficSecret = a.getNextTrafficSecret(a.suite.Hash(), a.nextSendTrafficSecret)
 	a.nextRcvAEAD = createAEAD(a.suite, a.nextRcvTrafficSecret)
 	a.nextSendAEAD = createAEAD(a.suite, a.nextSendTrafficSecret)
 }
@@ -115,36 +114,36 @@ func (a *updatableAEAD) getNextTrafficSecret(hash crypto.Hash, ts []byte) []byte
 
 // For the client, this function is called before SetWriteKey.
 // For the server, this function is called after SetWriteKey.
-func (a *updatableAEAD) SetReadKey(suite *qtls.CipherSuiteTLS13, trafficSecret []byte) {
+func (a *updatableAEAD) SetReadKey(suite cipherSuite, trafficSecret []byte) {
 	a.rcvAEAD = createAEAD(suite, trafficSecret)
-	a.headerDecrypter = newHeaderProtector(suite, trafficSecret, false)
+	a.hpDecrypter = createHeaderProtector(suite, trafficSecret)
 	if a.suite == nil {
 		a.nonceBuf = make([]byte, a.rcvAEAD.NonceSize())
-		a.aeadOverhead = a.rcvAEAD.Overhead()
+		a.hpMask = make([]byte, a.hpDecrypter.BlockSize())
 		a.suite = suite
 	}
 
-	a.nextRcvTrafficSecret = a.getNextTrafficSecret(suite.Hash, trafficSecret)
+	a.nextRcvTrafficSecret = a.getNextTrafficSecret(suite.Hash(), trafficSecret)
 	a.nextRcvAEAD = createAEAD(suite, a.nextRcvTrafficSecret)
 }
 
 // For the client, this function is called after SetReadKey.
 // For the server, this function is called before SetWriteKey.
-func (a *updatableAEAD) SetWriteKey(suite *qtls.CipherSuiteTLS13, trafficSecret []byte) {
+func (a *updatableAEAD) SetWriteKey(suite cipherSuite, trafficSecret []byte) {
 	a.sendAEAD = createAEAD(suite, trafficSecret)
-	a.headerEncrypter = newHeaderProtector(suite, trafficSecret, false)
+	a.hpEncrypter = createHeaderProtector(suite, trafficSecret)
 	if a.suite == nil {
 		a.nonceBuf = make([]byte, a.sendAEAD.NonceSize())
-		a.aeadOverhead = a.sendAEAD.Overhead()
+		a.hpMask = make([]byte, a.hpEncrypter.BlockSize())
 		a.suite = suite
 	}
 
-	a.nextSendTrafficSecret = a.getNextTrafficSecret(suite.Hash, trafficSecret)
+	a.nextSendTrafficSecret = a.getNextTrafficSecret(suite.Hash(), trafficSecret)
 	a.nextSendAEAD = createAEAD(suite, a.nextSendTrafficSecret)
 }
 
-func (a *updatableAEAD) Open(dst, src []byte, rcvTime time.Time, pn protocol.PacketNumber, kp protocol.KeyPhaseBit, ad []byte) ([]byte, error) {
-	if a.prevRcvAEAD != nil && rcvTime.After(a.prevRcvAEADExpiry) {
+func (a *updatableAEAD) Open(dst, src []byte, pn protocol.PacketNumber, kp protocol.KeyPhaseBit, ad []byte) ([]byte, error) {
+	if a.prevRcvAEAD != nil && time.Now().After(a.prevRcvAEADExpiry) {
 		a.prevRcvAEAD = nil
 		a.prevRcvAEADExpiry = time.Time{}
 	}
@@ -176,7 +175,7 @@ func (a *updatableAEAD) Open(dst, src []byte, rcvTime time.Time, pn protocol.Pac
 		if a.firstSentWithCurrentKey == protocol.InvalidPacketNumber {
 			return nil, qerr.Error(qerr.ProtocolViolation, "keys updated too quickly")
 		}
-		a.rollKeys(rcvTime)
+		a.rollKeys()
 		a.logger.Debugf("Peer updated keys to %s", a.keyPhase)
 		a.firstRcvdWithCurrentKey = pn
 		return dec, err
@@ -233,19 +232,33 @@ func (a *updatableAEAD) shouldInitiateKeyUpdate() bool {
 
 func (a *updatableAEAD) KeyPhase() protocol.KeyPhaseBit {
 	if a.shouldInitiateKeyUpdate() {
-		a.rollKeys(time.Now())
+		a.rollKeys()
 	}
 	return a.keyPhase.Bit()
 }
 
 func (a *updatableAEAD) Overhead() int {
-	return a.aeadOverhead
+	return a.sendAEAD.Overhead()
 }
 
-func (a *updatableAEAD) EncryptHeader(sample []byte, firstByte *byte, hdrBytes []byte) {
-	a.headerEncrypter.EncryptHeader(sample, firstByte, hdrBytes)
+func (a *updatableAEAD) EncryptHeader(sample []byte, firstByte *byte, pnBytes []byte) {
+	if len(sample) != a.hpEncrypter.BlockSize() {
+		panic("invalid sample size")
+	}
+	a.hpEncrypter.Encrypt(a.hpMask, sample)
+	*firstByte ^= a.hpMask[0] & 0x1f
+	for i := range pnBytes {
+		pnBytes[i] ^= a.hpMask[i+1]
+	}
 }
 
-func (a *updatableAEAD) DecryptHeader(sample []byte, firstByte *byte, hdrBytes []byte) {
-	a.headerDecrypter.DecryptHeader(sample, firstByte, hdrBytes)
+func (a *updatableAEAD) DecryptHeader(sample []byte, firstByte *byte, pnBytes []byte) {
+	if len(sample) != a.hpDecrypter.BlockSize() {
+		panic("invalid sample size")
+	}
+	a.hpDecrypter.Encrypt(a.hpMask, sample)
+	*firstByte ^= a.hpMask[0] & 0x1f
+	for i := range pnBytes {
+		pnBytes[i] ^= a.hpMask[i+1]
+	}
 }

@@ -46,11 +46,6 @@ type RoundTripper struct {
 	// If Dial is nil, quic.DialAddr will be used.
 	Dial func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.Session, error)
 
-	// MaxResponseHeaderBytes specifies a limit on how many response bytes are
-	// allowed in the server's response header.
-	// Zero means to use a default limit.
-	MaxResponseHeaderBytes int64
-
 	clients map[string]roundTripCloser
 }
 
@@ -133,10 +128,7 @@ func (r *RoundTripper) getClient(hostname string, onlyCached bool) (http.RoundTr
 		client = newClient(
 			hostname,
 			r.TLSClientConfig,
-			&roundTripperOpts{
-				DisableCompression: r.DisableCompression,
-				MaxHeaderBytes:     r.MaxResponseHeaderBytes,
-			},
+			&roundTripperOpts{DisableCompression: r.DisableCompression},
 			r.QuicConfig,
 			r.Dial,
 		)

@@ -1,14 +1,12 @@
 module github.com/xyproto/algernon
 
-go 1.12
+go 1.13
 
 require (
-	github.com/alecthomas/chroma v0.6.7 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.3
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
@@ -16,16 +14,15 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 	github.com/lib/pq v1.2.0
-	github.com/lucas-clemente/quic-go v0.7.1-0.20190917080620-9e6bff0b9872
+	github.com/lucas-clemente/quic-go v0.12.0
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.0
@@ -43,17 +40,13 @@ require (
 	github.com/xyproto/recwatch v0.0.0-20190815131735-c8f6c928dd10
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v0.0.0-20190613081550-5b2ecc9405cb
-	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20190919091103-4dd4111d2407
 	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 	github.com/xyproto/textoutput v1.7.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
-	golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
-	google.golang.org/appengine v1.6.3 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

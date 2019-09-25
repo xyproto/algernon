@@ -97,10 +97,5 @@ func VarIntLen(i uint64) protocol.ByteCount {
 	if i <= maxVarInt8 {
 		return 8
 	}
-	// Don't use a fmt.Sprintf here to format the error message.
-	// The function would then exceed the inlining budget.
-	panic(struct {
-		message string
-		num     uint64
-	}{"value doesn't fit into 62 bits: ", i})
+	panic(fmt.Sprintf("%#x doesn't fit into 62 bits", i))
 }

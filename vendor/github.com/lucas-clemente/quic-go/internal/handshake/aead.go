@@ -1,28 +1,32 @@
 package handshake
 
 import (
+	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/marten-seemann/qtls"
 )
 
 type sealer struct {
-	aead            cipher.AEAD
-	headerProtector headerProtector
+	aead        cipher.AEAD
+	hpEncrypter cipher.Block
 
 	// use a single slice to avoid allocations
 	nonceBuf []byte
+	hpMask   []byte
 }
 
 var _ LongHeaderSealer = &sealer{}
 
-func newLongHeaderSealer(aead cipher.AEAD, headerProtector headerProtector) LongHeaderSealer {
+func newLongHeaderSealer(aead cipher.AEAD, hpEncrypter cipher.Block) LongHeaderSealer {
 	return &sealer{
-		aead:            aead,
-		headerProtector: headerProtector,
-		nonceBuf:        make([]byte, aead.NonceSize()),
+		aead:        aead,
+		nonceBuf:    make([]byte, aead.NonceSize()),
+		hpEncrypter: hpEncrypter,
+		hpMask:      make([]byte, hpEncrypter.BlockSize()),
 	}
 }
 
@@ -34,7 +38,14 @@ func (s *sealer) Seal(dst, src []byte, pn protocol.PacketNumber, ad []byte) []by
 }
 
 func (s *sealer) EncryptHeader(sample []byte, firstByte *byte, pnBytes []byte) {
-	s.headerProtector.EncryptHeader(sample, firstByte, pnBytes)
+	if len(sample) != s.hpEncrypter.BlockSize() {
+		panic("invalid sample size")
+	}
+	s.hpEncrypter.Encrypt(s.hpMask, sample)
+	*firstByte ^= s.hpMask[0] & 0xf
+	for i := range pnBytes {
+		pnBytes[i] ^= s.hpMask[i+1]
+	}
 }
 
 func (s *sealer) Overhead() int {
@@ -42,20 +53,22 @@ func (s *sealer) Overhead() int {
 }
 
 type longHeaderOpener struct {
-	aead            cipher.AEAD
-	headerProtector headerProtector
+	aead        cipher.AEAD
+	pnDecrypter cipher.Block
 
 	// use a single slice to avoid allocations
 	nonceBuf []byte
+	hpMask   []byte
 }
 
 var _ LongHeaderOpener = &longHeaderOpener{}
 
-func newLongHeaderOpener(aead cipher.AEAD, headerProtector headerProtector) LongHeaderOpener {
+func newLongHeaderOpener(aead cipher.AEAD, pnDecrypter cipher.Block) LongHeaderOpener {
 	return &longHeaderOpener{
-		aead:            aead,
-		headerProtector: headerProtector,
-		nonceBuf:        make([]byte, aead.NonceSize()),
+		aead:        aead,
+		nonceBuf:    make([]byte, aead.NonceSize()),
+		pnDecrypter: pnDecrypter,
+		hpMask:      make([]byte, pnDecrypter.BlockSize()),
 	}
 }
 
@@ -71,11 +84,27 @@ func (o *longHeaderOpener) Open(dst, src []byte, pn protocol.PacketNumber, ad []
 }
 
 func (o *longHeaderOpener) DecryptHeader(sample []byte, firstByte *byte, pnBytes []byte) {
-	o.headerProtector.DecryptHeader(sample, firstByte, pnBytes)
+	if len(sample) != o.pnDecrypter.BlockSize() {
+		panic("invalid sample size")
+	}
+	o.pnDecrypter.Encrypt(o.hpMask, sample)
+	*firstByte ^= o.hpMask[0] & 0xf
+	for i := range pnBytes {
+		pnBytes[i] ^= o.hpMask[i+1]
+	}
 }
 
-func createAEAD(suite *qtls.CipherSuiteTLS13, trafficSecret []byte) cipher.AEAD {
-	key := qtls.HkdfExpandLabel(suite.Hash, trafficSecret, []byte{}, "quic key", suite.KeyLen)
-	iv := qtls.HkdfExpandLabel(suite.Hash, trafficSecret, []byte{}, "quic iv", suite.IVLen())
+func createAEAD(suite cipherSuite, trafficSecret []byte) cipher.AEAD {
+	key := qtls.HkdfExpandLabel(suite.Hash(), trafficSecret, []byte{}, "quic key", suite.KeyLen())
+	iv := qtls.HkdfExpandLabel(suite.Hash(), trafficSecret, []byte{}, "quic iv", suite.IVLen())
 	return suite.AEAD(key, iv)
+}
+
+func createHeaderProtector(suite cipherSuite, trafficSecret []byte) cipher.Block {
+	hpKey := qtls.HkdfExpandLabel(suite.Hash(), trafficSecret, []byte{}, "quic hp", suite.KeyLen())
+	hp, err := aes.NewCipher(hpKey)
+	if err != nil {
+		panic(fmt.Sprintf("error creating new AES cipher: %s", err))
+	}
+	return hp
 }

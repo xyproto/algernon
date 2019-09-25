@@ -174,9 +174,7 @@ func (h *receivedPacketTracker) GetAckFrame() *wire.AckFrame {
 
 	ack := &wire.AckFrame{
 		AckRanges: h.packetHistory.GetAckRanges(),
-		// Make sure that the DelayTime is always positive.
-		// This is not guaranteed on systems that don't have a monotonic clock.
-		DelayTime: utils.MaxDuration(0, now.Sub(h.largestObservedReceivedTime)),
+		DelayTime: now.Sub(h.largestObservedReceivedTime),
 	}
 
 	h.lastAck = ack

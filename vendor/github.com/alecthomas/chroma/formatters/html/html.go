@@ -157,7 +157,7 @@ func (f *Formatter) writeHTML(w io.Writer, style *chroma.Style, tokens []chroma.
 			fmt.Fprint(w, "</pre>")
 		}
 		fmt.Fprint(w, "</td>\n")
-		fmt.Fprintf(w, "<td%s>\n", f.styleAttr(css, chroma.LineTableTD, "width:100%"))
+		fmt.Fprintf(w, "<td%s>\n", f.styleAttr(css, chroma.LineTableTD))
 	}
 
 	if !f.preventSurroundingPre {
@@ -240,7 +240,7 @@ func (f *Formatter) class(t chroma.TokenType) string {
 	return ""
 }
 
-func (f *Formatter) styleAttr(styles map[chroma.TokenType]string, tt chroma.TokenType, extraCSS ...string) string {
+func (f *Formatter) styleAttr(styles map[chroma.TokenType]string, tt chroma.TokenType) string {
 	if f.Classes {
 		cls := f.class(tt)
 		if cls == "" {
@@ -257,9 +257,7 @@ func (f *Formatter) styleAttr(styles map[chroma.TokenType]string, tt chroma.Toke
 			}
 		}
 	}
-	css := []string{styles[tt]}
-	css = append(css, extraCSS...)
-	return fmt.Sprintf(` style="%s"`, strings.Join(css, ";"))
+	return fmt.Sprintf(` style="%s"`, styles[tt])
 }
 
 func (f *Formatter) tabWidthStyle() string {

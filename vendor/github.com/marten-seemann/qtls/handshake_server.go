@@ -7,7 +7,6 @@ package qtls
 import (
 	"crypto"
 	"crypto/ecdsa"
-	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/subtle"
 	"crypto/x509"
@@ -24,8 +23,8 @@ type serverHandshakeState struct {
 	clientHello  *clientHelloMsg
 	hello        *serverHelloMsg
 	suite        *cipherSuite
-	ecdhOk       bool
-	ecSignOk     bool
+	ellipticOk   bool
+	ecdsaOk      bool
 	rsaDecryptOk bool
 	rsaSignOk    bool
 	sessionState *sessionState
@@ -195,7 +194,7 @@ Curves:
 			break
 		}
 	}
-	hs.ecdhOk = supportedCurve && supportedPointFormat
+	hs.ellipticOk = supportedCurve && supportedPointFormat
 
 	foundCompression := false
 	// We only support null compression, so check that the client offered it.
@@ -268,9 +267,7 @@ Curves:
 	if priv, ok := hs.cert.PrivateKey.(crypto.Signer); ok {
 		switch priv.Public().(type) {
 		case *ecdsa.PublicKey:
-			hs.ecSignOk = true
-		case ed25519.PublicKey:
-			hs.ecSignOk = true
+			hs.ecdsaOk = true
 		case *rsa.PublicKey:
 			hs.rsaSignOk = true
 		default:
@@ -458,10 +455,9 @@ func (hs *serverHandshakeState) doFullHandshake() error {
 		}
 	}
 
-	var certReq *certificateRequestMsg
 	if c.config.ClientAuth >= RequestClientCert {
 		// Request a client certificate
-		certReq = new(certificateRequestMsg)
+		certReq := new(certificateRequestMsg)
 		certReq.certificateTypes = []byte{
 			byte(certTypeRSASign),
 			byte(certTypeECDSASign),
@@ -564,15 +560,15 @@ func (hs *serverHandshakeState) doFullHandshake() error {
 		}
 
 		// Determine the signature type.
-		_, sigType, hashFunc, err := pickSignatureAlgorithm(pub, []SignatureScheme{certVerify.signatureAlgorithm}, certReq.supportedSignatureAlgorithms, c.vers)
+		_, sigType, hashFunc, err := pickSignatureAlgorithm(pub, []SignatureScheme{certVerify.signatureAlgorithm}, supportedSignatureAlgorithmsTLS12, c.vers)
 		if err != nil {
 			c.sendAlert(alertIllegalParameter)
 			return err
 		}
 
-		signed, err := hs.finishedHash.hashForClientCertificate(sigType, hashFunc, hs.masterSecret)
-		if err == nil {
-			err = verifyHandshakeSignature(sigType, pub, hashFunc, signed, certVerify.signature)
+		var digest []byte
+		if digest, err = hs.finishedHash.hashForClientCertificate(sigType, hashFunc, hs.masterSecret); err == nil {
+			err = verifyHandshakeSignature(sigType, pub, hashFunc, digest, certVerify.signature)
 		}
 		if err != nil {
 			c.sendAlert(alertBadCertificate)
@@ -759,7 +755,7 @@ func (c *Conn) processCertsFromClient(certificate Certificate) error {
 	}
 
 	switch certs[0].PublicKey.(type) {
-	case *ecdsa.PublicKey, *rsa.PublicKey, ed25519.PublicKey:
+	case *ecdsa.PublicKey, *rsa.PublicKey:
 	default:
 		c.sendAlert(alertUnsupportedCertificate)
 		return fmt.Errorf("tls: client's certificate contains an unsupported public key of type %T", certs[0].PublicKey)
@@ -776,34 +772,33 @@ func (c *Conn) processCertsFromClient(certificate Certificate) error {
 // It returns a bool indicating if the suite was set.
 func (hs *serverHandshakeState) setCipherSuite(id uint16, supportedCipherSuites []uint16, version uint16) bool {
 	for _, supported := range supportedCipherSuites {
-		if id != supported {
-			continue
-		}
-		candidate := cipherSuiteByID(id)
-		if candidate == nil {
-			continue
-		}
-		// Don't select a ciphersuite which we can't
-		// support for this client.
-		if candidate.flags&suiteECDHE != 0 {
-			if !hs.ecdhOk {
+		if id == supported {
+			candidate := cipherSuiteByID(id)
+			if candidate == nil {
 				continue
 			}
-			if candidate.flags&suiteECSign != 0 {
-				if !hs.ecSignOk {
+			// Don't select a ciphersuite which we can't
+			// support for this client.
+			if candidate.flags&suiteECDHE != 0 {
+				if !hs.ellipticOk {
 					continue
 				}
-			} else if !hs.rsaSignOk {
+				if candidate.flags&suiteECDSA != 0 {
+					if !hs.ecdsaOk {
+						continue
+					}
+				} else if !hs.rsaSignOk {
+					continue
+				}
+			} else if !hs.rsaDecryptOk {
 				continue
 			}
-		} else if !hs.rsaDecryptOk {
-			continue
+			if version < VersionTLS12 && candidate.flags&suiteTLS12 != 0 {
+				continue
+			}
+			hs.suite = candidate
+			return true
 		}
-		if version < VersionTLS12 && candidate.flags&suiteTLS12 != 0 {
-			continue
-		}
-		hs.suite = candidate
-		return true
 	}
 	return false
 }

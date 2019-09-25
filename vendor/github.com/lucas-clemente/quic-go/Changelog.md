@@ -1,11 +1,6 @@
 # Changelog
 
-## v0.13.0 (unreleased)
-
-- Add an `EarlyListener` that allows sending of 0.5-RTT data.
-- Add a `TokenStore` to store address validation tokens.
-
-## v0.12.0 (2019-08-05)
+## v0.12.0 (unreleased)
 
 - Implement HTTP/3.
 - Rename `quic.Cookie` to `quic.Token` and `quic.Config.AcceptCookie` to `quic.Config.AcceptToken`.
