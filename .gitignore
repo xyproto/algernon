@@ -76,3 +76,6 @@ output.b64
 
 # regression tests
 regtest/issue13/large-file
+
+# Visual Studio Code
+.vscode
