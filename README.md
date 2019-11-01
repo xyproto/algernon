@@ -21,7 +21,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-### Go 1.12 or later
+### Go 1.11 or later
 
 Clone algernon outside of `GOPATH`:
 
@@ -29,9 +29,9 @@ Clone algernon outside of `GOPATH`:
     cd algernon
     go build -mod=vendor
 
-### Go 1.11
+This may also work
 
-See `README.md` in the `go111` branch.
+    go get -u github.com/xyproto/algernon
 
 Static build with support for TLS 1.3
 -------------------------------------
@@ -126,7 +126,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go 1.12 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
+* Requires Go 1.11 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
 
 Utilities
 ---------
@@ -248,15 +248,17 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-Go 1.12 or later:
+Go 1.11:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
 
-Go 1.11:
+Go 1.12 or later:
 
-    See `README.md` in the `go111` branch.
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    go build
 
 ##### Launch the "welcome" page
 
