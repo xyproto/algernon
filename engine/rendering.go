@@ -13,7 +13,6 @@ import (
 	"github.com/eknkc/amber"
 	"github.com/flosch/pongo2"
 	"github.com/jvatic/goja-babel"
-	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
 	"github.com/xyproto/algernon/console"
@@ -23,6 +22,7 @@ import (
 	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.

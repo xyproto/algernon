@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/russross/blackfriday"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gopher-lua"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 // FutureStatus is useful when redirecting in combination with writing to a
