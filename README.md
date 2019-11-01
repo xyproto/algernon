@@ -39,12 +39,10 @@ This may also work
 
     go get -u github.com/xyproto/algernon
 
-Static build with support for TLS 1.3
--------------------------------------
+Releases and pre-built images
+-----------------------------
 
-* [algernon](https://github.com/xyproto/algernon/releases/download/1.12.5/algernon-1.12.5-static_linux.tar.gz) (statically compiled ELF)
-
-See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for other platforms and architectures.
+See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for a variety of platforms and architectures.
 
 The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB.
 
