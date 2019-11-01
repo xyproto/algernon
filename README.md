@@ -21,13 +21,19 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-### Go 1.11 or later
+Go 1.11:
 
 Clone algernon outside of `GOPATH`:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
+
+Go 1.12 or later, or GCC 9.2 (`gccgo`):
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    go build
 
 This may also work
 
@@ -126,7 +132,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go 1.11 or later. Also, the package used for QUIC support fails to build with `gccgo` (GCC).
+* Requires Go 1.11 or later, or GCC 9.2 or later (`gccgo`).
 
 Utilities
 ---------
@@ -164,7 +170,7 @@ Running Algernon:
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_gopher.png">
 
-Screenshot of an erlier version:
+Screenshot of an earlier version:
 
 <img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
 
@@ -255,6 +261,12 @@ Go 1.11:
     go build -mod=vendor
 
 Go 1.12 or later:
+
+    git clone https://github.com/xyproto/algernon
+    cd algernon
+    go build
+
+GCC 9.2 (`gccgo`):
 
     git clone https://github.com/xyproto/algernon
     cd algernon
@@ -1089,7 +1101,7 @@ Serve files in one directory:
 
     algernon --accesslog=access.log -x
 
-Then visit the webpage once, to create one entry in the access.log.
+Then visit the web page once, to create one entry in the access.log.
 
 The wonderful [goaccess](https://goaccess.io) utility can then be used to view the access log, while it is being filled:
 
