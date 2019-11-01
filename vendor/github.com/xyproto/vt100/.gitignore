@@ -1,3 +1,8 @@
+*.tmp
+*.bak
+*.swp
+*~
+canvas.txt
 cmd/canvas/canvas
 cmd/color/color
 cmd/info/info
@@ -11,8 +16,4 @@ cmd/blink/blink
 cmd/bg/bg
 cmd/ok/ok
 cmd/widget/widget
-*.tmp
-*.bak
-*.swp
-*~
-canvas.txt
+cmd/editor/editor

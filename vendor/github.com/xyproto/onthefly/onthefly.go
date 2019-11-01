@@ -4,12 +4,13 @@ package onthefly
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
 const (
-	Version     = 0.9
+	Version     = 1.2
 	noAttribute = "NIL"
 )
 
@@ -431,4 +432,9 @@ func (page *Page) Publish(mux *http.ServeMux, htmlurl, cssurl string, refresh bo
 			fmt.Fprint(w, css)
 		})
 	}
+}
+
+// Save the current page as an SVG file
+func (page *Page) SaveSVG(filename string) error {
+	return ioutil.WriteFile(filename, []byte(page.GetXML(false)), 0644)
 }

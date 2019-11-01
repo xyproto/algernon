@@ -1,7 +1,8 @@
-# github.com/alecthomas/chroma v0.6.3
+# github.com/alecthomas/chroma v0.6.8
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
+github.com/alecthomas/chroma/styles
 github.com/alecthomas/chroma/lexers/a
 github.com/alecthomas/chroma/lexers/b
 github.com/alecthomas/chroma/lexers/c
@@ -28,7 +29,6 @@ github.com/alecthomas/chroma/lexers/v
 github.com/alecthomas/chroma/lexers/w
 github.com/alecthomas/chroma/lexers/x
 github.com/alecthomas/chroma/lexers/y
-github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 github.com/bmizerany/assert
 # github.com/cheekybits/genny v1.0.0
@@ -44,7 +44,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2 v1.1.6
+# github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
 # github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733
@@ -72,9 +72,15 @@ github.com/go-sql-driver/mysql
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
-github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/juju/errors v0.0.0-20190806202954-0232dcc7464d
+github.com/gomodule/redigo/internal
+# github.com/hpcloud/tail v1.0.0
+github.com/hpcloud/tail
+github.com/hpcloud/tail/ratelimiter
+github.com/hpcloud/tail/util
+github.com/hpcloud/tail/watch
+github.com/hpcloud/tail/winfile
+# github.com/juju/errors v0.0.0-20190930114154-d42613fe1ab9
 github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 github.com/jvatic/goja-babel
@@ -88,23 +94,11 @@ github.com/kr/text
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/lucas-clemente/quic-go v0.12.0
-github.com/lucas-clemente/quic-go
-github.com/lucas-clemente/quic-go/http3
-github.com/lucas-clemente/quic-go/internal/ackhandler
-github.com/lucas-clemente/quic-go/internal/congestion
-github.com/lucas-clemente/quic-go/internal/flowcontrol
-github.com/lucas-clemente/quic-go/internal/handshake
-github.com/lucas-clemente/quic-go/internal/protocol
-github.com/lucas-clemente/quic-go/internal/qerr
-github.com/lucas-clemente/quic-go/internal/utils
-github.com/lucas-clemente/quic-go/internal/wire
-github.com/lucas-clemente/quic-go/quictrace
-github.com/lucas-clemente/quic-go/quictrace/pb
+# github.com/marten-seemann/chacha20 v0.2.0
+github.com/marten-seemann/chacha20
+github.com/marten-seemann/chacha20/internal/subtle
 # github.com/marten-seemann/qpack v0.1.0
 github.com/marten-seemann/qpack
-# github.com/marten-seemann/qtls v0.3.2
-github.com/marten-seemann/qtls
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
 # github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
@@ -115,6 +109,25 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
+# github.com/onsi/ginkgo v1.10.3
+github.com/onsi/ginkgo
+github.com/onsi/ginkgo/config
+github.com/onsi/ginkgo/internal/codelocation
+github.com/onsi/ginkgo/internal/failer
+github.com/onsi/ginkgo/internal/remote
+github.com/onsi/ginkgo/internal/suite
+github.com/onsi/ginkgo/internal/testingtproxy
+github.com/onsi/ginkgo/internal/writer
+github.com/onsi/ginkgo/reporters
+github.com/onsi/ginkgo/reporters/stenographer
+github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
+github.com/onsi/ginkgo/types
+github.com/onsi/ginkgo/internal/spec_iterator
+github.com/onsi/ginkgo/internal/containernode
+github.com/onsi/ginkgo/internal/leafnodes
+github.com/onsi/ginkgo/internal/spec
+github.com/onsi/ginkgo/internal/specrunner
+github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
@@ -122,7 +135,7 @@ github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/russross/blackfriday v2.0.0+incompatible
 github.com/russross/blackfriday
-# github.com/shopspring/decimal v0.0.0-20190905144223-a36b5d85f337
+# github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
@@ -131,7 +144,12 @@ github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
 # github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
+github.com/wellington/sass/compiler
 github.com/wellington/sass/ast
+github.com/wellington/sass/calc
+github.com/wellington/sass/parser
+github.com/wellington/sass/token
+github.com/wellington/sass/scanner
 github.com/wellington/sass/ast/unit
 github.com/wellington/sass/builtin
 github.com/wellington/sass/builtin/colors
@@ -139,12 +157,7 @@ github.com/wellington/sass/builtin/introspect
 github.com/wellington/sass/builtin/list
 github.com/wellington/sass/builtin/strops
 github.com/wellington/sass/builtin/url
-github.com/wellington/sass/calc
-github.com/wellington/sass/compiler
-github.com/wellington/sass/parser
-github.com/wellington/sass/scanner
 github.com/wellington/sass/strops
-github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.0
 github.com/xyproto/ask
 # github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff
@@ -162,11 +175,11 @@ github.com/xyproto/gopher-lua/pm
 github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
 github.com/xyproto/mime
-# github.com/xyproto/onthefly v0.0.0-20180903110516-0f923083607c
+# github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
 github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v0.0.0-20190822174405-70061863efdb
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20190729074010-6510c7590749
+# github.com/xyproto/permissions2 v0.0.0-20191007164607-8bc6a69b73b4
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20190314100438-d55e4b7cdf90
 github.com/xyproto/permissionsql
@@ -174,6 +187,21 @@ github.com/xyproto/permissionsql
 github.com/xyproto/pinterface
 # github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 github.com/xyproto/pstore
+# github.com/xyproto/qtls v1.0.1
+github.com/xyproto/qtls
+# github.com/xyproto/quic v1.0.1
+github.com/xyproto/quic/http3
+github.com/xyproto/quic
+github.com/xyproto/quic/internal/protocol
+github.com/xyproto/quic/internal/utils
+github.com/xyproto/quic/internal/ackhandler
+github.com/xyproto/quic/internal/congestion
+github.com/xyproto/quic/internal/flowcontrol
+github.com/xyproto/quic/internal/handshake
+github.com/xyproto/quic/internal/qerr
+github.com/xyproto/quic/internal/wire
+github.com/xyproto/quic/quictrace
+github.com/xyproto/quic/quictrace/pb
 # github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v0.0.0-20190815131735-c8f6c928dd10
@@ -182,61 +210,67 @@ github.com/xyproto/recwatch
 github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v0.0.0-20190613081550-5b2ecc9405cb
 github.com/xyproto/simplebolt
-# github.com/xyproto/simplehstore v0.0.0-20190613092656-111ad9c15b85
+# github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b
 github.com/xyproto/simplehstore
-# github.com/xyproto/simplemaria v0.0.0-20181211083039-d325ae02395a
+# github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis v0.0.0-20190919091103-4dd4111d2407
+# github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
 github.com/xyproto/splash
-# github.com/xyproto/textoutput v1.7.0
+# github.com/xyproto/textoutput v1.8.0
 github.com/xyproto/textoutput
+# github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
+github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.4.0
+# github.com/xyproto/vt100 v1.5.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
+# golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/hkdf
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/cryptobyte
-golang.org/x/crypto/cryptobyte/asn1
 golang.org/x/crypto/curve25519
-golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20190923162816-aa69164e4478
-golang.org/x/net/http/httpguts
+golang.org/x/crypto/cryptobyte/asn1
+# golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
 golang.org/x/net/http2
+golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13
-golang.org/x/sys/cpu
+# golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c
 golang.org/x/sys/unix
+golang.org/x/sys/cpu
 # golang.org/x/text v0.3.2
 golang.org/x/text/cases
 golang.org/x/text/collate
+golang.org/x/text/language
+golang.org/x/text/unicode/norm
+golang.org/x/text/secure/bidirule
+golang.org/x/text/unicode/bidi
 golang.org/x/text/internal
+golang.org/x/text/transform
 golang.org/x/text/internal/colltab
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
-golang.org/x/text/language
-golang.org/x/text/secure/bidirule
-golang.org/x/text/transform
-golang.org/x/text/unicode/bidi
-golang.org/x/text/unicode/norm
-# golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
+# golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# google.golang.org/appengine v1.3.0
+# google.golang.org/appengine v1.6.5
 google.golang.org/appengine/cloudsql
+# gopkg.in/fsnotify.v1 v1.4.7
+gopkg.in/fsnotify.v1
 # gopkg.in/gcfg.v1 v1.2.3
 gopkg.in/gcfg.v1/scanner
 gopkg.in/gcfg.v1/token
 gopkg.in/gcfg.v1/types
+# gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
+gopkg.in/tomb.v1
 # gopkg.in/warnings.v0 v0.1.2
 gopkg.in/warnings.v0

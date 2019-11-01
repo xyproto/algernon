@@ -41,7 +41,7 @@ func NewCanvas() *Canvas {
 func (c *Canvas) FillBackground(bg AttributeColor) {
 	c.mut.Lock()
 	converted := bg.Background()
-	for i, _ := range c.chars {
+	for i := range c.chars {
 		c.chars[i].bg = converted
 		c.chars[i].drawn = false
 	}
@@ -51,7 +51,7 @@ func (c *Canvas) FillBackground(bg AttributeColor) {
 // Change the foreground color for each character
 func (c *Canvas) Fill(fg AttributeColor) {
 	c.mut.Lock()
-	for i, _ := range c.chars {
+	for i := range c.chars {
 		c.chars[i].fg = fg
 	}
 	c.mut.Unlock()
@@ -79,6 +79,14 @@ func (c *Canvas) String() string {
 // Return the size of the current canvas
 func (c *Canvas) Size() (uint, uint) {
 	return c.w, c.h
+}
+
+func (c *Canvas) Width() uint {
+	return c.w
+}
+
+func (c *Canvas) Height() uint {
+	return c.h
 }
 
 func umin(a, b uint) uint {
@@ -161,31 +169,85 @@ func (c *Canvas) H() uint {
 	return c.h
 }
 
+// Draw the entire canvas
 func (c *Canvas) Draw() {
-	// TODO: Consider using a single for-loop over index instead of 2 (x,y)
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	// Build a string per line
+	var line strings.Builder
 	for y := uint(0); y < c.h; y++ {
+		anythingChangedForThisLine := false
 		for x := uint(0); x < c.w; x++ {
-			c.mut.RLock()
 			ch := &((*c).chars[y*c.w+x])
 			if !ch.drawn {
-				c.mut.RUnlock()
-				SetXY(x, y)
-				c.mut.RLock()
-				if len(ch.bg) == 0 {
-					fmt.Print(ch.fg.Get(string(ch.s)))
-				} else if ch.s == rune(0) {
-					fmt.Print(ch.fg.Combine(ch.bg).Get(string(' ')))
-				} else {
-					fmt.Print(ch.fg.Combine(ch.bg).Get(string(ch.s)))
-				}
-				c.mut.RUnlock()
-				c.mut.Lock()
-				ch.drawn = true
-				c.mut.Unlock()
-			} else {
-				c.mut.RUnlock()
+				anythingChangedForThisLine = true
+				break
 			}
 		}
+		if !anythingChangedForThisLine {
+			continue
+		}
+		var lastfg, lastbg AttributeColor
+		for x := uint(0); x < c.w; x++ {
+			ch := &((*c).chars[y*c.w+x])
+			if !ch.drawn {
+				if len(ch.bg) != 0 {
+					if ch.s == rune(0) || len(string(ch.s)) == 0 {
+						// Write the color attributes, if they changed
+						if !ch.fg.Equal(lastfg) || !ch.bg.Equal(lastbg) {
+							line.WriteString(ch.fg.Combine(ch.bg).String())
+						}
+						lastfg = ch.fg
+						lastbg = ch.bg
+						// Write a blank
+						line.WriteRune(' ')
+					} else {
+						// Write the color attributes, if they changed
+						if !ch.fg.Equal(lastfg) || !ch.bg.Equal(lastbg) {
+							line.WriteString(ch.fg.Combine(ch.bg).String())
+						}
+						lastfg = ch.fg
+						lastbg = ch.bg
+						// Write the rune
+						line.WriteRune(ch.s)
+					}
+				} else {
+					if ch.s == rune(0) || len(string(ch.s)) == 0 {
+						// Write the color attributes, if they changed
+						if !ch.fg.Equal(lastfg) {
+							line.WriteString(ch.fg.String())
+						}
+						lastfg = ch.fg
+						lastbg = ch.bg
+						// Write a blank
+						line.WriteRune(' ')
+					} else {
+						// Write the color attributes, if they changed
+						if !ch.fg.Equal(lastfg) {
+							line.WriteString(ch.fg.String())
+						}
+						lastfg = ch.fg
+						lastbg = ch.bg
+						// Write the rune
+						line.WriteRune(ch.s)
+					}
+				}
+				ch.drawn = true
+			} else {
+				// Write the color attributes, if they changed
+				if !ch.fg.Equal(lastfg) || !ch.bg.Equal(lastbg) {
+					line.WriteString(ch.fg.Combine(ch.bg).String())
+				}
+				lastfg = ch.fg
+				lastbg = ch.bg
+				// Write a blank
+				line.WriteRune(' ')
+			}
+		}
+		line.WriteString(NoColor())
+		SetXY(0, y)
+		fmt.Print(line.String())
+		line.Reset()
 	}
 	SetXY(c.w-1, c.h-1)
 }
@@ -243,32 +305,32 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, s rune) {
 	c.mut.Unlock()
 }
 
-// Write will write a string to the canvas, without conversion of the background color bg to a background color (use bg.Background()). Beware that strings that consists of multi-byte runes may not be written correctly! For those cases, use WriteRune instead.
-func (c *Canvas) Write(x, y uint, fg, bg AttributeColor, s string) {
+// WriteString will write a string to the canvas.
+func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	if x < 0 || y < 0 {
 		return
 	}
 	if x >= c.w || y >= c.h {
 		return
 	}
-	index := y*c.w + x
-	c.mut.Lock()
 	chars := (*c).chars
-	lenchars := uint(len(chars))
-	//converted := bg.Background()
-	for si, r := range s {
-		i := index + uint(si)
-		if i < lenchars {
-			chars[i].s = r
-			chars[i].fg = fg
-			chars[i].bg = bg
-			chars[i].drawn = false
-		}
+	counter := uint(0)
+	for _, r := range s {
+		c.mut.Lock()
+		chars[y*c.w+x+counter].s = r
+		chars[y*c.w+x+counter].fg = fg
+		chars[y*c.w+x+counter].bg = bg.Background()
+		chars[y*c.w+x+counter].drawn = false
+		c.mut.Unlock()
+		counter++
 	}
-	c.mut.Unlock()
 }
 
-// WriteRune will write a colored rune to the canvas, without conversion of the bg color to a background color (use bg.Background()).
+func (c *Canvas) Write(x, y uint, fg, bg AttributeColor, s string) {
+	c.WriteString(x, y, fg, bg, s)
+}
+
+// WriteRune will write a colored rune to the canvas
 func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	if x < 0 || y < 0 {
 		return
@@ -281,7 +343,7 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	chars := (*c).chars
 	chars[index].s = r
 	chars[index].fg = fg
-	chars[index].bg = bg
+	chars[index].bg = bg.Background()
 	chars[index].drawn = false
 	c.mut.Unlock()
 }

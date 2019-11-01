@@ -1,7 +1,9 @@
 language: go
 
 addons:
-  - postgresql: "9.6"
+  - postgresql
+
+# "9.6", "11.5"
 
 services:
   - postgresql
@@ -13,6 +15,8 @@ go:
   - "1.9"
   - "1.10"
   - "1.11"
+  - "1.12"
+  - "1.13"
 
 os:
   - linux

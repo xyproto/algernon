@@ -5,13 +5,21 @@ import (
 	"fmt"
 	"github.com/xyproto/vt100"
 	"os"
+	"strconv"
 	"strings"
 )
 
+// CharAttribute is a rune and a color attribute
+type CharAttribute struct {
+	R rune
+	A vt100.AttributeColor
+}
+
+// TextOutput keeps state about verbosity and if colors are enabled
 type TextOutput struct {
 	color   bool
 	enabled bool
-	// Tag replacement structs
+	// Tag replacement structs, for performance
 	lightReplacer *strings.Replacer
 	darkReplacer  *strings.Replacer
 }
@@ -291,4 +299,58 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = ""
 	}
 	o.darkReplacer = strings.NewReplacer(rs...)
+}
+
+// Pair takes a string with ANSI codes and returns
+// a slice with two elements.
+func (o *TextOutput) Extract(s string) []CharAttribute {
+	escaped := false
+	var colorcode strings.Builder
+	var word strings.Builder
+	cc := make([]CharAttribute, 0)
+	var currentColor vt100.AttributeColor
+	for _, r := range s {
+		if r == '\033' {
+			escaped = true
+			w := word.String()
+			if w != "" {
+				//fmt.Println("cc", cc)
+				word.Reset()
+			}
+			continue
+		}
+		if escaped {
+			if r != 'm' {
+				colorcode.WriteRune(r)
+			} else if r == 'm' {
+				s := colorcode.String()
+				if strings.HasPrefix(s, "[") {
+					s = s[1:]
+				}
+				attributeStrings := strings.Split(s, ";")
+				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
+					currentColor = []byte{}
+				}
+				for _, attributeString := range attributeStrings {
+					attributeNumber, err := strconv.Atoi(attributeString)
+					if err != nil {
+						continue
+					}
+					currentColor = append(currentColor, byte(attributeNumber))
+				}
+				// Strip away leading 0 color attribute, if there are more than 1
+				if len(currentColor) > 1 && currentColor[0] == 0 {
+					currentColor = currentColor[1:]
+				}
+				// currentColor now contains the last found color attributes,
+				// but as a vt100.AttributeColor.
+				colorcode.Reset()
+				escaped = false
+			}
+		} else {
+			cc = append(cc, CharAttribute{r, currentColor})
+		}
+	}
+	// if escaped is true here, there is something wrong
+	return cc
 }

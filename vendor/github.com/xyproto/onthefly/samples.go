@@ -1,26 +1,28 @@
 package onthefly
 
-// Sample Tiny SVG drawing 1
-func SampleSVG1() *Page {
-	page, svg := NewTinySVG(0, 0, 30, 30)
-	desc := svg.AddNewTag("desc")
-	desc.AddContent("Sample SVG file 1")
+import (
+	"github.com/xyproto/tinysvg"
+)
+
+// SampleSVG1 returns a drawing sample, #1
+func SampleSVG1() []byte {
+	document, svg := tinysvg.NewTinySVG(30, 30)
+	svg.Describe("Sample SVG file 1")
 	rect := svg.AddRect(10, 10, 10, 10)
 	rect.Fill("green")
 	svg.Pixel(10, 10, 255, 0, 0)
 	svg.AlphaDot(5, 5, 0, 0, 255, 0.5)
-	return page
+	return document.Bytes()
 }
 
-// Sample Tiny SVG drawing 2
-func SampleSVG2() *Page {
+// SampleSVG2 returns a drawing sample, #2
+func SampleSVG2() []byte {
 	w := 160
 	h := 90
 	stepx := 8
 	stepy := 8
-	page, svg := NewTinySVG(0, 0, w, h)
-	desc := svg.AddNewTag("desc")
-	desc.AddContent("Sample SVG file 2")
+	document, svg := tinysvg.NewTinySVG(w, h)
+	svg.Describe("Sample SVG file 2")
 	increase := 0
 	decrease := 0
 	for y := stepy; y < h; y += stepy {
@@ -30,7 +32,7 @@ func SampleSVG2() *Page {
 			svg.Dot(x, y, 255, decrease, increase)
 		}
 	}
-	return page
+	return document.Bytes()
 }
 
 // Sample OnTheFly-page (generates HTML5+CSS)
@@ -68,11 +70,12 @@ func SamplePage(cssurl string) *Page {
 }
 
 // SampleStar draws a star at the given position
-func SampleStar(svg *Tag) {
-	points, err := PointsFromString("350,75 379,161 469,161 397,215 423,301 350,250 277,301 303,215 231,161 321,161")
+func SampleStar(svg *tinysvg.Tag) error {
+	points, err := tinysvg.PointsFromString("350,75 379,161 469,161 397,215 423,301 350,250 277,301 303,215 231,161 321,161")
 	if err != nil {
-		panic(err)
+		return err
 	}
-	polygon := svg.Polygon(points, NewColor("blue"))
+	polygon := svg.Polygon(points, tinysvg.NewColor("blue"))
 	polygon.Fill("red")
+	return nil
 }

@@ -130,6 +130,9 @@ func NewFromString(value string) (Decimal, error) {
 		// strip the insignificant digits for more accurate comparisons.
 		decimalPart := strings.TrimRight(parts[1], "0")
 		intString = parts[0] + decimalPart
+		if intString == "" && parts[1] != "" {
+			intString = "0"
+		}
 		expInt := -len(decimalPart)
 		exp += int64(expInt)
 	} else {
@@ -657,6 +660,7 @@ func (d Decimal) Exponent() int32 {
 
 // Coefficient returns the coefficient of the decimal.  It is scaled by 10^Exponent()
 func (d Decimal) Coefficient() *big.Int {
+	d.ensureInitialized()
 	// we copy the coefficient so that mutating the result does not mutate the
 	// Decimal.
 	return big.NewInt(0).Set(d.value)

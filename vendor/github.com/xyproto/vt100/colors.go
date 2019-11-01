@@ -38,14 +38,14 @@ var (
 	LightGray = NewAttributeColor("White")
 
 	// Light foreground colors (+ dark gray)
-	DarkGray     = NewAttributeColor("Bright", "Black")
-	LightRed     = NewAttributeColor("Bright", "Red")
-	LightGreen   = NewAttributeColor("Bright", "Green")
-	LightYellow  = NewAttributeColor("Bright", "Yellow")
-	LightBlue    = NewAttributeColor("Bright", "Blue")
-	LightMagenta = NewAttributeColor("Bright", "Magenta")
-	LightCyan    = NewAttributeColor("Bright", "Cyan")
-	White        = NewAttributeColor("Bright", "White")
+	DarkGray     = NewAttributeColor("90")
+	LightRed     = NewAttributeColor("91")
+	LightGreen   = NewAttributeColor("92")
+	LightYellow  = NewAttributeColor("93")
+	LightBlue    = NewAttributeColor("94")
+	LightMagenta = NewAttributeColor("95")
+	LightCyan    = NewAttributeColor("96")
+	White        = NewAttributeColor("97")
 
 	// Aliases
 	Pink = LightMagenta
@@ -88,8 +88,10 @@ var (
 		"Cyan":         Cyan,
 		"gray":         DarkGray,
 		"Gray":         DarkGray,
-		"white":        White,
-		"White":        White,
+		"white":        LightGray,
+		"White":        LightGray,
+		"lightwhite":   White,
+		"LightWhite":   White,
 		"darkred":      Red,
 		"DarkRed":      Red,
 		"darkgreen":    Green,
@@ -139,6 +141,8 @@ var (
 		"Gray":         LightGray,
 		"white":        White,
 		"White":        White,
+		"lightwhite":   White,
+		"LightWhite":   White,
 		"lightred":     LightRed,
 		"LightRed":     LightRed,
 		"lightgreen":   LightGreen,
@@ -332,7 +336,7 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	}
 	newAttributes := make(AttributeColor, len(amap))
 	index := 0
-	for attr, _ := range amap {
+	for attr := range amap {
 		newAttributes[index] = attr
 		index++
 	}

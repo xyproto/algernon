@@ -1,0 +1,28 @@
+run:
+  skip-files:
+    - internal/handshake/unsafe_test.go
+
+linters-settings:
+  misspell:
+    ignore-words:
+      - ect
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - goconst
+    - goimports
+    - gosimple
+    - ineffassign
+    - misspell
+    - prealloc
+    - scopelint
+    - staticcheck
+    - stylecheck
+    - structcheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - vet
