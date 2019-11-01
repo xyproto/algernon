@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/xyproto/quic/http3"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/http2"
@@ -163,6 +163,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			// TODO: Handle ctrl-c by fetching the quicServer struct and passing it to GenerateShutdownFunction.
 			//       This can be done once CloseGracefully in h2quic has been implemented:
 			//       https://github.com/lucas-clemente/quic-go/blob/master/h2quic/server.go#L257
+			// TODO: As far as I can tell, this was never implemented. Look into implementing this for github.com/xyproto/quic
 			//
 			// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
 			if err := http3.ListenAndServe(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {

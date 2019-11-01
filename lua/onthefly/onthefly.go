@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/onthefly"
+	"github.com/xyproto/tinysvg"
 )
 
 const (
@@ -114,20 +115,17 @@ func constructHTML5Page(L *lua.LState) (*lua.LUserData, error) {
 // Construct an onthefly.Page that represents a TinySVG object
 func constructTinySVGPage(L *lua.LState) (*lua.LUserData, error) {
 	// Use the first argument as the title of the page
-	x := L.ToInt(1)
-	y := L.ToInt(2)
-	w := L.ToInt(3)
-	h := L.ToInt(4)
-	description := L.ToString(5)
+	w := L.ToInt(1)
+	h := L.ToInt(2)
+	description := L.ToString(3)
 
 	// Create a new TinySVG Page
-	page, svgTag := onthefly.NewTinySVG(x, y, w, h)
-	descTag := svgTag.AddNewTag("desc")
-	descTag.AddContent(description)
+	document, svgTag := tinysvg.NewTinySVG(w, h)
+	svgTag.Describe(description)
 
 	// Create a new userdata struct
 	ud := L.NewUserData()
-	ud.Value = page
+	ud.Value = document
 	L.SetMetatable(ud, L.GetTypeMetatable(PageClass))
 
 	return ud, nil
