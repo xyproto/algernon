@@ -6,3 +6,4 @@ simple/simple
 output*.html
 
 docs/docs
+cmd/gendoc/gendoc

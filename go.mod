@@ -1,15 +1,13 @@
 module github.com/xyproto/algernon
 
-go 1.13
+go 1.11
 
 require (
-	github.com/alecthomas/chroma v0.6.8 // indirect
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.3
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
@@ -25,7 +23,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stvp/assert v0.0.0-20170616060220-4bc16443988b // indirect
@@ -50,7 +47,7 @@ require (
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect
 	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85
-	github.com/xyproto/splash v0.0.0-20190405073251-f213b9090528
+	github.com/xyproto/splash v0.0.0-20191101101845-976bc65146d5
 	github.com/xyproto/textoutput v1.8.0
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
@@ -60,5 +57,6 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
+	gopkg.in/russross/blackfriday.v2 v2.0.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
