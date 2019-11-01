@@ -40,7 +40,7 @@ require (
 	github.com/xyproto/permissionsql v0.0.0-20190314100438-d55e4b7cdf90
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
-	github.com/xyproto/quic v1.0.1
+	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
 	github.com/xyproto/recwatch v0.0.0-20190815131735-c8f6c928dd10
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v0.0.0-20190613081550-5b2ecc9405cb

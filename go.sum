@@ -256,8 +256,8 @@ github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7 h1:qqbB26/v7iYY8+RQ
 github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7/go.mod h1:HnRYu3TtKO81WKV23a3UdDGyZTFBWBSy9j+aSJCMn14=
 github.com/xyproto/qtls v1.0.1 h1:eo61CT3lZtIYsaobA+LnmyzaPfzbKmpaHXmGysCscSA=
 github.com/xyproto/qtls v1.0.1/go.mod h1:k9T4X89Gwyc2TJxwAopRkYgjuRnSu/yJ+3AG8Iq4adI=
-github.com/xyproto/quic v1.0.1 h1:mUYhKeIUiqdaV5NxnivKIgGuGltgcNB3WCADj1gNLg0=
-github.com/xyproto/quic v1.0.1/go.mod h1:K9mH8ii31LzkE8rqMhIukhRK4Ovx9k5mPR5a9uOxQjs=
+github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b h1:b+V2ucSPfoyMWBpbsmtrq0mFzNIYMPWKhFXJ0Hv5yDs=
+github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b/go.mod h1:K9mH8ii31LzkE8rqMhIukhRK4Ovx9k5mPR5a9uOxQjs=
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8fEA1DIpa1a4ZH+3opiHKZHs/y9ovbXF3xA=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=

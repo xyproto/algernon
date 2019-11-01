@@ -187,7 +187,7 @@ github.com/xyproto/pinterface
 github.com/xyproto/pstore
 # github.com/xyproto/qtls v1.0.1
 github.com/xyproto/qtls
-# github.com/xyproto/quic v1.0.1
+# github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
 github.com/xyproto/quic
 github.com/xyproto/quic/http3
 github.com/xyproto/quic/internal/ackhandler
