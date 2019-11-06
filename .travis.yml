@@ -1,6 +1,22 @@
 language: go
 
 go:
+    - "1.9"
+    - "1.10"
     - "1.11"
     - "1.12"
     - "1.13"
+
+notifications:
+  email: false
+  irc:
+    channels:
+      - "irc.freenode.net#algernon"
+    on_success: change
+    on_failure: always
+    template:
+      - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+      - "Change view : %{compare_url}"
+      - "Build details : %{build_url}"
+    use_notice: true
+    skip_join: true
