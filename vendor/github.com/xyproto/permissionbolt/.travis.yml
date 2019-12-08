@@ -1,16 +1,6 @@
 language: go
 
 go:
+  - "1.11"
   - "1.12"
-
-os:
-  - linux
-
-dist: trusty
-sudo: false
-
-install: true
-
-script:
-  - go build
-  - go test
+  - "1.13"

@@ -3,12 +3,15 @@
 package vt100
 
 import (
-	"github.com/pkg/term"
+	"strconv"
 	"time"
+	"unicode"
+
+	"github.com/pkg/term"
 )
 
 var (
-	defaultTimeout = 5 * time.Millisecond
+	defaultTimeout = 2 * time.Millisecond
 	lastKey        int
 )
 
@@ -230,4 +233,90 @@ func WaitForKey() {
 			return
 		}
 	}
+}
+
+// String will block and then return a string
+// Arrow keys are returned as ←, →, ↑ or ↓
+// returns an empty string if the pressed key could not be interpreted
+func (tty *TTY) String() string {
+	bytes := make([]byte, 3)
+	tty.RawMode()
+	//tty.NoBlock()
+	tty.SetTimeout(0)
+	numRead, err := tty.t.Read(bytes)
+	if err != nil {
+		return ""
+	}
+	tty.Restore()
+	tty.t.Flush()
+	if numRead == 3 && bytes[0] == 27 && bytes[1] == 91 {
+		// Three-character control sequence, beginning with "ESC-[".
+
+		// Since there are no ASCII codes for arrow keys, we use
+		// the last 4 values of a byte
+		if bytes[2] == 65 {
+			// Up
+			return "↑"
+		} else if bytes[2] == 66 {
+			// Down
+			return "↓"
+		} else if bytes[2] == 67 {
+			// Right
+			return "→"
+		} else if bytes[2] == 68 {
+			// Left
+			return "←"
+		}
+	} else if numRead == 1 {
+		r := rune(bytes[0])
+		if unicode.IsPrint(r) {
+			return string(r)
+		}
+		return "c:" + strconv.Itoa(int(r))
+	} else {
+		// Two or more bytes, a unicode character (or mashing several keys)
+		return string([]rune(string(bytes))[0])
+	}
+	return ""
+}
+
+// Rune will block and then return a rune.
+// Arrow keys are returned as ←, →, ↑ or ↓
+// returns a rune(0) if the pressed key could not be interpreted
+func (tty *TTY) Rune() rune {
+	bytes := make([]byte, 3)
+	tty.RawMode()
+	//tty.NoBlock()
+	tty.SetTimeout(0)
+	numRead, err := tty.t.Read(bytes)
+	if err != nil {
+		return rune(0)
+	}
+	tty.Restore()
+	tty.t.Flush()
+	if numRead == 3 && bytes[0] == 27 && bytes[1] == 91 {
+		// Three-character control sequence, beginning with "ESC-[".
+
+		// Since there are no ASCII codes for arrow keys, we use
+		// the last 4 values of a byte
+		if bytes[2] == 65 {
+			// Up
+			return '↑'
+		} else if bytes[2] == 66 {
+			// Down
+			return '↓'
+		} else if bytes[2] == 67 {
+			// Right
+			return '→'
+		} else if bytes[2] == 68 {
+			// Left
+			return '←'
+		}
+	} else if numRead == 1 {
+		return rune(bytes[0])
+	} else {
+		// Two or more bytes, a unicode character (or mashing several keys)
+		return []rune(string(bytes))[0]
+	}
+	return rune(0)
 }

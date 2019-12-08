@@ -110,7 +110,7 @@ func (state *UserState) UserRights(req *http.Request) bool {
 	return state.IsLoggedIn(username)
 }
 
-// HasUser checks if the given username exists.
+// HasUser checks if the given username exists in the current list of usernames.
 func (state *UserState) HasUser(username string) bool {
 	val, err := state.usernames.Has(username)
 	if err != nil {
@@ -489,7 +489,7 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
-		return "", errors.New("All existing users are already confirmed.")
+		return "", errors.New("all existing users are already confirmed")
 	}
 
 	// Find the username by looking up the confirmationCode on unconfirmed users
@@ -509,11 +509,11 @@ func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (str
 
 	// Check that the user is there
 	if username == "" {
-		return username, errors.New("The confirmation code is no longer valid.")
+		return username, errors.New("the confirmation code is no longer valid")
 	}
 	hasUser := state.HasUser(username)
 	if !hasUser {
-		return username, errors.New("The user that is to be confirmed no longer exists.")
+		return username, errors.New("the user that is to be confirmed no longer exists")
 	}
 
 	return username, nil
@@ -558,7 +558,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 		confirmationCode = cookie.RandomHumanFriendlyString(length)
 		if length > maxConfirmationCodeLength {
 			// This should never happen
-			return confirmationCode, errors.New("Too many generated confirmation codes are not unique!")
+			return confirmationCode, errors.New("too many generated confirmation codes are not unique")
 		}
 	}
 	return confirmationCode, nil
@@ -577,10 +577,10 @@ NEXT:
 				continue NEXT // check the next letter in the username
 			}
 		}
-		return errors.New("Only letters, numbers and underscore are allowed in usernames.")
+		return errors.New("only letters, numbers and underscore are allowed in usernames")
 	}
 	if username == password {
-		return errors.New("Username and password must be different, try another password.")
+		return errors.New("username and password must be different, try another password")
 	}
 	return nil
 }

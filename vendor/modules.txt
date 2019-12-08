@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.6.8
+# github.com/alecthomas/chroma v0.7.0
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20190912223329-aa89e6a4c733
+# github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -133,7 +133,7 @@ github.com/patrickmn/go-cache
 # github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
 github.com/pkg/term
 github.com/pkg/term/termios
-# github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5
+# github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
@@ -175,11 +175,11 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20190822174405-70061863efdb
+# github.com/xyproto/permissionbolt v0.0.0-20191106222133-08fe5bbae5f6
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20191007164607-8bc6a69b73b4
+# github.com/xyproto/permissions2 v0.0.0-20191113102357-75b6f16c2c47
 github.com/xyproto/permissions2
-# github.com/xyproto/permissionsql v0.0.0-20190314100438-d55e4b7cdf90
+# github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 github.com/xyproto/permissionsql
 # github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 github.com/xyproto/pinterface
@@ -214,35 +214,35 @@ github.com/xyproto/simplehstore
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85
 github.com/xyproto/simpleredis
-# github.com/xyproto/splash v0.0.0-20191101101845-976bc65146d5
+# github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd
 github.com/xyproto/splash
-# github.com/xyproto/textoutput v1.8.0
+# github.com/xyproto/textoutput v1.9.1
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.5.0
+# github.com/xyproto/vt100 v1.8.1
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf
+# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
-golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+# golang.org/x/net v0.0.0-20191207000613-e7e4b65ae663
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c
+# golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2

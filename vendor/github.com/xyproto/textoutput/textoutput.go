@@ -3,10 +3,11 @@ package textoutput
 
 import (
 	"fmt"
-	"github.com/xyproto/vt100"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/xyproto/vt100"
 )
 
 // CharAttribute is a rune and a color attribute
@@ -25,6 +26,10 @@ type TextOutput struct {
 }
 
 func NewTextOutput(color, enabled bool) *TextOutput {
+	// Respect the NO_COLOR environment variable
+	if os.Getenv("NO_COLOR") != "" {
+		color = false
+	}
 	o := &TextOutput{color, enabled, nil, nil}
 	o.initializeTagReplacers()
 	return o
@@ -58,7 +63,11 @@ func (o *TextOutput) Println(msg ...interface{}) {
 // Write an error message in red to stderr if output is enabled
 func (o *TextOutput) Err(msg string) {
 	if o.enabled {
-		vt100.Red.Error(msg)
+		if o.color {
+			vt100.Red.Error(msg)
+		} else {
+			vt100.Default.Error(msg)
+		}
 	}
 }
 
@@ -324,9 +333,7 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 				colorcode.WriteRune(r)
 			} else if r == 'm' {
 				s := colorcode.String()
-				if strings.HasPrefix(s, "[") {
-					s = s[1:]
-				}
+				s = strings.TrimPrefix(s, "[")
 				attributeStrings := strings.Split(s, ";")
 				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
 					currentColor = []byte{}

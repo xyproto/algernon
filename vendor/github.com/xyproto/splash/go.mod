@@ -3,7 +3,7 @@ module github.com/xyproto/splash
 go 1.11
 
 require (
-	github.com/alecthomas/chroma v0.6.8
+	github.com/alecthomas/chroma v0.7.0
 	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1 // indirect
 	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect

@@ -1,4 +1,4 @@
-# PermissionSQL [![Build Status](https://travis-ci.org/xyproto/permissionsql.svg?branch=master)](https://travis-ci.org/xyproto/permissionsql) [![GoDoc](https://godoc.org/github.com/xyproto/permissionsql?status.svg)](http://godoc.org/github.com/xyproto/permissionsql)
+# PermissionSQL [![Build Status](https://travis-ci.com/xyproto/permissionsql.svg?branch=master)](https://travis-ci.com/xyproto/permissionsql) [![GoDoc](https://godoc.org/github.com/xyproto/permissionsql?status.svg)](http://godoc.org/github.com/xyproto/permissionsql)
 
 Middleware for keeping track of users, login states and permissions.
 
@@ -25,7 +25,7 @@ For connecting to a MariaDB/MySQL host that is running locally, the `New` functi
 ## Requirements
 
 * MariaDB or MySQL
-* Go >= 1.7
+* Go >= 1.9
 
 ## Examples
 
