@@ -17,12 +17,11 @@ import (
 var (
 	// List of filenames that should be displayed instead of a directory listing
 	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx"}
-
 )
 
 const (
-	dotSlash = "." + utils.Pathsep           /* ./ */
-	doubleP  = utils.Pathsep + utils.Pathsep /* // */
+	dotSlash        = "." + utils.Pathsep           /* ./ */
+	doubleP         = utils.Pathsep + utils.Pathsep /* // */
 	dirconfFilename = ".algernon"
 )
 

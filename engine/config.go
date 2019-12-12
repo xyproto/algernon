@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jvatic/goja-babel"
+	babel "github.com/jvatic/goja-babel"
 	"github.com/mitchellh/colorstring"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
@@ -87,8 +87,8 @@ type Config struct {
 	// If only QUIC
 	serveJustQUIC bool
 
-	// If only using the Lua REPL
-	serveNothing bool
+	// If only using the Lua REPL, and not serving anything
+	onlyLuaMode bool
 
 	// Configuration that may only be set in the server configuration script(s)
 	serverAddrLua          string
@@ -672,7 +672,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// TODO: save repl history + close luapool + close logs ++ at shutdown
 
-	if ac.singleFileMode && filepath.Ext(ac.serverDirOrFilename) == ".lua" {
+	if ac.singleFileMode && (filepath.Ext(ac.serverDirOrFilename) == ".lua" || ac.onlyLuaMode) {
 		ac.luaServerFilename = ac.serverDirOrFilename
 		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
 			// Friendly message to new users
@@ -698,7 +698,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// strings meant for the terminal.
 	c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
-	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.serveNothing {
+	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
 	}
 
@@ -708,7 +708,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	for _, filename := range unique(ac.serverConfigurationFilenames) {
 		if ac.fs.Exists(filename) {
 			// Dividing line between the banner and output from any of the configuration scripts
-			if !ac.quietMode && !ac.serveNothing {
+			if !ac.quietMode && !ac.onlyLuaMode {
 				// Output the configuration filename
 				colorstring.Println(arrowColor + "-> " + filenameColor + filename + "[reset]")
 				fmt.Print(c.Color(luaOutputColor))
@@ -739,7 +739,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Run the standalone Lua server, if specified
 	if ac.luaServerFilename != "" {
 		// Run the Lua server file and set up handlers
-		if !ac.quietMode && !ac.serveNothing {
+		if !ac.quietMode && !ac.onlyLuaMode {
 			// Output the configuration filename
 			colorstring.Println(arrowColor + "-> " + filenameColor + ac.luaServerFilename + "[reset]")
 			fmt.Print(c.Color(luaOutputColor))
@@ -761,14 +761,14 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// (and can be set by both)
 	ranServerReadyFunction := ac.finalConfiguration(ac.serverHost)
 
-	if !ac.quietMode && !ac.serveNothing {
+	if !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Print(c.Color("[reset]"))
 	}
 
 	// If no configuration files were being ran successfully,
 	// output basic server information.
 	if len(ac.serverConfigurationFilenames) == 0 {
-		if !ac.quietMode && !ac.serveNothing {
+		if !ac.quietMode && !ac.onlyLuaMode {
 			fmt.Println(ac.Info())
 		}
 		ranServerReadyFunction = true
@@ -776,7 +776,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Separator between the output of the configuration scripts and
 	// the rest of the server output.
-	if ranServerReadyFunction && (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.serveNothing {
+	if ranServerReadyFunction && (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
 	}
 
