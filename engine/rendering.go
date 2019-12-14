@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/eknkc/amber"
-	"github.com/flosch/pongo2"
+	"github.com/xyproto/pongo2"
 	"github.com/jvatic/goja-babel"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"

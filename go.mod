@@ -10,13 +10,9 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
-	github.com/juju/errors v0.0.0-20190930114154-d42613fe1ab9 // indirect
-	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
-	github.com/juju/testing v0.0.0-20191001232224-ce9dec17d28b // indirect
 	github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-isatty v0.0.10 // indirect
@@ -41,6 +37,7 @@ require (
 	github.com/xyproto/permissions2 v0.0.0-20191113102357-75b6f16c2c47
 	github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
+	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
 	github.com/xyproto/recwatch v0.0.0-20190815131735-c8f6c928dd10
@@ -58,7 +55,6 @@ require (
 	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
-	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 	gopkg.in/russross/blackfriday.v2 v2.0.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

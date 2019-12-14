@@ -58,8 +58,6 @@ github.com/eknkc/amber
 github.com/eknkc/amber/parser
 # github.com/etcd-io/bbolt v1.3.3
 github.com/etcd-io/bbolt
-# github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
-github.com/flosch/pongo2
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
@@ -80,8 +78,6 @@ github.com/hpcloud/tail/ratelimiter
 github.com/hpcloud/tail/util
 github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
-# github.com/juju/errors v0.0.0-20190930114154-d42613fe1ab9
-github.com/juju/errors
 # github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
 github.com/jvatic/goja-babel
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
@@ -183,6 +179,8 @@ github.com/xyproto/permissions2
 github.com/xyproto/permissionsql
 # github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
 github.com/xyproto/pinterface
+# github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
+github.com/xyproto/pongo2
 # github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 github.com/xyproto/pstore
 # github.com/xyproto/qtls v1.0.1

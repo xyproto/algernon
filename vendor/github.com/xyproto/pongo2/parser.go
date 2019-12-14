@@ -1,10 +1,9 @@
 package pongo2
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/juju/errors"
 )
 
 type INode interface {
