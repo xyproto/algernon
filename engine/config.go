@@ -262,7 +262,7 @@ func New(versionString, description string) (*Config, error) {
 		defaultRedisColonPort:     ":6379",
 		defaultEventColonPort:     ":5553",
 		defaultEventRefresh:       "350ms",
-		defaultEventPath:          "/fs",
+		defaultEventPath:          "/sse",
 		defaultLimit:              10,
 		defaultPermissions:        0660,
 		defaultCacheSize:          1 * utils.MiB,   // 1 MiB
