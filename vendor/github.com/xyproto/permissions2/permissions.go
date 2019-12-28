@@ -2,9 +2,10 @@
 package permissions
 
 import (
-	"github.com/xyproto/pinterface"
 	"net/http"
 	"strings"
+
+	"github.com/xyproto/pinterface"
 )
 
 const (
@@ -160,16 +161,16 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 		}
 	}
 
-	// Reject if it's not a public page
-	found := false
+	// Don't reject if it's a public page
 	for _, prefix := range perm.publicPathPrefixes {
 		if strings.HasPrefix(path, prefix) {
-			found = true
-			break
+			// Don't reject
+			return false
 		}
 	}
 
-	return !found
+	// Reject
+	return true
 }
 
 // Middleware handler (compatible with Negroni)

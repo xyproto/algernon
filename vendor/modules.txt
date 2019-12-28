@@ -78,7 +78,7 @@ github.com/hpcloud/tail/ratelimiter
 github.com/hpcloud/tail/util
 github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
-# github.com/jvatic/goja-babel v0.0.0-20190524192434-5d6f64e2caa4
+# github.com/jvatic/goja-babel v0.0.0-20191226142409-36e9cc0df91a
 github.com/jvatic/goja-babel
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
@@ -86,7 +86,7 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
-# github.com/lib/pq v1.2.0
+# github.com/lib/pq v1.3.0
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
@@ -105,7 +105,7 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/onsi/ginkgo v1.10.3
+# github.com/onsi/ginkgo v1.11.0
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
 github.com/onsi/ginkgo/internal/codelocation
@@ -173,7 +173,7 @@ github.com/xyproto/mime
 github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v0.0.0-20191106222133-08fe5bbae5f6
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20191113102357-75b6f16c2c47
+# github.com/xyproto/permissions2 v0.0.0-20191218091146-b67b95e6d465
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 github.com/xyproto/permissionsql
@@ -224,7 +224,7 @@ github.com/xyproto/unzip
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+# golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -240,7 +240,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
+# golang.org/x/sys v0.0.0-20191224085550-c709ea063b76
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
