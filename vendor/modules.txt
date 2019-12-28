@@ -58,7 +58,7 @@ github.com/eknkc/amber
 github.com/eknkc/amber/parser
 # github.com/etcd-io/bbolt v1.3.3
 github.com/etcd-io/bbolt
-# github.com/fsnotify/fsnotify v1.4.7
+# github.com/fsnotify/fsnotify v1.4.8-0.20191012010759-4bf2d1fec783
 github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg

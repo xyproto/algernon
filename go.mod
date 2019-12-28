@@ -9,6 +9,7 @@ require (
 	github.com/ddliu/go-httpclient v0.6.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
+	github.com/fsnotify/fsnotify v1.4.8-0.20191012010759-4bf2d1fec783 // indirect
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/jvatic/goja-babel v0.0.0-20191226142409-36e9cc0df91a
