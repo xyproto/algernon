@@ -15,7 +15,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 3.4
+	Version = 4.0
 )
 
 type (
@@ -136,12 +136,7 @@ func (l *List) All() (results []string, err error) {
 	})
 }
 
-// GetAll is deprecated, please use .All() instead
-func (l *List) GetAll() ([]string, error) {
-	return l.All()
-}
-
-// Get the last element of a list
+// Last will return the last element of a list
 func (l *List) Last() (result string, err error) {
 	if l.name == nil {
 		return "", ErrDoesNotExist
@@ -159,12 +154,7 @@ func (l *List) Last() (result string, err error) {
 	})
 }
 
-// Deprecated
-func (l *List) GetLast() (string, error) {
-	return l.Last()
-}
-
-// Get the last N elements of a list
+// LastN will return the last N elements of a list
 func (l *List) LastN(n int) (results []string, err error) {
 	if l.name == nil {
 		return nil, ErrDoesNotExist
@@ -174,33 +164,26 @@ func (l *List) LastN(n int) (results []string, err error) {
 		if bucket == nil {
 			return ErrBucketNotFound
 		}
-		var size int64
-		bucket.ForEach(func(_, _ []byte) error {
-			size++
-			return nil // Continue ForEach
-		})
-		if size < int64(n) {
+		c := bucket.Cursor()
+		sizeBytes, _ := c.Last()
+		size := binary.BigEndian.Uint64(sizeBytes)
+		if size < uint64(n) {
 			return errors.New("Too few items in list")
 		}
-		// Ok, fetch the n last items. startPos is counting from 0.
-		var (
-			startPos = size - int64(n)
-			i        int64
-		)
-		bucket.ForEach(func(_, value []byte) error {
-			if i >= startPos {
-				results = append(results, string(value))
-			}
-			i++
-			return nil // Continue ForEach
-		})
+		// Ok, fetch the n last items. startPos is counting from (size - n)+1.
+		// +1 because Seek() moves to a specific key.
+		// e.g. if the size of the list is, say, 50, and we want the last 4
+		// elements, say, from 47 to 50 inclusive, then the calculation would be like this:
+		// size = 50
+		// n = 4
+		// startPos = size - n // startPos = 46
+		// startPos += 1 // startPos = 47
+		startPos := byteID(size - uint64(n) + 1)
+		for key, value := c.Seek(startPos); key != nil; key, value = c.Next() {
+			results = append(results, string(value))
+		}
 		return nil // Return from View function
 	})
-}
-
-// Deprecated
-func (l *List) GetLastN(n int) ([]string, error) {
-	return l.LastN(n)
 }
 
 // Remove this list
@@ -307,11 +290,6 @@ func (s *Set) All() (values []string, err error) {
 			return nil // Return from ForEach function
 		})
 	})
-}
-
-// GetAll is deprecated, please use .All() instead
-func (s *Set) GetAll() ([]string, error) {
-	return s.All()
 }
 
 // Remove an element from the set
@@ -423,11 +401,6 @@ func (h *HashMap) All() (results []string, err error) {
 			return nil // Continue ForEach
 		})
 	})
-}
-
-// GetAll is deprecated, please use .All() instead
-func (h *HashMap) GetAll() ([]string, error) {
-	return h.All()
 }
 
 // Get a value from a hashmap given the element id (for instance a user id) and the key (for instance "password")

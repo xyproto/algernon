@@ -15,7 +15,7 @@ Features and limitations
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
 * Requires Go 1.9 or later.
-* Does not support `gccgo`. Two recent versions of `gccgo` (7.2.0 and 8.2.1) are able to compile `simplebolt`, but does not appear to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
+* Does not support `gccgo`. Three recent versions of `gccgo` (7.2.0, 8.2.1 and 9.2.0) are able to compile `simplebolt`, but does not appear to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
 * Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
 Example usage
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	// Get the last item of the list
-	if item, err := list.GetLast(); err != nil {
+	if item, err := list.Last(); err != nil {
 		log.Fatalf("Could not fetch the last item from the list! %s", err)
 	} else {
 		log.Println("The value of the stored item is:", item)
@@ -67,6 +67,5 @@ Version, license and author
 ---------------------------
 
 * License: MIT
-* Version: 3.4.0
-* Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
-
+* Version: 4.0.1
+* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

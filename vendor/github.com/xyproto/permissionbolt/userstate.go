@@ -240,7 +240,7 @@ func (state *UserState) SetUsernameCookieOnlyHTTPS(w http.ResponseWriter, userna
 
 // AllUsernames retrieves a list of all usernames.
 func (state *UserState) AllUsernames() ([]string, error) {
-	return state.usernames.GetAll()
+	return state.usernames.All()
 }
 
 // Email returns the email address for the given username.
@@ -255,7 +255,7 @@ func (state *UserState) PasswordHash(username string) (string, error) {
 
 // AllUnconfirmedUsernames returns a list of all registered users that are not yet confirmed.
 func (state *UserState) AllUnconfirmedUsernames() ([]string, error) {
-	return state.unconfirmed.GetAll()
+	return state.unconfirmed.All()
 }
 
 // ConfirmationCode returns the stored confirmation code for a specific user.
