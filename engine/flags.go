@@ -101,6 +101,7 @@ Available flags:
   --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
   --ncsa=FILENAME              Alternative access log filename. Logged in Common Log Format (NCSA).
   --cookiesecret=STRING        Secret that will be used for login cookies.
+  -g, --gopher                 Also server over Gopher at port 70.
   -x, --simple                 Serve as regular HTTP, enable server mode and
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
@@ -134,7 +135,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
-		serveJustQUICShort, onlyLuaModeShort bool
+		serveJustQUICShort, onlyLuaModeShort, gopherShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -216,6 +217,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
+	flag.BoolVar(&ac.gopher, "gopher", false, "Also serve over Gopher at port 70")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -236,6 +238,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
 	flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
 	flag.BoolVar(&onlyLuaModeShort, "l", false, "Only present the Lua REPL")
+	flag.BoolVar(&gopherShort, "g", false, "Also serve over Gopher at port 70")
 
 	flag.Parse()
 
@@ -257,6 +260,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.noBanner = ac.noBanner || noBannerShort
 	ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
+	ac.gopher = ac.gopher || gopherShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {

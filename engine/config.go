@@ -242,6 +242,9 @@ type Config struct {
 
 	// Secret to be used when setting and getting user login cookies
 	cookieSecret string
+
+	// Also serve over the Gopher protocol?
+	gopher bool
 }
 
 // ErrVersion is returned when the initialization quits because all that is done

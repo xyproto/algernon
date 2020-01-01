@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xyproto/gopher"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"github.com/xyproto/quic/http3"
@@ -118,6 +119,14 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	servingHTTPS := false
 	servingHTTP := false
+
+	// Serve Gopher?
+	if ac.gopher {
+		go func() {
+			log.Info("Serving Gopher on gopher://localhost/ (port 70)")
+			log.Fatal(gopher.ListenAndServe("localhost:70", nil))
+		}()
+	}
 
 	// Goroutine that wait for a message to just serve regular HTTP, if needed
 	go func() {

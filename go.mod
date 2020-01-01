@@ -20,6 +20,7 @@ require (
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/prologic/go-gopher v0.0.0-20191226035442-664dbdb49f44
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
@@ -28,6 +29,7 @@ require (
 	github.com/xyproto/ask v1.0.0
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
+	github.com/xyproto/gopher v0.0.0-20191231124901-90259362bfd2
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9

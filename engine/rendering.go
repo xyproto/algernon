@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/eknkc/amber"
-	"github.com/xyproto/pongo2"
 	"github.com/jvatic/goja-babel"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
@@ -20,6 +19,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
 	"gopkg.in/russross/blackfriday.v2"
