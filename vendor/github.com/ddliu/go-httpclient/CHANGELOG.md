@@ -1,5 +1,9 @@
 ## Changelog
 
+### v0.6.4 (2020-01-03)
+
+Support context(cancel)
+
 ### v0.6.2 (2019-03-08)
 
 Fix concurrency issue.

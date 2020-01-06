@@ -37,7 +37,7 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
-# github.com/ddliu/go-httpclient v0.6.3
+# github.com/ddliu/go-httpclient v0.6.5
 github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.2+incompatible
 github.com/didip/tollbooth
@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f
+# github.com/dop251/goja v0.0.0-20200106141417-aaec0e7bde29
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -78,7 +78,7 @@ github.com/hpcloud/tail/ratelimiter
 github.com/hpcloud/tail/util
 github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
-# github.com/jvatic/goja-babel v0.0.0-20191230153719-24489a0183fb
+# github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 github.com/jvatic/goja-babel
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
@@ -129,7 +129,7 @@ github.com/patrickmn/go-cache
 # github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
 github.com/pkg/term
 github.com/pkg/term/termios
-# github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
+# github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
@@ -200,7 +200,7 @@ github.com/xyproto/quic/quictrace
 github.com/xyproto/quic/quictrace/pb
 # github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
 github.com/xyproto/randomstring
-# github.com/xyproto/recwatch v0.0.0-20191228152308-8c962c1c39cf
+# github.com/xyproto/recwatch v1.0.1
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
@@ -240,7 +240,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
+# golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2

@@ -5,6 +5,7 @@
 package httpclient
 
 import (
+	"context"
 	"fmt"
 
 	"bytes"
@@ -61,6 +62,8 @@ const (
 	OPT_PROXY_FUNC      = 100001
 	OPT_DEBUG           = 100002
 	OPT_UNSAFE_TLS      = 100004
+
+	OPT_CONTEXT = 100005
 )
 
 // String map of options
@@ -83,6 +86,7 @@ var CONST = map[string]int{
 	"OPT_PROXY_FUNC":      100001,
 	"OPT_DEBUG":           100002,
 	"OPT_UNSAFE_TLS":      100004,
+	"OPT_CONTEXT":         100005,
 }
 
 // Default options for any clients.
@@ -611,6 +615,12 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
 		}
 	}
 
+	if ctx, ok := options[OPT_CONTEXT]; ok {
+		if c, ok := ctx.(context.Context); ok {
+			req = req.WithContext(c)
+		}
+	}
+
 	res, err := c.Do(req)
 
 	return &Response{res}, err
@@ -648,6 +658,11 @@ func (this *HttpClient) Delete(url string, params ...interface{}) (*Response, er
 // (similar to CURL but different).
 func (this *HttpClient) Post(url string, params interface{}) (*Response,
 	error) {
+	t := checkParamsType(params)
+	if t == 2 {
+		return this.Do("POST", url, nil, toReader(params))
+	}
+
 	paramsValues := toUrlValues(params)
 	// Post with files should be sent as multipart.
 	if checkParamFile(paramsValues) {

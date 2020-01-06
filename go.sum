@@ -35,8 +35,8 @@ github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964/go.mod h1:Xd9
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/ddliu/go-httpclient v0.6.3 h1:WGayEAjRC2/EiZnJdTYiOLyxHcl0c2GhokZTTqTd4kQ=
-github.com/ddliu/go-httpclient v0.6.3/go.mod h1:8QVbjq00YK2f2MQyiKuWMdaKOFRcoD9VuubkNCNOuZo=
+github.com/ddliu/go-httpclient v0.6.5 h1:rdnUxXsPLKmYW4QAkTRPqK+6dSBIJLAwYk/AbQT+/xw=
+github.com/ddliu/go-httpclient v0.6.5/go.mod h1:zM9P0OxV4OGGz1pt/ibuj0ooX2SWH9a6MvXZLbT0JMc=
 github.com/didip/tollbooth v4.0.2+incompatible h1:fVSa33JzSz0hoh2NxpwZtksAzAgd7zjmGO20HCZtF4M=
 github.com/didip/tollbooth v4.0.2+incompatible/go.mod h1:A9b0665CE6l1KmzpDws2++elm/CsuWBMa5Jv4WY0PEY=
 github.com/dlclark/regexp2 v1.1.6 h1:CqB4MjHw0MFCDj+PHHjiESmHX+N7t0tJzKvC6M97BRg=
@@ -45,6 +45,8 @@ github.com/dlclark/regexp2 v1.2.0 h1:8sAhBGEM0dRWogWqWyQeIJnxjWO6oIjl8FKqREDsGfk
 github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f h1:vtCDQseO/Sbu5IZSoc2uzZ7CkSoai7OtpcwGFK5FlyE=
 github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
+github.com/dop251/goja v0.0.0-20200106141417-aaec0e7bde29 h1:Ewd9K+mC725sITA12QQHRqWj78NU4t7EhlFVVgdlzJg=
+github.com/dop251/goja v0.0.0-20200106141417-aaec0e7bde29/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/etcd-io/bbolt v1.3.3 h1:gSJmxrs37LgTqR/oyJBWok6k6SvXEUerFTbltIhXkBM=
@@ -90,8 +92,8 @@ github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCV
 github.com/json-iterator/go v1.1.7/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/juju/loggo v0.0.0-20180524022052-584905176618/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=
 github.com/juju/testing v0.0.0-20180920084828-472a3e8b2073/go.mod h1:63prj8cnj0tU0S9OHjGJn+b1h0ZghCndfnbQolrYTwA=
-github.com/jvatic/goja-babel v0.0.0-20191230153719-24489a0183fb h1:CFX1uK6rAH81ZMSl6RUcbX1mA6AkdwX/EWdHR4fMjy8=
-github.com/jvatic/goja-babel v0.0.0-20191230153719-24489a0183fb/go.mod h1:2Rjou2jq2BUH7Adnd9cIcU2fOYAIz2GxyuyqsNJm0N4=
+github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a h1:WuwcEKWfDriJzlronFYhSDz9me9Xl7UbanAxTHpCLXA=
+github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a/go.mod h1:2Rjou2jq2BUH7Adnd9cIcU2fOYAIz2GxyuyqsNJm0N4=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2 h1:DB17ag19krx9CFsz4o3enTrPXyIXCl+2iCXH/aMAp9s=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -157,8 +159,8 @@ github.com/rustyoz/genericlexer v0.0.0-20190224115003-eb82fd2987bd/go.mod h1:m65
 github.com/rustyoz/svg v0.0.0-20191013033824-9c58bd1781a3/go.mod h1:fzOwHlLapZc+KrYbBhrUNF9/Mu5VuQjnI2Apt9JQwlI=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
-github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045 h1:8CnFGhoe92Izugjok8nZEGYCNovJwdRFYwrEiLtG6ZQ=
-github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
+github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 h1:Pm6R878vxWWWR+Sa3ppsLce/Zq+JNTs6aVvRu13jv9A=
+github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/shurcooL/sanitized_anchor_name v1.0.0 h1:PdmoCO6wvbs+7yrJyMORt4/BmY5IYyJwS/kOiWx8mHo=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.4.2 h1:SPIRibHv4MatM3XXNO2BJeFLZwZ2LvZgfQ5+UNI2im4=
@@ -218,8 +220,8 @@ github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b/go.mod h1:K9mH8ii31
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8fEA1DIpa1a4ZH+3opiHKZHs/y9ovbXF3xA=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
-github.com/xyproto/recwatch v0.0.0-20191228152308-8c962c1c39cf h1:LuvJDZjwEz83u5YU5OZWUL09kOCFtp89DRqYcdnwPik=
-github.com/xyproto/recwatch v0.0.0-20191228152308-8c962c1c39cf/go.mod h1:d9sKuEA5ufehmsh4CHsfbQg10mqER/I20yRwUUba06E=
+github.com/xyproto/recwatch v1.0.1 h1:Bosb0eqC3+0kjtfPjLujWn3YMQFXmYTiJKSfR7awwxc=
+github.com/xyproto/recwatch v1.0.1/go.mod h1:iJB1gVNSudMxfQaBkjzgSwK2fZQWpquVdj5NbQpSW08=
 github.com/xyproto/sheepcounter v1.6.0 h1:7de0tc+lDP8XVZmL6ekB1hGNr6JaROx8AkCv4UTB5P0=
 github.com/xyproto/sheepcounter v1.6.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04 h1:nKZ+T6ndhXhrL4MsNoWXMJzpPtlYwy08Jmkz47NWnSc=
@@ -291,10 +293,10 @@ golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c h1:S/FtSvpNLtFBgjTqcKsRpsa6a
 golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191118133127-cf1e2d577169/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 h1:Dho5nD6R3PcW2SH1or8vS0dszDaXRxIw55lBX7XiE5g=
-golang.org/x/sys v0.0.0-20191224085550-c709ea063b76/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8 h1:JA8d3MPx/IToSyXZG/RhwYEtfrKO1Fxrqe8KrkiLXKM=
 golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e h1:LwyF2AFISC9nVbS6MgzsaQNSUsRXI49GS+YQ5KX/QH0=
+golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=

@@ -1,6 +1,6 @@
 # recwatch
 
-[![Build Status](https://travis-ci.org/xyproto/recwatch.svg?branch=master)](https://travis-ci.org/xyproto/recwatch)
+[![Build Status](https://travis-ci.com/xyproto/recwatch.svg?branch=master)](https://travis-ci.com/xyproto/recwatch)
 
 Watch filesystem changes recursively.
 
@@ -108,6 +108,6 @@ func main() {
 
 ## General info
 
-* Version: 0.3.0
+* Version: 1.0.1
 * License: Simplified BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

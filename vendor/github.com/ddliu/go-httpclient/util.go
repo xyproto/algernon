@@ -4,6 +4,7 @@
 package httpclient
 
 import (
+	"bytes"
 	"io"
 	"mime/multipart"
 	"net/url"
@@ -156,6 +157,34 @@ func toUrlValues(v interface{}) url.Values {
 		return rst
 	case nil:
 		return make(url.Values)
+	default:
+		panic("Invalid value")
+	}
+}
+
+func checkParamsType(v interface{}) int {
+	switch v.(type) {
+	case url.Values, map[string][]string, map[string]string:
+		return 1
+	case []byte, string, *bytes.Reader:
+		return 2
+	case nil:
+		return 0
+	default:
+		return 3
+	}
+}
+
+func toReader(v interface{}) *bytes.Reader {
+	switch t := v.(type) {
+	case []byte:
+		return bytes.NewReader(t)
+	case string:
+		return bytes.NewReader([]byte(t))
+	case *bytes.Reader:
+		return t
+	case nil:
+		return bytes.NewReader(nil)
 	default:
 		panic("Invalid value")
 	}

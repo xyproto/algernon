@@ -6,12 +6,14 @@ require (
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/ddliu/go-httpclient v0.6.3
+	github.com/ddliu/go-httpclient v0.6.5
 	github.com/didip/tollbooth v4.0.2+incompatible
+	github.com/dop251/goja v0.0.0-20200106141417-aaec0e7bde29 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
+	github.com/fsnotify/fsnotify v1.4.8-0.20191012010759-4bf2d1fec783 // indirect
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/jvatic/goja-babel v0.0.0-20191230153719-24489a0183fb
+	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
@@ -19,7 +21,7 @@ require (
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045 // indirect
+	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/tylerb/graceful v1.2.15
@@ -38,7 +40,7 @@ require (
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
-	github.com/xyproto/recwatch v0.0.0-20191228152308-8c962c1c39cf
+	github.com/xyproto/recwatch v1.0.1
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect
