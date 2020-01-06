@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Comments</title>
+    <link rel="stylesheet" href="simple.scss">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.14.5/react.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.5/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/marked/0.3.17/marked.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script src="comment.jsx"></script>
+  </body>
+</html>

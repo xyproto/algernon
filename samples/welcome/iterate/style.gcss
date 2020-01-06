@@ -1,0 +1,18 @@
+body
+  margin: 4em
+  font-family: sans-serif
+  background-color: #202020
+  color: #e0e0e0
+
+div
+  margin-bottom: 0.25em
+
+h1
+  margin-bottom: 1em
+
+a
+  color: #2080ff
+  font-size: 1.2em
+
+a:hover
+  color: white

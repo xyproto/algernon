@@ -1,0 +1,8 @@
+doctype 5
+html
+  head
+    title #{title}
+  body
+    h1 #{title}
+    div#content
+      p Page views: #{counter()}
