@@ -2,6 +2,7 @@
 
 Priority 1
 ----------
+- [ ] Fork [powerwalk](https://github.com/stretchr/powerwalk) and make a walk function that can also traverse symlinks to directories. Then use that module and update the `samples/welcome` directory to have symlinks like it used to.
 - [ ] Add an example for writing a simple JSON/REST server.
 - [ ] Resolve all issues in the issue tracker.
 - [ ] Refresh all files, cache and certificates when receiving the USR1 signal.
