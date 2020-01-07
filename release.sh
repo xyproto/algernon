@@ -7,26 +7,25 @@ version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo 'Compiling...'
 export GOARCH=amd64
 echo '* Linux'
-GOOS=linux go build -o $name.linux
-echo '* Linux static w/ upx'
-CGO_ENABLED=0 GOOS=linux go build -v -trimpath -ldflags "-s" -a -o $name.linux_static
-upx $name.linux_static
-echo '* Plan9'
-GOOS=plan9 go build -o $name.plan9
+GOOS=linux go build -mod=vendor -o $name.linux
+#echo '* Plan9'
+#GOOS=plan9 go build -mod=vendor -o $name.plan9
 echo '* macOS'
-GOOS=darwin go build -o $name.macos
+GOOS=darwin go build -mod=vendor -o $name.macos
 echo '* FreeBSD'
-GOOS=freebsd go build -o $name.freebsd
+GOOS=freebsd go build -mod=vendor -o $name.freebsd
 echo '* NetBSD'
-GOOS=netbsd go build -o $name.netbsd
+GOOS=netbsd go build -mod=vendor -o $name.netbsd
 echo '* OpenBSD'
-GOOS=openbsd go build -o $name.openbsd
+GOOS=openbsd go build -mod=vendor -o $name.openbsd
 echo '* Windows'
-GOOS=windows go build -o $name.exe
+GOOS=windows go build -mod=vendor -o $name.exe
 echo '* Linux ARM64'
-GOOS=linux GOARCH=arm64 go build -o $name.linux_arm64
+GOOS=linux GOARCH=arm64 go build -mod=vendor -o $name.linux_arm64
 echo '* RPI 2/3'
-GOOS=linux GOARCH=arm GOARM=6 go build -o $name.rpi
+GOOS=linux GOARCH=arm GOARM=6 go build -mod=vendor -o $name.rpi
+echo '* Linux static w/ upx'
+CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static && upx $name.linux_static
 
 # Compress the Windows release
 echo "Compressing $name-$version.zip"
@@ -47,7 +46,7 @@ for p in linux linux_arm64 rpi linux_static; do
 done
 
 # Compress the other tarballs with gz
-for p in macos freebsd netbsd openbsd plan9; do
+for p in macos freebsd netbsd openbsd; do
   echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
   #cp $name.1 "$name-$version-$p/"
