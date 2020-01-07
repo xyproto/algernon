@@ -1,5 +1,4 @@
-# Permissionbolt [![Build Status](https://travis-ci.com/xyproto/permissionbolt.svg?branch=master)](https://travis-ci.com/xyproto/permissionbolt) [![GoDoc](https://godoc.org/github.com/xyproto/permissionbolt?status.svg)](http://godoc.org/github.com/xyproto/permissionbolt) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/permissionbolt)
-
+# Permissionbolt [![Build Status](https://travis-ci.com/xyproto/permissionbolt.svg?branch=master)](https://travis-ci.com/xyproto/permissionbolt) [![GoDoc](https://godoc.org/github.com/xyproto/permissionbolt?status.svg)](http://godoc.org/github.com/xyproto/permissionbolt) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/permissionbolt)](https://goreportcard.com/report/github.com/xyproto/permissionbolt)
 
 Middleware for keeping track of users, login states and permissions.
 
@@ -20,7 +19,7 @@ Features and limitations
 
 ## Requirements
 
-* Go >= 1.11
+* Go >= 1.9
 
 Example for [Negroni](https://github.com/codegangsta/negroni)
 --------------------
@@ -667,7 +666,7 @@ func main() {
 General information
 -------------------
 
-* Version: 2.5.0
+* Version: 2.5.1
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 

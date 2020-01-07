@@ -1,4 +1,4 @@
-# Simple Bolt [![Build Status](https://travis-ci.org/xyproto/simplebolt.svg?branch=master)](https://travis-ci.org/xyproto/simplebolt) [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt)
+# Simple Bolt [![Build Status](https://travis-ci.com/xyproto/simplebolt.svg?branch=master)](https://travis-ci.com/xyproto/simplebolt) [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplebolt)](https://goreportcard.com/report/github.com/xyproto/simplebolt)
 
 Simple way to use the [Bolt](https://github.com/coreos/bbolt) database. Similar design to [simpleredis](https://github.com/xyproto/simpleredis).
 
@@ -15,7 +15,6 @@ Features and limitations
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
 * Requires Go 1.9 or later.
-* Does not support `gccgo`. Three recent versions of `gccgo` (7.2.0, 8.2.1 and 9.2.0) are able to compile `simplebolt`, but does not appear to compile it correctly. There are runtime errors when running `go test`, that work fine when compiling `simplebolt` with the regular Go compiler.
 * Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
 Example usage
@@ -67,5 +66,5 @@ Version, license and author
 ---------------------------
 
 * License: MIT
-* Version: 4.0.1
+* Version: 4.0.3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

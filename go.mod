@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.11
+go 1.9
 
 require (
 	github.com/alecthomas/colour v0.1.0 // indirect
@@ -13,6 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.8-0.20191012010759-4bf2d1fec783 // indirect
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
+	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-isatty v0.0.10 // indirect
@@ -33,7 +34,7 @@ require (
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
 	github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
-	github.com/xyproto/permissionbolt v0.0.0-20200101184019-2d22bbef4133
+	github.com/xyproto/permissionbolt v0.0.0-20200107212556-7118d181bc75
 	github.com/xyproto/permissions2 v0.0.0-20191218091146-b67b95e6d465
 	github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
@@ -42,7 +43,7 @@ require (
 	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.0
-	github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04
+	github.com/xyproto/simplebolt v0.0.0-20200107212535-0f525d8de662
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect
 	github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85
 	github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd

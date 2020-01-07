@@ -120,11 +120,12 @@ func (l *List) Add(value string) error {
 }
 
 // All returns all elements in the list
-func (l *List) All() (results []string, err error) {
+func (l *List) All() ([]string, error) {
+	var results []string
 	if l.name == nil {
 		return nil, ErrDoesNotExist
 	}
-	return results, (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(l.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -134,14 +135,16 @@ func (l *List) All() (results []string, err error) {
 			return nil // Continue ForEach
 		})
 	})
+	return results, err
 }
 
 // Last will return the last element of a list
-func (l *List) Last() (result string, err error) {
+func (l *List) Last() (string, error) {
+	var result string
 	if l.name == nil {
 		return "", ErrDoesNotExist
 	}
-	return result, (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(l.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -152,14 +155,16 @@ func (l *List) Last() (result string, err error) {
 		result = string(value)
 		return nil // Return from View function
 	})
+	return result, err
 }
 
 // LastN will return the last N elements of a list
-func (l *List) LastN(n int) (results []string, err error) {
+func (l *List) LastN(n int) ([]string, error) {
+	var results []string
 	if l.name == nil {
 		return nil, ErrDoesNotExist
 	}
-	return results, (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(l.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -184,6 +189,7 @@ func (l *List) LastN(n int) (results []string, err error) {
 		}
 		return nil // Return from View function
 	})
+	return results, err
 }
 
 // Remove this list
@@ -255,11 +261,12 @@ func (s *Set) Add(value string) error {
 }
 
 // Check if a given value is in the set
-func (s *Set) Has(value string) (exists bool, err error) {
+func (s *Set) Has(value string) (bool, error) {
+	var exists bool
 	if s.name == nil {
 		return false, ErrDoesNotExist
 	}
-	return exists, (*bbolt.DB)(s.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(s.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(s.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -273,14 +280,16 @@ func (s *Set) Has(value string) (exists bool, err error) {
 		})
 		return nil // Return from View function
 	})
+	return exists, err
 }
 
 // All returns all elements in the set
-func (s *Set) All() (values []string, err error) {
+func (s *Set) All() ([]string, error) {
+	var values []string
 	if s.name == nil {
 		return nil, ErrDoesNotExist
 	}
-	return values, (*bbolt.DB)(s.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(s.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(s.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -290,6 +299,7 @@ func (s *Set) All() (values []string, err error) {
 			return nil // Return from ForEach function
 		})
 	})
+	return values, err
 }
 
 // Remove an element from the set
@@ -358,7 +368,7 @@ func NewHashMap(db *Database, id string) (*HashMap, error) {
 }
 
 // Set a value in a hashmap given the element id (for instance a user id) and the key (for instance "password")
-func (h *HashMap) Set(elementid, key, value string) (err error) {
+func (h *HashMap) Set(elementid, key, value string) error {
 	if h.name == nil {
 		return ErrDoesNotExist
 	}
@@ -376,11 +386,12 @@ func (h *HashMap) Set(elementid, key, value string) (err error) {
 }
 
 // All returns all ID's, for all hash elements
-func (h *HashMap) All() (results []string, err error) {
+func (h *HashMap) All() ([]string, error) {
+	var results []string
 	if h.name == nil {
 		return nil, ErrDoesNotExist
 	}
-	return results, (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -401,14 +412,16 @@ func (h *HashMap) All() (results []string, err error) {
 			return nil // Continue ForEach
 		})
 	})
+	return results, err
 }
 
 // Get a value from a hashmap given the element id (for instance a user id) and the key (for instance "password")
-func (h *HashMap) Get(elementid, key string) (val string, err error) {
+func (h *HashMap) Get(elementid, key string) (string, error) {
+	var val string
 	if h.name == nil {
 		return "", ErrDoesNotExist
 	}
-	err = (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -420,15 +433,16 @@ func (h *HashMap) Get(elementid, key string) (val string, err error) {
 		val = string(byteval)
 		return nil // Return from View function
 	})
-	return
+	return val, err
 }
 
 // Check if a given elementid + key is in the hash map
-func (h *HashMap) Has(elementid, key string) (found bool, err error) {
+func (h *HashMap) Has(elementid, key string) (bool, error) {
+	var found bool
 	if h.name == nil {
 		return false, ErrDoesNotExist
 	}
-	return found, (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -439,12 +453,13 @@ func (h *HashMap) Has(elementid, key string) (found bool, err error) {
 		}
 		return nil // Return from View function
 	})
+	return found, err
 }
 
 // Keys returns all names of all keys of a given owner.
 func (h *HashMap) Keys(owner string) ([]string, error) {
 	var props []string
-	return props, (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -460,14 +475,16 @@ func (h *HashMap) Keys(owner string) ([]string, error) {
 			return nil // Continue ForEach
 		})
 	})
+	return props, err
 }
 
 // Check if a given elementid exists as a hash map at all
-func (h *HashMap) Exists(elementid string) (found bool, err error) {
+func (h *HashMap) Exists(elementid string) (bool, error) {
+	var found bool
 	if h.name == nil {
 		return false, ErrDoesNotExist
 	}
-	return found, (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(h.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(h.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -485,6 +502,7 @@ func (h *HashMap) Exists(elementid string) (found bool, err error) {
 		})
 		return nil // Return from View function
 	})
+	return found, err
 }
 
 // Remove a key for an entry in a hashmap (for instance the email field for a user)
@@ -583,11 +601,12 @@ func (kv *KeyValue) Set(key, value string) error {
 
 // Get a value given a key
 // Returns an error if the key was not found
-func (kv *KeyValue) Get(key string) (val string, err error) {
+func (kv *KeyValue) Get(key string) (string, error) {
+	var val string
 	if kv.name == nil {
 		return "", ErrDoesNotExist
 	}
-	err = (*bbolt.DB)(kv.db).View(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(kv.db).View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(kv.name)
 		if bucket == nil {
 			return ErrBucketNotFound
@@ -599,7 +618,7 @@ func (kv *KeyValue) Get(key string) (val string, err error) {
 		val = string(byteval)
 		return nil // Return from View function
 	})
-	return
+	return val, err
 }
 
 // Remove a key
@@ -619,11 +638,12 @@ func (kv *KeyValue) Del(key string) error {
 // Increase the value of a key, returns the new value
 // Returns an empty string if there were errors,
 // or "0" if the key does not already exist.
-func (kv *KeyValue) Inc(key string) (val string, err error) {
+func (kv *KeyValue) Inc(key string) (string, error) {
+	var val string
 	if kv.name == nil {
 		kv.name = []byte(key)
 	}
-	return val, (*bbolt.DB)(kv.db).Update(func(tx *bbolt.Tx) error {
+	err := (*bbolt.DB)(kv.db).Update(func(tx *bbolt.Tx) (err error) {
 		// The numeric value
 		num := 0
 		// Get the string value
@@ -648,6 +668,7 @@ func (kv *KeyValue) Inc(key string) (val string, err error) {
 		err = bucket.Put([]byte(key), []byte(val))
 		return err
 	})
+	return val, err
 }
 
 // Remove this key/value

@@ -65,7 +65,7 @@ github.com/go-gcfg/gcfg
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
-# github.com/go-sql-driver/mysql v1.4.1
+# github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
@@ -171,7 +171,7 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20200101184019-2d22bbef4133
+# github.com/xyproto/permissionbolt v0.0.0-20200107212556-7118d181bc75
 github.com/xyproto/permissionbolt
 # github.com/xyproto/permissions2 v0.0.0-20191218091146-b67b95e6d465
 github.com/xyproto/permissions2
@@ -204,7 +204,7 @@ github.com/xyproto/randomstring
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04
+# github.com/xyproto/simplebolt v0.0.0-20200107212535-0f525d8de662
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b
 github.com/xyproto/simplehstore
@@ -242,7 +242,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e
+# golang.org/x/sys v0.0.0-20200107162124-548cf772de50
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
@@ -260,8 +260,6 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# google.golang.org/appengine v1.6.5
-google.golang.org/appengine/cloudsql
 # gopkg.in/fsnotify.v1 v1.4.7
 gopkg.in/fsnotify.v1
 # gopkg.in/gcfg.v1 v1.2.3
