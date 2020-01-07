@@ -21,7 +21,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.11 or later (or GCC 9.2, using `gccgo`).
+Requires Go 1.9 or later (or GCC 9.2, using `gccgo`).
 
 Clone algernon outside of `GOPATH`:
 
@@ -107,7 +107,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go 1.11 or later, or GCC 9.2 or later (`gccgo`).
+* Requires Go 1.9 or later, or GCC 9.2 or later (`gccgo`).
 
 Q&A
 ---
@@ -245,17 +245,11 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 
 ##### Prepare for running the samples
 
-Go 1.11:
+Go 1.11 or later:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
-
-Go 1.12 or later:
-
-    git clone https://github.com/xyproto/algernon
-    cd algernon
-    go build
 
 GCC 9.2 (`gccgo`):
 
