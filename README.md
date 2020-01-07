@@ -1122,7 +1122,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.12.5
+* Version: 1.12.6
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 

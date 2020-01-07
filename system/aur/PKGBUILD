@@ -1,7 +1,7 @@
 # Maintainer: Alexander F. Rødseth <xyproto@archlinux.org>
 
 pkgname=algernon
-pkgver=1.12.5
+pkgver=1.12.6
 pkgrel=1
 pkgdesc='Small self-contained web server with Lua, Markdown, QUIC, Redis and PostgreSQL support'
 arch=(x86_64)
