@@ -40,7 +40,7 @@ require (
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
-	github.com/xyproto/recwatch v1.0.1
+	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect

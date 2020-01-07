@@ -220,8 +220,8 @@ github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b/go.mod h1:K9mH8ii31
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8fEA1DIpa1a4ZH+3opiHKZHs/y9ovbXF3xA=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
-github.com/xyproto/recwatch v1.0.1 h1:Bosb0eqC3+0kjtfPjLujWn3YMQFXmYTiJKSfR7awwxc=
-github.com/xyproto/recwatch v1.0.1/go.mod h1:iJB1gVNSudMxfQaBkjzgSwK2fZQWpquVdj5NbQpSW08=
+github.com/xyproto/recwatch v1.1.0 h1:M8raxpfOb1HChmMxE+72PmhugC+/LlJ3tPDs2dQjpzc=
+github.com/xyproto/recwatch v1.1.0/go.mod h1:L5vSDqREe0dO3awl3+gESUo/5jQTTxPe1TmhFMpBa2w=
 github.com/xyproto/sheepcounter v1.6.0 h1:7de0tc+lDP8XVZmL6ekB1hGNr6JaROx8AkCv4UTB5P0=
 github.com/xyproto/sheepcounter v1.6.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/simplebolt v0.0.0-20200101183335-07df57af8f04 h1:nKZ+T6ndhXhrL4MsNoWXMJzpPtlYwy08Jmkz47NWnSc=
@@ -236,6 +236,8 @@ github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85 h1:LQ8qyYZXBW0
 github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85/go.mod h1:v1Rr7lzv9F8H/sMg5RRvU1oMi9/Fjx6xzhOJgFLnuhs=
 github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd h1:SY7tmaBN5FP5gMFUigEd/ILRy8GTxA5MXNtQo2XEm90=
 github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd/go.mod h1:Xzbzvy5VeaipyaMCxTNDmCefSeM6jK2b5cBE2dx+pmk=
+github.com/xyproto/symwalk v1.1.1 h1:icxMUiRAOqw8x9q9UWtpNz3rN7fngSYNMRguWzsyiWI=
+github.com/xyproto/symwalk v1.1.1/go.mod h1:u40/s1ER3LYv1ibNLeyH1PAR9oX62BPHNRt295/9zQc=
 github.com/xyproto/textoutput v1.9.1 h1:jqyZpKWOn7/SWQGMuLzE8FLAtEvQ6/7v5O1aWrIFF+8=
 github.com/xyproto/textoutput v1.9.1/go.mod h1:N3GsiKztREttVHs36uX6aUJj/uTuuiLOkkEf6bOiP18=
 github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89 h1:AfGCPfw7hTEZlM8843wNZKwkjhyA/WXyW1CNA3VsZmA=

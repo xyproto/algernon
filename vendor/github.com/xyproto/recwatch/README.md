@@ -11,6 +11,8 @@ Watch filesystem changes recursively.
 * Can be used for watching filesystem changes recursively.
 * Can be used for setting up a SSE ([server-sent events](https://en.wikipedia.org/wiki/Server-sent_events)) server, for serving filesystem changes as events.
 * Filenames beginning with `.` or `_` are ignored.
+* The file search is concurrent.
+* Will follow symlinks.
 
 ## Example usage
 
@@ -108,6 +110,6 @@ func main() {
 
 ## General info
 
-* Version: 1.0.1
+* Version: 1.1.0
 * License: Simplified BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
