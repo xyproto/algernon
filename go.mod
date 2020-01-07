@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.9
+go 1.11
 
 require (
 	github.com/alecthomas/colour v0.1.0 // indirect
