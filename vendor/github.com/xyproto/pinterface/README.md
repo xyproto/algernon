@@ -13,4 +13,9 @@ General information
 
 * Version 5.0.0
 * License: MIT
-* Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
+* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+
+Packaging status
+----------------
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/go:github-xyproto-pinterface.svg)](https://repology.org/project/go:github-xyproto-pinterface/versions)

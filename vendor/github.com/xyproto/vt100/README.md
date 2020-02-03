@@ -1,16 +1,18 @@
 # VT100
 
-[![Build Status](https://travis-ci.org/xyproto/vt100.svg?branch=master)](https://travis-ci.org/xyproto/vt100) [![GoDoc](https://godoc.org/github.com/xyproto/vt100?status.svg)](https://godoc.org/github.com/xyproto/vt100) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/vt100/master/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/vt100)](https://goreportcard.com/report/github.com/xyproto/vt100)
+[![Build Status](https://travis-ci.com/xyproto/vt100.svg?branch=master)](https://travis-ci.com/xyproto/vt100) [![GoDoc](https://godoc.org/github.com/xyproto/vt100?status.svg)](https://godoc.org/github.com/xyproto/vt100) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/vt100/master/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/vt100)](https://goreportcard.com/report/github.com/xyproto/vt100)
 
 * Supports colors and attributes.
-* Developed for Linux. May work on other systems, but there are no guarantees.
+* Supports platforms with VT100 support and a `/dev/tty` device.
 * Can detect the terminal size.
 * Can get key-presses, including arrow keys (252, 253, 254, 255).
 * Has a Canvas struct, for drawing only the updated lines to the terminal.
 * Uses the spec directly, but memoizes the commands sent to the terminal, for speed.
 * Could be used for building a better `dialog` or `whiptail` utility.
 
-Note that [go-terminput](https://github.com/tj/go-terminput) is probably a better choice for handling keyboard input, and that they current keyboard-related functions will be modified to use go-terminput in the future (but the signatures will stay the same).
+### Editor
+
+For an editor that uses this module, take a look at [o](https://github.com/xyproto/o).
 
 ### Images
 
@@ -74,6 +76,6 @@ The `o` editor that uses `vt100` can be used for editing Go or C++ code, or for 
 
 ### General info
 
-* Version: 1.8.1
+* Version: 1.8.3
 * Licence: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

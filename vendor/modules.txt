@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.7.0
+# github.com/alecthomas/chroma v0.7.1
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -37,7 +37,7 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
-# github.com/ddliu/go-httpclient v0.6.5
+# github.com/ddliu/go-httpclient v0.6.6
 github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.2+incompatible
 github.com/didip/tollbooth
@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200106141417-aaec0e7bde29
+# github.com/dop251/goja v0.0.0-20200126140343-a7d7d4827263
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -67,7 +67,7 @@ github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.3.2
+# github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
@@ -105,7 +105,7 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
-# github.com/onsi/ginkgo v1.11.0
+# github.com/onsi/ginkgo v1.12.0
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
 github.com/onsi/ginkgo/internal/codelocation
@@ -177,7 +177,7 @@ github.com/xyproto/permissionbolt
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 github.com/xyproto/permissionsql
-# github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
+# github.com/xyproto/pinterface v0.0.0-20200201214933-70763765f31f
 github.com/xyproto/pinterface
 # github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 github.com/xyproto/pongo2
@@ -210,23 +210,23 @@ github.com/xyproto/simplebolt
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis v0.0.0-20191007160910-58ebe44f9f85
+# github.com/xyproto/simpleredis v0.0.0-20200201215242-1ff0da2967b4
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.9.1
+# github.com/xyproto/textoutput v1.9.4
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.8.1
+# github.com/xyproto/vt100 v1.8.3
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
+# golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -237,12 +237,12 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200107162124-548cf772de50
+# golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2

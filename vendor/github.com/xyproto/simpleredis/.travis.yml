@@ -5,19 +5,8 @@ go:
   - "1.9"
   - "1.10"
   - "1.11"
-  - tip
+  - "1.12"
+  - "1.13"
 
 services:
     - redis-server
-
-os:
-  - linux
-
-dist: trusty
-sudo: false
-
-install: true
-
-script:
-  - env GO111MODULE=on go build
-  - env GO111MODULE=on go test

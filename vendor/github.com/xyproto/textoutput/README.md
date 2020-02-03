@@ -40,7 +40,7 @@ func main() {
 	o.OutputTags("<blue>a<off>")
 
 	// Exit with a dark red error message
-	o.ErrExit("error: too convenient")
+	o.ErrExit("Oh no, it's too convenient!")
 }
 ```
 
@@ -48,6 +48,6 @@ func main() {
 
 ## General info
 
-* Version: 1.9.1
+* Version: 1.9.4
 * License: MIT
 * Author &lt;xyproto@archlinux.org&gt;
