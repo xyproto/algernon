@@ -253,6 +253,10 @@ var (
 
 // New creates a new server configuration based using the default values
 func New(versionString, description string) (*Config, error) {
+	tmpdir := os.Getenv("TMPDIR")
+	if tmpdir == "" {
+		tmpdir = "/tmp"
+	}
 	ac := &Config{
 		curlSupport: true,
 
@@ -276,10 +280,10 @@ func New(versionString, description string) (*Config, error) {
 		defaultLimitString: strconv.Itoa(10),
 
 		// Default Bolt database file, for some operating systems
-		defaultBoltFilename: "/tmp/algernon.db",
+		defaultBoltFilename: filepath.Join(tmpdir, "algernon.db"),
 
 		// Default log file, for some operating systems
-		defaultLogFile: "/tmp/algernon.log",
+		defaultLogFile: filepath.Join(tmpdir, "algernon.log"),
 
 		// Default filename for a Lua script that provides data to a template
 		defaultLuaDataFilename: "data.lua",
