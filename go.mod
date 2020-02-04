@@ -53,7 +53,7 @@ require (
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d // indirect
+	golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72 // indirect
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect

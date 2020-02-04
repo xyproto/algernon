@@ -226,7 +226,7 @@ github.com/xyproto/unzip
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
+# golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
