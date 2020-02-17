@@ -412,6 +412,14 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		}
 	}
 
+	// Clean up path in ac.serverDirOrFilename
+	// .Rel calls .Clean on the result.
+	if pwd, err := os.Getwd(); err == nil { // no error
+		if cleanPath, err := filepath.Rel(pwd, ac.serverDirOrFilename); err == nil { // no error
+			ac.serverDirOrFilename = cleanPath
+		}
+	}
+
 	// TODO: Replace the code below with a good config/flag package.
 	shift := 0
 	if serverAddrChanged {
