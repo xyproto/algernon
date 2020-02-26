@@ -24,7 +24,7 @@ Middleware for keeping track of users, login states and permissions.
 ## Requirements
 
 * Redis >= 2.6.12
-* Go >= 1.9
+* Go >= 1.8
 
 ## Examples
 
@@ -699,4 +699,3 @@ Note that the `redigo` repository was recently moved to `https://github.com/gomo
 * Version: 2.6.1
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-

@@ -19,7 +19,7 @@ Features and limitations
 
 ## Requirements
 
-* Go >= 1.9
+* Go >= 1.8
 
 Example for [Negroni](https://github.com/codegangsta/negroni)
 --------------------
@@ -669,4 +669,3 @@ General information
 * Version: 2.5.1
 * License: MIT
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-

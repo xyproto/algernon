@@ -25,6 +25,21 @@ type TextOutput struct {
 	darkReplacer  *strings.Replacer
 }
 
+// New creates a new TextOutput struct, which is
+// enabled by default and with colors turned on.
+// If the NO_COLOR environment variable is set, colors are disabled.
+func New() *TextOutput {
+	// Respect the NO_COLOR environment variable
+	color := len(os.Getenv("NO_COLOR")) == 0
+	o := &TextOutput{color, true, nil, nil}
+	o.initializeTagReplacers()
+	return o
+}
+
+// NewTextOutput can initialize a new TextOutput struct,
+// which can have colors turned on or off and where the
+// output can be enabled (verbose) or disabled (silent).
+// If NO_COLOR is set, colors are disabled, regardless.
 func NewTextOutput(color, enabled bool) *TextOutput {
 	// Respect the NO_COLOR environment variable
 	if os.Getenv("NO_COLOR") != "" {
@@ -56,7 +71,34 @@ func (o *TextOutput) OutputWords(line string, colors ...string) {
 // Write a message to stdout if output is enabled
 func (o *TextOutput) Println(msg ...interface{}) {
 	if o.enabled {
-		fmt.Println(msg...)
+		fmt.Println(o.InterfaceTags(msg...))
+	}
+}
+
+// Write a message to stdout if output is enabled
+func (o *TextOutput) Printf(msg ...interface{}) {
+	if o.enabled {
+		if len(msg) == 0 {
+			return
+		} else if len(msg) == 1 {
+			if fmtString, ok := msg[0].(string); ok {
+				fmt.Printf(fmtString)
+			}
+		} else { // > 1
+			if fmtString, ok := msg[0].(string); ok {
+				fmt.Printf(o.InterfaceTags(fmtString), msg[1:]...)
+			} else {
+				// fail
+				fmt.Printf("%v", msg...)
+			}
+		}
+	}
+}
+
+// Write a message to stdout if output is enabled
+func (o *TextOutput) Print(msg ...interface{}) {
+	if o.enabled {
+		fmt.Print(o.InterfaceTags(msg...))
 	}
 }
 
@@ -77,9 +119,19 @@ func (o *TextOutput) ErrExit(msg string) {
 	os.Exit(1)
 }
 
-// Checks if textual output is enabled
+// Deprectated
 func (o *TextOutput) IsEnabled() bool {
 	return o.enabled
+}
+
+// Enabled returns true if any output is enabled
+func (o *TextOutput) Enabled() bool {
+	return o.enabled
+}
+
+// Disabled returns true if all output is disabled
+func (o *TextOutput) Disabled() bool {
+	return !o.enabled
 }
 
 func (o *TextOutput) DarkRed(s string) string {
@@ -215,6 +267,19 @@ func (o *TextOutput) LightTags(colors ...string) string {
 // Same as LightTags
 func (o *TextOutput) Tags(colors ...string) string {
 	return o.LightTags(colors...)
+}
+
+// InterfaceTags is the same as LightTags, but with interfaces
+func (o *TextOutput) InterfaceTags(colors ...interface{}) string {
+	var sb strings.Builder
+	for _, color := range colors {
+		if colorString, ok := color.(string); ok {
+			sb.WriteString(colorString)
+		} else {
+			sb.WriteString(fmt.Sprintf("%s", color))
+		}
+	}
+	return o.LightTags(sb.String())
 }
 
 // Replace <blue> with starting a light blue color attribute and <off> with using the default attributes.
