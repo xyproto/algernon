@@ -2,18 +2,20 @@
 
 Priority 1
 ----------
-- [ ] Fork [powerwalk](https://github.com/stretchr/powerwalk) and make a walk function that can also traverse symlinks to directories. Then use that module and update the `samples/welcome` directory to have symlinks like it used to.
-- [ ] Add an example for writing a simple JSON/REST server.
-- [ ] Resolve all issues in the issue tracker.
+- [ ] Make it easier to specify Redis, without providing any further info.
+- [ ] By default, try writing the bolt database to ".". If not, try TMPDIR or TEMPDIR, if not, try /var/something, if not, try /tmp.
 - [ ] Refresh all files, cache and certificates when receiving the USR1 signal.
-- [ ] Add a way to reload the HTTPS certificates without restarting Algernon.
-- [ ] Add a flag for redirecting all `http://` traffic to `https://`.
-- [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
-- [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
+- [ ] Resolve all issues in the issue tracker.
 
 Priority 2
 ----------
+- [ ] Add an example for writing a simple JSON/REST server.
+- [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
+- [ ] Add a flag for redirecting all `http://` traffic to `https://`.
+- [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
 
+Priority 3
+----------
 - [ ] Create a video like the one at [vim-livedown](https://github.com/shime/vim-livedown), that demonstrates live editing of Markdown.
 - [ ] When `-m` is given, scan the given Markdown file for images that will also need to be served, then wait until those are served before exiting.
 - [ ] Add support for [metatar](https://github.com/xyproto/metatar) in Lua, to be able to offer a whole Arch Linux package repository from just a single `.lua` file, and a collection of `PKGBUILD` files.
@@ -25,7 +27,6 @@ Priority 2
 - [ ] Present directories with media files with a built-in page.
 - [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
 - [ ] Add a Lua function for upgrading a handler to a WebSocket handler, also using concurrency in Lua.
-- [ ] Add support for `gccgo` by changing dependencies and/or report an issue with `gccgo`.
 - [ ] Add support for pushing from emacs "writefreely mode" to Algernon with this [API](https://developers.write.as/docs/api/).
 
 Languages other than Lua
