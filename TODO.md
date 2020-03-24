@@ -309,3 +309,4 @@ Alternative databases
 - [ ] Aim for a very small and specific usage pattern and try to optimize for that.
 - [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
 - [ ] Use [configparser](https://github.com/alyu/configparser) for a configuration file with port, host, keys etc.
+- [ ] Add Lua functions for returning all sorts of data types for all sorts of database backends, ref #39.
