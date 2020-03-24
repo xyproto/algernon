@@ -3,8 +3,8 @@ module github.com/xyproto/simplebolt
 go 1.9
 
 require (
-	github.com/etcd-io/bbolt v1.3.3
-	github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684
-	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
+	github.com/golang/protobuf v1.3.5
+	github.com/xyproto/pinterface v0.0.0-20200201214933-70763765f31f
+	go.etcd.io/bbolt v1.3.4
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
 )

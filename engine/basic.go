@@ -16,7 +16,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gopher-lua"
-	"gopkg.in/russross/blackfriday.v2"
+	"github.com/russross/blackfriday/v2"
 )
 
 // FutureStatus is useful when redirecting in combination with writing to a

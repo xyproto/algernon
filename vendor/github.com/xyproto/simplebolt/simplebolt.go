@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 4.0
+	Version = 5.1
 )
 
 type (
@@ -57,8 +57,12 @@ var (
 	// ErrInvalidID is only returned if adding an element to a HashMap that contains a colon (:)
 	ErrInvalidID = errors.New("Element ID can not contain \":\"")
 
-	// ErrFoundIt is only used internally, for breaking out of Bolt DB style for-loops
-	ErrFoundIt = errors.New("Found it")
+	// errFoundIt is only used internally, for breaking out of Bolt DB style for-loops
+	errFoundIt = errors.New("Found it")
+
+	// errReachedEnd is used internally by traversing methods to indicate that the
+	// end of the data structure has been reached.
+	errReachedEnd = errors.New("Reached end of data structure")
 )
 
 /* --- Database functions --- */
@@ -76,6 +80,11 @@ func New(filename string) (*Database, error) {
 // Close the database
 func (db *Database) Close() {
 	(*bbolt.DB)(db).Close()
+}
+
+// Path returns the full path to the database file
+func (db *Database) Path() string {
+	return (*bbolt.DB)(db).Path()
 }
 
 // Ping the database (only for fulfilling the pinterface.IHost interface)
@@ -202,7 +211,7 @@ func (l *List) Remove() error {
 	return err
 }
 
-// Remove all elements from this list
+// Clear will remove all elements from this list
 func (l *List) Clear() error {
 	if l.name == nil {
 		return ErrDoesNotExist
@@ -260,7 +269,7 @@ func (s *Set) Add(value string) error {
 	})
 }
 
-// Check if a given value is in the set
+// Has will check if a given value is in the set
 func (s *Set) Has(value string) (bool, error) {
 	var exists bool
 	if s.name == nil {
@@ -274,7 +283,7 @@ func (s *Set) Has(value string) (bool, error) {
 		bucket.ForEach(func(_, byteValue []byte) error {
 			if value == string(byteValue) {
 				exists = true
-				return ErrFoundIt // break the ForEach by returning an error
+				return errFoundIt // break the ForEach by returning an error
 			}
 			return nil // Continue ForEach
 		})
@@ -302,7 +311,7 @@ func (s *Set) All() ([]string, error) {
 	return values, err
 }
 
-// Remove an element from the set
+// Del will remove an element from the set
 func (s *Set) Del(value string) error {
 	if s.name == nil {
 		return ErrDoesNotExist
@@ -316,7 +325,7 @@ func (s *Set) Del(value string) error {
 		bucket.ForEach(func(byteKey, byteValue []byte) error {
 			if value == string(byteValue) {
 				foundKey = byteKey
-				return ErrFoundIt // break the ForEach by returning an error
+				return errFoundIt // break the ForEach by returning an error
 			}
 			return nil // Continue ForEach
 		})
@@ -334,7 +343,7 @@ func (s *Set) Remove() error {
 	return err
 }
 
-// Remove all elements from this set
+// Clear will remove all elements from this set
 func (s *Set) Clear() error {
 	if s.name == nil {
 		return ErrDoesNotExist
@@ -436,7 +445,7 @@ func (h *HashMap) Get(elementid, key string) (string, error) {
 	return val, err
 }
 
-// Check if a given elementid + key is in the hash map
+// Has will check if a given elementid + key is in the hash map
 func (h *HashMap) Has(elementid, key string) (bool, error) {
 	var found bool
 	if h.name == nil {
@@ -478,7 +487,7 @@ func (h *HashMap) Keys(owner string) ([]string, error) {
 	return props, err
 }
 
-// Check if a given elementid exists as a hash map at all
+// Exists will check if a given elementid exists as a hash map at all
 func (h *HashMap) Exists(elementid string) (bool, error) {
 	var found bool
 	if h.name == nil {
@@ -495,7 +504,7 @@ func (h *HashMap) Exists(elementid string) (bool, error) {
 				fields := strings.SplitN(combinedKey, ":", 2)
 				if fields[0] == elementid {
 					found = true
-					return ErrFoundIt
+					return errFoundIt
 				}
 			}
 			return nil // Continue ForEach
@@ -505,7 +514,7 @@ func (h *HashMap) Exists(elementid string) (bool, error) {
 	return found, err
 }
 
-// Remove a key for an entry in a hashmap (for instance the email field for a user)
+// DelKey will remove a key for an entry in a hashmap (for instance the email field for a user)
 func (h *HashMap) DelKey(elementid, key string) error {
 	if h.name == nil {
 		return ErrDoesNotExist
@@ -519,7 +528,7 @@ func (h *HashMap) DelKey(elementid, key string) error {
 	})
 }
 
-// Remove an element (for instance a user)
+// Del will remove an element (for instance a user)
 func (h *HashMap) Del(elementid string) error {
 	if h.name == nil {
 		return ErrDoesNotExist
@@ -553,7 +562,7 @@ func (h *HashMap) Remove() error {
 	return err
 }
 
-// Remove all elements from this hash map
+// Clear will remove all elements from this hash map
 func (h *HashMap) Clear() error {
 	if h.name == nil {
 		return ErrDoesNotExist
@@ -621,7 +630,7 @@ func (kv *KeyValue) Get(key string) (string, error) {
 	return val, err
 }
 
-// Remove a key
+// Del will remove a key
 func (kv *KeyValue) Del(key string) error {
 	if kv.name == nil {
 		return ErrDoesNotExist
@@ -635,7 +644,7 @@ func (kv *KeyValue) Del(key string) error {
 	})
 }
 
-// Increase the value of a key, returns the new value
+// Inc will increase the value of a key, returns the new value
 // Returns an empty string if there were errors,
 // or "0" if the key does not already exist.
 func (kv *KeyValue) Inc(key string) (string, error) {
@@ -681,7 +690,7 @@ func (kv *KeyValue) Remove() error {
 	return err
 }
 
-// Remove all elements from this key/value
+// Clear will remove all elements from this key/value
 func (kv *KeyValue) Clear() error {
 	if kv.name == nil {
 		return ErrDoesNotExist

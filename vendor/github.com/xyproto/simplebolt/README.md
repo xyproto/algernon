@@ -2,23 +2,18 @@
 
 Simple way to use the [Bolt](https://github.com/coreos/bbolt) database. Similar design to [simpleredis](https://github.com/xyproto/simpleredis).
 
-
-Online API Documentation
-------------------------
+## Online API Documentation
 
 [godoc.org](http://godoc.org/github.com/xyproto/simplebolt)
 
-
-Features and limitations
-------------------------
+## Features and limitations
 
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
 * Requires Go 1.9 or later.
 * Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
-Example usage
--------------
+## Example usage
 
 ~~~go
 package main
@@ -62,9 +57,12 @@ func main() {
 }
 ~~~
 
-Version, license and author
----------------------------
+## Contributors
+
+* Luis Villegas, for the linked list functionality.
+
+## Version, license and author
 
 * License: MIT
-* Version: 4.0.3
+* Version: 5.1.0
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

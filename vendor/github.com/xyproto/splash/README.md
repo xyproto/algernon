@@ -15,19 +15,20 @@ import (
 )
 
 func main() {
-	htmlData, err := ioutil.ReadFile("input.html")
+	// Read "input.html"
+	inputHTML, err := ioutil.ReadFile("input.html")
 	if err != nil {
 		panic(err)
 	}
 
-	// Highlight the source code in the HTML with the monokai style
-	htmlBytes, err := splash.Splash(htmlData, "monokai")
+	// Highlight the source code in the HTML document with the monokai style
+	outputHTML, err := splash.Splash(inputHTML, "monokai")
 	if err != nil {
 		panic(err)
 	}
 
-	err = ioutil.WriteFile("output.html", htmlBytes, 0644)
-	if err != nil {
+	// Write the highlighted HTML to "output.html"
+	if err := ioutil.WriteFile("output.html", outputHTML, 0644); err != nil {
 		panic(err)
 	}
 }

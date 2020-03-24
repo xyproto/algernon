@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200223111000-2a7d122434f4
+# github.com/dop251/goja v0.0.0-20200309191912-043cf4f34a48
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -56,18 +56,16 @@ github.com/dop251/goja/token
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/etcd-io/bbolt v1.3.3
-github.com/etcd-io/bbolt
-# github.com/fsnotify/fsnotify v1.4.8-0.20191012010759-4bf2d1fec783
+# github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
 github.com/go-gcfg/gcfg
-# github.com/go-sourcemap/sourcemap v2.1.2+incompatible
+# github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.3.3
+# github.com/golang/protobuf v1.3.5
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
@@ -101,7 +99,7 @@ github.com/mattetti/filebuffer
 github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.1.2
+# github.com/mitchellh/mapstructure v1.2.2
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
@@ -129,11 +127,13 @@ github.com/patrickmn/go-cache
 # github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
 github.com/pkg/term
 github.com/pkg/term/termios
-# github.com/shopspring/decimal v0.0.0-20200226005030-a08b92da27ed
+# github.com/russross/blackfriday/v2 v2.0.1
+github.com/russross/blackfriday/v2
+# github.com/shopspring/decimal v0.0.0-20200227202807-02e2044944cc
 github.com/shopspring/decimal
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.5.0
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -171,9 +171,9 @@ github.com/xyproto/jpath
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt v0.0.0-20200224104838-89c85ea739fa
+# github.com/xyproto/permissionbolt v1.2.6
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20200224103855-a272e8b83bd2
+# github.com/xyproto/permissions2 v0.0.0-20200321215504-7f891816e6a2
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 github.com/xyproto/permissionsql
@@ -204,7 +204,7 @@ github.com/xyproto/randomstring
 github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.0
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v0.0.0-20200107212535-0f525d8de662
+# github.com/xyproto/simplebolt v1.5.1
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b
 github.com/xyproto/simplehstore
@@ -212,7 +212,7 @@ github.com/xyproto/simplehstore
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20200201215242-1ff0da2967b4
 github.com/xyproto/simpleredis
-# github.com/xyproto/splash v0.0.0-20191208135107-85dc65dae3fd
+# github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
@@ -226,7 +226,9 @@ github.com/xyproto/unzip
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
+# go.etcd.io/bbolt v1.3.4
+go.etcd.io/bbolt
+# golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -237,12 +239,12 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
+# golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
+# golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
@@ -266,8 +268,6 @@ gopkg.in/fsnotify.v1
 gopkg.in/gcfg.v1/scanner
 gopkg.in/gcfg.v1/token
 gopkg.in/gcfg.v1/types
-# gopkg.in/russross/blackfriday.v2 v2.0.0
-gopkg.in/russross/blackfriday.v2
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 gopkg.in/tomb.v1
 # gopkg.in/warnings.v0 v0.1.2

@@ -22,7 +22,7 @@ import (
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
-	"gopkg.in/russross/blackfriday.v2"
+	"github.com/russross/blackfriday/v2"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.
