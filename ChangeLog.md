@@ -1,5 +1,66 @@
 # Changelog
 
+Changes from 1.12.6 to 1.12.7
+=============================
+
+* Issues with bolt db, simplebolt and `gccgo` are resolved. Algernon now also supports `gccgo`.
+* Now requires Go 1.11 or later.
+* Respect `TMPDIR`, for improved Termux support.
+* Fix issue #42, when `--dir` is used together with a trailing slash.
+* Don't force the use of the bolt database when in development mode.
+* Update dependencies.
+
+Changes from 1.12.5 to 1.12.6
+=============================
+
+* Now using a fork of the quic package, since there were build issues with it (could not build with `gccgo` and issue #41).
+* Updated dependencies.
+* There are still issues with compiling simplebolt with gccgo, which is why Algernon can not be compiled with gccgo in a way where simplebolt works, yet. This is related to different behavior between go and gccgo and will be worked around in simplebolt. See: golang/go#36430
+* The autorefresh feature (-a or --autorefresh) may now follow symlinks to diretories, to make the ./welcome.sh script and example more user-friendly when live editing for instance samples/greetings/index.md.
+* The file-search backend of the autofresh feature is now also concurrent.
+* Tested with the latest version of Go (1.13.5) on 64-bit Arch Linux.
+
+Changes from 1.12.4 to 1.12.5
+=============================
+
+* Tested with Go 1.13.
+* Adds support for PostgreSQL queries with the PQ function, from Lua.
+* Updated dependencies, especially with QUIC and HTTP/2 in mind.
+* Updated the JSX sample to use the latest version of React.
+* The static executable for Linux is now built with `-trimpath`.
+* New HTTP client functionality from Lua, using GET or HTTPClient.
+* `CookieSecret` and `SetCookieSecret` can now be used to get and set the secure cookie secret from Lua, or it can be set with the `--cookiesecret` flag.
+
+Changes from 1.12.3 to 1.12.4
+=============================
+
+* Fix #26, an issue with using Lua tables together with Pongo2 and the serve2 function.
+* Update dependencies.
+* Improved help function on the Lua prompt.
+* Support the `IGNOREEOF` environment variable.
+* Update documentation.
+
+Changes from 1.12.2 to 1.12.3
+=============================
+
+* Fix #25, where an attack with vegeta could make Algernon crash.
+* Update dependencies (boltdb has a new home, TLS 1.3 has further improvements).
+
+Changes from 1.12.0 to 1.12.2
+=============================
+
+* Update dependencies.
+* Better output to stdout when loading configuration files (lists the names of all loaded configuration files).
+* A timestamp is added to the command line output when starting Algernon.
+* Slightly modified console text colors.
+* Minor changes to recognized filename extensions.
+* Update documentation to mention welcome.sh (fixes issue #23).
+* Minor updates to javascript libraries used by two of the samples.
+* Improved support for streaming large files (fixes issue #13).
+* Added two new flags:
+  * `--timeout=N` for setting a timeout in seconds, when serving large files (but there is range support, so if a download times out, the client can continue where it left).
+  * `--largesize=N` for setting a threshold for when a file is too large to be read into memory (the default is 42 MiB).
+
 Changes from 1.11.0 to 1.12.0
 =============================
 
