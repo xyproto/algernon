@@ -318,7 +318,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serverMode = true
 	case ac.devMode:
 		// Change several defaults if development mode is enabled
-		ac.useBolt = true
 		ac.serveJustHTTP = true
 		//serverLogFile = defaultLogFile
 		ac.debugMode = true
