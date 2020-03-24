@@ -1096,6 +1096,11 @@ If you have goaccess setup correctly, running goaccess without any flags should 
 
     goaccess access.log
 
+`.alg` files
+------------
+
+`.alg` files are just renamed `.zip` files, that can be served by Algernon. There is an example application here: [wercstyle](https://github.com/xyproto/wercstyle).
+
 Logo license
 ------------
 
