@@ -1,14 +1,12 @@
 [Unit]
 Description=Algernon web server
-Requires=redis.service
-After=redis.service
-#Wants=network-online.target
-#After=network.target network-online.target
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 User=root
 Group=users
-ExecStart=/usr/bin/algernon --statcache --autorefresh --domain --server --cachesize 67108864 --prod --theme=material --log /var/log/algernon.log /srv/algernon
+ExecStart=/usr/bin/algernon --statcache --autorefresh --server --cachesize 67108864 --prod --theme=material --boltdb=/var/db/algernon.db --log /var/log/algernon.log /srv/http
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
