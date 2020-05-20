@@ -100,6 +100,47 @@
 //         "address": "123 Maple St.",
 //     }
 //
+// Omit Empty Values
+//
+// When decoding from a struct to any other value, you may use the
+// ",omitempty" suffix on your tag to omit that value if it equates to
+// the zero value. The zero value of all types is specified in the Go
+// specification.
+//
+// For example, the zero type of a numeric type is zero ("0"). If the struct
+// field value is zero and a numeric type, the field is empty, and it won't
+// be encoded into the destination type.
+//
+//     type Source {
+//         Age int `mapstructure:",omitempty"`
+//     }
+//
+// Unexported fields
+//
+// Since unexported (private) struct fields cannot be set outside the package
+// where they are defined, the decoder will simply skip them.
+//
+// For this output type definition:
+//
+//     type Exported struct {
+//         private string // this unexported field will be skipped
+//         Public string
+//     }
+//
+// Using this map as input:
+//
+//     map[string]interface{}{
+//         "private": "I will be ignored",
+//         "Public":  "I made it through!",
+//     }
+//
+// The following struct will be decoded:
+//
+//     type Exported struct {
+//         private: "" // field is left with an empty string (zero value)
+//         Public: "I made it through!"
+//     }
+//
 // Other Configuration
 //
 // mapstructure is highly configurable. See the DecoderConfig struct
@@ -378,6 +419,7 @@ func (d *Decoder) decode(name string, input interface{}, outVal reflect.Value) e
 
 	var err error
 	outputKind := getKind(outVal)
+	addMetaKey := true
 	switch outputKind {
 	case reflect.Bool:
 		err = d.decodeBool(name, input, outVal)
@@ -396,7 +438,7 @@ func (d *Decoder) decode(name string, input interface{}, outVal reflect.Value) e
 	case reflect.Map:
 		err = d.decodeMap(name, input, outVal)
 	case reflect.Ptr:
-		err = d.decodePtr(name, input, outVal)
+		addMetaKey, err = d.decodePtr(name, input, outVal)
 	case reflect.Slice:
 		err = d.decodeSlice(name, input, outVal)
 	case reflect.Array:
@@ -410,7 +452,7 @@ func (d *Decoder) decode(name string, input interface{}, outVal reflect.Value) e
 
 	// If we reached here, then we successfully decoded SOMETHING, so
 	// mark the key as used if we're tracking metainput.
-	if d.config.Metadata != nil && name != "" {
+	if addMetaKey && d.config.Metadata != nil && name != "" {
 		d.config.Metadata.Keys = append(d.config.Metadata.Keys, name)
 	}
 
@@ -800,6 +842,18 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 		tagValue := f.Tag.Get(d.config.TagName)
 		tagParts := strings.Split(tagValue, ",")
 
+		// If "omitempty" is specified in the tag, it ignores empty values.
+		omitempty := false
+		for _, tag := range tagParts[1:] {
+			if tag == "omitempty" {
+				omitempty = true
+				break
+			}
+		}
+		if omitempty && isEmptyValue(v) {
+			continue
+		}
+
 		// Determine the name of the key in the map
 		keyName := f.Name
 		if tagParts[0] != "" {
@@ -861,7 +915,7 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 	return nil
 }
 
-func (d *Decoder) decodePtr(name string, data interface{}, val reflect.Value) error {
+func (d *Decoder) decodePtr(name string, data interface{}, val reflect.Value) (bool, error) {
 	// If the input data is nil, then we want to just set the output
 	// pointer to be nil as well.
 	isNil := data == nil
@@ -882,7 +936,7 @@ func (d *Decoder) decodePtr(name string, data interface{}, val reflect.Value) er
 			val.Set(nilValue)
 		}
 
-		return nil
+		return true, nil
 	}
 
 	// Create an element of the concrete (non pointer) type and decode
@@ -896,16 +950,16 @@ func (d *Decoder) decodePtr(name string, data interface{}, val reflect.Value) er
 		}
 
 		if err := d.decode(name, data, reflect.Indirect(realVal)); err != nil {
-			return err
+			return false, err
 		}
 
 		val.Set(realVal)
 	} else {
 		if err := d.decode(name, data, reflect.Indirect(val)); err != nil {
-			return err
+			return false, err
 		}
 	}
-	return nil
+	return false, nil
 }
 
 func (d *Decoder) decodeFunc(name string, data interface{}, val reflect.Value) error {
@@ -1291,6 +1345,24 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 	}
 
 	return nil
+}
+
+func isEmptyValue(v reflect.Value) bool {
+	switch getKind(v) {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+	return false
 }
 
 func getKind(val reflect.Value) reflect.Kind {
