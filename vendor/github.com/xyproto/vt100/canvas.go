@@ -236,36 +236,34 @@ func (c *Canvas) Draw() {
 	firstRun := 0 == len(c.oldchars)
 	skipAll := !firstRun // true by default, except for the first run
 
-	for y := uint(0); y < c.h; y++ {
-		for x := uint(0); x < c.w; x++ {
-			index := y*c.w + x
-			ch = &((*c).chars[index])
-			if !firstRun {
-				oldch = &((*c).oldchars[index])
-				if ch.fg.Equal(lastfg) && ch.bg.Equal(lastbg) && ch.fg.Equal(oldch.fg) && ch.bg.Equal(oldch.bg) && ch.s == oldch.s {
-					// One is not skippable, can not skip all
-					skipAll = false
-				}
+	size := uint(c.w * c.h)
+	for index := uint(0); index < size; index++ {
+		ch = &((*c).chars[index])
+		if !firstRun {
+			oldch = &((*c).oldchars[index])
+			if ch.fg.Equal(lastfg) && ch.bg.Equal(lastbg) && ch.fg.Equal(oldch.fg) && ch.bg.Equal(oldch.bg) && ch.s == oldch.s {
+				// One is not skippable, can not skip all
+				skipAll = false
 			}
-			// Write this character
-			if ch.s == rune(0) || len(string(ch.s)) == 0 {
-				// Only output a color code if it's different from the last character, or it's the first one
-				if (x == 0 && y == 0) || !lastfg.Equal(ch.fg) || !lastbg.Equal(ch.bg) {
-					all.WriteString(ch.fg.Combine(ch.bg).String())
-				}
-				// Write a blank
-				all.WriteRune(' ')
-			} else {
-				// Only output a color code if it's different from the last character, or it's the first one
-				if (x == 0 && y == 0) || !lastfg.Equal(ch.fg) || !lastbg.Equal(ch.bg) {
-					all.WriteString(ch.fg.Combine(ch.bg).String())
-				}
-				// Write the character
-				all.WriteRune(ch.s)
-			}
-			lastfg = ch.fg
-			lastbg = ch.bg
 		}
+		// Write this character
+		if ch.s == rune(0) || len(string(ch.s)) == 0 {
+			// Only output a color code if it's different from the last character, or it's the first one
+			if (index == 0) || !lastfg.Equal(ch.fg) || !lastbg.Equal(ch.bg) {
+				all.WriteString(ch.fg.Combine(ch.bg).String())
+			}
+			// Write a blank
+			all.WriteRune(' ')
+		} else {
+			// Only output a color code if it's different from the last character, or it's the first one
+			if (index == 0) || !lastfg.Equal(ch.fg) || !lastbg.Equal(ch.bg) {
+				all.WriteString(ch.fg.Combine(ch.bg).String())
+			}
+			// Write the character
+			all.WriteRune(ch.s)
+		}
+		lastfg = ch.fg
+		lastbg = ch.bg
 	}
 
 	// Output the combined string, also disable the color codes

@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200414142002-77e84ffb8c65
+# github.com/dop251/goja v0.0.0-20200526165454-f1752421c432
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -93,7 +93,7 @@ github.com/mattetti/filebuffer
 github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.3.0
+# github.com/mitchellh/mapstructure v1.3.1
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
@@ -103,7 +103,7 @@ github.com/nxadm/tail/ratelimiter
 github.com/nxadm/tail/util
 github.com/nxadm/tail/watch
 github.com/nxadm/tail/winfile
-# github.com/onsi/ginkgo v1.12.1
+# github.com/onsi/ginkgo v1.12.2
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
 github.com/onsi/ginkgo/internal/codelocation
@@ -124,7 +124,7 @@ github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
-# github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942
+# github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/russross/blackfriday/v2 v2.0.1
@@ -216,13 +216,13 @@ github.com/xyproto/simpleredis
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.11.0
+# github.com/xyproto/textoutput v1.12.0
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.8.3
+# github.com/xyproto/vt100 v1.8.5
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
@@ -239,12 +239,12 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
+# golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200519105757-fe76b779f299
+# golang.org/x/sys v0.0.0-20200523222454-059865788121
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -263,7 +263,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 golang.org/x/time/rate
-# google.golang.org/protobuf v1.23.0
+# google.golang.org/protobuf v1.24.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt

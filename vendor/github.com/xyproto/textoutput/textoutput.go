@@ -82,7 +82,7 @@ func (o *TextOutput) Printf(msg ...interface{}) {
 			return
 		} else if len(msg) == 1 {
 			if fmtString, ok := msg[0].(string); ok {
-				fmt.Printf(fmtString)
+				fmt.Print(fmtString)
 			}
 		} else { // > 1
 			if fmtString, ok := msg[0].(string); ok {
@@ -378,16 +378,17 @@ func (o *TextOutput) initializeTagReplacers() {
 // Pair takes a string with ANSI codes and returns
 // a slice with two elements.
 func (o *TextOutput) Extract(s string) []CharAttribute {
-	escaped := false
-	var colorcode strings.Builder
-	var word strings.Builder
-	cc := make([]CharAttribute, 0)
-	var currentColor vt100.AttributeColor
+	var (
+		escaped      bool
+		colorcode    strings.Builder
+		word         strings.Builder
+		cc           = make([]CharAttribute, 0, len(s))
+		currentColor vt100.AttributeColor
+	)
 	for _, r := range s {
 		if r == '\033' {
 			escaped = true
-			w := word.String()
-			if w != "" {
+			if len(word.String()) > 0 {
 				//fmt.Println("cc", cc)
 				word.Reset()
 			}
@@ -397,9 +398,8 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 			if r != 'm' {
 				colorcode.WriteRune(r)
 			} else if r == 'm' {
-				s := colorcode.String()
-				s = strings.TrimPrefix(s, "[")
-				attributeStrings := strings.Split(s, ";")
+				s2 := strings.TrimPrefix(colorcode.String(), "[")
+				attributeStrings := strings.Split(s2, ";")
 				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
 					currentColor = []byte{}
 				}

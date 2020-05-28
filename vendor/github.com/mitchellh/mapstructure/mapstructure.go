@@ -840,42 +840,31 @@ func (d *Decoder) decodeMapFromStruct(name string, dataVal reflect.Value, val re
 		}
 
 		tagValue := f.Tag.Get(d.config.TagName)
-		tagParts := strings.Split(tagValue, ",")
-
-		// If "omitempty" is specified in the tag, it ignores empty values.
-		omitempty := false
-		for _, tag := range tagParts[1:] {
-			if tag == "omitempty" {
-				omitempty = true
-				break
-			}
-		}
-		if omitempty && isEmptyValue(v) {
-			continue
-		}
-
-		// Determine the name of the key in the map
 		keyName := f.Name
-		if tagParts[0] != "" {
-			if tagParts[0] == "-" {
-				continue
-			}
-			keyName = tagParts[0]
-		}
 
 		// If Squash is set in the config, we squash the field down.
-		squash := d.config.Squash && v.Kind() == reflect.Struct
-		// If "squash" is specified in the tag, we squash the field down.
-		if !squash {
-			for _, tag := range tagParts[1:] {
-				if tag == "squash" {
-					squash = true
-					break
-				}
+		squash := d.config.Squash && v.Kind() == reflect.Struct && f.Anonymous
+		// Determine the name of the key in the map
+		if index := strings.Index(tagValue, ","); index != -1 {
+			if tagValue[:index] == "-" {
+				continue;
 			}
+			// If "omitempty" is specified in the tag, it ignores empty values.
+			if strings.Index(tagValue[index + 1:], "omitempty") != -1 && isEmptyValue(v) {
+				continue
+			}
+
+			// If "squash" is specified in the tag, we squash the field down.
+			squash = !squash && strings.Index(tagValue[index + 1:], "squash") != -1
 			if squash && v.Kind() != reflect.Struct {
 				return fmt.Errorf("cannot squash non-struct type '%s'", v.Type())
 			}
+			keyName = tagValue[:index]
+		} else if len(tagValue) > 0 {
+			if  tagValue == "-" {
+				continue
+			}
+			keyName = tagValue
 		}
 
 		switch v.Kind() {
@@ -1198,7 +1187,7 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 			fieldKind := fieldType.Type.Kind()
 
 			// If "squash" is specified in the tag, we squash the field down.
-			squash := d.config.Squash && fieldKind == reflect.Struct
+			squash := d.config.Squash && fieldKind == reflect.Struct && fieldType.Anonymous
 			remain := false
 
 			// We always parse the tags cause we're looking for other tags too
@@ -1226,9 +1215,8 @@ func (d *Decoder) decodeStructFromMap(name string, dataVal, val reflect.Value) e
 			}
 
 			// Build our field
-			fieldCurrent := field{fieldType, structVal.Field(i)}
 			if remain {
-				remainField = &fieldCurrent
+				remainField = &field{fieldType, structVal.Field(i)}
 			} else {
 				// Normal struct field, store it away
 				fields = append(fields, field{fieldType, structVal.Field(i)})

@@ -1,3 +1,5 @@
+// +build !windows
+
 // Package term manages POSIX terminals. As POSIX terminals are connected to,
 // or emulate, a UART, this package also provides control over the various
 // UART and serial line parameters.
