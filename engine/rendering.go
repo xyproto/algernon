@@ -12,6 +12,7 @@ import (
 
 	"github.com/eknkc/amber"
 	"github.com/jvatic/goja-babel"
+	"github.com/russross/blackfriday/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
 	"github.com/xyproto/algernon/console"
@@ -22,7 +23,6 @@ import (
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
-	"github.com/russross/blackfriday/v2"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.
@@ -582,7 +582,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Write the rendered template to the client
-	ac.DataToClient(w, req, filename, []byte(buf.String()))
+	ac.DataToClient(w, req, filename, buf.Bytes())
 }
 
 // AmberPage the given source bytes (in Amber) converted to HTML, to a writer.
