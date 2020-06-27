@@ -1,5 +1,19 @@
 # Changelog
 
+Changes from 1.12.7 to 1.12.8
+=============================
+
+* Update documentation.
+* Improve CI config and Homebrew release process (thanks Rui Chen!).
+* Update supplied systemd configuration.
+* Remove mentions of nacl.
+* Remove the `mitchellh/colorstring` dependency.
+* Update dependencies.
+* Use `algernon_history.txt` as the REPL history filename on Windows.
+* Don't output raw color codes on Windows, use ANSI colors or disable the color.
+* Remove symlinks from the "welcome" sample.
+* Update the release script to also build with GOARM=7 for Raspberry Pi 2, 3 and 4.
+
 Changes from 1.12.6 to 1.12.7
 =============================
 
