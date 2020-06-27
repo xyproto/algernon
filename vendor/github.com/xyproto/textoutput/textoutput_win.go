@@ -1,4 +1,4 @@
-// +build darwin,cgo dragonfly,cgo freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
+// +build !darwin,!dragonfly,!freebsd,!linux,!netbsd,!openbsd,!solaris !cgo
 
 // Package textoutput offers a simple way to use vt100 and output colored text
 package textoutput
@@ -6,16 +6,15 @@ package textoutput
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
-	"github.com/xyproto/vt100"
+	"github.com/mgutz/ansi"
 )
 
 // CharAttribute is a rune and a color attribute
 type CharAttribute struct {
 	R rune
-	A vt100.AttributeColor
+	A ANSIColor
 }
 
 // TextOutput keeps state about verbosity and if colors are enabled
@@ -108,9 +107,9 @@ func (o *TextOutput) Print(msg ...interface{}) {
 func (o *TextOutput) Err(msg string) {
 	if o.enabled {
 		if o.color {
-			vt100.Red.Error(msg)
+			fmt.Fprintln(os.Stderr, ansi.Color(msg, "red"))
 		} else {
-			vt100.Default.Error(msg)
+			fmt.Fprintln(os.Stderr, msg)
 		}
 	}
 }
@@ -138,98 +137,98 @@ func (o *TextOutput) Disabled() bool {
 
 func (o *TextOutput) DarkRed(s string) string {
 	if o.color {
-		return vt100.Red.Get(s)
+		return ansi.Color(s, "red")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkGreen(s string) string {
 	if o.color {
-		return vt100.Green.Get(s)
+		return ansi.Color(s, "green")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkYellow(s string) string {
 	if o.color {
-		return vt100.Yellow.Get(s)
+		return ansi.Color(s, "yellow")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkBlue(s string) string {
 	if o.color {
-		return vt100.Blue.Get(s)
+		return ansi.Color(s, "blue")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkPurple(s string) string {
 	if o.color {
-		return vt100.Magenta.Get(s)
+		return ansi.Color(s, "magenta")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkCyan(s string) string {
 	if o.color {
-		return vt100.Cyan.Get(s)
+		return ansi.Color(s, "cyan")
 	}
 	return s
 }
 
 func (o *TextOutput) DarkGray(s string) string {
 	if o.color {
-		return vt100.DarkGray.Get(s)
+		return ansi.Color(s, "black")
 	}
 	return s
 }
 
 func (o *TextOutput) LightRed(s string) string {
 	if o.color {
-		return vt100.LightRed.Get(s)
+		return ansi.Color(s, "red+h")
 	}
 	return s
 }
 
 func (o *TextOutput) LightGreen(s string) string {
 	if o.color {
-		return vt100.LightGreen.Get(s)
+		return ansi.Color(s, "green+h")
 	}
 	return s
 }
 
 func (o *TextOutput) LightYellow(s string) string {
 	if o.color {
-		return vt100.LightYellow.Get(s)
+		return ansi.Color(s, "yellow+h")
 	}
 	return s
 }
 
 func (o *TextOutput) LightBlue(s string) string {
 	if o.color {
-		return vt100.LightBlue.Get(s)
+		return ansi.Color(s, "blue+h")
 	}
 	return s
 }
 
 func (o *TextOutput) LightPurple(s string) string {
 	if o.color {
-		return vt100.LightMagenta.Get(s)
+		return ansi.Color(s, "magenta+h")
 	}
 	return s
 }
 
 func (o *TextOutput) LightCyan(s string) string {
 	if o.color {
-		return vt100.LightCyan.Get(s)
+		return ansi.Color(s, "cyan+h")
 	}
 	return s
 }
 
 func (o *TextOutput) White(s string) string {
 	if o.color {
-		return vt100.White.Get(s)
+		return ansi.Color(s, "white+h")
 	}
 	return s
 }
@@ -239,7 +238,22 @@ func (o *TextOutput) White(s string) string {
 // words.
 func (o *TextOutput) Words(line string, colors ...string) string {
 	if o.color {
-		return vt100.Words(line, colors...)
+		var ok bool
+		words := strings.Split(line, " ")
+		color := ANSIColor(ansi.ColorCode("black+h")) // LightGray
+		coloredWords := make([]string, len(words))
+		for i, word := range words {
+			if i < len(colors) {
+				prevColor := color
+				color, ok = LightColorMap[colors[i]]
+				if !ok {
+					// Use the previous color of this color string was not found
+					color = prevColor
+				}
+			}
+			coloredWords[i] = ansi.Color(word, string(color))
+		}
+		return strings.Join(coloredWords, " ")
 	}
 	return line
 }
@@ -310,14 +324,14 @@ func (o *TextOutput) Enable() {
 
 func (o *TextOutput) initializeTagReplacers() {
 	// Initialize tag replacement tables, with as few memory allocations as possible (no append)
-	off := vt100.NoColor()
-	rs := make([]string, len(vt100.LightColorMap)*4+2)
+	off := ansi.ColorCode("off")
+	rs := make([]string, len(LightColorMap)*4+2)
 	i := 0
 	if o.color {
-		for key, value := range vt100.LightColorMap {
+		for key, value := range LightColorMap {
 			rs[i] = "<" + key + ">"
 			i++
-			rs[i] = value.String()
+			rs[i] = string(value)
 			i++
 			rs[i] = "</" + key + ">"
 			i++
@@ -328,7 +342,7 @@ func (o *TextOutput) initializeTagReplacers() {
 		i++
 		rs[i] = off
 	} else {
-		for key := range vt100.LightColorMap {
+		for key := range LightColorMap {
 			rs[i] = "<" + key + ">"
 			i++
 			rs[i] = ""
@@ -346,10 +360,10 @@ func (o *TextOutput) initializeTagReplacers() {
 	// Initialize the replacer for the dark color scheme, while reusing the rs slice
 	i = 0
 	if o.color {
-		for key, value := range vt100.DarkColorMap {
+		for key, value := range DarkColorMap {
 			rs[i] = "<" + key + ">"
 			i++
-			rs[i] = value.String()
+			rs[i] = string(value)
 			i++
 			rs[i] = "</" + key + ">"
 			i++
@@ -360,7 +374,7 @@ func (o *TextOutput) initializeTagReplacers() {
 		i++
 		rs[i] = off
 	} else {
-		for key := range vt100.DarkColorMap {
+		for key := range DarkColorMap {
 			rs[i] = "<" + key + ">"
 			i++
 			rs[i] = ""
@@ -377,54 +391,54 @@ func (o *TextOutput) initializeTagReplacers() {
 	o.darkReplacer = strings.NewReplacer(rs...)
 }
 
-// Pair takes a string with ANSI codes and returns
-// a slice with two elements.
-func (o *TextOutput) Extract(s string) []CharAttribute {
-	var (
-		escaped      bool
-		colorcode    strings.Builder
-		word         strings.Builder
-		cc           = make([]CharAttribute, 0, len(s))
-		currentColor vt100.AttributeColor
-	)
-	for _, r := range s {
-		if r == '\033' {
-			escaped = true
-			if len(word.String()) > 0 {
-				//fmt.Println("cc", cc)
-				word.Reset()
-			}
-			continue
-		}
-		if escaped {
-			if r != 'm' {
-				colorcode.WriteRune(r)
-			} else if r == 'm' {
-				s2 := strings.TrimPrefix(colorcode.String(), "[")
-				attributeStrings := strings.Split(s2, ";")
-				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
-					currentColor = []byte{}
-				}
-				for _, attributeString := range attributeStrings {
-					attributeNumber, err := strconv.Atoi(attributeString)
-					if err != nil {
-						continue
-					}
-					currentColor = append(currentColor, byte(attributeNumber))
-				}
-				// Strip away leading 0 color attribute, if there are more than 1
-				if len(currentColor) > 1 && currentColor[0] == 0 {
-					currentColor = currentColor[1:]
-				}
-				// currentColor now contains the last found color attributes,
-				// but as a vt100.AttributeColor.
-				colorcode.Reset()
-				escaped = false
-			}
-		} else {
-			cc = append(cc, CharAttribute{r, currentColor})
-		}
-	}
-	// if escaped is true here, there is something wrong
-	return cc
-}
+// // Pair takes a string with ANSI codes and returns
+// // a slice with two elements.
+// func (o *TextOutput) Extract(s string) []CharAttribute {
+// 	var (
+// 		escaped      bool
+// 		colorcode    strings.Builder
+// 		word         strings.Builder
+// 		cc           = make([]ANSIColor, 0, len(s))
+// 		currentColor ANSIColor
+// 	)
+// 	for _, r := range s {
+// 		if r == '\033' {
+// 			escaped = true
+// 			if len(word.String()) > 0 {
+// 				//fmt.Println("cc", cc)
+// 				word.Reset()
+// 			}
+// 			continue
+// 		}
+// 		if escaped {
+// 			if r != 'm' {
+// 				colorcode.WriteRune(r)
+// 			} else if r == 'm' {
+// 				s2 := strings.TrimPrefix(colorcode.String(), "[")
+// 				attributeStrings := strings.Split(s2, ";")
+// 				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
+// 					currentColor = ""
+// 				}
+// 				for _, attributeString := range attributeStrings {
+// 					attributeNumber, err := strconv.Atoi(attributeString)
+// 					if err != nil {
+// 						continue
+// 					}
+// 					currentColor = append(currentColor, byte(attributeNumber))
+// 				}
+// 				// Strip away leading 0 color attribute, if there are more than 1
+// 				if len(currentColor) > 1 && currentColor[0] == 0 {
+// 					currentColor = currentColor[1:]
+// 				}
+// 				// currentColor now contains the last found color attributes,
+// 				// but as a vt100.AttributeColor.
+// 				colorcode.Reset()
+// 				escaped = false
+// 			}
+// 		} else {
+// 			cc = append(cc, CharAttribute{r, currentColor})
+// 		}
+// 	}
+// 	// if escaped is true here, there is something wrong
+// 	return cc
+//}
