@@ -9,7 +9,7 @@ Welcome
 
 Your local Algernon server is up and running.
 
-You can find this Markdown file in the `samples/welcome` directory.
+You can find this Markdown file in the `samples/` directory.
 
 Try changing `index.md` in your favorite editor and watch this page refresh instantly as you save.
 
