@@ -18,7 +18,6 @@ import (
 	"time"
 
 	babel "github.com/jvatic/goja-babel"
-	"github.com/mitchellh/colorstring"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/pool"
@@ -28,6 +27,7 @@ import (
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/recwatch"
+	"github.com/xyproto/textoutput"
 	"github.com/xyproto/unzip"
 )
 
@@ -645,13 +645,16 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.serveJustHTTP = true
 	}
 
+	to := textoutput.NewTextOutput(true, !ac.quietMode)
+
 	// Console output
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
 		// Output a colorful ansi logo if a proper terminal is available
 		fmt.Println(platformdep.Banner(ac.versionString, ac.description))
 	} else if !ac.quietMode {
 		timestamp := time.Now().Format("2006-01-02 15:04")
-		colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
+		to.OutputTags("<cyan>" + ac.versionString + "<darkgray> - " + timestamp + "<off>")
+		//colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
@@ -693,17 +696,17 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	ac.serverConfigurationFilenames = unique(ac.serverConfigurationFilenames)
 
 	// Color scheme
-	arrowColor := "[bold][blue]"
-	filenameColor := "[bold][white]"
-	luaOutputColor := "[dark_gray]"
-	dashLineColor := "[red]"
+	arrowColor := "<lightblue>"
+	filenameColor := "<white>"
+	luaOutputColor := "<darkgray>"
+	dashLineColor := "<red>"
 
 	// Create a Colorize struct that will not reset colors after colorizing
 	// strings meant for the terminal.
-	c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
+	//c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
 	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
-		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
+		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))
 	}
 
 	// Read server configuration script, if present.
@@ -714,8 +717,8 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 			// Dividing line between the banner and output from any of the configuration scripts
 			if !ac.quietMode && !ac.onlyLuaMode {
 				// Output the configuration filename
-				colorstring.Println(arrowColor + "-> " + filenameColor + filename + "[reset]")
-				fmt.Print(c.Color(luaOutputColor))
+				to.Println(arrowColor + "-> " + filenameColor + filename + "<off>")
+				fmt.Print(to.Tags(luaOutputColor))
 			} else if ac.verboseMode {
 				log.Info("Running Lua configuration file: " + filename)
 			}
@@ -745,8 +748,8 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		// Run the Lua server file and set up handlers
 		if !ac.quietMode && !ac.onlyLuaMode {
 			// Output the configuration filename
-			colorstring.Println(arrowColor + "-> " + filenameColor + ac.luaServerFilename + "[reset]")
-			fmt.Print(c.Color(luaOutputColor))
+			to.Println(arrowColor + "-> " + filenameColor + ac.luaServerFilename + "<off>")
+			fmt.Print(to.Tags(luaOutputColor))
 		} else if ac.verboseMode {
 			fmt.Println("Running Lua configuration file: " + ac.luaServerFilename)
 		}
@@ -766,7 +769,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	ranServerReadyFunction := ac.finalConfiguration(ac.serverHost)
 
 	if !ac.quietMode && !ac.onlyLuaMode {
-		fmt.Print(c.Color("[reset]"))
+		to.Print("<off>")
 	}
 
 	// If no configuration files were being ran successfully,
@@ -781,7 +784,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Separator between the output of the configuration scripts and
 	// the rest of the server output.
 	if ranServerReadyFunction && (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
-		fmt.Println(colorstring.Color(dashLineColor + repeat("-", 49) + "[reset]"))
+		to.Tags(dashLineColor + repeat("-", 49) + "<off>")
 	}
 
 	// Direct internal logging elsewhere
