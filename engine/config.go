@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"runtime/pprof"
 	"runtime/trace"
 	"strconv"
@@ -645,7 +646,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.serveJustHTTP = true
 	}
 
-	to := textoutput.NewTextOutput(true, !ac.quietMode)
+	to := textoutput.NewTextOutput(runtime.GOOS != "windows", !ac.quietMode)
 
 	// Console output
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
