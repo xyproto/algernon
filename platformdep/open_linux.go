@@ -1,4 +1,4 @@
-// +build linux nacl solaris
+// +build linux solaris
 
 package platformdep
 

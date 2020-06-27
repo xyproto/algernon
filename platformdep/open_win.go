@@ -1,4 +1,4 @@
-// +build !linux,!nacl,!solaris,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd
+// +build !linux,!solaris,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd
 
 package platformdep
 
