@@ -89,11 +89,8 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		// Strip the leading "./" from the current directory
 		title = strings.TrimPrefix(title, dotSlash)
 
-		// Strip double "/" at the end, just keep one
-		if strings.Contains(title, doubleP) {
-			// Replace "//" with just "/"
-			title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
-		}
+		// Replace "//" with just "/"
+		title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
 	}
 
 	// Check if the current page contents are empty
