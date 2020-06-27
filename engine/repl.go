@@ -711,7 +711,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 
 	// Command history file
 	if windows {
-		historyFilename = filepath.Join(historydir, "algernon", "repl.txt")
+		historyFilename = filepath.Join(historydir, "algernon_history.txt")
 	} else {
 		historyFilename = filepath.Join(historydir, ".algernon_history")
 	}
