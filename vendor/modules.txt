@@ -47,7 +47,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200526165454-f1752421c432
+# github.com/dop251/goja v0.0.0-20200622111502-2faa37d3dedf
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -78,7 +78,7 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
-# github.com/lib/pq v1.5.2
+# github.com/lib/pq v1.7.0
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
@@ -95,11 +95,9 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 github.com/mgutz/ansi
-# github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
-github.com/mitchellh/colorstring
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.3.1
+# github.com/mitchellh/mapstructure v1.3.2
 github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 github.com/natefinch/pie
@@ -109,12 +107,13 @@ github.com/nxadm/tail/ratelimiter
 github.com/nxadm/tail/util
 github.com/nxadm/tail/watch
 github.com/nxadm/tail/winfile
-# github.com/onsi/ginkgo v1.12.2
+# github.com/onsi/ginkgo v1.13.0
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
 github.com/onsi/ginkgo/internal/codelocation
 github.com/onsi/ginkgo/internal/containernode
 github.com/onsi/ginkgo/internal/failer
+github.com/onsi/ginkgo/internal/global
 github.com/onsi/ginkgo/internal/leafnodes
 github.com/onsi/ginkgo/internal/remote
 github.com/onsi/ginkgo/internal/spec
@@ -232,9 +231,9 @@ github.com/xyproto/unzip
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# go.etcd.io/bbolt v1.3.4
+# go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -245,7 +244,7 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
+# golang.org/x/net v0.0.0-20200625001655-4c5254603344
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -254,7 +253,7 @@ golang.org/x/net/idna
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.3
 golang.org/x/text/cases
 golang.org/x/text/collate
 golang.org/x/text/internal
@@ -269,7 +268,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 golang.org/x/time/rate
-# google.golang.org/protobuf v1.24.0
+# google.golang.org/protobuf v1.25.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -280,12 +279,11 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma

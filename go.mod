@@ -9,20 +9,19 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.6
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20200526165454-f1752421c432 // indirect
+	github.com/dop251/goja v0.0.0-20200622111502-2faa37d3dedf // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
-	github.com/lib/pq v1.5.2
+	github.com/lib/pq v1.7.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.3.1 // indirect
+	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/onsi/ginkgo v1.12.2 // indirect
+	github.com/onsi/ginkgo v1.13.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/shopspring/decimal v1.2.0 // indirect
@@ -54,10 +53,11 @@ require (
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
-	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
+	go.etcd.io/bbolt v1.3.5 // indirect
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	google.golang.org/protobuf v1.24.0 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
