@@ -276,8 +276,8 @@ github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e h1:UNgpd3FQ8ng5/sXD
 github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e/go.mod h1:Vzq/bags86biUdysmbzzVwkEYd2+5r51ryxisbjbjkU=
 github.com/xyproto/symwalk v1.1.1 h1:icxMUiRAOqw8x9q9UWtpNz3rN7fngSYNMRguWzsyiWI=
 github.com/xyproto/symwalk v1.1.1/go.mod h1:u40/s1ER3LYv1ibNLeyH1PAR9oX62BPHNRt295/9zQc=
-github.com/xyproto/textoutput v1.12.1-0.20200627170325-1d846c1e686c h1:IMLeFfe/SIBeicg1PMhC0f+Nn8V0JnVgWZWvT/BTGIQ=
-github.com/xyproto/textoutput v1.12.1-0.20200627170325-1d846c1e686c/go.mod h1:STHz0FZrKHctsEP449lprZKy4fK/ylaz5FX5StD3TDI=
+github.com/xyproto/textoutput v1.12.1 h1:zVX9yrVZij+r5tgrgfafMk17UYa4THkOkshPTY+iHY4=
+github.com/xyproto/textoutput v1.12.1/go.mod h1:STHz0FZrKHctsEP449lprZKy4fK/ylaz5FX5StD3TDI=
 github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89 h1:AfGCPfw7hTEZlM8843wNZKwkjhyA/WXyW1CNA3VsZmA=
 github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89/go.mod h1:OQfIWNs5Nhh2Mkq/pygdm0+4W9U21SgeXAO3ww1Ts/I=
 github.com/xyproto/unzip v0.0.0-20150601123358-823950573952 h1:pCgYs8AOzRpEmdM55hrSnd+TZOr+1/m9Y9KkFIZPwiU=

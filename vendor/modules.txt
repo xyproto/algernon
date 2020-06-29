@@ -221,7 +221,7 @@ github.com/xyproto/simpleredis
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.12.1-0.20200627170325-1d846c1e686c
+# github.com/xyproto/textoutput v1.12.1
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 github.com/xyproto/tinysvg

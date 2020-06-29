@@ -49,7 +49,7 @@ require (
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect
 	github.com/xyproto/simpleredis v0.0.0-20200201215242-1ff0da2967b4
 	github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e
-	github.com/xyproto/textoutput v1.12.1-0.20200627170325-1d846c1e686c
+	github.com/xyproto/textoutput v1.12.1
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
