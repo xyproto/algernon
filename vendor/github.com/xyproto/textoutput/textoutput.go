@@ -1,4 +1,4 @@
-// +build darwin,cgo dragonfly,cgo freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
+// +build !windows
 
 // Package textoutput offers a simple way to use vt100 and output colored text
 package textoutput

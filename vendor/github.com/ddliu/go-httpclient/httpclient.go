@@ -283,7 +283,10 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
 			if proxy, ok = proxy_.(string); !ok {
 				return nil, fmt.Errorf("OPT_PROXY must be string")
 			}
-			proxy = "http://" + proxy
+
+			if !strings.Contains(proxy, "://") {
+				proxy = "http://" + proxy
+			}
 			proxyUrl, err := url.Parse(proxy)
 			if err != nil {
 				return nil, err
