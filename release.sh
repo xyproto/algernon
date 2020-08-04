@@ -30,10 +30,10 @@ echo '* Linux static w/ upx'
 CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static && upx $name.linux_static
 
 # Compress the Windows release
-echo "Compressing $name-$version.zip"
+echo "Compressing $name-$version-windows.zip"
 mkdir "$name-$version"
 cp $name.exe LICENSE "$name-$version/"
-zip -q -r "$name-$version.zip" "$name-$version/"
+zip -q -r "$name-$version-windows.zip" "$name-$version/"
 rm -r "$name-$version"
 rm $name.exe
 
