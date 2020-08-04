@@ -48,7 +48,7 @@ func AddScriptToHeader(page *Page, js string) error {
 func (page *Page) AddScriptToHead(js string) (*Tag, error) {
 	// Check if there's anything to add
 	if js == "" {
-		return nil, errors.New("No javascript to add")
+		return nil, errors.New("no javascript to add")
 	}
 	// Add a script tag
 	head, err := page.GetTag("head")
@@ -65,7 +65,7 @@ func (page *Page) AddScriptToHead(js string) (*Tag, error) {
 func (page *Page) AddScriptToBody(js string) (*Tag, error) {
 	// Check if there's anything to add
 	if js == "" {
-		return nil, errors.New("No javascript to add")
+		return nil, errors.New("no javascript to add")
 	}
 	// Add a script tag
 	body, err := page.GetTag("body")

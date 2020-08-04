@@ -3,7 +3,7 @@ module github.com/xyproto/algernon
 go 1.11
 
 require (
-	github.com/alecthomas/chroma v0.7.3 // indirect
+	github.com/alecthomas/chroma v0.8.0 // indirect
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
@@ -16,7 +16,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
-	github.com/lib/pq v1.7.1
+	github.com/lib/pq v1.8.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0
@@ -36,7 +36,7 @@ require (
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
-	github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
+	github.com/xyproto/onthefly v0.0.0-20200729114226-067b477dcf06
 	github.com/xyproto/permissionbolt v1.2.6
 	github.com/xyproto/permissions2 v0.0.0-20200321215504-7f891816e6a2
 	github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
@@ -55,9 +55,9 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c // indirect
+	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	google.golang.org/protobuf v1.25.0 // indirect

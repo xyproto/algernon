@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.7.3
+# github.com/alecthomas/chroma v0.8.0
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -28,6 +28,7 @@ github.com/alecthomas/chroma/lexers/v
 github.com/alecthomas/chroma/lexers/w
 github.com/alecthomas/chroma/lexers/x
 github.com/alecthomas/chroma/lexers/y
+github.com/alecthomas/chroma/lexers/z
 github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 github.com/bmizerany/assert
@@ -78,7 +79,7 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
-# github.com/lib/pq v1.7.1
+# github.com/lib/pq v1.8.0
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
@@ -174,7 +175,7 @@ github.com/xyproto/gopher-lua/pm
 github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20180623224327-f1da6d4ca4c9
 github.com/xyproto/mime
-# github.com/xyproto/onthefly v0.0.0-20191101100742-c576f31faceb
+# github.com/xyproto/onthefly v0.0.0-20200729114226-067b477dcf06
 github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v1.2.6
 github.com/xyproto/permissionbolt
@@ -233,7 +234,7 @@ github.com/xyproto/vt100
 github.com/yosssi/gcss
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+# golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -249,7 +250,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c
+# golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
