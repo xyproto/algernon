@@ -215,35 +215,8 @@ func s2b(attribute string) byte {
 	return byte(num)
 }
 
-// For each element in a slice, apply the function f
-func mapSB(sl []string, f func(string) byte) []byte {
-	result := make([]byte, len(sl))
-	for i, s := range sl {
-		result[i] = f(s)
-	}
-	return result
-}
-
 func NewAttributeColor(attributes ...string) AttributeColor {
 	return AttributeColor(mapSB(attributes, s2b))
-}
-
-// For each element in a slice, apply the function f
-func mapS(sl []string, f func(string) string) []string {
-	result := make([]string, len(sl))
-	for i, s := range sl {
-		result[i] = f(s)
-	}
-	return result
-}
-
-// For each element in a slice, apply the function f
-func mapBS(bl []byte, f func(byte) string) []string {
-	result := make([]string, len(bl))
-	for i, b := range bl {
-		result[i] = f(b)
-	}
-	return result
 }
 
 func (ac AttributeColor) Head() byte {

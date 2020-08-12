@@ -94,7 +94,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		}
 	} else if numRead == 1 {
 		ascii = int(bytes[0])
-	} else {
+		//} else {
 		// TWo characters read??
 	}
 	return
@@ -133,7 +133,7 @@ func asciiAndKeyCodeNoJavascript(tty *TTY) (ascii, keyCode int, err error) {
 		}
 	} else if numRead == 1 {
 		ascii = int(bytes[0])
-	} else {
+		//} else {
 		// Two characters read??
 	}
 	return
@@ -220,14 +220,15 @@ func KeyOnce() int {
 func WaitForKey() {
 	// Get a new TTY and start reading keypresses in a loop
 	r, err := NewTTY()
-	defer r.Close()
 	if err != nil {
+		r.Close()
 		panic(err)
 	}
 	//r.SetTimeout(10 * time.Millisecond)
 	for {
 		switch r.Key() {
 		case 27, 13, 32:
+			r.Close()
 			return
 		}
 	}

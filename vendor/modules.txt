@@ -48,12 +48,15 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200721192441-a695b0cdd498
+# github.com/dop251/goja v0.0.0-20200811154920-cd0eddb06559
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
+github.com/dop251/goja/ftoa
+github.com/dop251/goja/ftoa/internal/fast
 github.com/dop251/goja/parser
 github.com/dop251/goja/token
+github.com/dop251/goja/unistring
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
@@ -86,7 +89,7 @@ github.com/lib/pq/scram
 # github.com/marten-seemann/chacha20 v0.2.0
 github.com/marten-seemann/chacha20
 github.com/marten-seemann/chacha20/internal/subtle
-# github.com/marten-seemann/qpack v0.1.0
+# github.com/marten-seemann/qpack v0.2.0
 github.com/marten-seemann/qpack
 # github.com/mattetti/filebuffer v1.0.1
 github.com/mattetti/filebuffer
@@ -183,7 +186,7 @@ github.com/xyproto/permissionbolt
 github.com/xyproto/permissions2
 # github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
 github.com/xyproto/permissionsql
-# github.com/xyproto/pinterface v0.0.0-20200201214933-70763765f31f
+# github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c
 github.com/xyproto/pinterface
 # github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 github.com/xyproto/pongo2
@@ -216,7 +219,7 @@ github.com/xyproto/simplebolt
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis v0.0.0-20200201215242-1ff0da2967b4
+# github.com/xyproto/simpleredis v0.0.0-20200807102745-cc407f748897
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e
 github.com/xyproto/splash
@@ -228,7 +231,7 @@ github.com/xyproto/textoutput
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.8.5
+# github.com/xyproto/vt100 v1.8.6
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
@@ -250,7 +253,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
+# golang.org/x/sys v0.0.0-20200810151505-1b9f1253b3ed
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
