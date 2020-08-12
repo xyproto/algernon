@@ -1,18 +1,15 @@
 module github.com/xyproto/algernon
 
-go 1.11
+go 1.15
 
 require (
 	github.com/alecthomas/chroma v0.8.0 // indirect
-	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.7
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dop251/goja v0.0.0-20200811154920-cd0eddb06559 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
@@ -44,7 +41,7 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
-	github.com/xyproto/quic v1.0.2-0.20191101113740-28ced3f2f12b
+	github.com/xyproto/quic v1.0.1
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v1.5.1
@@ -64,5 +61,4 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
