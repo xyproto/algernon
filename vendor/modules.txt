@@ -48,7 +48,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.2.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200811154920-cd0eddb06559
+# github.com/dop251/goja v0.0.0-20200807102615-e36d2cba6a5c
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file

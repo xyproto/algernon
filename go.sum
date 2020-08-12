@@ -46,6 +46,8 @@ github.com/dlclark/regexp2 v1.2.0 h1:8sAhBGEM0dRWogWqWyQeIJnxjWO6oIjl8FKqREDsGfk
 github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f h1:vtCDQseO/Sbu5IZSoc2uzZ7CkSoai7OtpcwGFK5FlyE=
 github.com/dop251/goja v0.0.0-20191203121440-007eef3bc40f/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
+github.com/dop251/goja v0.0.0-20200807102615-e36d2cba6a5c h1:dJ/SSOC9eB6eEvdgpN2XSGijxhLFl9AumVP+2dvqx4Y=
+github.com/dop251/goja v0.0.0-20200807102615-e36d2cba6a5c/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
 github.com/dop251/goja v0.0.0-20200811154920-cd0eddb06559 h1:j53LTiKFnfAjigMGpsPQVpXN6sG64p8CyH5btbZdg3s=
 github.com/dop251/goja v0.0.0-20200811154920-cd0eddb06559/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
