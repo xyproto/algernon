@@ -11,18 +11,21 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dop251/goja v0.0.0-20200721192441-a695b0cdd498 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.8.0
-	github.com/marten-seemann/qpack v0.2.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
+	github.com/onsi/ginkgo v1.12.1 // indirect
+	github.com/onsi/gomega v1.10.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/shopspring/decimal v1.2.0 // indirect
@@ -60,6 +63,8 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
+	google.golang.org/protobuf v1.23.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
