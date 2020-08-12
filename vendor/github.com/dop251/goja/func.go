@@ -1,10 +1,6 @@
 package goja
 
-import (
-	"reflect"
-
-	"github.com/dop251/goja/unistring"
-)
+import "reflect"
 
 type baseFuncObject struct {
 	baseObject
@@ -24,12 +20,11 @@ type nativeFuncObject struct {
 	baseFuncObject
 
 	f         func(FunctionCall) Value
-	construct func(args []Value, newTarget *Object) *Object
+	construct func(args []Value) *Object
 }
 
 type boundFuncObject struct {
 	nativeFuncObject
-	wrapped *Object
 }
 
 func (f *nativeFuncObject) export() interface{} {
@@ -40,39 +35,39 @@ func (f *nativeFuncObject) exportType() reflect.Type {
 	return reflect.TypeOf(f.f)
 }
 
-func (f *funcObject) _addProto(n unistring.String) Value {
+func (f *funcObject) _addProto(n string) Value {
 	if n == "prototype" {
-		if _, exists := f.values[n]; !exists {
+		if _, exists := f.values["prototype"]; !exists {
 			return f.addPrototype()
 		}
 	}
 	return nil
 }
 
-func (f *funcObject) getStr(p unistring.String, receiver Value) Value {
-	return f.getStrWithOwnProp(f.getOwnPropStr(p), p, receiver)
-}
-
-func (f *funcObject) getOwnPropStr(name unistring.String) Value {
+func (f *funcObject) getPropStr(name string) Value {
 	if v := f._addProto(name); v != nil {
 		return v
 	}
 
-	return f.baseObject.getOwnPropStr(name)
+	return f.baseObject.getPropStr(name)
 }
 
-func (f *funcObject) setOwnStr(name unistring.String, val Value, throw bool) bool {
+func (f *funcObject) putStr(name string, val Value, throw bool) {
 	f._addProto(name)
-	return f.baseObject.setOwnStr(name, val, throw)
+	f.baseObject.putStr(name, val, throw)
 }
 
-func (f *funcObject) setForeignStr(name unistring.String, val, receiver Value, throw bool) (bool, bool) {
-	return f._setForeignStr(name, f.getOwnPropStr(name), val, receiver, throw)
+func (f *funcObject) put(n Value, val Value, throw bool) {
+	f.putStr(n.String(), val, throw)
 }
 
-func (f *funcObject) deleteStr(name unistring.String, throw bool) bool {
+func (f *funcObject) deleteStr(name string, throw bool) bool {
 	f._addProto(name)
 	return f.baseObject.deleteStr(name, throw)
+}
+
+func (f *funcObject) delete(n Value, throw bool) bool {
+	return f.deleteStr(n.String(), throw)
 }
 
 func (f *funcObject) addPrototype() Value {
@@ -81,7 +76,23 @@ func (f *funcObject) addPrototype() Value {
 	return f._putProp("prototype", proto, true, false, false)
 }
 
-func (f *funcObject) hasOwnPropertyStr(name unistring.String) bool {
+func (f *funcObject) getProp(n Value) Value {
+	return f.getPropStr(n.String())
+}
+
+func (f *funcObject) hasOwnProperty(n Value) bool {
+	if r := f.baseObject.hasOwnProperty(n); r {
+		return true
+	}
+
+	name := n.String()
+	if name == "prototype" {
+		return true
+	}
+	return false
+}
+
+func (f *funcObject) hasOwnPropertyStr(name string) bool {
 	if r := f.baseObject.hasOwnPropertyStr(name); r {
 		return true
 	}
@@ -92,32 +103,19 @@ func (f *funcObject) hasOwnPropertyStr(name unistring.String) bool {
 	return false
 }
 
-func (f *funcObject) ownKeys(all bool, accum []Value) []Value {
-	if all {
-		if _, exists := f.values["prototype"]; !exists {
-			accum = append(accum, asciiString("prototype"))
-		}
-	}
-	return f.baseFuncObject.ownKeys(all, accum)
-}
-
-func (f *funcObject) construct(args []Value, newTarget *Object) *Object {
-	if newTarget == nil {
-		newTarget = f.val
-	}
-	proto := newTarget.self.getStr("prototype", nil)
+func (f *funcObject) construct(args []Value) *Object {
+	proto := f.getStr("prototype")
 	var protoObj *Object
 	if p, ok := proto.(*Object); ok {
 		protoObj = p
 	} else {
 		protoObj = f.val.runtime.global.ObjectPrototype
 	}
-
 	obj := f.val.runtime.newBaseObject(protoObj, classObject).val
-	ret := f.call(FunctionCall{
+	ret := f.Call(FunctionCall{
 		This:      obj,
 		Arguments: args,
-	}, newTarget)
+	})
 
 	if ret, ok := ret.(*Object); ok {
 		return ret
@@ -126,10 +124,6 @@ func (f *funcObject) construct(args []Value, newTarget *Object) *Object {
 }
 
 func (f *funcObject) Call(call FunctionCall) Value {
-	return f.call(call, nil)
-}
-
-func (f *funcObject) call(call FunctionCall, newTarget Value) Value {
 	vm := f.val.runtime.vm
 	pc := vm.pc
 
@@ -156,7 +150,6 @@ func (f *funcObject) call(call FunctionCall, newTarget Value) Value {
 	vm.args = len(call.Arguments)
 	vm.prg = f.prg
 	vm.stash = f.stash
-	vm.newTarget = newTarget
 	vm.pc = 0
 	vm.run()
 	vm.pc = pc
@@ -176,18 +169,12 @@ func (f *funcObject) assertCallable() (func(FunctionCall) Value, bool) {
 	return f.Call, true
 }
 
-func (f *funcObject) assertConstructor() func(args []Value, newTarget *Object) *Object {
-	return f.construct
-}
-
-func (f *baseFuncObject) init(name unistring.String, length int) {
+func (f *baseFuncObject) init(name string, length int) {
 	f.baseObject.init()
 
-	if name != "" {
-		f.nameProp.configurable = true
-		f.nameProp.value = stringValueFromRaw(name)
-		f._put("name", &f.nameProp)
-	}
+	f.nameProp.configurable = true
+	f.nameProp.value = newStringValue(name)
+	f._put("name", &f.nameProp)
 
 	f.lenProp.configurable = true
 	f.lenProp.value = valueInt(length)
@@ -196,7 +183,7 @@ func (f *baseFuncObject) init(name unistring.String, length int) {
 
 func (f *baseFuncObject) hasInstance(v Value) bool {
 	if v, ok := v.(*Object); ok {
-		o := f.val.self.getStr("prototype", nil)
+		o := f.val.self.getStr("prototype")
 		if o1, ok := o.(*Object); ok {
 			for {
 				v = v.self.proto()
@@ -216,7 +203,7 @@ func (f *baseFuncObject) hasInstance(v Value) bool {
 }
 
 func (f *nativeFuncObject) defaultConstruct(ccall func(ConstructorCall) *Object, args []Value) *Object {
-	proto := f.getStr("prototype", nil)
+	proto := f.getStr("prototype")
 	var protoObj *Object
 	if p, ok := proto.(*Object); ok {
 		protoObj = p
@@ -242,40 +229,36 @@ func (f *nativeFuncObject) assertCallable() (func(FunctionCall) Value, bool) {
 	return nil, false
 }
 
-func (f *nativeFuncObject) assertConstructor() func(args []Value, newTarget *Object) *Object {
-	return f.construct
+func (f *boundFuncObject) getProp(n Value) Value {
+	return f.getPropStr(n.String())
 }
 
-func (f *boundFuncObject) getStr(p unistring.String, receiver Value) Value {
-	return f.getStrWithOwnProp(f.getOwnPropStr(p), p, receiver)
-}
-
-func (f *boundFuncObject) getOwnPropStr(name unistring.String) Value {
+func (f *boundFuncObject) getPropStr(name string) Value {
 	if name == "caller" || name == "arguments" {
+		//f.runtime.typeErrorResult(true, "'caller' and 'arguments' are restricted function properties and cannot be accessed in this context.")
 		return f.val.runtime.global.throwerProperty
 	}
-
-	return f.nativeFuncObject.getOwnPropStr(name)
+	return f.nativeFuncObject.getPropStr(name)
 }
 
-func (f *boundFuncObject) deleteStr(name unistring.String, throw bool) bool {
+func (f *boundFuncObject) delete(n Value, throw bool) bool {
+	return f.deleteStr(n.String(), throw)
+}
+
+func (f *boundFuncObject) deleteStr(name string, throw bool) bool {
 	if name == "caller" || name == "arguments" {
 		return true
 	}
 	return f.nativeFuncObject.deleteStr(name, throw)
 }
 
-func (f *boundFuncObject) setOwnStr(name unistring.String, val Value, throw bool) bool {
+func (f *boundFuncObject) putStr(name string, val Value, throw bool) {
 	if name == "caller" || name == "arguments" {
-		panic(f.val.runtime.NewTypeError("'caller' and 'arguments' are restricted function properties and cannot be accessed in this context."))
+		f.val.runtime.typeErrorResult(true, "'caller' and 'arguments' are restricted function properties and cannot be accessed in this context.")
 	}
-	return f.nativeFuncObject.setOwnStr(name, val, throw)
+	f.nativeFuncObject.putStr(name, val, throw)
 }
 
-func (f *boundFuncObject) setForeignStr(name unistring.String, val, receiver Value, throw bool) (bool, bool) {
-	return f._setForeignStr(name, f.getOwnPropStr(name), val, receiver, throw)
-}
-
-func (f *boundFuncObject) hasInstance(v Value) bool {
-	return instanceOfOperator(v, f.wrapped)
+func (f *boundFuncObject) put(n Value, val Value, throw bool) {
+	f.putStr(n.String(), val, throw)
 }

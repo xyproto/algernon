@@ -4,11 +4,10 @@ import (
 	"github.com/dop251/goja/ast"
 	"github.com/dop251/goja/file"
 	"github.com/dop251/goja/token"
-	"github.com/dop251/goja/unistring"
 )
 
 func (self *_parser) parseIdentifier() *ast.Identifier {
-	literal := self.parsedLiteral
+	literal := self.literal
 	idx := self.idx
 	self.next()
 	return &ast.Identifier{
@@ -18,7 +17,7 @@ func (self *_parser) parseIdentifier() *ast.Identifier {
 }
 
 func (self *_parser) parsePrimaryExpression() ast.Expression {
-	literal, parsedLiteral := self.literal, self.parsedLiteral
+	literal := self.literal
 	idx := self.idx
 	switch self.token {
 	case token.IDENTIFIER:
@@ -32,7 +31,7 @@ func (self *_parser) parsePrimaryExpression() ast.Expression {
 			}
 		}
 		return &ast.Identifier{
-			Name: parsedLiteral,
+			Name: literal,
 			Idx:  idx,
 		}
 	case token.NULL:
@@ -44,7 +43,7 @@ func (self *_parser) parsePrimaryExpression() ast.Expression {
 	case token.BOOLEAN:
 		self.next()
 		value := false
-		switch parsedLiteral {
+		switch literal {
 		case "true":
 			value = true
 		case "false":
@@ -59,10 +58,14 @@ func (self *_parser) parsePrimaryExpression() ast.Expression {
 		}
 	case token.STRING:
 		self.next()
+		value, err := parseStringLiteral(literal[1 : len(literal)-1])
+		if err != nil {
+			self.error(idx, err.Error())
+		}
 		return &ast.StringLiteral{
 			Idx:     idx,
 			Literal: literal,
-			Value:   parsedLiteral,
+			Value:   value,
 		}
 	case token.NUMBER:
 		self.next()
@@ -109,7 +112,7 @@ func (self *_parser) parseRegExpLiteral() *ast.RegExpLiteral {
 	}
 	idx := self.idxOf(offset)
 
-	pattern, _, err := self.scanString(offset, false)
+	pattern, err := self.scanString(offset)
 	endOffset := self.chrOffset
 
 	if err == nil {
@@ -148,11 +151,11 @@ func (self *_parser) parseVariableDeclaration(declarationList *[]*ast.VariableEx
 		return &ast.BadExpression{From: idx, To: self.idx}
 	}
 
-	name := self.parsedLiteral
+	literal := self.literal
 	idx := self.idx
 	self.next()
 	node := &ast.VariableExpression{
-		Name: name,
+		Name: literal,
 		Idx:  idx,
 	}
 
@@ -189,27 +192,31 @@ func (self *_parser) parseVariableDeclarationList(var_ file.Idx) []ast.Expressio
 	return list
 }
 
-func (self *_parser) parseObjectPropertyKey() (string, unistring.String) {
-	idx, tkn, literal, parsedLiteral := self.idx, self.token, self.literal, self.parsedLiteral
-	var value unistring.String
+func (self *_parser) parseObjectPropertyKey() (string, string) {
+	idx, tkn, literal := self.idx, self.token, self.literal
+	value := ""
 	self.next()
 	switch tkn {
 	case token.IDENTIFIER:
-		value = parsedLiteral
+		value = literal
 	case token.NUMBER:
 		var err error
 		_, err = parseNumberLiteral(literal)
 		if err != nil {
 			self.error(idx, err.Error())
 		} else {
-			value = unistring.String(literal)
+			value = literal
 		}
 	case token.STRING:
-		value = parsedLiteral
+		var err error
+		value, err = parseStringLiteral(literal[1 : len(literal)-1])
+		if err != nil {
+			self.error(idx, err.Error())
+		}
 	default:
 		// null, false, class, etc.
-		if isId(tkn) {
-			value = unistring.String(literal)
+		if matchIdentifier.MatchString(literal) {
+			value = literal
 		}
 	}
 	return literal, value
@@ -332,10 +339,10 @@ func (self *_parser) parseCallExpression(left ast.Expression) ast.Expression {
 func (self *_parser) parseDotMember(left ast.Expression) ast.Expression {
 	period := self.expect(token.PERIOD)
 
-	literal := self.parsedLiteral
+	literal := self.literal
 	idx := self.idx
 
-	if self.token != token.IDENTIFIER && !isId(self.token) {
+	if !matchIdentifier.MatchString(literal) {
 		self.expect(token.IDENTIFIER)
 		self.nextStatement()
 		return &ast.BadExpression{From: period, To: self.idx}
@@ -366,23 +373,6 @@ func (self *_parser) parseBracketMember(left ast.Expression) ast.Expression {
 
 func (self *_parser) parseNewExpression() ast.Expression {
 	idx := self.expect(token.NEW)
-	if self.token == token.PERIOD {
-		self.next()
-		prop := self.parseIdentifier()
-		if prop.Name == "target" {
-			if !self.scope.inFunction {
-				self.error(idx, "new.target expression is not allowed here")
-			}
-			return &ast.MetaProperty{
-				Meta: &ast.Identifier{
-					Name: unistring.String(token.NEW.String()),
-					Idx:  idx,
-				},
-				Property: prop,
-			}
-		}
-		self.errorUnexpectedToken(token.IDENTIFIER)
-	}
 	callee := self.parseLeftHandSideExpression()
 	node := &ast.NewExpression{
 		New:    idx,

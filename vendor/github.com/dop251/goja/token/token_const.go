@@ -77,7 +77,6 @@ const (
 	firstKeyword
 	IF
 	IN
-	OF
 	DO
 
 	VAR
@@ -174,7 +173,6 @@ var token2string = [...]string{
 	QUESTION_MARK:               "?",
 	IF:                          "if",
 	IN:                          "in",
-	OF:                          "of",
 	DO:                          "do",
 	VAR:                         "var",
 	FOR:                         "for",
@@ -202,148 +200,148 @@ var token2string = [...]string{
 }
 
 var keywordTable = map[string]_keyword{
-	"if": {
+	"if": _keyword{
 		token: IF,
 	},
-	"in": {
+	"in": _keyword{
 		token: IN,
 	},
-	"do": {
+	"do": _keyword{
 		token: DO,
 	},
-	"var": {
+	"var": _keyword{
 		token: VAR,
 	},
-	"for": {
+	"for": _keyword{
 		token: FOR,
 	},
-	"new": {
+	"new": _keyword{
 		token: NEW,
 	},
-	"try": {
+	"try": _keyword{
 		token: TRY,
 	},
-	"this": {
+	"this": _keyword{
 		token: THIS,
 	},
-	"else": {
+	"else": _keyword{
 		token: ELSE,
 	},
-	"case": {
+	"case": _keyword{
 		token: CASE,
 	},
-	"void": {
+	"void": _keyword{
 		token: VOID,
 	},
-	"with": {
+	"with": _keyword{
 		token: WITH,
 	},
-	"while": {
+	"while": _keyword{
 		token: WHILE,
 	},
-	"break": {
+	"break": _keyword{
 		token: BREAK,
 	},
-	"catch": {
+	"catch": _keyword{
 		token: CATCH,
 	},
-	"throw": {
+	"throw": _keyword{
 		token: THROW,
 	},
-	"return": {
+	"return": _keyword{
 		token: RETURN,
 	},
-	"typeof": {
+	"typeof": _keyword{
 		token: TYPEOF,
 	},
-	"delete": {
+	"delete": _keyword{
 		token: DELETE,
 	},
-	"switch": {
+	"switch": _keyword{
 		token: SWITCH,
 	},
-	"default": {
+	"default": _keyword{
 		token: DEFAULT,
 	},
-	"finally": {
+	"finally": _keyword{
 		token: FINALLY,
 	},
-	"function": {
+	"function": _keyword{
 		token: FUNCTION,
 	},
-	"continue": {
+	"continue": _keyword{
 		token: CONTINUE,
 	},
-	"debugger": {
+	"debugger": _keyword{
 		token: DEBUGGER,
 	},
-	"instanceof": {
+	"instanceof": _keyword{
 		token: INSTANCEOF,
 	},
-	"const": {
+	"const": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"class": {
+	"class": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"enum": {
+	"enum": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"export": {
+	"export": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"extends": {
+	"extends": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"import": {
+	"import": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"super": {
+	"super": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 	},
-	"implements": {
-		token:         KEYWORD,
-		futureKeyword: true,
-		strict:        true,
-	},
-	"interface": {
+	"implements": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"let": {
+	"interface": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"package": {
+	"let": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"private": {
+	"package": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"protected": {
+	"private": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"public": {
+	"protected": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,
 	},
-	"static": {
+	"public": _keyword{
+		token:         KEYWORD,
+		futureKeyword: true,
+		strict:        true,
+	},
+	"static": _keyword{
 		token:         KEYWORD,
 		futureKeyword: true,
 		strict:        true,

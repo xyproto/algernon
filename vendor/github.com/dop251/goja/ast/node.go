@@ -12,7 +12,6 @@ package ast
 import (
 	"github.com/dop251/goja/file"
 	"github.com/dop251/goja/token"
-	"github.com/dop251/goja/unistring"
 	"github.com/go-sourcemap/sourcemap"
 )
 
@@ -99,7 +98,7 @@ type (
 	}
 
 	Identifier struct {
-		Name unistring.String
+		Name string
 		Idx  file.Idx
 	}
 
@@ -135,7 +134,7 @@ type (
 	}
 
 	Property struct {
-		Key   unistring.String
+		Key   string
 		Kind  string
 		Value Expression
 	}
@@ -154,7 +153,7 @@ type (
 	StringLiteral struct {
 		Idx     file.Idx
 		Literal string
-		Value   unistring.String
+		Value   string
 	}
 
 	ThisExpression struct {
@@ -169,14 +168,9 @@ type (
 	}
 
 	VariableExpression struct {
-		Name        unistring.String
+		Name        string
 		Idx         file.Idx
 		Initializer Expression
-	}
-
-	MetaProperty struct {
-		Meta, Property *Identifier
-		Idx            file.Idx
 	}
 )
 
@@ -203,7 +197,6 @@ func (*StringLiteral) _expressionNode()         {}
 func (*ThisExpression) _expressionNode()        {}
 func (*UnaryExpression) _expressionNode()       {}
 func (*VariableExpression) _expressionNode()    {}
-func (*MetaProperty) _expressionNode()          {}
 
 // ========= //
 // Statement //
@@ -264,13 +257,6 @@ type (
 	}
 
 	ForInStatement struct {
-		For    file.Idx
-		Into   Expression
-		Source Expression
-		Body   Statement
-	}
-
-	ForOfStatement struct {
 		For    file.Idx
 		Into   Expression
 		Source Expression
@@ -352,7 +338,6 @@ func (*DoWhileStatement) _statementNode()    {}
 func (*EmptyStatement) _statementNode()      {}
 func (*ExpressionStatement) _statementNode() {}
 func (*ForInStatement) _statementNode()      {}
-func (*ForOfStatement) _statementNode()      {}
 func (*ForStatement) _statementNode()        {}
 func (*IfStatement) _statementNode()         {}
 func (*LabelledStatement) _statementNode()   {}
@@ -428,7 +413,6 @@ func (self *StringLiteral) Idx0() file.Idx         { return self.Idx }
 func (self *ThisExpression) Idx0() file.Idx        { return self.Idx }
 func (self *UnaryExpression) Idx0() file.Idx       { return self.Idx }
 func (self *VariableExpression) Idx0() file.Idx    { return self.Idx }
-func (self *MetaProperty) Idx0() file.Idx          { return self.Idx }
 
 func (self *BadStatement) Idx0() file.Idx        { return self.From }
 func (self *BlockStatement) Idx0() file.Idx      { return self.LeftBrace }
@@ -440,7 +424,6 @@ func (self *DoWhileStatement) Idx0() file.Idx    { return self.Do }
 func (self *EmptyStatement) Idx0() file.Idx      { return self.Semicolon }
 func (self *ExpressionStatement) Idx0() file.Idx { return self.Expression.Idx0() }
 func (self *ForInStatement) Idx0() file.Idx      { return self.For }
-func (self *ForOfStatement) Idx0() file.Idx      { return self.For }
 func (self *ForStatement) Idx0() file.Idx        { return self.For }
 func (self *IfStatement) Idx0() file.Idx         { return self.If }
 func (self *LabelledStatement) Idx0() file.Idx   { return self.Label.Idx0() }
@@ -488,9 +471,6 @@ func (self *VariableExpression) Idx1() file.Idx {
 	}
 	return self.Initializer.Idx1()
 }
-func (self *MetaProperty) Idx1() file.Idx {
-	return self.Property.Idx1()
-}
 
 func (self *BadStatement) Idx1() file.Idx        { return self.To }
 func (self *BlockStatement) Idx1() file.Idx      { return self.RightBrace + 1 }
@@ -502,7 +482,6 @@ func (self *DoWhileStatement) Idx1() file.Idx    { return self.Test.Idx1() }
 func (self *EmptyStatement) Idx1() file.Idx      { return self.Semicolon + 1 }
 func (self *ExpressionStatement) Idx1() file.Idx { return self.Expression.Idx1() }
 func (self *ForInStatement) Idx1() file.Idx      { return self.Body.Idx1() }
-func (self *ForOfStatement) Idx1() file.Idx      { return self.Body.Idx1() }
 func (self *ForStatement) Idx1() file.Idx        { return self.Body.Idx1() }
 func (self *IfStatement) Idx1() file.Idx {
 	if self.Alternate != nil {

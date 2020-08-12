@@ -378,21 +378,6 @@ func (self *_parser) parseForIn(idx file.Idx, into ast.Expression) *ast.ForInSta
 	}
 }
 
-func (self *_parser) parseForOf(idx file.Idx, into ast.Expression) *ast.ForOfStatement {
-
-	// Already have consumed "<into> of"
-
-	source := self.parseExpression()
-	self.expect(token.RIGHT_PARENTHESIS)
-
-	return &ast.ForOfStatement{
-		For:    idx,
-		Into:   into,
-		Source: source,
-		Body:   self.parseIterationStatement(),
-	}
-}
-
 func (self *_parser) parseFor(idx file.Idx, initializer ast.Expression) *ast.ForStatement {
 
 	// Already have consumed "<initializer> ;"
@@ -425,7 +410,6 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 	var left []ast.Expression
 
 	forIn := false
-	forOf := false
 	if self.token != token.SEMICOLON {
 
 		allowIn := self.scope.allowIn
@@ -434,46 +418,33 @@ func (self *_parser) parseForOrForInStatement() ast.Statement {
 			var_ := self.idx
 			self.next()
 			list := self.parseVariableDeclarationList(var_)
-			if len(list) == 1 {
-				if self.token == token.IN {
-					self.next() // in
-					forIn = true
-				} else if self.token == token.IDENTIFIER {
-					if self.literal == "of" {
-						self.next()
-						forOf = true
-					}
-				}
+			if len(list) == 1 && self.token == token.IN {
+				self.next() // in
+				forIn = true
+				left = []ast.Expression{list[0]} // There is only one declaration
+			} else {
+				left = list
 			}
-			left = list
 		} else {
 			left = append(left, self.parseExpression())
 			if self.token == token.IN {
 				self.next()
 				forIn = true
-			} else if self.token == token.IDENTIFIER {
-				if self.literal == "of" {
-					self.next()
-					forOf = true
-				}
 			}
 		}
 		self.scope.allowIn = allowIn
 	}
 
-	if forIn || forOf {
+	if forIn {
 		switch left[0].(type) {
 		case *ast.Identifier, *ast.DotExpression, *ast.BracketExpression, *ast.VariableExpression:
 			// These are all acceptable
 		default:
-			self.error(idx, "Invalid left-hand side in for-in or for-of")
+			self.error(idx, "Invalid left-hand side in for-in")
 			self.nextStatement()
 			return &ast.BadStatement{From: idx, To: self.idx}
 		}
-		if forIn {
-			return self.parseForIn(idx, left[0])
-		}
-		return self.parseForOf(idx, left[0])
+		return self.parseForIn(idx, left[0])
 	}
 
 	self.expect(token.SEMICOLON)

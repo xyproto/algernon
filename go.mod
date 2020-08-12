@@ -9,7 +9,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.7
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20200807102615-e36d2cba6a5c // indirect
+	github.com/dop251/goja v0.0.0-20200721192441-a695b0cdd498 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-check/check v0.0.0-20190902080502-41f04d3bba15 // indirect
 	github.com/go-gcfg/gcfg v1.2.3

@@ -5,26 +5,20 @@ import (
 )
 
 func (r *Runtime) builtin_Function(args []Value, proto *Object) *Object {
-	var sb valueStringBuilder
-	sb.WriteString(asciiString("(function anonymous("))
+	src := "(function anonymous("
 	if len(args) > 1 {
-		ar := args[:len(args)-1]
-		for i, arg := range ar {
-			sb.WriteString(arg.toString())
-			if i < len(ar)-1 {
-				sb.WriteRune(',')
-			}
+		for _, arg := range args[:len(args)-1] {
+			src += arg.String() + ","
 		}
+		src = src[:len(src)-1]
 	}
-	sb.WriteString(asciiString("){"))
+	body := ""
 	if len(args) > 0 {
-		sb.WriteString(args[len(args)-1].toString())
+		body = args[len(args)-1].String()
 	}
-	sb.WriteString(asciiString("})"))
+	src += "){" + body + "})"
 
-	ret := r.toObject(r.eval(sb.String(), false, false, _undefined))
-	ret.self.setProto(proto, true)
-	return ret
+	return r.toObject(r.eval(src, false, false, _undefined))
 }
 
 func (r *Runtime) functionproto_toString(call FunctionCall) Value {
@@ -34,65 +28,34 @@ repeat:
 	case *funcObject:
 		return newStringValue(f.src)
 	case *nativeFuncObject:
-		return newStringValue(fmt.Sprintf("function %s() { [native code] }", f.nameProp.get(call.This).toString()))
+		return newStringValue(fmt.Sprintf("function %s() { [native code] }", f.nameProp.get(call.This).ToString()))
 	case *boundFuncObject:
-		return newStringValue(fmt.Sprintf("function %s() { [native code] }", f.nameProp.get(call.This).toString()))
+		return newStringValue(fmt.Sprintf("function %s() { [native code] }", f.nameProp.get(call.This).ToString()))
 	case *lazyObject:
 		obj.self = f.create(obj)
 		goto repeat
-	case *proxyObject:
-		var name string
-	repeat2:
-		switch c := f.target.self.(type) {
-		case *funcObject:
-			name = c.src
-		case *nativeFuncObject:
-			name = nilSafe(c.nameProp.get(call.This)).toString().String()
-		case *boundFuncObject:
-			name = nilSafe(c.nameProp.get(call.This)).toString().String()
-		case *lazyObject:
-			f.target.self = c.create(obj)
-			goto repeat2
-		default:
-			name = f.target.String()
-		}
-		return newStringValue(fmt.Sprintf("function proxy() { [%s] }", name))
 	}
 
 	r.typeErrorResult(true, "Object is not a function")
 	return nil
 }
 
-func (r *Runtime) functionproto_hasInstance(call FunctionCall) Value {
-	if o, ok := call.This.(*Object); ok {
-		if _, ok = o.self.assertCallable(); ok {
-			return r.toBoolean(o.self.hasInstance(call.Argument(0)))
-		}
+func (r *Runtime) toValueArray(a Value) []Value {
+	obj := r.toObject(a)
+	l := toUInt32(obj.self.getStr("length"))
+	ret := make([]Value, l)
+	for i := uint32(0); i < l; i++ {
+		ret[i] = obj.self.get(valueInt(i))
 	}
-
-	return valueFalse
-}
-
-func (r *Runtime) createListFromArrayLike(a Value) []Value {
-	o := r.toObject(a)
-	if arr := r.checkStdArrayObj(o); arr != nil {
-		return arr.values
-	}
-	l := toLength(o.self.getStr("length", nil))
-	res := make([]Value, 0, l)
-	for k := int64(0); k < l; k++ {
-		res = append(res, o.self.getIdx(valueInt(k), nil))
-	}
-	return res
+	return ret
 }
 
 func (r *Runtime) functionproto_apply(call FunctionCall) Value {
+	f := r.toCallable(call.This)
 	var args []Value
 	if len(call.Arguments) >= 2 {
-		args = r.createListFromArrayLike(call.Arguments[1])
+		args = r.toValueArray(call.Arguments[1])
 	}
-
-	f := r.toCallable(call.This)
 	return f(FunctionCall{
 		This:      call.Argument(0),
 		Arguments: args,
@@ -100,12 +63,11 @@ func (r *Runtime) functionproto_apply(call FunctionCall) Value {
 }
 
 func (r *Runtime) functionproto_call(call FunctionCall) Value {
+	f := r.toCallable(call.This)
 	var args []Value
 	if len(call.Arguments) > 0 {
 		args = call.Arguments[1:]
 	}
-
-	f := r.toCallable(call.This)
 	return f(FunctionCall{
 		This:      call.Argument(0),
 		Arguments: args,
@@ -131,7 +93,7 @@ func (r *Runtime) boundCallable(target func(FunctionCall) Value, boundArgs []Val
 	}
 }
 
-func (r *Runtime) boundConstruct(target func([]Value, *Object) *Object, boundArgs []Value) func([]Value, *Object) *Object {
+func (r *Runtime) boundConstruct(target func([]Value) *Object, boundArgs []Value) func([]Value) *Object {
 	if target == nil {
 		return nil
 	}
@@ -140,37 +102,47 @@ func (r *Runtime) boundConstruct(target func([]Value, *Object) *Object, boundArg
 		args = make([]Value, len(boundArgs)-1)
 		copy(args, boundArgs[1:])
 	}
-	return func(fargs []Value, newTarget *Object) *Object {
+	return func(fargs []Value) *Object {
 		a := append(args, fargs...)
 		copy(a, args)
-		return target(a, newTarget)
+		return target(a)
 	}
 }
 
 func (r *Runtime) functionproto_bind(call FunctionCall) Value {
 	obj := r.toObject(call.This)
+	f := obj.self
+	var fcall func(FunctionCall) Value
+	var construct func([]Value) *Object
+repeat:
+	switch ff := f.(type) {
+	case *funcObject:
+		fcall = ff.Call
+		construct = ff.construct
+	case *nativeFuncObject:
+		fcall = ff.f
+		construct = ff.construct
+	case *boundFuncObject:
+		f = &ff.nativeFuncObject
+		goto repeat
+	case *lazyObject:
+		f = ff.create(obj)
+		goto repeat
+	default:
+		r.typeErrorResult(true, "Value is not callable: %s", obj.ToString())
+	}
 
-	fcall := r.toCallable(call.This)
-	construct := obj.self.assertConstructor()
-
-	l := int(toUint32(obj.self.getStr("length", nil)))
+	l := int(toUInt32(obj.self.getStr("length")))
 	l -= len(call.Arguments) - 1
 	if l < 0 {
 		l = 0
 	}
 
-	name := obj.self.getStr("name", nil)
-	nameStr := stringBound_
-	if s, ok := name.(valueString); ok {
-		nameStr = nameStr.concat(s)
-	}
-
 	v := &Object{runtime: r}
 
-	ff := r.newNativeFuncObj(v, r.boundCallable(fcall, call.Arguments), r.boundConstruct(construct, call.Arguments), nameStr.string(), nil, l)
+	ff := r.newNativeFuncObj(v, r.boundCallable(fcall, call.Arguments), r.boundConstruct(construct, call.Arguments), "", nil, l)
 	v.self = &boundFuncObject{
 		nativeFuncObject: *ff,
-		wrapped:          obj,
 	}
 
 	//ret := r.newNativeFunc(r.boundCallable(f, call.Arguments), nil, "", nil, l)
@@ -181,15 +153,12 @@ func (r *Runtime) functionproto_bind(call FunctionCall) Value {
 }
 
 func (r *Runtime) initFunction() {
-	o := r.global.FunctionPrototype.self.(*nativeFuncObject)
-	o.prototype = r.global.ObjectPrototype
-	o.nameProp.value = stringEmpty
-
-	o._putProp("apply", r.newNativeFunc(r.functionproto_apply, nil, "apply", nil, 2), true, false, true)
-	o._putProp("bind", r.newNativeFunc(r.functionproto_bind, nil, "bind", nil, 1), true, false, true)
-	o._putProp("call", r.newNativeFunc(r.functionproto_call, nil, "call", nil, 1), true, false, true)
+	o := r.global.FunctionPrototype.self
+	o.(*nativeFuncObject).prototype = r.global.ObjectPrototype
 	o._putProp("toString", r.newNativeFunc(r.functionproto_toString, nil, "toString", nil, 0), true, false, true)
-	o._putSym(symHasInstance, valueProp(r.newNativeFunc(r.functionproto_hasInstance, nil, "[Symbol.hasInstance]", nil, 1), false, false, false))
+	o._putProp("apply", r.newNativeFunc(r.functionproto_apply, nil, "apply", nil, 2), true, false, true)
+	o._putProp("call", r.newNativeFunc(r.functionproto_call, nil, "call", nil, 1), true, false, true)
+	o._putProp("bind", r.newNativeFunc(r.functionproto_bind, nil, "bind", nil, 1), true, false, true)
 
 	r.global.Function = r.newNativeFuncConstruct(r.builtin_Function, "Function", r.global.FunctionPrototype, 1)
 	r.addToGlobal("Function", r.global.Function)
