@@ -1,3 +1,4 @@
+dist: bionic
 language: go
 
 go:
