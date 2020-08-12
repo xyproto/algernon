@@ -79,3 +79,6 @@ regtest/issue13/large-file
 
 # Visual Studio Code
 .vscode
+
+# gzip man page
+algernon.1.gz
