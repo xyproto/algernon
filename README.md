@@ -21,7 +21,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.14 or later (or GCC 10, using `gccgo`).
+Requires Go 1.14.
 
 Clone algernon outside of `GOPATH`:
 
