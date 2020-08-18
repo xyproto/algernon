@@ -1064,7 +1064,7 @@ Releases
 Requirements
 ------------
 
-* go >= 1.12
+* `go 1.14` is recommended (`go 1.12` and `1.13` will also work, but not `1.15`, yet. [related issue](https://github.com/lucas-clemente/quic-go/issues/2614)).
 
 Access logs
 -----------
