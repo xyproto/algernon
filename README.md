@@ -1064,7 +1064,9 @@ Releases
 Requirements
 ------------
 
-* `go 1.14` is recommended (`go 1.12` and `1.13` will also work, but not `1.15`, yet. [related issue](https://github.com/lucas-clemente/quic-go/issues/2614)).
+* `go 1.14` is supported.
+* For `go 1.10`, `1.11`, `1.12` and `1.13` + `gcc-go <10` version `1.12.7` of Algernon is the latest supported version.
+* `go 1.15` is a bit too new right now, since the QUIC package [has issues](https://github.com/lucas-clemente/quic-go/issues/2614).
 
 Access logs
 -----------
