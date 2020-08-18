@@ -5,7 +5,8 @@ MANDIR ?= "$(PREFIX)/share/man/man1"
 GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | tail -1) -le 12 && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
 
 algernon:
-	$(GOBUILD)
+	@go version | grep -q 'go version go1.14' && $(GOBUILD) \
+      || echo 'Unfortunately, only Go 1.14 is supported right now'
 
 algernon.1.gz: algernon.1
 	gzip -f -k -v algernon.1
