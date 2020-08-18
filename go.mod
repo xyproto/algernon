@@ -15,7 +15,9 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.8.0
+	github.com/lucas-clemente/quic-go v0.17.3
 	github.com/marten-seemann/qpack v0.2.0 // indirect
+	github.com/marten-seemann/qtls v0.10.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0
@@ -41,7 +43,6 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
-	github.com/xyproto/quic v1.0.1
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.0
 	github.com/xyproto/simplebolt v1.5.1

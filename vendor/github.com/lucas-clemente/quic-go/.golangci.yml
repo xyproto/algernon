@@ -1,0 +1,35 @@
+run:
+  skip-files:
+    - internal/handshake/client_session_state.go
+    - internal/handshake/unsafe_test.go
+
+linters-settings:
+  misspell:
+    ignore-words:
+      - ect
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - goconst
+    - goimports
+    - gosimple
+    - ineffassign
+    - misspell
+    - prealloc
+    - scopelint
+    - staticcheck
+    - stylecheck
+    - structcheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - vet
+
+issues:
+  exclude-rules:
+    - path: qlog/
+      linters:
+        - goconst

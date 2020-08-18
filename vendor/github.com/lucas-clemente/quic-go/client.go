@@ -1,0 +1,344 @@
+package quic
+
+import (
+	"context"
+	"crypto/tls"
+	"errors"
+	"fmt"
+	"net"
+	"strings"
+	"sync"
+
+	"github.com/lucas-clemente/quic-go/internal/protocol"
+	"github.com/lucas-clemente/quic-go/internal/utils"
+	"github.com/lucas-clemente/quic-go/qlog"
+)
+
+type client struct {
+	mutex sync.Mutex
+
+	conn connection
+	// If the client is created with DialAddr, we create a packet conn.
+	// If it is started with Dial, we take a packet conn as a parameter.
+	createdPacketConn bool
+
+	use0RTT bool
+
+	packetHandlers packetHandlerManager
+
+	tlsConf *tls.Config
+	config  *Config
+
+	srcConnID  protocol.ConnectionID
+	destConnID protocol.ConnectionID
+
+	initialPacketNumber  protocol.PacketNumber
+	hasNegotiatedVersion bool
+	version              protocol.VersionNumber
+
+	handshakeChan chan struct{}
+
+	session quicSession
+
+	qlogger qlog.Tracer
+	logger  utils.Logger
+}
+
+var _ packetHandler = &client{}
+
+var (
+	// make it possible to mock connection ID generation in the tests
+	generateConnectionID           = protocol.GenerateConnectionID
+	generateConnectionIDForInitial = protocol.GenerateConnectionIDForInitial
+	// make it possible to the qlogger
+	newQlogger = qlog.NewTracer
+)
+
+// DialAddr establishes a new QUIC connection to a server.
+// It uses a new UDP connection and closes this connection when the QUIC session is closed.
+// The hostname for SNI is taken from the given address.
+// The tls.Config.CipherSuites allows setting of TLS 1.3 cipher suites.
+func DialAddr(
+	addr string,
+	tlsConf *tls.Config,
+	config *Config,
+) (Session, error) {
+	return DialAddrContext(context.Background(), addr, tlsConf, config)
+}
+
+// DialAddrEarly establishes a new 0-RTT QUIC connection to a server.
+// It uses a new UDP connection and closes this connection when the QUIC session is closed.
+// The hostname for SNI is taken from the given address.
+// The tls.Config.CipherSuites allows setting of TLS 1.3 cipher suites.
+func DialAddrEarly(
+	addr string,
+	tlsConf *tls.Config,
+	config *Config,
+) (EarlySession, error) {
+	sess, err := dialAddrContext(context.Background(), addr, tlsConf, config, true)
+	if err != nil {
+		return nil, err
+	}
+	utils.Logger.WithPrefix(utils.DefaultLogger, "client").Debugf("Returning early session")
+	return sess, nil
+}
+
+// DialAddrContext establishes a new QUIC connection to a server using the provided context.
+// See DialAddr for details.
+func DialAddrContext(
+	ctx context.Context,
+	addr string,
+	tlsConf *tls.Config,
+	config *Config,
+) (Session, error) {
+	return dialAddrContext(ctx, addr, tlsConf, config, false)
+}
+
+func dialAddrContext(
+	ctx context.Context,
+	addr string,
+	tlsConf *tls.Config,
+	config *Config,
+	use0RTT bool,
+) (quicSession, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return nil, err
+	}
+	udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
+	if err != nil {
+		return nil, err
+	}
+	return dialContext(ctx, udpConn, udpAddr, addr, tlsConf, config, use0RTT, true)
+}
+
+// Dial establishes a new QUIC connection to a server using a net.PacketConn.
+// The same PacketConn can be used for multiple calls to Dial and Listen,
+// QUIC connection IDs are used for demultiplexing the different connections.
+// The host parameter is used for SNI.
+// The tls.Config must define an application protocol (using NextProtos).
+func Dial(
+	pconn net.PacketConn,
+	remoteAddr net.Addr,
+	host string,
+	tlsConf *tls.Config,
+	config *Config,
+) (Session, error) {
+	return dialContext(context.Background(), pconn, remoteAddr, host, tlsConf, config, false, false)
+}
+
+// DialEarly establishes a new 0-RTT QUIC connection to a server using a net.PacketConn.
+// The same PacketConn can be used for multiple calls to Dial and Listen,
+// QUIC connection IDs are used for demultiplexing the different connections.
+// The host parameter is used for SNI.
+// The tls.Config must define an application protocol (using NextProtos).
+func DialEarly(
+	pconn net.PacketConn,
+	remoteAddr net.Addr,
+	host string,
+	tlsConf *tls.Config,
+	config *Config,
+) (Session, error) {
+	return dialContext(context.Background(), pconn, remoteAddr, host, tlsConf, config, true, false)
+}
+
+// DialContext establishes a new QUIC connection to a server using a net.PacketConn using the provided context.
+// See Dial for details.
+func DialContext(
+	ctx context.Context,
+	pconn net.PacketConn,
+	remoteAddr net.Addr,
+	host string,
+	tlsConf *tls.Config,
+	config *Config,
+) (Session, error) {
+	return dialContext(ctx, pconn, remoteAddr, host, tlsConf, config, false, false)
+}
+
+func dialContext(
+	ctx context.Context,
+	pconn net.PacketConn,
+	remoteAddr net.Addr,
+	host string,
+	tlsConf *tls.Config,
+	config *Config,
+	use0RTT bool,
+	createdPacketConn bool,
+) (quicSession, error) {
+	if tlsConf == nil {
+		return nil, errors.New("quic: tls.Config not set")
+	}
+	config = populateClientConfig(config, createdPacketConn)
+	packetHandlers, err := getMultiplexer().AddConn(pconn, config.ConnectionIDLength, config.StatelessResetKey)
+	if err != nil {
+		return nil, err
+	}
+	c, err := newClient(pconn, remoteAddr, config, tlsConf, host, use0RTT, createdPacketConn)
+	if err != nil {
+		return nil, err
+	}
+	c.packetHandlers = packetHandlers
+
+	if c.config.GetLogWriter != nil {
+		if w := c.config.GetLogWriter(c.destConnID); w != nil {
+			c.qlogger = newQlogger(w, protocol.PerspectiveClient, c.destConnID)
+		}
+	}
+	if err := c.dial(ctx); err != nil {
+		return nil, err
+	}
+	return c.session, nil
+}
+
+func newClient(
+	pconn net.PacketConn,
+	remoteAddr net.Addr,
+	config *Config,
+	tlsConf *tls.Config,
+	host string,
+	use0RTT bool,
+	createdPacketConn bool,
+) (*client, error) {
+	if tlsConf == nil {
+		tlsConf = &tls.Config{}
+	}
+	if tlsConf.ServerName == "" {
+		sni := host
+		if strings.IndexByte(sni, ':') != -1 {
+			var err error
+			sni, _, err = net.SplitHostPort(sni)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		tlsConf.ServerName = sni
+	}
+
+	// check that all versions are actually supported
+	if config != nil {
+		for _, v := range config.Versions {
+			if !protocol.IsValidVersion(v) {
+				return nil, fmt.Errorf("%s is not a valid QUIC version", v)
+			}
+		}
+	}
+
+	srcConnID, err := generateConnectionID(config.ConnectionIDLength)
+	if err != nil {
+		return nil, err
+	}
+	destConnID, err := generateConnectionIDForInitial()
+	if err != nil {
+		return nil, err
+	}
+	c := &client{
+		srcConnID:         srcConnID,
+		destConnID:        destConnID,
+		conn:              &conn{pconn: pconn, currentAddr: remoteAddr},
+		createdPacketConn: createdPacketConn,
+		use0RTT:           use0RTT,
+		tlsConf:           tlsConf,
+		config:            config,
+		version:           config.Versions[0],
+		handshakeChan:     make(chan struct{}),
+		logger:            utils.DefaultLogger.WithPrefix("client"),
+	}
+	return c, nil
+}
+
+func (c *client) dial(ctx context.Context) error {
+	c.logger.Infof("Starting new connection to %s (%s -> %s), source connection ID %s, destination connection ID %s, version %s", c.tlsConf.ServerName, c.conn.LocalAddr(), c.conn.RemoteAddr(), c.srcConnID, c.destConnID, c.version)
+	if c.qlogger != nil {
+		c.qlogger.StartedConnection(c.conn.LocalAddr(), c.conn.RemoteAddr(), c.version, c.srcConnID, c.destConnID)
+	}
+
+	c.mutex.Lock()
+	c.session = newClientSession(
+		c.conn,
+		c.packetHandlers,
+		c.destConnID,
+		c.srcConnID,
+		c.config,
+		c.tlsConf,
+		c.initialPacketNumber,
+		c.version,
+		c.use0RTT,
+		c.hasNegotiatedVersion,
+		c.qlogger,
+		c.logger,
+		c.version,
+	)
+	c.mutex.Unlock()
+	c.packetHandlers.Add(c.srcConnID, c)
+
+	errorChan := make(chan error, 1)
+	go func() {
+		err := c.session.run() // returns as soon as the session is closed
+		if !errors.Is(err, errCloseForRecreating{}) && c.createdPacketConn {
+			c.packetHandlers.Destroy()
+		}
+		errorChan <- err
+	}()
+
+	// only set when we're using 0-RTT
+	// Otherwise, earlySessionChan will be nil. Receiving from a nil chan blocks forever.
+	var earlySessionChan <-chan struct{}
+	if c.use0RTT {
+		earlySessionChan = c.session.earlySessionReady()
+	}
+
+	select {
+	case <-ctx.Done():
+		c.session.shutdown()
+		return ctx.Err()
+	case err := <-errorChan:
+		var recreateErr *errCloseForRecreating
+		if errors.As(err, &recreateErr) {
+			c.initialPacketNumber = recreateErr.nextPacketNumber
+			c.version = recreateErr.nextVersion
+			c.hasNegotiatedVersion = true
+			return c.dial(ctx)
+		}
+		return err
+	case <-earlySessionChan:
+		// ready to send 0-RTT data
+		return nil
+	case <-c.session.HandshakeComplete().Done():
+		// handshake successfully completed
+		return nil
+	}
+}
+
+func (c *client) handlePacket(p *receivedPacket) {
+	c.session.handlePacket(p)
+}
+
+func (c *client) shutdown() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.session == nil {
+		return
+	}
+	c.session.shutdown()
+}
+
+func (c *client) destroy(e error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.session == nil {
+		return
+	}
+	c.session.destroy(e)
+}
+
+func (c *client) GetVersion() protocol.VersionNumber {
+	c.mutex.Lock()
+	v := c.version
+	c.mutex.Unlock()
+	return v
+}
+
+func (c *client) getPerspective() protocol.Perspective {
+	return protocol.PerspectiveClient
+}
