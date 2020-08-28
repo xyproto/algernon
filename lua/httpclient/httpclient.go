@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// HTTPClient represents a HTTP client
 type HTTPClient struct {
 	timeout   int
 	userAgent string
@@ -21,6 +22,7 @@ type HTTPClient struct {
 	invalid   bool
 }
 
+// NewHTTPClient creates a HTTPClient struct
 func NewHTTPClient() *HTTPClient {
 	var hc HTTPClient
 	hc.client = httpclient.NewHttpClient()

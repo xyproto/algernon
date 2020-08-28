@@ -9,12 +9,7 @@ import (
 )
 
 // Identifier for the List class in Lua
-const (
-	lListClass = "LIST"
-
-	// Prefix when indenting JSON
-	indentPrefix = ""
-)
+const lListClass = "LIST"
 
 // Get the first argument, "self", and cast it from userdata to a list.
 func checkList(L *lua.LState) pinterface.IList {

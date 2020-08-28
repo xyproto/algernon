@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lucas-clemente/quic-go/http3"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
-	"github.com/lucas-clemente/quic-go/http3"
 	"golang.org/x/net/http2"
 )
 
