@@ -21,7 +21,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.14.
+Requires Go 1.14 or later.
 
 Clone algernon outside of `GOPATH`:
 
@@ -1064,9 +1064,8 @@ Releases
 Requirements
 ------------
 
-* `go 1.14` is supported.
+* `go 1.14` or later is supported.
 * For `go 1.10`, `1.11`, `1.12` and `1.13` + `gcc-go <10` version `1.12.7` of Algernon is the latest supported version.
-* `go 1.15` is a bit too new right now, since the QUIC package [has issues](https://github.com/lucas-clemente/quic-go/issues/2614).
 
 Access logs
 -----------
