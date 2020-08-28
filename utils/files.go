@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
@@ -98,4 +99,22 @@ func ReadString(filename string) string {
 	}
 	// There were errors, return an empty string
 	return ""
+}
+
+// CanRead checks if 1 byte can actually be read from the given filename
+func CanRead(filename string) bool {
+	f, err := os.Open(filename)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	var onebyte [1]byte
+	n, err := io.ReadFull(f, onebyte[:])
+	if err != nil {
+		return false
+	}
+	if n != 1 {
+		return false
+	}
+	return true
 }
