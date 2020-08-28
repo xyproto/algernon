@@ -738,6 +738,8 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	completer := readline.NewPrefixCompleter(
 		&readline.PrefixCompleter{Name: []rune("help")},
 		&readline.PrefixCompleter{Name: []rune("webhelp")},
+		&readline.PrefixCompleter{Name: []rune("confighelp")},
+		&readline.PrefixCompleter{Name: []rune("dir")},
 		&readline.PrefixCompleter{Name: []rune("bye")},
 		&readline.PrefixCompleter{Name: []rune("quit")},
 		&readline.PrefixCompleter{Name: []rune("exit")},
@@ -821,6 +823,9 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		case "confighelp":
 			outputHelp(o, configHelpText)
 			continue
+		case "dir":
+			// Be more helpful than listing the Lua bytecode contents of the dir function. Call "dir()".
+			line = "dir()"
 		case "quit", "exit", "shutdown", "halt":
 			done <- true
 			return nil
