@@ -291,8 +291,6 @@ github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49u
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6 h1:qPS12y9iMXyKr2flmOG7RgiyUGkQxQibp1hx7uug9IQ=
 github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6/go.mod h1:ncYBwTYUjmb7N+sZbf8WJYynLivoqFL+U2f8uOX2Yzk=
-github.com/xyproto/ask v1.0.0 h1:9Rd14jRqlv89x7klrdYXYrXxZGsE/b49/8edPMAf60w=
-github.com/xyproto/ask v1.0.0/go.mod h1:GTF2UyZg4J/JFVrY8jrfbk00yljvpDWra9gHiSuwI90=
 github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd h1:eoIac4aF4nxIbzAOc9CliPuR91wM26ODvZP6p89/DDs=
 github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd/go.mod h1:GTF2UyZg4J/JFVrY8jrfbk00yljvpDWra9gHiSuwI90=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff h1:G+UgV5480yPnIK9+aaz4Tx0l7hu8lcDuXc9SfTbK1+w=
@@ -328,8 +326,6 @@ github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8f
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/recwatch v1.1.0 h1:M8raxpfOb1HChmMxE+72PmhugC+/LlJ3tPDs2dQjpzc=
 github.com/xyproto/recwatch v1.1.0/go.mod h1:L5vSDqREe0dO3awl3+gESUo/5jQTTxPe1TmhFMpBa2w=
-github.com/xyproto/sheepcounter v1.6.0 h1:7de0tc+lDP8XVZmL6ekB1hGNr6JaROx8AkCv4UTB5P0=
-github.com/xyproto/sheepcounter v1.6.0/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83 h1:ieEKEqH21GlEJLn0YWNCCij2tBEWu7W/n7cHgqqOILM=
 github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83/go.mod h1:YX7FdbBHLOFxgiunTndfQaYcdSGtbmvSNp0mLDlWns0=
 github.com/xyproto/simplebolt v1.5.1 h1:XJ/HbsyrQVqW4HPMLBv8j8wiS/XHgqdwJomGruy0mcw=
@@ -357,8 +353,6 @@ github.com/xyproto/unzip v0.0.0-20150601123358-823950573952 h1:pCgYs8AOzRpEmdM55
 github.com/xyproto/unzip v0.0.0-20150601123358-823950573952/go.mod h1:ygEdojOpwX5uG71ECHji5sod2rpZ+9hqNeAZD50S84Q=
 github.com/xyproto/vt100 v1.8.5 h1:Q4BZYFnqXiSF/RZD77mO+E4fbtkEx8we/YCF2Vtauvw=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
-github.com/xyproto/vt100 v1.8.6 h1:g/TyH/sryXdXL3T9gkDzis+mu+8tz8n6zDKisdgJkXY=
-github.com/xyproto/vt100 v1.8.6/go.mod h1:1T4YQxfA9mSQQO+Pn7pavQ9/c3nwf80GNHsFppCgoqc=
 github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd h1:Y2iwirZw3uCnKQWIk9VRVV3yWbGlbmqQX6/IcJCMFrQ=
 github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd/go.mod h1:1T4YQxfA9mSQQO+Pn7pavQ9/c3nwf80GNHsFppCgoqc=
 github.com/yosssi/gcss v0.1.0 h1:jRuino7qq7kqntBIhT+0xSUI5/sBgCA/zCQ1Tuzd6Gg=
