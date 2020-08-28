@@ -129,10 +129,7 @@ func (s *stream) StreamID() protocol.StreamID {
 }
 
 func (s *stream) Close() error {
-	if err := s.sendStream.Close(); err != nil {
-		return err
-	}
-	return nil
+	return s.sendStream.Close()
 }
 
 func (s *stream) SetDeadline(t time.Time) error {
@@ -147,10 +144,6 @@ func (s *stream) SetDeadline(t time.Time) error {
 func (s *stream) closeForShutdown(err error) {
 	s.sendStream.closeForShutdown(err)
 	s.receiveStream.closeForShutdown(err)
-}
-
-func (s *stream) handleResetStreamFrame(frame *wire.ResetStreamFrame) error {
-	return s.receiveStream.handleResetStreamFrame(frame)
 }
 
 // checkIfCompleted is called from the uniStreamSender, when one of the stream halves is completed.

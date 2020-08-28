@@ -11,13 +11,13 @@ import (
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
-	"github.com/lucas-clemente/quic-go/qlog"
+	"github.com/lucas-clemente/quic-go/logging"
 )
 
 type client struct {
 	mutex sync.Mutex
 
-	conn connection
+	conn sendConn
 	// If the client is created with DialAddr, we create a packet conn.
 	// If it is started with Dial, we take a packet conn as a parameter.
 	createdPacketConn bool
@@ -40,18 +40,14 @@ type client struct {
 
 	session quicSession
 
-	qlogger qlog.Tracer
-	logger  utils.Logger
+	tracer logging.ConnectionTracer
+	logger utils.Logger
 }
-
-var _ packetHandler = &client{}
 
 var (
 	// make it possible to mock connection ID generation in the tests
 	generateConnectionID           = protocol.GenerateConnectionID
 	generateConnectionIDForInitial = protocol.GenerateConnectionIDForInitial
-	// make it possible to the qlogger
-	newQlogger = qlog.NewTracer
 )
 
 // DialAddr establishes a new QUIC connection to a server.
@@ -138,7 +134,7 @@ func DialEarly(
 	host string,
 	tlsConf *tls.Config,
 	config *Config,
-) (Session, error) {
+) (EarlySession, error) {
 	return dialContext(context.Background(), pconn, remoteAddr, host, tlsConf, config, true, false)
 }
 
@@ -168,8 +164,11 @@ func dialContext(
 	if tlsConf == nil {
 		return nil, errors.New("quic: tls.Config not set")
 	}
+	if err := validateConfig(config); err != nil {
+		return nil, err
+	}
 	config = populateClientConfig(config, createdPacketConn)
-	packetHandlers, err := getMultiplexer().AddConn(pconn, config.ConnectionIDLength, config.StatelessResetKey)
+	packetHandlers, err := getMultiplexer().AddConn(pconn, config.ConnectionIDLength, config.StatelessResetKey, config.Tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -179,10 +178,8 @@ func dialContext(
 	}
 	c.packetHandlers = packetHandlers
 
-	if c.config.GetLogWriter != nil {
-		if w := c.config.GetLogWriter(c.destConnID); w != nil {
-			c.qlogger = newQlogger(w, protocol.PerspectiveClient, c.destConnID)
-		}
+	if c.config.Tracer != nil {
+		c.tracer = c.config.Tracer.TracerForConnection(protocol.PerspectiveClient, c.destConnID)
 	}
 	if err := c.dial(ctx); err != nil {
 		return nil, err
@@ -235,7 +232,7 @@ func newClient(
 	c := &client{
 		srcConnID:         srcConnID,
 		destConnID:        destConnID,
-		conn:              &conn{pconn: pconn, currentAddr: remoteAddr},
+		conn:              newSendConn(pconn, remoteAddr),
 		createdPacketConn: createdPacketConn,
 		use0RTT:           use0RTT,
 		tlsConf:           tlsConf,
@@ -249,8 +246,8 @@ func newClient(
 
 func (c *client) dial(ctx context.Context) error {
 	c.logger.Infof("Starting new connection to %s (%s -> %s), source connection ID %s, destination connection ID %s, version %s", c.tlsConf.ServerName, c.conn.LocalAddr(), c.conn.RemoteAddr(), c.srcConnID, c.destConnID, c.version)
-	if c.qlogger != nil {
-		c.qlogger.StartedConnection(c.conn.LocalAddr(), c.conn.RemoteAddr(), c.version, c.srcConnID, c.destConnID)
+	if c.tracer != nil {
+		c.tracer.StartedConnection(c.conn.LocalAddr(), c.conn.RemoteAddr(), c.version, c.srcConnID, c.destConnID)
 	}
 
 	c.mutex.Lock()
@@ -265,12 +262,12 @@ func (c *client) dial(ctx context.Context) error {
 		c.version,
 		c.use0RTT,
 		c.hasNegotiatedVersion,
-		c.qlogger,
+		c.tracer,
 		c.logger,
 		c.version,
 	)
 	c.mutex.Unlock()
-	c.packetHandlers.Add(c.srcConnID, c)
+	c.packetHandlers.Add(c.srcConnID, c.session)
 
 	errorChan := make(chan error, 1)
 	go func() {
@@ -308,37 +305,4 @@ func (c *client) dial(ctx context.Context) error {
 		// handshake successfully completed
 		return nil
 	}
-}
-
-func (c *client) handlePacket(p *receivedPacket) {
-	c.session.handlePacket(p)
-}
-
-func (c *client) shutdown() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	if c.session == nil {
-		return
-	}
-	c.session.shutdown()
-}
-
-func (c *client) destroy(e error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	if c.session == nil {
-		return
-	}
-	c.session.destroy(e)
-}
-
-func (c *client) GetVersion() protocol.VersionNumber {
-	c.mutex.Lock()
-	v := c.version
-	c.mutex.Unlock()
-	return v
-}
-
-func (c *client) getPerspective() protocol.Perspective {
-	return protocol.PerspectiveClient
 }

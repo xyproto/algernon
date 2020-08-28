@@ -450,12 +450,19 @@ func (r *regexpObject) writeEscapedSource(sb *valueStringBuilder) bool {
 	pos := 0
 	lastPos := 0
 	rd := &lenientUtf16Decoder{utf16Reader: r.source.utf16Reader(0)}
+L:
 	for {
 		c, size, err := rd.ReadRune()
 		if err != nil {
 			break
 		}
 		switch c {
+		case '\\':
+			pos++
+			_, size, err = rd.ReadRune()
+			if err != nil {
+				break L
+			}
 		case '/', '\u000a', '\u000d', '\u2028', '\u2029':
 			sb.WriteSubstring(r.source, lastPos, pos)
 			sb.WriteRune('\\')
@@ -706,26 +713,16 @@ func (r *Runtime) regexpproto_stdMatcher(call FunctionCall) Value {
 		return r.regexpproto_stdMatcherGeneric(thisObj, s)
 	}
 	if rx.pattern.global {
-		rx.setOwnStr("lastIndex", intToValue(0), true)
-		var a []Value
-		var previousLastIndex int64
-		for {
-			match, result := rx.execRegexp(s)
-			if !match {
-				break
-			}
-			thisIndex := rx.getStr("lastIndex", nil).ToInteger()
-			if thisIndex == previousLastIndex {
-				previousLastIndex = int64(advanceStringIndex(s, toInt(previousLastIndex), rx.pattern.unicode))
-				rx.setOwnStr("lastIndex", intToValue(previousLastIndex), true)
-			} else {
-				previousLastIndex = thisIndex
-			}
-			a = append(a, s.substring(result[0], result[1]))
-		}
-		if len(a) == 0 {
+		res := rx.pattern.findAllSubmatchIndex(s, 0, -1, rx.pattern.sticky)
+		if len(res) == 0 {
+			rx.setOwnStr("lastIndex", intToValue(0), true)
 			return _null
 		}
+		a := make([]Value, 0, len(res))
+		for _, result := range res {
+			a = append(a, s.substring(result[0], result[1]))
+		}
+		rx.setOwnStr("lastIndex", intToValue(int64(res[len(res)-1][1])), true)
 		return r.newArrayValues(a)
 	} else {
 		return rx.exec(s)

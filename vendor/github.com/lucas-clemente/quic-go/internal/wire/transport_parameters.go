@@ -51,7 +51,7 @@ type PreferredAddress struct {
 	IPv6                net.IP
 	IPv6Port            uint16
 	ConnectionID        protocol.ConnectionID
-	StatelessResetToken [16]byte
+	StatelessResetToken protocol.StatelessResetToken
 }
 
 // TransportParameters are parameters sent to the peer during the handshake
@@ -79,19 +79,19 @@ type TransportParameters struct {
 	InitialSourceConnectionID       protocol.ConnectionID
 	RetrySourceConnectionID         *protocol.ConnectionID // use a pointer here to distinguish zero-length connection IDs from missing transport parameters
 
-	StatelessResetToken     *[16]byte
+	StatelessResetToken     *protocol.StatelessResetToken
 	ActiveConnectionIDLimit uint64
 }
 
 // Unmarshal the transport parameters
 func (p *TransportParameters) Unmarshal(data []byte, sentBy protocol.Perspective) error {
-	if err := p.unmarshal(data, sentBy, false); err != nil {
+	if err := p.unmarshal(bytes.NewReader(data), sentBy, false); err != nil {
 		return qerr.NewError(qerr.TransportParameterError, err.Error())
 	}
 	return nil
 }
 
-func (p *TransportParameters) unmarshal(data []byte, sentBy protocol.Perspective, fromSessionTicket bool) error {
+func (p *TransportParameters) unmarshal(r *bytes.Reader, sentBy protocol.Perspective, fromSessionTicket bool) error {
 	// needed to check that every parameter is only sent at most once
 	var parameterIDs []transportParameterID
 
@@ -102,7 +102,6 @@ func (p *TransportParameters) unmarshal(data []byte, sentBy protocol.Perspective
 		readInitialSourceConnectionID       bool
 	)
 
-	r := bytes.NewReader(data)
 	for r.Len() > 0 {
 		paramIDInt, err := utils.ReadVarInt(r)
 		if err != nil {
@@ -161,7 +160,7 @@ func (p *TransportParameters) unmarshal(data []byte, sentBy protocol.Perspective
 				if paramLen != 16 {
 					return fmt.Errorf("wrong length for stateless_reset_token: %d (expected 16)", paramLen)
 				}
-				var token [16]byte
+				var token protocol.StatelessResetToken
 				r.Read(token[:])
 				p.StatelessResetToken = &token
 			case originalDestinationConnectionIDParameterID:
@@ -359,9 +358,11 @@ func (p *TransportParameters) Marshal(pers protocol.Perspective) []byte {
 	}
 	if pers == protocol.PerspectiveServer {
 		// stateless_reset_token
-		utils.WriteVarInt(b, uint64(statelessResetTokenParameterID))
-		utils.WriteVarInt(b, 16)
-		b.Write(p.StatelessResetToken[:])
+		if p.StatelessResetToken != nil {
+			utils.WriteVarInt(b, uint64(statelessResetTokenParameterID))
+			utils.WriteVarInt(b, 16)
+			b.Write(p.StatelessResetToken[:])
+		}
 		// original_destination_connection_id
 		utils.WriteVarInt(b, uint64(originalDestinationConnectionIDParameterID))
 		utils.WriteVarInt(b, uint64(p.OriginalDestinationConnectionID.Len()))
@@ -429,8 +430,7 @@ func (p *TransportParameters) MarshalForSessionTicket(b *bytes.Buffer) {
 }
 
 // UnmarshalFromSessionTicket unmarshals transport parameters from a session ticket.
-func (p *TransportParameters) UnmarshalFromSessionTicket(data []byte) error {
-	r := bytes.NewReader(data)
+func (p *TransportParameters) UnmarshalFromSessionTicket(r *bytes.Reader) error {
 	version, err := utils.ReadVarInt(r)
 	if err != nil {
 		return err
@@ -438,7 +438,7 @@ func (p *TransportParameters) UnmarshalFromSessionTicket(data []byte) error {
 	if version != transportParameterMarshalingVersion {
 		return fmt.Errorf("unknown transport parameter marshaling version: %d", version)
 	}
-	return p.unmarshal(data[len(data)-r.Len():], protocol.PerspectiveServer, true)
+	return p.unmarshal(r, protocol.PerspectiveServer, true)
 }
 
 // ValidFor0RTT checks if the transport parameters match those saved in the session ticket.
