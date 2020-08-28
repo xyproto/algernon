@@ -3,6 +3,7 @@ package engine
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/themes"
+	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 )
 
@@ -337,6 +339,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.clearDefaultPathPrefixes = true
 		ac.noHeaders = true
 		ac.writeTimeout = 3600 * 24
+	}
+
+	if ac.onlyLuaMode {
+		// Use a random database, so that several lua REPLs can be started without colliding,
+		// but only if the current default bolt database file can not be opened.
+		if ac.boltFilename != os.DevNull && !utils.CanRead(ac.boltFilename) {
+			tempFile, err := ioutil.TempFile("", "algernon_repl*.db")
+			if err == nil { // no issue
+				ac.boltFilename = tempFile.Name()
+			}
+		}
 	}
 
 	// If a watch directory is given, enable the auto refresh feature
