@@ -29,7 +29,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
-	github.com/xyproto/ask v1.0.0
+	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
@@ -43,15 +43,15 @@ require (
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
 	github.com/xyproto/recwatch v1.1.0
-	github.com/xyproto/sheepcounter v1.6.0
-	github.com/xyproto/simplebolt v1.5.1
+	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
+	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 	github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b // indirect
 	github.com/xyproto/simpleredis v0.0.0-20200807102745-cc407f748897
 	github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e
 	github.com/xyproto/textoutput v1.12.2
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
-	github.com/xyproto/vt100 v1.8.6 // indirect
+	github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd // indirect
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect

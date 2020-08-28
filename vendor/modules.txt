@@ -152,7 +152,7 @@ github.com/wellington/sass/parser
 github.com/wellington/sass/scanner
 github.com/wellington/sass/strops
 github.com/wellington/sass/token
-# github.com/xyproto/ask v1.0.0
+# github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 github.com/xyproto/ask
 # github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff
 github.com/xyproto/cookie
@@ -187,9 +187,9 @@ github.com/xyproto/pstore
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v1.1.0
 github.com/xyproto/recwatch
-# github.com/xyproto/sheepcounter v1.6.0
+# github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v1.5.1
+# github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 github.com/xyproto/simplebolt
 # github.com/xyproto/simplehstore v0.0.0-20191007161827-7957c30b2d9b
 github.com/xyproto/simplehstore
@@ -207,7 +207,7 @@ github.com/xyproto/textoutput
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.8.6
+# github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss

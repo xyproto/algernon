@@ -26,5 +26,5 @@ _testmain.go
 
 bolt.db
 
-cmd/linkedlist/linkedlist
-cmd/simple/simple
+example/linkedlist/linkedlist
+example/simple/simple

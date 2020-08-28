@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// Read a line from stdin
+// ReadLn will read a line from stdin, until \n.
 func ReadLn() string {
 	reader := bufio.NewReader(os.Stdin)
 	line, err := reader.ReadString('\n')
@@ -16,14 +16,14 @@ func ReadLn() string {
 	return line[:len(line)-1]
 }
 
-// Ask a question, wait for textual input followed by a newline
+// Ask a question, wait for textual input followed by a newline.
 func Ask(prompt string) string {
 	fmt.Print(prompt)
 	return ReadLn()
 }
 
-// Ask a yes/no question, don't wait for newline
-func AskYesNo(question string, noIsDefault bool) bool {
+// YesNo will ask a yes/no question. Will not wait for a newline.
+func YesNo(question string, noIsDefault bool) bool {
 	var s string
 	alternatives := "Yn"
 	if noIsDefault {
