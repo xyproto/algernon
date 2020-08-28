@@ -40,8 +40,8 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 	backtick := []byte("`")
 	found := make(map[string][]byte)
 
-	if bytes.Contains(data, backtick) {
-	}
+	//if bytes.Contains(data, backtick) {
+	//}
 
 	var stopLooking = false
 	// Find and separate the lines starting with one of the keywords in the special map
