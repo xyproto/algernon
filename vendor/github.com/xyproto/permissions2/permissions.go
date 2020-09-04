@@ -182,7 +182,21 @@ func (perm *Permissions) ServeHTTP(w http.ResponseWriter, req *http.Request, nex
 		// Reject the request by not calling the next handler below
 		return
 	}
-
 	// Call the next middleware handler
 	next(w, req)
+}
+
+// Middleware handler (compatible with Chi)
+func (perm *Permissions) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// Check if the user has the right admin/user rights
+		if perm.Rejected(w, req) {
+			// Get and call the Permission Denied function
+			perm.DenyFunction()(w, req)
+			// Reject the request by not calling the next handler below
+			return
+		}
+		// Call the next middleware handler
+		next.ServeHTTP(w, req)
+	})
 }

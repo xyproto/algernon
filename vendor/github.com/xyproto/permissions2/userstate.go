@@ -21,8 +21,42 @@ const (
 var (
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
 
-	// ErrNotFound is used as an error if not finding what is being searched for
+	// ErrNotFound is returned if something is not found
 	ErrNotFound = errors.New("not found")
+
+	// ErrNoCookieUsername is returned if a username could not be retrieved from a cookie
+	ErrNoCookieUsername = errors.New("could not retrieve the username from browser cookie")
+
+	// ErrNoCookieEmptyUsername is returned if the cookie could not be set because the username was empty
+	ErrNoCookieEmptyUsername = errors.New("can't set cookie for empty username")
+
+	// ErrNoCookieMissingUser is returned if the user does not exist when about to store a cookie
+	ErrNoCookieMissingUser = errors.New("can't store cookie for non-existing user")
+
+	// ErrRedisConnectionFailure is returned if the Redis server is unreachable
+	ErrRedisConnectionFailure = errors.New("unable to connect to Redis server on port 6379")
+
+	// ErrRedisLostConnection is returned if the connection to the Redis server is lost
+	ErrRedisLostConnection = errors.New("lost connection to Redis")
+
+	// ErrUsersAlreadyConfirmed is returned if all users are confirmed and no confirmation can be done
+	ErrUsersAlreadyConfirmed = errors.New("all existing users are already confirmed")
+
+	// ErrConfirmationNoLongerValid is returned if the given confirmation code is invalid
+	ErrConfirmationNoLongerValid = errors.New("the confirmation code is no longer valid")
+
+	// ErrConfirmationUserMissing is returned if the confirmation fails because the user does not exist
+	// on the list of users that are unconfirmed.
+	ErrConfirmationUserMissing = errors.New("the user that is to be confirmed no longer exists")
+
+	// ErrConfirmationNotUnique is returned if there are issues generating confirmation codes. This should normally not happen.
+	ErrConfirmationNotUnique = errors.New("too many generated confirmation codes are not unique")
+
+	// ErrInvalidUsername is returned if the given username contains characters that the default validator does not accept
+	ErrInvalidUsername = errors.New("only numbers, underscore and some letters are allowed in usernames")
+
+	// ErrSameUsernameAndPassword is returned if the username and password are equal
+	ErrSameUsernameAndPassword = errors.New("username and password must be different, try another password")
 )
 
 // UserState is a struct for dealing with the user state, users and passwords.
@@ -181,7 +215,7 @@ func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserSta
 	if err := simpleredis.TestConnectionHost(redisHostPort); err != nil {
 		errorMessage := err.Error()
 		if errorMessage == "dial tcp :6379: getsockopt: connection refused" {
-			return nil, errors.New("unable to connect to Redis server on port 6379")
+			return nil, ErrRedisConnectionFailure
 		}
 		return nil, err
 	}
@@ -263,7 +297,7 @@ func (state *UserState) HasUser(username string) bool {
 	val, err := state.usernames.Has(username)
 	if err != nil {
 		// This happened at concurrent connections before introducing the connection pool
-		panic("ERROR: Lost connection to Redis?")
+		panic(ErrRedisLostConnection.Error())
 	}
 	return val
 }
@@ -273,7 +307,7 @@ func (state *UserState) HasUser2(username string) (bool, error) {
 	val, err := state.usernames.Has(username)
 	if err != nil {
 		// This happened at concurrent connections before introducing the connection pool
-		return false, errors.New("Lost connection to Redis?")
+		return false, ErrRedisLostConnection
 	}
 	return val, nil
 }
@@ -370,7 +404,7 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 	if ok && (username != "") {
 		return username, nil
 	}
-	return "", errors.New("Could not retrieve the username from browser cookie")
+	return "", ErrNoCookieUsername
 }
 
 // Store the given username in a cookie in the browser, if possible.
@@ -380,10 +414,11 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 // - httponly is for only allowing cookies for the same server
 func (state *UserState) setUsernameCookieWithFlags(w http.ResponseWriter, username string, secure, httponly bool) error {
 	if username == "" {
-		return errors.New("Can't set cookie for empty username")
+		return ErrNoCookieEmptyUsername
+
 	}
 	if !state.HasUser(username) {
-		return errors.New("Can't store cookie for non-existing user")
+		return ErrNoCookieMissingUser
 	}
 	// Create a cookie that lasts for a while ("timeout" seconds),
 	// this is the equivalent of a session for a given username.
@@ -682,7 +717,7 @@ func (state *UserState) AlreadyHasConfirmationCode(confirmationCode string) bool
 func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (string, error) {
 	unconfirmedUsernames, err := state.AllUnconfirmedUsernames()
 	if err != nil {
-		return "", errors.New("all existing users are already confirmed")
+		return "", ErrUsersAlreadyConfirmed
 	}
 
 	// Find the username by looking up the confirmationCode on unconfirmed users
@@ -702,11 +737,11 @@ func (state *UserState) FindUserByConfirmationCode(confirmationCode string) (str
 
 	// Check that the user is there
 	if username == "" {
-		return username, errors.New("the confirmation code is no longer valid")
+		return username, ErrConfirmationNoLongerValid
 	}
 	hasUser := state.HasUser(username)
 	if !hasUser {
-		return username, errors.New("the user that is to be confirmed no longer exists")
+		return username, ErrConfirmationUserMissing
 	}
 
 	return username, nil
@@ -749,7 +784,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 		confirmationCode = cookie.RandomHumanFriendlyString(length)
 		if length > maxConfirmationCodeLength {
 			// This should never happen
-			return confirmationCode, errors.New("too many generated confirmation codes are not unique")
+			return confirmationCode, ErrConfirmationNotUnique
 		}
 	}
 	return confirmationCode, nil
@@ -758,6 +793,7 @@ func (state *UserState) GenerateUniqueConfirmationCode() (string, error) {
 // ValidUsernamePassword checks that the given username and password are different.
 // Also check if the chosen username only contains letters, numbers and/or underscore.
 // Use the "CorrectPassword" function for checking if the password is correct.
+// Don't use this function if you wish to use e-mail addresses as usernames.
 func ValidUsernamePassword(username, password string) error {
 	const allAllowedLetters = "abcdefghijklmnopqrstuvwxyzæøåABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ_0123456789"
 NEXT:
@@ -767,10 +803,10 @@ NEXT:
 				continue NEXT // check the next letter in the username
 			}
 		}
-		return errors.New("only letters, numbers and underscore are allowed in usernames")
+		return ErrInvalidUsername
 	}
 	if username == password {
-		return errors.New("username and password must be different, try another password")
+		return ErrSameUsernameAndPassword
 	}
 	return nil
 }

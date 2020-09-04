@@ -1,9 +1,9 @@
-github.com/lib/pq v1.2.0 h1:LXpIM/LZ5xGFhOpXAQUIMM1HdyqzVYM13zNdjCEEcA0=
-github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
+github.com/lib/pq v1.8.0 h1:9xohqzkUwzR4Ga4ivdTcawVS89YSDVxXMa3xJX3cGzg=
+github.com/lib/pq v1.8.0/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff h1:G+UgV5480yPnIK9+aaz4Tx0l7hu8lcDuXc9SfTbK1+w=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff/go.mod h1:+c0/g8lVJKAi+uZ/kPHqSzf2UsSI2If03smY6xITgtM=
-github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684 h1:NFSurCu+HqTKLlURDwnZL2J6GQv4WKzGBuFdrO8Rimc=
-github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684/go.mod h1:BzQLxcJwPQpzFgOyNEL02hGO5T4VqXB1BX+lp5bE040=
+github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c h1:lxAVlHyqZRKpiMVzJj1iZy5wxg+COPyhnj8snRgJfeU=
+github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c/go.mod h1:X5B5pKE49ak7SpyDh5QvJvLH9cC9XuZNDcl5hEyYc34=
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8fEA1DIpa1a4ZH+3opiHKZHs/y9ovbXF3xA=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=

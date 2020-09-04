@@ -25,12 +25,10 @@ _testmain.go
 *.rdb
 
 # Executables for the examples
-examples/negroni/negroni
-examples/martini/martini
-examples/gin/gin
-examples/macaron/macaron
-examples/echo/echo
-examples/http/http
-examples/goji/goji
-examples/iris/iris
+examples/chi/chi
 examples/getdb/getdb
+examples/gin/gin
+examples/goji/goji
+examples/http/http
+examples/martini/martini
+examples/negroni/negroni
