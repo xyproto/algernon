@@ -13,6 +13,8 @@ Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperA
 
 All in one small self-contained executable.
 
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
+
 Distro Packages
 ---------------
 
