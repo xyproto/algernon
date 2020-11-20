@@ -1,0 +1,22 @@
+{
+    "name": "algernon",
+    "options": {
+        "allow-unauthenticated": true,
+        "memory": "256Mi",
+        "cpu": "2",
+        "port": "80"
+    },
+    "build": {
+        "skip": false,
+        "buildpacks": {
+            "builder": "docker/demo"
+        }
+    },
+    "hooks": {
+        "prebuild": {
+            "commands": [
+                "docker build -t $IMAGE_URL -f docker/demo/Dockerfile ."
+            ]
+        },
+    }
+}
