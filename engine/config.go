@@ -823,11 +823,19 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		recwatch.FatalExit = ac.fatalExit
 		recwatch.Exists = ac.fs.Exists
 		if ac.autoRefreshDir != "" {
+			absdir, err := filepath.Abs(ac.autoRefreshDir)
+			if err != nil {
+				absdir = ac.autoRefreshDir
+			}
 			// Only watch the autoRefreshDir, recursively
-			recwatch.EventServer(ac.autoRefreshDir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
+			recwatch.EventServer(absdir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		} else {
+			absdir, err := filepath.Abs(ac.serverDirOrFilename)
+			if err != nil {
+				absdir = ac.serverDirOrFilename
+			}
 			// Watch everything in the server directory, recursively
-			recwatch.EventServer(ac.serverDirOrFilename, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
+			recwatch.EventServer(absdir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		}
 	}
 
