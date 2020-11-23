@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.8.0
+# github.com/alecthomas/chroma v0.8.2
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -38,17 +38,17 @@ github.com/cheekybits/genny/generic
 github.com/chzyer/readline
 # github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 github.com/danwakefield/fnmatch
-# github.com/ddliu/go-httpclient v0.6.7
+# github.com/ddliu/go-httpclient v0.6.9
 github.com/ddliu/go-httpclient
 # github.com/didip/tollbooth v4.0.2+incompatible
 github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2 v1.2.1
+# github.com/dlclark/regexp2 v1.4.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20200831102558-9af81ddcf0e1
+# github.com/dop251/goja v0.0.0-20201107160812-7545ac6de48a
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -69,15 +69,13 @@ github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
 # github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 github.com/jvatic/goja-babel
-# github.com/konsorten/go-windows-terminal-sequences v1.0.3
-github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/pretty v0.2.1
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
@@ -86,7 +84,7 @@ github.com/kr/text
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/lucas-clemente/quic-go v0.18.0
+# github.com/lucas-clemente/quic-go v0.19.2
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/http3
 github.com/lucas-clemente/quic-go/internal/ackhandler
@@ -102,15 +100,15 @@ github.com/lucas-clemente/quic-go/internal/wire
 github.com/lucas-clemente/quic-go/logging
 github.com/lucas-clemente/quic-go/quictrace
 github.com/lucas-clemente/quic-go/quictrace/pb
-# github.com/marten-seemann/qpack v0.2.0
+# github.com/marten-seemann/qpack v0.2.1
 github.com/marten-seemann/qpack
 # github.com/marten-seemann/qtls v0.10.0
 github.com/marten-seemann/qtls
-# github.com/marten-seemann/qtls-go1-15 v0.1.0
+# github.com/marten-seemann/qtls-go1-15 v0.1.1
 github.com/marten-seemann/qtls-go1-15
 # github.com/mattetti/filebuffer v1.0.1
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.1.7
+# github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
@@ -127,13 +125,11 @@ github.com/patrickmn/go-cache
 # github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
-# github.com/russross/blackfriday/v2 v2.0.1
+# github.com/russross/blackfriday/v2 v2.1.0
 github.com/russross/blackfriday/v2
 # github.com/shopspring/decimal v1.2.0
 github.com/shopspring/decimal
-# github.com/shurcooL/sanitized_anchor_name v1.0.0
-github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.6.0
+# github.com/sirupsen/logrus v1.7.0
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful
@@ -181,7 +177,7 @@ github.com/xyproto/permissionsql
 github.com/xyproto/pinterface
 # github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 github.com/xyproto/pongo2
-# github.com/xyproto/pstore v0.0.0-20190613110908-8c3c8ff4f7f7
+# github.com/xyproto/pstore v0.0.0-20200905092234-9b00f24eea6e
 github.com/xyproto/pstore
 # github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
 github.com/xyproto/randomstring
@@ -191,11 +187,13 @@ github.com/xyproto/recwatch
 github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 github.com/xyproto/simplebolt
-# github.com/xyproto/simplehstore v0.0.0-20200904131731-03b2ef4a5f85
+# github.com/xyproto/simpleform v0.2.0
+github.com/xyproto/simpleform
+# github.com/xyproto/simplehstore v0.0.0-20200929212236-7297f3830304
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis v0.0.0-20200807102745-cc407f748897
+# github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 github.com/xyproto/simpleredis
 # github.com/xyproto/splash v0.0.0-20200322080928-3c9bc249020e
 github.com/xyproto/splash
@@ -213,7 +211,7 @@ github.com/xyproto/vt100
 github.com/yosssi/gcss
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+# golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -224,16 +222,17 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20200822124328-c89045814202
+# golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a
+# golang.org/x/sys v0.0.0-20201119102817-f84b799fce68
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.3
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.4
 golang.org/x/text/cases
 golang.org/x/text/collate
 golang.org/x/text/internal

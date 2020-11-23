@@ -10,11 +10,14 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/internal/handshake"
+	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/marten-seemann/qpack"
 )
@@ -25,7 +28,20 @@ var (
 	quicListenAddr = quic.ListenAddrEarly
 )
 
-const nextProtoH3 = "h3-29"
+const (
+	nextProtoH3Draft29 = "h3-29"
+	nextProtoH3Draft32 = "h3-32"
+)
+
+func versionToALPN(v protocol.VersionNumber) string {
+	if v == protocol.VersionTLS || v == protocol.VersionDraft29 {
+		return nextProtoH3Draft29
+	}
+	if v == protocol.VersionDraft32 {
+		return nextProtoH3Draft32
+	}
+	return ""
+}
 
 // contextKey is a value for use with context.WithValue. It's used as
 // a pointer so it fits in an interface{} without allocation.
@@ -35,13 +51,11 @@ type contextKey struct {
 
 func (k *contextKey) String() string { return "quic-go/http3 context value " + k.name }
 
-var (
-	// ServerContextKey is a context key. It can be used in HTTP
-	// handlers with Context.Value to access the server that
-	// started the handler. The associated value will be of
-	// type *http3.Server.
-	ServerContextKey = &contextKey{"http3-server"}
-)
+// ServerContextKey is a context key. It can be used in HTTP
+// handlers with Context.Value to access the server that
+// started the handler. The associated value will be of
+// type *http3.Server.
+var ServerContextKey = &contextKey{"http3-server"}
 
 type requestError struct {
 	err       error
@@ -117,32 +131,36 @@ func (s *Server) serveImpl(tlsConf *tls.Config, conn net.PacketConn) error {
 		s.logger = utils.DefaultLogger.WithPrefix("server")
 	})
 
-	if tlsConf == nil {
-		tlsConf = &tls.Config{}
-	} else {
-		tlsConf = tlsConf.Clone()
-	}
-	// Replace existing ALPNs by H3
-	tlsConf.NextProtos = []string{nextProtoH3}
-	if tlsConf.GetConfigForClient != nil {
-		getConfigForClient := tlsConf.GetConfigForClient
-		tlsConf.GetConfigForClient = func(ch *tls.ClientHelloInfo) (*tls.Config, error) {
-			conf, err := getConfigForClient(ch)
-			if err != nil || conf == nil {
-				return conf, err
+	// The tls.Config we pass to Listen needs to have the GetConfigForClient callback set.
+	// That way, we can get the QUIC version and set the correct ALPN value.
+	baseConf := &tls.Config{
+		GetConfigForClient: func(ch *tls.ClientHelloInfo) (*tls.Config, error) {
+			// determine the ALPN from the QUIC version used
+			proto := nextProtoH3Draft29
+			if qconn, ok := ch.Conn.(handshake.ConnWithVersion); ok && qconn.GetQUICVersion() == quic.VersionDraft32 {
+				proto = nextProtoH3Draft32
+			}
+			conf := tlsConf
+			if tlsConf.GetConfigForClient != nil {
+				getConfigForClient := tlsConf.GetConfigForClient
+				var err error
+				conf, err = getConfigForClient(ch)
+				if err != nil {
+					return nil, err
+				}
 			}
 			conf = conf.Clone()
-			conf.NextProtos = []string{nextProtoH3}
+			conf.NextProtos = []string{proto}
 			return conf, nil
-		}
+		},
 	}
 
 	var ln quic.EarlyListener
 	var err error
 	if conn == nil {
-		ln, err = quicListenAddr(s.Addr, tlsConf, s.QuicConfig)
+		ln, err = quicListenAddr(s.Addr, baseConf, s.QuicConfig)
 	} else {
-		ln, err = quicListen(conn, tlsConf, s.QuicConfig)
+		ln, err = quicListen(conn, baseConf, s.QuicConfig)
 	}
 	if err != nil {
 		return err
@@ -346,8 +364,19 @@ func (s *Server) SetQuicHeaders(hdr http.Header) error {
 		atomic.StoreUint32(&s.port, port)
 	}
 
-	hdr.Add("Alt-Svc", fmt.Sprintf(`%s=":%d"; ma=2592000`, nextProtoH3, port))
-
+	// This code assumes that we will use protocol.SupportedVersions if no quic.Config is passed.
+	supportedVersions := protocol.SupportedVersions
+	if s.QuicConfig != nil && len(s.QuicConfig.Versions) > 0 {
+		supportedVersions = s.QuicConfig.Versions
+	}
+	altSvc := make([]string, 0, len(supportedVersions))
+	for _, version := range supportedVersions {
+		v := versionToALPN(version)
+		if len(v) > 0 {
+			altSvc = append(altSvc, fmt.Sprintf(`%s=":%d"; ma=2592000`, v, port))
+		}
+	}
+	hdr.Add("Alt-Svc", strings.Join(altSvc, ","))
 	return nil
 }
 

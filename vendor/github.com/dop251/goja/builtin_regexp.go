@@ -252,9 +252,14 @@ func compileRegexp(patternStr, flags string) (p *regexpPattern, err error) {
 		}
 		wrapper = (*regexpWrapper)(pattern)
 	} else {
+		if _, incompat := err1.(parser.RegexpErrorIncompatible); !incompat {
+			err = err1
+			return
+		}
 		wrapper2, err = compileRegexp2(patternStr, multiline, ignoreCase)
 		if err != nil {
-			err = fmt.Errorf("Invalid regular expression (regexp2): %s (%v)", patternStr, err1)
+			err = fmt.Errorf("Invalid regular expression (regexp2): %s (%v)", patternStr, err)
+			return
 		}
 	}
 
@@ -852,21 +857,24 @@ func advanceStringIndex(s valueString, pos int, unicode bool) int {
 
 func (r *Runtime) regexpproto_stdSplitter(call FunctionCall) Value {
 	rxObj := r.toObject(call.This)
-	c := r.speciesConstructor(rxObj, r.global.RegExp)
-	flags := nilSafe(rxObj.self.getStr("flags", nil)).toString()
-	flagsStr := flags.String()
-
-	// Add 'y' flag if missing
-	if !strings.Contains(flagsStr, "y") {
-		flags = newStringValue(flagsStr + "y")
-	}
-	splitter := c([]Value{rxObj, flags}, nil)
-
 	s := call.Argument(0).toString()
 	limitValue := call.Argument(1)
-	search := r.checkStdRegexp(splitter)
-	if search == nil {
-		return r.regexpproto_stdSplitterGeneric(splitter, s, limitValue, strings.Contains(flagsStr, "u"))
+	var splitter *Object
+	search := r.checkStdRegexp(rxObj)
+	c := r.speciesConstructorObj(rxObj, r.global.RegExp)
+	if search == nil || c != r.global.RegExp {
+		flags := nilSafe(rxObj.self.getStr("flags", nil)).toString()
+		flagsStr := flags.String()
+
+		// Add 'y' flag if missing
+		if !strings.Contains(flagsStr, "y") {
+			flags = flags.concat(asciiString("y"))
+		}
+		splitter = r.toConstructor(c)([]Value{rxObj, flags}, nil)
+		search = r.checkStdRegexp(splitter)
+		if search == nil {
+			return r.regexpproto_stdSplitterGeneric(splitter, s, limitValue, strings.Contains(flagsStr, "u"))
+		}
 	}
 
 	limit := -1

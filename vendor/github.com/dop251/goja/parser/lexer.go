@@ -354,12 +354,7 @@ func (self *_parser) scan() (tkn token.Token, literal string, parsedLiteral unis
 					tkn = token.STRICT_NOT_EQUAL
 				}
 			case '&':
-				if self.chr == '^' {
-					self.read()
-					tkn = self.switch2(token.AND_NOT, token.AND_NOT_ASSIGN)
-				} else {
-					tkn = self.switch3(token.AND, token.AND_ASSIGN, '&', token.LOGICAL_AND)
-				}
+				tkn = self.switch3(token.AND, token.AND_ASSIGN, '&', token.LOGICAL_AND)
 			case '|':
 				tkn = self.switch3(token.OR, token.OR_ASSIGN, '|', token.LOGICAL_OR)
 			case '~':
@@ -452,25 +447,6 @@ func (self *_parser) _peek() rune {
 }
 
 func (self *_parser) read() {
-	if self.offset < self.length {
-		self.chrOffset = self.offset
-		chr, width := rune(self.str[self.offset]), 1
-		if chr >= utf8.RuneSelf { // !ASCII
-			chr, width = utf8.DecodeRuneInString(self.str[self.offset:])
-			if chr == utf8.RuneError && width == 1 {
-				self.error(self.chrOffset, "Invalid UTF-8 character")
-			}
-		}
-		self.offset += width
-		self.chr = chr
-	} else {
-		self.chrOffset = self.length
-		self.chr = -1 // EOF
-	}
-}
-
-// This is here since the functions are so similar
-func (self *_RegExp_parser) read() {
 	if self.offset < self.length {
 		self.chrOffset = self.offset
 		chr, width := rune(self.str[self.offset]), 1
@@ -774,6 +750,9 @@ func parseStringLiteral1(literal string, length int, unicode bool) (unistring.St
 			var size int
 			value, size = utf8.DecodeRuneInString(str)
 			str = str[size:] // \ + <character>
+			if value == '\u2028' || value == '\u2029' {
+				continue
+			}
 		} else {
 			str = str[2:] // \<character>
 			switch chr {
