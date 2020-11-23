@@ -334,13 +334,14 @@ button[disabled]:hover {
 }
 
 form {
-    border: 1px solid var(--color-bg-secondary);
+    margin-top: 3em;
+    /*border: 1px solid var(--color-bg-secondary);
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow) var(--color-shadow);
+    box-shadow: var(--box-shadow) var(--color-shadow);*/
     display: block;
     max-width: var(--width-card-wide);
     min-width: var(--width-card);
-    padding: 1.5rem;
+    padding: 2rem 2rem 0 2rem;
     text-align: var(--justify-normal);
 }
 

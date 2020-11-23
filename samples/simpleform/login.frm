@@ -5,4 +5,4 @@ Invalid login attempts will be logged, read out loud and ridiculed at the next b
 Username: {{ username }}
 Password: {{ password }}
 
-[Login](/login)
+[Login](/login/)
