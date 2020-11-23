@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="mvp.css">
+    <link rel="stylesheet" href="sidebar.css">
+	<link rel="stylesheet" href="header.css">
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidenav">
+      <img alt="logo" src="logo.svg">
+      <a href="#">About</a>
+      <a href="#">Services</a>
+      <a href="#">Clients</a>
+      <a href="#">Contact</a>
+    </div>
+    <!-- Main content -->
+    <div class="main">
+      <div class="header">
+        <h1>Corporate Roundabouts</h1>
+        <i>Synchronicity driven consolidation for the elite</i>
+      </div>
+      {{ formHTML|safe }}
+    </div>
+  </body>
+</html>

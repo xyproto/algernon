@@ -1,0 +1,13 @@
+h1 {
+  font-family: georgia, times new roman, times, serif;
+  margin: 1.2em 0 0 0;
+}
+
+.header {
+  text-align: center;
+  background: white;
+  color: #202020;
+  font-size: 30px;
+  padding: 2em 2em 2em 2em;
+  margin: -2em -2em 2em -2em;
+}
