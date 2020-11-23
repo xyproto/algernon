@@ -208,7 +208,7 @@ Changes from 1.4 to 1.4.1
 
 * Update the Markdown styling: tables, colors and &lt;code&gt; tags
 * Split out file caching to a separate package: [datablock](https://github.com/xyproto/datablock)
-* Add an [example](https://github.com/xyproto/algernon/tree/master/samples/structure) for structuring a web site.
+* Add an [example](https://github.com/xyproto/algernon/tree/main/samples/structure) for structuring a web site.
 * Add a Lua `preload()` function, for caching files before they are needed.
 * Let the Lua `render()` and ` serve()` functions take an optional filename.
 * Fallback for the log filename.

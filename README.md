@@ -7,7 +7,7 @@ theme: material
 
 <a href="https://github.com/xyproto/algernon"><img src="https://algernon.roboticoverlords.org/img/algernon_logo.png" style="margin-left: 2em"></a>
 
-[![Build Status](https://travis-ci.com/xyproto/algernon.svg?branch=master)](https://travis-ci.com/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield)
+[![Build Status](https://travis-ci.com/xyproto/algernon.svg?branch=main)](https://travis-ci.com/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield)
 
 Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB (built-in, stores the database in a file, like SQLite), Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
@@ -145,9 +145,9 @@ Installation
 
 ##### Any system where go is available
 
-This method is using the latest commit from the master branch:
+This method is using the latest commit from the main branch:
 
-`go get -u github.com/xyproto/algernon`
+`go get -u github.com/xyproto/algernon@main`
 
 If needed, first:
 
@@ -159,11 +159,11 @@ Overview
 
 Running Algernon:
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_gopher.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_gopher.png">
 
 Screenshot of an earlier version:
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_redis_054.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_redis_054.png">
 
 ---
 
@@ -187,32 +187,32 @@ PostgreSQL is a solid and fast database that is also supported.
 Screenshots
 -----------
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_markdown.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_markdown.png">
 
 *Markdown can easily be styled with Sass or GCSS.*
 
 ---
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_lua_error.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_lua_error.png">
 
 *This is how errors in Lua scripts are handled, when Debug mode is enabled.*
 
 ---
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_threejs.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_threejs.png">
 
 *One of the poems of Algernon Charles Swinburne, with three rotating tori in the background.*
 *Uses CSS3 for the Gaussian blur and [three.js](https://threejs.org) for the 3D graphics.*
 
 ---
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/prettify.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/prettify.png">
 
 *Screenshot of the <strong>prettify</strong> sample. Served from a single Lua script.*
 
 ---
 
-<img src="https://raw.github.com/xyproto/algernon/master/img/algernon_react.png">
+<img src="https://raw.github.com/xyproto/algernon/main/img/algernon_react.png">
 
 *JSX transforms are built-in. Using [React](https://facebook.github.io/react/) together with Algernon is easy.*
 
@@ -1056,7 +1056,7 @@ Releases
 
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
 * [Windows executable](https://github.com/xyproto/algernon/releases/tag/v1.0-win8-64).
-* [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/master/system/homebrew/algernon.rb)
+* [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/main/system/homebrew/algernon.rb)
 * [Algernon Tray Launcher for OS X, in App Store](https://itunes.apple.com/no/app/algernon-server/id1030394926?l=nb&mt=12)
 * Source releases are tagged with a version number at release.
 
