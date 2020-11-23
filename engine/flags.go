@@ -37,7 +37,7 @@ Available flags:
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
-                               Enables server mode. Sets cache to "production".
+                               Enables server mode. Sets cache to "prod".
   -a, --autorefresh            Enable event server and auto-refresh feature.
                                Sets cache mode to "images".
   --cache=MODE                 Sets a cache mode. The default is "on".
