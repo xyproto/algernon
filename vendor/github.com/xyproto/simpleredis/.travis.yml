@@ -1,4 +1,23 @@
+arch:
+  - amd64
+  - arm64
+  - arm64-graviton2
+  - ppc64le
+  - s390x
+
+services:
+  - redis-server
+
 language: go
+
+jobs:
+  exclude:
+    - go: "1.15"
+      arch: arm64
+    - go: "1.13"
+      arch: s390x
+    - go: "tip"
+      arch: arm64
 
 go:
   - "1.8"
@@ -8,7 +27,5 @@ go:
   - "1.12"
   - "1.13"
   - "1.14"
-  - tip
-
-services:
-    - redis-server
+  - "1.15"
+  - "tip"

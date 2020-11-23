@@ -81,7 +81,7 @@ var staticTableEntries = [...]HeaderField{
 	{Name: "access-control-allow-methods", Value: "get, post, options"},
 	{Name: "access-control-allow-methods", Value: "options"},
 	{Name: "access-control-expose-headers", Value: "content-length"},
-	{Name: "access-control-expose-headers", Value: "content-type"},
+	{Name: "access-control-request-headers", Value: "content-type"},
 	{Name: "access-control-request-method", Value: "get"},
 	{Name: "access-control-request-method", Value: "post"},
 	{Name: "alt-svc", Value: "clear"},
@@ -142,10 +142,12 @@ var encoderMap = map[string]indexAndValues{
 		"HEAD":    18,
 		"OPTIONS": 19,
 		"POST":    20,
-		"PUT":     21}},
+		"PUT":     21,
+	}},
 	":scheme": {22, map[string]uint8{
 		"http":  22,
-		"https": 23}},
+		"https": 23,
+	}},
 	":status": {24, map[string]uint8{
 		"103": 24,
 		"200": 25,
@@ -160,16 +162,19 @@ var encoderMap = map[string]indexAndValues{
 		"403": 68,
 		"421": 69,
 		"425": 70,
-		"500": 71}},
+		"500": 71,
+	}},
 	"accept": {29, map[string]uint8{
 		"*/*":                     29,
-		"application/dns-message": 30}},
+		"application/dns-message": 30,
+	}},
 	"accept-encoding": {31, map[string]uint8{"gzip, deflate, br": 31}},
 	"accept-ranges":   {32, map[string]uint8{"bytes": 32}},
 	"access-control-allow-headers": {33, map[string]uint8{
 		"cache-control": 33,
 		"content-type":  34,
-		"*":             75}},
+		"*":             75,
+	}},
 	"access-control-allow-origin": {35, map[string]uint8{"*": 35}},
 	"cache-control": {36, map[string]uint8{
 		"max-age=0":                36,
@@ -177,10 +182,12 @@ var encoderMap = map[string]indexAndValues{
 		"max-age=604800":           38,
 		"no-cache":                 39,
 		"no-store":                 40,
-		"public, max-age=31536000": 41}},
+		"public, max-age=31536000": 41,
+	}},
 	"content-encoding": {42, map[string]uint8{
 		"br":   42,
-		"gzip": 43}},
+		"gzip": 43,
+	}},
 	"content-type": {44, map[string]uint8{
 		"application/dns-message":           44,
 		"application/javascript":            45,
@@ -192,37 +199,43 @@ var encoderMap = map[string]indexAndValues{
 		"text/css":                          51,
 		"text/html; charset=utf-8":          52,
 		"text/plain":                        53,
-		"text/plain;charset=utf-8":          54}},
+		"text/plain;charset=utf-8":          54,
+	}},
 	"range": {55, map[string]uint8{"bytes=0-": 55}},
 	"strict-transport-security": {56, map[string]uint8{
 		"max-age=31536000":                             56,
 		"max-age=31536000; includesubdomains":          57,
-		"max-age=31536000; includesubdomains; preload": 58}},
+		"max-age=31536000; includesubdomains; preload": 58,
+	}},
 	"vary": {59, map[string]uint8{
 		"accept-encoding": 59,
-		"origin":          60}},
+		"origin":          60,
+	}},
 	"x-content-type-options": {61, map[string]uint8{"nosniff": 61}},
 	"x-xss-protection":       {62, map[string]uint8{"1; mode=block": 62}},
 	// ":status" is duplicated and takes index 63 to 71
 	"accept-language": {72, nil},
 	"access-control-allow-credentials": {73, map[string]uint8{
 		"FALSE": 73,
-		"TRUE":  74}},
+		"TRUE":  74,
+	}},
 	// "access-control-allow-headers" is duplicated and takes index 75
 	"access-control-allow-methods": {76, map[string]uint8{
 		"get":                76,
 		"get, post, options": 77,
-		"options":            78}},
-	"access-control-expose-headers": {79, map[string]uint8{
-		"content-length": 79,
-		"content-type":   80}},
+		"options":            78,
+	}},
+	"access-control-expose-headers":  {79, map[string]uint8{"content-length": 79}},
+	"access-control-request-headers": {80, map[string]uint8{"content-type": 80}},
 	"access-control-request-method": {81, map[string]uint8{
 		"get":  81,
-		"post": 82}},
+		"post": 82,
+	}},
 	"alt-svc":       {83, map[string]uint8{"clear": 83}},
 	"authorization": {84, nil},
 	"content-security-policy": {85, map[string]uint8{
-		"script-src 'none'; object-src 'none'; base-uri 'none'": 85}},
+		"script-src 'none'; object-src 'none'; base-uri 'none'": 85,
+	}},
 	"early-data":                {86, map[string]uint8{"1": 86}},
 	"expect-ct":                 {87, nil},
 	"forwarded":                 {88, nil},
@@ -236,5 +249,6 @@ var encoderMap = map[string]indexAndValues{
 	"x-forwarded-for":           {96, nil},
 	"x-frame-options": {97, map[string]uint8{
 		"deny":       97,
-		"sameorigin": 98}},
+		"sameorigin": 98,
+	}},
 }

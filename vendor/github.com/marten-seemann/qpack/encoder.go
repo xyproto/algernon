@@ -47,7 +47,6 @@ func (e *Encoder) WriteField(f HeaderField) error {
 				e.writeLiteralFieldWithNameReference(&f, idxAndVals.idx)
 			}
 		}
-
 	} else {
 		e.writeLiteralFieldWithoutNameReference(f)
 	}

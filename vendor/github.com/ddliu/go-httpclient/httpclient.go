@@ -34,59 +34,63 @@ import (
 // Constants definations
 // CURL options, see https://github.com/bagder/curl/blob/169fedbdce93ecf14befb6e0e1ce6a2d480252a3/packages/OS400/curl.inc.in
 const (
-	VERSION   = "0.6.6"
+	VERSION   = "0.6.9"
 	USERAGENT = "go-httpclient v" + VERSION
+)
 
-	PROXY_HTTP    = 0
-	PROXY_SOCKS4  = 4
-	PROXY_SOCKS5  = 5
-	PROXY_SOCKS4A = 6
+const (
+	PROXY_HTTP int = iota
+	PROXY_SOCKS4
+	PROXY_SOCKS5
+	PROXY_SOCKS4A
 
 	// CURL like OPT
-	OPT_AUTOREFERER       = 58
-	OPT_FOLLOWLOCATION    = 52
-	OPT_CONNECTTIMEOUT    = 78
-	OPT_CONNECTTIMEOUT_MS = 156
-	OPT_MAXREDIRS         = 68
-	OPT_PROXYTYPE         = 101
-	OPT_TIMEOUT           = 13
-	OPT_TIMEOUT_MS        = 155
-	OPT_COOKIEJAR         = 10082
-	OPT_INTERFACE         = 10062
-	OPT_PROXY             = 10004
-	OPT_REFERER           = 10016
-	OPT_USERAGENT         = 10018
+	OPT_AUTOREFERER
+	OPT_FOLLOWLOCATION
+	OPT_CONNECTTIMEOUT
+	OPT_CONNECTTIMEOUT_MS
+	OPT_MAXREDIRS
+	OPT_PROXYTYPE
+	OPT_TIMEOUT
+	OPT_TIMEOUT_MS
+	OPT_COOKIEJAR
+	OPT_INTERFACE
+	OPT_PROXY
+	OPT_REFERER
+	OPT_USERAGENT
 
 	// Other OPT
-	OPT_REDIRECT_POLICY = 100000
-	OPT_PROXY_FUNC      = 100001
-	OPT_DEBUG           = 100002
-	OPT_UNSAFE_TLS      = 100004
+	OPT_REDIRECT_POLICY
+	OPT_PROXY_FUNC
+	OPT_DEBUG
+	OPT_UNSAFE_TLS
 
-	OPT_CONTEXT = 100005
+	OPT_CONTEXT
+
+	OPT_BEFORE_REQUEST_FUNC
 )
 
 // String map of options
 var CONST = map[string]int{
-	"OPT_AUTOREFERER":       58,
-	"OPT_FOLLOWLOCATION":    52,
-	"OPT_CONNECTTIMEOUT":    78,
-	"OPT_CONNECTTIMEOUT_MS": 156,
-	"OPT_MAXREDIRS":         68,
-	"OPT_PROXYTYPE":         101,
-	"OPT_TIMEOUT":           13,
-	"OPT_TIMEOUT_MS":        155,
-	"OPT_COOKIEJAR":         10082,
-	"OPT_INTERFACE":         10062,
-	"OPT_PROXY":             10004,
-	"OPT_REFERER":           10016,
-	"OPT_USERAGENT":         10018,
-
-	"OPT_REDIRECT_POLICY": 100000,
-	"OPT_PROXY_FUNC":      100001,
-	"OPT_DEBUG":           100002,
-	"OPT_UNSAFE_TLS":      100004,
-	"OPT_CONTEXT":         100005,
+	"OPT_AUTOREFERER":         OPT_AUTOREFERER,
+	"OPT_FOLLOWLOCATION":      OPT_FOLLOWLOCATION,
+	"OPT_CONNECTTIMEOUT":      OPT_CONNECTTIMEOUT,
+	"OPT_CONNECTTIMEOUT_MS":   OPT_CONNECTTIMEOUT_MS,
+	"OPT_MAXREDIRS":           OPT_MAXREDIRS,
+	"OPT_PROXYTYPE":           OPT_PROXYTYPE,
+	"OPT_TIMEOUT":             OPT_TIMEOUT,
+	"OPT_TIMEOUT_MS":          OPT_TIMEOUT_MS,
+	"OPT_COOKIEJAR":           OPT_COOKIEJAR,
+	"OPT_INTERFACE":           OPT_INTERFACE,
+	"OPT_PROXY":               OPT_PROXY,
+	"OPT_REFERER":             OPT_REFERER,
+	"OPT_USERAGENT":           OPT_USERAGENT,
+	"OPT_REDIRECT_POLICY":     OPT_REDIRECT_POLICY,
+	"OPT_PROXY_FUNC":          OPT_PROXY_FUNC,
+	"OPT_DEBUG":               OPT_DEBUG,
+	"OPT_UNSAFE_TLS":          OPT_UNSAFE_TLS,
+	"OPT_CONTEXT":             OPT_CONTEXT,
+	"OPT_BEFORE_REQUEST_FUNC": OPT_BEFORE_REQUEST_FUNC,
 }
 
 // Default options for any clients.
@@ -188,45 +192,53 @@ func prepareRequest(method string, url_ string, headers map[string]string,
 func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
 	transport := &http.Transport{}
 
-	connectTimeoutMS := 0
+	var connectTimeout time.Duration
 
 	if connectTimeoutMS_, ok := options[OPT_CONNECTTIMEOUT_MS]; ok {
-		if connectTimeoutMS, ok = connectTimeoutMS_.(int); !ok {
+		if connectTimeoutMS, ok := connectTimeoutMS_.(int); ok {
+			connectTimeout = time.Duration(connectTimeoutMS) * time.Millisecond
+		} else {
 			return nil, fmt.Errorf("OPT_CONNECTTIMEOUT_MS must be int")
 		}
 	} else if connectTimeout_, ok := options[OPT_CONNECTTIMEOUT]; ok {
-		if connectTimeout, ok := connectTimeout_.(int); ok {
-			connectTimeoutMS = connectTimeout * 1000
-		} else {
-			return nil, fmt.Errorf("OPT_CONNECTTIMEOUT must be int")
+		if connectTimeout, ok = connectTimeout_.(time.Duration); !ok {
+			if connectTimeoutS, ok := connectTimeout_.(int); ok {
+				connectTimeout = time.Duration(connectTimeoutS) * time.Second
+			} else {
+				return nil, fmt.Errorf("OPT_CONNECTTIMEOUT must be int or time.Duration")
+			}
 		}
 	}
 
-	timeoutMS := 0
+	var timeout time.Duration
 
 	if timeoutMS_, ok := options[OPT_TIMEOUT_MS]; ok {
-		if timeoutMS, ok = timeoutMS_.(int); !ok {
+		if timeoutMS, ok := timeoutMS_.(int); ok {
+			timeout = time.Duration(timeoutMS) * time.Millisecond
+		} else {
 			return nil, fmt.Errorf("OPT_TIMEOUT_MS must be int")
 		}
 	} else if timeout_, ok := options[OPT_TIMEOUT]; ok {
-		if timeout, ok := timeout_.(int); ok {
-			timeoutMS = timeout * 1000
-		} else {
-			return nil, fmt.Errorf("OPT_TIMEOUT must be int")
+		if timeout, ok = timeout_.(time.Duration); !ok {
+			if timeoutS, ok := timeout_.(int); ok {
+				timeout = time.Duration(timeoutS) * time.Second
+			} else {
+				return nil, fmt.Errorf("OPT_TIMEOUT must be int or time.Duration")
+			}
 		}
 	}
 
 	// fix connect timeout(important, or it might cause a long time wait during
 	//connection)
-	if timeoutMS > 0 && (connectTimeoutMS > timeoutMS || connectTimeoutMS == 0) {
-		connectTimeoutMS = timeoutMS
+	if timeout > 0 && (connectTimeout > timeout || connectTimeout == 0) {
+		connectTimeout = timeout
 	}
 
 	transport.Dial = func(network, addr string) (net.Conn, error) {
 		var conn net.Conn
 		var err error
-		if connectTimeoutMS > 0 {
-			conn, err = net.DialTimeout(network, addr, time.Duration(connectTimeoutMS)*time.Millisecond)
+		if connectTimeout > 0 {
+			conn, err = net.DialTimeout(network, addr, connectTimeout)
 			if err != nil {
 				return nil, err
 			}
@@ -237,8 +249,8 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
 			}
 		}
 
-		if timeoutMS > 0 {
-			conn.SetDeadline(time.Now().Add(time.Duration(timeoutMS) * time.Millisecond))
+		if timeout > 0 {
+			conn.SetDeadline(time.Now().Add(timeout))
 		}
 
 		return conn, nil
@@ -622,6 +634,12 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
 	if ctx, ok := options[OPT_CONTEXT]; ok {
 		if c, ok := ctx.(context.Context); ok {
 			req = req.WithContext(c)
+		}
+	}
+
+	if beforeReqFunc, ok := options[OPT_BEFORE_REQUEST_FUNC]; ok {
+		if f, ok := beforeReqFunc.(func(c *http.Client, r *http.Request)); ok {
+			f(c, req)
 		}
 	}
 

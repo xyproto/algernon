@@ -1,4 +1,8 @@
-# pstore [![Build Status](https://travis-ci.org/xyproto/pstore.svg?branch=master)](https://travis-ci.org/xyproto/pstore) [![GoDoc](https://godoc.org/github.com/xyproto/pstore?status.svg)](http://godoc.org/github.com/xyproto/pstore) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/pstore)](https://goreportcard.com/report/github.com/xyproto/pstore)
+# pstore
+
+[![Build Status](https://travis-ci.com/xyproto/pstore.svg?branch=master)](https://travis-ci.com/xyproto/pstore)
+[![GoDoc](https://godoc.org/github.com/xyproto/pstore?status.svg)](http://godoc.org/github.com/xyproto/pstore)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/pstore)](https://goreportcard.com/report/github.com/xyproto/pstore)
 
 Middleware for keeping track of users, login states and permissions.
 
@@ -8,7 +12,7 @@ There is also a [BoltDB](https://github.com/xyproto/permissionbolt) and [MariaDB
 Online API Documentation
 ------------------------
 
-[godoc.org](http://godoc.org/github.com/xyproto/pstore)
+[godoc.org](https://godoc.org/github.com/xyproto/pstore)
 
 Connecting
 ----------
@@ -669,7 +673,6 @@ func main() {
 General information
 -------------------
 
-* Version: 3.0
+* Version: 3.0.0
 * License: MIT
-* Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
-
+* Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

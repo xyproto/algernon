@@ -208,11 +208,11 @@ See `examples/main.go`
 Available options as below:
 
 - `OPT_FOLLOWLOCATION`: TRUE to follow any "Location: " header that the server sends as part of the HTTP header. Default to `true`.
-- `OPT_CONNECTTIMEOUT`: The number of seconds to wait while trying to connect. Use 0 to wait indefinitely.
+- `OPT_CONNECTTIMEOUT`: The number of seconds or interval (with time.Duration) to wait while trying to connect. Use 0 to wait indefinitely.
 - `OPT_CONNECTTIMEOUT_MS`: The number of milliseconds to wait while trying to connect. Use 0 to wait indefinitely.
 - `OPT_MAXREDIRS`: The maximum amount of HTTP redirections to follow. Use this option alongside `OPT_FOLLOWLOCATION`.
 - `OPT_PROXYTYPE`: Specify the proxy type. Valid options are `PROXY_HTTP`, `PROXY_SOCKS4`, `PROXY_SOCKS5`, `PROXY_SOCKS4A`. Only `PROXY_HTTP` is supported currently. 
-- `OPT_TIMEOUT`: The maximum number of seconds to allow httpclient functions to execute.
+- `OPT_TIMEOUT`: The maximum number of seconds or interval (with time.Duration) to allow httpclient functions to execute.
 - `OPT_TIMEOUT_MS`: The maximum number of milliseconds to allow httpclient functions to execute.
 - `OPT_COOKIEJAR`: Set to `true` to enable the default cookiejar, or you can set to a `http.CookieJar` instance to use a customized jar. Default to `true`.
 - `OPT_INTERFACE`: TODO
@@ -224,6 +224,7 @@ Available options as below:
 - `OPT_UNSAFE_TLS`: Set to `true` to disable TLS certificate checking.
 - `OPT_DEBUG`: Print request info.
 - `OPT_CONTEXT`: Set `context.context` (can be used to cancel request).
+- `OPT_BEFORE_REQUEST_FUNC`: Function to call before request is sent, option should be type `func(*http.Client, *http.Request)`.
 
 ## Seperate Clients
 

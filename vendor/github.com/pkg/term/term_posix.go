@@ -3,17 +3,17 @@
 package term
 
 import (
-	"syscall"
 	"time"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 // Term represents an asynchronous communications port.
 type Term struct {
 	name string
 	fd   int
-	orig syscall.Termios // original state of the terminal, see Open and Restore
+	orig unix.Termios // original state of the terminal, see Open and Restore
 }
 
 // SetCbreak sets cbreak mode.
@@ -24,11 +24,11 @@ func (t *Term) SetCbreak() error {
 // CBreakMode places the terminal into cbreak mode.
 func CBreakMode(t *Term) error {
 	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*syscall.Termios)(&a)); err != nil {
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
 		return err
 	}
-	termios.Cfmakecbreak((*syscall.Termios)(&a))
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&a))
+	termios.Cfmakecbreak((*unix.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
 }
 
 // SetRaw sets raw mode.
@@ -39,11 +39,11 @@ func (t *Term) SetRaw() error {
 // RawMode places the terminal into raw mode.
 func RawMode(t *Term) error {
 	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*syscall.Termios)(&a)); err != nil {
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
 		return err
 	}
-	termios.Cfmakeraw((*syscall.Termios)(&a))
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&a))
+	termios.Cfmakeraw((*unix.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
 }
 
 // Speed sets the baud rate option for the terminal.
@@ -60,11 +60,20 @@ func (t *Term) SetSpeed(baud int) error {
 
 func (t *Term) setSpeed(baud int) error {
 	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*syscall.Termios)(&a)); err != nil {
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
 		return err
 	}
 	a.setSpeed(baud)
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+}
+
+// GetSpeed gets the current output baud rate.
+func (t *Term) GetSpeed() (int, error) {
+	var a attr
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+		return 0, err
+	}
+	return a.getSpeed()
 }
 
 func clamp(v, lo, hi int64) int64 {
@@ -105,11 +114,11 @@ func (t *Term) SetReadTimeout(d time.Duration) error {
 
 func (t *Term) setReadTimeout(d time.Duration) error {
 	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*syscall.Termios)(&a)); err != nil {
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
 		return err
 	}
-	a.Cc[syscall.VMIN], a.Cc[syscall.VTIME] = timeoutVals(d)
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&a))
+	a.Cc[unix.VMIN], a.Cc[unix.VTIME] = timeoutVals(d)
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
 }
 
 // FlowControl sets the flow control option for the terminal.
@@ -126,7 +135,7 @@ func (t *Term) SetFlowControl(kind int) error {
 
 func (t *Term) setFlowControl(kind int) error {
 	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*syscall.Termios)(&a)); err != nil {
+	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
 		return err
 	}
 	switch kind {
@@ -142,7 +151,7 @@ func (t *Term) setFlowControl(kind int) error {
 		a.Iflag &^= termios.IXON | termios.IXOFF | termios.IXANY
 		a.Cflag |= termios.CRTSCTS
 	}
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
 }
 
 // Flush flushes both data received but not read, and data written but not transmitted.
@@ -157,41 +166,39 @@ func (t *Term) SendBreak() error {
 
 // SetDTR sets the DTR (data terminal ready) signal.
 func (t *Term) SetDTR(v bool) error {
-	bits := syscall.TIOCM_DTR
+	bits := unix.TIOCM_DTR
 	if v {
-		return termios.Tiocmbis(uintptr(t.fd), &bits)
+		return termios.Tiocmbis(uintptr(t.fd), bits)
 	} else {
-		return termios.Tiocmbic(uintptr(t.fd), &bits)
+		return termios.Tiocmbic(uintptr(t.fd), bits)
 	}
 }
 
 // DTR returns the state of the DTR (data terminal ready) signal.
 func (t *Term) DTR() (bool, error) {
-	var status int
-	err := termios.Tiocmget(uintptr(t.fd), &status)
-	return status&syscall.TIOCM_DTR == syscall.TIOCM_DTR, err
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_DTR == unix.TIOCM_DTR, err
 }
 
 // SetRTS sets the RTS (data terminal ready) signal.
 func (t *Term) SetRTS(v bool) error {
-	bits := syscall.TIOCM_RTS
+	bits := unix.TIOCM_RTS
 	if v {
-		return termios.Tiocmbis(uintptr(t.fd), &bits)
+		return termios.Tiocmbis(uintptr(t.fd), bits)
 	} else {
-		return termios.Tiocmbic(uintptr(t.fd), &bits)
+		return termios.Tiocmbic(uintptr(t.fd), bits)
 	}
 }
 
 // RTS returns the state of the RTS (data terminal ready) signal.
 func (t *Term) RTS() (bool, error) {
-	var status int
-	err := termios.Tiocmget(uintptr(t.fd), &status)
-	return status&syscall.TIOCM_RTS == syscall.TIOCM_RTS, err
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_RTS == unix.TIOCM_RTS, err
 }
 
 // Close closes the device and releases any associated resources.
 func (t *Term) Close() error {
-	err := syscall.Close(t.fd)
+	err := unix.Close(t.fd)
 	t.fd = -1
 	return err
 }

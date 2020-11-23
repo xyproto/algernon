@@ -11,6 +11,8 @@ import (
 	"sync"
 
 	"github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/internal/protocol"
+	"github.com/lucas-clemente/quic-go/internal/qtls"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/marten-seemann/qpack"
 )
@@ -19,12 +21,15 @@ import (
 // Note that 0-RTT data doesn't provide replay protection.
 const MethodGet0RTT = "GET_0RTT"
 
-const defaultUserAgent = "quic-go HTTP/3"
-const defaultMaxResponseHeaderBytes = 10 * 1 << 20 // 10 MB
+const (
+	defaultUserAgent              = "quic-go HTTP/3"
+	defaultMaxResponseHeaderBytes = 10 * 1 << 20 // 10 MB
+)
 
 var defaultQuicConfig = &quic.Config{
 	MaxIncomingStreams: -1, // don't allow the server to create bidirectional streams
 	KeepAlive:          true,
+	Versions:           []protocol.VersionNumber{protocol.VersionTLS},
 }
 
 var dialAddr = quic.DialAddrEarly
@@ -60,19 +65,26 @@ func newClient(
 	opts *roundTripperOpts,
 	quicConfig *quic.Config,
 	dialer func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error),
-) *client {
+) (*client, error) {
+	if quicConfig == nil {
+		quicConfig = defaultQuicConfig
+	} else if len(quicConfig.Versions) == 0 {
+		quicConfig = quicConfig.Clone()
+		quicConfig.Versions = []quic.VersionNumber{defaultQuicConfig.Versions[0]}
+	}
+	if len(quicConfig.Versions) != 1 {
+		return nil, errors.New("can only use a single QUIC version for dialing a HTTP/3 connection")
+	}
+	quicConfig.MaxIncomingStreams = -1 // don't allow any bidirectional streams
+	logger := utils.DefaultLogger.WithPrefix("h3 client")
+
 	if tlsConf == nil {
 		tlsConf = &tls.Config{}
 	} else {
 		tlsConf = tlsConf.Clone()
 	}
 	// Replace existing ALPNs by H3
-	tlsConf.NextProtos = []string{nextProtoH3}
-	if quicConfig == nil {
-		quicConfig = defaultQuicConfig
-	}
-	quicConfig.MaxIncomingStreams = -1 // don't allow any bidirectional streams
-	logger := utils.DefaultLogger.WithPrefix("h3 client")
+	tlsConf.NextProtos = []string{versionToALPN(quicConfig.Versions[0])}
 
 	return &client{
 		hostname:      authorityAddr("https", hostname),
@@ -83,7 +95,7 @@ func newClient(
 		opts:          opts,
 		dialer:        dialer,
 		logger:        logger,
-	}
+	}, nil
 }
 
 func (c *client) dial() error {
@@ -238,10 +250,12 @@ func (c *client) doRequest(
 		return nil, newConnError(errorGeneralProtocolError, err)
 	}
 
+	connState := qtls.ToTLSConnectionState(c.session.ConnectionState())
 	res := &http.Response{
 		Proto:      "HTTP/3",
 		ProtoMajor: 3,
 		Header:     http.Header{},
+		TLS:        &connState,
 	}
 	for _, hf := range hfs {
 		switch hf.Name {

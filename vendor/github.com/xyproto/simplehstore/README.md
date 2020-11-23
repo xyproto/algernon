@@ -3,7 +3,7 @@ simplehstore
 
 [![Build Status](https://travis-ci.com/xyproto/simplehstore.svg?branch=master)](https://travis-ci.com/xyproto/simplehstore)
 [![GoDoc](https://godoc.org/github.com/xyproto/simplehstore?status.svg)](http://godoc.org/github.com/xyproto/simplehstore)
-[![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplehstore/master/LICENSE)
+[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplehstore/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplehstore)](https://goreportcard.com/report/github.com/xyproto/simplehstore)
 
 
@@ -20,6 +20,7 @@ Features and limitations
 ------------------------
 
 * Requires PostgreSQL 9.1 or later.
+* Requires Go 1.10 or later.
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
 * Uses the [pq](https://github.com/lib/pq) package.
@@ -85,7 +86,7 @@ func main() {
 Testing
 -------
 
-* A PostgreSQL server must be up and running locally for `go test` to work.
+* A PostgreSQL server must be up and running locally for `go test` to work, and a database named `test` must exist.
 
 
 License, author and version
@@ -93,4 +94,4 @@ License, author and version
 
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-* Version: 2.4.0
+* Version: 2.7.3
