@@ -13,12 +13,12 @@ import (
 
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/recwatch"
 	"github.com/xyproto/sheepcounter"
+	"github.com/xyproto/simpleform"
 	"github.com/xyproto/unzip"
 )
 
@@ -171,6 +171,18 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 			// Render the markdown page
 			ac.MarkdownPage(w, req, markdownblock.MustData(), filename)
 		}
+		return
+
+	case ".frm", ".form":
+		w.Header().Add("Content-Type", "text/html;charset=utf-8")
+		formblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
+		// TODO: Add a function for retrieving the default CSS contents + default favicon
+		//       and use it to pass arguments to simpleform.HTML.
+		html, err := simpleform.HTML(formblock.String(), true, "en")
+		if err != nil {
+			return
+		}
+		w.Write([]byte(html))
 		return
 
 	case ".amber", ".amb":
