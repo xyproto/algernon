@@ -38,5 +38,5 @@ EXPOSE 4000
 # "--log", "/var/log/algernon.log" can be used for logging errors
 #
 # The final parameter is the directory or file to serve, for instance /srv/algernon
-ENTRYPOINT ["/bin/algernon", "--domain", "--dev", "--autorefresh", "--addr", "--dir", "/srv/algernon", ":4000"]
+ENTRYPOINT ["/bin/algernon", "--domain", "--dev", "--autorefresh", "--addr", "/srv/algernon", ":4000"]
 CMD ["/bin/algernon"]
