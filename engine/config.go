@@ -274,7 +274,7 @@ func New(versionString, description string) (*Config, error) {
 		defaultCacheMaxEntitySize: 64 * utils.KiB,  // 64 KB
 		defaultStatCacheRefresh:   time.Minute * 1, // Refresh the stat cache, if the stat cache feature is enabled
 
-		// When is a static file large enought to not read into memory when serving
+		// When is a static file large enough to not read into memory when serving
 		defaultLargeFileSize: 42 * utils.MiB, // 42 MiB
 
 		// Default rate limit, as a string
