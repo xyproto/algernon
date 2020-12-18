@@ -383,7 +383,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 	}
 	if ac.dbName == "" {
 		// This may typically happen if Algernon is already running
-		return nil, errors.New("Could not find a usable database backend")
+		return nil, errors.New("could not find a usable database backend")
 	}
 
 	if ac.verboseMode {

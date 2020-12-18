@@ -63,7 +63,7 @@ func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*Uploa
 	clientLength := int64(clientLengthTotal - 20)
 
 	if clientLength > uploadLimit {
-		return nil, fmt.Errorf("Uploaded file was too large: %s according to Content-Length (current limit is %s)", utils.DescribeBytes(clientLength), utils.DescribeBytes(uploadLimit))
+		return nil, fmt.Errorf("uploaded file was too large: %s according to Content-Length (current limit is %s)", utils.DescribeBytes(clientLength), utils.DescribeBytes(uploadLimit))
 	}
 
 	// For specifying the memory usage when uploading
@@ -86,7 +86,7 @@ func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*Uploa
 		totalWritten += writtenBytes
 		if totalWritten > uploadLimit {
 			// File too large
-			return nil, fmt.Errorf("Uploaded file was too large: %d bytes (limit is %d bytes)", totalWritten, uploadLimit)
+			return nil, fmt.Errorf("uploaded file was too large: %d bytes (limit is %d bytes)", totalWritten, uploadLimit)
 		} else if writtenBytes < chunkSize || err == io.EOF {
 			// Done writing
 			break

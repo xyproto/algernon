@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	errToMap = errors.New("Could not represent Lua structure table as a map")
+	errToMap = errors.New("could not represent Lua structure table as a map")
 )
 
 // PprintToWriter outputs more informative information than the memory location.

@@ -280,7 +280,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// Open the https:// URL if both http:// and https:// are being served
 		mut.Lock()
 		if (!servingHTTP) && (!servingHTTPS) {
-			ac.fatalExit(errors.New("Serving neither over https:// nor over https://"))
+			ac.fatalExit(errors.New("serving neither over https:// nor over https://"))
 		}
 		httpsProtocol := servingHTTPS
 		mut.Unlock()
