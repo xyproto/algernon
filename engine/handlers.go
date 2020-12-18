@@ -176,6 +176,9 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	case ".frm", ".form":
 		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 		formblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
+		if err != nil {
+			return
+		}
 		// Render the form file as just the HTML body, not the surrounding document
 		// (between <body> and </body>)
 		html, err := simpleform.HTML(formblock.String(), false, "en")
