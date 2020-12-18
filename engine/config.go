@@ -473,7 +473,7 @@ func (ac *Config) fatalExit(err error) {
 	// Use the standard formatter
 	log.SetFormatter(&log.TextFormatter{})
 	// Log and exit
-	log.Fatalln(err)
+	log.Fatalln(strings.Title(err.Error()))
 }
 
 // Abrupt exit
@@ -800,7 +800,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 			internalLogFile.Close()
 		})
 		if err != nil {
-			ac.fatalExit(fmt.Errorf("Error: could not write to %s nor %s", ac.internalLogFilename, "internal.log"))
+			ac.fatalExit(fmt.Errorf("could not write to %s nor %s", ac.internalLogFilename, "internal.log"))
 		}
 	}
 	defer internalLogFile.Close()
