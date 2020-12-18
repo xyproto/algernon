@@ -833,14 +833,20 @@ func (ac *Config) REPL(ready, done chan bool) error {
 			// Easter egg
 			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑̈ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
 		default:
-			if strings.HasPrefix(line, "help(") {
-				topic := line[5:]
+			topic := ""
+			if len(line) > 5 && (strings.HasPrefix(line, "help(") || strings.HasPrefix(line, "help ")) {
+				topic = line[5:]
+			} else if len(line) > 8 && (strings.HasPrefix(line, "webhelp(") || strings.HasPrefix(line, "webhelp ")) {
+				topic = line[8:]
+			}
+			if len(topic) > 0 {
 				if strings.HasSuffix(topic, ")") {
-					topic = topic[:len(topic)-1]
+					topic = strings.TrimSuffix(topic, ")")
 				}
 				outputHelpAbout(o, generalHelpText+webHelpText+configHelpText, topic)
 				continue
 			}
+
 		}
 
 		// If the line starts with print, don't touch it
