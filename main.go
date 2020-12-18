@@ -3,7 +3,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/engine"
@@ -20,7 +19,7 @@ func main() {
 	if err != nil {
 		if err == engine.ErrVersion {
 			// Exit with error code 0 if --version was specified
-			os.Exit(0)
+			return
 		} else {
 			// Exit if there are problems with the fundamental setup
 			log.Fatalln(err)
