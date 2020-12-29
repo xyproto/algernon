@@ -19,6 +19,7 @@ import (
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gopher-lua"
+	"github.com/go-zoo/bone"
 )
 
 // LoadCommonFunctions adds most of the available Lua functions in algernon to
@@ -161,7 +162,7 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 // configuration variables with the given Lua configuration script.
 //
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
-func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
+func (ac *Config) RunConfiguration(filename string, mux *bone.Mux, withHandlerFunctions bool) error {
 
 	// Retrieve a Lua state
 	L := ac.luapool.Get()

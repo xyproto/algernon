@@ -14,6 +14,7 @@ require (
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/go-zoo/bone v1.3.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.8.0

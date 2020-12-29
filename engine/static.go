@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
+	"github.com/go-zoo/bone"
 )
 
 const (
@@ -72,7 +73,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 
 	ac.shortInfoAndOpen(filename, colonPort, cancelChannel)
 
-	mux := http.NewServeMux()
+	mux := bone.New()
 	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression, compress for size not for speed
 	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false, 0)
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

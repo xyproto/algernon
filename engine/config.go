@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	internallog "log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-zoo/bone"
 	babel "github.com/jvatic/goja-babel"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
@@ -567,7 +567,7 @@ func unique(sl []string) []string {
 }
 
 // MustServe sets up a server with handlers
-func (ac *Config) MustServe(mux *http.ServeMux) error {
+func (ac *Config) MustServe(mux *bone.Mux) error {
 	var err error
 
 	defer ac.Close()

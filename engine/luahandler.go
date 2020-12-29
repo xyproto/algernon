@@ -9,11 +9,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/gopher-lua"
+	"github.com/go-zoo/bone"
 )
 
 // LoadLuaHandlerFunctions makes functions related to handling HTTP requests
 // available to Lua scripts
-func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
+func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *bone.Mux, addDomain bool, httpStatus *FutureStatus, theme string) {
 
 	luahandlermutex := &sync.RWMutex{}
 

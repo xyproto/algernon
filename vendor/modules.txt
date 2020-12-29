@@ -69,6 +69,8 @@ github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
 # github.com/go-sql-driver/mysql v1.5.0
 github.com/go-sql-driver/mysql
+# github.com/go-zoo/bone v1.3.0
+github.com/go-zoo/bone
 # github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible

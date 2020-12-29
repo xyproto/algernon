@@ -2,8 +2,7 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/go-zoo/bone"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/engine"
 )
@@ -27,7 +26,8 @@ func main() {
 	}
 
 	// Set up a mux
-	mux := http.NewServeMux()
+	//mux := http.NewServeMux()
+	mux := bone.New()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS. Quit when done.
 	algernon.MustServe(mux)

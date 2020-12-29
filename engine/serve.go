@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-zoo/bone"
 	"github.com/lucas-clemente/quic-go/http3"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
@@ -74,7 +75,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server, quic
 }
 
 // NewGracefulServer creates a new graceful server configuration
-func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr string) *graceful.Server {
+func (ac *Config) NewGracefulServer(mux *bone.Mux, http2support bool, addr string) *graceful.Server {
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,
@@ -101,7 +102,7 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 }
 
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
-func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
+func (ac *Config) Serve(mux *bone.Mux, done, ready chan bool) error {
 
 	// If we are not writing internal logs to a file, reduce the verbosity
 	http2.VerboseLogs = (ac.internalLogFilename != os.DevNull)

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/didip/tollbooth"
+	"github.com/go-zoo/bone"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
@@ -440,7 +441,7 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 
 // RegisterHandlers configures the given mutex and request limiter to handle
 // HTTP requests
-func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
+func (ac *Config) RegisterHandlers(mux *bone.Mux, handlePath, servedir string, addDomain bool) {
 
 	theme := ac.defaultTheme
 	// Theme aliases. Use a map if there are more than 2 aliases in the future.
