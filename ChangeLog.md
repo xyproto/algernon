@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.12.9 to 1.12.10
+==============================
+
+* Use a specific commit of github.com/pkg/term so that it also compiles for FreeBSD.
+
 Changes from 1.12.8 to 1.12.9
 =============================
 
