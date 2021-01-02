@@ -1,5 +1,21 @@
 # Changelog
 
+Changes from 1.12.8 to 1.12.9
+=============================
+
+* Improve the man page.
+* Minor improvements for the help and completion functionality in the REPL.
+* Let several `algernon --lua` instances not use the same temporary database.
+* Let `.mk`, `.ts` and `.tsx` be served as `text/plain;charset=utf-8`.
+* Initial support for rendering `.frm` and `.form` files written in SimpleForm.
+* Fix for making it possible to use `.` together with `--autorefresh`.
+* Minor fixes to the docker example files.
+* Correct a typo in a comment (thanks Felix Yan).
+* Update the Travis CI configuration (thanks Rui Chen).
+* Follow the advice of the very useful `staticcheck` utility.
+* Update documentation.
+* Update dependencies.
+
 Changes from 1.12.7 to 1.12.8
 =============================
 
