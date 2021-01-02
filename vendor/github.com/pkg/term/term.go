@@ -9,9 +9,9 @@ import (
 	"errors"
 	"io"
 	"os"
-	"syscall"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -26,7 +26,7 @@ var errNotSupported = errors.New("not supported")
 // bytes read and an error, if any. EOF is signaled by a zero count with
 // err set to io.EOF.
 func (t *Term) Read(b []byte) (int, error) {
-	n, e := syscall.Read(t.fd, b)
+	n, e := unix.Read(t.fd, b)
 	if n < 0 {
 		n = 0
 	}
@@ -53,7 +53,7 @@ func (t *Term) SetOption(options ...func(*Term) error) error {
 // written and an error, if any. Write returns a non-nil error when n !=
 // len(b).
 func (t *Term) Write(b []byte) (int, error) {
-	n, e := syscall.Write(t.fd, b)
+	n, e := unix.Write(t.fd, b)
 	if n < 0 {
 		n = 0
 	}
@@ -68,14 +68,10 @@ func (t *Term) Write(b []byte) (int, error) {
 
 // Available returns how many bytes are unused in the buffer.
 func (t *Term) Available() (int, error) {
-	var n int
-	err := termios.Tiocinq(uintptr(t.fd), &n)
-	return n, err
+	return termios.Tiocinq(uintptr(t.fd))
 }
 
 // Buffered returns the number of bytes that have been written into the current buffer.
 func (t *Term) Buffered() (int, error) {
-	var n int
-	err := termios.Tiocoutq(uintptr(t.fd), &n)
-	return n, err
+	return termios.Tiocoutq(uintptr(t.fd))
 }

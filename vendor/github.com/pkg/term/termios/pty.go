@@ -5,11 +5,12 @@ package termios
 import (
 	"fmt"
 	"os"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 func open_device(path string) (uintptr, error) {
-	fd, err := syscall.Open(path, syscall.O_NOCTTY|syscall.O_RDWR|syscall.O_CLOEXEC, 0666)
+	fd, err := unix.Open(path, unix.O_NOCTTY|unix.O_RDWR|unix.O_CLOEXEC, 0666)
 	if err != nil {
 		return 0, fmt.Errorf("unable to open %q: %v", path, err)
 	}

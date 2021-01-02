@@ -4,14 +4,14 @@ package term
 
 import (
 	"os"
-	"syscall"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 // Open opens an asynchronous communications port.
 func Open(name string, options ...func(*Term) error) (*Term, error) {
-	fd, e := syscall.Open(name, syscall.O_NOCTTY|syscall.O_CLOEXEC|syscall.O_NDELAY|syscall.O_RDWR, 0666)
+	fd, e := unix.Open(name, unix.O_NOCTTY|unix.O_CLOEXEC|unix.O_NDELAY|unix.O_RDWR, 0666)
 	if e != nil {
 		return nil, &os.PathError{"open", name, e}
 	}
@@ -23,7 +23,7 @@ func Open(name string, options ...func(*Term) error) (*Term, error) {
 	if err := t.SetOption(options...); err != nil {
 		return nil, err
 	}
-	return &t, syscall.SetNonblock(t.fd, false)
+	return &t, unix.SetNonblock(t.fd, false)
 }
 
 // Restore restores the state of the terminal captured at the point that
