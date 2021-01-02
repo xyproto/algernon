@@ -16,8 +16,8 @@ echo '* FreeBSD'
 GOOS=freebsd go build -mod=vendor -o $name.freebsd
 echo '* NetBSD'
 GOOS=netbsd go build -mod=vendor -o $name.netbsd
-echo '* OpenBSD'
-GOOS=openbsd go build -mod=vendor -o $name.openbsd
+#echo '* OpenBSD'
+#GOOS=openbsd go build -mod=vendor -o $name.openbsd
 echo '* Windows'
 GOOS=windows go build -mod=vendor -o $name.exe
 echo '* Linux ARM64'
@@ -47,8 +47,9 @@ for p in linux linux_arm64 pi1 rpi linux_static; do
   rm $name.$p
 done
 
+# openbsd
 # Compress the other tarballs with gz
-for p in macos freebsd netbsd openbsd; do
+for p in macos freebsd netbsd; do
   echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
   #cp $name.1 "$name-$version-$p/"
