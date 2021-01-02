@@ -23,7 +23,6 @@ require (
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pkg/term v1.1.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.7.0

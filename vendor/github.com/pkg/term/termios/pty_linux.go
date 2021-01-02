@@ -2,9 +2,8 @@ package termios
 
 import (
 	"fmt"
+	"syscall"
 	"unsafe"
-
-	"golang.org/x/sys/unix"
 )
 
 func open_pty_master() (uintptr, error) {
@@ -13,7 +12,7 @@ func open_pty_master() (uintptr, error) {
 
 func Ptsname(fd uintptr) (string, error) {
 	var n uintptr
-	err := ioctl(fd, unix.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
+	err := ioctl(fd, syscall.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
 	if err != nil {
 		return "", err
 	}
@@ -22,10 +21,10 @@ func Ptsname(fd uintptr) (string, error) {
 
 func grantpt(fd uintptr) error {
 	var n uintptr
-	return ioctl(fd, unix.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
+	return ioctl(fd, syscall.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
 }
 
 func unlockpt(fd uintptr) error {
 	var n uintptr
-	return ioctl(fd, unix.TIOCSPTLCK, uintptr(unsafe.Pointer(&n)))
+	return ioctl(fd, syscall.TIOCSPTLCK, uintptr(unsafe.Pointer(&n)))
 }

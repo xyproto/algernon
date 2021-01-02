@@ -122,7 +122,7 @@ github.com/mitchellh/mapstructure
 github.com/natefinch/pie
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
-# github.com/pkg/term v1.1.0
+# github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/russross/blackfriday/v2 v2.1.0

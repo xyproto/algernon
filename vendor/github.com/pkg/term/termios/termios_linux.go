@@ -1,7 +1,8 @@
 package termios
 
 import (
-	"golang.org/x/sys/unix"
+	"syscall"
+	"unsafe"
 )
 
 const (
@@ -19,12 +20,12 @@ const (
 )
 
 // Tcgetattr gets the current serial port settings.
-func Tcgetattr(fd uintptr, argp *unix.Termios) error {
-	return unix.IoctlSetTermios(int(fd), unix.TCGETS, argp)
+func Tcgetattr(fd uintptr, argp *syscall.Termios) error {
+	return ioctl(fd, syscall.TCGETS, uintptr(unsafe.Pointer(argp)))
 }
 
 // Tcsetattr sets the current serial port settings.
-func Tcsetattr(fd, action uintptr, argp *unix.Termios) error {
+func Tcsetattr(fd, action uintptr, argp *syscall.Termios) error {
 	var request uintptr
 	switch action {
 	case TCSANOW:
@@ -34,9 +35,9 @@ func Tcsetattr(fd, action uintptr, argp *unix.Termios) error {
 	case TCSAFLUSH:
 		request = TCSETSF
 	default:
-		return unix.EINVAL
+		return syscall.EINVAL
 	}
-	return unix.IoctlSetTermios(int(fd), uint(request), argp)
+	return ioctl(fd, request, uintptr(unsafe.Pointer(argp)))
 }
 
 // Tcsendbreak transmits a continuous stream of zero-valued bits for a specific
@@ -51,7 +52,7 @@ func Tcsendbreak(fd, duration uintptr) error {
 // Tcdrain waits until all output written to the object referred to by fd has been transmitted.
 func Tcdrain(fd uintptr) error {
 	// simulate drain with TCSADRAIN
-	var attr unix.Termios
+	var attr syscall.Termios
 	if err := Tcgetattr(fd, &attr); err != nil {
 		return err
 	}
@@ -64,17 +65,17 @@ func Tcflush(fd, selector uintptr) error {
 }
 
 // Tiocinq returns the number of bytes in the input buffer.
-func Tiocinq(fd uintptr) (int, error) {
-	return unix.IoctlGetInt(int(fd), unix.TIOCINQ)
+func Tiocinq(fd uintptr, argp *int) error {
+	return ioctl(fd, syscall.TIOCINQ, uintptr(unsafe.Pointer(argp)))
 }
 
 // Tiocoutq return the number of bytes in the output buffer.
-func Tiocoutq(fd uintptr) (int, error) {
-	return unix.IoctlGetInt(int(fd), unix.TIOCOUTQ)
+func Tiocoutq(fd uintptr, argp *int) error {
+	return ioctl(fd, syscall.TIOCOUTQ, uintptr(unsafe.Pointer(argp)))
 }
 
 // Cfgetispeed returns the input baud rate stored in the termios structure.
-func Cfgetispeed(attr *unix.Termios) uint32 { return attr.Ispeed }
+func Cfgetispeed(attr *syscall.Termios) uint32 { return attr.Ispeed }
 
 // Cfgetospeed returns the output baud rate stored in the termios structure.
-func Cfgetospeed(attr *unix.Termios) uint32 { return attr.Ospeed }
+func Cfgetospeed(attr *syscall.Termios) uint32 { return attr.Ospeed }
