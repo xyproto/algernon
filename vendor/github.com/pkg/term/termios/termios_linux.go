@@ -1,18 +1,10 @@
 package termios
 
 import (
-	"syscall"
-	"unsafe"
+	"golang.org/x/sys/unix"
 )
 
 const (
-	TCSETS  = 0x5402
-	TCSETSW = 0x5403
-	TCSETSF = 0x5404
-	TCFLSH  = 0x540B
-	TCSBRK  = 0x5409
-	TCSBRKP = 0x5425
-
 	IXON    = 0x00000400
 	IXANY   = 0x00000800
 	IXOFF   = 0x00001000
@@ -20,24 +12,24 @@ const (
 )
 
 // Tcgetattr gets the current serial port settings.
-func Tcgetattr(fd uintptr, argp *syscall.Termios) error {
-	return ioctl(fd, syscall.TCGETS, uintptr(unsafe.Pointer(argp)))
+func Tcgetattr(fd uintptr) (*unix.Termios, error) {
+	return unix.IoctlGetTermios(int(fd), unix.TCGETS)
 }
 
 // Tcsetattr sets the current serial port settings.
-func Tcsetattr(fd, action uintptr, argp *syscall.Termios) error {
+func Tcsetattr(fd, action uintptr, argp *unix.Termios) error {
 	var request uintptr
 	switch action {
 	case TCSANOW:
-		request = TCSETS
+		request = unix.TCSETS
 	case TCSADRAIN:
-		request = TCSETSW
+		request = unix.TCSETSW
 	case TCSAFLUSH:
-		request = TCSETSF
+		request = unix.TCSETSF
 	default:
-		return syscall.EINVAL
+		return unix.EINVAL
 	}
-	return ioctl(fd, request, uintptr(unsafe.Pointer(argp)))
+	return unix.IoctlSetTermios(int(fd), uint(request), argp)
 }
 
 // Tcsendbreak transmits a continuous stream of zero-valued bits for a specific
@@ -45,37 +37,32 @@ func Tcsetattr(fd, action uintptr, argp *syscall.Termios) error {
 // duration is zero, it transmits zero-valued bits for at least 0.25 seconds, and not more that 0.5 seconds.
 // If duration is not zero, it sends zero-valued bits for some
 // implementation-defined length of time.
-func Tcsendbreak(fd, duration uintptr) error {
-	return ioctl(fd, TCSBRKP, duration)
+func Tcsendbreak(fd uintptr, duration int) error {
+	return unix.IoctlSetInt(int(fd), unix.TCSBRKP, duration)
 }
 
 // Tcdrain waits until all output written to the object referred to by fd has been transmitted.
 func Tcdrain(fd uintptr) error {
 	// simulate drain with TCSADRAIN
-	var attr syscall.Termios
-	if err := Tcgetattr(fd, &attr); err != nil {
+	attr, err := Tcgetattr(fd)
+	if err != nil {
 		return err
 	}
-	return Tcsetattr(fd, TCSADRAIN, &attr)
+	return Tcsetattr(fd, TCSADRAIN, attr)
 }
 
 // Tcflush discards data written to the object referred to by fd but not transmitted, or data received but not read, depending on the value of selector.
 func Tcflush(fd, selector uintptr) error {
-	return ioctl(fd, TCFLSH, selector)
+	return unix.IoctlSetInt(int(fd), unix.TCFLSH, int(selector))
 }
 
 // Tiocinq returns the number of bytes in the input buffer.
-func Tiocinq(fd uintptr, argp *int) error {
-	return ioctl(fd, syscall.TIOCINQ, uintptr(unsafe.Pointer(argp)))
-}
-
-// Tiocoutq return the number of bytes in the output buffer.
-func Tiocoutq(fd uintptr, argp *int) error {
-	return ioctl(fd, syscall.TIOCOUTQ, uintptr(unsafe.Pointer(argp)))
+func Tiocinq(fd uintptr) (int, error) {
+	return unix.IoctlGetInt(int(fd), unix.TIOCINQ)
 }
 
 // Cfgetispeed returns the input baud rate stored in the termios structure.
-func Cfgetispeed(attr *syscall.Termios) uint32 { return attr.Ispeed }
+func Cfgetispeed(attr *unix.Termios) uint32 { return attr.Ispeed }
 
 // Cfgetospeed returns the output baud rate stored in the termios structure.
-func Cfgetospeed(attr *syscall.Termios) uint32 { return attr.Ospeed }
+func Cfgetospeed(attr *unix.Termios) uint32 { return attr.Ospeed }

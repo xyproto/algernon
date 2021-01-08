@@ -7,11 +7,7 @@ import (
 )
 
 func open_pty_master() (uintptr, error) {
-	fd, err := unix.Open("/dev/ptmx", unix.O_NOCTTY|unix.O_RDWR, 0666)
-	if err != nil {
-		return 0, err
-	}
-	return uintptr(fd), nil
+	return open_device("/dev/ptmx")
 }
 
 func Ptsname(fd uintptr) (string, error) {

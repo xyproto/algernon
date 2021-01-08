@@ -6,12 +6,11 @@
 package term
 
 import (
-	"errors"
 	"io"
 	"os"
-	"syscall"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -20,13 +19,11 @@ const (
 	HARDWARE        // hardware flow control
 )
 
-var errNotSupported = errors.New("not supported")
-
 // Read reads up to len(b) bytes from the terminal. It returns the number of
 // bytes read and an error, if any. EOF is signaled by a zero count with
 // err set to io.EOF.
 func (t *Term) Read(b []byte) (int, error) {
-	n, e := syscall.Read(t.fd, b)
+	n, e := unix.Read(t.fd, b)
 	if n < 0 {
 		n = 0
 	}
@@ -34,7 +31,10 @@ func (t *Term) Read(b []byte) (int, error) {
 		return 0, io.EOF
 	}
 	if e != nil {
-		return n, &os.PathError{"read", t.name, e}
+		return n, &os.PathError{
+			Op:   "read",
+			Path: t.name,
+			Err:  e}
 	}
 	return n, nil
 }
@@ -53,7 +53,7 @@ func (t *Term) SetOption(options ...func(*Term) error) error {
 // written and an error, if any. Write returns a non-nil error when n !=
 // len(b).
 func (t *Term) Write(b []byte) (int, error) {
-	n, e := syscall.Write(t.fd, b)
+	n, e := unix.Write(t.fd, b)
 	if n < 0 {
 		n = 0
 	}
@@ -61,21 +61,21 @@ func (t *Term) Write(b []byte) (int, error) {
 		return n, io.ErrShortWrite
 	}
 	if e != nil {
-		return n, &os.PathError{"write", t.name, e}
+		return n, &os.PathError{
+			Op:   "write",
+			Path: t.name,
+			Err:  e,
+		}
 	}
 	return n, nil
 }
 
 // Available returns how many bytes are unused in the buffer.
 func (t *Term) Available() (int, error) {
-	var n int
-	err := termios.Tiocinq(uintptr(t.fd), &n)
-	return n, err
+	return termios.Tiocinq(uintptr(t.fd))
 }
 
 // Buffered returns the number of bytes that have been written into the current buffer.
 func (t *Term) Buffered() (int, error) {
-	var n int
-	err := termios.Tiocoutq(uintptr(t.fd), &n)
-	return n, err
+	return termios.Tiocoutq(uintptr(t.fd))
 }

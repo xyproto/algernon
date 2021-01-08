@@ -48,7 +48,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.0
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20201221183957-6b6d5e2b5d80
+# github.com/dop251/goja v0.0.0-20210106133455-27b0a7dc4c7f
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -122,7 +122,7 @@ github.com/mitchellh/mapstructure
 github.com/natefinch/pie
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
-# github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
+# github.com/pkg/term v1.2.0-beta.1
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/russross/blackfriday/v2 v2.1.0
@@ -227,7 +227,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20201231184435-2d18734c6014
+# golang.org/x/sys v0.0.0-20210105210732-16f7687f5001
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
