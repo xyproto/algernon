@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20210106133455-27b0a7dc4c7f // indirect
+	github.com/dop251/goja v0.0.0-20210111190058-952c20e23c35 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
@@ -15,7 +15,7 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
 	github.com/lib/pq v1.9.0
-	github.com/lucas-clemente/quic-go v0.19.2
+	github.com/lucas-clemente/quic-go v0.19.3
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
@@ -57,8 +57,8 @@ require (
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
-	golang.org/x/sys v0.0.0-20210105210732-16f7687f5001 // indirect
-	golang.org/x/text v0.3.4 // indirect
+	golang.org/x/sys v0.0.0-20210112080510-489259a85091 // indirect
+	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
