@@ -71,7 +71,6 @@ func insertText(s, tabs string, linenr, offset int, message string, removal int)
 			s = s[:pos] + message + s[pos+removal:]
 			break
 		}
-
 	}
 	return s
 }
@@ -81,8 +80,12 @@ func Banner(versionString, description string) string {
 	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"
 	s = tabs + strings.Replace(s, "\n", "\n"+tabs, utils.EveryInstance)
+
+	parts := strings.Fields(versionString)
+
 	// See https://github.com/shiena/ansicolor/blob/master/README.md for ANSI color code table
-	s = insertText(s, tabs, 5, 2, "\x1b[36m"+versionString+"\x1b[0m", 1)
-	s = insertText(s, tabs, 6, 1, "\x1b[90m"+description+"\x1b[0m", 1)
+	s = insertText(s, tabs, 3, 2, "\x1b[37m"+parts[0]+"\x1b[0m", 1)
+	s = insertText(s, tabs, 5, 1, "\x1b[94m"+description+"\x1b[0m", 1)
+	s = insertText(s, tabs, 7, 0, "\x1b[90m"+parts[1]+"\x1b[0m\t", 1)
 	return s
 }
