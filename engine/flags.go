@@ -19,6 +19,13 @@ import (
 func generateUsageFunction(ac *Config) func() {
 	return func() {
 		fmt.Println("\n" + ac.versionString + "\n\n" + ac.description)
+
+		// Prepare a message, depending on if QUIC support is enabled or not
+		quicUsageOrMessage := "  -u                           Serve over QUIC.\n"
+		if !quicEnabled {
+			quicUsageOrMessage = "\nThis Algernon executable was built without QUIC support."
+		}
+
 		// Possible arguments are also, for backward compatibility:
 		// server dir, server addr, certificate file, key file, redis addr and redis db index
 		// They are not mentioned here, but are possible to use, in that strict order.
@@ -107,8 +114,7 @@ Available flags:
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
-  -u                           Serve over QUIC.
-
+` + quicUsageOrMessage + `
 
 Example usage:
 
@@ -211,7 +217,9 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.defaultTheme, "theme", themes.DefaultTheme, "Theme for Markdown and directory listings")
 	flag.BoolVar(&ac.noBanner, "nobanner", false, "Don't show a banner at start")
 	flag.BoolVar(&ac.ctrldTwice, "ctrld", false, "Press ctrl-d twice to exit")
-	flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
+	if quicEnabled {
+		flag.BoolVar(&ac.serveJustQUIC, "quic", false, "Serve just QUIC")
+	}
 	flag.BoolVar(&noDatabase, "nodb", false, "No database backend")
 	flag.BoolVar(&ac.onlyLuaMode, "lua", false, "Only present the Lua REPL")
 	flag.StringVar(&ac.combinedAccessLogFilename, "accesslog", "", "Combined access log filename")
@@ -236,7 +244,9 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&quitAfterFirstRequestShort, "z", false, "Quit after the first request")
 	flag.BoolVar(&ac.markdownMode, "m", false, "Markdown mode")
 	flag.BoolVar(&noBannerShort, "n", false, "Don't show a banner at start")
-	flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
+	if quicEnabled {
+		flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
+	}
 	flag.BoolVar(&onlyLuaModeShort, "l", false, "Only present the Lua REPL")
 
 	flag.Parse()
@@ -257,7 +267,9 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.quitAfterFirstRequest = ac.quitAfterFirstRequest || quitAfterFirstRequestShort
 	ac.verboseMode = ac.verboseMode || verboseModeShort
 	ac.noBanner = ac.noBanner || noBannerShort
-	ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
+	if quicEnabled {
+		ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
+	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
 
 	// Serve a single Markdown file once, and open it in the browser

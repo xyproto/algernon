@@ -853,7 +853,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	}
 
 	// Run the shutdown functions if graceful does not
-	defer ac.GenerateShutdownFunction(nil, nil)()
+	defer ac.GenerateShutdownFunction(nil)()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS
 	return ac.Serve(mux, done, ready)
