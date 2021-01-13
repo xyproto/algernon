@@ -7,7 +7,7 @@ theme: material
 
 <a href="https://github.com/xyproto/algernon"><img src="https://algernon.roboticoverlords.org/img/algernon_logo.png" style="margin-left: 2em"></a>
 
-[![Build Status](https://travis-ci.com/xyproto/algernon.svg?branch=main)](https://travis-ci.com/xyproto/algernon) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield)
+[![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield)
 
 Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, BoltDB (built-in, stores the database in a file, like SQLite), Redis, PostgreSQL, MariaDB/MySQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
