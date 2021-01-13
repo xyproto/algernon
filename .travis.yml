@@ -1,7 +1,0 @@
-dist: focal
-language: go
-
-go:
-  - "1.14.x"
-  - "1.15.x"
-  - tip
