@@ -85,7 +85,7 @@ func Banner(versionString, description string) string {
 
 	// See https://github.com/shiena/ansicolor/blob/master/README.md for ANSI color code table
 	s = insertText(s, tabs, 3, 2, "\x1b[37m"+parts[0]+"\x1b[0m", 1)
+	s = insertText(s, tabs, 4, 1, "\x1b[90m"+parts[1]+"\x1b[0\t", 1)
 	s = insertText(s, tabs, 5, 1, "\x1b[94m"+description+"\x1b[0m", 1)
-	s = insertText(s, tabs, 7, 0, "\x1b[90m"+parts[1]+"\x1b[0m\t", 1)
 	return s
 }
