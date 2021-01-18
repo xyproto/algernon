@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.12.11 to 1.12.12
+===============================
+
+* Only include QUIC support on supported platforms. This should let Algernon build for the Apple M1 CPU.
+
 Changes from 1.12.10 to 1.12.11
 ===============================
 
