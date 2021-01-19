@@ -511,14 +511,14 @@ hc:SetCookie(string, string)
 hc:SetUserAgent(string)
 
 // Perform a HTTP GET request. First comes the URL, then an optional table with
-// URL paramets, then an optional table with HTTP headers.
+// URL parameters, then an optional table with HTTP headers.
 hc:Get(string, [table], [table]) -> string
 
-// Perform a HTTP POST request. It's the same arguments as for hc:Get, except
+// Perform a HTTP POST request. It's the same arguments as for `Get`, except
 // the fourth optional argument is the POST body.
 hc:Post(string, [table], [table], [string]) -> string
 
-// Like hc:Get, except the first argument is the HTTP method (like "PUT")
+// Like `Get`, except the first argument is the HTTP method (like "PUT")
 hc:Do(string, string, [table], [table]) -> string
 
 // Shorthand for HTTPClient():Get()
