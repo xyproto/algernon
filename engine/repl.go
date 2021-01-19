@@ -224,11 +224,14 @@ hc:Get(string, [table], [table]) -> string
 hc:Post(string, [table], [table], [string]) -> string
 // Like hc:Get, except the first argument is the HTTP method (like "PUT")
 hc:Do(string, string, [table], [table]) -> string
-// Shorthand for HTTPClient():Get()
+// Shorthand for HTTPClient():Get(). Retrieve an URL, with optional tables for
+// URL parameters and HTTP headers.
 GET(string, [table], [table]) -> string
-// Shorthand for HTTPClient():Post()
+// Shorthand for HTTPClient():Post(). Post to an URL, with optional tables for
+// URL parameters and HTTP headers, followed by a string for the body.
 POST(string, [table], [table], [string]) -> string
-// Shorthand for HTTPClient():Do()
+// Shorthand for HTTPClient():Do(). Like Get, but the first argument is the
+// method, like ie. "PUT".
 DO(string, string, [table], [table]) -> string
 
 Plugins
@@ -831,7 +834,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 			return nil
 		case "zalgo":
 			// Easter egg
-			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑̈ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
+			o.ErrExit("Ḫ̷̲̫̰̯̭̀̂̑~ͅĚ̥̖̩̘̱͔͈͈ͬ̚ ̦̦͖̲̀ͦ͂C̜͓̲̹͐̔ͭ̏Oͭ͛͂̋ͭͬͬ͆͏̺͓̰͚͠ͅM̢͉̼̖͍̊̕Ḛ̭̭͗̉̀̆ͬ̐ͪ̒S͉̪͂͌̄")
 		default:
 			topic := ""
 			if len(line) > 5 && (strings.HasPrefix(line, "help(") || strings.HasPrefix(line, "help ")) {
