@@ -282,6 +282,15 @@ markdown(string) -> string
 // Default connection string: "host=localhost port=5432 user=postgres dbname=test sslmode=disable"
 PQ([string], [string]) -> table
 
+REPL-only
+
+// Output the current working directory
+cwd | pwd
+// Output the current file or directory that is being served
+serverdir | serverfile
+// Exit Algernon
+exit | halt | quit | shutdown
+
 Extra
 
 // Takes a Python filename, executes the script with the "python" binary in the Path.
@@ -579,6 +588,8 @@ func highlight(o *textoutput.TextOutput, line string) string {
 			fields := strings.SplitN(unprocessed, "(", 2)
 			function = o.LightGreen(fields[0])
 			unprocessed = "(" + fields[1]
+		} else if strings.Contains(unprocessed, "|") {
+			unprocessed = "<magenta>" + strings.Replace(unprocessed, "|", "<white>|</white><magenta>", -1) + "</magenta>"
 		}
 	}
 	unprocessed, typed := colorSplit(unprocessed, "->", nil, o.LightBlue, o.DarkRed, false)
@@ -741,6 +752,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	completer := readline.NewPrefixCompleter(
 		&readline.PrefixCompleter{Name: []rune("bye")},
 		&readline.PrefixCompleter{Name: []rune("confighelp")},
+		&readline.PrefixCompleter{Name: []rune("cwd")},
 		&readline.PrefixCompleter{Name: []rune("dir")},
 		&readline.PrefixCompleter{Name: []rune("exit")},
 		&readline.PrefixCompleter{Name: []rune("help")},
@@ -832,9 +844,14 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		case "dir":
 			// Be more helpful than listing the Lua bytecode contents of the dir function. Call "dir()".
 			line = "dir()"
-		case "pwd":
-			// Should work on Windows, Linux and macOS
-			line = "os.getenv'CD' or os.getenv'PWD'"
+		case "cwd", "pwd":
+			if cwd, err := os.Getwd(); err != nil {
+				// Might work if Getwd should fail. Should work on Windows, Linux and macOS
+				line = "os.getenv'CD' or os.getenv'PWD'"
+			} else {
+				fmt.Println(cwd)
+				continue
+			}
 		case "serverfile", "serverdir":
 			if absdir, err := filepath.Abs(ac.serverDirOrFilename); err != nil {
 				fmt.Println(ac.serverDirOrFilename)
