@@ -968,6 +968,9 @@ OnReady(function)
 // Use a Lua file for setting up HTTP handlers instead of using the directory structure.
 ServerFile(string) -> bool
 
+// Serve files from this directory.
+ServerDir(string) -> bool
+
 // Get the cookie secret from the server configuration.
 CookieSecret() -> string
 

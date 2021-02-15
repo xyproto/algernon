@@ -223,6 +223,19 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		return 1 // number of results
 	}))
 
+	// Set the server directory
+	L.SetGlobal("ServerDir", L.NewFunction(func(L *lua.LState) int {
+		givenDirectory := L.ToString(1)
+		if !ac.fs.Exists(givenDirectory) {
+			log.Error("Could not find", givenDirectory)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
+		ac.serverDirOrFilename = filepath.Clean(givenDirectory)
+		L.Push(lua.LBool(true))
+		return 1 // number of results
+	}))
+
 	L.SetGlobal("ServerInfo", L.NewFunction(func(L *lua.LState) int {
 		// Return the string, but drop the final newline
 		L.Push(lua.LString(ac.Info()))
