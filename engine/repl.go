@@ -739,13 +739,16 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	//       based on the documentation or repl help text. Then add each word
 	//       to the completer.
 	completer := readline.NewPrefixCompleter(
-		&readline.PrefixCompleter{Name: []rune("help")},
-		&readline.PrefixCompleter{Name: []rune("webhelp")},
+		&readline.PrefixCompleter{Name: []rune("bye")},
 		&readline.PrefixCompleter{Name: []rune("confighelp")},
 		&readline.PrefixCompleter{Name: []rune("dir")},
-		&readline.PrefixCompleter{Name: []rune("bye")},
-		&readline.PrefixCompleter{Name: []rune("quit")},
 		&readline.PrefixCompleter{Name: []rune("exit")},
+		&readline.PrefixCompleter{Name: []rune("help")},
+		&readline.PrefixCompleter{Name: []rune("pwd")},
+		&readline.PrefixCompleter{Name: []rune("quit")},
+		&readline.PrefixCompleter{Name: []rune("serverdir")},
+		&readline.PrefixCompleter{Name: []rune("serverfile")},
+		&readline.PrefixCompleter{Name: []rune("webhelp")},
 		&readline.PrefixCompleter{Name: []rune("zalgo")},
 	)
 
@@ -829,6 +832,16 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		case "dir":
 			// Be more helpful than listing the Lua bytecode contents of the dir function. Call "dir()".
 			line = "dir()"
+		case "pwd":
+			// Should work on Windows, Linux and macOS
+			line = "os.getenv'CD' or os.getenv'PWD'"
+		case "serverfile", "serverdir":
+			if absdir, err := filepath.Abs(ac.serverDirOrFilename); err != nil {
+				fmt.Println(ac.serverDirOrFilename)
+			} else {
+				fmt.Println(absdir)
+			}
+			continue
 		case "quit", "exit", "shutdown", "halt":
 			done <- true
 			return nil
