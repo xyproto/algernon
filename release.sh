@@ -4,8 +4,12 @@
 #
 name=algernon
 version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
-echo 'Compiling...'
+
+export CGO_ENABLED=0
 export GOARCH=amd64
+
+echo 'Compiling...'
+
 echo '* Linux'
 GOOS=linux go build -mod=vendor -o $name.linux
 #echo '* Plan9'
@@ -26,8 +30,10 @@ echo '* Raspberry Pi A, A+, B, B+ and Zero'
 GOOS=linux GOARCH=arm GOARM=6 go build -mod=vendor -o $name.pi1
 echo '* Raspberry Pi 2, 3 and 4'
 GOOS=linux GOARCH=arm GOARM=7 go build -mod=vendor -o $name.rpi
+echo '* Linux static'
+GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static
 echo '* Linux static w/ upx'
-CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static && upx $name.linux_static
+GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static_upx && upx $name.linux_static_upx
 
 # Compress the Windows release
 echo "Compressing $name-$version-windows.zip"
@@ -38,7 +44,7 @@ rm -r "$name-$version"
 rm $name.exe
 
 # Compress the Linux releases with xz
-for p in linux linux_arm64 pi1 rpi linux_static; do
+for p in linux linux_arm64 pi1 rpi linux_static linux_static_upx; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
   cp $name.$p LICENSE "$name-$version-$p/"
