@@ -100,9 +100,6 @@ github.com/lucas-clemente/quic-go/internal/wire
 github.com/lucas-clemente/quic-go/logging
 github.com/lucas-clemente/quic-go/quictrace
 github.com/lucas-clemente/quic-go/quictrace/pb
-# github.com/magefile/mage v1.10.0
-github.com/magefile/mage/mg
-github.com/magefile/mage/sh
 # github.com/marten-seemann/qpack v0.2.1
 github.com/marten-seemann/qpack
 # github.com/marten-seemann/qtls v0.10.0
@@ -132,7 +129,7 @@ github.com/pkg/term/termios
 github.com/russross/blackfriday/v2
 # github.com/shopspring/decimal v1.2.0
 github.com/shopspring/decimal
-# github.com/sirupsen/logrus v1.8.0
+# github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
 github.com/tylerb/graceful

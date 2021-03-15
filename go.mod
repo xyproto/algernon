@@ -26,7 +26,7 @@ require (
 	github.com/pkg/term v1.2.0-beta.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/sirupsen/logrus v1.8.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
