@@ -2,6 +2,7 @@ package http3
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/qtls"
 	"github.com/lucas-clemente/quic-go/internal/utils"
+	"github.com/lucas-clemente/quic-go/quicvarint"
 	"github.com/marten-seemann/qpack"
 )
 
@@ -36,6 +38,7 @@ var dialAddr = quic.DialAddrEarly
 
 type roundTripperOpts struct {
 	DisableCompression bool
+	EnableDatagram     bool
 	MaxHeaderBytes     int64
 }
 
@@ -67,7 +70,7 @@ func newClient(
 	dialer func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error),
 ) (*client, error) {
 	if quicConfig == nil {
-		quicConfig = defaultQuicConfig
+		quicConfig = defaultQuicConfig.Clone()
 	} else if len(quicConfig.Versions) == 0 {
 		quicConfig = quicConfig.Clone()
 		quicConfig.Versions = []quic.VersionNumber{defaultQuicConfig.Versions[0]}
@@ -76,6 +79,7 @@ func newClient(
 		return nil, errors.New("can only use a single QUIC version for dialing a HTTP/3 connection")
 	}
 	quicConfig.MaxIncomingStreams = -1 // don't allow any bidirectional streams
+	quicConfig.EnableDatagrams = opts.EnableDatagram
 	logger := utils.DefaultLogger.WithPrefix("h3 client")
 
 	if tlsConf == nil {
@@ -109,7 +113,7 @@ func (c *client) dial() error {
 		return err
 	}
 
-	// run the sesssion setup using 0-RTT data
+	// send the SETTINGs frame, using 0-RTT data, if possible
 	go func() {
 		if err := c.setupSession(); err != nil {
 			c.logger.Debugf("Setting up session failed: %s", err)
@@ -117,6 +121,7 @@ func (c *client) dial() error {
 		}
 	}()
 
+	go c.handleUnidirectionalStreams()
 	return nil
 }
 
@@ -127,15 +132,63 @@ func (c *client) setupSession() error {
 		return err
 	}
 	buf := &bytes.Buffer{}
-	// write the type byte
-	buf.Write([]byte{0x0})
+	quicvarint.Write(buf, streamTypeControlStream)
 	// send the SETTINGS frame
-	(&settingsFrame{}).Write(buf)
-	if _, err := str.Write(buf.Bytes()); err != nil {
-		return err
-	}
+	(&settingsFrame{Datagram: c.opts.EnableDatagram}).Write(buf)
+	_, err = str.Write(buf.Bytes())
+	return err
+}
 
-	return nil
+func (c *client) handleUnidirectionalStreams() {
+	for {
+		str, err := c.session.AcceptUniStream(context.Background())
+		if err != nil {
+			c.logger.Debugf("accepting unidirectional stream failed: %s", err)
+			return
+		}
+
+		go func() {
+			streamType, err := quicvarint.Read(&byteReaderImpl{str})
+			if err != nil {
+				c.logger.Debugf("reading stream type on stream %d failed: %s", str.StreamID(), err)
+				return
+			}
+			// We're only interested in the control stream here.
+			switch streamType {
+			case streamTypeControlStream:
+			case streamTypeQPACKEncoderStream, streamTypeQPACKDecoderStream:
+				// Our QPACK implementation doesn't use the dynamic table yet.
+				// TODO: check that only one stream of each type is opened.
+				return
+			case streamTypePushStream:
+				// We never increased the Push ID, so we don't expect any push streams.
+				c.session.CloseWithError(quic.ErrorCode(errorIDError), "")
+				return
+			default:
+				str.CancelRead(quic.ErrorCode(errorStreamCreationError))
+				return
+			}
+			f, err := parseNextFrame(str)
+			if err != nil {
+				c.session.CloseWithError(quic.ErrorCode(errorFrameError), "")
+				return
+			}
+			sf, ok := f.(*settingsFrame)
+			if !ok {
+				c.session.CloseWithError(quic.ErrorCode(errorMissingSettings), "")
+				return
+			}
+			if !sf.Datagram {
+				return
+			}
+			// If datagram support was enabled on our side as well as on the server side,
+			// we can expect it to have been negotiated both on the transport and on the HTTP/3 layer.
+			// Note: ConnectionState() will block until the handshake is complete (relevant when using 0-RTT).
+			if c.opts.EnableDatagram && !c.session.ConnectionState().SupportsDatagrams {
+				c.session.CloseWithError(quic.ErrorCode(errorSettingsError), "missing QUIC Datagram support")
+			}
+		}()
+	}
 }
 
 func (c *client) Close() error {
@@ -154,9 +207,6 @@ func (c *client) maxHeaderBytes() uint64 {
 
 // RoundTrip executes a request and returns a response
 func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
-	if req.URL.Scheme != "https" {
-		return nil, errors.New("http3: unsupported scheme")
-	}
 	if authorityAddr("https", hostnameFromRequest(req)) != c.hostname {
 		return nil, fmt.Errorf("http3 client BUG: RoundTrip called for the wrong client (expected %s, got %s)", c.hostname, req.Host)
 	}
@@ -250,7 +300,7 @@ func (c *client) doRequest(
 		return nil, newConnError(errorGeneralProtocolError, err)
 	}
 
-	connState := qtls.ToTLSConnectionState(c.session.ConnectionState())
+	connState := qtls.ToTLSConnectionState(c.session.ConnectionState().TLS)
 	res := &http.Response{
 		Proto:      "HTTP/3",
 		ProtoMajor: 3,
@@ -273,6 +323,21 @@ func (c *client) doRequest(
 	respBody := newResponseBody(str, reqDone, func() {
 		c.session.CloseWithError(quic.ErrorCode(errorFrameUnexpected), "")
 	})
+
+	// Rules for when to set Content-Length are defined in https://tools.ietf.org/html/rfc7230#section-3.3.2.
+	_, hasTransferEncoding := res.Header["Transfer-Encoding"]
+	isInformational := res.StatusCode >= 100 && res.StatusCode < 200
+	isNoContent := res.StatusCode == 204
+	isSuccessfulConnect := req.Method == http.MethodConnect && res.StatusCode >= 200 && res.StatusCode < 300
+	if !hasTransferEncoding && !isInformational && !isNoContent && !isSuccessfulConnect {
+		res.ContentLength = -1
+		if clens, ok := res.Header["Content-Length"]; ok && len(clens) == 1 {
+			if clen64, err := strconv.ParseInt(clens[0], 10, 64); err == nil {
+				res.ContentLength = clen64
+			}
+		}
+	}
+
 	if requestGzip && res.Header.Get("Content-Encoding") == "gzip" {
 		res.Header.Del("Content-Encoding")
 		res.Header.Del("Content-Length")
