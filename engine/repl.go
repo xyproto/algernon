@@ -278,9 +278,12 @@ sleep(number)
 unixnano() -> number
 // Convert Markdown to HTML
 markdown(string) -> string
-// Query a PostgreSQL database with a query and a connection string
+// Query a PostgreSQL database with a query and a connection string.
 // Default connection string: "host=localhost port=5432 user=postgres dbname=test sslmode=disable"
 PQ([string], [string]) -> table
+// Query a MSSQL database with a query and a connection string.
+// Default connection string: "server=localhost;user=user;password=password,port=1433"
+MSSQL([string], [string]) -> table
 
 REPL-only
 
@@ -628,12 +631,12 @@ func outputHelpAbout(o *textoutput.TextOutput, helpText, topic string) {
 		if strings.HasPrefix(line, topic) {
 			// Output help text, with some surrounding blank lines
 			o.Println("\n" + highlight(o, line))
-			o.Println("\n" + o.DarkGray(comment) + "\n")
+			o.Println("\n" + o.DarkGray(strings.TrimSpace(comment)) + "\n")
 			return
 		}
 		// Gather comments until a non-comment is encountered
 		if strings.HasPrefix(line, "//") {
-			comment += strings.TrimSpace(line[2:] + "\n")
+			comment += strings.TrimSpace(line[2:]) + "\n"
 		} else {
 			comment = ""
 		}
