@@ -3,8 +3,6 @@ goja-babel
 
 Uses github.com/dop251/goja to run babel.js within Go.
 
-**WARNING:** This uses Babel v6.26 which is not the latest. Feel free to create a PR updating it to the latest.
-
 **WARNING:** This is largely untested and the exposed API may change at any time.
 
 ## Usage
@@ -30,7 +28,7 @@ func main() {
 	</div>`), map[string]interface{}{
 		"plugins": []string{
 			"transform-react-jsx",
-			"transform-es2015-block-scoping",
+			"transform-block-scoping",
 		},
 	})
 	if err != nil {

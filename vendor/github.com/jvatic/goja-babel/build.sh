@@ -3,7 +3,7 @@
 set -e
 
 main() {
-    curl -o babel.js https://unpkg.com/babel-standalone@6.26.0/babel.min.js
+    curl -o babel.js https://unpkg.com/@babel/standalone@7.13.9/babel.min.js
 
     local dir=$(pwd)
     local bindataGitDir=$GOPATH/src/github.com/jvatic/go-bindata

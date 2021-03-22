@@ -6,30 +6,31 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
+	github.com/denisenkom/go-mssqldb v0.9.0
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20210111190058-952c20e23c35 // indirect
+	github.com/dop251/goja v0.0.0-20210321160301-ef3349e3c1ec // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
-	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20200102152603-63c66b7c796a
+	github.com/golang/protobuf v1.5.1 // indirect
+	github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 	github.com/lib/pq v1.10.0
-	github.com/lucas-clemente/quic-go v0.19.3
+	github.com/lucas-clemente/quic-go v0.20.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.4.0 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pkg/term v1.2.0-beta.1 // indirect
+	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
+	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
 	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
@@ -55,12 +56,10 @@ require (
 	github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd // indirect
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
-	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
-	golang.org/x/sys v0.0.0-20210112080510-489259a85091 // indirect
-	golang.org/x/text v0.3.5 // indirect
-	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
+	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670 // indirect
+	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
+	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

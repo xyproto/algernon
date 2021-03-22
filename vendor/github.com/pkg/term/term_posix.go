@@ -90,7 +90,12 @@ func (t *Term) setSpeed(baud int) error {
 	if err != nil {
 		return err
 	}
-	(*attr)(a).setSpeed(baud)
+
+	err = (*attr)(a).setSpeed(baud)
+	if err != nil {
+		return err
+	}
+
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 

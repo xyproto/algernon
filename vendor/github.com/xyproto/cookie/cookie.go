@@ -25,18 +25,18 @@ const (
 )
 
 // SecureCookie retrieves a secure cookie from a HTTP request
-func SecureCookie(req *http.Request, name string, cookieSecret string) (string, bool) {
+func SecureCookie(req *http.Request, name, cookieSecret string) (string, bool) {
 	for _, cookie := range req.Cookies() {
 		if cookie.Name != name {
 			continue
 		}
 
-		parts := strings.SplitN(cookie.Value, "|", 3)
-
-		// fix potential out of range error
-		if len(parts) != 3 {
+		if strings.Count(cookie.Value, "|") != 2 {
 			return "", false
 		}
+		parts := strings.SplitN(cookie.Value, "|", 3)
+
+		// This is safe without checking the length of parts, because we know the | count
 
 		val := parts[0]
 		timestamp := parts[1]
@@ -99,15 +99,17 @@ func ClearCookie(w http.ResponseWriter, cookieName, cookiePath string) {
  * The secure and httponly flags are documented here:
  * https://golang.org/pkg/net/http/#Cookie
  */
-func SetSecureCookiePathWithFlags(w http.ResponseWriter, name, val string, age int64, path string, cookieSecret string, secure, httponly bool) {
-	// base64 encode the value
+func SetSecureCookiePathWithFlags(w http.ResponseWriter, name, val string, age int64, path, cookieSecret string, secure, httponly bool) {
 	if len(cookieSecret) == 0 {
 		log.Fatalln("Secret Key for secure cookies has not been set. Please use a non-empty secret.")
 	}
+
+	// base64 encode the value
 	var buf bytes.Buffer
 	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
 	encoder.Write([]byte(val))
 	encoder.Close()
+
 	vs := buf.String()
 	vb := buf.Bytes()
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
