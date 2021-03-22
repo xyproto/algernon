@@ -1,4 +1,3 @@
-// Package pquery provides Lua functions for storing Lua functions in a database
 package pquery
 
 import (
@@ -13,8 +12,6 @@ import (
 	// Using the PostgreSQL database engine
 	_ "github.com/lib/pq"
 )
-
-// Library class is for storing and loading Lua source code to and from a data structure.
 
 const (
 	defaultQuery            = "SELECT version()"
