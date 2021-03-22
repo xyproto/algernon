@@ -162,7 +162,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		go ac.ListenAndServeQUIC(mux, &mut, justServeRegularHTTP, &servingHTTPS)
 	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		if len(ac.serverHost) == 0 {
+		if ac.serverHost == "" {
 			log.Info("Serving HTTP/2 on https://localhost/")
 		} else {
 			log.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
@@ -182,7 +182,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				log.Error(err)
 			}
 		}()
-		if len(ac.serverHost) == 0 {
+		if ac.serverHost == "" {
 			log.Info("Serving HTTP on http://localhost/")
 		} else {
 			log.Info("Serving HTTP on http://" + ac.serverHost + "/")
