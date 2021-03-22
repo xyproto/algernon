@@ -42,8 +42,6 @@ func New(mode string) Setting {
 		return Small
 	case "off", "disabled", "0", "no", "disable": // Disable caching entirely.
 		return Off
-	case "dev", "default", "unset": // Cache everything, except: Amber, Lua, GCSS and Markdown.
-		fallthrough
 	default:
 		return Default
 	}
