@@ -21,6 +21,8 @@ const (
 	packetThreshold = 3
 	// Before validating the client's address, the server won't send more than 3x bytes than it received.
 	amplificationFactor = 3
+	// We use Retry packets to derive an RTT estimate. Make sure we don't set the RTT to a super low value yet.
+	minRTTAfterRetry = 5 * time.Millisecond
 )
 
 type packetNumberSpace struct {
@@ -101,6 +103,7 @@ var (
 
 func newSentPacketHandler(
 	initialPN protocol.PacketNumber,
+	initialMaxDatagramSize protocol.ByteCount,
 	rttStats *utils.RTTStats,
 	pers protocol.Perspective,
 	tracer logging.ConnectionTracer,
@@ -109,6 +112,7 @@ func newSentPacketHandler(
 	congestion := congestion.NewCubicSender(
 		congestion.DefaultClock{},
 		rttStats,
+		initialMaxDatagramSize,
 		true, // use Reno
 		tracer,
 	)
@@ -194,12 +198,17 @@ func (h *sentPacketHandler) dropPackets(encLevel protocol.EncryptionLevel) {
 }
 
 func (h *sentPacketHandler) ReceivedBytes(n protocol.ByteCount) {
+	wasAmplificationLimit := h.isAmplificationLimited()
 	h.bytesReceived += n
+	if wasAmplificationLimit && !h.isAmplificationLimited() {
+		h.setLossDetectionTimer()
+	}
 }
 
-func (h *sentPacketHandler) ReceivedPacket(encLevel protocol.EncryptionLevel) {
-	if h.perspective == protocol.PerspectiveServer && encLevel == protocol.EncryptionHandshake {
+func (h *sentPacketHandler) ReceivedPacket(l protocol.EncryptionLevel) {
+	if h.perspective == protocol.PerspectiveServer && l == protocol.EncryptionHandshake && !h.peerAddressValidated {
 		h.peerAddressValidated = true
+		h.setLossDetectionTimer()
 	}
 }
 
@@ -311,9 +320,6 @@ func (h *sentPacketHandler) ReceivedAck(ack *wire.AckFrame, encLevel protocol.En
 		return err
 	}
 	for _, p := range ackedPackets {
-		if p.skippedPacket {
-			return fmt.Errorf("received an ACK for skipped packet number: %d (%s)", p.PacketNumber, encLevel)
-		}
 		if p.includedInBytesInFlight && !p.declaredLost {
 			h.congestion.OnPacketAcked(p.PacketNumber, p.Length, priorInFlight, rcvTime)
 		}
@@ -367,15 +373,17 @@ func (h *sentPacketHandler) detectAndRemoveAckedPackets(ack *wire.AckFrame, encL
 				ackRange = ack.AckRanges[len(ack.AckRanges)-1-ackRangeIndex]
 			}
 
-			if p.PacketNumber >= ackRange.Smallest { // packet i contained in ACK range
-				if p.PacketNumber > ackRange.Largest {
-					return false, fmt.Errorf("BUG: ackhandler would have acked wrong packet %d, while evaluating range %d -> %d", p.PacketNumber, ackRange.Smallest, ackRange.Largest)
-				}
-				h.ackedPackets = append(h.ackedPackets, p)
+			if p.PacketNumber < ackRange.Smallest { // packet not contained in ACK range
+				return true, nil
 			}
-		} else {
-			h.ackedPackets = append(h.ackedPackets, p)
+			if p.PacketNumber > ackRange.Largest {
+				return false, fmt.Errorf("BUG: ackhandler would have acked wrong packet %d, while evaluating range %d -> %d", p.PacketNumber, ackRange.Smallest, ackRange.Largest)
+			}
 		}
+		if p.skippedPacket {
+			return false, fmt.Errorf("received an ACK for skipped packet number: %d (%s)", p.PacketNumber, encLevel)
+		}
+		h.ackedPackets = append(h.ackedPackets, p)
 		return true, nil
 	})
 	if h.logger.Debug() && len(h.ackedPackets) > 0 {
@@ -398,6 +406,9 @@ func (h *sentPacketHandler) detectAndRemoveAckedPackets(ack *wire.AckFrame, encL
 		}
 		if err := pnSpace.history.Remove(p.PacketNumber); err != nil {
 			return nil, err
+		}
+		if h.tracer != nil {
+			h.tracer.AcknowledgedPacket(encLevel, p.PacketNumber)
 		}
 	}
 
@@ -481,7 +492,8 @@ func (h *sentPacketHandler) hasOutstandingPackets() bool {
 
 func (h *sentPacketHandler) setLossDetectionTimer() {
 	oldAlarm := h.alarm // only needed in case tracing is enabled
-	if lossTime, encLevel := h.getLossTimeAndSpace(); !lossTime.IsZero() {
+	lossTime, encLevel := h.getLossTimeAndSpace()
+	if !lossTime.IsZero() {
 		// Early retransmit timer or time loss detection.
 		h.alarm = lossTime
 		if h.tracer != nil && h.alarm != oldAlarm {
@@ -490,12 +502,26 @@ func (h *sentPacketHandler) setLossDetectionTimer() {
 		return
 	}
 
+	// Cancel the alarm if amplification limited.
+	if h.isAmplificationLimited() {
+		h.alarm = time.Time{}
+		if !oldAlarm.IsZero() {
+			h.logger.Debugf("Canceling loss detection timer. Amplification limited.")
+			if h.tracer != nil {
+				h.tracer.LossTimerCanceled()
+			}
+		}
+		return
+	}
+
 	// Cancel the alarm if no packets are outstanding
 	if !h.hasOutstandingPackets() && h.peerCompletedAddressValidation {
 		h.alarm = time.Time{}
-		h.logger.Debugf("Canceling loss detection timer. No packets in flight.")
-		if h.tracer != nil && !oldAlarm.IsZero() {
-			h.tracer.LossTimerCanceled()
+		if !oldAlarm.IsZero() {
+			h.logger.Debugf("Canceling loss detection timer. No packets in flight.")
+			if h.tracer != nil {
+				h.tracer.LossTimerCanceled()
+			}
 		}
 		return
 	}
@@ -768,8 +794,9 @@ func (h *sentPacketHandler) ResetForRetry() error {
 	// Only use the Retry to estimate the RTT if we didn't send any retransmission for the Initial.
 	// Otherwise, we don't know which Initial the Retry was sent in response to.
 	if h.ptoCount == 0 {
+		// Don't set the RTT to a value lower than 5ms here.
 		now := time.Now()
-		h.rttStats.UpdateRTT(now.Sub(firstPacketSendTime), 0, now)
+		h.rttStats.UpdateRTT(utils.MaxDuration(minRTTAfterRetry, now.Sub(firstPacketSendTime)), 0, now)
 		if h.logger.Debug() {
 			h.logger.Debugf("\tupdated RTT: %s (σ: %s)", h.rttStats.SmoothedRTT(), h.rttStats.MeanDeviation())
 		}

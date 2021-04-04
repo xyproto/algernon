@@ -61,9 +61,9 @@ func NewMultiplexedConnectionTracer(tracers ...ConnectionTracer) ConnectionTrace
 	return &connTracerMultiplexer{tracers: tracers}
 }
 
-func (m *connTracerMultiplexer) StartedConnection(local, remote net.Addr, version VersionNumber, srcConnID, destConnID ConnectionID) {
+func (m *connTracerMultiplexer) StartedConnection(local, remote net.Addr, srcConnID, destConnID ConnectionID) {
 	for _, t := range m.tracers {
-		t.StartedConnection(local, remote, version, srcConnID, destConnID)
+		t.StartedConnection(local, remote, srcConnID, destConnID)
 	}
 }
 
@@ -136,6 +136,12 @@ func (m *connTracerMultiplexer) UpdatedCongestionState(state CongestionState) {
 func (m *connTracerMultiplexer) UpdatedMetrics(rttStats *RTTStats, cwnd, bytesInFLight ByteCount, packetsInFlight int) {
 	for _, t := range m.tracers {
 		t.UpdatedMetrics(rttStats, cwnd, bytesInFLight, packetsInFlight)
+	}
+}
+
+func (m *connTracerMultiplexer) AcknowledgedPacket(encLevel EncryptionLevel, pn PacketNumber) {
+	for _, t := range m.tracers {
+		t.AcknowledgedPacket(encLevel, pn)
 	}
 }
 

@@ -293,6 +293,7 @@ var newSession = func(
 	s.preSetup()
 	s.sentPacketHandler, s.receivedPacketHandler = ackhandler.NewAckHandler(
 		0,
+		getMaxPacketSize(s.conn.RemoteAddr()),
 		s.rttStats,
 		s.perspective,
 		s.tracer,
@@ -417,6 +418,7 @@ var newClientSession = func(
 	s.preSetup()
 	s.sentPacketHandler, s.receivedPacketHandler = ackhandler.NewAckHandler(
 		initialPacketNumber,
+		getMaxPacketSize(s.conn.RemoteAddr()),
 		s.rttStats,
 		s.perspective,
 		s.tracer,
@@ -608,7 +610,6 @@ runLoop:
 				// nothing to see here.
 			case <-sendQueueAvailable:
 			case firstPacket := <-s.receivedPackets:
-				s.sentPacketHandler.ReceivedBytes(firstPacket.Size())
 				wasProcessed := s.handlePacketImpl(firstPacket)
 				// Don't set timers and send packets if the packet made us close the session.
 				select {
@@ -664,19 +665,13 @@ runLoop:
 			s.framer.QueueControlFrame(&wire.PingFrame{})
 			s.keepAlivePingSent = true
 		} else if !s.handshakeComplete && now.Sub(s.sessionCreationTime) >= s.config.handshakeTimeout() {
-			if s.tracer != nil {
-				s.tracer.ClosedConnection(logging.NewTimeoutCloseReason(logging.TimeoutReasonHandshake))
-			}
-			s.destroyImpl(qerr.NewTimeoutError("Handshake did not complete in time"))
+			s.destroyImpl(qerr.ErrHandshakeTimeout)
 			continue
 		} else {
 			idleTimeoutStartTime := s.idleTimeoutStartTime()
 			if (!s.handshakeComplete && now.Sub(idleTimeoutStartTime) >= s.config.HandshakeIdleTimeout) ||
 				(s.handshakeComplete && now.Sub(idleTimeoutStartTime) >= s.idleTimeout) {
-				if s.tracer != nil {
-					s.tracer.ClosedConnection(logging.NewTimeoutCloseReason(logging.TimeoutReasonIdle))
-				}
-				s.destroyImpl(qerr.NewTimeoutError("No recent network activity"))
+				s.destroyImpl(qerr.ErrIdleTimeout)
 				continue
 			}
 		}
@@ -738,23 +733,26 @@ func (s *session) nextKeepAliveTime() time.Time {
 	if !s.config.KeepAlive || s.keepAlivePingSent || !s.firstAckElicitingPacketAfterIdleSentTime.IsZero() {
 		return time.Time{}
 	}
-	return s.lastPacketReceivedTime.Add(s.keepAliveInterval / 2)
+	return s.lastPacketReceivedTime.Add(s.keepAliveInterval)
 }
 
 func (s *session) maybeResetTimer() {
 	var deadline time.Time
 	if !s.handshakeComplete {
-		deadline = s.sessionCreationTime.Add(utils.MinDuration(s.config.handshakeTimeout(), s.config.HandshakeIdleTimeout))
+		deadline = utils.MinTime(
+			s.sessionCreationTime.Add(s.config.handshakeTimeout()),
+			s.idleTimeoutStartTime().Add(s.config.HandshakeIdleTimeout),
+		)
 	} else {
 		if keepAliveTime := s.nextKeepAliveTime(); !keepAliveTime.IsZero() {
 			deadline = keepAliveTime
 		} else {
 			deadline = s.idleTimeoutStartTime().Add(s.idleTimeout)
 		}
-		if !s.config.DisablePathMTUDiscovery {
-			if probeTime := s.mtuDiscoverer.NextProbeTime(); !probeTime.IsZero() {
-				deadline = utils.MinTime(deadline, probeTime)
-			}
+	}
+	if s.handshakeConfirmed && !s.config.DisablePathMTUDiscovery {
+		if probeTime := s.mtuDiscoverer.NextProbeTime(); !probeTime.IsZero() {
+			deadline = utils.MinTime(deadline, probeTime)
 		}
 	}
 
@@ -786,6 +784,36 @@ func (s *session) handleHandshakeComplete() {
 	s.connIDManager.SetHandshakeComplete()
 	s.connIDGenerator.SetHandshakeComplete()
 
+	if s.perspective == protocol.PerspectiveClient {
+		s.applyTransportParameters()
+		return
+	}
+
+	s.handleHandshakeConfirmed()
+
+	ticket, err := s.cryptoStreamHandler.GetSessionTicket()
+	if err != nil {
+		s.closeLocal(err)
+	}
+	if ticket != nil {
+		s.oneRTTStream.Write(ticket)
+		for s.oneRTTStream.HasData() {
+			s.queueControlFrame(s.oneRTTStream.PopCryptoFrame(protocol.MaxPostHandshakeCryptoFrameSize))
+		}
+	}
+	token, err := s.tokenGenerator.NewToken(s.conn.RemoteAddr())
+	if err != nil {
+		s.closeLocal(err)
+	}
+	s.queueControlFrame(&wire.NewTokenFrame{Token: token})
+	s.queueControlFrame(&wire.HandshakeDoneFrame{})
+}
+
+func (s *session) handleHandshakeConfirmed() {
+	s.handshakeConfirmed = true
+	s.sentPacketHandler.SetHandshakeConfirmed()
+	s.cryptoStreamHandler.SetHandshakeConfirmed()
+
 	if !s.config.DisablePathMTUDiscovery {
 		maxPacketSize := s.peerParams.MaxUDPPayloadSize
 		if maxPacketSize == 0 {
@@ -802,34 +830,11 @@ func (s *session) handleHandshakeComplete() {
 			},
 		)
 	}
-
-	if s.perspective == protocol.PerspectiveClient {
-		s.applyTransportParameters()
-		return
-	}
-
-	s.handshakeConfirmed = true
-	s.sentPacketHandler.SetHandshakeConfirmed()
-	ticket, err := s.cryptoStreamHandler.GetSessionTicket()
-	if err != nil {
-		s.closeLocal(err)
-	}
-	if ticket != nil {
-		s.oneRTTStream.Write(ticket)
-		for s.oneRTTStream.HasData() {
-			s.queueControlFrame(s.oneRTTStream.PopCryptoFrame(protocol.MaxPostHandshakeCryptoFrameSize))
-		}
-	}
-	token, err := s.tokenGenerator.NewToken(s.conn.RemoteAddr())
-	if err != nil {
-		s.closeLocal(err)
-	}
-	s.queueControlFrame(&wire.NewTokenFrame{Token: token})
-	s.cryptoStreamHandler.SetHandshakeConfirmed()
-	s.queueControlFrame(&wire.HandshakeDoneFrame{})
 }
 
 func (s *session) handlePacketImpl(rp *receivedPacket) bool {
+	s.sentPacketHandler.ReceivedBytes(rp.Size())
+
 	if wire.IsVersionNegotiationPacket(rp.data) {
 		s.handleVersionNegotiationPacket(rp)
 		return false
@@ -1130,7 +1135,6 @@ func (s *session) handleUnpackedPacket(
 				s.tracer.StartedConnection(
 					s.conn.LocalAddr(),
 					s.conn.RemoteAddr(),
-					s.version,
 					packet.hdr.SrcConnectionID,
 					packet.hdr.DestConnectionID,
 				)
@@ -1353,9 +1357,9 @@ func (s *session) handleHandshakeDoneFrame() error {
 	if s.perspective == protocol.PerspectiveServer {
 		return qerr.NewError(qerr.ProtocolViolation, "received a HANDSHAKE_DONE frame")
 	}
-	s.handshakeConfirmed = true
-	s.sentPacketHandler.SetHandshakeConfirmed()
-	s.cryptoStreamHandler.SetHandshakeConfirmed()
+	if !s.handshakeConfirmed {
+		s.handleHandshakeConfirmed()
+	}
 	return nil
 }
 
@@ -1443,20 +1447,22 @@ func (s *session) handleCloseError(closeErr closeError) {
 		s.datagramQueue.CloseWithError(quicErr)
 	}
 
-	if s.tracer != nil {
-		// timeout errors are logged as soon as they occur (to distinguish between handshake and idle timeouts)
-		if nerr, ok := closeErr.err.(net.Error); !ok || !nerr.Timeout() {
-			var resetErr statelessResetErr
-			var vnErr errVersionNegotiation
-			if errors.As(closeErr.err, &resetErr) {
-				s.tracer.ClosedConnection(logging.NewStatelessResetCloseReason(resetErr.token))
-			} else if errors.As(closeErr.err, &vnErr) {
-				s.tracer.ClosedConnection(logging.NewVersionNegotiationError(vnErr.theirVersions))
-			} else if quicErr.IsApplicationError() {
-				s.tracer.ClosedConnection(logging.NewApplicationCloseReason(quicErr.ErrorCode, closeErr.remote))
-			} else {
-				s.tracer.ClosedConnection(logging.NewTransportCloseReason(quicErr.ErrorCode, closeErr.remote))
-			}
+	if s.tracer != nil && !errors.Is(closeErr.err, errCloseForRecreating{}) {
+		var resetErr statelessResetErr
+		var vnErr errVersionNegotiation
+		switch {
+		case errors.Is(closeErr.err, qerr.ErrIdleTimeout):
+			s.tracer.ClosedConnection(logging.NewTimeoutCloseReason(logging.TimeoutReasonIdle))
+		case errors.Is(closeErr.err, qerr.ErrHandshakeTimeout):
+			s.tracer.ClosedConnection(logging.NewTimeoutCloseReason(logging.TimeoutReasonHandshake))
+		case errors.As(closeErr.err, &resetErr):
+			s.tracer.ClosedConnection(logging.NewStatelessResetCloseReason(resetErr.token))
+		case errors.As(closeErr.err, &vnErr):
+			s.tracer.ClosedConnection(logging.NewVersionNegotiationError(vnErr.theirVersions))
+		case quicErr.IsApplicationError():
+			s.tracer.ClosedConnection(logging.NewApplicationCloseReason(quicErr.ErrorCode, closeErr.remote))
+		default:
+			s.tracer.ClosedConnection(logging.NewTransportCloseReason(quicErr.ErrorCode, closeErr.remote))
 		}
 	}
 
@@ -1718,7 +1724,7 @@ func (s *session) sendPacket() (bool, error) {
 		s.sendQueue.Send(packet.buffer)
 		return true, nil
 	}
-	if !s.config.DisablePathMTUDiscovery && s.handshakeComplete && s.mtuDiscoverer.ShouldSendProbe(now) {
+	if !s.config.DisablePathMTUDiscovery && s.mtuDiscoverer.ShouldSendProbe(now) {
 		packet, err := s.packer.PackMTUProbePacket(s.mtuDiscoverer.GetPing())
 		if err != nil {
 			return false, err
