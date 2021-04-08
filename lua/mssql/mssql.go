@@ -44,6 +44,20 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			connectionString = L.ToString(2)
 		}
 
+		// Get arguments
+		var queryArgs []interface{}
+		if L.GetTop() >= 3 {
+			args := L.ToTable(3)
+			args.ForEach(func(k lua.LValue, v lua.LValue) {
+				switch k.Type() {
+				case lua.LTNumber:
+					queryArgs = append(queryArgs, v.String())
+				case lua.LTString:
+					queryArgs = append(queryArgs, sql.Named(k.String(), v.String()))
+				}
+			})
+		}
+
 		// Check if there is a connection that can be reused
 		var db *sql.DB = nil
 		reuseMut.RLock()
@@ -80,7 +94,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		}
 		//log.Info(fmt.Sprintf("MSSQL database: %v (%T)\n", db, db))
 		reuseMut.Lock()
-		rows, err := db.Query(query)
+		rows, err := db.Query(query, queryArgs...)
 		reuseMut.Unlock()
 		if err != nil {
 			errMsg := err.Error()
