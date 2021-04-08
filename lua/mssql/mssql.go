@@ -117,20 +117,35 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			L.Push(L.NewTable())
 			return 1 // number of results
 		}
-		// Return the rows as a table
+		cols, err := rows.Columns()
+		if err != nil {
+			log.Error("Failed to get columns: " + err.Error())
+			return 0
+		}
+		// Return the rows as a 2-dimensional table
+		// Outer table is an array of rows
+		// Inner tables are maps of values with column names as keys
 		var (
-			values []string
-			value  string
+			m      map[string]*string
+			maps   []map[string]*string
+			values []*string
+			cname  string
 		)
 		for rows.Next() {
-			err = rows.Scan(&value)
+			err = rows.Scan(&values)
 			if err != nil {
+				log.Error("Failed to scan data: " + err.Error())
 				break
 			}
-			values = append(values, value)
+			m = make(map[string]*string, len(cols))
+			for i, v := range values {
+				cname = cols[i]
+				m[cname] = v
+			}
+			maps = append(maps, m)
 		}
 		// Convert the strings to a Lua table
-		table := convert.Strings2table(L, values)
+		table := convert.Maps2table(L, maps)
 		// Return the table
 		L.Push(table)
 		return 1 // number of results

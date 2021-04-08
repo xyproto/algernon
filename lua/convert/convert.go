@@ -118,6 +118,23 @@ func Map2table(L *lua.LState, m map[string]string) *lua.LTable {
 	return table
 }
 
+// Maps2table converts a []map[string]*string to a Lua table
+func Maps2table(L *lua.LState, maps []map[string]*string) *lua.LTable {
+	outer := L.NewTable()
+	for _, m := range maps {
+		inner := L.NewTable()
+		for k, v := range m {
+			if v == nil {
+				L.RawSet(inner, lua.LString(k), lua.LNil)
+			} else {
+				L.RawSet(inner, lua.LString(k), lua.LString(*v))
+			}
+		}
+		outer.Append(inner)
+	}
+	return outer
+}
+
 // Table2map converts a Lua table to **one** of the following types, depending
 // on the content:
 //   map[string]string
