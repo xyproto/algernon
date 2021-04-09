@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -24,6 +25,56 @@ var (
 	reuseDB  = make(map[string]*sql.DB)
 	reuseMut = &sync.RWMutex{}
 )
+
+// LValueWrapper decorates lua.LValue to help retieve values from the database.
+type LValueWrapper struct {
+	LValue lua.LValue
+}
+
+// Scan implements the sql.Scanner interface for database deserialization.
+func (w *LValueWrapper) Scan(value interface{}) error {
+
+	if value == nil {
+		*w = LValueWrapper{lua.LNil}
+		return nil
+	}
+
+	switch v := value.(type) {
+
+	case float32:
+		*w = LValueWrapper{lua.LNumber(float64(v))}
+
+	case float64:
+		*w = LValueWrapper{lua.LNumber(v)}
+
+	case int64:
+		*w = LValueWrapper{lua.LNumber(float64(v))}
+
+	case string:
+		*w = LValueWrapper{lua.LString(v)}
+
+	case []byte:
+		*w = LValueWrapper{lua.LString(string(v))}
+
+	default:
+		return fmt.Errorf("unable to scan type %T into lua value wrapper", value)
+
+	}
+
+	return nil
+}
+
+// LValueWrappers is a convenience type to easily map to a slice of lua.LValue
+type LValueWrappers []LValueWrapper
+
+// LValues produces a slice of lua.LValue from the contents of the wrappers
+func (w LValueWrappers) LValues() (s []lua.LValue) {
+	s = make([]lua.LValue, len(w))
+	for i, v := range w {
+		s[i] = v.LValue
+	}
+	return
+}
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState, perm pinterface.IPermissions) {
@@ -126,9 +177,9 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		// Outer table is an array of rows
 		// Inner tables are maps of values with column names as keys
 		var (
-			m      map[string]*string
-			maps   []map[string]*string
-			values []*string
+			m      map[string]lua.LValue
+			maps   []map[string]lua.LValue
+			values LValueWrappers
 			cname  string
 		)
 		for rows.Next() {
@@ -137,15 +188,15 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 				log.Error("Failed to scan data: " + err.Error())
 				break
 			}
-			m = make(map[string]*string, len(cols))
-			for i, v := range values {
+			m = make(map[string]lua.LValue, len(cols))
+			for i, v := range values.LValues() {
 				cname = cols[i]
 				m[cname] = v
 			}
 			maps = append(maps, m)
 		}
 		// Convert the strings to a Lua table
-		table := convert.Maps2table(L, maps)
+		table := convert.LValueMaps2table(L, maps)
 		// Return the table
 		L.Push(table)
 		return 1 // number of results
