@@ -149,7 +149,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		// Create a new connection, if needed
 		var err error
 		if db == nil {
-			db, err = sql.Open("mssql", connectionString)
+			db, err = sql.Open("sqlserver", connectionString)
 			if err != nil {
 				log.Error("Could not connect to database using " + connectionString + ": " + err.Error())
 				return 0 // No results
