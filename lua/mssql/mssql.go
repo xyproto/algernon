@@ -68,12 +68,28 @@ func (w *LValueWrapper) Scan(value interface{}) error {
 type LValueWrappers []LValueWrapper
 
 // LValues produces a slice of lua.LValue from the contents of the wrappers
-func (w LValueWrappers) LValues() (s []lua.LValue) {
+func (w LValueWrappers) Unwrap() (s []lua.LValue) {
 	s = make([]lua.LValue, len(w))
 	for i, v := range w {
 		s[i] = v.LValue
 	}
 	return
+}
+
+func (w LValueWrappers) Interfaces() (s []interface{}) {
+	s = make([]interface{}, len(w))
+	for i := range w {
+		s[i] = &w[i]
+	}
+	return
+}
+
+func unwrap(from []*LValueWrapper) []lua.LValue {
+	to := make([]lua.LValue, len(from))
+	for i, v := range from {
+		to[i] = v.LValue
+	}
+	return to
 }
 
 // Load makes functions related to building a library of Lua code available
@@ -183,13 +199,14 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			cname  string
 		)
 		for rows.Next() {
-			err = rows.Scan(&values)
+			values = make(LValueWrappers, len(cols))
+			err = rows.Scan(values.Interfaces()...)
 			if err != nil {
 				log.Error("Failed to scan data: " + err.Error())
 				break
 			}
 			m = make(map[string]lua.LValue, len(cols))
-			for i, v := range values.LValues() {
+			for i, v := range values.Unwrap() {
 				cname = cols[i]
 				m[cname] = v
 			}

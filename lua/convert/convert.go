@@ -252,6 +252,16 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
 		if hasSkey && hasTvalue {
 			// Recursive call if the value is another table that can be converted to a string->interface{} map
 			everything[skey.String()] = Table2interfaceMap(secondTableValue)
+		} else if hasNkey && hasTvalue {
+			floatKey := float64(nkey)
+			intKey := int(nkey)
+			// Use the int key if it's the same as the float representation
+			if floatKey == float64(intKey) {
+				// Recursive call if the value is another table that can be converted to a string->interface{} map
+				everything[fmt.Sprintf("%d", intKey)] = Table2interfaceMap(secondTableValue)
+			} else {
+				everything[fmt.Sprintf("%f", floatKey)] = Table2interfaceMap(secondTableValue)
+			}
 		} else if hasSkey && hasSvalue {
 			everything[skey.String()] = svalue.String()
 		} else if hasSkey && hasNvalue {
