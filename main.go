@@ -20,10 +20,9 @@ func main() {
 		if err == engine.ErrVersion {
 			// Exit with error code 0 if --version was specified
 			return
-		} else {
-			// Exit if there are problems with the fundamental setup
-			log.Fatalln(err)
 		}
+		// Exit if there are problems with the fundamental setup
+		log.Fatalln(err)
 	}
 
 	// Set up a mux
