@@ -17,8 +17,6 @@ require (
 	github.com/lib/pq v1.10.0
 	github.com/lucas-clemente/quic-go v0.20.1
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
@@ -50,15 +48,13 @@ require (
 	github.com/xyproto/simplehstore v0.0.0-20200929212236-7297f3830304 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20201201084911-b9fc340d3c42
-	github.com/xyproto/textoutput v1.12.2
+	github.com/xyproto/textoutput v1.12.3
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
-	github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd // indirect
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

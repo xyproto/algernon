@@ -7,7 +7,8 @@ import (
 	"sync"
 )
 
-// From http://www.termsys.demon.co.uk/vtansi.htm. Not the full spec, but a good subset:
+// From http://www.termsys.demon.co.uk/vtansi.htm. Not the full spec, but a good subset.
+// Update: Not even a good subset. Some of the codes are wrong!
 const specVT100 = `
 
 ANSI/VT100 Terminal Control Escape Sequences
@@ -56,11 +57,11 @@ Reset Device		<ESC>c
 
     Reset all terminal settings to default.
 
-Enable Line Wrap	<ESC>[7h
+Enable Line Wrap	<ESC>[?7h
 
     Text wraps to next line if longer than the length of the display area.
 
-Disable Line Wrap	<ESC>[7l
+Disable Line Wrap	<ESC>[?7l
 
     Disables line wrapping.
 
