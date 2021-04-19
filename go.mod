@@ -6,7 +6,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
-	github.com/denisenkom/go-mssqldb v0.9.0
+	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dop251/goja v0.0.0-20210402105715-96fa0aa6d91e // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
