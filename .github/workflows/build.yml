@@ -5,7 +5,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.14.x, 1.15.x, 1.16.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
@@ -31,7 +31,6 @@ jobs:
           ~/go/pkg/mod              # Module download cache
           ~/.cache/go-build         # Build cache (Linux)
           ~/Library/Caches/go-build # Build cache (Mac)
-          '%LocalAppData%\go-build' # Build cache (Windows)
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
