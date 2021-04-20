@@ -1,4 +1,4 @@
-// +build !darwin,!linux,!freebsd,!windows
+// +build !darwin,!linux
 
 package quic
 
@@ -8,8 +8,6 @@ func newConn(c net.PacketConn) (connection, error) {
 	return &basicConn{PacketConn: c}, nil
 }
 
-func inspectReadBuffer(interface{}) (int, error) {
+func inspectReadBuffer(net.PacketConn) (int, error) {
 	return 0, nil
 }
-
-func (i *packetInfo) OOB() []byte { return nil }

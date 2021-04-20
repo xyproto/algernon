@@ -130,7 +130,9 @@ func (h *receivedPacketHandler) IsPotentiallyDuplicate(pn protocol.PacketNumber,
 			return h.handshakePackets.IsPotentiallyDuplicate(pn)
 		}
 	case protocol.Encryption0RTT, protocol.Encryption1RTT:
-		return h.appDataPackets.IsPotentiallyDuplicate(pn)
+		if h.appDataPackets != nil {
+			return h.appDataPackets.IsPotentiallyDuplicate(pn)
+		}
 	}
 	panic("unexpected encryption level")
 }

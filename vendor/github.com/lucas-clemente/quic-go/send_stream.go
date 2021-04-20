@@ -20,7 +20,7 @@ type sendStreamI interface {
 	hasData() bool
 	popStreamFrame(maxBytes protocol.ByteCount) (*ackhandler.Frame, bool)
 	closeForShutdown(error)
-	updateSendWindow(protocol.ByteCount)
+	handleMaxStreamDataFrame(*wire.MaxStreamDataFrame)
 }
 
 type sendStream struct {
@@ -191,7 +191,7 @@ func (s *sendStream) canBufferStreamFrame() bool {
 	if s.nextFrame != nil {
 		l = s.nextFrame.DataLen()
 	}
-	return l+protocol.ByteCount(len(s.dataForWriting)) <= protocol.MaxPacketBufferSize
+	return l+protocol.ByteCount(len(s.dataForWriting)) <= protocol.MaxReceivePacketSize
 }
 
 // popStreamFrame returns the next STREAM frame that is supposed to be sent on this stream
@@ -346,10 +346,6 @@ func (s *sendStream) frameAcked(f wire.Frame) {
 	f.(*wire.StreamFrame).PutBack()
 
 	s.mutex.Lock()
-	if s.canceledWrite {
-		s.mutex.Unlock()
-		return
-	}
 	s.numOutstandingFrames--
 	if s.numOutstandingFrames < 0 {
 		panic("numOutStandingFrames negative")
@@ -375,10 +371,6 @@ func (s *sendStream) queueRetransmission(f wire.Frame) {
 	sf := f.(*wire.StreamFrame)
 	sf.DataLenPresent = true
 	s.mutex.Lock()
-	if s.canceledWrite {
-		s.mutex.Unlock()
-		return
-	}
 	s.retransmissionQueue = append(s.retransmissionQueue, sf)
 	s.numOutstandingFrames--
 	if s.numOutstandingFrames < 0 {
@@ -421,8 +413,6 @@ func (s *sendStream) cancelWriteImpl(errorCode protocol.ApplicationErrorCode, wr
 	s.ctxCancel()
 	s.canceledWrite = true
 	s.cancelWriteErr = writeErr
-	s.numOutstandingFrames = 0
-	s.retransmissionQueue = nil
 	newlyCompleted := s.isNewlyCompleted()
 	s.mutex.Unlock()
 
@@ -437,12 +427,12 @@ func (s *sendStream) cancelWriteImpl(errorCode protocol.ApplicationErrorCode, wr
 	}
 }
 
-func (s *sendStream) updateSendWindow(limit protocol.ByteCount) {
+func (s *sendStream) handleMaxStreamDataFrame(frame *wire.MaxStreamDataFrame) {
 	s.mutex.Lock()
 	hasStreamData := s.dataForWriting != nil || s.nextFrame != nil
 	s.mutex.Unlock()
 
-	s.flowController.UpdateSendWindow(limit)
+	s.flowController.UpdateSendWindow(frame.MaximumStreamData)
 	if hasStreamData {
 		s.sender.onHasStreamData(s.streamID)
 	}

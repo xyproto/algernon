@@ -59,8 +59,3 @@ type StreamFrame struct {
 	Length   ByteCount
 	Fin      bool
 }
-
-// A DatagramFrame is a DATAGRAM frame.
-type DatagramFrame struct {
-	Length ByteCount
-}

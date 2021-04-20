@@ -116,14 +116,13 @@ func dialAddrContext(
 	return dialContext(ctx, udpConn, udpAddr, addr, tlsConf, config, use0RTT, true)
 }
 
-// Dial establishes a new QUIC connection to a server using a net.PacketConn. If
-// the PacketConn satisfies the OOBCapablePacketConn interface (as a net.UDPConn
-// does), ECN and packet info support will be enabled. In this case, ReadMsgUDP
-// and WriteMsgUDP will be used instead of ReadFrom and WriteTo to read/write
-// packets. The same PacketConn can be used for multiple calls to Dial and
-// Listen, QUIC connection IDs are used for demultiplexing the different
-// connections. The host parameter is used for SNI. The tls.Config must define
-// an application protocol (using NextProtos).
+// Dial establishes a new QUIC connection to a server using a net.PacketConn.
+// If the PacketConn satisfies the ECNCapablePacketConn interface (as a net.UDPConn does), ECN support will be enabled.
+// In this case, ReadMsgUDP will be used instead of ReadFrom to read packets.
+// The same PacketConn can be used for multiple calls to Dial and Listen,
+// QUIC connection IDs are used for demultiplexing the different connections.
+// The host parameter is used for SNI.
+// The tls.Config must define an application protocol (using NextProtos).
 func Dial(
 	pconn net.PacketConn,
 	remoteAddr net.Addr,
@@ -205,9 +204,6 @@ func dialContext(
 	if c.config.Tracer != nil {
 		c.tracer = c.config.Tracer.TracerForConnection(protocol.PerspectiveClient, c.destConnID)
 	}
-	if c.tracer != nil {
-		c.tracer.StartedConnection(c.conn.LocalAddr(), c.conn.RemoteAddr(), c.srcConnID, c.destConnID)
-	}
 	if err := c.dial(ctx); err != nil {
 		return nil, err
 	}
@@ -259,7 +255,7 @@ func newClient(
 	c := &client{
 		srcConnID:         srcConnID,
 		destConnID:        destConnID,
-		conn:              newSendPconn(pconn, remoteAddr),
+		conn:              newSendConn(pconn, remoteAddr),
 		createdPacketConn: createdPacketConn,
 		use0RTT:           use0RTT,
 		tlsConf:           tlsConf,
@@ -273,6 +269,9 @@ func newClient(
 
 func (c *client) dial(ctx context.Context) error {
 	c.logger.Infof("Starting new connection to %s (%s -> %s), source connection ID %s, destination connection ID %s, version %s", c.tlsConf.ServerName, c.conn.LocalAddr(), c.conn.RemoteAddr(), c.srcConnID, c.destConnID, c.version)
+	if c.tracer != nil {
+		c.tracer.StartedConnection(c.conn.LocalAddr(), c.conn.RemoteAddr(), c.version, c.srcConnID, c.destConnID)
+	}
 
 	c.session = newClientSession(
 		c.conn,
@@ -282,6 +281,7 @@ func (c *client) dial(ctx context.Context) error {
 		c.config,
 		c.tlsConf,
 		c.initialPacketNumber,
+		c.version,
 		c.use0RTT,
 		c.hasNegotiatedVersion,
 		c.tracer,

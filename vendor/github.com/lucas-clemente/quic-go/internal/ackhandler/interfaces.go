@@ -5,6 +5,7 @@ import (
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/wire"
+	"github.com/lucas-clemente/quic-go/quictrace"
 )
 
 // A Packet is a packet
@@ -15,8 +16,6 @@ type Packet struct {
 	Length          protocol.ByteCount
 	EncryptionLevel protocol.EncryptionLevel
 	SendTime        time.Time
-
-	IsPathMTUProbePacket bool // We don't report the loss of Path MTU probe packets to the congestion controller.
 
 	includedInBytesInFlight bool
 	declaredLost            bool
@@ -40,7 +39,6 @@ type SentPacketHandler interface {
 	TimeUntilSend() time.Time
 	// HasPacingBudget says if the pacer allows sending of a (full size) packet at this moment.
 	HasPacingBudget() bool
-	SetMaxDatagramSize(count protocol.ByteCount)
 
 	// only to be called once the handshake is complete
 	QueueProbePacket(protocol.EncryptionLevel) bool /* was a packet queued */
@@ -50,6 +48,9 @@ type SentPacketHandler interface {
 
 	GetLossDetectionTimeout() time.Time
 	OnLossDetectionTimeout() error
+
+	// report some congestion statistics. For tracing only.
+	GetStats() *quictrace.TransportState
 }
 
 type sentPacketTracker interface {
