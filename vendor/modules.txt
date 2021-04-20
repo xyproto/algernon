@@ -40,7 +40,7 @@ github.com/chzyer/readline
 github.com/danwakefield/fnmatch
 # github.com/ddliu/go-httpclient v0.6.9
 github.com/ddliu/go-httpclient
-# github.com/denisenkom/go-mssqldb v0.9.0
+# github.com/denisenkom/go-mssqldb v0.10.0
 github.com/denisenkom/go-mssqldb
 github.com/denisenkom/go-mssqldb/internal/cp
 github.com/denisenkom/go-mssqldb/internal/decimal
@@ -53,7 +53,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20210402105715-96fa0aa6d91e
+# github.com/dop251/goja v0.0.0-20210406175830-1b11a6af686d
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -199,23 +199,23 @@ github.com/xyproto/simplehstore
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 github.com/xyproto/simpleredis
-# github.com/xyproto/splash v0.0.0-20201201084911-b9fc340d3c42
+# github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.12.2
+# github.com/xyproto/textoutput v1.12.3
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd
+# github.com/xyproto/vt100 v1.8.7
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+# golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -227,12 +227,12 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/md4
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c
+# golang.org/x/net v0.0.0-20210420072503-d25e30425868
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
+# golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
