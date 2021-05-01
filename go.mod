@@ -32,8 +32,8 @@ require (
 	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
-	github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4
-	github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174
+	github.com/xyproto/gluamapper v1.1.0
+	github.com/xyproto/gopher-lua v1.0.0
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20200828140854-76b50a8d49f0
 	github.com/xyproto/onthefly v0.0.0-20200729114226-067b477dcf06

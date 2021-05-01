@@ -284,8 +284,12 @@ github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7 h1:QhHTQZv23FYag
 github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7/go.mod h1:TT/TbaPa1pHzsZ1rtzvdfNsVZui5AXFQxTfEig7srvg=
 github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4 h1:F+u2f5dToicjUxe2WxHiLmNCL+UvzekyPN+LdJaRtk8=
 github.com/xyproto/gluamapper v0.0.0-20190219142928-9e3518c991d4/go.mod h1:HJfN3ntwV2jL5nNvE5aKKlJbSeyA/T72SFdJYI1AnYY=
+github.com/xyproto/gluamapper v1.1.0 h1:6zhdy/Wid7xzUbVQNYGI6gUxwJIfBBBt0La7jKhOQaA=
+github.com/xyproto/gluamapper v1.1.0/go.mod h1:XGaJEGEK95X9aOeshaG/3I6F7XkkkYAwn22+YGVposU=
 github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174 h1:zzXyavRs6/SLa4ZW1ikFDEyvV544BuD48KREfVu+NNg=
 github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174/go.mod h1:zSgXLDIUlWefPuqun4G82KonWEb+HKhNLaBHdv4iUZw=
+github.com/xyproto/gopher-lua v1.0.0 h1:o3p1HWhD6muejponx5JV79PC/yaPPYlxWKiPqPLHflM=
+github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=
 github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce h1:+3uFe3DjsTqLLDfnjNfE9OvIroowQOzm5PUnhyNI/ZU=
 github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce/go.mod h1:FfOtdoHN9a3oSHEIqoMo+8VJxcv8F16ufr3rm0J18aE=
 github.com/xyproto/mime v0.0.0-20200828140854-76b50a8d49f0 h1:6Rk0ADs/Ubo6ULELtW0/ytZLo9fekHKNmqrLF351Ksw=
