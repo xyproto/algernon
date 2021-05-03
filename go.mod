@@ -20,7 +20,6 @@ require (
 	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
@@ -50,14 +49,13 @@ require (
 	github.com/xyproto/simplehstore v0.0.0-20200929212236-7297f3830304 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
-	github.com/xyproto/textoutput v1.12.3
+	github.com/xyproto/textoutput v1.12.5
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
 	golang.org/x/net v0.0.0-20210420072503-d25e30425868
-	golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
