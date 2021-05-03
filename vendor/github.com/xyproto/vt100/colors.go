@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Color aliases, for ease of use, not for performance
@@ -256,11 +257,32 @@ func b2s(b byte) string {
 	return strconv.Itoa(int(b))
 }
 
+var (
+	scache = make(map[string]string)
+	smut   = &sync.RWMutex{}
+)
+
 // Return the VT100 terminal codes for setting this combination of attributes and color attributes
 func (ac AttributeColor) String() string {
+	id := string(ac)
+
+	smut.RLock()
+	if s, has := scache[id]; has {
+		smut.RUnlock()
+		return s
+	}
+	smut.RUnlock()
+
 	attributeString := strings.Join(mapBS(ac, b2s), ";")
 	// Replace '{attr1};...;{attrn}' with the generated attribute string and return
-	return get(specVT100, "Set Attribute Mode", map[string]string{"{attr1};...;{attrn}": attributeString})
+	s := get(specVT100, "Set Attribute Mode", map[string]string{"{attr1};...;{attrn}": attributeString})
+
+	// Store the value in the cache, if the id is short enough
+	smut.Lock()
+	scache[id] = s
+	smut.Unlock()
+
+	return s
 }
 
 // Get the full string needed for outputting colored texti, with the text and stopping the color attribute
