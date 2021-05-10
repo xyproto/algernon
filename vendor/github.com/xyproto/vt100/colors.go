@@ -277,10 +277,12 @@ func (ac AttributeColor) String() string {
 	// Replace '{attr1};...;{attrn}' with the generated attribute string and return
 	s := get(specVT100, "Set Attribute Mode", map[string]string{"{attr1};...;{attrn}": attributeString})
 
-	// Store the value in the cache, if the id is short enough
-	smut.Lock()
-	scache[id] = s
-	smut.Unlock()
+	// Store the value in the cache
+	if len(s) > 0 {
+		smut.Lock()
+		scache[id] = s
+		smut.Unlock()
+	}
 
 	return s
 }

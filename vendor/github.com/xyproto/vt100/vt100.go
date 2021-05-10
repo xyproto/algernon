@@ -490,3 +490,20 @@ func Close() {
 func EchoOff() {
 	fmt.Print("\033[12h")
 }
+
+func SetLineWrap(enable bool) {
+	if enable {
+		Do("Enable Line Wrap")
+	} else {
+		Do("Disable Line Wrap")
+	}
+}
+
+func ShowCursor(enable bool) {
+	// Thanks https://rosettacode.org/wiki/Terminal_control/Hiding_the_cursor#Escape_code
+	if enable {
+		fmt.Print("\033[?25h")
+	} else {
+		fmt.Print("\033[?25l")
+	}
+}
