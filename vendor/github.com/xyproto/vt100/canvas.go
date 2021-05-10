@@ -43,9 +43,9 @@ func NewCanvas() *Canvas {
 	c.oldchars = make([]ColorRune, 0)
 	c.mut = &sync.RWMutex{}
 	c.cursorVisible = false
-	ShowCursor(false)
 	c.lineWrap = false
-	SetLineWrap(false)
+	c.SetShowCursor(c.cursorVisible)
+	c.SetLineWrap(c.lineWrap)
 	return c
 }
 
@@ -53,9 +53,11 @@ func NewCanvas() *Canvas {
 // The mutex is kept as a pointer to the original.
 func (c *Canvas) Copy() Canvas {
 	var c2 Canvas
+	c.mut.RLock()
 	c2.w = c.w
 	c2.h = c.h
-	chars2 := make([]ColorRune, len(c.chars))
+	l := len(c.chars)
+	chars2 := make([]ColorRune, l)
 	for i, cr := range c.chars {
 		var cr2 ColorRune
 		cr2.fg = cr.fg
@@ -64,8 +66,10 @@ func (c *Canvas) Copy() Canvas {
 		cr2.drawn = cr.drawn
 		chars2[i] = cr
 	}
+	c.mut.RUnlock()
 	c2.chars = chars2
-	oldchars2 := make([]ColorRune, len(c.chars))
+	oldchars2 := make([]ColorRune, l)
+	c.mut.RLock()
 	for i, cr := range c.oldchars {
 		var cr2 ColorRune
 		cr2.fg = cr.fg
@@ -74,17 +78,18 @@ func (c *Canvas) Copy() Canvas {
 		cr2.drawn = cr.drawn
 		oldchars2[i] = cr
 	}
-	c2.oldchars = oldchars2
-	c2.mut = c.mut
 	c2.cursorVisible = c.cursorVisible
 	c2.lineWrap = c.lineWrap
+	c.mut.RUnlock()
+	c2.oldchars = oldchars2
+	c2.mut = c.mut
 	return c2
 }
 
 // Change the background color for each character
 func (c *Canvas) FillBackground(bg AttributeColor) {
-	c.mut.Lock()
 	converted := bg.Background()
+	c.mut.Lock()
 	for i := range c.chars {
 		c.chars[i].bg = converted
 		c.chars[i].drawn = false
@@ -114,8 +119,8 @@ func (c *Canvas) String() string {
 				sb.WriteRune(cr.r)
 			}
 		}
-		c.mut.RUnlock()
 		sb.WriteRune('\n')
+		c.mut.RUnlock()
 	}
 	return sb.String()
 }
@@ -126,6 +131,7 @@ func (c *Canvas) PlotAll() {
 	w := c.w
 	h := c.h
 	for y := uint(0); y < h; y++ {
+		c.mut.Lock()
 		for x := int(w - 1); x >= 0; x-- {
 			cr := &((*c).chars[y*w+uint(x)])
 			r := cr.r
@@ -136,6 +142,7 @@ func (c *Canvas) PlotAll() {
 			SetXY(uint(x), y)
 			fmt.Print(cr.fg.Combine(cr.bg).String() + string(r) + NoColor())
 		}
+		c.mut.Unlock()
 	}
 }
 
@@ -201,53 +208,47 @@ func (c *Canvas) Clear() {
 	c.mut.Unlock()
 }
 
-func SetLineWrap(enable bool) {
-	if enable {
-		Do("Enable Line Wrap")
-	} else {
-		Do("Disable Line Wrap")
-	}
+func (c *Canvas) SetLineWrap(enable bool) {
+	c.mut.Lock()
+	SetLineWrap(enable)
+	c.mut.Unlock()
 }
 
-func ShowCursor(enable bool) {
-	// Thanks https://rosettacode.org/wiki/Terminal_control/Hiding_the_cursor#Escape_code
-	if enable {
-		fmt.Print("\033[?25h")
-	} else {
-		fmt.Print("\033[?25l")
-	}
+func (c *Canvas) SetShowCursor(enable bool) {
+	c.mut.Lock()
+	c.cursorVisible = enable
+	ShowCursor(enable)
+	c.mut.Unlock()
 }
 
 func (c *Canvas) W() uint {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
 	return c.w
 }
 
 func (c *Canvas) H() uint {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
 	return c.h
 }
 
-func (c *Canvas) ShowCursor() {
-	if !c.cursorVisible {
-		c.cursorVisible = true
-	}
-	ShowCursor(true)
+func (c *Canvas) HideCursor() {
+	c.SetShowCursor(false)
 }
 
-func (c *Canvas) HideCursor() {
-	if c.cursorVisible {
-		c.cursorVisible = false
-	}
-	ShowCursor(false)
+func (c *Canvas) ShowCursor() {
+	c.SetShowCursor(true)
 }
 
 func (c *Canvas) SetRunewise(b bool) {
+	c.mut.Lock()
 	c.runewise = b
+	c.mut.Unlock()
 }
 
 // Draw the entire canvas
 func (c *Canvas) Draw() {
-	c.mut.Lock()
-	defer c.mut.Unlock()
 
 	var (
 		lastfg, lastbg AttributeColor
@@ -259,12 +260,13 @@ func (c *Canvas) Draw() {
 	// NOTE: If too many runes are written to the screen, the contents will scroll up,
 	// and it will appear like the first line(s) are lost!
 
+	c.mut.RLock()
 	firstRun := len(c.oldchars) == 0
-
 	skipAll := !firstRun // true by default, except for the first run
-
 	size := uint(c.w * c.h)
+	c.mut.RUnlock()
 
+	c.mut.RLock()
 	for index := uint(0); index < (size - 1); index++ {
 		cr = (*c).chars[index]
 		if !firstRun {
@@ -293,6 +295,7 @@ func (c *Canvas) Draw() {
 		lastfg = cr.fg
 		lastbg = cr.bg
 	}
+	c.mut.RUnlock()
 
 	// The screenfull so far is correct (sb.String())
 
@@ -304,13 +307,17 @@ func (c *Canvas) Draw() {
 		//sb.WriteString(NoColor())
 
 		// Hide the cursor, temporarily, if it's visible
+		reEnableCursor := false
 		if c.cursorVisible {
-			ShowCursor(false)
+			c.SetShowCursor(false)
+			reEnableCursor = true
 		}
 
 		// Enable line wrap, temporarily, if it's disabled
+		reDisableLineWrap := false
 		if !c.lineWrap {
-			SetLineWrap(true)
+			c.SetLineWrap(true)
+			reDisableLineWrap = true
 		}
 
 		// Draw each and every line, or push one large string to screen?
@@ -337,24 +344,28 @@ func (c *Canvas) Draw() {
 			// 			}
 
 		} else {
+			c.mut.Lock()
 			SetXY(0, 0)
 			os.Stdout.Write([]byte(sb.String()))
+			c.mut.Unlock()
 			//os.Stdout.Sync()
 		}
 
 		// Restore the cursor, if it was temporarily hidden
-		if c.cursorVisible {
-			ShowCursor(true)
+		if reEnableCursor {
+			c.SetShowCursor(true)
 		}
 
 		// Restore the line wrap, if it was temporarily enabled
-		if !c.lineWrap {
-			SetLineWrap(false)
+		if reDisableLineWrap {
+			c.SetLineWrap(false)
 		}
 
 		// Save the current state to oldchars
+		c.mut.Lock()
 		c.oldchars = make([]ColorRune, len(c.chars))
 		copy(c.oldchars, c.chars)
+		c.mut.Unlock()
 	}
 }
 
@@ -419,24 +430,26 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	if x >= c.w || y >= c.h {
 		return
 	}
-	c.mut.Lock()
+	c.mut.RLock()
 	chars := (*c).chars
 	counter := uint(0)
 	startpos := y*c.w + x
 	lchars := uint(len(chars))
+	c.mut.RUnlock()
 	bgb := bg.Background()
 	for _, r := range s {
 		i := startpos + counter
 		if i >= lchars {
 			break
 		}
+		c.mut.Lock()
 		chars[i].r = r
 		chars[i].fg = fg
 		chars[i].bg = bgb
 		chars[i].drawn = false
+		c.mut.Unlock()
 		counter++
 	}
-	c.mut.Unlock()
 }
 
 func (c *Canvas) Write(x, y uint, fg, bg AttributeColor, s string) {
