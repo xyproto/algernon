@@ -67,7 +67,7 @@ func (w *LValueWrapper) Scan(value interface{}) error {
 // LValueWrappers is a convenience type to easily map to a slice of lua.LValue
 type LValueWrappers []LValueWrapper
 
-// LValues produces a slice of lua.LValue from the contents of the wrappers
+// Unwrap produces a slice of lua.LValue from the given LValueWrappers
 func (w LValueWrappers) Unwrap() (s []lua.LValue) {
 	s = make([]lua.LValue, len(w))
 	for i, v := range w {
@@ -76,6 +76,7 @@ func (w LValueWrappers) Unwrap() (s []lua.LValue) {
 	return
 }
 
+// Interfaces returns a slice of interface{} values from the given LValueWrappers
 func (w LValueWrappers) Interfaces() (s []interface{}) {
 	s = make([]interface{}, len(w))
 	for i := range w {
@@ -84,6 +85,7 @@ func (w LValueWrappers) Interfaces() (s []interface{}) {
 	return
 }
 
+// unwrap produces a slice of lua.LValue from the given LValueWrappers
 func unwrap(from []*LValueWrapper) []lua.LValue {
 	to := make([]lua.LValue, len(from))
 	for i, v := range from {

@@ -118,7 +118,7 @@ func Map2table(L *lua.LState, m map[string]string) *lua.LTable {
 	return table
 }
 
-// Maps2table converts a []map[string]*string to a Lua table
+// LValueMaps2table converts a []map[string]lua.LValue to a Lua table
 func LValueMaps2table(L *lua.LState, maps []map[string]lua.LValue) *lua.LTable {
 	outer := L.NewTable()
 	for _, m := range maps {
