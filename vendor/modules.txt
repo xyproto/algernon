@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.8.2
+# github.com/alecthomas/chroma v0.9.1
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
 github.com/alecthomas/chroma/lexers
@@ -53,7 +53,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20210406175830-1b11a6af686d
+# github.com/dop251/goja v0.0.0-20210427212725-462d53687b0d
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -76,12 +76,12 @@ github.com/go-sourcemap/sourcemap/internal/base64vlq
 github.com/go-sql-driver/mysql
 # github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe
 github.com/golang-sql/civil
-# github.com/golang/protobuf v1.5.1
+# github.com/golang/protobuf v1.5.2
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
+# github.com/jvatic/goja-babel v0.0.0-20210518112715-d88cf672428a
 github.com/jvatic/goja-babel
 # github.com/kr/pretty v0.2.1
 github.com/kr/pretty
@@ -117,7 +117,7 @@ github.com/marten-seemann/qtls-go1-15
 github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.12
+# github.com/mattn/go-isatty v0.0.13
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
@@ -218,7 +218,7 @@ github.com/xyproto/vt100
 github.com/yosssi/gcss
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
+# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -226,16 +226,17 @@ golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
 golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/md4
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20210420072503-d25e30425868
+# golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
+# golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix

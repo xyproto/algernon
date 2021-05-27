@@ -3,22 +3,24 @@ module github.com/xyproto/algernon
 go 1.10
 
 require (
+	github.com/alecthomas/chroma v0.9.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20210406175830-1b11a6af686d // indirect
+	github.com/dop251/goja v0.0.0-20210427212725-462d53687b0d // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/mock v1.5.0 // indirect
-	github.com/golang/protobuf v1.5.1 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/jvatic/goja-babel v0.0.0-20210518112715-d88cf672428a
 	github.com/lib/pq v1.10.2
 	github.com/lucas-clemente/quic-go v0.19.2
 	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
+	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -54,8 +56,9 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
-	golang.org/x/net v0.0.0-20210420072503-d25e30425868
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
