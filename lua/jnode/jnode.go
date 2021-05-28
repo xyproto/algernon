@@ -391,18 +391,18 @@ func LoadJSONFunctions(L *lua.LState) {
 			L.ArgError(1, "Expected a table as the first argument")
 		}
 
-		//
-		// NOTE:
-		//   JSON keys in maps are always strings!
-		//   See: https://stackoverflow.com/questions/24284612/failed-to-json-marshal-map-with-non-string-keys
-		//
-
 		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
 		mapinterface := gluamapper.ToGoValue(table, gluamapper.Option{
 			NameFunc: func(s string) string {
 				return s
 			},
 		})
+
+		//
+		// NOTE:
+		//   JSON keys in maps are always strings!
+		//   See: https://stackoverflow.com/questions/24284612/failed-to-json-marshal-map-with-non-string-keys
+		//
 
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {
