@@ -1,10 +1,7 @@
 package quic
 
 import (
-	"crypto/rand"
-	"encoding/binary"
 	"fmt"
-	mrand "math/rand"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/qerr"
@@ -24,13 +21,12 @@ type connIDManager struct {
 	// We change the connection ID after sending on average
 	// protocol.PacketsPerConnectionID packets. The actual value is randomized
 	// hide the packet loss rate from on-path observers.
-	packetsSinceLastChange uint64
-	rand                   *mrand.Rand
-	packetsPerConnectionID uint64
+	rand                   utils.Rand
+	packetsSinceLastChange uint32
+	packetsPerConnectionID uint32
 
 	addStatelessResetToken    func(protocol.StatelessResetToken)
 	removeStatelessResetToken func(protocol.StatelessResetToken)
-	retireStatelessResetToken func(protocol.StatelessResetToken)
 	queueControlFrame         func(wire.Frame)
 }
 
@@ -38,19 +34,13 @@ func newConnIDManager(
 	initialDestConnID protocol.ConnectionID,
 	addStatelessResetToken func(protocol.StatelessResetToken),
 	removeStatelessResetToken func(protocol.StatelessResetToken),
-	retireStatelessResetToken func(protocol.StatelessResetToken),
 	queueControlFrame func(wire.Frame),
 ) *connIDManager {
-	b := make([]byte, 8)
-	_, _ = rand.Read(b) // ignore the error here. Nothing bad will happen if the seed is not perfectly random.
-	seed := int64(binary.BigEndian.Uint64(b))
 	return &connIDManager{
 		activeConnectionID:        initialDestConnID,
 		addStatelessResetToken:    addStatelessResetToken,
 		removeStatelessResetToken: removeStatelessResetToken,
-		retireStatelessResetToken: retireStatelessResetToken,
 		queueControlFrame:         queueControlFrame,
-		rand:                      mrand.New(mrand.NewSource(seed)),
 	}
 }
 
@@ -150,7 +140,7 @@ func (h *connIDManager) updateConnectionID() {
 	})
 	h.highestRetired = utils.MaxUint64(h.highestRetired, h.activeSequenceNumber)
 	if h.activeStatelessResetToken != nil {
-		h.retireStatelessResetToken(*h.activeStatelessResetToken)
+		h.removeStatelessResetToken(*h.activeStatelessResetToken)
 	}
 
 	front := h.queue.Remove(h.queue.Front())
@@ -158,7 +148,7 @@ func (h *connIDManager) updateConnectionID() {
 	h.activeConnectionID = front.ConnectionID
 	h.activeStatelessResetToken = &front.StatelessResetToken
 	h.packetsSinceLastChange = 0
-	h.packetsPerConnectionID = protocol.PacketsPerConnectionID/2 + uint64(h.rand.Int63n(protocol.PacketsPerConnectionID))
+	h.packetsPerConnectionID = protocol.PacketsPerConnectionID/2 + uint32(h.rand.Int31n(protocol.PacketsPerConnectionID))
 	h.addStatelessResetToken(*h.activeStatelessResetToken)
 }
 
