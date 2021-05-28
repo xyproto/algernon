@@ -79,7 +79,7 @@ github.com/golang-sql/civil
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20210518112715-d88cf672428a
+# github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 github.com/jvatic/goja-babel
 # github.com/kr/pretty v0.2.1
 github.com/kr/pretty

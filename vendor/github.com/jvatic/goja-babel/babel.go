@@ -1,7 +1,6 @@
 package babel
 
 import (
-	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -89,12 +88,13 @@ func getTransformer() (*babelTransformer, error) {
 	}
 }
 
-//go:embed babel.js
-var babelData string
-
 func compileBabel() error {
-	var err error
-	babelProg, err = goja.Compile("babel.js", babelData, false)
+	babelData, err := _Asset("babel.js")
+	if err != nil {
+		return err
+	}
+
+	babelProg, err = goja.Compile("babel.js", string(babelData), false)
 	if err != nil {
 		return err
 	}
