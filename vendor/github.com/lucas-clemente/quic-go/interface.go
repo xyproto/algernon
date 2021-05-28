@@ -2,7 +2,6 @@ package quic
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/handshake"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/logging"
+	"github.com/lucas-clemente/quic-go/quictrace"
 )
 
 // RetireBugBackwardsCompatibilityMode controls a backwards compatibility mode, necessary due to a bug in
@@ -33,8 +33,6 @@ const (
 	VersionDraft29 = protocol.VersionDraft29
 	// VersionDraft32 is IETF QUIC draft-32
 	VersionDraft32 = protocol.VersionDraft32
-	// VersionDraft34 is IETF QUIC draft-34
-	VersionDraft34 = protocol.VersionDraft34
 )
 
 // A Token can be used to verify the ownership of the client address.
@@ -67,13 +65,6 @@ type TokenStore interface {
 // An ErrorCode is an application-defined error code.
 // Valid values range between 0 and MAX_UINT62.
 type ErrorCode = protocol.ApplicationErrorCode
-
-// Err0RTTRejected is the returned from:
-// * Open{Uni}Stream{Sync}
-// * Accept{Uni}Stream
-// * Stream.Read and Stream.Write
-// when the server rejects a 0-RTT connection attempt.
-var Err0RTTRejected = errors.New("0-RTT rejected")
 
 // Stream is the interface implemented by QUIC streams
 type Stream interface {
@@ -151,6 +142,8 @@ type StreamError interface {
 	ErrorCode() ErrorCode
 }
 
+type ConnectionState = handshake.ConnectionState
+
 // A Session is a QUIC connection between two peers.
 type Session interface {
 	// AcceptStream returns the next stream opened by the peer, blocking until one is available.
@@ -197,13 +190,6 @@ type Session interface {
 	// It blocks until the handshake completes.
 	// Warning: This API should not be considered stable and might change soon.
 	ConnectionState() ConnectionState
-
-	// SendMessage sends a message as a datagram.
-	// See https://datatracker.ietf.org/doc/draft-pauly-quic-datagram/.
-	SendMessage([]byte) error
-	// ReceiveMessage gets a message received in a datagram.
-	// See https://datatracker.ietf.org/doc/draft-pauly-quic-datagram/.
-	ReceiveMessage() ([]byte, error)
 }
 
 // An EarlySession is a session that is handshaking.
@@ -217,8 +203,6 @@ type EarlySession interface {
 	// Data sent before completion of the handshake is encrypted with 1-RTT keys.
 	// Note that the client's identity hasn't been verified yet.
 	HandshakeComplete() context.Context
-
-	NextSession() Session
 }
 
 // Config contains all configuration data needed for a QUIC server or client.
@@ -234,10 +218,10 @@ type Config struct {
 	// If used for a server, or dialing on a packet conn, a 4 byte connection ID will be used.
 	// When dialing on a packet conn, the ConnectionIDLength value must be the same for every Dial call.
 	ConnectionIDLength int
-	// HandshakeIdleTimeout is the idle timeout before completion of the handshake.
-	// Specifically, if we don't receive any packet from the peer within this time, the connection attempt is aborted.
-	// If this value is zero, the timeout is set to 5 seconds.
-	HandshakeIdleTimeout time.Duration
+	// HandshakeTimeout is the maximum duration that the cryptographic handshake may take.
+	// If the timeout is exceeded, the connection is closed.
+	// If this value is zero, the timeout is set to 10 seconds.
+	HandshakeTimeout time.Duration
 	// MaxIdleTimeout is the maximum duration that may pass without any incoming network activity.
 	// The actual value for the idle timeout is the minimum of this value and the peer's.
 	// This value only applies after the handshake has completed.
@@ -257,22 +241,12 @@ type Config struct {
 	// The key used to store tokens is the ServerName from the tls.Config, if set
 	// otherwise the token is associated with the server's IP address.
 	TokenStore TokenStore
-	// InitialStreamReceiveWindow is the initial size of the stream-level flow control window for receiving data.
-	// If the application is consuming data quickly enough, the flow control auto-tuning algorithm
-	// will increase the window up to MaxStreamReceiveWindow.
-	// If this value is zero, it will default to 512 KB.
-	InitialStreamReceiveWindow uint64
-	// MaxStreamReceiveWindow is the maximum stream-level flow control window for receiving data.
-	// If this value is zero, it will default to 6 MB.
-	MaxStreamReceiveWindow uint64
-	// InitialConnectionReceiveWindow is the initial size of the stream-level flow control window for receiving data.
-	// If the application is consuming data quickly enough, the flow control auto-tuning algorithm
-	// will increase the window up to MaxConnectionReceiveWindow.
-	// If this value is zero, it will default to 512 KB.
-	InitialConnectionReceiveWindow uint64
-	// MaxConnectionReceiveWindow is the connection-level flow control window for receiving data.
-	// If this value is zero, it will default to 15 MB.
-	MaxConnectionReceiveWindow uint64
+	// MaxReceiveStreamFlowControlWindow is the maximum stream-level flow control window for receiving data.
+	// If this value is zero, it will default to 1 MB for the server and 6 MB for the client.
+	MaxReceiveStreamFlowControlWindow uint64
+	// MaxReceiveConnectionFlowControlWindow is the connection-level flow control window for receiving data.
+	// If this value is zero, it will default to 1.5 MB for the server and 15 MB for the client.
+	MaxReceiveConnectionFlowControlWindow uint64
 	// MaxIncomingStreams is the maximum number of concurrent bidirectional streams that a peer is allowed to open.
 	// Values above 2^60 are invalid.
 	// If not set, it will default to 100.
@@ -288,19 +262,11 @@ type Config struct {
 	StatelessResetKey []byte
 	// KeepAlive defines whether this peer will periodically send a packet to keep the connection alive.
 	KeepAlive bool
-	// DisablePathMTUDiscovery disables Path MTU Discovery (RFC 8899).
-	// Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.
-	DisablePathMTUDiscovery bool
-	// See https://datatracker.ietf.org/doc/draft-ietf-quic-datagram/.
-	// Datagrams will only be available when both peers enable datagram support.
-	EnableDatagrams bool
-	Tracer          logging.Tracer
-}
-
-// ConnectionState records basic details about a QUIC connection
-type ConnectionState struct {
-	TLS               handshake.ConnectionState
-	SupportsDatagrams bool
+	// QUIC Event Tracer (see https://github.com/google/quic-trace).
+	// Warning: Support for quic-trace will soon be dropped in favor of qlog.
+	// It is disabled by default. Use the "quictrace" build tag to enable (e.g. go build -tags quictrace).
+	QuicTracer quictrace.Tracer
+	Tracer     logging.Tracer
 }
 
 // A Listener for incoming QUIC connections

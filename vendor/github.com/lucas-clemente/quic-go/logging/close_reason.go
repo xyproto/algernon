@@ -13,7 +13,6 @@ type CloseReason struct {
 
 	timeout             *TimeoutReason
 	statelessResetToken *StatelessResetToken
-	versions            []VersionNumber
 }
 
 // NewApplicationCloseReason creates a new CloseReason for an application error.
@@ -34,11 +33,6 @@ func NewTimeoutCloseReason(r TimeoutReason) CloseReason {
 // NewStatelessResetCloseReason creates a new CloseReason for a stateless reset.
 func NewStatelessResetCloseReason(token StatelessResetToken) CloseReason {
 	return CloseReason{statelessResetToken: &token}
-}
-
-// NewVersionNegotiationError creates a new CloseReason for a version negotiation error.
-func NewVersionNegotiationError(versions []VersionNumber) CloseReason {
-	return CloseReason{versions: versions}
 }
 
 // ApplicationError gets the application error.
@@ -71,8 +65,4 @@ func (r *CloseReason) StatelessReset() (token StatelessResetToken, ok bool) {
 		return
 	}
 	return *r.statelessResetToken, true
-}
-
-func (r *CloseReason) VersionNegotiation() (versions []VersionNumber, ok bool) {
-	return r.versions, len(r.versions) > 0
 }

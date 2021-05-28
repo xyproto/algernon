@@ -12,24 +12,23 @@ import (
 
 type connection interface {
 	ReadPacket() (*receivedPacket, error)
-	WritePacket(b []byte, addr net.Addr, oob []byte) (int, error)
+	WriteTo([]byte, net.Addr) (int, error)
 	LocalAddr() net.Addr
 	io.Closer
 }
 
 // If the PacketConn passed to Dial or Listen satisfies this interface, quic-go will read the ECN bits from the IP header.
 // In this case, ReadMsgUDP() will be used instead of ReadFrom() to read packets.
-type OOBCapablePacketConn interface {
+type ECNCapablePacketConn interface {
 	net.PacketConn
 	SyscallConn() (syscall.RawConn, error)
 	ReadMsgUDP(b, oob []byte) (n, oobn, flags int, addr *net.UDPAddr, err error)
-	WriteMsgUDP(b, oob []byte, addr *net.UDPAddr) (n, oobn int, err error)
 }
 
-var _ OOBCapablePacketConn = &net.UDPConn{}
+var _ ECNCapablePacketConn = &net.UDPConn{}
 
 func wrapConn(pc net.PacketConn) (connection, error) {
-	c, ok := pc.(OOBCapablePacketConn)
+	c, ok := pc.(ECNCapablePacketConn)
 	if !ok {
 		utils.DefaultLogger.Infof("PacketConn is not a net.UDPConn. Disabling optimizations possible on UDP connections.")
 		return &basicConn{PacketConn: pc}, nil
@@ -45,9 +44,9 @@ var _ connection = &basicConn{}
 
 func (c *basicConn) ReadPacket() (*receivedPacket, error) {
 	buffer := getPacketBuffer()
-	// The packet size should not exceed protocol.MaxPacketBufferSize bytes
+	// The packet size should not exceed protocol.MaxReceivePacketSize bytes
 	// If it does, we only read a truncated packet, which will then end up undecryptable
-	buffer.Data = buffer.Data[:protocol.MaxPacketBufferSize]
+	buffer.Data = buffer.Data[:protocol.MaxReceivePacketSize]
 	n, addr, err := c.PacketConn.ReadFrom(buffer.Data)
 	if err != nil {
 		return nil, err
@@ -58,8 +57,4 @@ func (c *basicConn) ReadPacket() (*receivedPacket, error) {
 		data:       buffer.Data[:n],
 		buffer:     buffer,
 	}, nil
-}
-
-func (c *basicConn) WritePacket(b []byte, addr net.Addr, _ []byte) (n int, err error) {
-	return c.PacketConn.WriteTo(b, addr)
 }

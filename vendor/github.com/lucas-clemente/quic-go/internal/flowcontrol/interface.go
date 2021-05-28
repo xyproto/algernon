@@ -29,7 +29,6 @@ type StreamFlowController interface {
 // The ConnectionFlowController is the flow controller for the connection.
 type ConnectionFlowController interface {
 	flowController
-	Reset() error
 }
 
 type connectionFlowControllerI interface {

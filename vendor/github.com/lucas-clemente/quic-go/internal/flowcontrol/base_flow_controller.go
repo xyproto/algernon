@@ -15,7 +15,6 @@ type baseFlowController struct {
 	lastBlockedAt protocol.ByteCount
 
 	// for receiving data
-	//nolint:structcheck // The mutex is used both by the stream and the connection flow controller
 	mutex                sync.Mutex
 	bytesRead            protocol.ByteCount
 	highestReceived      protocol.ByteCount
@@ -45,7 +44,8 @@ func (c *baseFlowController) AddBytesSent(n protocol.ByteCount) {
 	c.bytesSent += n
 }
 
-// UpdateSendWindow is be called after receiving a MAX_{STREAM_}DATA frame.
+// UpdateSendWindow should be called after receiving a WindowUpdateFrame
+// it returns true if the window was actually updated
 func (c *baseFlowController) UpdateSendWindow(offset protocol.ByteCount) {
 	if offset > c.sendWindow {
 		c.sendWindow = offset
@@ -60,8 +60,10 @@ func (c *baseFlowController) sendWindowSize() protocol.ByteCount {
 	return c.sendWindow - c.bytesSent
 }
 
-// needs to be called with locked mutex
-func (c *baseFlowController) addBytesRead(n protocol.ByteCount) {
+func (c *baseFlowController) AddBytesRead(n protocol.ByteCount) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	// pretend we sent a WindowUpdate when reading the first byte
 	// this way auto-tuning of the window size already works for the first WindowUpdate
 	if c.bytesRead == 0 {

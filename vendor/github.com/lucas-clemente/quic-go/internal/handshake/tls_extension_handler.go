@@ -5,16 +5,11 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/qtls"
 )
 
-const (
-	quicTLSExtensionTypeOldDrafts = 0xffa5
-	quicTLSExtensionType          = 0x39
-)
+const quicTLSExtensionType = 0xffa5
 
 type extensionHandler struct {
 	ourParams  []byte
 	paramsChan chan []byte
-
-	extensionType uint16
 
 	perspective protocol.Perspective
 }
@@ -22,16 +17,11 @@ type extensionHandler struct {
 var _ tlsExtensionHandler = &extensionHandler{}
 
 // newExtensionHandler creates a new extension handler
-func newExtensionHandler(params []byte, pers protocol.Perspective, v protocol.VersionNumber) tlsExtensionHandler {
-	et := uint16(quicTLSExtensionType)
-	if v != protocol.VersionDraft34 {
-		et = quicTLSExtensionTypeOldDrafts
-	}
+func newExtensionHandler(params []byte, pers protocol.Perspective) tlsExtensionHandler {
 	return &extensionHandler{
-		ourParams:     params,
-		paramsChan:    make(chan []byte),
-		perspective:   pers,
-		extensionType: et,
+		ourParams:   params,
+		paramsChan:  make(chan []byte),
+		perspective: pers,
 	}
 }
 
@@ -41,7 +31,7 @@ func (h *extensionHandler) GetExtensions(msgType uint8) []qtls.Extension {
 		return nil
 	}
 	return []qtls.Extension{{
-		Type: h.extensionType,
+		Type: quicTLSExtensionType,
 		Data: h.ourParams,
 	}}
 }
@@ -54,7 +44,7 @@ func (h *extensionHandler) ReceivedExtensions(msgType uint8, exts []qtls.Extensi
 
 	var data []byte
 	for _, ext := range exts {
-		if ext.Type == h.extensionType {
+		if ext.Type == quicTLSExtensionType {
 			data = ext.Data
 			break
 		}

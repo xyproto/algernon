@@ -1,6 +1,7 @@
 run:
   skip-files:
-    - internal/qtls/structs_equal_test.go
+    - internal/handshake/client_session_state.go
+    - internal/handshake/unsafe_test.go
 
 linters-settings:
   depguard:

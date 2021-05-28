@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
-	"github.com/lucas-clemente/quic-go/quicvarint"
+	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
 // A StreamDataBlockedFrame is a STREAM_DATA_BLOCKED frame
@@ -18,11 +18,11 @@ func parseStreamDataBlockedFrame(r *bytes.Reader, _ protocol.VersionNumber) (*St
 		return nil, err
 	}
 
-	sid, err := quicvarint.Read(r)
+	sid, err := utils.ReadVarInt(r)
 	if err != nil {
 		return nil, err
 	}
-	offset, err := quicvarint.Read(r)
+	offset, err := utils.ReadVarInt(r)
 	if err != nil {
 		return nil, err
 	}
@@ -35,12 +35,12 @@ func parseStreamDataBlockedFrame(r *bytes.Reader, _ protocol.VersionNumber) (*St
 
 func (f *StreamDataBlockedFrame) Write(b *bytes.Buffer, version protocol.VersionNumber) error {
 	b.WriteByte(0x15)
-	quicvarint.Write(b, uint64(f.StreamID))
-	quicvarint.Write(b, uint64(f.MaximumStreamData))
+	utils.WriteVarInt(b, uint64(f.StreamID))
+	utils.WriteVarInt(b, uint64(f.MaximumStreamData))
 	return nil
 }
 
 // Length of a written frame
 func (f *StreamDataBlockedFrame) Length(version protocol.VersionNumber) protocol.ByteCount {
-	return 1 + quicvarint.Len(uint64(f.StreamID)) + quicvarint.Len(uint64(f.MaximumStreamData))
+	return 1 + utils.VarIntLen(uint64(f.StreamID)) + utils.VarIntLen(uint64(f.MaximumStreamData))
 }
