@@ -3,6 +3,6 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
 github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
-github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174 h1:zzXyavRs6/SLa4ZW1ikFDEyvV544BuD48KREfVu+NNg=
-github.com/xyproto/gopher-lua v0.0.0-20190220202711-e72dfa319174/go.mod h1:zSgXLDIUlWefPuqun4G82KonWEb+HKhNLaBHdv4iUZw=
+github.com/xyproto/gopher-lua v1.0.0 h1:o3p1HWhD6muejponx5JV79PC/yaPPYlxWKiPqPLHflM=
+github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=
 golang.org/x/sys v0.0.0-20190219092855-153ac476189d/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

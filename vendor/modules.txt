@@ -158,7 +158,7 @@ github.com/xyproto/ask
 github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 github.com/xyproto/datablock
-# github.com/xyproto/gluamapper v1.1.0
+# github.com/xyproto/gluamapper v1.2.0
 github.com/xyproto/gluamapper
 # github.com/xyproto/gopher-lua v1.0.0
 github.com/xyproto/gopher-lua

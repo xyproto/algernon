@@ -56,4 +56,4 @@ fmt.Printf("%s %d", person.Name, person.Age)
 ## General info
 
 * License: MIT
-* Version: 1.1.0
+* Version: 1.2.0
