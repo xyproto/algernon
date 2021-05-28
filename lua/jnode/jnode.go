@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/gluamapper"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/jpath"
 )
 
@@ -398,7 +398,11 @@ func LoadJSONFunctions(L *lua.LState) {
 		//
 
 		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
-		mapinterface := convert.Table2interfaceMap(table)
+		mapinterface := gluamapper.ToGoValue(table, gluamapper.Option{
+			NameFunc: func(s string) string {
+				return s
+			},
+		})
 
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {
@@ -421,8 +425,10 @@ func LoadJSONFunctions(L *lua.LState) {
 
 	// Convert a table to JSON
 	L.SetGlobal("json", toJSON)
-	L.SetGlobal("JSON", toJSON)   // Alias for backward compatibility
-	L.SetGlobal("toJSON", toJSON) // Alias for backward compatibility
-	L.SetGlobal("ToJSON", toJSON) // Alias for backward compatibility
+
+	// Also add backward compatible aliases for the toJSON function
+	L.SetGlobal("JSON", toJSON)
+	L.SetGlobal("toJSON", toJSON)
+	L.SetGlobal("ToJSON", toJSON)
 
 }
