@@ -1121,3 +1121,8 @@ General information
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
 <a href="https://algernon.roboticoverlords.org"><img alt="0-0" src="img/gophereyes.png" align="right"></a>
+
+Stargazers over time
+--------------------
+
+[![Stargazers over time](https://starchart.cc/xyproto/algernon.svg)](https://starchart.cc/xyproto/algernon)
