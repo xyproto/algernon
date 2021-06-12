@@ -57,8 +57,8 @@ func (w *LValueWrapper) Scan(value interface{}) error {
 	case []byte:
 		*w = LValueWrapper{lua.LString(string(v))}
   
-    case time.Time:
-    	*w = LValueWrapper{lua.LNumber(float64(v.Unix()))}
+	case time.Time:
+		*w = LValueWrapper{lua.LNumber(float64(v.Unix()))}
 
 	default:
 		return fmt.Errorf("unable to scan type %T into lua value wrapper", value)
