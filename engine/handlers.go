@@ -288,7 +288,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 				// If things went well, check if there is a status code we should write first
 				// (especially for the case of a redirect)
 				if httpStatus.code != 0 {
-					w.WriteHeader(httpStatus.code)
+					recorder.WriteHeader(httpStatus.code)
 				}
 				// Then write to the ResponseWriter
 				utils.WriteRecorder(w, recorder)
