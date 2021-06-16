@@ -1,6 +1,7 @@
 package babel
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,6 +35,15 @@ func Init(poolSize int) (err error) {
 		globalpool = make(chan *babelTransformer, poolSize)
 		for i := 0; i < poolSize; i++ {
 			vm := goja.New()
+
+			// define console.{log|error|warn} so loading babel doesn't error
+			logFunc := func(goja.FunctionCall) goja.Value { return nil }
+			vm.Set("console", map[string]func(goja.FunctionCall) goja.Value{
+				"log":   logFunc,
+				"error": logFunc,
+				"warn":  logFunc,
+			})
+
 			transformFn, e := loadBabel(vm)
 			if e != nil {
 				err = e
@@ -88,13 +98,12 @@ func getTransformer() (*babelTransformer, error) {
 	}
 }
 
-func compileBabel() error {
-	babelData, err := _Asset("babel.js")
-	if err != nil {
-		return err
-	}
+//go:embed babel.js
+var babelData string
 
-	babelProg, err = goja.Compile("babel.js", string(babelData), false)
+func compileBabel() error {
+	var err error
+	babelProg, err = goja.Compile("babel.js", babelData, false)
 	if err != nil {
 		return err
 	}
