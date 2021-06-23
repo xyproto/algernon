@@ -705,7 +705,37 @@ func (h *HashMap) All() ([]string, error) {
 	}
 	err = rows.Err()
 	return values, err
+}
 
+// AllWhere returns all owner ID's that has a property where key == value
+func (h *HashMap) AllWhere(key, value string) ([]string, error) {
+	var values []string
+	if !h.host.rawUTF8 {
+		Encode(&value)
+	}
+	// Return all owner ID's for all entries that has the given key->value attribute
+	//fmt.Printf("SELECT DISTINCT %s FROM %s WHERE attr @> '\"%s\"=>\"%s\"' :: hstore", ownerCol, h.table, key, value)
+	rows, err := h.host.db.Query(fmt.Sprintf("SELECT DISTINCT %s FROM %s WHERE attr @> '\"%s\"=>\"%s\"' :: hstore", ownerCol, h.table, key, value))
+	if err != nil {
+		return values, err
+	}
+	if rows == nil {
+		return values, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	var v string
+	for rows.Next() {
+		err = rows.Scan(&v)
+		if !h.host.rawUTF8 {
+			Decode(&v)
+		}
+		values = append(values, v)
+		if err != nil {
+			return values, err
+		}
+	}
+	err = rows.Err()
+	return values, err
 }
 
 // Count counts the number of owners for hash map elements

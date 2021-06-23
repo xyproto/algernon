@@ -53,7 +53,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20210427212725-462d53687b0d
+# github.com/dop251/goja v0.0.0-20210614154742-14a1ffa82844
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -161,7 +161,7 @@ github.com/xyproto/ask
 github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 github.com/xyproto/datablock
-# github.com/xyproto/gluamapper v1.2.0
+# github.com/xyproto/gluamapper v1.2.1
 github.com/xyproto/gluamapper
 # github.com/xyproto/gopher-lua v1.0.0
 github.com/xyproto/gopher-lua
@@ -196,7 +196,7 @@ github.com/xyproto/sheepcounter
 github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v0.0.0-20200929212236-7297f3830304
+# github.com/xyproto/simplehstore v0.0.0-20210607125359-5215f95594e9
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
@@ -216,7 +216,7 @@ github.com/xyproto/unzip
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 github.com/yosssi/gcss
-# go.etcd.io/bbolt v1.3.5
+# go.etcd.io/bbolt v1.3.6
 go.etcd.io/bbolt
 # golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/bcrypt
@@ -231,12 +231,12 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/md4
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
+# golang.org/x/sys v0.0.0-20210616045830-e2b7044e8c71
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -254,7 +254,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+# golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
 golang.org/x/time/rate
 # google.golang.org/protobuf v1.26.0
 google.golang.org/protobuf/encoding/prototext

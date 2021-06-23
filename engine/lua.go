@@ -19,6 +19,7 @@ import (
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
+	"github.com/xyproto/gluamapper"
 	"github.com/xyproto/gopher-lua"
 )
 
@@ -343,7 +344,11 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 						switch {
 						case isTable:
 							// lv was a Lua Table
-							retval = convert.Table2interfaceMap(tbl)
+							retval = gluamapper.ToGoValue(tbl, gluamapper.Option{
+								NameFunc: func(s string) string {
+									return s
+								},
+							})
 							if ac.debugMode && ac.verboseMode {
 								log.Info(utils.Infostring(functionName, args) + " -> (map)")
 							}

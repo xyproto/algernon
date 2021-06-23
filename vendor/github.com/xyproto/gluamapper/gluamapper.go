@@ -86,6 +86,9 @@ func ToGoValue(lv lua.LValue, opt Option) interface{} {
 	case lua.LString:
 		return string(v)
 	case lua.LNumber:
+		if float64(int(v)) == float64(v) {
+			return int(v)
+		}
 		return float64(v)
 	case *lua.LTable:
 		maxn := v.MaxN()
