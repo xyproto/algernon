@@ -65,7 +65,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		if L.GetTop() == 2 {
 			luaTable := L.CheckTable(2)
 			goMap := gluamapper.ToGoValue(luaTable, gluamapper.Option{
-				NameFunc: func(s name) string {
+				NameFunc: func(s string) string {
 					return s
 				},
 			}).(map[string]interface{})
