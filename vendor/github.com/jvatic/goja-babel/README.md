@@ -1,9 +1,9 @@
 goja-babel
 ==========
 
-[![CI](https://github.com/jvatic/goja-babel/actions/workflows/ci.yml/badge.svg)](https://github.com/jvatic/goja-babel/actions/workflows/ci.yml)
-
 Uses github.com/dop251/goja to run babel.js within Go.
+
+**WARNING:** This is largely untested and the exposed API may change at any time.
 
 ## Usage
 
@@ -40,24 +40,23 @@ func main() {
 ```
 
 ```js
-$ go run main.go
 var foo = 1;
-
-/*#__PURE__*/
-React.createElement("div", null, "Hello JSX! The value of foo is ", foo, ".");
+React.createElement(
+	"div",
+	null,
+	"Hello JSX! The value of foo is ",
+	foo,
+	"."
+);
 ```
 
 ## Benchmarks
 
 ```
-go test -bench Transform -benchmem
-goos: darwin
-goarch: amd64
-pkg: github.com/jvatic/goja-babel
-cpu: Intel(R) Core(TM) i7-3615QM CPU @ 2.30GHz
-BenchmarkTransformString-8                    	      81	  15642708 ns/op	 3069085 B/op	   37243 allocs/op
-BenchmarkTransformStringWithSingletonPool-8   	      67	  15820676 ns/op	 3070920 B/op	   37244 allocs/op
-BenchmarkTransformStringWithLargePool-8       	      78	  15497562 ns/op	 3070015 B/op	   37243 allocs/op
+$ go test -bench Transform -benchmem
+BenchmarkTransformString-8                    	     200	   6042202 ns/op	  925350 B/op	   15779 allocs/op
+BenchmarkTransformStringWithSingletonPool-8   	     200	   5976874 ns/op	  927350 B/op	   15809 allocs/op
+BenchmarkTransformStringWithLargePool-8       	     300	   5892891 ns/op	  926572 B/op	   15799 allocs/op
 PASS
-ok  	github.com/jvatic/goja-babel	4.993s
+ok  	github.com/jvatic/goja-babel	20.346s
 ```

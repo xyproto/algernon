@@ -9,12 +9,13 @@ require (
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/didip/tollbooth v4.0.2+incompatible
+	github.com/dop251/goja v0.0.0-20210614154742-14a1ffa82844 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20210615124441-ff3b3c2be80c
+	github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 	github.com/lib/pq v1.10.2
 	github.com/lucas-clemente/quic-go v0.19.2
 	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
