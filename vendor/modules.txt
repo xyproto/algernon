@@ -81,7 +81,7 @@ github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20210615124441-ff3b3c2be80c
+# github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 github.com/jvatic/goja-babel
 # github.com/kr/pretty v0.2.1
 github.com/kr/pretty
