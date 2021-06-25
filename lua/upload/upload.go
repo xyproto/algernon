@@ -235,6 +235,13 @@ func uploadedfileSaveIn(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Retrieve the file content
+func uploadedfileGet(L *lua.LState) int {
+	ulf := checkUploadedFile(L) // arg 1
+	L.Push(lua.LString(ulf.buf.Bytes()))
+	return 1 // number of results
+}
+
 // The hash map methods that are to be registered
 var uploadedfileMethods = map[string]lua.LGFunction{
 	"__tostring": uploadedfileToString,
@@ -243,6 +250,7 @@ var uploadedfileMethods = map[string]lua.LGFunction{
 	"mimetype":   uploadedfileMimeType,
 	"save":       uploadedfileSave,
 	"savein":     uploadedfileSaveIn,
+	"content":    uploadedfileGet,
 }
 
 // Load makes functions related to saving an uploaded file available
