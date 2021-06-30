@@ -430,6 +430,8 @@ uploadedfile:filename() -> string
 uploadedfile:size() -> number
 // Return the mime type of the uploaded file, as specified by the client
 uploadedfile:mimetype() -> string
+// Return the full textual content of the uploaded file
+uploadedfile:content() -> string
 // Save the uploaded data locally. Takes an optional filename.
 uploadedfile:save([string]) -> bool
 // Save the uploaded data as the client-provided filename, in the specified
