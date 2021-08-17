@@ -1,5 +1,5 @@
-github.com/lib/pq v1.10.2 h1:AqzbZs4ZoCBp+GtejcpCpcxM3zlSMx29dXbUSeVtJb8=
-github.com/lib/pq v1.10.2/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/lib/pq v1.8.0 h1:9xohqzkUwzR4Ga4ivdTcawVS89YSDVxXMa3xJX3cGzg=
+github.com/lib/pq v1.8.0/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff h1:G+UgV5480yPnIK9+aaz4Tx0l7hu8lcDuXc9SfTbK1+w=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff/go.mod h1:+c0/g8lVJKAi+uZ/kPHqSzf2UsSI2If03smY6xITgtM=
 github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c h1:lxAVlHyqZRKpiMVzJj1iZy5wxg+COPyhnj8snRgJfeU=

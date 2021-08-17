@@ -17,7 +17,7 @@ import (
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.7
+	Version = 2.6
 )
 
 var (
@@ -95,7 +95,7 @@ func TestConnection() (err error) {
 // TestConnectionHost checks if a given database server is up and running.
 // connectionString may be on the form "username:password@host:port/database".
 // The database name is ignored.
-func TestConnectionHost(connectionString string) error {
+func TestConnectionHost(connectionString string) (err error) {
 	newConnectionString, _ := rebuildConnectionString(connectionString, false)
 	// Connect to the given host:port
 	db, err := sql.Open("postgres", newConnectionString)
@@ -115,7 +115,7 @@ func TestConnectionHost(connectionString string) error {
 }
 
 // TestConnectionHostWithDSN checks if a given database server is up and running.
-func TestConnectionHostWithDSN(connectionString string) error {
+func TestConnectionHostWithDSN(connectionString string) (err error) {
 	// Connect to the given host:port
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -148,62 +148,41 @@ func escape(s string) string {
 // NewHost sets up a new database connection.
 // connectionString may be on the form "username:password@host:port/database".
 func NewHost(connectionString string) *Host {
-	host, err := NewHost2(connectionString)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return host
-}
-
-// NewHost2 sets up a new database connection.
-// connectionString may be on the form "username:password@host:port/database".
-// An error may be returned.
-func NewHost2(connectionString string) (*Host, error) {
 	newConnectionString, dbname := rebuildConnectionString(connectionString, true)
 	db, err := sql.Open("postgres", newConnectionString)
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to %s", newConnectionString)
+		log.Fatalln("Could not connect to " + newConnectionString + "!")
 	}
 	host := &Host{db, pq.QuoteIdentifier(dbname), false}
 	if err := host.Ping(); err != nil {
-		return nil, fmt.Errorf("database host does not reply to ping: %s", err)
+		log.Fatalln("Host does not reply to ping: " + err.Error())
 	}
 	if err := host.createDatabase(); err != nil {
-		return nil, fmt.Errorf("could not create database %s: %s", host.dbname, err)
+		log.Fatalln("Could not create database " + host.dbname + ": " + err.Error())
 	}
 	if err := host.useDatabase(); err != nil {
-		return nil, fmt.Errorf("could not use database %s: %s", host.dbname, err)
+		panic("Could not use database " + host.dbname + ": " + err.Error())
 	}
-	return host, nil
+	return host
 }
 
 // NewHostWithDSN creates a new database connection with a valid DSN.
 func NewHostWithDSN(connectionString string, dbname string) *Host {
-	host, err := NewHostWithDSN2(connectionString, dbname)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return host
-}
-
-// NewHostWithDSN2 creates a new database connection with a valid DSN.
-// An error may be returned.
-func NewHostWithDSN2(connectionString string, dbname string) (*Host, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to %s", connectionString)
+		log.Fatalln("Could not connect to " + connectionString + "!")
 	}
 	host := &Host{db, pq.QuoteIdentifier(dbname), false}
 	if err := host.Ping(); err != nil {
-		return nil, fmt.Errorf("database host does not reply to ping: %s", err)
+		log.Fatalln("Host does not reply to ping: " + err.Error())
 	}
 	if err := host.createDatabase(); err != nil {
-		return nil, fmt.Errorf("could not create database %s: %s", host.dbname, err)
+		log.Fatalln("Could not create database " + host.dbname + ": " + err.Error())
 	}
 	if err := host.useDatabase(); err != nil {
-		return nil, fmt.Errorf("could not use database %s: %s", host.dbname, err)
+		panic("Could not use database " + host.dbname + ": " + err.Error())
 	}
-	return host, nil
+	return host
 }
 
 // New sets up a connection to the default (local) database host
@@ -495,7 +474,7 @@ func (s *Set) All() ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := s.host.db.Query(fmt.Sprintf("SELECT DISTINCT %s FROM %s", setCol, s.table))
+	rows, err := s.host.db.Query(fmt.Sprintf("SELECT %s FROM %s", setCol, s.table))
 	if err != nil {
 		return values, err
 	}
@@ -563,6 +542,7 @@ func NewHashMap(host *Host, name string) (*HashMap, error) {
 
 // Set a value in a hashmap given the element id (for instance a user id) and the key (for instance "password")
 func (h *HashMap) Set(owner, key, value string) error {
+
 	// See if the owner and key already exists
 	hasKey, err := h.Has(owner, key)
 	if err != nil {
@@ -586,6 +566,26 @@ func (h *HashMap) Set(owner, key, value string) error {
 		}
 	}
 	return err
+
+}
+
+// SetString will return the SQL string for setting a value. Useful for batch imports. Returns an empty string if there are issues.
+func (h *HashMap) SetString(owner, key, value string) string {
+	// See if the owner and key already exists
+	hasKey, err := h.Has(owner, key)
+	if err != nil {
+		return ""
+	}
+	if Verbose {
+		log.Printf("%s/%s exists? %v\n", owner, key, hasKey)
+	}
+	if !h.host.rawUTF8 {
+		Encode(&value)
+	}
+	if hasKey {
+		return fmt.Sprintf("UPDATE %s SET attr = attr || '\"%s\"=>\"%s\"' :: hstore WHERE %s = %s AND attr ? %s", h.table, escape(key), escape(value), ownerCol, singleQuote(owner), singleQuote(key))
+	}
+	return fmt.Sprintf("INSERT INTO %s (%s, attr) VALUES (%s, '\"%s\"=>\"%s\"')", h.table, ownerCol, singleQuote(owner), escape(key), escape(value))
 }
 
 // Get a value from a hashmap given the element id (for instance a user id) and the key (for instance "password").
@@ -685,7 +685,7 @@ func (h *HashMap) All() ([]string, error) {
 		values []string
 		value  string
 	)
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT DISTINCT %s FROM %s", ownerCol, h.table))
+	rows, err := h.host.db.Query(fmt.Sprintf("SELECT %s FROM %s", ownerCol, h.table))
 	if err != nil {
 		return values, err
 	}
@@ -705,56 +705,6 @@ func (h *HashMap) All() ([]string, error) {
 	}
 	err = rows.Err()
 	return values, err
-}
-
-// AllWhere returns all owner ID's that has a property where key == value
-func (h *HashMap) AllWhere(key, value string) ([]string, error) {
-	var values []string
-	if !h.host.rawUTF8 {
-		Encode(&value)
-	}
-	// Return all owner ID's for all entries that has the given key->value attribute
-	//fmt.Printf("SELECT DISTINCT %s FROM %s WHERE attr @> '\"%s\"=>\"%s\"' :: hstore", ownerCol, h.table, key, value)
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT DISTINCT %s FROM %s WHERE attr @> '\"%s\"=>\"%s\"' :: hstore", ownerCol, h.table, key, value))
-	if err != nil {
-		return values, err
-	}
-	if rows == nil {
-		return values, ErrNoAvailableValues
-	}
-	defer rows.Close()
-	var v string
-	for rows.Next() {
-		err = rows.Scan(&v)
-		if !h.host.rawUTF8 {
-			Decode(&v)
-		}
-		values = append(values, v)
-		if err != nil {
-			return values, err
-		}
-	}
-	err = rows.Err()
-	return values, err
-}
-
-// Count counts the number of owners for hash map elements
-func (h *HashMap) Count() (int, error) {
-	value := -1
-	rows, err := h.host.db.Query(fmt.Sprintf("SELECT COUNT(*) FROM (SELECT DISTINCT %s FROM %s) as temp", ownerCol, h.table))
-	if err != nil {
-		return value, err
-	}
-	if rows == nil {
-		return value, ErrNoAvailableValues
-	}
-	defer rows.Close()
-	rows.Next()
-	err = rows.Scan(&value)
-	if err != nil {
-		return value, err
-	}
-	return value, nil
 }
 
 // GetAll is deprecated in favor of All
@@ -937,4 +887,5 @@ func (kv *KeyValue) Clear() error {
 	// Truncate the table
 	_, err := kv.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", pq.QuoteIdentifier(kvPrefix+kv.table)))
 	return err
+
 }

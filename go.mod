@@ -17,7 +17,6 @@ require (
 	github.com/lib/pq v1.10.2
 	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -45,12 +44,13 @@ require (
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 	github.com/xyproto/simpleform v0.2.0
-	github.com/xyproto/simplehstore v0.0.0-20210607125359-5215f95594e9 // indirect
+	github.com/xyproto/simplehstore v0.0.0-20200909111002-3d2a485c4155 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
-	github.com/xyproto/textoutput v1.12.6
+	github.com/xyproto/textoutput v1.12.9
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
+	github.com/xyproto/vt100 v1.9.5 // indirect
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect

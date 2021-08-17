@@ -134,7 +134,6 @@ github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.13
-## explicit
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
@@ -214,6 +213,8 @@ github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 ## explicit
 github.com/xyproto/ask
+# github.com/xyproto/benchmarked v0.1.0
+github.com/xyproto/benchmarked
 # github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9
 ## explicit
 github.com/xyproto/cookie
@@ -270,7 +271,7 @@ github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 ## explicit
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v0.0.0-20210607125359-5215f95594e9
+# github.com/xyproto/simplehstore v0.0.0-20200909111002-3d2a485c4155
 ## explicit
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
@@ -283,7 +284,7 @@ github.com/xyproto/simpleredis
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.12.6
+# github.com/xyproto/textoutput v1.12.9
 ## explicit
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
@@ -292,7 +293,8 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.9.2
+# github.com/xyproto/vt100 v1.9.5
+## explicit
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 ## explicit

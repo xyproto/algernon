@@ -10,16 +10,16 @@ Package for controlling text output, with or without colors, on Linux, using VT1
 package main
 
 import (
-	"github.com/xyproto/textoutput"
+    "github.com/xyproto/textoutput"
 )
 
 func main() {
-	// Prepare to output colored text, but respect the NO_COLOR environment variable
-	o := textoutput.New()
+    // Prepare to output colored text, but respect the NO_COLOR environment variable
+    o := textoutput.New()
 
-	o.Print("<blue>hi</blue> ")
-	o.Println("<yellow>there</yellow>")
-	o.Printf("<green>%s: <red>%d<off>\n", "number", 42)
+    o.Print("<blue>hi</blue> ")
+    o.Println("<yellow>there</yellow>")
+    o.Printf("<green>%s: <red>%d<off>\n", "number", 42)
 }
 ```
 
@@ -27,6 +27,6 @@ func main() {
 
 ## General info
 
-* Version: 1.12.6
+* Version: 1.12.9
 * License: MIT
 * Author &lt;xyproto@archlinux.org&gt;
