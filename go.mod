@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.10
+go 1.15
 
 require (
 	github.com/alecthomas/chroma v0.9.1 // indirect
@@ -13,12 +13,9 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 	github.com/lib/pq v1.10.2
-	github.com/lucas-clemente/quic-go v0.19.2
-	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
+	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
@@ -56,10 +53,12 @@ require (
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.6 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/sys v0.0.0-20210616045830-e2b7044e8c71 // indirect
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/mod v0.5.0 // indirect
+	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
+	golang.org/x/tools v0.1.5 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

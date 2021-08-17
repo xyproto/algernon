@@ -37,6 +37,7 @@ type updatableAEAD struct {
 
 	firstRcvdWithCurrentKey protocol.PacketNumber
 	firstSentWithCurrentKey protocol.PacketNumber
+	highestRcvdPN           protocol.PacketNumber // highest packet number received (which could be successfully unprotected)
 	numRcvdWithCurrentKey   uint64
 	numSentWithCurrentKey   uint64
 	rcvAEAD                 cipher.AEAD
@@ -153,13 +154,20 @@ func (a *updatableAEAD) setAEADParameters(aead cipher.AEAD, suite *qtls.CipherSu
 	}
 }
 
+func (a *updatableAEAD) DecodePacketNumber(wirePN protocol.PacketNumber, wirePNLen protocol.PacketNumberLen) protocol.PacketNumber {
+	return protocol.DecodePacketNumber(wirePNLen, a.highestRcvdPN, wirePN)
+}
+
 func (a *updatableAEAD) Open(dst, src []byte, rcvTime time.Time, pn protocol.PacketNumber, kp protocol.KeyPhaseBit, ad []byte) ([]byte, error) {
 	dec, err := a.open(dst, src, rcvTime, pn, kp, ad)
 	if err == ErrDecryptionFailed {
 		a.invalidPacketCount++
 		if a.invalidPacketCount >= a.invalidPacketLimit {
-			return nil, qerr.AEADLimitReached
+			return nil, &qerr.TransportError{ErrorCode: qerr.AEADLimitReached}
 		}
+	}
+	if err == nil {
+		a.highestRcvdPN = utils.MaxPacketNumber(a.highestRcvdPN, pn)
 	}
 	return dec, err
 }
@@ -193,7 +201,10 @@ func (a *updatableAEAD) open(dst, src []byte, rcvTime time.Time, pn protocol.Pac
 		}
 		// Opening succeeded. Check if the peer was allowed to update.
 		if a.keyPhase > 0 && a.firstSentWithCurrentKey == protocol.InvalidPacketNumber {
-			return nil, qerr.NewError(qerr.KeyUpdateError, "keys updated too quickly")
+			return nil, &qerr.TransportError{
+				ErrorCode:    qerr.KeyUpdateError,
+				ErrorMessage: "keys updated too quickly",
+			}
 		}
 		a.rollKeys()
 		a.logger.Debugf("Peer updated keys to %d", a.keyPhase)
@@ -242,7 +253,10 @@ func (a *updatableAEAD) Seal(dst, src []byte, pn protocol.PacketNumber, ad []byt
 func (a *updatableAEAD) SetLargestAcked(pn protocol.PacketNumber) error {
 	if a.firstSentWithCurrentKey != protocol.InvalidPacketNumber &&
 		pn >= a.firstSentWithCurrentKey && a.numRcvdWithCurrentKey == 0 {
-		return qerr.NewError(qerr.KeyUpdateError, fmt.Sprintf("received ACK for key phase %d, but peer didn't update keys", a.keyPhase))
+		return &qerr.TransportError{
+			ErrorCode:    qerr.KeyUpdateError,
+			ErrorMessage: fmt.Sprintf("received ACK for key phase %d, but peer didn't update keys", a.keyPhase),
+		}
 	}
 	a.largestAcked = pn
 	return nil

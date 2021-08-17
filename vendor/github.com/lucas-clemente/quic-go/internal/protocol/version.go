@@ -18,16 +18,16 @@ const (
 
 // The version numbers, making grepping easier
 const (
-	VersionTLS      VersionNumber = 0xff00001d // draft-29
-	VersionWhatever VersionNumber = 1          // for when the version doesn't matter
+	VersionTLS      VersionNumber = 0x1
+	VersionWhatever VersionNumber = math.MaxUint32 - 1 // for when the version doesn't matter
 	VersionUnknown  VersionNumber = math.MaxUint32
 	VersionDraft29  VersionNumber = 0xff00001d
-	VersionDraft32  VersionNumber = 0xff000020
+	Version1        VersionNumber = 0x1
 )
 
 // SupportedVersions lists the versions that the server supports
 // must be in sorted descending order
-var SupportedVersions = []VersionNumber{VersionDraft32, VersionDraft29}
+var SupportedVersions = []VersionNumber{Version1, VersionDraft29}
 
 // IsValidVersion says if the version is known to quic-go
 func IsValidVersion(v VersionNumber) bool {
@@ -37,7 +37,7 @@ func IsValidVersion(v VersionNumber) bool {
 func (vn VersionNumber) String() string {
 	// For releases, VersionTLS will be set to a draft version.
 	// A switch statement can't contain duplicate cases.
-	if vn == VersionTLS && VersionTLS != VersionDraft29 && VersionTLS != VersionDraft32 {
+	if vn == VersionTLS && VersionTLS != VersionDraft29 && VersionTLS != Version1 {
 		return "TLS dev version (WIP)"
 	}
 	//nolint:exhaustive
@@ -48,8 +48,8 @@ func (vn VersionNumber) String() string {
 		return "unknown"
 	case VersionDraft29:
 		return "draft-29"
-	case VersionDraft32:
-		return "draft-32"
+	case Version1:
+		return "v1"
 	default:
 		if vn.isGQUIC() {
 			return fmt.Sprintf("gQUIC %d", vn.toGQUICVersion())
@@ -64,12 +64,6 @@ func (vn VersionNumber) isGQUIC() bool {
 
 func (vn VersionNumber) toGQUICVersion() int {
 	return int(10*(vn-gquicVersion0)/0x100) + int(vn%0x10)
-}
-
-// UseRetireBugBackwardsCompatibilityMode says if it is necessary to use the backwards compatilibity mode.
-// This is only the case if it 1. is enabled and 2. draft-29 is used.
-func UseRetireBugBackwardsCompatibilityMode(enabled bool, v VersionNumber) bool {
-	return enabled && v == VersionDraft29
 }
 
 // IsSupportedVersion returns true if the server supports this version
@@ -114,15 +108,4 @@ func GetGreasedVersions(supported []VersionNumber) []VersionNumber {
 	greased[randPos] = generateReservedVersion()
 	copy(greased[randPos+1:], supported[randPos:])
 	return greased
-}
-
-// StripGreasedVersions strips all greased versions from a slice of versions
-func StripGreasedVersions(versions []VersionNumber) []VersionNumber {
-	realVersions := make([]VersionNumber, 0, len(versions))
-	for _, v := range versions {
-		if v&0x0f0f0f0f != 0x0a0a0a0a {
-			realVersions = append(realVersions, v)
-		}
-	}
-	return realVersions
 }

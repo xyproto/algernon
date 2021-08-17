@@ -155,7 +155,7 @@ func (m *outgoingItemsMap) DeleteStream(num protocol.StreamNum) error {
 
 	if _, ok := m.streams[num]; !ok {
 		return streamError{
-			message: "Tried to delete unknown outgoing stream %d",
+			message: "tried to delete unknown outgoing stream %d",
 			nums:    []protocol.StreamNum{num},
 		}
 	}
@@ -176,6 +176,17 @@ func (m *outgoingItemsMap) SetMaxStream(num protocol.StreamNum) {
 		m.maybeSendBlockedFrame()
 	}
 	m.unblockOpenSync()
+}
+
+// UpdateSendWindow is called when the peer's transport parameters are received.
+// Only in the case of a 0-RTT handshake will we have open streams at this point.
+// We might need to update the send window, in case the server increased it.
+func (m *outgoingItemsMap) UpdateSendWindow(limit protocol.ByteCount) {
+	m.mutex.Lock()
+	for _, str := range m.streams {
+		str.updateSendWindow(limit)
+	}
+	m.mutex.Unlock()
 }
 
 // unblockOpenSync unblocks the next OpenStreamSync go-routine to open a new stream
