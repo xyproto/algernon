@@ -170,7 +170,7 @@ github.com/xyproto/gopher-lua/parse
 github.com/xyproto/gopher-lua/pm
 # github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 github.com/xyproto/jpath
-# github.com/xyproto/mime v0.0.0-20200828140854-76b50a8d49f0
+# github.com/xyproto/mime v0.0.0-20210817202823-e3bc97c7d9ef
 github.com/xyproto/mime
 # github.com/xyproto/onthefly v0.0.0-20200729114226-067b477dcf06
 github.com/xyproto/onthefly

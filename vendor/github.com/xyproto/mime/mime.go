@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -130,7 +131,7 @@ func (mr *Reader) SetHeader(w http.ResponseWriter, ext string) {
 		// Default mime type
 		mimestring = "application/octet-stream"
 	}
-	if mr.utf8 {
+	if mr.utf8 && !strings.Contains(mimestring, "wasm") && !strings.Contains(mimestring, "image") {
 		mimestring += "; charset=utf-8"
 	}
 	w.Header().Add("Content-Type", mimestring)
