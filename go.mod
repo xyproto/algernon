@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.15
+go 1.16
 
 require (
 	github.com/alecthomas/chroma v0.9.1 // indirect

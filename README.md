@@ -25,7 +25,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.15 or later.
+Requires Go 1.16 or later.
 
 Clone algernon outside of `GOPATH`:
 
@@ -111,7 +111,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go >= 1.15 or GCC >= 10 (`gccgo`).
+* Requires Go >= 1.16 or GCC >= 10 (`gccgo`).
 
 Q&A
 ---
@@ -1074,8 +1074,8 @@ Releases
 Requirements
 ------------
 
-* `go 1.15` or later is supported.
-* For `go 1.10`, `1.11`, `1.12`, `1.13`, `1.14` + `gcc-go <10` version `1.12.7` of Algernon is the latest supported version.
+* `go 1.16` or later is supported.
+* For `go 1.10`, `1.11`, `1.12`, `1.13`, `1.14`, '1.15` + `gcc-go <10` version `1.12.7` of Algernon is the latest supported version.
 
 Access logs
 -----------
