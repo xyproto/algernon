@@ -58,7 +58,7 @@ func PprintToWriter(w io.Writer, value lua.LValue) {
 		}
 		// A go map, but with "interface{}" hidden
 		// TODO: Also hide double quotes, but only when they surround the keys in the map
-		fmt.Fprint(w, strings.Replace(fmt.Sprintf("%#v", m)[29:], ":[]interface {}", "=", -1), "\"", "", -1)
+		fmt.Fprint(w, strings.ReplaceAll(fmt.Sprintf("%#v", m)[29:], ":[]interface {}", "="), "\"", "", -1)
 	case *lua.LFunction:
 		if v.Proto != nil {
 			// Extended information about the function

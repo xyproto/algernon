@@ -55,7 +55,7 @@ func (LuaPlugin) Add3(jsonargs []byte, response *[]byte) (err error) {
 
 // Code is called once when the Plugin function is used in Algernon
 func (LuaPlugin) Code(pluginPath string, response *string) error {
-	*response = strings.Replace(luacode, "$0", pluginPath, -1)
+	*response = strings.ReplaceAll(luacode, "$0", pluginPath)
 	return nil
 }
 

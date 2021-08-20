@@ -594,13 +594,13 @@ func highlight(o *textoutput.TextOutput, line string) string {
 			function = o.LightGreen(fields[0])
 			unprocessed = "(" + fields[1]
 		} else if strings.Contains(unprocessed, "|") {
-			unprocessed = "<magenta>" + strings.Replace(unprocessed, "|", "<white>|</white><magenta>", -1) + "</magenta>"
+			unprocessed = "<magenta>" + strings.ReplaceAll(unprocessed, "|", "<white>|</white><magenta>") + "</magenta>"
 		}
 	}
 	unprocessed, typed := colorSplit(unprocessed, "->", nil, o.LightBlue, o.DarkRed, false)
-	unprocessed = strings.Replace(unprocessed, "string", o.LightBlue("string"), -1)
-	unprocessed = strings.Replace(unprocessed, "number", o.LightYellow("number"), -1)
-	unprocessed = strings.Replace(unprocessed, "function", o.LightCyan("function"), -1)
+	unprocessed = strings.ReplaceAll(unprocessed, "string", o.LightBlue("string"))
+	unprocessed = strings.ReplaceAll(unprocessed, "number", o.LightYellow("number"))
+	unprocessed = strings.ReplaceAll(unprocessed, "function", o.LightCyan("function"))
 	return module + function + unprocessed + typed + comment
 }
 
