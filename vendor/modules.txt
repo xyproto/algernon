@@ -332,7 +332,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2
+# golang.org/x/sys v0.0.0-20210819135213-f52c844e1c1c
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
