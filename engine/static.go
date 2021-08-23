@@ -15,11 +15,9 @@ import (
 )
 
 const (
-	defaultStaticCacheSize = 128 * utils.MiB
-
+	defaultStaticCacheSize            = 128 * utils.MiB
 	maxAttemptsAtIncreasingPortNumber = 128
-
-	delayBeforeLaunchingBrowser = time.Millisecond * 200
+	delayBeforeLaunchingBrowser       = time.Millisecond * 200
 )
 
 // nextPort increases the port number by 1
