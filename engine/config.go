@@ -25,6 +25,7 @@ import (
 	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
+	"github.com/xyproto/env"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/recwatch"
@@ -260,10 +261,7 @@ var (
 
 // New creates a new server configuration based using the default values
 func New(versionString, description string) (*Config, error) {
-	tmpdir := os.Getenv("TMPDIR")
-	if tmpdir == "" {
-		tmpdir = "/tmp"
-	}
+	tmpdir := env.Str("TMPDIR", "/tmp")
 	ac := &Config{
 		curlSupport: true,
 
