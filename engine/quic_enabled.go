@@ -1,3 +1,4 @@
+//go:build linux || freebsd || windows || netbsd || (darwin && amd64)
 // +build linux freebsd windows netbsd darwin,amd64
 
 package engine

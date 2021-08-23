@@ -1,3 +1,4 @@
+//go:build plan9 || solaris || openbsd || (darwin && !amd64)
 // +build plan9 solaris openbsd darwin,!amd64
 
 package engine
