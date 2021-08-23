@@ -261,7 +261,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				log.Error(err)
 			}
 		}()
-	case !(ac.serveJustHTTP2 || ac.serveJustHTTP):
+	case !ac.serveJustHTTP2 && !ac.serveJustHTTP:
 		if strings.HasPrefix(ac.serverAddr, ":") {
 			log.Info("Serving HTTP/2 on https://localhost" + ac.serverAddr + "/")
 		} else {
