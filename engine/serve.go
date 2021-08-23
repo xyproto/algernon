@@ -216,13 +216,28 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		servingHTTP = true
 		mut.Unlock()
 		go func() {
-			HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+":80")
-			if err := HTTPserver.ListenAndServe(); err != nil {
-				mut.Lock()
-				servingHTTP = false
-				mut.Unlock()
-				// If we can't serve regular HTTP on port 80, give up
-				ac.fatalExit(err)
+			if ac.noHTTPRedirect {
+				// Redirect HTTPS to HTTP
+				redirectFunc := func(w http.ResponseWriter, req *http.Request) {
+					http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
+				}
+				if err := http.ListenAndServe(ac.serverHost+":80", http.HandlerFunc(redirectFunc)); err != nil {
+					mut.Lock()
+					servingHTTP = false
+					mut.Unlock()
+					// If we can't serve regular HTTP on port 80, give up
+					ac.fatalExit(err)
+				}
+			} else {
+				// Don't redirect, but serve the same contents as the HTTPS server as HTTP on port 80
+				HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+":80")
+				if err := HTTPserver.ListenAndServe(); err != nil {
+					mut.Lock()
+					servingHTTP = false
+					mut.Unlock()
+					// If we can't serve regular HTTP on port 80, give up
+					ac.fatalExit(err)
+				}
 			}
 		}()
 	case ac.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
