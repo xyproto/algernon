@@ -226,9 +226,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 					s += key + ", "
 				}
 				// Remove the final comma
-				if strings.HasSuffix(s, ", ") {
-					s = s[:len(s)-2]
-				}
+				s = strings.TrimSuffix(s, ", ")
 				// Output the message
 				log.Info(s)
 			}

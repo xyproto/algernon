@@ -878,9 +878,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 				topic = line[8:]
 			}
 			if len(topic) > 0 {
-				if strings.HasSuffix(topic, ")") {
-					topic = strings.TrimSuffix(topic, ")")
-				}
+				topic = strings.TrimSuffix(topic, ")")
 				outputHelpAbout(o, generalHelpText+webHelpText+configHelpText, topic)
 				continue
 			}

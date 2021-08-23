@@ -43,9 +43,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	)
 
 	// Remove a trailing slash after the root directory, if present
-	if strings.HasSuffix(rootdir, "/") {
-		rootdir = rootdir[:len(rootdir)-1]
-	}
+	rootdir = strings.TrimSuffix(rootdir, "/")
 
 	// Fill the coming HTML body with a list of all the filenames in `dirname`
 	for _, filename := range utils.GetFilenames(dirname) {

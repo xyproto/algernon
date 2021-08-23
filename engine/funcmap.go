@@ -44,9 +44,7 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 				s += key + ", "
 			}
 			// Remove the final comma
-			if strings.HasSuffix(s, ", ") {
-				s = s[:len(s)-2]
-			}
+			s = strings.TrimSuffix(s, ", ")
 			// Output the message
 			log.Info(s)
 		}
