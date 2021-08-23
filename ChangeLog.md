@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.12.13 to 1.12.14
+===============================
+
+* Downgrade fsnotify to v1.4.9 so that building with GOOS=freebsd works again
+
 Changes from 1.12.12 to 1.12.13
 ===============================
 
