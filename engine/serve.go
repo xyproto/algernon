@@ -2,12 +2,14 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/caddyserver/certmagic"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/http2"
@@ -149,6 +151,29 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// Decide which protocol to listen to
 	switch {
+	case len(ac.certMagicDomains) > 0:
+		if strings.HasPrefix(ac.serverAddr, ":") {
+			log.Info("Serving with CertMagic on https://localhost" + ac.serverAddr + "/")
+		} else {
+			log.Info("Serving with CertMagic on https://" + ac.serverAddr + "/")
+		}
+		mut.Lock()
+		servingHTTPS = true
+		mut.Unlock()
+		// TODO: Look at "Advanced use" at https://github.com/caddyserver/certmagic#examples
+		// Listen for HTTP and HTTPS requests, for specific domain(s)
+		go func() {
+			if err := certmagic.HTTPS(ac.certMagicDomains, mux); err != nil {
+				log.Errorf("%s. Not serving with CertMagic.", err)
+				log.Info("Use the -t flag for serving regular HTTP.")
+				mut.Lock()
+				servingHTTPS = false
+				mut.Unlock()
+				// If HTTPS failed (perhaps the key + cert are missing),
+				// serve plain HTTP instead
+				justServeRegularHTTP <- true
+			}
+		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
 		if strings.HasPrefix(ac.serverAddr, ":") {
 			log.Info("Serving QUIC on https://localhost" + ac.serverAddr + "/")

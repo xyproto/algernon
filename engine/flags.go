@@ -114,6 +114,8 @@ Available flags:
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
+  --certmagic=STRING[,STRING]  Provide a comma separated list of domains that will be served
+                               with CertMagic, for automatic TLS certificate retrieval.
 ` + quicUsageOrMessage + `
 
 Example usage:
@@ -149,6 +151,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		rawCache bool
 		// Used if disabling the database backend
 		noDatabase bool
+		// Used to hold the list of comma separated domains
+		certMagicString string
 	)
 
 	// The usage function that provides more help (for --help or -h)
@@ -226,6 +230,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
+	flag.StringVar(&certMagicString, "certmagic", "", "Comma separated list of domains to be served with CertMagic")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -271,6 +276,11 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
 	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
+
+	if certMagicString != "" {
+		// Split returns a slice with the given string if the separator is not found
+		ac.certMagicDomains = strings.Split(certMagicString, ",")
+	}
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {

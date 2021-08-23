@@ -243,6 +243,12 @@ type Config struct {
 
 	// Secret to be used when setting and getting user login cookies
 	cookieSecret string
+
+	// Redirect HTTP traffic to HTTPS
+	redirectHTTP bool
+
+	// CertMagic is enabled if one or more CertMagic domains are given
+	certMagicDomains []string
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
