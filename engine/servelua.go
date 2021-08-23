@@ -9,9 +9,9 @@ import (
 
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
+	"github.com/xyproto/gluamapper"
 	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pongo2"
-	"github.com/xyproto/gluamapper"
 
 	log "github.com/sirupsen/logrus"
 )
