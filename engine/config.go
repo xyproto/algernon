@@ -313,7 +313,7 @@ func New(versionString, description string) (*Config, error) {
 		jsxOptions: map[string]interface{}{
 			"plugins": []string{
 				"transform-react-jsx",
-				"transform-es2015-block-scoping",
+				"transform-block-scoping",
 			},
 		},
 	}
