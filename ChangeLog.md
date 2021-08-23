@@ -1,5 +1,27 @@
 # Changelog
 
+Changes from 1.12.12 to 1.12.13
+===============================
+
+* Fix a typo in the documentation (thanks Felix Yan)
+* Add support for simple MSSQL queries, ref #57
+* Improve MSSQL support (thanks Matt Mc)
+* Improvements to table mappings in Lua, including changes to gluamapper (thanks Matt Mc)
+* Support headers in buffered responses, ref #75 (thanks Matt Mc)
+* Improvements to the file upload functionality (thanks Matt Mc)
+* Various minor fixes and improvements (thanks Matt Mc)
+* Add three new repl commands: `pwd`, `serverdir` and `serverfile`
+* Add nicer help output for built-in commands to the repl
+* Add a `ServerDir` function for the server configuration Lua script
+* Fix wasm mimetype issue, ref #82
+* Fix the Babl plugin configuration after updating the Babl dependency
+* Various improvements to the samples and to the "Welcome" page
+* Follow the advice of `go vet`, `golint` and `staticcheck`
+* Support Go 1.16 and Go 1.17 only, for now
+* Update CI configuration
+* Update dependencies
+* Update documentation
+
 Changes from 1.12.11 to 1.12.12
 ===============================
 
