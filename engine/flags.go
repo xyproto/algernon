@@ -81,6 +81,7 @@ Available flags:
   --postgresdb=NAME            Use the given PostgreSQL database name.
   --clear                      Clear the default URI prefixes that are used
                                when handling permissions.
+  -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
   -V, --verbose                Slightly more verbose logging.
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --eventrefresh=DURATION      How often the event server should refresh
@@ -144,7 +145,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
-		serveJustQUICShort, onlyLuaModeShort bool
+		serveJustQUICShort, onlyLuaModeShort, redirectShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -185,6 +186,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.productionMode, "prod", false, "Production mode")
 	flag.BoolVar(&ac.debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&ac.verboseMode, "verbose", false, "Verbose logging")
+	flag.BoolVar(&ac.redirectHTTP, "redirect", false, "Redirect HTTP traffic to HTTPS if both are enabled")
 	flag.BoolVar(&ac.autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
@@ -253,6 +255,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		flag.BoolVar(&serveJustQUICShort, "u", false, "Serve just QUIC")
 	}
 	flag.BoolVar(&onlyLuaModeShort, "l", false, "Only present the Lua REPL")
+	flag.BoolVar(&redirectShort, "r", false, "Redirect HTTP traffic to HTTPS, if both are enabled")
 
 	flag.Parse()
 
@@ -276,6 +279,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
 	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
+	ac.redirectHTTP = ac.redirectHTTP || redirectShort
 
 	if certMagicString != "" {
 		// Split returns a slice with the given string if the separator is not found
