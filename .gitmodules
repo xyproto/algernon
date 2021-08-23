@@ -1,3 +1,0 @@
-[submodule "vendor/github.com/xyproto/quic-go"]
-	path = vendor/github.com/xyproto/quic-go
-	url = https://github.com/xyproto/quic-go
