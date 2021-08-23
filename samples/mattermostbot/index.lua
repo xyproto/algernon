@@ -9,7 +9,7 @@ content("text/html; charset=utf-8")
 
 -- Only accept POST requests
 if method() ~= "POST" then
-    print("Unsupported method: " .. method())
+    print("Unsupported method: " .. method() .. ", see index.lua for more information and configuration settings")
     return
 end
 
