@@ -38,5 +38,5 @@ Resources
 * [Algernon project page](https://github.com/xyproto/algernon/)
 * [Learn Markdown in Y minutes](https://learnxinyminutes.com/docs/markdown/)
 * [Markdown tutorial](http://markdowntutorial.com/)
+* [Lua at Rosetta Code](https://rosettacode.org/wiki/Category:Lua)
 * [Learn Lua in Y minutes](https://learnxinyminutes.com/docs/lua/)
-* [Lua crash course](http://luatut.com/crash_course.html)
