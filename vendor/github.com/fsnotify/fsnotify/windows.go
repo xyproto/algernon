@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build windows
 // +build windows
 
 package fsnotify
@@ -64,8 +63,8 @@ func (w *Watcher) Close() error {
 	return <-ch
 }
 
-// AddRaw starts watching the named file or directory (non-recursively). Symlinks are not implicitly resolved.
-func (w *Watcher) AddRaw(name string) error {
+// Add starts watching the named file or directory (non-recursively).
+func (w *Watcher) Add(name string) error {
 	if w.isClosed {
 		return errors.New("watcher already closed")
 	}

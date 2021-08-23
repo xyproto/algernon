@@ -10,7 +10,6 @@ require (
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/fsnotify/fsnotify v1.5.0 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20210818124241-c60087094663
