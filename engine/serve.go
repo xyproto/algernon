@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -216,7 +215,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		servingHTTP = true
 		mut.Unlock()
 		go func() {
-			if ac.noHTTPRedirect {
+			if ac.redirectHTTP {
 				// Redirect HTTPS to HTTP
 				redirectFunc := func(w http.ResponseWriter, req *http.Request) {
 					http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
