@@ -248,7 +248,8 @@ type Config struct {
 	// Redirect HTTP traffic to HTTPS
 	redirectHTTP bool
 
-	// CertMagic is enabled if one or more CertMagic domains are given
+	// Use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
+	useCertMagic     bool
 	certMagicDomains []string
 }
 

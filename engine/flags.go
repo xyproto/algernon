@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
@@ -115,8 +117,8 @@ Available flags:
                                disable all features that requires a database.
   --domain                     Serve files from the subdirectory with the same
                                name as the requested domain.
-  --certmagic=STRING[,STRING]  Provide a comma separated list of domains that will be served
-                               with CertMagic, for automatic TLS certificate retrieval.
+  --letsencrypt                Use certificates provided by Let's Encrypt for all served
+                               domains and serve over regular HTTPS by using CertMagic.
 ` + quicUsageOrMessage + `
 
 Example usage:
@@ -152,8 +154,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		rawCache bool
 		// Used if disabling the database backend
 		noDatabase bool
-		// Used to hold the list of comma separated domains
-		certMagicString string
 	)
 
 	// The usage function that provides more help (for --help or -h)
@@ -232,7 +232,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
-	flag.StringVar(&certMagicString, "certmagic", "", "Comma separated list of domains to be served with CertMagic")
+	flag.BoolVar(&ac.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
@@ -280,11 +280,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
 	ac.redirectHTTP = ac.redirectHTTP || redirectShort
-
-	if certMagicString != "" {
-		// Split returns a slice with the given string if the separator is not found
-		ac.certMagicDomains = strings.Split(certMagicString, ",")
-	}
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {
@@ -500,6 +495,34 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	ac.serverHost = host
+
+	// CertMagic and Let's Encrypt
+	if ac.useCertMagic {
+		log.Info("Use Cert Magic")
+		if files, err := ioutil.ReadDir(ac.serverDirOrFilename); err != nil {
+			log.Error("Could not use Cert Magic:" + err.Error())
+			ac.useCertMagic = false
+		} else {
+			//log.Infof("Looping over %v files", len(files))
+			for _, f := range files {
+				basename := filepath.Base(f.Name())
+				if f.Mode().IsDir() && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
+					//log.Infof("Accepting directory %s", basename)
+					ac.certMagicDomains = append(ac.certMagicDomains, basename)
+				} else if (f.Mode() & os.ModeSymlink) == os.ModeSymlink {
+					//log.Infof("Accepting symlink %s", basename)
+				} else {
+					//log.Infof("Rejecting %s", basename)
+				}
+			}
+			//log.Info("Using CertMagic for these domains:")
+			for _, domain := range ac.certMagicDomains {
+				log.Info(domain)
+			}
+			// Using Let's Encrypt implies --domain, to search for suitable directories in the directory to be served
+			ac.serverAddDomain = true
+		}
+	}
 }
 
 // Set the values that has not been set by flags nor scripts (and can be set by both)
