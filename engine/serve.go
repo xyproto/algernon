@@ -154,8 +154,11 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	case ac.useCertMagic:
 		if len(ac.certMagicDomains) == 0 {
 			log.Warnln("Found no directories looking like domains in the given directory.")
+		} else if len(ac.certMagicDomains) == 1 {
+			log.Infof("Serving one domain with CertMagic: %s", ac.certMagicDomains[0])
+		} else {
+			log.Infof("Serving %d domains with CertMagic: %s", len(ac.certMagicDomains), strings.Join(ac.certMagicDomains, ", "))
 		}
-		log.Infof("Serving %d domains with CertMagic", len(ac.certMagicDomains))
 		mut.Lock()
 		servingHTTPS = true
 		mut.Unlock()

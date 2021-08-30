@@ -510,13 +510,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 				// TODO: Confirm that the symlink is a symlink to a directory, if it's a symlink
 				if dirOrSymlink && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
 					ac.certMagicDomains = append(ac.certMagicDomains, basename)
-				} else {
-					//log.Infof("Rejecting %s", basename)
 				}
-			}
-			//log.Info("Using CertMagic for these domains:")
-			for _, domain := range ac.certMagicDomains {
-				log.Info(domain)
 			}
 			// Using Let's Encrypt implies --domain, to search for suitable directories in the directory to be served
 			ac.serverAddDomain = true
