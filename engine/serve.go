@@ -11,6 +11,7 @@ import (
 	"github.com/caddyserver/certmagic"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
+	"github.com/xyproto/env"
 	"golang.org/x/net/http2"
 )
 
@@ -150,11 +151,13 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// Decide which protocol to listen to
 	switch {
-	case len(ac.certMagicDomains) > 0:
-		if strings.HasPrefix(ac.serverAddr, ":") {
-			log.Info("Serving with CertMagic on https://localhost" + ac.serverAddr + "/")
+	case ac.useCertMagic:
+		if len(ac.certMagicDomains) == 0 {
+			log.Warnln("Found no directories looking like domains in the given directory.")
+		} else if len(ac.certMagicDomains) == 1 {
+			log.Infof("Serving one domain with CertMagic: %s", ac.certMagicDomains[0])
 		} else {
-			log.Info("Serving with CertMagic on https://" + ac.serverAddr + "/")
+			log.Infof("Serving %d domains with CertMagic: %s", len(ac.certMagicDomains), strings.Join(ac.certMagicDomains, ", "))
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -162,15 +165,24 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// TODO: Look at "Advanced use" at https://github.com/caddyserver/certmagic#examples
 		// Listen for HTTP and HTTPS requests, for specific domain(s)
 		go func() {
+
+			// If $XDG_CONFIG_DIR is not set, use $HOME.
+			// If $HOME is not set, use $TMPDIR.
+			// If $TMPDIR is not set, use /tmp.
+			certStorageDir := env.Str("XDG_CONFIG_DIR", env.Str("HOME", env.Str("TMPDIR", "/tmp")))
+
+			// TODO: Find a way for Algernon users to agree on this manually
+			certmagic.DefaultACME.Agreed = true
+			// TODO: Find a better default e-mail address
+			certmagic.DefaultACME.Email = env.Str("EMAIL", "bob@zombo.com")
+			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
 			if err := certmagic.HTTPS(ac.certMagicDomains, mux); err != nil {
-				log.Errorf("%s. Not serving with CertMagic.", err)
-				log.Info("Use the -t flag for serving regular HTTP.")
 				mut.Lock()
 				servingHTTPS = false
 				mut.Unlock()
-				// If HTTPS failed (perhaps the key + cert are missing),
-				// serve plain HTTP instead
-				justServeRegularHTTP <- true
+				log.Error(err)
+				// Don't serve HTTP if CertMagic fails, just quit
+				//justServeRegularHTTP <- true
 			}
 		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
