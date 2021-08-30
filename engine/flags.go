@@ -506,11 +506,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			//log.Infof("Looping over %v files", len(files))
 			for _, f := range files {
 				basename := filepath.Base(f.Name())
-				if f.Mode().IsDir() && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
-					//log.Infof("Accepting directory %s", basename)
+				dirOrSymlink := f.Mode().IsDir || ((f.Mode() & os.ModeSymlink) == os.ModeSymlink)
+				// TODO: Confirm that the symlink is a symlink to a directory, if it's a symlink
+				if dirOrSymlink && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
 					ac.certMagicDomains = append(ac.certMagicDomains, basename)
-				} else if (f.Mode() & os.ModeSymlink) == os.ModeSymlink {
-					//log.Infof("Accepting symlink %s", basename)
 				} else {
 					//log.Infof("Rejecting %s", basename)
 				}
