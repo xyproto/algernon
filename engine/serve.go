@@ -162,9 +162,17 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// TODO: Look at "Advanced use" at https://github.com/caddyserver/certmagic#examples
 		// Listen for HTTP and HTTPS requests, for specific domain(s)
 		go func() {
+
+			// If $XDG_CONFIG_DIR is not set, use $HOME.
+			// If $HOME is not set, use $TMPDIR.
+			// If $TMPDIR is not set, use /tmp.
+			certStorageDir := env.Str("XDG_CONFIG_DIR", env.Str("HOME", env.Str("TMPDIR", "/tmp")))
+
 			// TODO: Find a way for Algernon users to agree on this manually
 			certmagic.DefaultACME.Agreed = true
-			certmagic.DefaultACME.Email = env.Str("EMAIL")
+			// TODO: Find a better default e-mail address
+			certmagic.DefaultACME.Email = env.Str("EMAIL", "bob@zombo.com")
+			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
 			if err := certmagic.HTTPS(ac.certMagicDomains, mux); err != nil {
 				mut.Lock()
 				servingHTTPS = false
