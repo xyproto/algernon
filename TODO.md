@@ -1,5 +1,12 @@
 # Plans
 
+Bugs
+----
+- [ ] The "import macro" feature in Pongo2 should be relative to the current directory, not to where Algernon is running, ref #84
+- [ ] Problem serving files with % in the filename, ref #73
+- [ ] Multiple processes per plugin, ref #64
+
+
 Priority 1
 ----------
 - [ ] Make it easier to specify Redis, without providing any further info.
