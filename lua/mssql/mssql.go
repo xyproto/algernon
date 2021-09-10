@@ -3,9 +3,9 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"time"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
@@ -56,7 +56,7 @@ func (w *LValueWrapper) Scan(value interface{}) error {
 
 	case []byte:
 		*w = LValueWrapper{lua.LString(string(v))}
-  
+
 	case time.Time:
 		*w = LValueWrapper{lua.LNumber(float64(v.Unix()))}
 
