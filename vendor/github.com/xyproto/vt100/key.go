@@ -1,3 +1,5 @@
+// +build !windows
+
 package vt100
 
 import (

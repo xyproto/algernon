@@ -5,25 +5,26 @@ go 1.16
 require (
 	github.com/alecthomas/chroma v0.9.2 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.14.1
+	github.com/caddyserver/certmagic v0.14.5
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/didip/tollbooth v4.0.2+incompatible
+	github.com/dop251/goja v0.0.0-20210912140721-ac5354e9a820 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/fsnotify/fsnotify v1.5.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20210818124241-c60087094663
+	github.com/jvatic/goja-babel v0.0.0-20210911123954-dd5e0b257731
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
-	github.com/lib/pq v1.10.2
+	github.com/lib/pq v1.10.3
 	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
@@ -43,6 +44,7 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20200905092234-9b00f24eea6e
+	github.com/xyproto/randomstring v0.0.0-20210824125156-24cf50c16803 // indirect
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
@@ -53,18 +55,16 @@ require (
 	github.com/xyproto/textoutput v1.12.9
 	github.com/xyproto/tinysvg v0.0.0-20191101100520-ef4e4a2e5b89
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
-	github.com/xyproto/vt100 v1.9.5 // indirect
+	github.com/xyproto/vt100 v1.9.8 // indirect
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
-	go.uber.org/zap v1.19.0 // indirect
+	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
+	golang.org/x/net v0.0.0-20210908191846-a5e095526f91
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

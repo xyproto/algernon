@@ -34,7 +34,7 @@ github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 github.com/bmizerany/assert
-# github.com/caddyserver/certmagic v0.14.1
+# github.com/caddyserver/certmagic v0.14.5
 ## explicit
 github.com/caddyserver/certmagic
 # github.com/cheekybits/genny v1.0.0
@@ -65,7 +65,8 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20210817151038-07a7fd9355b4
+# github.com/dop251/goja v0.0.0-20210912140721-ac5354e9a820
+## explicit
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -78,7 +79,7 @@ github.com/dop251/goja/unistring
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/fsnotify/fsnotify v1.5.0
+# github.com/fsnotify/fsnotify v1.5.1
 ## explicit
 github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
@@ -97,7 +98,7 @@ github.com/golang-sql/civil
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20210818124241-c60087094663
+# github.com/jvatic/goja-babel v0.0.0-20210911123954-dd5e0b257731
 ## explicit
 github.com/jvatic/goja-babel
 # github.com/klauspost/cpuid/v2 v2.0.9
@@ -107,7 +108,7 @@ github.com/klauspost/cpuid/v2
 github.com/kr/pretty
 # github.com/kr/text v0.2.0
 github.com/kr/text
-# github.com/lib/pq v1.10.2
+# github.com/lib/pq v1.10.3
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -141,11 +142,12 @@ github.com/marten-seemann/qtls-go1-17
 github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.13
+# github.com/mattn/go-isatty v0.0.14
+## explicit
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
-# github.com/mholt/acmez v0.1.3
+# github.com/mholt/acmez v1.0.0
 github.com/mholt/acmez
 github.com/mholt/acmez/acme
 # github.com/miekg/dns v1.1.43
@@ -193,7 +195,6 @@ github.com/onsi/ginkgo/types
 ## explicit
 github.com/patrickmn/go-cache
 # github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba
-## explicit
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/russross/blackfriday/v2 v2.1.0
@@ -227,7 +228,7 @@ github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 ## explicit
 github.com/xyproto/ask
-# github.com/xyproto/benchmarked v0.1.0
+# github.com/xyproto/benchmarked v0.3.0
 github.com/xyproto/benchmarked
 # github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9
 github.com/xyproto/cookie
@@ -273,7 +274,8 @@ github.com/xyproto/pongo2
 # github.com/xyproto/pstore v0.0.0-20200905092234-9b00f24eea6e
 ## explicit
 github.com/xyproto/pstore
-# github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a
+# github.com/xyproto/randomstring v0.0.0-20210824125156-24cf50c16803
+## explicit
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v1.1.0
 ## explicit
@@ -309,7 +311,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.9.5
+# github.com/xyproto/vt100 v1.9.8
 ## explicit
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
@@ -324,7 +326,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.7.0
 ## explicit
 go.uber.org/multierr
-# go.uber.org/zap v1.19.0
+# go.uber.org/zap v1.19.1
 ## explicit
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -352,7 +354,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+# golang.org/x/net v0.0.0-20210908191846-a5e095526f91
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -363,8 +365,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
-## explicit
+# golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -387,7 +388,6 @@ golang.org/x/text/unicode/norm
 ## explicit
 golang.org/x/time/rate
 # golang.org/x/tools v0.1.5
-## explicit
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/imports
