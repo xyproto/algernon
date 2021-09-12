@@ -33,10 +33,11 @@ Clone algernon outside of `GOPATH`:
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
+    ./welcome.sh
 
-This may also work:
+This should also work:
 
-    go get -u github.com/xyproto/algernon
+    go install github.com/xyproto/algernon@latest
 
 Releases and pre-built images
 -----------------------------
