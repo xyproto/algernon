@@ -3,6 +3,8 @@ package mssql
 import (
 	"context"
 	"errors"
+
+	"github.com/denisenkom/go-mssqldb/msdsn"
 )
 
 // Federated authentication library affects the login data structure and message sequence.
@@ -34,28 +36,25 @@ const (
 	fedAuthADALWorkflowMSI = 0x03
 )
 
-// newSecurityTokenConnector creates a new connector from a DSN and a token provider.
+// newSecurityTokenConnector creates a new connector from a Config and a token provider.
 // When invoked, token provider implementations should contact the security token
 // service specified and obtain the appropriate token, or return an error
 // to indicate why a token is not available.
 // The returned connector may be used with sql.OpenDB.
-func newSecurityTokenConnector(dsn string, tokenProvider func(ctx context.Context) (string, error)) (*Connector, error) {
+func newSecurityTokenConnector(config msdsn.Config, tokenProvider func(ctx context.Context) (string, error)) (*Connector, error) {
 	if tokenProvider == nil {
 		return nil, errors.New("mssql: tokenProvider cannot be nil")
 	}
 
-	conn, err := NewConnector(dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	conn.params.fedAuthLibrary = fedAuthLibrarySecurityToken
+	conn := NewConnectorConfig(config)
+	conn.fedAuthRequired = true
+	conn.fedAuthLibrary = fedAuthLibrarySecurityToken
 	conn.securityTokenProvider = tokenProvider
 
 	return conn, nil
 }
 
-// newADALTokenConnector creates a new connector from a DSN and a Active Directory token provider.
+// newADALTokenConnector creates a new connector from a Config and a Active Directory token provider.
 // Token provider implementations are called during federated
 // authentication login sequences where the server provides a service
 // principal name and security token service endpoint that should be used
@@ -64,18 +63,15 @@ func newSecurityTokenConnector(dsn string, tokenProvider func(ctx context.Contex
 // to indicate why a token is not available.
 //
 // The returned connector may be used with sql.OpenDB.
-func newActiveDirectoryTokenConnector(dsn string, adalWorkflow byte, tokenProvider func(ctx context.Context, serverSPN, stsURL string) (string, error)) (*Connector, error) {
+func newActiveDirectoryTokenConnector(config msdsn.Config, adalWorkflow byte, tokenProvider func(ctx context.Context, serverSPN, stsURL string) (string, error)) (*Connector, error) {
 	if tokenProvider == nil {
 		return nil, errors.New("mssql: tokenProvider cannot be nil")
 	}
 
-	conn, err := NewConnector(dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	conn.params.fedAuthLibrary = fedAuthLibraryADAL
-	conn.params.fedAuthADALWorkflow = adalWorkflow
+	conn := NewConnectorConfig(config)
+	conn.fedAuthRequired = true
+	conn.fedAuthLibrary = fedAuthLibraryADAL
+	conn.fedAuthADALWorkflow = adalWorkflow
 	conn.adalTokenProvider = tokenProvider
 
 	return conn, nil

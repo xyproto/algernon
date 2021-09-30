@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+
+	"github.com/denisenkom/go-mssqldb/msdsn"
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type token
@@ -101,18 +103,21 @@ func (d doneStruct) isError() bool {
 }
 
 func (d doneStruct) getError() Error {
-	if len(d.errors) > 0 {
-		return d.errors[len(d.errors)-1]
-	} else {
+	n := len(d.errors)
+	if n == 0 {
 		return Error{Message: "Request failed but didn't provide reason"}
 	}
+	err := d.errors[n-1]
+	err.All = make([]Error, n)
+	copy(err.All, d.errors)
+	return err
 }
 
 type doneInProcStruct doneStruct
 
 // ENVCHANGE stream
 // http://msdn.microsoft.com/en-us/library/dd303449.aspx
-func processEnvChg(sess *tdsSession) {
+func processEnvChg(ctx context.Context, sess *tdsSession) {
 	size := sess.buf.uint16()
 	r := &io.LimitedReader{R: sess.buf, N: int64(size)}
 	for {
@@ -230,7 +235,7 @@ func processEnvChg(sess *tdsSession) {
 				badStreamPanic(err)
 			}
 			if sess.logFlags&logTransaction != 0 {
-				sess.log.Printf("BEGIN TRANSACTION %x\n", sess.tranid)
+				sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("BEGIN TRANSACTION %x", sess.tranid))
 			}
 			_, err = readBVarByte(r)
 			if err != nil {
@@ -247,9 +252,9 @@ func processEnvChg(sess *tdsSession) {
 			}
 			if sess.logFlags&logTransaction != 0 {
 				if envtype == envTypCommitTran {
-					sess.log.Printf("COMMIT TRANSACTION %x\n", sess.tranid)
+					sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("COMMIT TRANSACTION %x", sess.tranid))
 				} else {
-					sess.log.Printf("ROLLBACK TRANSACTION %x\n", sess.tranid)
+					sess.logger.Log(ctx, msdsn.LogTransaction, fmt.Sprintf("ROLLBACK TRANSACTION %x", sess.tranid))
 				}
 			}
 			sess.tranid = 0
@@ -364,7 +369,9 @@ func processEnvChg(sess *tdsSession) {
 			sess.routedPort = newPort
 		default:
 			// ignore rest of records because we don't know how to skip those
-			sess.log.Printf("WARN: Unknown ENVCHANGE record detected with type id = %d\n", envtype)
+			if sess.logFlags&logDebug != 0 {
+				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("WARN: Unknown ENVCHANGE record detected with type id = %d", envtype))
+			}
 			return
 		}
 	}
@@ -467,7 +474,7 @@ func parseFedAuthInfo(r *tdsBuffer) fedAuthInfoStruct {
 		case fedAuthInfoSPN:
 			SPN, err = ucs22str(optData)
 		default:
-			err = fmt.Errorf("Unexpected fed auth info opt ID %d", int(opts[i].fedAuthInfoID))
+			err = fmt.Errorf("unexpected fed auth info opt ID %d", int(opts[i].fedAuthInfoID))
 		}
 
 		if err != nil {
@@ -635,11 +642,11 @@ func parseReturnValue(r *tdsBuffer) (nv namedValue) {
 	return
 }
 
-func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[string]interface{}) {
+func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenStruct, outs outputs) {
 	defer func() {
 		if err := recover(); err != nil {
 			if sess.logFlags&logErrors != 0 {
-				sess.log.Printf("ERROR: Intercepted panic %v", err)
+				sess.logger.Log(ctx, msdsn.LogErrors, fmt.Sprintf("Intercepted panic %v", err))
 			}
 			ch <- err
 		}
@@ -649,7 +656,7 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 	packet_type, err := sess.buf.BeginRead()
 	if err != nil {
 		if sess.logFlags&logErrors != 0 {
-			sess.log.Printf("ERROR: BeginRead failed %v", err)
+			sess.logger.Log(ctx, msdsn.LogErrors, fmt.Sprintf("BeginRead failed %v", err))
 		}
 		ch <- err
 		return
@@ -662,7 +669,7 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 	for tokens := 0; ; tokens += 1 {
 		token := token(sess.buf.byte())
 		if sess.logFlags&logDebug != 0 {
-			sess.log.Printf("got token %v", token)
+			sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got token %v", token))
 		}
 		switch token {
 		case tokenSSPI:
@@ -686,21 +693,21 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 		case tokenDoneInProc:
 			done := parseDoneInProc(sess.buf)
 			if sess.logFlags&logRows != 0 && done.Status&doneCount != 0 {
-				sess.log.Printf("(%d row(s) affected)\n", done.RowCount)
+				sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d row(s) affected)", done.RowCount))
 			}
 			ch <- done
 		case tokenDone, tokenDoneProc:
 			done := parseDone(sess.buf)
 			done.errors = errs
 			if sess.logFlags&logDebug != 0 {
-				sess.log.Printf("got DONE or DONEPROC status=%d", done.Status)
+				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got DONE or DONEPROC status=%d", done.Status))
 			}
 			if done.Status&doneSrvError != 0 {
-				ch <- errors.New("SQL Server had internal error")
+				ch <- ServerError{done.getError()}
 				return
 			}
 			if sess.logFlags&logRows != 0 && done.Status&doneCount != 0 {
-				sess.log.Printf("(%d row(s) affected)\n", done.RowCount)
+				sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d row(s) affected)", done.RowCount))
 			}
 			ch <- done
 			if done.Status&doneMore == 0 {
@@ -718,29 +725,29 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 			parseNbcRow(sess.buf, columns, row)
 			ch <- row
 		case tokenEnvChange:
-			processEnvChg(sess)
+			processEnvChg(ctx, sess)
 		case tokenError:
 			err := parseError72(sess.buf)
 			if sess.logFlags&logDebug != 0 {
-				sess.log.Printf("got ERROR %d %s", err.Number, err.Message)
+				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got ERROR %d %s", err.Number, err.Message))
 			}
 			errs = append(errs, err)
 			if sess.logFlags&logErrors != 0 {
-				sess.log.Println(err.Message)
+				sess.logger.Log(ctx, msdsn.LogErrors, err.Message)
 			}
 		case tokenInfo:
 			info := parseInfo(sess.buf)
 			if sess.logFlags&logDebug != 0 {
-				sess.log.Printf("got INFO %d %s", info.Number, info.Message)
+				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got INFO %d %s", info.Number, info.Message))
 			}
 			if sess.logFlags&logMessages != 0 {
-				sess.log.Println(info.Message)
+				sess.logger.Log(ctx, msdsn.LogMessages, info.Message)
 			}
 		case tokenReturnValue:
 			nv := parseReturnValue(sess.buf)
 			if len(nv.Name) > 0 {
 				name := nv.Name[1:] // Remove the leading "@".
-				if ov, has := outs[name]; has {
+				if ov, has := outs.params[name]; has {
 					err = scanIntoOut(name, nv.Value, ov)
 					if err != nil {
 						fmt.Println("scan error", err)
@@ -758,15 +765,17 @@ type tokenProcessor struct {
 	tokChan    chan tokenStruct
 	ctx        context.Context
 	sess       *tdsSession
-	outs       map[string]interface{}
+	outs       outputs
 	lastRow    []interface{}
 	rowCount   int64
 	firstError error
+	// whether to skip sending attention when ctx is done
+	noAttn bool
 }
 
-func startReading(sess *tdsSession, ctx context.Context, outs map[string]interface{}) *tokenProcessor {
+func startReading(sess *tdsSession, ctx context.Context, outs outputs) *tokenProcessor {
 	tokChan := make(chan tokenStruct, 5)
-	go processSingleResponse(sess, tokChan, outs)
+	go processSingleResponse(ctx, sess, tokChan, outs)
 	return &tokenProcessor{
 		tokChan: tokChan,
 		ctx:     ctx,
@@ -799,7 +808,9 @@ func (t *tokenProcessor) iterateResponse() error {
 						t.firstError = token.getError()
 					}
 				case ReturnStatus:
-					t.sess.setReturnStatus(token)
+					if t.outs.returnStatus != nil {
+						*t.outs.returnStatus = token
+					}
 					/*case error:
 					if resultError == nil {
 						resultError = token
@@ -843,6 +854,9 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 			return nil, nil
 		}
 	case <-t.ctx.Done():
+		if t.noAttn {
+			return nil, t.ctx.Err()
+		}
 		if err := sendAttention(t.sess.buf); err != nil {
 			// unable to send attention, current connection is bad
 			// notify caller and close channel
@@ -864,7 +878,7 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 		// we did not get cancellation confirmation in the current response
 		// read one more response, it must be there
 		t.tokChan = make(chan tokenStruct, 5)
-		go processSingleResponse(t.sess, t.tokChan, t.outs)
+		go processSingleResponse(t.ctx, t.sess, t.tokChan, t.outs)
 		if readCancelConfirmation(t.tokChan) {
 			return nil, t.ctx.Err()
 		}

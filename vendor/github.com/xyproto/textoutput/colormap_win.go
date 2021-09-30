@@ -1,3 +1,4 @@
+//go:build (!darwin && !dragonfly && !freebsd && !linux && !netbsd && !openbsd && !solaris) || !cgo
 // +build !darwin,!dragonfly,!freebsd,!linux,!netbsd,!openbsd,!solaris !cgo
 
 package textoutput

@@ -144,11 +144,11 @@ func (r *tdsBuffer) readNextPacket() error {
 	}
 	h := header{
 		PacketType: packetType(buf[0]),
-		Status: buf[1],
-		Size: binary.BigEndian.Uint16(buf[2:4]),
-		Spid: binary.BigEndian.Uint16(buf[4:6]),
-		PacketNo: buf[6],
-		Pad: buf[7],
+		Status:     buf[1],
+		Size:       binary.BigEndian.Uint16(buf[2:4]),
+		Spid:       binary.BigEndian.Uint16(buf[4:6]),
+		PacketNo:   buf[6],
+		Pad:        buf[7],
 	}
 	if int(h.Size) > r.packetSize {
 		return errors.New("invalid packet size, it is longer than buffer size")

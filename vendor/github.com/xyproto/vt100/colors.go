@@ -325,21 +325,19 @@ func (ac AttributeColor) Error(text string) {
 }
 
 func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
-	// Set an initial size of the map, where keys are attributes and values are bool
-	amap := make(map[byte]bool, len(ac)+len(other))
-	for _, attr := range ac {
-		amap[attr] = true
+	for _, a1 := range ac {
+		a2has := false
+		for _, a2 := range other {
+			if a1 == a2 {
+				a2has = true
+				break
+			}
+		}
+		if !a2has {
+			other = append(other, a1)
+		}
 	}
-	for _, attr := range other {
-		amap[attr] = true
-	}
-	newAttributes := make(AttributeColor, len(amap))
-	index := 0
-	for attr := range amap {
-		newAttributes[index] = attr
-		index++
-	}
-	return AttributeColor(newAttributes)
+	return AttributeColor(other)
 }
 
 // Return a new AttributeColor that has "Bright" added to the list of attributes

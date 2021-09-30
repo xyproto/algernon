@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/denisenkom/go-mssqldb/internal/decimal"
+	"github.com/denisenkom/go-mssqldb/msdsn"
 )
 
 type Bulk struct {
@@ -85,7 +87,7 @@ func (b *Bulk) sendBulkCommand(ctx context.Context) (err error) {
 				bulkCol.ti.TypeId = typeBigVarBin
 			}
 			b.bulkColumns = append(b.bulkColumns, *bulkCol)
-			b.dlogf("Adding column %s %s %#x", colname, bulkCol.ColName, bulkCol.ti.TypeId)
+			b.dlogf(ctx, "Adding column %s %s %#x", colname, bulkCol.ColName, bulkCol.ti.TypeId)
 		} else {
 			return fmt.Errorf("column %s does not exist in destination table %s", colname, b.tablename)
 		}
@@ -137,7 +139,7 @@ func (b *Bulk) sendBulkCommand(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("Prepare failed: %s", err.Error())
 	}
-	b.dlogf(query)
+	b.dlogf(ctx, query)
 
 	_, err = stmt.(*Stmt).ExecContext(ctx, nil)
 	if err != nil {
@@ -210,7 +212,7 @@ func (b *Bulk) makeRowData(row []interface{}) ([]byte, error) {
 		}
 	}
 
-	b.dlogf("row[%d] %s\n", b.numRows, logcol.String())
+	b.dlogf(b.ctx, "row[%d] %s", b.numRows, logcol.String())
 
 	return buf.Bytes(), nil
 }
@@ -234,10 +236,10 @@ func (b *Bulk) Done() (rowcount int64, err error) {
 
 	buf.FinishPacket()
 
-	reader := startReading(b.cn.sess, b.ctx, nil)
+	reader := startReading(b.cn.sess, b.ctx, outputs{})
 	err = reader.iterateResponse()
 	if err != nil {
-		return 0, b.cn.checkBadConn(err)
+		return 0, b.cn.checkBadConn(b.ctx, err, false)
 	}
 
 	return reader.rowCount, nil
@@ -299,7 +301,7 @@ func (b *Bulk) getMetadata(ctx context.Context) (err error) {
 
 	if b.Debug {
 		for _, col := range b.metadata {
-			b.dlogf("col: %s typeId: %#x size: %d scale: %d prec: %d flags: %d lcid: %#x\n",
+			b.dlogf(ctx, "col: %s typeId: %#x size: %d scale: %d prec: %d flags: %d lcid: %#x",
 				col.ColName, col.ti.TypeId, col.ti.Size, col.ti.Scale, col.ti.Prec,
 				col.Flags, col.ti.Collation.LcidAndFlags)
 		}
@@ -329,6 +331,10 @@ func (b *Bulk) makeParam(val DataValue, col columnStruct) (res param, err error)
 			intvalue = int64(val)
 		case int64:
 			intvalue = val
+		case float32:
+			intvalue = int64(val)
+		case float64:
+			intvalue = int64(val)
 		default:
 			err = fmt.Errorf("mssql: invalid type for int column: %T", val)
 			return
@@ -373,6 +379,8 @@ func (b *Bulk) makeParam(val DataValue, col columnStruct) (res param, err error)
 		switch val := val.(type) {
 		case string:
 			res.buffer = str2ucs2(val)
+		case int64:
+			res.buffer = []byte(strconv.FormatInt(val, 10))
 		case []byte:
 			res.buffer = val
 		default:
@@ -387,6 +395,8 @@ func (b *Bulk) makeParam(val DataValue, col columnStruct) (res param, err error)
 			res.buffer = []byte(val)
 		case []byte:
 			res.buffer = val
+		case int64:
+			res.buffer = []byte(strconv.FormatInt(val, 10))
 		default:
 			err = fmt.Errorf("mssql: invalid type for varchar column: %T %s", val, val)
 			return
@@ -581,8 +591,8 @@ func (b *Bulk) makeParam(val DataValue, col columnStruct) (res param, err error)
 
 }
 
-func (b *Bulk) dlogf(format string, v ...interface{}) {
+func (b *Bulk) dlogf(ctx context.Context, format string, v ...interface{}) {
 	if b.Debug {
-		b.cn.sess.log.Printf(format, v...)
+		b.cn.sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf(format, v...))
 	}
 }

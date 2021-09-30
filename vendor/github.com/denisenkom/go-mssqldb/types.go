@@ -1464,7 +1464,7 @@ func makeGoLangTypeLength(ti typeInfo) (int64, bool) {
 	case typeVariant:
 		return 0, false
 	case typeBigBinary:
-		return 0, false
+		return int64(ti.Size), true
 	default:
 		panic(fmt.Sprintf("not implemented makeGoLangTypeLength for type %d", ti.TypeId))
 	}

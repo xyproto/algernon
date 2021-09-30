@@ -76,6 +76,6 @@ The `o` editor that uses `vt100` can be used for editing ie. Go, Bash or C++ cod
 
 ### General info
 
-* Version: 1.9.8
+* Version: 1.9.9
 * Licence: BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
