@@ -34,7 +34,7 @@ github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 github.com/bmizerany/assert
-# github.com/caddyserver/certmagic v0.14.5
+# github.com/caddyserver/certmagic v0.15.0
 ## explicit
 github.com/caddyserver/certmagic
 # github.com/cheekybits/genny v1.0.0
@@ -353,7 +353,7 @@ golang.org/x/crypto/ocsp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
+# golang.org/x/net v0.0.0-20211004195052-b30845b58a23
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -364,7 +364,8 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
+# golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef
+## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader

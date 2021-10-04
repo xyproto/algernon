@@ -266,7 +266,7 @@ myACME := certmagic.NewACMEManager(magic, certmagic.ACMEManager{
 magic.Issuer = myACME
 
 // this obtains certificates or renews them if necessary
-err := magic.ManageSync([]string{"example.com", "sub.example.com"})
+err := magic.ManageSync(context.TODO(), []string{"example.com", "sub.example.com"})
 if err != nil {
 	return err
 }
@@ -274,6 +274,10 @@ if err != nil {
 // to use its certificates and solve the TLS-ALPN challenge,
 // you can get a TLS config to use in a TLS listener!
 tlsConfig := magic.TLSConfig()
+
+// be sure to customize NextProtos if serving a specific
+// application protocol after the TLS handshake, for example:
+tlsConfig.NextProtos = append([]string{"h2", "http/1.1"}, tlsConfig.NextProtos...)
 
 //// OR ////
 
