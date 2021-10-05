@@ -353,7 +353,7 @@ golang.org/x/crypto/ocsp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20211004195052-b30845b58a23
+# golang.org/x/net v0.0.0-20211005001312-d4b1ae081e3b
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
