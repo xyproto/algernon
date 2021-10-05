@@ -20,7 +20,7 @@ import (
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gluamapper"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // LoadCommonFunctions adds most of the available Lua functions in algernon to
@@ -122,23 +122,15 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 		// There must be a receiver for the done channel,
 		// or else this will hang everything!
 		defer func() {
-			_, ok := w.(http.CloseNotifier)
-			if ok {
-				// Only do this is the select case below is sure to be running!
-				done <- true
-			}
+			done <- true
 		}()
 
 		// Set up a background notifier
 		go func() {
-			wCloseNotify, ok := w.(http.CloseNotifier)
-			if !ok {
-				//log.Error("ResponseWriter has no CloseNotify()!")
-				return
-			}
+			ctx := req.Context()
 			for {
 				select {
-				case <-wCloseNotify.CloseNotify():
+				case <-ctx.Done():
 					// Client is done
 					log.Warn("Connection to client closed")
 				case <-done:
