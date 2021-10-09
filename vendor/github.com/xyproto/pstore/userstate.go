@@ -8,16 +8,14 @@ import (
 	"time"
 
 	"github.com/xyproto/cookie"          // Functions related to cookies
+	"github.com/xyproto/env"             // Fetch values from environment variables and support defaults
 	"github.com/xyproto/pinterface"      // Database interfaces
 	db "github.com/xyproto/simplehstore" // PostgreSQL database wrapper
 )
 
-const (
-	// username:password@host:port/database
-	defaultConnectionString = "postgres:@127.0.0.1/"
-)
-
 var (
+	defaultConnectionString = env.Str("POSTGRES_USER", "postgres") + ":" + env.Str("POSTGRES_PASSWORD") + "@127.0.0.1/"
+
 	minConfirmationCodeLength = 20 // minimum length of the confirmation code
 
 	// ErrNotFound is returned if HasEmail does not find the given e-mail address

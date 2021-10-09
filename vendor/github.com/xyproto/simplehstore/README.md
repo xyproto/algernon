@@ -3,7 +3,7 @@ simplehstore
 
 [![Build Status](https://travis-ci.com/xyproto/simplehstore.svg?branch=master)](https://travis-ci.com/xyproto/simplehstore)
 [![GoDoc](https://godoc.org/github.com/xyproto/simplehstore?status.svg)](http://godoc.org/github.com/xyproto/simplehstore)
-[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplehstore/master/LICENSE)
+[![License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplehstore/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplehstore)](https://goreportcard.com/report/github.com/xyproto/simplehstore)
 
 
@@ -92,6 +92,6 @@ Testing
 License, author and version
 ---------------------------
 
-* License: MIT
+* License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-* Version: 2.8.0 (also tagged as 1.2.8)
+* Version: 2.10.0 (also tagged as 1.2.10)

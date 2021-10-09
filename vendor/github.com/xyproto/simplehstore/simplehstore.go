@@ -1,6 +1,6 @@
 // Package simplehstore offers a simple way to use a PostgreSQL database with HSTORE.
 // The database back end is interchangeable with Redis (xyproto/simpleredis), BoltDB (xyproto/simplebolt) and
-// Mariadb/MySQL (xyproto/simplemaria) by using the interfaces in the xyproto/pinterface package.
+// MariaDB/MySQL (xyproto/simplemaria) by using the interfaces in the xyproto/pinterface package.
 package simplehstore
 
 import (
@@ -13,19 +13,16 @@ import (
 
 	// Using the PostgreSQL database engine
 	pq "github.com/lib/pq"
+	"github.com/xyproto/env"
 )
 
 const (
 	// Version number. Stable API within major version numbers.
-	Version = 2.7
-)
+	Version = 2.10
 
-var (
-	// ErrNoAvailableValues is used as an error if an SQL query returns no values
-	ErrNoAvailableValues = errors.New("no available values")
-
-	// ErrTooFewResults is used as an error if an SQL query returns too few results
-	ErrTooFewResults = errors.New("too few results")
+	defaultStringType = "TEXT"
+	defaultPort       = 5432
+	encoding          = "UTF8"
 )
 
 // Host represents a PostgreSQL database
@@ -60,17 +57,16 @@ type (
 	KeyValue dbDatastructure
 )
 
-const (
-	// The default "username:password@host:port/database" that the database is running at
-	defaultDatabaseServer = "postgres:@127.0.0.1/" // "username:password@server:port/"
-	defaultDatabaseName   = "test"                 // "main"
-	defaultStringType     = "TEXT"
-	defaultPort           = 5432
-
-	encoding = "UTF8"
-)
-
 var (
+	// The default "username:password@host:port/database" that the database is running at
+	defaultDatabaseServer = env.Str("POSTGRES_USER", "postgres") + "@" + env.Str("POSTGRES_PASSWORD") + "@127.0.0.1/"
+	defaultDatabaseName   = env.Str("POSTGRES_DB", "test")
+
+	// ErrNoAvailableValues is used as an error if an SQL query returns no values
+	ErrNoAvailableValues = errors.New("no available values")
+	// ErrTooFewResults is used as an error if an SQL query returns too few results
+	ErrTooFewResults = errors.New("too few results")
+
 	// Column names
 	listCol  = "a_list"
 	setCol   = "a_set"

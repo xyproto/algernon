@@ -10,11 +10,12 @@ require (
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.11.0
 	github.com/didip/tollbooth v4.0.2+incompatible
+	github.com/dop251/goja v0.0.0-20211009145147-6cede2fa03ed // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20210926124028-daae6b80f372
+	github.com/jvatic/goja-babel v0.0.0-20211007111857-180d357e3917
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/lib/pq v1.10.3
 	github.com/lucas-clemente/quic-go v0.23.0
@@ -40,15 +41,13 @@ require (
 	github.com/xyproto/permissionbolt v1.2.6
 	github.com/xyproto/permissions2 v0.0.0-20210728112904-5a3038edf035
 	github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
-	github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c
+	github.com/xyproto/pinterface v0.0.0-20211009195425-512bcf6c02ee
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
-	github.com/xyproto/pstore v0.0.0-20200905092234-9b00f24eea6e
-	github.com/xyproto/randomstring v0.0.0-20210824125156-24cf50c16803 // indirect
+	github.com/xyproto/pstore v0.0.0-20211009210918-48e92c3ca428
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 	github.com/xyproto/simpleform v0.2.0
-	github.com/xyproto/simplehstore v0.0.0-20210607125359-5215f95594e9 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
 	github.com/xyproto/textoutput v1.12.10
@@ -59,10 +58,9 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/net v0.0.0-20211005001312-d4b1ae081e3b
-	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
+	golang.org/x/net v0.0.0-20211008194852-3b03d305991f
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.7 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect

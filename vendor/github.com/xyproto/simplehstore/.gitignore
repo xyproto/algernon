@@ -1,4 +1,6 @@
-example/example
+cmd/simple/simple
 *.bak
 *.swp
+*.tmp
+*.o
 *~
