@@ -3,36 +3,36 @@ module github.com/xyproto/algernon
 go 1.16
 
 require (
-	github.com/alecthomas/chroma v0.9.2 // indirect
+	github.com/alecthomas/chroma v0.9.4 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.15.0
+	github.com/caddyserver/certmagic v0.15.1
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.11.0
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dop251/goja v0.0.0-20211009145147-6cede2fa03ed // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20211007111857-180d357e3917
+	github.com/jvatic/goja-babel v0.0.0-20211022124248-0fd87a017d78
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/lib/pq v1.10.3
-	github.com/lucas-clemente/quic-go v0.23.0
+	github.com/lucas-clemente/quic-go v0.24.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/russross/blackfriday/v2 v2.1.0
-	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
-	github.com/xyproto/env v1.1.0
+	github.com/xyproto/env v1.4.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.0
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
@@ -44,10 +44,12 @@ require (
 	github.com/xyproto/pinterface v0.0.0-20211009195425-512bcf6c02ee
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v0.0.0-20211009210918-48e92c3ca428
+	github.com/xyproto/randomstring v0.0.0-20211020123341-4731a123782f // indirect
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 	github.com/xyproto/simpleform v0.2.0
+	github.com/xyproto/simplehstore v0.0.0-20211009210653-1a0448f29f64 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
 	github.com/xyproto/textoutput v1.12.10
@@ -59,8 +61,8 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/net v0.0.0-20211008194852-3b03d305991f
-	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
+	golang.org/x/net v0.0.0-20211020060615-d418f374d309
+	golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.7 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect

@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 // Str does the same as os.Getenv, but allows the user to provide a default value (optional).
@@ -50,4 +51,55 @@ func Int(envName string, defaultValue int) int {
 		return defaultValue
 	}
 	return i
+}
+
+// Int64 returns the number stored in the environment variable, or the provided default value.
+func Int64(envName string, defaultValue int64) int64 {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return defaultValue
+	}
+	return i64
+}
+
+// Float64 returns the number stored in the environment variable, or the provided default value.
+func Float64(envName string, defaultValue float64) float64 {
+	f64, err := strconv.ParseFloat(Str(envName), 64)
+	if err != nil {
+		return defaultValue
+	}
+	return f64
+}
+
+// DurationSeconds interprets the environment variable value as seconds
+// and returns a time.Duration. The given default number is interpreted
+// as the number of seconds.
+func DurationSeconds(envName string, defaultValue int64) time.Duration {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return time.Duration(defaultValue) * time.Second
+	}
+	return time.Duration(i64) * time.Second
+}
+
+// DurationMinutes interprets the environment variable value as minutes
+// and returns a time.Duration. The given default number is interpreted
+// as the number of minutes.
+func DurationMinutes(envName string, defaultValue int64) time.Duration {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return time.Duration(defaultValue) * time.Minute
+	}
+	return time.Duration(i64) * time.Minute
+}
+
+// DurationHours interprets the environment variable value as hours
+// and returns a time.Duration. The given default number is interpreted
+// as the number of hours.
+func DurationHours(envName string, defaultValue int64) time.Duration {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return time.Duration(defaultValue) * time.Hour
+	}
+	return time.Duration(i64) * time.Hour
 }

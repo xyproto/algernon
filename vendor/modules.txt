@@ -1,4 +1,4 @@
-# github.com/alecthomas/chroma v0.9.2
+# github.com/alecthomas/chroma v0.9.4
 ## explicit
 github.com/alecthomas/chroma
 github.com/alecthomas/chroma/formatters/html
@@ -34,7 +34,7 @@ github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 github.com/bmizerany/assert
-# github.com/caddyserver/certmagic v0.15.0
+# github.com/caddyserver/certmagic v0.15.1
 ## explicit
 github.com/caddyserver/certmagic
 # github.com/cheekybits/genny v1.0.0
@@ -45,8 +45,6 @@ github.com/cheekybits/genny/parse
 # github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 ## explicit
 github.com/chzyer/readline
-# github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
-github.com/danwakefield/fnmatch
 # github.com/ddliu/go-httpclient v0.6.9
 ## explicit
 github.com/ddliu/go-httpclient
@@ -66,8 +64,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20211009145147-6cede2fa03ed
-## explicit
+# github.com/dop251/goja v0.0.0-20211022113120-dc8c55024d06
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -99,7 +96,7 @@ github.com/golang-sql/civil
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20211007111857-180d357e3917
+# github.com/jvatic/goja-babel v0.0.0-20211022124248-0fd87a017d78
 ## explicit
 github.com/jvatic/goja-babel
 # github.com/klauspost/cpuid/v2 v2.0.9
@@ -116,7 +113,7 @@ github.com/lib/pq/oid
 github.com/lib/pq/scram
 # github.com/libdns/libdns v0.2.1
 github.com/libdns/libdns
-# github.com/lucas-clemente/quic-go v0.23.0
+# github.com/lucas-clemente/quic-go v0.24.0
 ## explicit
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/http3
@@ -168,7 +165,8 @@ github.com/nxadm/tail/ratelimiter
 github.com/nxadm/tail/util
 github.com/nxadm/tail/watch
 github.com/nxadm/tail/winfile
-# github.com/onsi/ginkgo v1.16.4
+# github.com/onsi/ginkgo v1.16.5
+## explicit
 github.com/onsi/ginkgo/config
 github.com/onsi/ginkgo/formatter
 github.com/onsi/ginkgo/ginkgo
@@ -201,7 +199,7 @@ github.com/pkg/term/termios
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
-# github.com/shopspring/decimal v1.2.0
+# github.com/shopspring/decimal v1.3.1
 ## explicit
 github.com/shopspring/decimal
 # github.com/sirupsen/logrus v1.8.1
@@ -236,7 +234,7 @@ github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 ## explicit
 github.com/xyproto/datablock
-# github.com/xyproto/env v1.1.0
+# github.com/xyproto/env v1.4.0
 ## explicit
 github.com/xyproto/env
 # github.com/xyproto/gluamapper v1.2.1
@@ -275,7 +273,8 @@ github.com/xyproto/pongo2
 # github.com/xyproto/pstore v0.0.0-20211009210918-48e92c3ca428
 ## explicit
 github.com/xyproto/pstore
-# github.com/xyproto/randomstring v0.0.0-20210824125156-24cf50c16803
+# github.com/xyproto/randomstring v0.0.0-20211020123341-4731a123782f
+## explicit
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v1.1.0
 ## explicit
@@ -289,7 +288,8 @@ github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 ## explicit
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v0.0.0-20211009193353-ddef07ecb0d3
+# github.com/xyproto/simplehstore v0.0.0-20211009210653-1a0448f29f64
+## explicit
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
 github.com/xyproto/simplemaria
@@ -351,7 +351,7 @@ golang.org/x/crypto/ocsp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20211008194852-3b03d305991f
+# golang.org/x/net v0.0.0-20211020060615-d418f374d309
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -362,7 +362,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
+# golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs

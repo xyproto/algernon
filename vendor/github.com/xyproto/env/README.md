@@ -37,8 +37,39 @@ Only the first optional value is used, if the environment variable value is empt
 
 `Has` return true if the given environment variable name is non-empty.
 
+### func Int64
+
+Same as Int, but takes a default int64 value and returns an int64.
+
+### func Float64
+
+Same as Int, but takes a default float64 value and returns a float64.
+
+### DurationSeconds
+
+Takes a default int64 value, for the number of seconds, interprets the environment variable as the number of seconds and returns a `time.Duration`.
+
+## Example
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/xyproto/env"
+)
+
+func main() {
+    fmt.Println(env.DurationSeconds("REQUEST_TIMEOUT", 1800))
+}
+```
+
+Running the above problem like this: `REQUEST_TIMEOUT=1200 ./main`, outputs:
+
+    20m0s
+
 ## General info
 
-* Version: 1.1.0
+* Version: 1.4.0
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

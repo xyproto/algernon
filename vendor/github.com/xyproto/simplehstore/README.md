@@ -1,7 +1,7 @@
 simplehstore
 ===========
 
-[![Build Status](https://travis-ci.com/xyproto/simplehstore.svg?branch=master)](https://travis-ci.com/xyproto/simplehstore)
+[![Build](https://github.com/xyproto/simplehstore/actions/workflows/test.yml/badge.svg)](https://github.com/xyproto/simplehstore/actions/workflows/test.yml)
 [![GoDoc](https://godoc.org/github.com/xyproto/simplehstore?status.svg)](http://godoc.org/github.com/xyproto/simplehstore)
 [![License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplehstore/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplehstore)](https://goreportcard.com/report/github.com/xyproto/simplehstore)
