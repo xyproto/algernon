@@ -14,10 +14,6 @@ Web server with built-in support for QUIC, HTTP/2, Lua, Markdown, Pongo2, HyperA
 
 All in one small self-contained executable.
 
-Questions? Try our friendly Discord server:
-
-[![Discord](img/algernon_128x128.png)](https://discord.gg/KctRaBRpVA)
-
 Distro Packages
 ---------------
 
