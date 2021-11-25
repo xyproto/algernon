@@ -94,4 +94,4 @@ License, author and version
 
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-* Version: 2.10.0 (also tagged as 1.2.10)
+* Version: 1.3.0

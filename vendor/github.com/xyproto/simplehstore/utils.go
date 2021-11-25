@@ -8,11 +8,7 @@ import (
 )
 
 // Verbose can be set to true when testing, for more information
-var (
-	Verbose = false
-)
-
-/* --- Helper functions --- */
+var Verbose = false
 
 // twoFields splits a string into two parts, given a delimiter.
 // If it works out, the two parts are returned, together with "true".
@@ -154,4 +150,9 @@ func rebuildConnectionString(connectionString string, withDB bool) (string, stri
 		return buildConnectionString(username, password, hasPassword, hostname, port, dbname, args), dbname
 	}
 	return buildConnectionString(username, password, hasPassword, hostname, port, "", args), ""
+}
+
+// Escape single quotes (for keys and values)
+func escapeSingleQuotes(s string) string {
+	return strings.Replace(s, "'", "''", -1)
 }

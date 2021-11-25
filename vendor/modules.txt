@@ -34,7 +34,7 @@ github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 github.com/bmizerany/assert
-# github.com/caddyserver/certmagic v0.15.1
+# github.com/caddyserver/certmagic v0.15.2
 ## explicit
 github.com/caddyserver/certmagic
 # github.com/cheekybits/genny v1.0.0
@@ -64,7 +64,7 @@ github.com/didip/tollbooth/limiter
 # github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20211022113120-dc8c55024d06
+# github.com/dop251/goja v0.0.0-20211121151210-cc28e89bfc81
 github.com/dop251/goja
 github.com/dop251/goja/ast
 github.com/dop251/goja/file
@@ -96,17 +96,16 @@ github.com/golang-sql/civil
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20211022124248-0fd87a017d78
+# github.com/jvatic/goja-babel v0.0.0-20211122124320-4fb2c916a6f6
 ## explicit
 github.com/jvatic/goja-babel
 # github.com/klauspost/cpuid/v2 v2.0.9
-## explicit
 github.com/klauspost/cpuid/v2
 # github.com/kr/pretty v0.2.1
 github.com/kr/pretty
 # github.com/kr/text v0.2.0
 github.com/kr/text
-# github.com/lib/pq v1.10.3
+# github.com/lib/pq v1.10.4
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -138,17 +137,17 @@ github.com/marten-seemann/qtls-go1-17
 # github.com/mattetti/filebuffer v1.0.1
 ## explicit
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.1.11
+# github.com/mattn/go-colorable v0.1.12
+## explicit
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.14
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
-# github.com/mholt/acmez v1.0.0
+# github.com/mholt/acmez v1.0.1
 github.com/mholt/acmez
 github.com/mholt/acmez/acme
 # github.com/miekg/dns v1.1.43
-## explicit
 github.com/miekg/dns
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
@@ -234,7 +233,7 @@ github.com/xyproto/cookie
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 ## explicit
 github.com/xyproto/datablock
-# github.com/xyproto/env v1.4.0
+# github.com/xyproto/env v1.7.0
 ## explicit
 github.com/xyproto/env
 # github.com/xyproto/gluamapper v1.2.1
@@ -288,7 +287,7 @@ github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 ## explicit
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v0.0.0-20211009210653-1a0448f29f64
+# github.com/xyproto/simplehstore v1.3.0
 ## explicit
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
@@ -332,7 +331,8 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+# golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -351,7 +351,7 @@ golang.org/x/crypto/ocsp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20211020060615-d418f374d309
+# golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -362,7 +362,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70
+# golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -382,7 +382,8 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+golang.org/x/text/unicode/rangetable
+# golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 ## explicit
 golang.org/x/time/rate
 # golang.org/x/tools v0.1.7

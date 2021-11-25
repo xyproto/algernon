@@ -1,11 +1,11 @@
-github.com/lib/pq v1.10.3 h1:v9QZf2Sn6AmjXtQeFpdoq/eaNtYP6IN+7lcrygsIAtg=
-github.com/lib/pq v1.10.3/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/lib/pq v1.10.4 h1:SO9z7FRPzA03QhHKJrH5BXA6HU1rS4V2nIVrrNC1iYk=
+github.com/lib/pq v1.10.4/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff h1:G+UgV5480yPnIK9+aaz4Tx0l7hu8lcDuXc9SfTbK1+w=
 github.com/xyproto/cookie v0.0.0-20181220103240-f4de411f45ff/go.mod h1:+c0/g8lVJKAi+uZ/kPHqSzf2UsSI2If03smY6xITgtM=
-github.com/xyproto/env v1.1.0 h1:W2cGFeBNNwxwAGG9vuVdF2ub9fm73zoyl2W+xEmnIow=
-github.com/xyproto/env v1.1.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c h1:lxAVlHyqZRKpiMVzJj1iZy5wxg+COPyhnj8snRgJfeU=
-github.com/xyproto/pinterface v0.0.0-20200807103852-04e20752b31c/go.mod h1:X5B5pKE49ak7SpyDh5QvJvLH9cC9XuZNDcl5hEyYc34=
+github.com/xyproto/env v1.7.0 h1:TJHxvnXyBTomn7e/U2wLIiGn2oq0g83+b2F6jo5Hh0g=
+github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
+github.com/xyproto/pinterface v0.0.0-20211009195247-f633d6c15725 h1:yglVif0JI18gCC9L42G7Q+Dm2+oNRA+HZyO+qh41Nas=
+github.com/xyproto/pinterface v0.0.0-20211009195247-f633d6c15725/go.mod h1:X5B5pKE49ak7SpyDh5QvJvLH9cC9XuZNDcl5hEyYc34=
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a h1:Nokr4kww8fEA1DIpa1a4ZH+3opiHKZHs/y9ovbXF3xA=
 github.com/xyproto/randomstring v0.0.0-20181222003104-0f764aabc45a/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=

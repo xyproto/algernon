@@ -2,7 +2,9 @@ package env
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,16 +23,41 @@ func Str(name string, optionalDefault ...string) string {
 	return value
 }
 
-// AsBool can be used to interpret a string value as either true or false. Examples of true values are "yes" and "1".
-func AsBool(s string) bool {
-	switch s {
-	case "yes", "1", "true", "YES", "TRUE", "True", "Yes", "Y", "y", "enable", "Enable", "ENABLE", "enabled", "Enabled", "ENABLED", "affirmative", "Affirmative", "AFFIRMATIVE":
-		return true
-	case "", "no", "0", "false", "NO", "FALSE", "False", "No", "N", "n", "disable", "Disable", "DISABLE", "disabled", "Disabled", "DISABLED", "denied", "Denied", "DENIED":
-		fallthrough
-	default:
-		return false
+// File does the same as Str, but expands a leading "~" or "$HOME" string to the home
+// directory of the current user.
+func File(name string, optionalDefault ...string) string {
+	return ExpandUser(Str(name, optionalDefault...))
+}
+
+// Dir does the same as File
+func Dir(name string, optionalDefault ...string) string {
+	return ExpandUser(Str(name, optionalDefault...))
+}
+
+// Path returns the elements in the $PATH environment variable
+func Path() []string {
+	return filepath.SplitList(Str("PATH"))
+}
+
+// StrAlt will return the string value of the first given environment variable name,
+// or, if that is not available, use the string value of the second given environment variable.
+// If none are available, the optional default string is returned.
+func StrAlt(name1, name2 string, optionalDefault ...string) string {
+	// Retrieve the environment variable as a (possibly empty) string
+	value := os.Getenv(name1)
+
+	// If it is empty, try the second name
+	if value == "" {
+		value = os.Getenv(name2)
 	}
+
+	// If empty and a default value was provided, return that
+	if value == "" && len(optionalDefault) > 0 {
+		return optionalDefault[0]
+	}
+
+	// If not, return the non-empty value
+	return value
 }
 
 // Bool returns the bool value of the given environment variable name.
@@ -42,6 +69,12 @@ func Bool(envName string) bool {
 // Has returns true if the given environment variable name is set and not empty.
 func Has(envName string) bool {
 	return Str(envName) != ""
+}
+
+// Is returns true if the given environment variable is the given string value.
+// The whitespace of both values are trimmed before the comparison.
+func Is(envName, value string) bool {
+	return strings.TrimSpace(Str(envName)) == strings.TrimSpace(value)
 }
 
 // Int returns the number stored in the environment variable, or the provided default value.
@@ -102,4 +135,52 @@ func DurationHours(envName string, defaultValue int64) time.Duration {
 		return time.Duration(defaultValue) * time.Hour
 	}
 	return time.Duration(i64) * time.Hour
+}
+
+// Contains checks if the given environment variable contains the given string
+func Contains(envName string, value string) bool {
+	return strings.Contains(Str(envName), value)
+}
+
+// AsBool can be used to interpret a string value as either true or false. Examples of true values are "yes" and "1".
+func AsBool(s string) bool {
+	switch s {
+	case "1", "ABSOLUTELY", "AFFIRMATIVE", "Absolutely", "Affirmative", "ENABLE", "ENABLED", "Enable", "Enabled", "POSITIVE", "Positive", "T", "TRUE", "True", "Y", "YES", "Yes", "absolutely", "affirmative", "enable", "enabled", "positive", "t", "true", "y", "yes":
+		return true
+	case "", "0", "BLANK", "Blank", "DENIED", "DISABLE", "DISABLED", "Denied", "Disable", "Disabled", "F", "FALSE", "False", "N", "NEGATIVE", "NIL", "NO", "NOPE", "NULL", "Negative", "Nil", "No", "Nope", "Null", "blank", "denied", "disable", "disabled", "f", "false", "n", "negative", "nil", "no", "nope", "null":
+		fallthrough
+	default:
+		return false
+	}
+}
+
+// HomeDir returns the path to the home directory of the user, if available.
+// If not available, $LOGNAME or $USER are used to construct a path starting with /home/.
+// If $LOGNAME and $USER are not available, just "/tmp" is returned.
+func HomeDir() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Use $LOGNAME, $USER or "user", in that order
+		userName := StrAlt("LOGNAME", "USER", "user")
+		// Use $HOME or /home/username
+		homeDir = Str("HOME", "/home/"+userName)
+		if homeDir == "/home/user" {
+			homeDir = "/tmp"
+		}
+	}
+	return homeDir
+}
+
+// ExpandUser replaces a leading ~ or $HOME with the path
+// to the home directory of the current user
+func ExpandUser(path string) string {
+	// this is a simpler alternative to using os.UserHomeDir (which requires Go 1.12 or later)
+	if strings.HasPrefix(path, "~") {
+		// Expand ~ to the home directory
+		path = strings.Replace(path, "~", HomeDir(), 1)
+	} else if strings.HasPrefix(path, "$HOME") {
+		// Expand a leading $HOME variable to the home directory
+		path = strings.Replace(path, "$HOME", HomeDir(), 1)
+	}
+	return path
 }
