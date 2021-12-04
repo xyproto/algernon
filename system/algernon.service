@@ -1,12 +1,12 @@
 [Unit]
 Description=Algernon web server
-Wants=network-online.target
-After=network.target network-online.target
+Requires=redis.service
+After=redis.service
 
 [Service]
 User=root
 Group=users
-ExecStart=/usr/bin/algernon --letsencrypt --statcache --autorefresh --server --cachesize 67108864 --prod --theme=material --boltdb=/var/db/algernon.db --log /var/log/algernon.log /srv/http
+ExecStart=/usr/bin/algernon --letsencrypt --accesslog=/var/log/access.log -c --domain --server --cachesize 67108864 --log /var/log/algernon.log /srv
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
@@ -14,6 +14,7 @@ ProtectHome=true
 NoNewPrivileges=true
 RuntimeDirectory=algernon
 RuntimeDirectoryMode=700
+Environment=HOME=/run/algernon
 
 [Install]
 WantedBy=multi-user.target
