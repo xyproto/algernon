@@ -6,7 +6,7 @@ After=network.target network-online.target
 [Service]
 User=root
 Group=users
-ExecStart=/usr/bin/algernon --statcache --autorefresh --server --cachesize 67108864 --prod --theme=material --boltdb=/var/db/algernon.db --log /var/log/algernon.log /srv/http
+ExecStart=/usr/bin/algernon --letsencrypt --statcache --autorefresh --server --cachesize 67108864 --prod --theme=material --boltdb=/var/db/algernon.db --log /var/log/algernon.log /srv/http
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
