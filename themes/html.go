@@ -39,9 +39,14 @@ func StyleHead(theme string) []byte {
 	if theme == "material" {
 		buf.WriteString(MaterialHead())
 	}
-	buf.WriteString("<style>")
-	buf.Write(builtinThemes[theme])
-	buf.WriteString("</style>")
+	if strings.HasSuffix(theme, ".css") {
+		buf.WriteString("<style>html { margin: 3em; }</style>")
+		buf.WriteString("<link rel=\"stylesheet\" href=\"" + theme + "\">")
+	} else {
+		buf.WriteString("<style>")
+		buf.Write(builtinThemes[theme])
+		buf.WriteString("</style>")
+	}
 	return buf.Bytes()
 }
 
