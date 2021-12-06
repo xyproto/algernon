@@ -17,6 +17,6 @@ Interfaces for:
 General information
 -------------------
 
-* Version 5.0.1 (also tagged as v1.5.0.1)
+* Version: 1.5.3 (The tag is `v1.5.3` to work better with `go mod`. The API has version `5.3`.)
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

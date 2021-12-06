@@ -671,6 +671,6 @@ func main() {
 General information
 -------------------
 
-* Version: 3.0.2 (also tagged as v1.3.0.2)
+* Version: 1.3.1 (API version 3.1)
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

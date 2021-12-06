@@ -24,13 +24,16 @@ func NewKeyValue(host *Host, name string) (*KeyValue, error) {
 	// Ignore erors if this is already created
 	kv.host.db.Exec(query)
 
-	query = fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (attr hstore)", pq.QuoteIdentifier(kvPrefix+kv.table))
+	query = fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (attr hstore default hstore(''))", pq.QuoteIdentifier(kvPrefix+kv.table))
 	if _, err := kv.host.db.Exec(query); err != nil {
 		return nil, err
 	}
 	if Verbose {
 		log.Println("Created HSTORE table " + pq.QuoteIdentifier(kvPrefix+kv.table) + " in database " + host.dbname)
 	}
+
+	kv.CreateIndexTable()
+
 	return kv, nil
 }
 
@@ -38,7 +41,7 @@ func NewKeyValue(host *Host, name string) (*KeyValue, error) {
 func (kv *KeyValue) CreateIndexTable() error {
 	// strip double quotes from kv.table and add _idx at the end
 	indexTableName := strings.TrimSuffix(strings.TrimPrefix(kv.table, "\""), "\"") + "_idx"
-	query := fmt.Sprintf("CREATE INDEX %q ON %s USING GIN (attr)", indexTableName, kv.table)
+	query := fmt.Sprintf("CREATE INDEX %q ON %s USING GIN (attr)", indexTableName, pq.QuoteIdentifier(kvPrefix+kv.table))
 	if Verbose {
 		fmt.Println(query)
 	}
@@ -56,6 +59,36 @@ func (kv *KeyValue) RemoveIndexTable() error {
 	}
 	_, err := kv.host.db.Exec(query)
 	return err
+}
+
+// All returns all elements in the set
+func (kv *KeyValue) All() ([]string, error) {
+	var (
+		values []string
+		value  sql.NullString
+	)
+	query := fmt.Sprintf("SELECT DISTINCT skeys(attr) FROM %s", pq.QuoteIdentifier(kvPrefix+kv.table))
+	rows, err := kv.host.db.Query(query)
+	if err != nil {
+		return values, err
+	}
+	if rows == nil {
+		return values, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&value)
+		vs := value.String
+		if !kv.host.rawUTF8 {
+			Decode(&vs)
+		}
+		values = append(values, vs)
+		if err != nil {
+			return values, err
+		}
+	}
+	err = rows.Err()
+	return values, err
 }
 
 // insert a new key+value in the current KeyValue table
@@ -107,6 +140,7 @@ func (kv *KeyValue) update(key, encodedValue string) (int64, error) {
 }
 
 // update a value in the current KeyValue table, as part of a transaction
+// NOTE that the database must have an initialized hstore, possibly by using insert, before calling this!
 func (kv *KeyValue) updateWithTransaction(ctx context.Context, transaction *sql.Tx, key, encodedValue string) (int64, error) {
 	// Try updating
 	query := fmt.Sprintf("UPDATE %s SET attr = attr || '\"%s\"=>\"%s\"' :: hstore", pq.QuoteIdentifier(kvPrefix+kv.table), escapeSingleQuotes(key), escapeSingleQuotes(encodedValue))
@@ -130,75 +164,29 @@ func (kv *KeyValue) Set(key, value string) error {
 		Encode(&value)
 	}
 	encodedValue := value
-	// First try updating the key/values
-	n, err := kv.update(key, encodedValue)
+
+	isEmpty, err := kv.Empty()
 	if err != nil {
 		return err
 	}
-	// If no rows are affected (SELECTED) by the update, try inserting a row instead
-	if n == 0 {
-		n, err = kv.insert(key, encodedValue)
+
+	if isEmpty { // insert the first one if the KeyValue is currently empty
+		n, err := kv.insert(key, encodedValue)
 		if err != nil {
 			return err
 		}
 		if n == 0 {
-			return errors.New("keyValue Set: could not update or insert any rows")
+			return errors.New("keyValue Set: could not insert any rows")
 		}
-	}
-	// success
-	return nil
-}
-
-// set a key and value, as part of a transaction
-func (kv *KeyValue) setWithTransaction(ctx context.Context, transaction *sql.Tx, key, value string) error {
-	if !kv.host.rawUTF8 {
-		Encode(&value)
-	}
-	encodedValue := value
-	// First try updating the key/values
-	n, err := kv.updateWithTransaction(ctx, transaction, key, encodedValue)
-	if err != nil {
-		return err
-	}
-	// If no rows are affected (SELECTED) by the update, try inserting a row instead
-	if n == 0 {
-		n, err = kv.insertWithTransaction(ctx, transaction, key, encodedValue)
+	} else {
+		// Try updating the key/values
+		_, err := kv.update(key, encodedValue)
 		if err != nil {
 			return err
 		}
-		if n == 0 {
-			return errors.New("could not update or insert any rows")
-		}
 	}
 	// success
 	return nil
-}
-
-// SetCheck will set a value in a hashmap given the element id (for instance a user id) and the key (for instance "password")
-// Returns true if the key already existed.
-func (kv *KeyValue) SetCheck(key, value string) (bool, error) {
-	if !kv.host.rawUTF8 {
-		Encode(&value)
-	}
-	encodedValue := value
-	// First try updating the key/values
-	n, err := kv.update(key, encodedValue)
-	if err != nil {
-		return false, err
-	}
-	// If no rows are affected (SELECTED) by the update, try inserting a row instead
-	if n == 0 {
-		n, err = kv.insert(key, encodedValue)
-		if err != nil {
-			return false, err
-		}
-		if n == 0 {
-			return false, errors.New("could not update or insert any rows")
-		}
-		return false, nil
-	}
-	// success, and the key already existed
-	return true, nil
 }
 
 // Get a value given a key
@@ -224,15 +212,60 @@ func (kv *KeyValue) Get(key string) (string, error) {
 	if err := rows.Err(); err != nil {
 		return "", fmt.Errorf("keyValue Get: rows.Err(): %s", err)
 	}
+	if counter == 0 {
+		return "", errors.New("keyValue Get: no rows")
+	}
 	if counter != 1 {
 		return "", fmt.Errorf("keyValue Get: wrong number of keys in KeyValue table: %s", kvPrefix+kv.table)
 	}
+
+	s := value.String
+	if !kv.host.rawUTF8 {
+		Decode(&s)
+	}
+	if s == "" {
+		return "", fmt.Errorf("key does not exist: %s", key)
+	}
+	return s, nil
+}
+
+// Get a value given a key
+func (kv *KeyValue) getWithTransaction(ctx context.Context, transaction *sql.Tx, key string) (string, error) {
+	rows, err := transaction.QueryContext(ctx, fmt.Sprintf("SELECT attr -> '%s' FROM %s", escapeSingleQuotes(key), pq.QuoteIdentifier(kvPrefix+kv.table)))
+	if err != nil {
+		return "", fmt.Errorf("KeyValue getWithTransaction: query error: %s", err)
+	}
+	if rows == nil {
+		return "", fmt.Errorf("KeyValue getWithTransaction: no rows for key %s", key)
+	}
+	defer rows.Close()
+	var value sql.NullString
+	// Get the value. Should only loop once.
+	counter := 0
+	for rows.Next() {
+		err = rows.Scan(&value)
+		if err != nil {
+			return "", err
+		}
+		counter++
+	}
+	if err := rows.Err(); err != nil {
+		return "", fmt.Errorf("keyValue getWithTransaction: rows.Err(): %s", err)
+	}
+
 	if counter == 0 {
-		return "", errors.New("keyValue Get: no rows")
+		return "", errors.New("keyValue getWithTransaction: no rows")
+	}
+
+	if counter != 1 {
+		return "", fmt.Errorf("keyValue getWithTransaction: wrong number of keys in KeyValue table: %s", kvPrefix+kv.table)
 	}
 	s := value.String
 	if !kv.host.rawUTF8 {
 		Decode(&s)
+	}
+	if s == "" {
+		return "", fmt.Errorf("key does not exist: %s", key)
 	}
 	return s, nil
 }
@@ -312,4 +345,67 @@ func (kv *KeyValue) Clear() error {
 	// Truncate the table
 	_, err := kv.host.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", pq.QuoteIdentifier(kvPrefix+kv.table)))
 	return err
+}
+
+// Count counts the number of keys
+func (kv *KeyValue) Count() (int, error) {
+	var value sql.NullInt32
+	query := fmt.Sprintf("SELECT COUNT(*) FROM (SELECT DISTINCT skeys(attr) FROM %s) as temp", pq.QuoteIdentifier(kvPrefix+kv.table))
+	rows, err := kv.host.db.Query(query)
+	if err != nil {
+		return 0, err
+	}
+	if rows == nil {
+		return 0, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	if rows.Next() {
+		err = rows.Scan(&value)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return int(value.Int32), nil
+}
+
+// CountInt64 counts the number of keys
+func (kv *KeyValue) CountInt64() (int64, error) {
+	var value sql.NullInt64
+	query := fmt.Sprintf("SELECT COUNT(*) FROM (SELECT DISTINCT skeys(attr) FROM %s) as temp", pq.QuoteIdentifier(kvPrefix+kv.table))
+	rows, err := kv.host.db.Query(query)
+	if err != nil {
+		return 0, err
+	}
+	if rows == nil {
+		return 0, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	if rows.Next() {
+		err = rows.Scan(&value)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return value.Int64, nil
+}
+
+// Empty checks if there are no keys, in an efficient way
+func (kv *KeyValue) Empty() (bool, error) {
+	var value sql.NullInt64
+	query := fmt.Sprintf("SELECT COUNT(*) FROM (SELECT attr FROM %s LIMIT 1) as temp", pq.QuoteIdentifier(kvPrefix+kv.table))
+	rows, err := kv.host.db.Query(query)
+	if err != nil {
+		return true, err
+	}
+	if rows == nil {
+		return true, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	if rows.Next() {
+		err = rows.Scan(&value)
+		if err != nil {
+			return true, err
+		}
+	}
+	return value.Int64 == 0, nil // the count of either 0 elements, or the first 1 elements (LIMIT 1), is empty
 }

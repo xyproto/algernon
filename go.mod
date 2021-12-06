@@ -13,14 +13,13 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/jvatic/goja-babel v0.0.0-20211122124320-4fb2c916a6f6
+	github.com/jvatic/goja-babel v0.0.0-20211203124233-3de7899ca24c
 	github.com/lib/pq v1.10.4
 	github.com/lucas-clemente/quic-go v0.24.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.4.2 // indirect
+	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -39,16 +38,14 @@ require (
 	github.com/xyproto/onthefly v0.0.0-20200729114226-067b477dcf06
 	github.com/xyproto/permissionbolt v1.2.6
 	github.com/xyproto/permissions2 v0.0.0-20210728112904-5a3038edf035
-	github.com/xyproto/permissionsql v0.0.0-20191104111213-c7c1d2d341d7
-	github.com/xyproto/pinterface v0.0.0-20211009195425-512bcf6c02ee
+	github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0
+	github.com/xyproto/pinterface v1.5.3
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
-	github.com/xyproto/pstore v0.0.0-20211009210918-48e92c3ca428
-	github.com/xyproto/randomstring v0.0.0-20211020123341-4731a123782f // indirect
+	github.com/xyproto/pstore v1.3.1
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
 	github.com/xyproto/simplebolt v1.5.2-0.20200505113320-15a1a8a98c28
 	github.com/xyproto/simpleform v0.2.0
-	github.com/xyproto/simplehstore v1.3.0 // indirect
 	github.com/xyproto/simpleredis v0.0.0-20201022102402-3ef49f016e6f
 	github.com/xyproto/splash v0.0.0-20210409091724-80432d5130a0
 	github.com/xyproto/textoutput v1.12.10
@@ -59,12 +56,10 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
+	golang.org/x/net v0.0.0-20211205041911-012df41ee64c
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
-	golang.org/x/tools v0.1.7 // indirect
+	golang.org/x/tools v0.1.8 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

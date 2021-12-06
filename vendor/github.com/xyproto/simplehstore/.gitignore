@@ -1,4 +1,5 @@
 cmd/simple/simple
+cmd/repl/repl
 *.bak
 *.swp
 *.tmp
