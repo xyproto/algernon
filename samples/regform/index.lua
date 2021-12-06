@@ -24,7 +24,7 @@ function thanksPage(email)
   serve2("confirm.po2", {
     sitename = sitename,
     title = "Registration complete",
-    msg = "Thanks for registering, a confirmation e-mail has been sent to " .. email .. ". Follow the link in the e-mail or enter the confirmation code here:",
+    msg = "Thanks for registering, a confirmation e-mail has been sent to " .. email .. ". Follow the link in the e-mail or paste the confirmation code here:",
   })
 end
 
@@ -53,15 +53,15 @@ function post()
   local confirmLink = baseURL .. "/examplepath/login/?code=" .. code
   local reportLink = baseURL .. "/examplepath/report/?code=" .. code
 
-  -- Check if the user is in the system, but not confirmed as a valid user
+  -- Check if the user is in the system, but not has not been confirmed as a valid user
   if HasUnconfirmedUser(username) then
-    msgpage("User already registered", "The user " .. username .. " has already been registered, but not confirmed.", "redbox")
+    msgpage("User already registered", "The user " .. username .. " has already been registered, but not been confirmed.", "style/nes.min.css")
     return
   end
 
   -- Check if the user is in the system already
   if HasUser(username) then
-    msgpage("User already exists", "The " .. username .. " user already exists.", "redbox")
+    msgpage("User already exists", "The " .. username .. " user already exists.", "style/nes.min.css")
     return
   end
 
