@@ -1132,6 +1132,6 @@ Stargazers over time
 
 <a href="https://algernon.roboticoverlords.org"><img alt="0-0" src="img/gophereyes.png" align="right"></a>
 
-The jump in stargzers happened when Algernon reached the front page of Hacker News:
+The jump in stargazers happened when Algernon reached the front page of Hacker News:
 
 * [Self-Contained Pure-Go Web Server with Lua, MD, HTTP/2, QUIC, Redis Support](https://news.ycombinator.com/item?id=19578351)
