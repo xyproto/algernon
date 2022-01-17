@@ -264,6 +264,7 @@ func (c *Canvas) Draw() {
 		oldcr  ColorRune
 		sb     strings.Builder
 	)
+
 	cr.fg = Default
 	cr.bg = Default
 	oldcr.fg = Default
@@ -276,9 +277,7 @@ func (c *Canvas) Draw() {
 	firstRun := len(c.oldchars) == 0
 	skipAll := !firstRun // true by default, except for the first run
 	size := uint(c.w * c.h)
-	c.mut.RUnlock()
 
-	c.mut.RLock()
 	for index := uint(0); index < (size - 1); index++ {
 		cr = (*c).chars[index]
 		if !firstRun {
@@ -291,11 +290,12 @@ func (c *Canvas) Draw() {
 
 		// Only output a color code if it's different from the last character, or it's the first one
 		if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
+			// Write to the string builder
 			sb.WriteString(cr.fg.Combine(cr.bg).String())
 		}
 
 		// Write the character
-		if unicode.IsGraphic(cr.r) {
+		if unicode.IsPrint(cr.r) {
 			sb.WriteRune(cr.r)
 		} else {
 			sb.WriteRune(' ')
@@ -310,10 +310,6 @@ func (c *Canvas) Draw() {
 
 	// Output the combined string, also disable the color codes
 	if !skipAll {
-
-		// After filling the string builder with characters,
-		// end with a final "color off" code.
-		//sb.WriteString(NoColor())
 
 		// Hide the cursor, temporarily, if it's visible
 		reEnableCursor := false
@@ -335,29 +331,11 @@ func (c *Canvas) Draw() {
 			Clear()
 			c.PlotAll()
 
-			// 			line := ""
-			// 			runes := []rune(sb.String())
-			// 			for y := uint(0); y < c.h; y++ {
-			// 				w := c.w
-			// 				thisPos := w * y
-			// 				nextPos := w*(y+1)
-			// 				if nextPos >= uint(len(runes)) {
-			// 					line = string(runes[thisPos:])
-			// 					SetXY(0, uint(y))
-			// 					fmt.Println(line)
-			// 					break
-			// 				}
-			// 				line = string(runes[thisPos : nextPos])
-			// 				SetXY(uint(y), 0)
-			// 				fmt.Println(line)
-			// 			}
-
 		} else {
 			c.mut.Lock()
 			SetXY(0, 0)
 			os.Stdout.Write([]byte(sb.String()))
 			c.mut.Unlock()
-			//os.Stdout.Sync()
 		}
 
 		// Restore the cursor, if it was temporarily hidden
@@ -379,7 +357,6 @@ func (c *Canvas) Draw() {
 }
 
 func (c *Canvas) Redraw() {
-	// TODO: Consider using a single for-loop instead of 1 (range) + 2 (x,y)
 	c.mut.Lock()
 	for _, cr := range c.chars {
 		cr.drawn = false
@@ -401,9 +378,6 @@ func (c *Canvas) At(x, y uint) (rune, error) {
 }
 
 func (c *Canvas) Plot(x, y uint, r rune) {
-	//if x < 0 || y < 0 {
-	//	return
-	//}
 	if x >= c.w || y >= c.h {
 		return
 	}
@@ -416,9 +390,6 @@ func (c *Canvas) Plot(x, y uint, r rune) {
 }
 
 func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
-	//if x < 0 || y < 0 {
-	//	return
-	//}
 	if x >= c.w || y >= c.h {
 		return
 	}
@@ -433,9 +404,6 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 
 // WriteString will write a string to the canvas.
 func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
-	//if x < 0 || y < 0 {
-	//return
-	//}
 	if x >= c.w || y >= c.h {
 		return
 	}
@@ -467,9 +435,6 @@ func (c *Canvas) Write(x, y uint, fg, bg AttributeColor, s string) {
 
 // WriteRune will write a colored rune to the canvas
 func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
-	//if x < 0 || y < 0 {
-	//	return
-	//}
 	if x >= c.w || y >= c.h {
 		return
 	}
@@ -489,17 +454,6 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 // the background attribute.
 // The x and y must be within range (x < c.w and y < c.h)
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
-
-	// Disabled for performance reasons
-	//if x < 0 || y < 0 {
-	//	return
-	//}
-
-	// Disabled for performance reasons
-	//if x >= c.w || y >= c.h {
-	//return
-	//}
-
 	index := y*c.w + x
 
 	c.mut.Lock()

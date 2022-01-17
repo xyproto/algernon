@@ -339,7 +339,7 @@ func (hm2 *HashMap2) Has(owner, key string) (bool, error) {
 // Exists checks if a given owner exists as a hash map at all.
 func (hm2 *HashMap2) Exists(owner string) (bool, error) {
 	kv := hm2.keyValue()
-	query := fmt.Sprintf("SELECT SUBSTRING(skeys,'(.*)%s') FROM (SELECT skeys(attr), svals(attr) FROM %s) AS temp WHERE skeys LIKE '%s%s%%' LIMIT 1",
+	query := fmt.Sprintf("SELECT SUBSTRING(skeys,'(.*)%s') FROM (SELECT skeys(attr) FROM %s) AS temp WHERE skeys LIKE '%s%s%%' LIMIT 1",
 		fieldSep,
 		pq.QuoteIdentifier(kvPrefix+kv.table),
 		owner,

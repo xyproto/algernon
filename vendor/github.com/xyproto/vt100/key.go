@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package vt100
@@ -218,7 +219,7 @@ func KeyOnce() int {
 	return ascii
 }
 
-// Wait for Esc, Enter or Space to be pressed
+// Wait for Return, Esc, Space or q to be pressed
 func WaitForKey() {
 	// Get a new TTY and start reading keypresses in a loop
 	r, err := NewTTY()
@@ -229,7 +230,7 @@ func WaitForKey() {
 	//r.SetTimeout(10 * time.Millisecond)
 	for {
 		switch r.Key() {
-		case 27, 13, 32:
+		case 13, 27, 32, 113:
 			r.Close()
 			return
 		}

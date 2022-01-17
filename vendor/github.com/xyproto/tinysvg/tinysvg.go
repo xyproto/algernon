@@ -1,11 +1,8 @@
 // Package tinysvg supports generating and writing TinySVG 1.2 images
 //
-// This package has been refactored out from the "github.com/xyproto/onthefly" package.
-//
 // Some function names are suffixed with "2" if they take structs instead of ints/floats,
 // "i" if they take ints and "f" if they take floats. There is no support for multiple dispatch in Go.
 //
-
 package tinysvg
 
 import (
@@ -19,28 +16,36 @@ import (
 const (
 	TRANSPARENT = 0.0
 	OPAQUE      = 1.0
+
+	YES  = 0
+	NO   = 1
+	AUTO = 2
 )
 
 type (
 	Vec2 struct {
 		X, Y float64
 	}
+
 	Pos    Vec2
 	Radius Vec2
-	Size   struct {
+
+	Size struct {
 		W, H float64
 	}
+
 	Color struct {
-		R int     // red, 0..255
-		G int     // green, 0..255
-		B int     // blue, 0..255
-		A float64 // alpha, 0.0..1.0
-		N string  // name (optional, will override the above values)
+		R, G, B int     // red, green, blue (0..255)
+		A       float64 // alpha, 0.0..1.0
+		N       string  // name (optional, will override the above values)
 	}
+
 	Font struct {
 		Family string
 		Size   int
 	}
+
+	YesNoAuto int
 )
 
 var ErrPair = errors.New("position pairs must be exactly two comma separated numbers")
@@ -75,16 +80,13 @@ func NewTinySVG2(p *Pos, s *Size) (*Document, *Tag) {
 	return page, svg
 }
 
+// f2b converts the given float64 to a string representation.
+// .0 or .000000 suffixes are stripped.
+// The string is returned as a byte slice.
 func f2b(x float64) []byte {
 	fs := fmt.Sprintf("%f", x)
-	// Drop ".0" if the number ends with that
-	if strings.HasSuffix(fs, ".0") {
-		return []byte(fs[:len(fs)-2])
-	}
-	// Drop ".000000" if the number ends with that
-	if strings.HasSuffix(fs, ".000000") {
-		return []byte(fs[:len(fs)-7])
-	}
+	fs = strings.TrimSuffix(fs, ".0")
+	fs = strings.TrimSuffix(fs, ".000000")
 	return []byte(fs)
 }
 
@@ -204,21 +206,18 @@ func (svg *Tag) Stroke2(c *Color) {
 }
 
 // RGBBytes converts r, g and b (integers in the range 0..255)
-// to a color string on the form "#nnnnnn".
+// to a color string on the form "#nnnnnn", returned as a byte slice.
+// May also return colors strings on the form "#nnn".
 func RGBBytes(r, g, b int) []byte {
 	rs := strconv.FormatInt(int64(r), 16)
 	gs := strconv.FormatInt(int64(g), 16)
-	bs := strconv.FormatInt(int64(b), 16)
-	if len(rs) == 1 {
-		rs = "0" + rs
+	bs := strconv.FormatInt(int64(g), 16)
+	if len(rs) == 1 && len(gs) == 1 && len(bs) == 1 {
+		// short form
+		return []byte("#" + rs + gs + bs)
 	}
-	if len(gs) == 1 {
-		gs = "0" + gs
-	}
-	if len(bs) == 1 {
-		bs = "0" + bs
-	}
-	return []byte("#" + rs + gs + bs)
+	// long form
+	return []byte(fmt.Sprintf("#%02x%02x%02x", r, g, b))
 }
 
 // RGBABytes converts integers r, g and b (the color) and also
@@ -404,16 +403,6 @@ func (svg *Tag) Dot(x, y, r, g, b int) *Tag {
 func (svg *Tag) Text(x, y, fontSize int, fontFamily, text, color string) *Tag {
 	return svg.Text2(&Pos{float64(x), float64(y)}, &Font{fontFamily, fontSize}, text, ColorByName(color))
 }
-
-// ---------------------------------
-
-const (
-	YES  = 0
-	NO   = 1
-	AUTO = 2
-)
-
-type YesNoAuto int
 
 // Create a new Yes/No/Auto struct. If auto is true, it overrides the yes value.
 func NewYesNoAuto(yes bool, auto bool) YesNoAuto {

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/xyproto/benchmarked"
 )
 
 // Color aliases, for ease of use, not for performance
@@ -376,5 +374,5 @@ func TrueColor(fg color.Color, text string) string {
 // Equal checks if two colors have the same attributes, in the same order.
 // The values that are being compared must have at least 1 byte in them.
 func (ac *AttributeColor) Equal(other AttributeColor) bool {
-	return benchmarked.Equal(*ac, other)
+	return string(*ac) == string(other)
 }

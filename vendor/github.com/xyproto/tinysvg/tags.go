@@ -96,15 +96,6 @@ func (tag *Tag) GetAttrString() []byte {
 	return ret
 }
 
-// getSpaces generates a []byte with spaces, based on the given indentation level
-func getSpaces(level int) []byte {
-	spacing := make([]byte, 0)
-	for i := 1; i < level; i++ {
-		spacing = append(spacing, []byte("  ")...)
-	}
-	return spacing
-}
-
 // getFlatXML renders XML.
 // This will generate a []byte for a tag, non-recursively.
 func (tag *Tag) getFlatXML() []byte {
