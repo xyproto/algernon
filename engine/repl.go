@@ -18,7 +18,8 @@ import (
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/ask"
-	"github.com/xyproto/gopher-lua"
+	"github.com/xyproto/env"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
 
@@ -724,7 +725,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 
 	// Colors and input
 	windows := (runtime.GOOS == "windows")
-	mingw := windows && strings.HasPrefix(os.Getenv("TERM"), "xterm")
+	mingw := windows && strings.HasPrefix(env.Str("TERM"), "xterm")
 	enableColors := !windows || mingw
 	o := textoutput.NewTextOutput(enableColors, true)
 

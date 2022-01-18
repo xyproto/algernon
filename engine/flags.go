@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
+	"github.com/xyproto/env"
 )
 
 func generateUsageFunction(ac *Config) func() {
@@ -296,11 +297,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 
 	// Check if IGNOREEOF is set
-	ignoreEOF, err := strconv.Atoi(os.Getenv("IGNOREEOF"))
-	if err != nil {
-		ignoreEOF = 0
-	}
-	if ignoreEOF > 1 {
+	if ignoreEOF := env.Int("IGNOREEOF", 0); ignoreEOF > 1 {
 		ac.ctrldTwice = true
 	}
 
