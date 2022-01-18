@@ -13,10 +13,9 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/jvatic/goja-babel v0.0.0-20220112112033-3ef795a80dfc
 	github.com/lib/pq v1.10.4
-	github.com/lucas-clemente/quic-go v0.24.0
+	github.com/lucas-clemente/quic-go v0.25.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/miekg/dns v1.1.45 // indirect
