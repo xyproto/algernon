@@ -49,6 +49,7 @@ install:
   - go version
   - go env
   - go get -u github.com/golang-sql/civil
+  - go get -u github.com/golang-sql/sqlexp
 
 build_script:
   - go build

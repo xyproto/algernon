@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/denisenkom/go-mssqldb/msdsn"
+	"github.com/golang-sql/sqlexp"
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type token
@@ -108,6 +109,7 @@ func (d doneStruct) getError() Error {
 		return Error{Message: "Request failed but didn't provide reason"}
 	}
 	err := d.errors[n-1]
+	// should this return the most severe error?
 	err.All = make([]Error, n)
 	copy(err.All, d.errors)
 	return err
@@ -643,6 +645,7 @@ func parseReturnValue(r *tdsBuffer) (nv namedValue) {
 }
 
 func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenStruct, outs outputs) {
+	firstResult := true
 	defer func() {
 		if err := recover(); err != nil {
 			if sess.logFlags&logErrors != 0 {
@@ -692,30 +695,67 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			ch <- order
 		case tokenDoneInProc:
 			done := parseDoneInProc(sess.buf)
-			if sess.logFlags&logRows != 0 && done.Status&doneCount != 0 {
-				sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d row(s) affected)", done.RowCount))
-			}
+
 			ch <- done
+			if sess.logFlags&logRows != 0 && done.Status&doneCount != 0 {
+				sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d rows affected)", done.RowCount))
+
+				if outs.msgq != nil {
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgRowsAffected{Count: int64(done.RowCount)})
+				}
+			}
+			if done.Status&doneMore == 0 {
+				if outs.msgq != nil {
+					// For now we ignore ctx->Done errors that ReturnMessageEnqueue might return
+					// It's not clear how to handle them correctly here, and data/sql seems
+					// to set Rows.Err correctly when ctx expires already
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
+				}
+				return
+			}
 		case tokenDone, tokenDoneProc:
 			done := parseDone(sess.buf)
 			done.errors = errs
+			if outs.msgq != nil {
+				errs = make([]Error, 0, 5)
+			}
 			if sess.logFlags&logDebug != 0 {
 				sess.logger.Log(ctx, msdsn.LogDebug, fmt.Sprintf("got DONE or DONEPROC status=%d", done.Status))
 			}
 			if done.Status&doneSrvError != 0 {
 				ch <- ServerError{done.getError()}
+				if outs.msgq != nil {
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
+				}
 				return
 			}
 			if sess.logFlags&logRows != 0 && done.Status&doneCount != 0 {
 				sess.logger.Log(ctx, msdsn.LogRows, fmt.Sprintf("(%d row(s) affected)", done.RowCount))
 			}
 			ch <- done
+			if done.Status&doneCount != 0 {
+				if outs.msgq != nil {
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgRowsAffected{Count: int64(done.RowCount)})
+				}
+			}
 			if done.Status&doneMore == 0 {
+				if outs.msgq != nil {
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
+				}
 				return
 			}
 		case tokenColMetadata:
 			columns = parseColMetadata72(sess.buf)
 			ch <- columns
+
+			if outs.msgq != nil {
+				if !firstResult {
+					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
+				}
+				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNext{})
+			}
+			firstResult = false
+
 		case tokenRow:
 			row := make([]interface{}, len(columns))
 			parseRow(sess.buf, columns, row)
@@ -735,6 +775,9 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			if sess.logFlags&logErrors != 0 {
 				sess.logger.Log(ctx, msdsn.LogErrors, err.Message)
 			}
+			if outs.msgq != nil {
+				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgError{Error: err})
+			}
 		case tokenInfo:
 			info := parseInfo(sess.buf)
 			if sess.logFlags&logDebug != 0 {
@@ -742,6 +785,9 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			}
 			if sess.logFlags&logMessages != 0 {
 				sess.logger.Log(ctx, msdsn.LogMessages, info.Message)
+			}
+			if outs.msgq != nil {
+				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNotice{Message: info.Message})
 			}
 		case tokenReturnValue:
 			nv := parseReturnValue(sess.buf)
@@ -854,6 +900,10 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 			return nil, nil
 		}
 	case <-t.ctx.Done():
+		// It seems the Message function on t.outs.msgq doesn't get the Done if it comes here instead
+		if t.outs.msgq != nil {
+			_ = sqlexp.ReturnMessageEnqueue(t.ctx, t.outs.msgq, sqlexp.MsgNextResultSet{})
+		}
 		if t.noAttn {
 			return nil, t.ctx.Err()
 		}

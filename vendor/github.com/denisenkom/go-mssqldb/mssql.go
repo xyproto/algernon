@@ -17,6 +17,7 @@ import (
 
 	"github.com/denisenkom/go-mssqldb/internal/querytext"
 	"github.com/denisenkom/go-mssqldb/msdsn"
+	"github.com/golang-sql/sqlexp"
 )
 
 // ReturnStatus may be used to return the return value from a proc.
@@ -206,6 +207,7 @@ type Conn struct {
 type outputs struct {
 	params       map[string]interface{}
 	returnStatus *ReturnStatus
+	msgq         *sqlexp.ReturnMessage
 }
 
 // IsValid satisfies the driver.Validator interface.
@@ -667,6 +669,11 @@ func (s *Stmt) processQueryResponse(ctx context.Context) (res driver.Rows, err e
 	ctx, cancel := context.WithCancel(ctx)
 	reader := startReading(s.c.sess, ctx, s.c.outs)
 	s.c.clearOuts()
+	// For apps using a message queue, return right away and let Rowsq do all the work
+	if reader.outs.msgq != nil {
+		res = &Rowsq{stmt: s, reader: reader, cols: nil, cancel: cancel}
+		return res, nil
+	}
 	// process metadata
 	var cols []columnStruct
 loop:
@@ -738,13 +745,13 @@ func (s *Stmt) processExec(ctx context.Context) (res driver.Result, err error) {
 	return &Result{s.c, reader.rowCount}, nil
 }
 
+// Rows represents the non-experimental data/sql model for Query and QueryContext
 type Rows struct {
 	stmt     *Stmt
 	cols     []columnStruct
 	reader   *tokenProcessor
 	nextCols []columnStruct
-
-	cancel func()
+	cancel   func()
 }
 
 func (rc *Rows) Close() error {
@@ -772,6 +779,7 @@ func (rc *Rows) Close() error {
 }
 
 func (rc *Rows) Columns() (res []string) {
+
 	res = make([]string, len(rc.cols))
 	for i, col := range rc.cols {
 		res[i] = col.ColName
@@ -793,6 +801,7 @@ func (rc *Rows) Next(dest []driver.Value) error {
 				return io.EOF
 			} else {
 				switch tokdata := tok.(type) {
+				// processQueryResponse may have delegated all the token reading to us
 				case []columnStruct:
 					rc.nextCols = tokdata
 					return io.EOF
@@ -1057,4 +1066,215 @@ func (s *Stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (drive
 		list[i] = namedValue(nv)
 	}
 	return s.exec(ctx, list)
+}
+
+// Rowsq implements the sqlexp messages model for Query and QueryContext
+// Theory: We could also implement the non-experimental model this way
+type Rowsq struct {
+	stmt        *Stmt
+	cols        []columnStruct
+	reader      *tokenProcessor
+	nextCols    []columnStruct
+	cancel      func()
+	requestDone bool
+	inResultSet bool
+}
+
+func (rc *Rowsq) Close() error {
+	rc.cancel()
+
+	for {
+		tok, err := rc.reader.nextToken()
+		if err == nil {
+			if tok == nil {
+				return nil
+			} else {
+				// continue consuming tokens
+				continue
+			}
+		} else {
+			if err == rc.reader.ctx.Err() {
+				return nil
+			} else {
+				return err
+			}
+		}
+	}
+}
+
+// data/sql calls Columns during the app's call to Next
+func (rc *Rowsq) Columns() (res []string) {
+	if rc.cols == nil {
+	scan:
+		for {
+			tok, err := rc.reader.nextToken()
+			if err == nil {
+				if rc.reader.sess.logFlags&logDebug != 0 {
+					rc.reader.sess.logger.Log(rc.reader.ctx, msdsn.LogDebug, fmt.Sprintf("Columns() token type:%v", reflect.TypeOf(tok)))
+				}
+				if tok == nil {
+					return []string{}
+				} else {
+					switch tokdata := tok.(type) {
+					case []columnStruct:
+						rc.cols = tokdata
+						rc.inResultSet = true
+						break scan
+					}
+				}
+			}
+		}
+	}
+	res = make([]string, len(rc.cols))
+	for i, col := range rc.cols {
+		res[i] = col.ColName
+	}
+	return
+}
+
+func (rc *Rowsq) Next(dest []driver.Value) error {
+	if !rc.stmt.c.connectionGood {
+		return driver.ErrBadConn
+	}
+	for {
+		tok, err := rc.reader.nextToken()
+		if rc.reader.sess.logFlags&logDebug != 0 {
+			rc.reader.sess.logger.Log(rc.reader.ctx, msdsn.LogDebug, fmt.Sprintf("Next() token type:%v", reflect.TypeOf(tok)))
+		}
+		if err == nil {
+			if tok == nil {
+				return io.EOF
+			} else {
+				switch tokdata := tok.(type) {
+				case []interface{}:
+					for i := range dest {
+						dest[i] = tokdata[i]
+					}
+					return nil
+				case doneStruct:
+					if tokdata.Status&doneMore == 0 {
+						rc.requestDone = true
+					}
+					if tokdata.isError() {
+						e := rc.stmt.c.checkBadConn(rc.reader.ctx, tokdata.getError(), false)
+						switch e.(type) {
+						case Error:
+							// Ignore non-fatal server errors. Fatal errors are of type ServerError
+						default:
+							return e
+						}
+					}
+					if rc.inResultSet {
+						rc.inResultSet = false
+						return io.EOF
+					}
+				case ReturnStatus:
+					if rc.reader.outs.returnStatus != nil {
+						*rc.reader.outs.returnStatus = tokdata
+					}
+				}
+			}
+
+		} else {
+			return rc.stmt.c.checkBadConn(rc.reader.ctx, err, false)
+		}
+	}
+}
+
+// In Message Queue mode, we always claim another resultset could be on the way
+// to avoid Rows being closed prematurely
+func (rc *Rowsq) HasNextResultSet() bool {
+	return !rc.requestDone
+}
+
+// Scans to the next set of columns in the stream
+// Note that the caller may not have read all the rows in the prior set
+func (rc *Rowsq) NextResultSet() error {
+	if rc.requestDone {
+		return io.EOF
+	}
+scan:
+	for {
+		// we should have a columns token in the channel if we aren't at the end
+		tok, err := rc.reader.nextToken()
+		if rc.reader.sess.logFlags&logDebug != 0 {
+			rc.reader.sess.logger.Log(rc.reader.ctx, msdsn.LogDebug, fmt.Sprintf("NextResultSet() token type:%v", reflect.TypeOf(tok)))
+		}
+
+		if err != nil {
+			return err
+		}
+		if tok == nil {
+			return io.EOF
+		}
+		switch tokdata := tok.(type) {
+		case []columnStruct:
+			rc.nextCols = tokdata
+			rc.inResultSet = true
+			break scan
+		case doneStruct:
+			if tokdata.Status&doneMore == 0 {
+				rc.nextCols = nil
+				rc.requestDone = true
+				break scan
+			}
+		}
+	}
+	rc.cols = rc.nextCols
+	rc.nextCols = nil
+	if rc.cols == nil {
+		return io.EOF
+	}
+	return nil
+}
+
+// It should return
+// the value type that can be used to scan types into. For example, the database
+// column type "bigint" this should return "reflect.TypeOf(int64(0))".
+func (r *Rowsq) ColumnTypeScanType(index int) reflect.Type {
+	return makeGoLangScanType(r.cols[index].ti)
+}
+
+// RowsColumnTypeDatabaseTypeName may be implemented by Rows. It should return the
+// database system type name without the length. Type names should be uppercase.
+// Examples of returned types: "VARCHAR", "NVARCHAR", "VARCHAR2", "CHAR", "TEXT",
+// "DECIMAL", "SMALLINT", "INT", "BIGINT", "BOOL", "[]BIGINT", "JSONB", "XML",
+// "TIMESTAMP".
+func (r *Rowsq) ColumnTypeDatabaseTypeName(index int) string {
+	return makeGoLangTypeName(r.cols[index].ti)
+}
+
+// RowsColumnTypeLength may be implemented by Rows. It should return the length
+// of the column type if the column is a variable length type. If the column is
+// not a variable length type ok should return false.
+// If length is not limited other than system limits, it should return math.MaxInt64.
+// The following are examples of returned values for various types:
+//   TEXT          (math.MaxInt64, true)
+//   varchar(10)   (10, true)
+//   nvarchar(10)  (10, true)
+//   decimal       (0, false)
+//   int           (0, false)
+//   bytea(30)     (30, true)
+func (r *Rowsq) ColumnTypeLength(index int) (int64, bool) {
+	return makeGoLangTypeLength(r.cols[index].ti)
+}
+
+// It should return
+// the precision and scale for decimal types. If not applicable, ok should be false.
+// The following are examples of returned values for various types:
+//   decimal(38, 4)    (38, 4, true)
+//   int               (0, 0, false)
+//   decimal           (math.MaxInt64, math.MaxInt64, true)
+func (r *Rowsq) ColumnTypePrecisionScale(index int) (int64, int64, bool) {
+	return makeGoLangTypePrecisionScale(r.cols[index].ti)
+}
+
+// The nullable value should
+// be true if it is known the column may be null, or false if the column is known
+// to be not nullable.
+// If the column nullability is unknown, ok should be false.
+func (r *Rowsq) ColumnTypeNullable(index int) (nullable, ok bool) {
+	nullable = r.cols[index].Flags&colFlagNullable != 0
+	ok = true
+	return
 }

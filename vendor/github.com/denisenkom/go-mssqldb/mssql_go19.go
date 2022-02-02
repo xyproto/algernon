@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/golang-sql/sqlexp"
+
 	// "github.com/cockroachdb/apd"
 	"github.com/golang-sql/civil"
 )
@@ -114,6 +116,10 @@ func (c *Conn) CheckNamedValue(nv *driver.NamedValue) error {
 		return driver.ErrRemoveArgument
 	case TVP:
 		return nil
+	case *sqlexp.ReturnMessage:
+		sqlexp.ReturnMessageInit(v)
+		c.outs.msgq = v
+		return driver.ErrRemoveArgument
 	default:
 		var err error
 		nv.Value, err = convertInputParameter(nv.Value)

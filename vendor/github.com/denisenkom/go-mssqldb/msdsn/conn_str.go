@@ -3,6 +3,7 @@ package msdsn
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -75,29 +76,36 @@ type Config struct {
 }
 
 func SetupTLS(certificate string, insecureSkipVerify bool, hostInCertificate string) (*tls.Config, error) {
-	var config tls.Config
-	if certificate != "" {
-		pem, err := ioutil.ReadFile(certificate)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read certificate %q: %v", certificate, err)
+	config := tls.Config{
+		ServerName:         hostInCertificate,
+		InsecureSkipVerify: insecureSkipVerify,
+
+		// fix for https://github.com/denisenkom/go-mssqldb/issues/166
+		// Go implementation of TLS payload size heuristic algorithm splits single TDS package to multiple TCP segments,
+		// while SQL Server seems to expect one TCP segment per encrypted TDS package.
+		// Setting DynamicRecordSizingDisabled to true disables that algorithm and uses 16384 bytes per TLS package
+		DynamicRecordSizingDisabled: true,
+	}
+	if len(certificate) == 0 {
+		return &config, nil
+	}
+	pem, err := ioutil.ReadFile(certificate)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read certificate %q: %w", certificate, err)
+	}
+	if strings.Contains(config.ServerName, ":") && !insecureSkipVerify {
+		err := setupTLSCommonName(&config, pem)
+		if err != skipSetup {
+			return &config, err
 		}
-		certs := x509.NewCertPool()
-		certs.AppendCertsFromPEM(pem)
-		config.RootCAs = certs
 	}
-	if insecureSkipVerify {
-		config.InsecureSkipVerify = true
-	}
-	config.ServerName = hostInCertificate
-
-	// fix for https://github.com/denisenkom/go-mssqldb/issues/166
-	// Go implementation of TLS payload size heuristic algorithm splits single TDS package to multiple TCP segments,
-	// while SQL Server seems to expect one TCP segment per encrypted TDS package.
-	// Setting DynamicRecordSizingDisabled to true disables that algorithm and uses 16384 bytes per TLS package
-	config.DynamicRecordSizingDisabled = true
-
+	certs := x509.NewCertPool()
+	certs.AppendCertsFromPEM(pem)
+	config.RootCAs = certs
 	return &config, nil
 }
+
+var skipSetup = errors.New("skip setting up TLS")
 
 func Parse(dsn string) (Config, map[string]string, error) {
 	p := Config{}

@@ -77,6 +77,12 @@ github.com/dop251/goja v0.0.0-20220108163712-ddea1f44690e h1:pw2dZaa+ZmxSrM/6XZR
 github.com/dop251/goja v0.0.0-20220108163712-ddea1f44690e/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
 github.com/dop251/goja v0.0.0-20220110113543-261677941f3c h1:1XnAlcjYBdO7xsa2rhNB/BTztiu4cFKOxE+3brXVtG4=
 github.com/dop251/goja v0.0.0-20220110113543-261677941f3c/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
+github.com/dop251/goja v0.0.0-20220121164618-eb794b530fe6 h1:3nh0tj9oKrhoHqixEo/wAgS+X9Uda5HASueZmjOVWoU=
+github.com/dop251/goja v0.0.0-20220121164618-eb794b530fe6/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
+github.com/dop251/goja v0.0.0-20220122125228-3c02223f615e h1:2CIkqLrnBQBBV7MiPw7Rtg4kSd8FS9u1jiRpcFEz2e4=
+github.com/dop251/goja v0.0.0-20220122125228-3c02223f615e/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
+github.com/dop251/goja v0.0.0-20220124171016-cfb079cdc7b4 h1:gUXabLfCUjaNl7kLxGdaZaw1c5x33SGL9PEo6p/hfuo=
+github.com/dop251/goja v0.0.0-20220124171016-cfb079cdc7b4/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
 github.com/dop251/goja_nodejs v0.0.0-20210225215109-d91c329300e7/go.mod h1:hn7BA7c8pLvoGndExHudxTDKZ84Pyvv+90pbBjbTz0Y=
 github.com/go-sourcemap/sourcemap v2.1.3+incompatible h1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=
 github.com/go-sourcemap/sourcemap v2.1.3+incompatible/go.mod h1:F8jJfvm2KbVjc5NqelyYJmf/v5J0dwNLS2mL4sNA1Jg=

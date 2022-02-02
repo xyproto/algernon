@@ -9,31 +9,31 @@ import (
 
 // Federated authentication library affects the login data structure and message sequence.
 const (
-	// fedAuthLibraryLiveIDCompactToken specifies the Microsoft Live ID Compact Token authentication scheme
-	fedAuthLibraryLiveIDCompactToken = 0x00
+	// FedAuthLibraryLiveIDCompactToken specifies the Microsoft Live ID Compact Token authentication scheme
+	FedAuthLibraryLiveIDCompactToken = 0x00
 
-	// fedAuthLibrarySecurityToken specifies a token-based authentication where the token is available
+	// FedAuthLibrarySecurityToken specifies a token-based authentication where the token is available
 	// without additional information provided during the login sequence.
-	fedAuthLibrarySecurityToken = 0x01
+	FedAuthLibrarySecurityToken = 0x01
 
-	// fedAuthLibraryADAL specifies a token-based authentication where a token is obtained during the
+	// FedAuthLibraryADAL specifies a token-based authentication where a token is obtained during the
 	// login sequence using the server SPN and STS URL provided by the server during login.
-	fedAuthLibraryADAL = 0x02
+	FedAuthLibraryADAL = 0x02
 
-	// fedAuthLibraryReserved is used to indicate that no federated authentication scheme applies.
-	fedAuthLibraryReserved = 0x7F
+	// FedAuthLibraryReserved is used to indicate that no federated authentication scheme applies.
+	FedAuthLibraryReserved = 0x7F
 )
 
 // Federated authentication ADAL workflow affects the mechanism used to authenticate.
 const (
-	// fedAuthADALWorkflowPassword uses a username/password to obtain a token from Active Directory
-	fedAuthADALWorkflowPassword = 0x01
+	// FedAuthADALWorkflowPassword uses a username/password to obtain a token from Active Directory
+	FedAuthADALWorkflowPassword = 0x01
 
 	// fedAuthADALWorkflowPassword uses the Windows identity to obtain a token from Active Directory
-	fedAuthADALWorkflowIntegrated = 0x02
+	FedAuthADALWorkflowIntegrated = 0x02
 
-	// fedAuthADALWorkflowMSI uses the managed identity service to obtain a token
-	fedAuthADALWorkflowMSI = 0x03
+	// FedAuthADALWorkflowMSI uses the managed identity service to obtain a token
+	FedAuthADALWorkflowMSI = 0x03
 )
 
 // newSecurityTokenConnector creates a new connector from a Config and a token provider.
@@ -41,14 +41,14 @@ const (
 // service specified and obtain the appropriate token, or return an error
 // to indicate why a token is not available.
 // The returned connector may be used with sql.OpenDB.
-func newSecurityTokenConnector(config msdsn.Config, tokenProvider func(ctx context.Context) (string, error)) (*Connector, error) {
+func NewSecurityTokenConnector(config msdsn.Config, tokenProvider func(ctx context.Context) (string, error)) (*Connector, error) {
 	if tokenProvider == nil {
 		return nil, errors.New("mssql: tokenProvider cannot be nil")
 	}
 
 	conn := NewConnectorConfig(config)
 	conn.fedAuthRequired = true
-	conn.fedAuthLibrary = fedAuthLibrarySecurityToken
+	conn.fedAuthLibrary = FedAuthLibrarySecurityToken
 	conn.securityTokenProvider = tokenProvider
 
 	return conn, nil
@@ -63,14 +63,14 @@ func newSecurityTokenConnector(config msdsn.Config, tokenProvider func(ctx conte
 // to indicate why a token is not available.
 //
 // The returned connector may be used with sql.OpenDB.
-func newActiveDirectoryTokenConnector(config msdsn.Config, adalWorkflow byte, tokenProvider func(ctx context.Context, serverSPN, stsURL string) (string, error)) (*Connector, error) {
+func NewActiveDirectoryTokenConnector(config msdsn.Config, adalWorkflow byte, tokenProvider func(ctx context.Context, serverSPN, stsURL string) (string, error)) (*Connector, error) {
 	if tokenProvider == nil {
 		return nil, errors.New("mssql: tokenProvider cannot be nil")
 	}
 
 	conn := NewConnectorConfig(config)
 	conn.fedAuthRequired = true
-	conn.fedAuthLibrary = fedAuthLibraryADAL
+	conn.fedAuthLibrary = FedAuthLibraryADAL
 	conn.fedAuthADALWorkflow = adalWorkflow
 	conn.adalTokenProvider = tokenProvider
 

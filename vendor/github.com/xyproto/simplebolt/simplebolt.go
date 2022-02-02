@@ -59,10 +59,6 @@ var (
 
 	// errFoundIt is only used internally, for breaking out of Bolt DB style for-loops
 	errFoundIt = errors.New("Found it")
-
-	// errReachedEnd is used internally by traversing methods to indicate that the
-	// end of the data structure has been reached.
-	errReachedEnd = errors.New("Reached end of data structure")
 )
 
 /* --- Database functions --- */
@@ -674,8 +670,8 @@ func (kv *KeyValue) Inc(key string) (string, error) {
 		num++
 		// Convert the new value to a string and save it
 		val = strconv.Itoa(num)
-		err = bucket.Put([]byte(key), []byte(val))
-		return err
+		// Return the error, if any
+		return bucket.Put([]byte(key), []byte(val))
 	})
 	return val, err
 }

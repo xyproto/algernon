@@ -517,19 +517,31 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 
 			failedChallengeTypes.rememberFailedChallenge(authz)
 
-			switch problem.Type {
-			case acme.ProblemTypeConnection,
-				acme.ProblemTypeDNS,
-				acme.ProblemTypeServerInternal,
-				acme.ProblemTypeUnauthorized,
-				acme.ProblemTypeTLS:
-				// this error might be recoverable with another challenge type
-				return retryableErr{err}
+			if c.countAvailableChallenges(authz) > 0 {
+				switch problem.Type {
+				case acme.ProblemTypeConnection,
+					acme.ProblemTypeDNS,
+					acme.ProblemTypeServerInternal,
+					acme.ProblemTypeUnauthorized,
+					acme.ProblemTypeTLS:
+					// this error might be recoverable with another challenge type
+					return retryableErr{err}
+				}
 			}
 		}
 		return fmt.Errorf("[%s] %w", authz.Authorization.IdentifierValue(), err)
 	}
 	return nil
+}
+
+func (c *Client) countAvailableChallenges(authz *authzState) int {
+	count := 0
+	for _, remainingChal := range authz.remainingChallenges {
+		if _, ok := c.ChallengeSolvers[remainingChal.Type]; ok {
+			count++
+		}
+	}
+	return count
 }
 
 func (c *Client) enabledChallengeTypes() []string {
