@@ -95,6 +95,8 @@ const (
 	AVXSLOW                             // Indicates the CPU performs 2 128 bit operations instead of one.
 	BMI1                                // Bit Manipulation Instruction Set 1
 	BMI2                                // Bit Manipulation Instruction Set 2
+	CETIBT                              // Intel CET Indirect Branch Tracking
+	CETSS                               // Intel CET Shadow Stack
 	CLDEMOTE                            // Cache Line Demote
 	CLMUL                               // Carry-less Multiplication
 	CLZERO                              // CLZERO instruction supported
@@ -993,6 +995,7 @@ func support() flagSet {
 		fs.setIf(ebx&(1<<29) != 0, SHA)
 		// CPUID.(EAX=7, ECX=0).ECX
 		fs.setIf(ecx&(1<<5) != 0, WAITPKG)
+		fs.setIf(ecx&(1<<7) != 0, CETSS)
 		fs.setIf(ecx&(1<<25) != 0, CLDEMOTE)
 		fs.setIf(ecx&(1<<27) != 0, MOVDIRI)
 		fs.setIf(ecx&(1<<28) != 0, MOVDIR64B)
@@ -1002,6 +1005,7 @@ func support() flagSet {
 		fs.setIf(edx&(1<<11) != 0, RTM_ALWAYS_ABORT)
 		fs.setIf(edx&(1<<14) != 0, SERIALIZE)
 		fs.setIf(edx&(1<<16) != 0, TSXLDTRK)
+		fs.setIf(edx&(1<<20) != 0, CETIBT)
 		fs.setIf(edx&(1<<26) != 0, IBPB)
 		fs.setIf(edx&(1<<27) != 0, STIBP)
 

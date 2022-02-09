@@ -96,10 +96,10 @@ github.com/golang-sql/civil
 github.com/golang-sql/sqlexp
 # github.com/gomodule/redigo v1.8.8
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20220125124125-2f6bd13d9524
+# github.com/jvatic/goja-babel v0.0.0-20220204111551-a1d14e0da9a9
 ## explicit
 github.com/jvatic/goja-babel
-# github.com/klauspost/cpuid/v2 v2.0.10
+# github.com/klauspost/cpuid/v2 v2.0.11
 ## explicit
 github.com/klauspost/cpuid/v2
 # github.com/kr/pretty v0.3.0
@@ -151,7 +151,7 @@ github.com/mgutz/ansi
 ## explicit
 github.com/mholt/acmez
 github.com/mholt/acmez/acme
-# github.com/miekg/dns v1.1.45
+# github.com/miekg/dns v1.1.46
 ## explicit
 github.com/miekg/dns
 # github.com/mitchellh/go-homedir v1.1.0
@@ -327,7 +327,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.7.0
 ## explicit
 go.uber.org/multierr
-# go.uber.org/zap v1.20.0
+# go.uber.org/zap v1.21.0
 ## explicit
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -335,7 +335,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
+# golang.org/x/crypto v0.0.0-20220208233918-bba287dce954
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -365,7 +365,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27
+# golang.org/x/sys v0.0.0-20220207234003-57398862261d
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
