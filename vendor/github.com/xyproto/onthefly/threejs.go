@@ -36,14 +36,24 @@ type (
 )
 
 // Create a HTML5 page that links with Three.JS and sets up a scene
-func NewThreeJS(titleText string) (*Page, *Tag) {
-	page := NewHTML5Page(titleText)
+func NewThreeJS(args ...string) (*Page, *Tag) {
+	title := "Untitled"
+	if len(args) > 0 {
+		title = args[0]
+	}
+
+	page := NewHTML5Page(title)
 
 	// Style the page for showing a fullscreen canvas
 	page.FullCanvas()
 
-	// Link to Three.JS
-	page.LinkToJSInBody("http://threejs.org/build/three.min.js")
+	if len(args) > 1 {
+		threeJSURL := args[1]
+		page.LinkToJSInBody(threeJSURL)
+	} else {
+		// Link to Three.JS
+		page.LinkToJSInBody("https://threejs.org/build/three.min.js")
+	}
 
 	// Add a scene
 	script, _ := page.AddScriptToBody("var scene = new THREE.Scene();")
