@@ -22,18 +22,16 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.16 or later.
+Requires Go 1.18 or later.
 
-Clone algernon outside of `GOPATH`:
+    go install github.com/xyproto/algernon@latest
+
+Or manually:
 
     git clone https://github.com/xyproto/algernon
     cd algernon
     go build -mod=vendor
     ./welcome.sh
-
-This should also work:
-
-    go install github.com/xyproto/algernon@latest
 
 Releases and pre-built images
 -----------------------------
@@ -1122,7 +1120,7 @@ General information
 -------------------
 
 * Version: 1.12.14
-* License: MIT
+* License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
 Stargazers over time
