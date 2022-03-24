@@ -11,7 +11,7 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/jvatic/goja-babel v0.0.0-20220319111308-ff5dd2e9d919
+	github.com/jvatic/goja-babel v0.0.0-20220324121911-69f3c2c187e8
 	github.com/lib/pq v1.10.4
 	github.com/lucas-clemente/quic-go v0.26.0
 	github.com/mitchellh/go-homedir v1.1.0
@@ -51,7 +51,7 @@ require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
-	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f // indirect
+	github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect

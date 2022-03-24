@@ -66,7 +66,7 @@ github.com/didip/tollbooth/limiter
 ## explicit
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f
+# github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866
 ## explicit; go 1.14
 github.com/dop251/goja
 github.com/dop251/goja/ast
@@ -105,7 +105,7 @@ github.com/golang-sql/sqlexp
 # github.com/gomodule/redigo v1.8.8
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20220319111308-ff5dd2e9d919
+# github.com/jvatic/goja-babel v0.0.0-20220324121911-69f3c2c187e8
 ## explicit; go 1.16
 github.com/jvatic/goja-babel
 # github.com/klauspost/cpuid/v2 v2.0.12

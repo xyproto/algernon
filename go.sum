@@ -49,8 +49,8 @@ github.com/dlclark/regexp2 v1.4.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55k
 github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 h1:Izz0+t1Z5nI16/II7vuEo/nHjodOg0p7+OiDpjX5t1E=
 github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
-github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f h1:ztRywKO1rqqS8li0TDcnwi9AGsqAH0ky9NaND69/Ccc=
-github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
+github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866 h1:LAjokPR4PSrBQ2uLG9jFAa4ajdXUn4acffvcdfN58WA=
+github.com/dop251/goja v0.0.0-20220324112439-a18ffb9c5866/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
 github.com/dop251/goja_nodejs v0.0.0-20210225215109-d91c329300e7/go.mod h1:hn7BA7c8pLvoGndExHudxTDKZ84Pyvv+90pbBjbTz0Y=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
@@ -143,8 +143,8 @@ github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHm
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/juju/loggo v0.0.0-20180524022052-584905176618/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=
 github.com/juju/testing v0.0.0-20180920084828-472a3e8b2073/go.mod h1:63prj8cnj0tU0S9OHjGJn+b1h0ZghCndfnbQolrYTwA=
-github.com/jvatic/goja-babel v0.0.0-20220319111308-ff5dd2e9d919 h1:Ev3grHgkFjD0mFEW64uhpxVzG8UAWIJDTYEqKL+128M=
-github.com/jvatic/goja-babel v0.0.0-20220319111308-ff5dd2e9d919/go.mod h1:Ji3Qg9MSeIL/Av9F70N+Xwk5Yx5SAsuVjJ6dCuicXK0=
+github.com/jvatic/goja-babel v0.0.0-20220324121911-69f3c2c187e8 h1:g7IDziGj7OXFjUmLq9DH/FnbcuuGXvpQJnsXMNqzPbA=
+github.com/jvatic/goja-babel v0.0.0-20220324121911-69f3c2c187e8/go.mod h1:7pQbT2QuSh4NwMjetenu5yqtjkaNN2lE3CNlVCcv0FA=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/klauspost/cpuid/v2 v2.0.12 h1:p9dKCg8i4gmOxtv35DvrYoWqYzQrvEVdjQ762Y0OqZE=
