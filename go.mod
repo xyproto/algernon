@@ -39,7 +39,7 @@ require (
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af
-	github.com/xyproto/splash v0.0.0-20220311124255-c20a33269c3d
+	github.com/xyproto/splash v1.1.5
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/tinysvg v1.0.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952

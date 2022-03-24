@@ -325,7 +325,7 @@ github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af
 ## explicit; go 1.8
 github.com/xyproto/simpleredis
-# github.com/xyproto/splash v0.0.0-20220311124255-c20a33269c3d
+# github.com/xyproto/splash v1.1.5
 ## explicit; go 1.11
 github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1

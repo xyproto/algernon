@@ -365,8 +365,8 @@ github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 h1:w6gHEw0SC54
 github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92/go.mod h1:8edMYeQzjObsOqqAczFoi/nKP8DMOztU0/25pTWQ/bw=
 github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af h1:cysD3MzP3R/pQETtrLsxudVsc79USsWNFY27kYooQbY=
 github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af/go.mod h1:klBJiwXWN4OvxC5qVNAr7RnRYowZh9WyeAJoU6aZjZ0=
-github.com/xyproto/splash v0.0.0-20220311124255-c20a33269c3d h1:05dj6F50CwfdsDOEFrD5/xvOtdBZhH1gKm3Iffca7xk=
-github.com/xyproto/splash v0.0.0-20220311124255-c20a33269c3d/go.mod h1:ivMgA2lbJI0jfC8jSV2X5xdNA6gAZqWrafwVa51Wl2c=
+github.com/xyproto/splash v1.1.5 h1:H3te9ef97jyUw+dJa2R7GjIDMCdtkOzvZjCY1KoOsQg=
+github.com/xyproto/splash v1.1.5/go.mod h1:ivMgA2lbJI0jfC8jSV2X5xdNA6gAZqWrafwVa51Wl2c=
 github.com/xyproto/symwalk v1.1.1 h1:icxMUiRAOqw8x9q9UWtpNz3rN7fngSYNMRguWzsyiWI=
 github.com/xyproto/symwalk v1.1.1/go.mod h1:u40/s1ER3LYv1ibNLeyH1PAR9oX62BPHNRt295/9zQc=
 github.com/xyproto/textoutput v1.12.10 h1:75oboV/BLgoQN711b6v9HmwN/LdrlSv89wDshavvDFo=

@@ -193,6 +193,10 @@ func Highlight(htmlData []byte, styleName string, unescape bool) ([]byte, []byte
 			hiBytes = []byte(`<pre class="chroma">` + string(hiBytes) + "</pre>")
 		}
 
+		// TODO: This is a hack. Find a cleaner way.
+		hiBytes = bytes.ReplaceAll(hiBytes, []byte("<pre class=\"chroma\"><code><pre tabindex=\"0\" class=\"chroma\"><code>"), []byte("<pre tabindex=\"0\" class=\"chroma\"><code>"))
+		hiBytes = bytes.ReplaceAll(hiBytes, []byte("</code></pre></code></pre>"), []byte("</code></pre>"))
+
 		return hiBytes
 	})
 
