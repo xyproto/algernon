@@ -5,6 +5,7 @@ package engine
 import (
 	"bytes"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -65,7 +66,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		fullFilename += filename
 
 		// Remove the root directory from the link path
-		URLpath = fullFilename[len(rootdir)+1:]
+		URLpath = url.QueryEscape(fullFilename[len(rootdir)+1:])
 
 		// Output different entries for files and directories
 		buf.WriteString(themes.HTMLLink(filename, URLpath, ac.fs.IsDir(fullFilename)))
