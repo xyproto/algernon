@@ -171,10 +171,14 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			// If $TMPDIR is not set, use /tmp.
 			certStorageDir := env.Str("XDG_CONFIG_DIR", env.Str("HOME", env.Str("TMPDIR", "/tmp")))
 
+			defaultEmail := env.Str("LOGNAME", "root") + "@localhost"
+			if len(ac.certMagicDomains) > 0 {
+				defaultEmail = "webmaster@" + ac.certMagicDomains[0]
+			}
+
+			certmagic.DefaultACME.Email = env.Str("EMAIL", defaultEmail)
 			// TODO: Find a way for Algernon users to agree on this manually
 			certmagic.DefaultACME.Agreed = true
-			// TODO: Find a better default e-mail address
-			certmagic.DefaultACME.Email = env.Str("EMAIL", "bob@zombo.com")
 			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
 			if err := certmagic.HTTPS(ac.certMagicDomains, mux); err != nil {
 				mut.Lock()
