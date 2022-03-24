@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/eknkc/amber"
-	"github.com/jvatic/goja-babel"
+	babel "github.com/jvatic/goja-babel"
 	"github.com/russross/blackfriday/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
@@ -421,8 +421,9 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	var (
 		buf                   bytes.Buffer
 		linkInGCSS, linkInCSS bool
-		GCSSFilename          = filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
-		CSSFilename           = filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
+		dirName               = filepath.Dir(filename)
+		GCSSFilename          = filepath.Join(dirName, themes.DefaultGCSSFilename)
+		CSSFilename           = filepath.Join(dirName, themes.DefaultCSSFilename)
 	)
 
 	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
@@ -448,6 +449,16 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 			}
 		}
 		linkInGCSS = true
+	}
+
+	// Set the base directory for Pongo2 to the one where the given filename is
+	if err := pongo2.DefaultLoader.SetBaseDir(dirName); err != nil {
+		if ac.debugMode {
+			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
+		} else {
+			log.Errorf("Could not set base directory for Pongo2 to %s:\n%s", dirName, err)
+		}
+		return
 	}
 
 	// Prepare a Pongo2 template
@@ -589,11 +600,14 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 // The filename is only used in error messages, if any.
 func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap) {
 
-	var buf bytes.Buffer
+	var (
+		buf bytes.Buffer
+		// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
+		dirName      = filepath.Dir(filename)
+		GCSSFilename = filepath.Join(dirName, themes.DefaultGCSSFilename)
+		CSSFilename  = filepath.Join(dirName, themes.DefaultCSSFilename)
+	)
 
-	// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
-	GCSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultGCSSFilename)
-	CSSFilename := filepath.Join(filepath.Dir(filename), themes.DefaultCSSFilename)
 	if ac.fs.Exists(CSSFilename) {
 		// Link to stylesheet (without checking if the GCSS file is valid first)
 		amberdata = themes.StyleAmber(amberdata, themes.DefaultCSSFilename)
