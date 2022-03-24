@@ -105,7 +105,7 @@ github.com/golang-sql/sqlexp
 # github.com/gomodule/redigo v1.8.8
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/jvatic/goja-babel v0.0.0-20220315111317-8eeeb328c537
+# github.com/jvatic/goja-babel v0.0.0-20220319111308-ff5dd2e9d919
 ## explicit; go 1.16
 github.com/jvatic/goja-babel
 # github.com/klauspost/cpuid/v2 v2.0.12
@@ -125,7 +125,7 @@ github.com/lib/pq/scram
 # github.com/libdns/libdns v0.2.1
 ## explicit; go 1.14
 github.com/libdns/libdns
-# github.com/lucas-clemente/quic-go v0.25.1-0.20220316083311-9c8cadba9e35
+# github.com/lucas-clemente/quic-go v0.26.0
 ## explicit; go 1.16
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/http3
@@ -144,13 +144,13 @@ github.com/lucas-clemente/quic-go/quicvarint
 # github.com/marten-seemann/qpack v0.2.1
 ## explicit; go 1.14
 github.com/marten-seemann/qpack
-# github.com/marten-seemann/qtls-go1-16 v0.1.4
+# github.com/marten-seemann/qtls-go1-16 v0.1.5
 ## explicit; go 1.16
 github.com/marten-seemann/qtls-go1-16
-# github.com/marten-seemann/qtls-go1-17 v0.1.0
+# github.com/marten-seemann/qtls-go1-17 v0.1.1
 ## explicit; go 1.17
 github.com/marten-seemann/qtls-go1-17
-# github.com/marten-seemann/qtls-go1-18 v0.1.0
+# github.com/marten-seemann/qtls-go1-18 v0.1.1
 ## explicit; go 1.18
 github.com/marten-seemann/qtls-go1-18
 # github.com/mattetti/filebuffer v1.0.1
@@ -363,7 +363,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -394,7 +394,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220318055525-2edf467146b5
+# golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
