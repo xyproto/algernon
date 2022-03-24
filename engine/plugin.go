@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/natefinch/pie"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
 
@@ -55,8 +55,9 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LBool(false)) // Fail
 			return 1                 // number of results
 		}
-		// May cause a data race
-		//defer client.Close()
+		// Close the client once this function has completed
+		defer client.Close()
+
 		p := &luaPlugin{client}
 
 		// Retrieve the Lua code
@@ -124,8 +125,9 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LString("")) // Fail
 			return 1                // number of results
 		}
-		// May cause a data race
-		//defer client.Close()
+		// Close the client once this function has completed
+		defer client.Close()
+
 		p := &luaPlugin{client}
 
 		// Retrieve the Lua code
@@ -176,6 +178,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 		if o != nil {
 			logto = os.Stdout
 		}
+
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, logto, path)
 		if err != nil {
 			if o != nil {
@@ -185,8 +188,8 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LString("")) // Fail
 			return 1                // number of results
 		}
-		// May cause a data race
-		//defer client.Close()
+		// Close the client once this function has completed
+		defer client.Close()
 
 		jsonargs, err := json.Marshal(args)
 		if err != nil {
