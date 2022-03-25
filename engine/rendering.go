@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/eknkc/amber"
-	babel "github.com/jvatic/goja-babel"
+	"github.com/evanw/esbuild/pkg/api"
+
 	"github.com/russross/blackfriday/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
@@ -122,6 +121,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 			} else {
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
 			}
+
 			//return 0 // number of results
 		}
 		return 0 // number of results
@@ -132,19 +132,40 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
-		res, err := babel.Transform(&buf, ac.jsxOptions)
-		if err != nil {
+		result := api.Transform(buf.String(), ac.jsxOptions)
+		if len(result.Errors) > 0 {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
+				fmt.Fprint(w, "Could not generate JavaScript:\n")
+				for _, errMsg := range result.Errors {
+					fmt.Fprintf(w, "error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				}
+				for _, warnMsg := range result.Warnings {
+					fmt.Fprintf(w, "warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				}
 			} else {
-				log.Errorf("Could not generate JavaScript:\n%s\n%s", err, buf.String())
+				// TODO: Use a similar error page as for Lua
+				log.Error(w, "Could not generate JavaScript:\n")
+				for _, errMsg := range result.Errors {
+					log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				}
+				for _, warnMsg := range result.Warnings {
+					log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				}
+			}
+			return 0 // number of results
+
+		}
+		n, err := w.Write(result.Code)
+		if err != nil || n == 0 {
+			if ac.debugMode {
+				fmt.Fprint(w, "Result from generated JavaScript is empty\n")
+			} else {
+				log.Error("Result from generated JavaScript is empty\n")
 			}
 			return 0 // number of results
 		}
-		if res != nil {
-			io.Copy(w, res)
-		}
+
 		return 0 // number of results
 	}))
 
@@ -153,26 +174,40 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Transform JSX to JavaScript and output the result.
-		res, err := babel.Transform(&buf, ac.jsxOptions)
-		if err != nil {
+		result := api.Transform(buf.String(), ac.jsxOptions)
+		if len(result.Errors) > 0 {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not generate JavaScript:\n\t"+err.Error()+"\n\n"+buf.String())
+				fmt.Fprint(w, "Could not generate JavaScript:\n")
+				for _, errMsg := range result.Errors {
+					fmt.Fprintf(w, "error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				}
+				for _, warnMsg := range result.Warnings {
+					fmt.Fprintf(w, "warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				}
 			} else {
-				log.Errorf("Could not generate JavaScript:\n%s\n%s", err, buf.String())
+				// TODO: Use a similar error page as for Lua
+				log.Error(w, "Could not generate JavaScript:\n")
+				for _, errMsg := range result.Errors {
+					log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				}
+				for _, warnMsg := range result.Warnings {
+					log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				}
 			}
 			return 0 // number of results
 		}
-		if res != nil {
-			data, err := ioutil.ReadAll(res)
-			if err != nil {
-				log.Error("Could not read bytes from JSX generator:", err)
-				return 0 // number of results
+		data := result.Code
+		// Use "h" instead of "React.createElement" for hyperApp apps
+		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+		n, err := w.Write(data)
+		if err != nil || n == 0 {
+			if ac.debugMode {
+				fmt.Fprint(w, "Result from generated JavaScript is empty\n")
+			} else {
+				log.Error("Result from generated JavaScript is empty\n")
 			}
-
-			// Use "h" instead of "React.createElement" for hyperApp apps
-			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
-			w.Write(data)
+			return 0 // number of results
 		}
 		return 0 // number of results
 	}))
@@ -717,29 +752,38 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	buf.Write(jsxdata)
 
 	// Convert JSX to JS
-	res, err := babel.Transform(&buf, ac.jsxOptions)
-	if err != nil {
+	result := api.Transform(buf.String(), ac.jsxOptions)
+	if len(result.Errors) > 0 {
 		if ac.debugMode {
-			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+			var sb strings.Builder
+			sb.WriteString("Could not generate JavaScript:\n")
+			for _, errMsg := range result.Errors {
+				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column))
+			}
+			for _, warnMsg := range result.Warnings {
+				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column))
+			}
+			ac.PrettyError(w, req, filename, jsxdata, sb.String(), "jsx")
 		} else {
-			log.Errorf("Could not generate javascript:\n%s\n%s", err, buf.String())
+			// TODO: Use a similar error page as for Lua
+			log.Error(w, "Could not generate JavaScript:\n")
+			for _, errMsg := range result.Errors {
+				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+			}
+			for _, warnMsg := range result.Warnings {
+				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+			}
 		}
 		return
 	}
-	if res != nil {
-		data, err := ioutil.ReadAll(res)
-		if err != nil {
-			log.Error("Could not read bytes from JSX generator:", err)
-			return
-		}
+	data := result.Code
 
-		// Use "h" instead of "React.createElement" for hyperApp apps
-		if ac.hyperApp {
-			data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
-		}
-
-		ac.DataToClient(w, req, filename, data)
+	// Use "h" instead of "React.createElement" for hyperApp apps
+	if ac.hyperApp {
+		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
 	}
+
+	ac.DataToClient(w, req, filename, data)
 }
 
 // HyperAppPage writes the given source bytes (in JSX for HyperApp) converted to JS, to a writer.
@@ -799,12 +843,28 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 
 	// Convert JSX to JS
 	jsxbuf.Write(jsxdata)
-	jsxGenerator, err := babel.Transform(&jsxbuf, ac.jsxOptions)
-	if err != nil {
+	jsxResult := api.Transform(jsxbuf.String(), ac.jsxOptions)
+
+	if len(jsxResult.Errors) > 0 {
 		if ac.debugMode {
-			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+			var sb strings.Builder
+			sb.WriteString("Could not generate JavaScript:\n")
+			for _, errMsg := range jsxResult.Errors {
+				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column))
+			}
+			for _, warnMsg := range jsxResult.Warnings {
+				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column))
+			}
+			ac.PrettyError(w, req, filename, jsxdata, sb.String(), "jsx")
 		} else {
-			log.Errorf("Could not generate javascript:\n%s\n%s", err, jsxbuf.String())
+			// TODO: Use a similar error page as for Lua
+			log.Error(w, "Could not generate JavaScript:\n")
+			for _, errMsg := range jsxResult.Errors {
+				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+			}
+			for _, warnMsg := range jsxResult.Warnings {
+				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+			}
 		}
 		return
 	}
@@ -819,32 +879,25 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	// The HyperApp library + compiled JSX can live in the same script tag. No need for this:
 	//htmlbuf.WriteString("</script><script>")
 
-	if jsxGenerator != nil {
-		// Read from the generator
-		jsxData, err := ioutil.ReadAll(jsxGenerator)
-		if err != nil {
-			log.Error("Could not read bytes from JSX generator:", err)
-			return
-		}
+	jsxData := jsxResult.Code
 
-		// Use "h" instead of "React.createElement"
-		jsxData = bytes.Replace(jsxData, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+	// Use "h" instead of "React.createElement"
+	jsxData = bytes.Replace(jsxData, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
 
-		// If the file does not seem to contain the hyper app import: add it to the top of the script
-		// TODO: Consider making a more robust (and slower) check that splits the data into words first
-		if !bytes.Contains(jsxData, []byte("import { h,")) {
-			htmlbuf.WriteString("const { h, app } = hyperapp;")
-		}
-
-		// Insert the JS data
-		htmlbuf.Write(jsxData)
-
-		// Tail of the HTML wrapper page
-		htmlbuf.WriteString("</script></body>")
-
-		// Output HTML + JS to browser
-		ac.DataToClient(w, req, filename, []byte(htmlbuf.String()))
+	// If the file does not seem to contain the hyper app import: add it to the top of the script
+	// TODO: Consider making a more robust (and slower) check that splits the data into words first
+	if !bytes.Contains(jsxData, []byte("import { h,")) {
+		htmlbuf.WriteString("const { h, app } = hyperapp;")
 	}
+
+	// Insert the JS data
+	htmlbuf.Write(jsxData)
+
+	// Tail of the HTML wrapper page
+	htmlbuf.WriteString("</script></body>")
+
+	// Output HTML + JS to browser
+	ac.DataToClient(w, req, filename, []byte(htmlbuf.String()))
 }
 
 // SCSSPage writes the given source bytes (in SCSS) converted to CSS, to a writer.

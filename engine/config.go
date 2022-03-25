@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	babel "github.com/jvatic/goja-babel"
+	"github.com/evanw/esbuild/pkg/api"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/pool"
@@ -230,7 +230,7 @@ type Config struct {
 	fs *datablock.FileStat
 
 	// JSX rendering options
-	jsxOptions map[string]interface{}
+	jsxOptions api.TransformOptions
 
 	// Convert JSX to HyperApp JS or React JS?
 	hyperApp bool
@@ -315,11 +315,12 @@ func New(versionString, description string) (*Config, error) {
 		description:   description,
 
 		// JSX rendering options
-		jsxOptions: map[string]interface{}{
-			"plugins": []string{
-				"transform-react-jsx",
-				"transform-block-scoping",
-			},
+		jsxOptions: api.TransformOptions{
+			Loader:            api.LoaderJSX,
+			MinifyWhitespace:  true,
+			MinifyIdentifiers: true,
+			MinifySyntax:      true,
+			Charset:           api.CharsetUTF8,
 		},
 	}
 	if err := ac.initFilesAndCache(); err != nil {
@@ -330,9 +331,6 @@ func New(versionString, description string) (*Config, error) {
 
 	// File stat cache
 	ac.fs = datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
-
-	// JSX rendering pool
-	babel.Init(8)
 
 	return ac, nil
 }
