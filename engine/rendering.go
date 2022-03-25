@@ -136,21 +136,19 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		if len(result.Errors) > 0 {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not generate JavaScript:\n")
 				for _, errMsg := range result.Errors {
-					fmt.Fprintf(w, "error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+					fmt.Fprintf(w, "error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					fmt.Fprintf(w, "warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+					fmt.Fprintf(w, "warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			} else {
 				// TODO: Use a similar error page as for Lua
-				log.Error(w, "Could not generate JavaScript:\n")
 				for _, errMsg := range result.Errors {
-					log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+					log.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+					log.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			}
 			return 0 // number of results
@@ -178,21 +176,19 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		if len(result.Errors) > 0 {
 			if ac.debugMode {
 				// TODO: Use a similar error page as for Lua
-				fmt.Fprint(w, "Could not generate JavaScript:\n")
 				for _, errMsg := range result.Errors {
-					fmt.Fprintf(w, "error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+					fmt.Fprintf(w, "error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					fmt.Fprintf(w, "warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+					fmt.Fprintf(w, "warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			} else {
 				// TODO: Use a similar error page as for Lua
-				log.Error(w, "Could not generate JavaScript:\n")
 				for _, errMsg := range result.Errors {
-					log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+					log.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+					log.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			}
 			return 0 // number of results
@@ -756,22 +752,20 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	if len(result.Errors) > 0 {
 		if ac.debugMode {
 			var sb strings.Builder
-			sb.WriteString("Could not generate JavaScript:\n")
 			for _, errMsg := range result.Errors {
-				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column))
+				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column))
 			}
 			for _, warnMsg := range result.Warnings {
-				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column))
+				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column))
 			}
 			ac.PrettyError(w, req, filename, jsxdata, sb.String(), "jsx")
 		} else {
 			// TODO: Use a similar error page as for Lua
-			log.Error(w, "Could not generate JavaScript:\n")
 			for _, errMsg := range result.Errors {
-				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
 			}
 			for _, warnMsg := range result.Warnings {
-				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
 			}
 		}
 		return
@@ -848,22 +842,20 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	if len(jsxResult.Errors) > 0 {
 		if ac.debugMode {
 			var sb strings.Builder
-			sb.WriteString("Could not generate JavaScript:\n")
 			for _, errMsg := range jsxResult.Errors {
-				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column))
+				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column))
 			}
 			for _, warnMsg := range jsxResult.Warnings {
-				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column))
+				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column))
 			}
 			ac.PrettyError(w, req, filename, jsxdata, sb.String(), "jsx")
 		} else {
 			// TODO: Use a similar error page as for Lua
-			log.Error(w, "Could not generate JavaScript:\n")
 			for _, errMsg := range jsxResult.Errors {
-				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, errMsg.Location.File, errMsg.Location.Line, errMsg.Location.Column)
+				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
 			}
 			for _, warnMsg := range jsxResult.Warnings {
-				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, warnMsg.Location.File, warnMsg.Location.Line, warnMsg.Location.Column)
+				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
 			}
 		}
 		return
