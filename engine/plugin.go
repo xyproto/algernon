@@ -45,6 +45,12 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
+		// Keep the plugin running in the background?
+		keepRunning := false
+		if L.GetTop() >= 2 {
+			keepRunning = L.ToBool(2)
+		}
+
 		// Connect with the Plugin
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
 		if err != nil {
@@ -55,8 +61,11 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LBool(false)) // Fail
 			return 1                 // number of results
 		}
-		// Close the client once this function has completed
-		defer client.Close()
+
+		if !keepRunning {
+			// Close the client once this function has completed
+			defer client.Close()
+		}
 
 		p := &luaPlugin{client}
 
@@ -115,6 +124,12 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
 
+		// Keep the plugin running in the background?
+		keepRunning := false
+		if L.GetTop() >= 2 {
+			keepRunning = L.ToBool(2)
+		}
+
 		// Connect with the Plugin
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
 		if err != nil {
@@ -125,8 +140,10 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LString("")) // Fail
 			return 1                // number of results
 		}
-		// Close the client once this function has completed
-		defer client.Close()
+		if !keepRunning {
+			// Close the client once this function has completed
+			defer client.Close()
+		}
 
 		p := &luaPlugin{client}
 
@@ -179,6 +196,9 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			logto = os.Stdout
 		}
 
+		// Keep the plugin running in the background?
+		keepRunning := false
+
 		client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, logto, path)
 		if err != nil {
 			if o != nil {
@@ -188,8 +208,11 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 			L.Push(lua.LString("")) // Fail
 			return 1                // number of results
 		}
-		// Close the client once this function has completed
-		defer client.Close()
+
+		if !keepRunning {
+			// Close the client once this function has completed
+			defer client.Close()
+		}
 
 		jsonargs, err := json.Marshal(args)
 		if err != nil {

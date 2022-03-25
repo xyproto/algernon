@@ -538,10 +538,12 @@ Lua functions for plugins
 
 ~~~c
 // Load a plugin given the path to an executable. Returns true on success. Will return the plugin help text if called on the Lua prompt.
-Plugin(string)
+// Pass in true as the second argument to keep it running.
+Plugin(string, [bool])
 
 // Returns the Lua code as returned by the Lua.Code function in the plugin, given a plugin path. May return an empty string.
-PluginCode(string) -> string
+// Pass in true as the second argument to keep it running.
+PluginCode(string, [bool]) -> string
 
 // Takes a plugin path, function name and arguments. Returns an empty string if the function call fails, or the results as a JSON string if successful.
 CallPlugin(string, string, ...) -> string

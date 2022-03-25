@@ -214,11 +214,13 @@ DO(string, string, [table], [table]) -> string
 Plugins
 
 // Load a plugin given the path to an executable. Returns true if successful.
-// Will return the plugin help text if called on the Lua prompt.
-Plugin(string) -> bool
+// Will return the plugin help text if called on the Lua prompt. Pass true as
+// the last argument to keep it running.
+Plugin(string, [bool]) -> bool
 // Returns the Lua code as returned by the Lua.Code function in the plugin,
-// given a plugin path. May return an empty string.
-PluginCode(string) -> string
+// given a plugin path. Pass true as the last argument to keep it running.
+// May return an empty string.
+PluginCode(string, [bool]) -> string
 // Takes a plugin path, function name and arguments. Returns an empty string
 // if the function call fails, or the results as a JSON string if successful.
 CallPlugin(string, string, ...) -> string
