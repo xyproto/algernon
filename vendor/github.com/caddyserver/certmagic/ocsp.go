@@ -16,11 +16,11 @@ package certmagic
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -39,7 +39,7 @@ import (
 //
 // Errors here are not necessarily fatal, it could just be that the
 // certificate doesn't have an issuer URL.
-func stapleOCSP(ocspConfig OCSPConfig, storage Storage, cert *Certificate, pemBundle []byte) error {
+func stapleOCSP(ctx context.Context, ocspConfig OCSPConfig, storage Storage, cert *Certificate, pemBundle []byte) error {
 	if ocspConfig.DisableStapling {
 		return nil
 	}
@@ -61,7 +61,7 @@ func stapleOCSP(ocspConfig OCSPConfig, storage Storage, cert *Certificate, pemBu
 	// First try to load OCSP staple from storage and see if
 	// we can still use it.
 	ocspStapleKey := StorageKeys.OCSPStaple(cert, pemBundle)
-	cachedOCSP, err := storage.Load(ocspStapleKey)
+	cachedOCSP, err := storage.Load(ctx, ocspStapleKey)
 	if err == nil {
 		resp, err := ocsp.ParseResponse(cachedOCSP, nil)
 		if err == nil {
@@ -77,7 +77,7 @@ func stapleOCSP(ocspConfig OCSPConfig, storage Storage, cert *Certificate, pemBu
 			// because we loaded it by name, whereas the maintenance routine
 			// just iterates the list of files, even if somehow a non-staple
 			// file gets in the folder. in this case we are sure it is corrupt.)
-			err := storage.Delete(ocspStapleKey)
+			err := storage.Delete(ctx, ocspStapleKey)
 			if err != nil {
 				log.Printf("[WARNING] Unable to delete invalid OCSP staple file: %v", err)
 			}
@@ -116,7 +116,7 @@ func stapleOCSP(ocspConfig OCSPConfig, storage Storage, cert *Certificate, pemBu
 	if ocspResp.Status == ocsp.Good {
 		cert.Certificate.OCSPStaple = ocspBytes
 		if gotNewOCSP {
-			err := storage.Store(ocspStapleKey, ocspBytes)
+			err := storage.Store(ctx, ocspStapleKey, ocspBytes)
 			if err != nil {
 				return fmt.Errorf("unable to write OCSP staple file for %v: %v", cert.Names, err)
 			}
@@ -174,7 +174,7 @@ func getOCSPForCert(ocspConfig OCSPConfig, bundle []byte) ([]byte, *ocsp.Respons
 		}
 		defer resp.Body.Close()
 
-		issuerBytes, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1024*1024))
+		issuerBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024*1024))
 		if err != nil {
 			return nil, nil, fmt.Errorf("reading issuer certificate: %v", err)
 		}
@@ -203,7 +203,7 @@ func getOCSPForCert(ocspConfig OCSPConfig, bundle []byte) ([]byte, *ocsp.Respons
 	}
 	defer req.Body.Close()
 
-	ocspResBytes, err := ioutil.ReadAll(io.LimitReader(req.Body, 1024*1024))
+	ocspResBytes, err := io.ReadAll(io.LimitReader(req.Body, 1024*1024))
 	if err != nil {
 		return nil, nil, fmt.Errorf("reading OCSP response: %v", err)
 	}

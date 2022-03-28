@@ -15,6 +15,7 @@
 package certmagic
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -26,8 +27,10 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"hash/fnv"
+	"io/fs"
 	"sort"
 	"strings"
 
@@ -140,7 +143,7 @@ func fastHash(input []byte) string {
 // saveCertResource saves the certificate resource to disk. This
 // includes the certificate file itself, the private key, and the
 // metadata file.
-func (cfg *Config) saveCertResource(issuer Issuer, cert CertificateResource) error {
+func (cfg *Config) saveCertResource(ctx context.Context, issuer Issuer, cert CertificateResource) error {
 	metaBytes, err := json.MarshalIndent(cert, "", "\t")
 	if err != nil {
 		return fmt.Errorf("encoding certificate metadata: %v", err)
@@ -164,19 +167,19 @@ func (cfg *Config) saveCertResource(issuer Issuer, cert CertificateResource) err
 		},
 	}
 
-	return storeTx(cfg.Storage, all)
+	return storeTx(ctx, cfg.Storage, all)
 }
 
 // loadCertResourceAnyIssuer loads and returns the certificate resource from any
 // of the configured issuers. If multiple are found (e.g. if there are 3 issuers
 // configured, and all 3 have a resource matching certNamesKey), then the newest
 // (latest NotBefore date) resource will be chosen.
-func (cfg *Config) loadCertResourceAnyIssuer(certNamesKey string) (CertificateResource, error) {
+func (cfg *Config) loadCertResourceAnyIssuer(ctx context.Context, certNamesKey string) (CertificateResource, error) {
 	// we can save some extra decoding steps if there's only one issuer, since
 	// we don't need to compare potentially multiple available resources to
 	// select the best one, when there's only one choice anyway
 	if len(cfg.Issuers) == 1 {
-		return cfg.loadCertResource(cfg.Issuers[0], certNamesKey)
+		return cfg.loadCertResource(ctx, cfg.Issuers[0], certNamesKey)
 	}
 
 	type decodedCertResource struct {
@@ -190,9 +193,9 @@ func (cfg *Config) loadCertResourceAnyIssuer(certNamesKey string) (CertificateRe
 	// load and decode all certificate resources found with the
 	// configured issuers so we can sort by newest
 	for _, issuer := range cfg.Issuers {
-		certRes, err := cfg.loadCertResource(issuer, certNamesKey)
+		certRes, err := cfg.loadCertResource(ctx, issuer, certNamesKey)
 		if err != nil {
-			if _, ok := err.(ErrNotExist); ok {
+			if errors.Is(err, fs.ErrNotExist) {
 				// not a problem, but we need to remember the error
 				// in case we end up not finding any cert resources
 				// since we'll need an error to return in that case
@@ -236,7 +239,7 @@ func (cfg *Config) loadCertResourceAnyIssuer(certNamesKey string) (CertificateRe
 }
 
 // loadCertResource loads a certificate resource from the given issuer's storage location.
-func (cfg *Config) loadCertResource(issuer Issuer, certNamesKey string) (CertificateResource, error) {
+func (cfg *Config) loadCertResource(ctx context.Context, issuer Issuer, certNamesKey string) (CertificateResource, error) {
 	certRes := CertificateResource{issuerKey: issuer.IssuerKey()}
 
 	normalizedName, err := idna.ToASCII(certNamesKey)
@@ -244,17 +247,17 @@ func (cfg *Config) loadCertResource(issuer Issuer, certNamesKey string) (Certifi
 		return CertificateResource{}, fmt.Errorf("converting '%s' to ASCII: %v", certNamesKey, err)
 	}
 
-	keyBytes, err := cfg.Storage.Load(StorageKeys.SitePrivateKey(certRes.issuerKey, normalizedName))
+	keyBytes, err := cfg.Storage.Load(ctx, StorageKeys.SitePrivateKey(certRes.issuerKey, normalizedName))
 	if err != nil {
 		return CertificateResource{}, err
 	}
 	certRes.PrivateKeyPEM = keyBytes
-	certBytes, err := cfg.Storage.Load(StorageKeys.SiteCert(certRes.issuerKey, normalizedName))
+	certBytes, err := cfg.Storage.Load(ctx, StorageKeys.SiteCert(certRes.issuerKey, normalizedName))
 	if err != nil {
 		return CertificateResource{}, err
 	}
 	certRes.CertificatePEM = certBytes
-	metaBytes, err := cfg.Storage.Load(StorageKeys.SiteMeta(certRes.issuerKey, normalizedName))
+	metaBytes, err := cfg.Storage.Load(ctx, StorageKeys.SiteMeta(certRes.issuerKey, normalizedName))
 	if err != nil {
 		return CertificateResource{}, err
 	}

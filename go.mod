@@ -4,13 +4,13 @@ go 1.18
 
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.15.4
+	github.com/caddyserver/certmagic v0.16.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.12.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.14.27
+	github.com/evanw/esbuild v0.14.28
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.4
 	github.com/lucas-clemente/quic-go v0.26.0
@@ -24,7 +24,7 @@ require (
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/gluamapper v1.2.1
-	github.com/xyproto/gopher-lua v1.0.0
+	github.com/xyproto/gopher-lua v1.0.1
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 	github.com/xyproto/onthefly v1.2.3
@@ -44,7 +44,7 @@ require (
 	github.com/xyproto/tinysvg v1.0.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 )
 
 require (
@@ -91,7 +91,7 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
+	golang.org/x/sys v0.0.0-20220327210214-530d0810a4d0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/tools v0.1.10 // indirect

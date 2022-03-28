@@ -46,9 +46,9 @@ import (
 // can access the keyAuth material is by loading it
 // from storage, which is done by distributedSolver.
 type httpSolver struct {
-	closed      int32 // accessed atomically
-	acmeManager *ACMEManager
-	address     string
+	closed     int32 // accessed atomically
+	acmeIssuer *ACMEIssuer
+	address    string
 }
 
 // Present starts an HTTP server if none is already listening on s.address.
@@ -72,13 +72,13 @@ func (s *httpSolver) Present(ctx context.Context, _ acme.Challenge) error {
 
 	// successfully bound socket, so save listener and start key auth HTTP server
 	si.listener = ln
-	go s.serve(si)
+	go s.serve(ctx, si)
 
 	return nil
 }
 
 // serve is an HTTP server that serves only HTTP challenge responses.
-func (s *httpSolver) serve(si *solverInfo) {
+func (s *httpSolver) serve(ctx context.Context, si *solverInfo) {
 	defer func() {
 		if err := recover(); err != nil {
 			buf := make([]byte, stackTraceBufferSize)
@@ -87,7 +87,10 @@ func (s *httpSolver) serve(si *solverInfo) {
 		}
 	}()
 	defer close(si.done)
-	httpServer := &http.Server{Handler: s.acmeManager.HTTPChallengeHandler(http.NewServeMux())}
+	httpServer := &http.Server{
+		Handler:     s.acmeIssuer.HTTPChallengeHandler(http.NewServeMux()),
+		BaseContext: func(listener net.Listener) context.Context { return ctx },
+	}
 	httpServer.SetKeepAlivesEnabled(false)
 	err := httpServer.Serve(si.listener)
 	if err != nil && atomic.LoadInt32(&s.closed) != 1 {
@@ -334,11 +337,7 @@ func (s *DNS01Solver) Wait(ctx context.Context, challenge acme.Challenge) error 
 			return ctx.Err()
 		}
 		var ready bool
-		if s.OverrideDomain == "" {
-			ready, err = checkDNSPropagation(dnsName, keyAuth, resolvers)
-		} else {
-			ready, err = checkAuthoritativeNss(dnsName, keyAuth, resolvers)
-		}
+		ready, err = checkDNSPropagation(dnsName, keyAuth, resolvers)
 		if err != nil {
 			return fmt.Errorf("checking DNS propagation of %s: %w", dnsName, err)
 		}
@@ -477,14 +476,14 @@ type distributedSolver struct {
 
 // Present invokes the underlying solver's Present method
 // and also stores domain, token, and keyAuth to the storage
-// backing the certificate cache of dhs.acmeManager.
+// backing the certificate cache of dhs.acmeIssuer.
 func (dhs distributedSolver) Present(ctx context.Context, chal acme.Challenge) error {
 	infoBytes, err := json.Marshal(chal)
 	if err != nil {
 		return err
 	}
 
-	err = dhs.storage.Store(dhs.challengeTokensKey(challengeKey(chal)), infoBytes)
+	err = dhs.storage.Store(ctx, dhs.challengeTokensKey(challengeKey(chal)), infoBytes)
 	if err != nil {
 		return err
 	}
@@ -507,7 +506,7 @@ func (dhs distributedSolver) Wait(ctx context.Context, challenge acme.Challenge)
 // CleanUp invokes the underlying solver's CleanUp method
 // and also cleans up any assets saved to storage.
 func (dhs distributedSolver) CleanUp(ctx context.Context, chal acme.Challenge) error {
-	err := dhs.storage.Delete(dhs.challengeTokensKey(challengeKey(chal)))
+	err := dhs.storage.Delete(ctx, dhs.challengeTokensKey(challengeKey(chal)))
 	if err != nil {
 		return err
 	}
