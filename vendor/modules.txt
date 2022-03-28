@@ -274,15 +274,6 @@ github.com/xyproto/datablock
 # github.com/xyproto/env v1.7.0
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/gluamapper v1.2.1
-## explicit; go 1.16
-github.com/xyproto/gluamapper
-# github.com/xyproto/gopher-lua v1.0.1
-## explicit; go 1.16
-github.com/xyproto/gopher-lua
-github.com/xyproto/gopher-lua/ast
-github.com/xyproto/gopher-lua/parse
-github.com/xyproto/gopher-lua/pm
 # github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 ## explicit
 github.com/xyproto/jpath
@@ -355,6 +346,15 @@ github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 ## explicit
 github.com/yosssi/gcss
+# github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
+## explicit
+github.com/yuin/gluamapper
+# github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+## explicit; go 1.14
+github.com/yuin/gopher-lua
+github.com/yuin/gopher-lua/ast
+github.com/yuin/gopher-lua/parse
+github.com/yuin/gopher-lua/pm
 # go.etcd.io/bbolt v1.3.6
 ## explicit; go 1.12
 go.etcd.io/bbolt

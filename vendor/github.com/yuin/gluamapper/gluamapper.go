@@ -1,14 +1,13 @@
-// Package gluamapper provides an easy way to map GopherLua tables to Go structs
+// gluamapper provides an easy way to map GopherLua tables to Go structs.
 package gluamapper
 
 import (
 	"errors"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/yuin/gopher-lua"
 	"regexp"
 	"strings"
-
-	"github.com/mitchellh/mapstructure"
-	lua "github.com/xyproto/gopher-lua"
 )
 
 // Option is a configuration that is used to create a new mapper.
@@ -42,7 +41,7 @@ func NewMapper(opt Option) *Mapper {
 // Map maps the lua table to the given struct pointer.
 func (mapper *Mapper) Map(tbl *lua.LTable, st interface{}) error {
 	opt := mapper.Option
-	mp, ok := ToGoValue(tbl, opt).(map[string]interface{})
+	mp, ok := ToGoValue(tbl, opt).(map[interface{}]interface{})
 	if !ok {
 		return errors.New("arguments #1 must be a table, but got an array")
 	}
@@ -64,16 +63,16 @@ func Map(tbl *lua.LTable, st interface{}) error {
 	return NewMapper(Option{}).Map(tbl, st)
 }
 
-// ID is an Option.NameFunc that returns given string as-is.
-func ID(s string) string {
+
+// Id is an Option.NameFunc that returns given string as-is.
+func Id(s string) string {
 	return s
 }
 
 var camelre = regexp.MustCompile(`_([a-z])`)
-
 // ToUpperCamelCase is an Option.NameFunc that converts strings from snake case to upper camel case.
 func ToUpperCamelCase(s string) string {
-	return strings.ToUpper(string(s[0])) + camelre.ReplaceAllStringFunc(s[1:], func(s string) string { return strings.ToUpper(s[1:]) })
+	return strings.ToUpper(string(s[0])) + camelre.ReplaceAllStringFunc(s[1:len(s)], func(s string) string { return strings.ToUpper(s[1:len(s)]) })
 }
 
 // ToGoValue converts the given LValue to a Go object.
@@ -86,26 +85,23 @@ func ToGoValue(lv lua.LValue, opt Option) interface{} {
 	case lua.LString:
 		return string(v)
 	case lua.LNumber:
-		if float64(int(v)) == float64(v) {
-			return int(v)
-		}
 		return float64(v)
 	case *lua.LTable:
 		maxn := v.MaxN()
 		if maxn == 0 { // table
-			ret := make(map[string]interface{})
+			ret := make(map[interface{}]interface{})
 			v.ForEach(func(key, value lua.LValue) {
 				keystr := fmt.Sprint(ToGoValue(key, opt))
 				ret[opt.NameFunc(keystr)] = ToGoValue(value, opt)
 			})
 			return ret
+		} else { // array
+			ret := make([]interface{}, 0, maxn)
+			for i := 1; i <= maxn; i++ {
+				ret = append(ret, ToGoValue(v.RawGetInt(i), opt))
+			}
+			return ret
 		}
-		// else: array
-		ret := make([]interface{}, 0, maxn)
-		for i := 1; i <= maxn; i++ {
-			ret = append(ret, ToGoValue(v.RawGetInt(i), opt))
-		}
-		return ret
 	default:
 		return v
 	}

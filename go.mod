@@ -23,8 +23,6 @@ require (
 	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/env v1.7.0
-	github.com/xyproto/gluamapper v1.2.1
-	github.com/xyproto/gopher-lua v1.0.1
 	github.com/xyproto/jpath v0.0.0-20170503093552-c3c5db51d5ce
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 	github.com/xyproto/onthefly v1.2.3
@@ -44,6 +42,8 @@ require (
 	github.com/xyproto/tinysvg v1.0.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
+	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
+	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 )
 

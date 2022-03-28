@@ -2,7 +2,7 @@ package lua
 
 import (
 	"fmt"
-	"github.com/xyproto/gopher-lua/ast"
+	"github.com/yuin/gopher-lua/ast"
 	"math"
 	"reflect"
 )

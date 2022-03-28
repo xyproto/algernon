@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/xyproto/gopher-lua/ast"
+	"github.com/yuin/gopher-lua/ast"
 	"io"
 	"reflect"
 	"strconv"
