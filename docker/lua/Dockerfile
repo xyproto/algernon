@@ -13,6 +13,7 @@ RUN GOOS=linux \
     go build \
       -mod=vendor \
       -a \
+      -trimpath \
       -installsuffix cgo \
       -ldflags="-w -s" \
       -o /bin/algernon
@@ -26,4 +27,3 @@ COPY --from=gobuilder /tmp /tmp
 
 # Only start the Lua interpreter
 ENTRYPOINT ["/bin/algernon", "--lua"]
-CMD ["/bin/algernon", "--lua"]
