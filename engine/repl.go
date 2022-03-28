@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -19,8 +20,8 @@ import (
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/ask"
 	"github.com/xyproto/env"
-	lua "github.com/yuin/gopher-lua"
 	"github.com/xyproto/textoutput"
+	lua "github.com/yuin/gopher-lua"
 )
 
 const exitMessage = "bye"
@@ -227,8 +228,13 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		historydir = "."
 	}
 
+	// Create a context with a 1 minute timeout
+	//ctx := context.WithTimeout(req.Context(), 1*time.Minute)
+
+	ctx := context.Background()
+
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Get(ctx)
 	// Don't re-use the Lua state
 	defer L.Close()
 

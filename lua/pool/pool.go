@@ -2,9 +2,10 @@
 package pool
 
 import (
+	"context"
 	"sync"
 
-	"github.com/yuin/gopher-lua"
+	lua "github.com/yuin/gopher-lua"
 )
 
 // The LState pool pattern, as recommended by the author of gopher-lua:
@@ -21,24 +22,24 @@ func New() *LStatePool {
 	return &LStatePool{saved: make([]*lua.LState, 0, 4)}
 }
 
-// New returns a new Lua state
-func (pl *LStatePool) New() *lua.LState {
+// New returns a new Lua state, and sets the context
+func (pl *LStatePool) New(ctx context.Context) *lua.LState {
 	L := lua.NewState()
-	// setting the L up here.
-	// load scripts, set global variables, share channels, etc...
+	L.SetContext(ctx)
 	return L
 }
 
-// Get borrows an existing Lua state
-func (pl *LStatePool) Get() *lua.LState {
+// Get borrows an existing Lua state, but sets a new context
+func (pl *LStatePool) Get(ctx context.Context) *lua.LState {
 	pl.m.Lock()
 	defer pl.m.Unlock()
 	n := len(pl.saved)
 	if n == 0 {
-		return pl.New()
+		return pl.New(ctx)
 	}
 	x := pl.saved[n-1]
 	pl.saved = pl.saved[0 : n-1]
+	x.SetContext(ctx)
 	return x
 }
 

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 
@@ -109,7 +110,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus) error {
 
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Get(req.Context())
 	defer ac.luapool.Put(L)
 
 	// Warn if the connection is closed before the script has finished.
@@ -161,8 +162,13 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
 func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
 
+	// Let the configuration script time out after 1 minute?
+	//ctx := contextWithTimeout(context.Background(), 1*time.Minute)
+
+	ctx := context.Background()
+
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Get(ctx)
 
 	// Basic system functions, like log()
 	ac.LoadBasicSystemFunctions(L)
@@ -246,7 +252,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 	defer ac.pongomutex.Unlock()
 
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Get(req.Context())
 	defer ac.luapool.Put(L)
 
 	// Prepare an empty map of functions (and variables)
@@ -305,7 +311,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 				funcs[functionName] = func(args ...string) (interface{}, error) {
 
 					// Create a brand new Lua state
-					L2 := ac.luapool.New()
+					L2 := ac.luapool.New(req.Context())
 					defer L2.Close()
 
 					// Set up a new Lua state with the current http.ResponseWriter and *http.Request
