@@ -13,6 +13,7 @@ RUN GOOS=linux \
     go build \
       -mod=vendor \
       -a \
+      -trimpath \
       -installsuffix cgo \
       -ldflags="-w -s" \
       -o /bin/algernon

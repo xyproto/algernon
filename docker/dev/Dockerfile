@@ -12,6 +12,7 @@ RUN GOOS=linux \
     CGO_ENABLED=0 \
     go build \
       -mod=vendor \
+      -trimpath \
       -a \
       -installsuffix cgo \
       -ldflags="-w -s" \
