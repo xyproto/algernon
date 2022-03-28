@@ -13,7 +13,7 @@ email="$EMAIL"
 force="false"
 
 if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
-  echo 'alg2docker 0.3'
+  echo 'alg2docker 0.4.0'
   echo
   echo 'Convert an Algernon application (.alg or .zip) to a Dockerfile'
   echo
@@ -36,37 +36,61 @@ if [[ $2 != "" ]]; then newfile="$2"; fi
 if [[ $3 != "" ]]; then name="$3"; fi
 if [[ $4 != "" ]]; then email="$4"; fi
 
+basefilename=$(basename "$filename")
+
+basedockerfilename=$(basename "$newfile")
+if [[ "$basedockerfilename" != Dockerfile ]]; then
+  echo "ERROR: expected Dockerfile, got $basedockerfilename"
+  exit 1
+fi
+
+
 if [[ -e $newfile && $force == "false" ]]; then
   echo "ERROR: file already exists: $newfile"
   echo "Use -f as the first argument to overwrite."
   exit 1
 fi
 
+echo "Using this Algernon application: $filename"
+echo "Creating this Dockerfile: $newfile"
+
 cat <<EOF > "$newfile"
-# Dockerfile for serving an Algernon application as
-# * HTTP on port 80
-# * HTTPS+HTTP/2 on port 443
+FROM golang:1.18 as builder
+LABEL MAINTAINER="%EMAIL%"
 
-FROM golang:latest
-MAINTAINER !NAME <!EMAIL>
+ENV CGO_ENABLED=0
+ENV GOOS=linux
 
-RUN go get github.com/xyproto/algernon
+# Install Algernon
+RUN go install -trimpath -ldflags "-s" -a -v github.com/xyproto/algernon@a54d9ef87e1b161fe447ad04edc3b9172bcea625
 
-# Add the .alg file
-ADD !FILENAME !FILENAME
+# Copy in in the .alg file
+COPY %FILENAME% %FILENAME%
 
-# Add the configuration directory
-# Should contain the HTTPS keys (cert.pem and key.pem)
-VOLUME /etc/algernon
+# Start a new Dockerfile based on Alpine
+FROM alpine:3.15.2
+LABEL MAINTAINER="%EMAIL%"
+RUN apk add --no-cache ca-certificates
 
-# Expose port 80 (HTTPS) and 443 (HTTPS or HTTP/2)
+# Mount the configuration, cert and keys
+#VOLUME /etc/algernon
+
+# Copy in the .alg file
+COPY %FILENAME% /srv/algernon/%BASEFILENAME%
+
+# Copy in the Algernon executable from the builder docker
+COPY --from=builder /go/bin/algernon /usr/bin/algernon
+
+# Expose port 80 (HTTP) and 443 (HTTPS)
 EXPOSE 80 443
 
-# Serve the .alg application, in a static, but fast, way
-CMD ["algernon", "-c", "--domain", "--server", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "!FILENAME"]
+# Serve over HTTPS using the custom cert and key
+CMD ["/usr/bin/algernon", "-c", "--cachesize", "67108864", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "-n", "--prod", "--server", "/srv/algernon/%BASEFILENAME%"]
+
 EOF
 
 # Configure the Dockerfile
-sed "s/\!NAME/$name/g" -i "$newfile"
-sed "s/\!EMAIL/$email/g" -i "$newfile"
-sed "s/\!FILENAME/$filename/g" -i "$newfile"
+sed "s|%NAME%|$name|g" -i "$newfile"
+sed "s|%EMAIL%|$email|g" -i "$newfile"
+sed "s|%FILENAME%|$filename|g" -i "$newfile"
+sed "s|%BASEFILENAME%|$basefilename|g" -i "$newfile"

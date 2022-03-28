@@ -1,17 +1,27 @@
-This utility can generate a Dockerfile, given an Algernon application (.alg file)
+# alg2docker
 
-Example usage:
+This utility can generate a Dockerfile, given an Algernon application (`.alg` file).
 
-    alg2docker hello.alg Dockerfile 'John Bob' 'john@thebobs.cx'
+### Step by step usage
 
-The docker image can then be built with:
+1. Have an `.alg` file (for instance `hello.alg`), and also a directory with a `cert.pem` and `key.pem` file that can be used when serving HTTPS.
 
-    docker build -t hello .
+2. Generate the Dockerfile:
 
-And you can run it with:
+    `./alg2docker -f hello.alg Dockerfile 'John Bob' 'john@thebobs.cx'`
 
-    docker run -v `pwd`/config:/etc/algernon --rm --publish 80:80 --publish 443:443 hello
+3. Build the Docker image:
 
-Note that the resulting Docker image tries to serve the application as fast as possible and use caching aggressively. Change the options in the Dockerfile if you wish to enable the auto-refresh feature, disable caching or enable the debug mode.
+    `docker build -t hello .`
 
-The resulting Docker image will include the application itself, but not the SSL keys used for HTTPS+HTTP/2. They are named `cert.pem` and `key.pem` and needs to be placed in the `config` directory (if using the docker command above).
+The resulting Docker image will include the application itself, but not the SSL keys used for HTTPS.
+
+4. Serve the application using docker and the `cert.pem` and `key.pem` files in `$PWD/config`:
+
+    `docker run -v "$PWD/config":/etc/algernon --publish 80:80 --publish 443:443 --rm hello`
+
+### Tweaks
+
+* The cache settings can be modified after creating the `Dockerfile` by changing the command line arguments that are given to Algernon, at the bottom of the file. One might want to disable caching, enable the auto-refresh feature or enable debug mode.
+* When `--domain` is used and a directory `/srv/algernon` corresponds to a valid domain name for the server, like `example.com`, then `/srv/algernon/example.com/` will be served when users vists `example.com`, if Algernon is running on that server.
+* Using `--letsencrypt` together with the `--domain` option, on a server that responds to requests for that domain, will use Let's Encrypt for fetching keys and certificates for the HTTPS port, and use CertMagic to serve both HTTP and HTTPS.
