@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/natefinch/pie"
-	lua "github.com/xyproto/gopher-lua"
+	lua "github.com/yuin/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
 

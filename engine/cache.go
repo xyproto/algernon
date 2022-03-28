@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/gopher-lua"
+	"github.com/yuin/gopher-lua"
 )
 
 // DataToClient is a helper function for sending file data (that might be cached) to a HTTP client

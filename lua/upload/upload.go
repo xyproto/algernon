@@ -13,7 +13,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
-	"github.com/xyproto/gopher-lua"
+	"github.com/yuin/gopher-lua"
 )
 
 // For dealing with uploaded files in POST method handlers

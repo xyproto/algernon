@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/ask"
 	"github.com/xyproto/env"
-	lua "github.com/xyproto/gopher-lua"
+	lua "github.com/yuin/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
 

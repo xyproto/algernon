@@ -5,7 +5,7 @@ import (
 	"github.com/ddliu/go-httpclient"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
+	"github.com/yuin/gopher-lua"
 	"net/http"
 	"net/url"
 	"strconv"

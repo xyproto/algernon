@@ -3,7 +3,7 @@ package codelib
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/gopher-lua"
+	"github.com/yuin/gopher-lua"
 	"github.com/xyproto/pinterface"
 )
 
