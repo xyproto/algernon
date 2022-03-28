@@ -23,23 +23,23 @@ func New() *LStatePool {
 }
 
 // New returns a new Lua state, and sets the context
-func (pl *LStatePool) New(ctx context.Context) *lua.LState {
+func (pl *LStatePool) New() *lua.LState {
 	L := lua.NewState()
+	ctx := context.Background()
 	L.SetContext(ctx)
 	return L
 }
 
 // Get borrows an existing Lua state, but sets a new context
-func (pl *LStatePool) Get(ctx context.Context) *lua.LState {
+func (pl *LStatePool) Get() *lua.LState {
 	pl.m.Lock()
 	defer pl.m.Unlock()
 	n := len(pl.saved)
 	if n == 0 {
-		return pl.New(ctx)
+		return pl.New()
 	}
 	x := pl.saved[n-1]
 	pl.saved = pl.saved[0 : n-1]
-	x.SetContext(ctx)
 	return x
 }
 

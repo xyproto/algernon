@@ -2,7 +2,6 @@ package engine
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -228,13 +227,8 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		historydir = "."
 	}
 
-	// Create a context with a 1 minute timeout
-	//ctx := context.WithTimeout(req.Context(), 1*time.Minute)
-
-	ctx := context.Background()
-
 	// Retrieve a Lua state
-	L := ac.luapool.Get(ctx)
+	L := ac.luapool.Get()
 	// Don't re-use the Lua state
 	defer L.Close()
 
