@@ -2,7 +2,6 @@ package engine
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -18,127 +17,6 @@ import (
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/env"
 )
-
-func generateUsageFunction(ac *Config) func() {
-	return func() {
-		fmt.Println("\n" + ac.versionString + "\n\n" + ac.description)
-
-		// Prepare a message, depending on if QUIC support is enabled or not
-		quicUsageOrMessage := "  -u                           Serve over QUIC.\n"
-		if !quicEnabled {
-			quicUsageOrMessage = "\nThis Algernon executable was built without QUIC support."
-		}
-
-		// Possible arguments are also, for backward compatibility:
-		// server dir, server addr, certificate file, key file, redis addr and redis db index
-		// They are not mentioned here, but are possible to use, in that strict order.
-		fmt.Println(`
-
-Syntax:
-  algernon [flags] [file or directory to serve] [host][:port]
-
-Available flags:
-  -h, --help                   This help text
-  -v, --version                Application name and version
-  --dir=DIRECTORY              Set the server directory
-  --addr=[HOST][:PORT]         Server host and port ("` + ac.defaultWebColonPort + `" is default)
-  -e, --dev                    Development mode: Enables Debug mode, uses
-                               regular HTTP, Bolt and sets cache mode "dev".
-  -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
-                               HTTP on port 80. Uses /srv/algernon for files.
-                               Disables debug mode. Disables auto-refresh.
-                               Enables server mode. Sets cache to "prod".
-  -a, --autorefresh            Enable event server and auto-refresh feature.
-                               Sets cache mode to "images".
-  --cache=MODE                 Sets a cache mode. The default is "on".
-                               "on"      - Cache everything.
-                               "dev"     - Everything, except Amber,
-                                           Lua, GCSS, Markdown and JSX.
-                               "prod"    - Everything, except Amber and Lua.
-                               "small"   - Like "prod", but only files <= 64KB.
-                               "images"  - Only images (png, jpg, gif, svg).
-                               "off"     - Disable caching.
-  --cachesize=N                Set the total cache size, in bytes.
-  --nocache                    Another way to disable the caching.
-  --noheaders                  Don't use the security-related HTTP headers.
-  --stricter                   Stricter HTTP headers (same origin policy).
-  -n, --nobanner               Don't display a colorful banner at start.
-  --ctrld                      Press ctrl-d twice to exit the REPL.
-  --rawcache                   Disable cache compression.
-  --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
-  --cert=FILENAME              TLS certificate, if using HTTPS.
-  --key=FILENAME               TLS key, if using HTTPS.
-  -d, --debug                  Enable debug mode (show errors in the browser).
-  -b, --bolt                   Use "` + ac.defaultBoltFilename + `" for the Bolt database.
-  --boltdb=FILENAME            Use a specific file for the Bolt database
-  --redis=[HOST][:PORT]        Use "` + ac.defaultRedisColonPort + `" for the Redis database.
-  --dbindex=INDEX              Redis database index (0 is default).
-  --conf=FILENAME              Lua script with additional configuration.
-  --log=FILENAME               Log to a file instead of to the console.
-  --internal=FILENAME          Internal log file (can be a bit verbose).
-  -t, --httponly               Serve regular HTTP.
-  --http2only                  Serve HTTP/2, without HTTPS.
-  --maria=DSN                  Use the given MariaDB or MySQL host/database.
-  --mariadb=NAME               Use the given MariaDB or MySQL database name.
-  --postgres=DSN               Use the given PostgreSQL host/database.
-  --postgresdb=NAME            Use the given PostgreSQL database name.
-  --clear                      Clear the default URI prefixes that are used
-                               when handling permissions.
-  -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
-  -V, --verbose                Slightly more verbose logging.
-  --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
-  --eventrefresh=DURATION      How often the event server should refresh
-                               (the default is "` + ac.defaultEventRefresh + `").
-  --limit=N                    Limit clients to N requests per second
-                               (the default is ` + ac.defaultLimitString + `).
-  --nolimit                    Disable rate limiting.
-  --nodb                       No database backend. (same as --boltdb=` + os.DevNull + `).
-  --largesize=N                Threshold for not reading static files into memory, in bytes.
-  --timeout=N                  Timeout when serving files, in seconds.
-  -l, --lua                    Don't serve anything, just present the Lua REPL.
-  -s, --server                 Server mode (disable debug + interactive mode).
-  -q, --quiet                  Don't output anything to stdout or stderr.
-  --servername=STRING          Custom HTTP header value for the Server field.
-  -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `, or with the
-                               given application.
-  -z, --quit                   Quit after the first request has been served.
-  -m                           View the given Markdown file in the browser.
-                               Quits after the file has been served once.
-                               ("-m" is equivalent to "-q -o -z").
-  --theme=NAME                 Builtin theme to use for Markdown, error pages,
-                               directory listings and HyperApp apps.
-                               Possible values are: light, dark, bw, redbox, wing,
-                               material, neon or werc.
-  -c, --statcache              Speed up responses by caching os.Stat.
-                               Only use if served files will not be removed.
-  --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
-  --ncsa=FILENAME              Alternative access log filename. Logged in Common Log Format (NCSA).
-  --cookiesecret=STRING        Secret that will be used for login cookies.
-  -x, --simple                 Serve as regular HTTP, enable server mode and
-                               disable all features that requires a database.
-  --domain                     Serve files from the subdirectory with the same
-                               name as the requested domain.
-  --letsencrypt                Use certificates provided by Let's Encrypt for all served
-                               domains and serve over regular HTTPS by using CertMagic.
-` + quicUsageOrMessage + `
-
-Example usage:
-
-  For auto-refreshing a webpage while developing:
-    algernon --dev --httponly --debug --autorefresh --bolt --server . :4000
-
-  Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
-    algernon -c --domain --server --cachesize 67108864 --prod /srv
-
-  Serve the current dir over QUIC, port 7000, no banner:
-    algernon -s -u -n . :7000
-
-  Serve the current directory over HTTP, port 3000. No limits, cache,
-  permissions or database connections:
-    algernon -x
-`)
-	}
-}
 
 // Parse the flags, return the default hostname
 func (ac *Config) handleFlags(serverTempDir string) {
