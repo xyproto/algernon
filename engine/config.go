@@ -251,6 +251,9 @@ type Config struct {
 	// Use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
 	useCertMagic     bool
 	certMagicDomains []string
+
+	// Optional Base URL, for the directory listings
+	dirBaseURL string
 }
 
 // ErrVersion is returned when the initialization quits because all that is done

@@ -112,6 +112,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
 	flag.BoolVar(&ac.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
+	flag.StringVar(&ac.dirBaseURL, "dirbaseurl", "", "Base URL for the directory listing (optional)")
 
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
