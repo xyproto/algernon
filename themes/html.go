@@ -81,13 +81,13 @@ func SimpleHTMLPage(title, headline, inhead, body []byte) []byte {
 
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory
 // and a boolean that is true if the given URL is to a directory.
-func HTMLLink(text, url string, isDirectory bool) string {
+func HTMLLink(text, URL string, isDirectory bool) string {
 	// Add a final slash, if needed
 	if isDirectory {
 		text += "/"
-		url += "/"
+		URL += "/"
 	}
-	return "<a href=\"/" + url + "\">" + text + "</a><br>"
+	return "<a href=\"/" + URL + "\">" + text + "</a><br>"
 }
 
 // StyleAmber modifies Amber source code so that a link to the given stylesheet URL is added
