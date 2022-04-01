@@ -1,28 +1,11 @@
 # Plans
 
-Bugs
-----
-- [ ] The "import macro" feature in Pongo2 should be relative to the current directory, not to where Algernon is running, ref #84
-- [ ] Problem serving files with % in the filename, ref #73
-- [ ] Multiple processes per plugin, ref #64
+General
+-------
 
-
-Priority 1
-----------
-- [ ] Make it easier to specify Redis, without providing any further info.
-- [ ] By default, try writing the bolt database to ".". If not, try TMPDIR or TEMPDIR, if not, try /var/something, if not, try /tmp.
-- [ ] Refresh all files, cache and certificates when receiving the USR1 signal.
-- [ ] Resolve all issues in the issue tracker.
-
-Priority 2
-----------
-- [ ] Add an example for writing a simple JSON/REST server.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
 - [ ] Add a flag for redirecting all `http://` traffic to `https://`.
 - [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
-
-Priority 3
-----------
 - [ ] Create a video like the one at [vim-livedown](https://github.com/shime/vim-livedown), that demonstrates live editing of Markdown.
 - [ ] When `-m` is given, scan the given Markdown file for images that will also need to be served, then wait until those are served before exiting.
 - [ ] Add support for [metatar](https://github.com/xyproto/metatar) in Lua, to be able to offer a whole Arch Linux package repository from just a single `.lua` file, and a collection of `PKGBUILD` files.
@@ -35,6 +18,8 @@ Priority 3
 - [ ] Make the behavior per file extension or mime type configurable: "raw view", "pretty view" or "download"
 - [ ] Add a Lua function for upgrading a handler to a WebSocket handler, also using concurrency in Lua.
 - [ ] Add support for pushing from emacs "writefreely mode" to Algernon with this [API](https://developers.write.as/docs/api/).
+- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
+- [ ] Use [configparser](https://github.com/alyu/configparser) for a configuration file with port, host, keys etc.
 
 Languages other than Lua
 ------------------------
@@ -296,24 +281,4 @@ Maybe
 - [ ] Add a Lua function for removing all cache entries without a hit.
 - [ ] Support the LuaPage format (".lp", HTML with <% %> and <%= %> for Lua code).
 - [ ] Add Lua functions for HTTP PUT without using JSON? (for etcd, but might be a bad idea in the first place).
-- [ ] Rewrite in C++17 and rename the project to "FnuFnu".
-
-Alternative databases
----------------------
-
-- [ ] RethinkDB support.
-- [ ] Add support for the [Badger](https://blog.dgraph.io/post/badger-lmdb-boltdb/).
-
-# Future
-
-## Algernon 2030
-
-- [ ] Use something like fasthttp from the start.
-- [ ] Drop Amber and GCSS.
-- [ ] Focus on templates, markdown and possibly microservices.
-- [ ] Embed a different language than Lua, perhaps Anko.
-- [ ] Support `gccgo` from the start.
-- [ ] Aim for a very small and specific usage pattern and try to optimize for that.
-- [ ] Parse options with [docopt](https://github.com/docopt/docopt.go) or [cli](https://github.com/urfave/cli).
-- [ ] Use [configparser](https://github.com/alyu/configparser) for a configuration file with port, host, keys etc.
-- [ ] Add Lua functions for returning all sorts of data types for all sorts of database backends, ref #39.
+- [ ] Rewrite in C++23 and rename the project to "FnuFnu".
