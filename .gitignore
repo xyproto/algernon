@@ -82,3 +82,5 @@ regtest/issue13/large-file
 
 # gzip man page
 algernon.1.gz
+
+*.out
