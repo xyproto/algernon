@@ -17,7 +17,6 @@ const (
 
 // Given a lowercase string for the language, return an approprite error page title
 func errorPageTitle(lang string) string {
-	// Special cases are only needed where capitalization is inappropriate ("CSS Error" vs "Css Error")
 	switch lang {
 	case "":
 		return "Error"
@@ -30,7 +29,8 @@ func errorPageTitle(lang string) string {
 	case "jsx":
 		return "JSX Error"
 	default:
-		return strings.Title(lang) + " Error"
+		// string.Title(lang) was used here before, but staticcheck recommends against it
+		return lang + " Error"
 	}
 }
 

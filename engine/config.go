@@ -479,7 +479,7 @@ func (ac *Config) fatalExit(err error) {
 	// Use the standard formatter
 	log.SetFormatter(&log.TextFormatter{})
 	// Log and exit
-	log.Fatalln(strings.Title(err.Error()))
+	log.Fatalln(err.Error())
 }
 
 // Abrupt exit
