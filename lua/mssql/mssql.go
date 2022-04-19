@@ -9,8 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	lua "github.com/yuin/gopher-lua"
 	"github.com/xyproto/pinterface"
+	lua "github.com/yuin/gopher-lua"
 
 	// Using the MSSQL database engine
 	_ "github.com/denisenkom/go-mssqldb"
@@ -87,15 +87,6 @@ func (w LValueWrappers) Interfaces() (s []interface{}) {
 		s[i] = &w[i]
 	}
 	return
-}
-
-// unwrap produces a slice of lua.LValue from the given LValueWrappers
-func unwrap(from []*LValueWrapper) []lua.LValue {
-	to := make([]lua.LValue, len(from))
-	for i, v := range from {
-		to[i] = v.LValue
-	}
-	return to
 }
 
 // Load makes functions related to building a library of Lua code available
