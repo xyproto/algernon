@@ -309,8 +309,9 @@ func validateFeatures(log logger.Log, target Target, engines []Engine) (config.T
 		constraints[compat.ES] = []int{2021}
 	case ES2022:
 		constraints[compat.ES] = []int{2022}
+		targetFromAPI = config.TargetWasConfiguredAndAtLeastES2022
 	case ESNext:
-		targetFromAPI = config.TargetWasConfiguredIncludingESNext
+		targetFromAPI = config.TargetWasConfiguredAndAtLeastES2022
 	case DefaultTarget:
 	default:
 		panic("Invalid target")
@@ -363,11 +364,11 @@ func validateFeatures(log logger.Log, target Target, engines []Engine) (config.T
 		case 3:
 			text = fmt.Sprintf("%s%d.%d.%d", engine.String(), version[0], version[1], version[2])
 		}
-		targets = append(targets, fmt.Sprintf("%q", text))
+		targets = append(targets, text)
 	}
 
 	sort.Strings(targets)
-	targetEnv := strings.Join(targets, ", ")
+	targetEnv := helpers.StringArrayToQuotedCommaSeparatedString(targets)
 
 	return targetFromAPI, compat.UnsupportedJSFeatures(constraints), compat.UnsupportedCSSFeatures(constraints), targetEnv
 }
@@ -1806,7 +1807,7 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 				if options.PluginName != "" {
 					pluginName = options.PluginName
 				}
-				text, notes := bundler.ResolveFailureErrorTextAndNotes(resolver, path, kind, pluginName, fs, absResolveDir, buildOptions.Platform, "")
+				text, _, notes := bundler.ResolveFailureErrorTextSuggestionNotes(resolver, path, kind, pluginName, fs, absResolveDir, buildOptions.Platform, "")
 				result.Errors = append(result.Errors, convertMessagesToPublic(logger.Error, []logger.Msg{{
 					Data:  logger.MsgData{Text: text},
 					Notes: notes,

@@ -4,6 +4,8 @@
 package vt100
 
 import (
+	"errors"
+	"io/ioutil"
 	"strconv"
 	"time"
 	"unicode"
@@ -321,4 +323,25 @@ func (tty *TTY) Rune() rune {
 		return []rune(string(bytes))[0]
 	}
 	return rune(0)
+}
+
+// Write a string to the TTY
+func (tty *TTY) WriteString(s string) error {
+	n, err := tty.t.Write([]byte(s))
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return errors.New("no bytes written to the TTY")
+	}
+	return nil
+}
+
+// Read a string from the TTY
+func (tty *TTY) ReadString() (string, error) {
+	b, err := ioutil.ReadAll(tty.t)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

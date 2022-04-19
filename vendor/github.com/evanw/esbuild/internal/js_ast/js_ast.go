@@ -516,8 +516,6 @@ type ECall struct {
 	// call itself is removed due to this annotation, the arguments must remain
 	// if they have side effects.
 	CanBeUnwrappedIfUnused bool
-
-	IsKeepName bool
 }
 
 func (a *ECall) HasSameFlagsAs(b *ECall) bool {
@@ -850,6 +848,11 @@ type SLazyExport struct {
 
 type SExpr struct {
 	Value Expr
+
+	// This is set to true for automatically-generated expressions that should
+	// not affect tree shaking. For example, calling a function from the runtime
+	// that doesn't have externally-visible side effects.
+	DoesNotAffectTreeShaking bool
 }
 
 type EnumValue struct {
@@ -1019,17 +1022,6 @@ type SBreak struct {
 
 type SContinue struct {
 	Label *LocRef
-}
-
-func IsSuperCall(stmt Stmt) bool {
-	if expr, ok := stmt.Data.(*SExpr); ok {
-		if call, ok := expr.Value.Data.(*ECall); ok {
-			if _, ok := call.Target.Data.(*ESuper); ok {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 type ClauseItem struct {

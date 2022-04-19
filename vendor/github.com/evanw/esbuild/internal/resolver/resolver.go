@@ -131,7 +131,7 @@ type DebugMeta struct {
 	notes             []logger.MsgData
 }
 
-func (dm DebugMeta) LogErrorMsg(log logger.Log, source *logger.Source, r logger.Range, text string, notes []logger.MsgData) {
+func (dm DebugMeta) LogErrorMsg(log logger.Log, source *logger.Source, r logger.Range, text string, suggestion string, notes []logger.MsgData) {
 	tracker := logger.MakeLineColumnTracker(source)
 
 	if source != nil && dm.suggestionMessage != "" {
@@ -144,6 +144,10 @@ func (dm DebugMeta) LogErrorMsg(log logger.Log, source *logger.Source, r logger.
 		Kind:  logger.Error,
 		Data:  tracker.MsgData(r, text),
 		Notes: append(dm.notes, notes...),
+	}
+
+	if msg.Data.Location != nil && suggestion != "" {
+		msg.Data.Location.Suggestion = suggestion
 	}
 
 	log.AddMsg(msg)
@@ -1465,13 +1469,9 @@ func (r resolverQuery) loadAsMainField(dirInfo *dirInfo, path string, extensionO
 						fmt.Sprintf("The %q field here was ignored. Main fields must be configured explicitly when using the \"neutral\" platform.",
 							field)))
 				} else {
-					quoted := make([]string, len(mainFieldKeys))
-					for i, key := range mainFieldKeys {
-						quoted[i] = fmt.Sprintf("%q", key)
-					}
 					r.debugMeta.notes = append(r.debugMeta.notes, tracker.MsgData(keyRange,
 						fmt.Sprintf("The %q field here was ignored because the list of main fields to use is currently set to [%s].",
-							field, strings.Join(quoted, ", "))))
+							field, helpers.StringArrayToQuotedCommaSeparatedString(mainFieldKeys))))
 				}
 				break
 			}
@@ -1910,32 +1910,60 @@ func (r resolverQuery) finalizeImportsExportsResult(
 			fmt.Sprintf("Importing the directory %q is not supported:", resolvedPath))}
 
 	case pjStatusUndefinedNoConditionsMatch:
-		prettyPrintConditions := func(conditions []string) string {
-			quoted := make([]string, len(conditions))
-			for i, condition := range conditions {
-				quoted[i] = fmt.Sprintf("%q", condition)
-			}
-			return strings.Join(quoted, ", ")
-		}
 		keys := make([]string, 0, len(conditions))
 		for key := range conditions {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
+
+		unmatchedConditions := make([]string, len(debug.unmatchedConditions))
+		for i, key := range debug.unmatchedConditions {
+			unmatchedConditions[i] = key.Text
+		}
+
 		r.debugMeta.notes = []logger.MsgData{
 			tracker.MsgData(importExportMap.root.firstToken,
 				fmt.Sprintf("The path %q is not currently exported by package %q:",
 					esmPackageSubpath, esmPackageName)),
+
 			tracker.MsgData(debug.token,
 				fmt.Sprintf("None of the conditions provided (%s) match any of the currently active conditions (%s):",
-					prettyPrintConditions(debug.unmatchedConditions),
-					prettyPrintConditions(keys),
-				))}
+					helpers.StringArrayToQuotedCommaSeparatedString(unmatchedConditions),
+					helpers.StringArrayToQuotedCommaSeparatedString(keys),
+				)),
+		}
+
+		didSuggestEnablingCondition := false
 		for _, key := range debug.unmatchedConditions {
-			if key == "import" && (r.kind == ast.ImportRequire || r.kind == ast.ImportRequireResolve) {
-				r.debugMeta.suggestionMessage = "Consider using an \"import\" statement to import this file:"
-			} else if key == "require" && (r.kind == ast.ImportStmt || r.kind == ast.ImportDynamic) {
-				r.debugMeta.suggestionMessage = "Consider using a \"require()\" call to import this file:"
+			switch key.Text {
+			case "import":
+				if r.kind == ast.ImportRequire || r.kind == ast.ImportRequireResolve {
+					r.debugMeta.suggestionMessage = "Consider using an \"import\" statement to import this file, " +
+						"which will work because the \"import\" condition is supported by this package:"
+				}
+
+			case "require":
+				if r.kind == ast.ImportStmt || r.kind == ast.ImportDynamic {
+					r.debugMeta.suggestionMessage = "Consider using a \"require()\" call to import this file, " +
+						"which will work because the \"require\" condition is supported by this package:"
+				}
+
+			default:
+				if !didSuggestEnablingCondition {
+					var how string
+					switch logger.API {
+					case logger.CLIAPI:
+						how = fmt.Sprintf("\"--conditions=%s\"", key.Text)
+					case logger.JSAPI:
+						how = fmt.Sprintf("\"conditions: ['%s']\"", key.Text)
+					case logger.GoAPI:
+						how = fmt.Sprintf("'Conditions: []string{%q}'", key.Text)
+					}
+					r.debugMeta.notes = append(r.debugMeta.notes, tracker.MsgData(key.Range,
+						fmt.Sprintf("Consider enabling the %q condition if this package expects it to be enabled. "+
+							"You can use %s to do that:", key.Text, how)))
+					didSuggestEnablingCondition = true
+				}
 			}
 		}
 	}

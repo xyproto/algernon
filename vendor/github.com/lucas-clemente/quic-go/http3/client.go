@@ -34,7 +34,9 @@ var defaultQuicConfig = &quic.Config{
 	Versions:           []protocol.VersionNumber{protocol.VersionTLS},
 }
 
-var dialAddr = quic.DialAddrEarly
+type dialFunc func(ctx context.Context, network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error)
+
+var dialAddr = quic.DialAddrEarlyContext
 
 type roundTripperOpts struct {
 	DisableCompression bool
@@ -49,7 +51,7 @@ type client struct {
 	opts    *roundTripperOpts
 
 	dialOnce     sync.Once
-	dialer       func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error)
+	dialer       dialFunc
 	handshakeErr error
 
 	requestWriter *requestWriter
@@ -57,29 +59,23 @@ type client struct {
 	decoder *qpack.Decoder
 
 	hostname string
-	session  quic.EarlySession
+	conn     quic.EarlyConnection
 
 	logger utils.Logger
 }
 
-func newClient(
-	hostname string,
-	tlsConf *tls.Config,
-	opts *roundTripperOpts,
-	quicConfig *quic.Config,
-	dialer func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error),
-) (*client, error) {
-	if quicConfig == nil {
-		quicConfig = defaultQuicConfig.Clone()
-	} else if len(quicConfig.Versions) == 0 {
-		quicConfig = quicConfig.Clone()
-		quicConfig.Versions = []quic.VersionNumber{defaultQuicConfig.Versions[0]}
+func newClient(hostname string, tlsConf *tls.Config, opts *roundTripperOpts, conf *quic.Config, dialer dialFunc) (*client, error) {
+	if conf == nil {
+		conf = defaultQuicConfig.Clone()
+	} else if len(conf.Versions) == 0 {
+		conf = conf.Clone()
+		conf.Versions = []quic.VersionNumber{defaultQuicConfig.Versions[0]}
 	}
-	if len(quicConfig.Versions) != 1 {
+	if len(conf.Versions) != 1 {
 		return nil, errors.New("can only use a single QUIC version for dialing a HTTP/3 connection")
 	}
-	quicConfig.MaxIncomingStreams = -1 // don't allow any bidirectional streams
-	quicConfig.EnableDatagrams = opts.EnableDatagram
+	conf.MaxIncomingStreams = -1 // don't allow any bidirectional streams
+	conf.EnableDatagrams = opts.EnableDatagram
 	logger := utils.DefaultLogger.WithPrefix("h3 client")
 
 	if tlsConf == nil {
@@ -88,26 +84,26 @@ func newClient(
 		tlsConf = tlsConf.Clone()
 	}
 	// Replace existing ALPNs by H3
-	tlsConf.NextProtos = []string{versionToALPN(quicConfig.Versions[0])}
+	tlsConf.NextProtos = []string{versionToALPN(conf.Versions[0])}
 
 	return &client{
 		hostname:      authorityAddr("https", hostname),
 		tlsConf:       tlsConf,
 		requestWriter: newRequestWriter(logger),
 		decoder:       qpack.NewDecoder(func(hf qpack.HeaderField) {}),
-		config:        quicConfig,
+		config:        conf,
 		opts:          opts,
 		dialer:        dialer,
 		logger:        logger,
 	}, nil
 }
 
-func (c *client) dial() error {
+func (c *client) dial(ctx context.Context) error {
 	var err error
 	if c.dialer != nil {
-		c.session, err = c.dialer("udp", c.hostname, c.tlsConf, c.config)
+		c.conn, err = c.dialer(ctx, "udp", c.hostname, c.tlsConf, c.config)
 	} else {
-		c.session, err = dialAddr(c.hostname, c.tlsConf, c.config)
+		c.conn, err = dialAddr(ctx, c.hostname, c.tlsConf, c.config)
 	}
 	if err != nil {
 		return err
@@ -115,9 +111,9 @@ func (c *client) dial() error {
 
 	// send the SETTINGs frame, using 0-RTT data, if possible
 	go func() {
-		if err := c.setupSession(); err != nil {
-			c.logger.Debugf("Setting up session failed: %s", err)
-			c.session.CloseWithError(quic.ApplicationErrorCode(errorInternalError), "")
+		if err := c.setupConn(); err != nil {
+			c.logger.Debugf("Setting up connection failed: %s", err)
+			c.conn.CloseWithError(quic.ApplicationErrorCode(errorInternalError), "")
 		}
 	}()
 
@@ -125,9 +121,9 @@ func (c *client) dial() error {
 	return nil
 }
 
-func (c *client) setupSession() error {
+func (c *client) setupConn() error {
 	// open the control stream
-	str, err := c.session.OpenUniStream()
+	str, err := c.conn.OpenUniStream()
 	if err != nil {
 		return err
 	}
@@ -141,7 +137,7 @@ func (c *client) setupSession() error {
 
 func (c *client) handleUnidirectionalStreams() {
 	for {
-		str, err := c.session.AcceptUniStream(context.Background())
+		str, err := c.conn.AcceptUniStream(context.Background())
 		if err != nil {
 			c.logger.Debugf("accepting unidirectional stream failed: %s", err)
 			return
@@ -162,7 +158,7 @@ func (c *client) handleUnidirectionalStreams() {
 				return
 			case streamTypePushStream:
 				// We never increased the Push ID, so we don't expect any push streams.
-				c.session.CloseWithError(quic.ApplicationErrorCode(errorIDError), "")
+				c.conn.CloseWithError(quic.ApplicationErrorCode(errorIDError), "")
 				return
 			default:
 				str.CancelRead(quic.StreamErrorCode(errorStreamCreationError))
@@ -170,12 +166,12 @@ func (c *client) handleUnidirectionalStreams() {
 			}
 			f, err := parseNextFrame(str)
 			if err != nil {
-				c.session.CloseWithError(quic.ApplicationErrorCode(errorFrameError), "")
+				c.conn.CloseWithError(quic.ApplicationErrorCode(errorFrameError), "")
 				return
 			}
 			sf, ok := f.(*settingsFrame)
 			if !ok {
-				c.session.CloseWithError(quic.ApplicationErrorCode(errorMissingSettings), "")
+				c.conn.CloseWithError(quic.ApplicationErrorCode(errorMissingSettings), "")
 				return
 			}
 			if !sf.Datagram {
@@ -184,18 +180,18 @@ func (c *client) handleUnidirectionalStreams() {
 			// If datagram support was enabled on our side as well as on the server side,
 			// we can expect it to have been negotiated both on the transport and on the HTTP/3 layer.
 			// Note: ConnectionState() will block until the handshake is complete (relevant when using 0-RTT).
-			if c.opts.EnableDatagram && !c.session.ConnectionState().SupportsDatagrams {
-				c.session.CloseWithError(quic.ApplicationErrorCode(errorSettingsError), "missing QUIC Datagram support")
+			if c.opts.EnableDatagram && !c.conn.ConnectionState().SupportsDatagrams {
+				c.conn.CloseWithError(quic.ApplicationErrorCode(errorSettingsError), "missing QUIC Datagram support")
 			}
 		}()
 	}
 }
 
 func (c *client) Close() error {
-	if c.session == nil {
+	if c.conn == nil {
 		return nil
 	}
-	return c.session.CloseWithError(quic.ApplicationErrorCode(errorNoError), "")
+	return c.conn.CloseWithError(quic.ApplicationErrorCode(errorNoError), "")
 }
 
 func (c *client) maxHeaderBytes() uint64 {
@@ -212,7 +208,7 @@ func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	c.dialOnce.Do(func() {
-		c.handshakeErr = c.dial()
+		c.handshakeErr = c.dial(req.Context())
 	})
 
 	if c.handshakeErr != nil {
@@ -225,13 +221,13 @@ func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else {
 		// wait for the handshake to complete
 		select {
-		case <-c.session.HandshakeComplete().Done():
+		case <-c.conn.HandshakeComplete().Done():
 		case <-req.Context().Done():
 			return nil, req.Context().Err()
 		}
 	}
 
-	str, err := c.session.OpenStreamSync(req.Context())
+	str, err := c.conn.OpenStreamSync(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +256,7 @@ func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 			if rerr.err != nil {
 				reason = rerr.err.Error()
 			}
-			c.session.CloseWithError(quic.ApplicationErrorCode(rerr.connErr), reason)
+			c.conn.CloseWithError(quic.ApplicationErrorCode(rerr.connErr), reason)
 		}
 	}
 	return rsp, rerr.err
@@ -300,7 +296,7 @@ func (c *client) doRequest(
 		return nil, newConnError(errorGeneralProtocolError, err)
 	}
 
-	connState := qtls.ToTLSConnectionState(c.session.ConnectionState().TLS)
+	connState := qtls.ToTLSConnectionState(c.conn.ConnectionState().TLS)
 	res := &http.Response{
 		Proto:      "HTTP/3",
 		ProtoMajor: 3,
@@ -321,7 +317,7 @@ func (c *client) doRequest(
 		}
 	}
 	respBody := newResponseBody(str, reqDone, func() {
-		c.session.CloseWithError(quic.ApplicationErrorCode(errorFrameUnexpected), "")
+		c.conn.CloseWithError(quic.ApplicationErrorCode(errorFrameUnexpected), "")
 	})
 
 	// Rules for when to set Content-Length are defined in https://tools.ietf.org/html/rfc7230#section-3.3.2.

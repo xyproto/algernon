@@ -1,6 +1,7 @@
 package http3
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	quic "github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go"
 
 	"golang.org/x/net/http/httpguts"
 )
@@ -48,8 +49,8 @@ type RoundTripper struct {
 
 	// Dial specifies an optional dial function for creating QUIC
 	// connections for requests.
-	// If Dial is nil, quic.DialAddrEarly will be used.
-	Dial func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error)
+	// If Dial is nil, quic.DialAddrEarlyContext will be used.
+	Dial func(ctx context.Context, network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error)
 
 	// MaxResponseHeaderBytes specifies a limit on how many response bytes are
 	// allowed in the server's response header.
@@ -64,9 +65,6 @@ type RoundTripOpt struct {
 	// OnlyCachedConn controls whether the RoundTripper may create a new QUIC connection.
 	// If set true and no cached connection is available, RoundTrip will return ErrNoCachedConn.
 	OnlyCachedConn bool
-	// SkipSchemeCheck controls whether we check if the scheme is https.
-	// This allows the use of different schemes, e.g. masque://target.example.com:443/.
-	SkipSchemeCheck bool
 }
 
 var _ roundTripCloser = &RoundTripper{}
@@ -100,7 +98,7 @@ func (r *RoundTripper) RoundTripOpt(req *http.Request, opt RoundTripOpt) (*http.
 				}
 			}
 		}
-	} else if !opt.SkipSchemeCheck {
+	} else {
 		closeRequestBody(req)
 		return nil, fmt.Errorf("http3: unsupported protocol scheme: %s", req.URL.Scheme)
 	}

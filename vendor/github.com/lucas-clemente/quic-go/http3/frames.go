@@ -39,8 +39,6 @@ func parseNextFrame(r io.Reader) (frame, error) {
 			fallthrough
 		case 0xd: // MAX_PUSH_ID
 			fallthrough
-		case 0xe: // DUPLICATE_PUSH
-			fallthrough
 		default:
 			// skip over unknown frames
 			if _, err := io.CopyN(ioutil.Discard, qr, int64(l)); err != nil {
@@ -68,7 +66,7 @@ func (f *headersFrame) Write(b *bytes.Buffer) {
 	quicvarint.Write(b, f.Length)
 }
 
-const settingDatagram = 0x276
+const settingDatagram = 0xffd277
 
 type settingsFrame struct {
 	Datagram bool
