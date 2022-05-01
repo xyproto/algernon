@@ -11,7 +11,7 @@ import (
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/pongo2"
 	"github.com/yuin/gluamapper"
-	"github.com/yuin/gopher-lua"
+	lua "github.com/yuin/gopher-lua"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -64,12 +64,24 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 
 		if L.GetTop() == 2 {
 			luaTable := L.CheckTable(2)
+
 			goMap := gluamapper.ToGoValue(luaTable, gluamapper.Option{
 				NameFunc: func(s string) string {
 					return s
 				},
-			}).(map[string]interface{})
-			pongoMap = pongo2.Context(goMap)
+			})
+
+			if interfaceMap, ok := goMap.(map[interface{}]interface{}); ok {
+				// Try to convert from map[interface{}]interface{} to map[string]interface{}
+				convertedMap := make(map[string]interface{})
+				for k, v := range interfaceMap {
+					convertedMap[k.(string)] = v
+				}
+				pongoMap = pongo2.Context(convertedMap)
+			} else if m, ok := goMap.(map[string]interface{}); ok {
+				pongoMap = pongo2.Context(m)
+			}
+
 			//fmt.Println("PONGOMAP", pongoMap, "LUA TABLE", luaTable)
 		} else if L.GetTop() > 2 {
 			log.Error("Too many arguments given to the serve2 function")
