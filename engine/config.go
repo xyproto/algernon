@@ -40,220 +40,113 @@ const (
 
 // Config is the main structure for the Algernon server.
 // It contains all the state and settings.
+// The order of the fields has been decided by the "fieldalignment" utility.
 type Config struct {
-
-	// For convenience. Set in the main function.
-	serverHost      string
-	dbName          string
-	refreshDuration time.Duration // for the auto-refresh feature
-	shutdownTimeout time.Duration
-
-	defaultWebColonPort       string
-	defaultRedisColonPort     string
-	defaultEventColonPort     string
-	defaultEventRefresh       string
-	defaultEventPath          string
-	defaultLimit              int64
-	defaultPermissions        os.FileMode
-	defaultCacheSize          uint64        // 1 MiB
-	defaultCacheMaxEntitySize uint64        // 64 KB
-	defaultStatCacheRefresh   time.Duration // Refresh the stat cache, if the stat cache feature is enabled
-
-	// Default size for when a static file is large enough to not be read into memory
-	defaultLargeFileSize uint64 // 42 MiB
-
-	// Default rate limit, as a string
-	defaultLimitString string
-
-	// Store the request limit as a string for faster HTTP header creation later on
-	limitRequestsString string
-
-	// Default Bolt database file, for some operating systems
-	defaultBoltFilename string
-
-	// Default log file, for some operating systems
-	defaultLogFile string
-
-	// Default filename for a Lua script that provides data to a template
-	defaultLuaDataFilename string
-
-	// List of configuration filenames to check
-	serverConfigurationFilenames []string
-
-	// Configuration that is exposed to the server configuration script(s)
-	serverDirOrFilename, serverAddr, serverCert, serverKey, serverConfScript, internalLogFilename, serverLogFile string
-
-	// If only HTTP/2 or HTTP
-	serveJustHTTP2, serveJustHTTP bool
-
-	// If only QUIC
-	serveJustQUIC bool
-
-	// If only using the Lua REPL, and not serving anything
-	onlyLuaMode bool
-
-	// Configuration that may only be set in the server configuration script(s)
-	serverAddrLua          string
-	serverReadyFunctionLua func()
-
-	// Server modes
-	debugMode, verboseMode, productionMode, serverMode bool
-
-	// For the Server-Sent Event (SSE) server
-	eventAddr    string // Host and port to serve Server-Sent Events on
-	eventRefresh string // The duration of an event cycle
-
-	// Enable the event server and inject JavaScript to reload pages when sources change
-	autoRefresh bool
-
-	// If only watching a single directory recursively
-	autoRefreshDir string
-
-	// If serving a single file, like a lua script
-	singleFileMode bool
-
-	// Development mode aims to make it easy to get started
-	devMode bool
-
-	// Databases
-	boltFilename       string
-	useBolt            bool
-	mariadbDSN         string // connection string
-	mariaDatabase      string // database name
-	postgresDSN        string // connection string
-	postgresDatabase   string // database name
-	redisAddr          string
-	redisDBindex       int
-	redisAddrSpecified bool
-
-	limitRequests       int64 // rate limit to this many requests per client per second
-	disableRateLimiting bool
-
-	// Access logs
-	commonAccessLogFilename   string // NCSA access log
-	combinedAccessLogFilename string // CLF access log
-
-	// For the version flag
-	showVersion bool
-
-	// Caching
-	cacheSize             uint64
-	cacheMode             cachemode.Setting
-	cacheCompression      bool
-	cacheMaxEntitySize    uint64
-	cacheCompressionSpeed bool // Compression speed over compactness
-	cacheMaxGivenDataSize uint64
-	noCache               bool
-
-	// Large file support (threshold for not reading into memory)
-	largeFileSize uint64
-
-	// Timeout when writing to a client, in seconds
-	writeTimeout uint64
-
-	// HTTP headers
-	noHeaders       bool
-	stricterHeaders bool
-
-	// Output
-	quietMode bool
-	noBanner  bool
-
-	// If a single Lua file is provided, or Server() is used.
-	luaServerFilename string
-
-	// Used in the HTTP headers as "Server"
-	serverHeaderName string
-
-	// CPU profile filename
-	profileCPU string
-
-	// Memory profile filename
-	profileMem string
-
-	// Trace filename
-	traceFilename string
-
-	// Assume files will not be removed from the server directory while
-	// Algernon is running. This allows caching of costly os.Stat calls.
-	cacheFileStat bool
-
-	// Look for files in the directory with the same name as the requested hostname
-	serverAddDomain bool
-
-	// Don't use a database backend. There will be loss of functionality.
-	// TODO: Add a flag for this.
-	useNoDatabase bool
-
-	// For serving a directory with files over regular HTTP
-	simpleMode bool
-
-	// Open the URL after serving
-	openURLAfterServing bool
-	// Open the URL after serving, with a specific application
-	openExecutable string
-
-	// Quit after the first request?
-	quitAfterFirstRequest bool
-
-	// Markdown mode
-	markdownMode bool
-
-	// Theme for Markdown and error pages
-	defaultTheme string
-
-	// Workaround for rendering Pongo2 pages without concurrency issues
-	pongomutex *sync.RWMutex
-
-	// Temporary directory
-	serverTempDir string
-
-	// REPL
-	ctrldTwice bool
-
-	// State and caching
-	perm    pinterface.IPermissions
-	luapool *pool.LStatePool
-	cache   *datablock.FileCache
-
-	// Default program for opening files and URLs in the current OS
-	defaultOpenExecutable string
-
-	// Version and description
-	versionString string
-	description   string
-
-	// Mime info
-	mimereader *mime.Reader
-
-	// For checking if files exists. FileStat cache.
-	fs *datablock.FileStat
-
-	// JSX rendering options
-	jsxOptions api.TransformOptions
-
-	// Convert JSX to HyperApp JS or React JS?
-	hyperApp bool
-
-	// Support clients like "curl" that downloads uncompressed by default
-	curlSupport bool
-
-	// Indicate if path prefixes like "/admin" should be cleared,
-	// or if the default settings should be kept.
-	clearDefaultPathPrefixes bool
-
-	// Secret to be used when setting and getting user login cookies
-	cookieSecret string
-
-	// Redirect HTTP traffic to HTTPS
-	redirectHTTP bool
-
-	// Use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
-	useCertMagic     bool
-	certMagicDomains []string
-
-	// Optional Base URL, for the directory listings
-	dirBaseURL string
+	perm                         pinterface.IPermissions // the user state, for the permissions system
+	mimereader                   *mime.Reader
+	serverReadyFunctionLua       func()              // configuration that may only be set in the server configuration script(s)
+	pongomutex                   *sync.RWMutex       // workaround for rendering pongo2 pages without concurrency issues
+	fs                           *datablock.FileStat // for checking if file exists, possibly in a cached way
+	luapool                      *pool.LStatePool    // a pool of Lua interpreters
+	cache                        *datablock.FileCache
+	redisAddr                    string
+	defaultEventPath             string
+	defaultEventRefresh          string
+	description                  string // description of the current program
+	versionString                string // program name and version number
+	defaultOpenExecutable        string // default program for opening files and URLs in the current operating system
+	serverHost                   string
+	defaultEventColonPort        string
+	defaultLimitString           string // default rate limit, as a string
+	limitRequestsString          string // store the request limit as a string for faster HTTP header creation later on
+	defaultBoltFilename          string // default bolt database file, for some operating systems
+	defaultLogFile               string // default log file, for some operating systems
+	defaultLuaDataFilename       string // default filename for a Lua script that provides data to a template
+	defaultRedisColonPort        string
+	serverDirOrFilename          string // exposed to the server configuration scripts(s)
+	serverAddr                   string // exposed to the server configuration scripts(s)
+	serverCert                   string // exposed to the server configuration scripts(s)
+	serverKey                    string // exposed to the server configuration scripts(s)
+	serverConfScript             string // exposed to the server configuration scripts(s)
+	defaultWebColonPort          string
+	serverLogFile                string // exposed to the server configuration scripts(s)
+	serverTempDir                string // temporary directory
+	cookieSecret                 string // secret to be used when setting and getting user login cookies
+	defaultTheme                 string // theme for Markdown and error pages
+	openExecutable               string // open the URL after serving, with a specific executable
+	serverAddrLua                string // configuration that may only be set in the server configuration script(s)
+	dbName                       string
+	traceFilename                string // trace filename
+	profileMem                   string // memory profiling filename
+	profileCPU                   string // CPU profiling filename
+	serverHeaderName             string // used in the HTTP headers as the "Server" name
+	eventAddr                    string // for the Server-Sent Event (SSE) server (host and port)
+	eventRefresh                 string // for the Server-Sent Event (SSE) server (duration of an event cycle)
+	luaServerFilename            string // if a single Lua file is provided, or if Server() is used
+	autoRefreshDir               string // if only watching a single directory recursively
+	combinedAccessLogFilename    string // CLF access log
+	commonAccessLogFilename      string // NCSA access log
+	boltFilename                 string
+	internalLogFilename          string               // exposed to the server configuration scripts(s)
+	mariadbDSN                   string               // connection string
+	mariaDatabase                string               // database name
+	postgresDSN                  string               // connection string
+	postgresDatabase             string               // database name
+	dirBaseURL                   string               // optional Base URL, for the directory listings
+	jsxOptions                   api.TransformOptions // JSX rendering options
+	certMagicDomains             []string
+	serverConfigurationFilenames []string // list of configuration filenames to check
+	cacheMaxGivenDataSize        uint64
+	largeFileSize                uint64        // threshold for not reading large files into memory
+	refreshDuration              time.Duration // for the auto-refresh feature
+	redisDBindex                 int
+	cacheSize                    uint64
+	cacheMode                    cachemode.Setting
+	shutdownTimeout              time.Duration
+	cacheMaxEntitySize           uint64
+	defaultLimit                 int64
+	defaultCacheMaxEntitySize    uint64        // 64 KiB
+	defaultLargeFileSize         uint64        // 42 MiB: the default size for when a static file is large enough to not be read into memory
+	limitRequests                int64         // rate limit to this many requests per client per second
+	writeTimeout                 uint64        // timeout when writing data to a client, in seconds
+	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
+	defaultCacheSize             uint64        // 1 MiB
+	defaultPermissions           os.FileMode
+	quietMode                    bool // no output to the command line
+	autoRefresh                  bool // enable the event server and inject JavaScript to reload pages when sources change
+	serverMode                   bool // server mode: non-interactive
+	productionMode               bool // server mode: non-interactive, assume the server is running as a system service
+	verboseMode                  bool // server mode: be more verbose
+	debugMode                    bool // server mode: enable debug features and better error messages
+	cacheFileStat                bool // assume files will not be removed from the served directories while Algernon is running, which allows caching of costly os.Stat calls
+	serverAddDomain              bool // look for files in the directory with the same name as the requested hostname
+	stricterHeaders              bool // stricter HTTP headers
+	simpleMode                   bool // server mode: for serving a directory with files over regular HTTP, nothing more nothing less
+	openURLAfterServing          bool // open the URL after serving
+	onlyLuaMode                  bool // if only using the Lua REPL, and not serving anything
+	quitAfterFirstRequest        bool // quit when the first request has been responded to?
+	markdownMode                 bool
+	serveJustQUIC                bool // if only QUIC or HTTP/3
+	serveJustHTTP                bool // if only HTTP
+	serveJustHTTP2               bool // if only HTTP/2
+	ctrldTwice                   bool // require a double press of ctrl-d to exit the REPL
+	noHeaders                    bool // HTTP headers
+	redisAddrSpecified           bool
+	noCache                      bool
+	showVersion                  bool
+	curlSupport                  bool // support clients like "curl" that downloads uncompressed by default
+	noBanner                     bool // don't display the ANSI-graphics banner at start
+	cacheCompressionSpeed        bool // compression speed over compactness
+	cacheCompression             bool
+	singleFileMode               bool // if only serving a single file, like a Lua script
+	hyperApp                     bool // convert JSX to HyperApp JS, or React JS?
+	devMode                      bool // server mode: aims to make it easy to get started
+	clearDefaultPathPrefixes     bool // clear default path prefixes like "/admin" from the permission system?
+	disableRateLimiting          bool
+	redirectHTTP                 bool // redirect HTTP traffic to HTTPS?
+	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
+	useBolt                      bool
+	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
