@@ -16,17 +16,16 @@ import (
 
 // CharAttribute is a rune and a color attribute
 type CharAttribute struct {
-	R rune
 	A vt100.AttributeColor
+	R rune
 }
 
 // TextOutput keeps state about verbosity and if colors are enabled
 type TextOutput struct {
-	color   bool
-	enabled bool
-	// Tag replacement structs, for performance
 	lightReplacer *strings.Replacer
 	darkReplacer  *strings.Replacer
+	color         bool
+	enabled       bool
 }
 
 // New creates a new TextOutput struct, which is
@@ -35,7 +34,7 @@ type TextOutput struct {
 func New() *TextOutput {
 	// Respect the NO_COLOR environment variable
 	color := len(os.Getenv("NO_COLOR")) == 0
-	o := &TextOutput{color, true, nil, nil}
+	o := &TextOutput{nil, nil, color, true}
 	o.initializeTagReplacers()
 	return o
 }
@@ -49,7 +48,7 @@ func NewTextOutput(color, enabled bool) *TextOutput {
 	if os.Getenv("NO_COLOR") != "" {
 		color = false
 	}
-	o := &TextOutput{color, enabled, nil, nil}
+	o := &TextOutput{nil, nil, color, enabled}
 	o.initializeTagReplacers()
 	return o
 }
@@ -462,7 +461,7 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 				escaped = false
 			}
 		} else {
-			cc = append(cc, CharAttribute{r, currentColor})
+			cc = append(cc, CharAttribute{currentColor, r})
 		}
 	}
 	// if escaped is true here, there is something wrong

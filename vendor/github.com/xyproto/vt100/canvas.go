@@ -21,14 +21,14 @@ type ColorRune struct {
 type Char ColorRune
 
 type Canvas struct {
-	w             uint
-	h             uint
+	mut           *sync.RWMutex
 	chars         []ColorRune
 	oldchars      []ColorRune
-	mut           *sync.RWMutex
+	w             uint
+	h             uint
 	cursorVisible bool
 	lineWrap      bool
-	runewise      bool // Should each rune be drawn by moving to (x,y) first?
+	runewise      bool
 }
 
 func NewCanvas() *Canvas {

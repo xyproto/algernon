@@ -7,7 +7,7 @@ package tinysvg
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 )
 
 // Tag represents an XML tag, as part of a larger XML document
@@ -21,34 +21,12 @@ type Tag struct {
 	firstChild  *Tag // first child
 }
 
-// Document is an XML document, with a title and a root tag
-type Document struct {
-	title []byte
-	root  *Tag
-}
-
-// NewDocument creates a new XML/HTML/SVG image, with a root tag.
-// If rootTagName contains "<" or ">", it can be used for preceding declarations,
-// like <!DOCTYPE html> or <?xml version=\"1.0\"?>.
-// Returns a pointer to a Document.
-func NewDocument(title, rootTagName []byte) *Document {
-	var image Document
-	image.title = []byte(title)
-	rootTag := NewTag([]byte(rootTagName))
-	image.root = rootTag
-	return &image
-}
-
 // NewTag creates a new tag based on the given name.
 // "name" is what will appear right after "<" when rendering as XML/HTML/SVG.
 func NewTag(name []byte) *Tag {
 	var tag Tag
 	tag.name = name
 	tag.attrs = make(map[string][]byte)
-	tag.nextSibling = nil
-	tag.firstChild = nil
-	tag.content = make([]byte, 0)
-	tag.lastContent = make([]byte, 0)
 	return &tag
 }
 
@@ -68,6 +46,14 @@ func (tag *Tag) AddTag(child *Tag) {
 // AddAttrib adds an attribute to a tag, for instance "size" and "20"
 func (tag *Tag) AddAttrib(attrName string, attrValue []byte) {
 	tag.attrs[attrName] = attrValue
+}
+
+// AddAttribMap adds attributes based on a given map
+func (tag *Tag) AddAttribMap(attrMap map[string][]byte) {
+	//attrName string, attrValue []byte) {
+	for attrName, attrValue := range attrMap {
+		tag.attrs[attrName] = attrValue
+	}
 }
 
 // AddSingularAttrib adds attribute without a value
@@ -150,6 +136,207 @@ func (tag *Tag) getFlatXML() []byte {
 		}
 	}
 	return ret
+}
+
+// writeFlatXML renders an XML tag to an io.Writer.
+// This will generate a bytes for a tag, non-recursively.
+func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
+	// TODO: This function is a bit long and verbose
+
+	// For the root tag
+	if (len(tag.name) > 0) && (tag.name[0] == '<') {
+		x, err := w.Write(tag.name)
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+		x, err = w.Write(tag.content)
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+		x, err = w.Write(tag.xmlContent)
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+		x, err = w.Write(tag.lastContent)
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+		n += int64(x)
+		return n, nil
+	}
+	// For indenting
+	spacing := make([]byte, 0)
+	// Generate the XML based on the tag
+	attrs := tag.GetAttrString()
+
+	x, err := w.Write(spacing)
+	n += int64(x)
+	if err != nil {
+		return n, err
+	}
+
+	x, err = w.Write([]byte("<"))
+	n += int64(x)
+	if err != nil {
+		return n, err
+	}
+
+	x, err = w.Write(tag.name)
+	n += int64(x)
+	if err != nil {
+		return n, err
+	}
+
+	if len(attrs) > 0 {
+		x, err = w.Write([]byte(" "))
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+
+		x, err = w.Write(attrs)
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+
+	}
+	if (len(tag.content) == 0) && (len(tag.xmlContent) == 0) && (len(tag.lastContent) == 0) {
+
+		x, err = w.Write([]byte(" />"))
+		n += int64(x)
+		if err != nil {
+			return n, err
+		}
+
+	} else {
+		if len(tag.xmlContent) > 0 {
+			if tag.xmlContent[0] != ' ' {
+
+				x, err = w.Write([]byte(">"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(spacing)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(tag.xmlContent)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(spacing)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write([]byte("</"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(tag.name)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write([]byte(">"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+			} else {
+				x, err = w.Write([]byte(">"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(tag.xmlContent)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(spacing)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write([]byte("</"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write(tag.name)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+				x, err = w.Write([]byte(">"))
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+
+			}
+		} else {
+			x, err = w.Write([]byte(">"))
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+			x, err = w.Write(tag.content)
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+			x, err = w.Write(tag.lastContent)
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+			x, err = w.Write([]byte("</"))
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+			x, err = w.Write(tag.name)
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+			x, err = w.Write([]byte(">"))
+			n += int64(x)
+			if err != nil {
+				return n, err
+			}
+
+		}
+	}
+	return n, nil
 }
 
 // GetChildren returns all children for a given tag.
@@ -239,16 +426,6 @@ func (tag *Tag) LastChild() *Tag {
 	return child
 }
 
-// GetTag searches all tags for the given name
-func (image *Document) GetTag(name []byte) (*Tag, error) {
-	return image.root.GetTag(name)
-}
-
-// GetRoot returns the root tag of the image
-func (image *Document) GetRoot() *Tag {
-	return image.root
-}
-
 // GetTag finds a tag by name and returns an error if not found.
 // Returns the first tag that matches.
 func (tag *Tag) GetTag(name []byte) (*Tag, error) {
@@ -273,16 +450,30 @@ func (tag *Tag) GetTag(name []byte) (*Tag, error) {
 	return nil, couldNotFindError
 }
 
+// ShallowCopy creates a copy of a tag, but uses the same attribute map!
+func (tag *Tag) ShallowCopy() *Tag {
+	var nt Tag
+	nt.name = tag.name
+	nt.content = tag.content
+	nt.lastContent = tag.lastContent
+	nt.xmlContent = tag.xmlContent
+	nt.attrs = tag.attrs
+	nt.nextSibling = tag.nextSibling
+	nt.firstChild = tag.firstChild
+	return &nt
+}
+
 // Bytes (previously getXMLRecursively) renders XML for a tag, recursively.
 // The generated XML is returned as a []byte.
 func (tag *Tag) Bytes() []byte {
-	var content, xmlContent []byte
-
 	if tag.CountChildren() == 0 {
 		return tag.getFlatXML()
 	}
-
-	child := tag.firstChild
+	var (
+		content    []byte
+		xmlContent []byte
+		child      = tag.firstChild
+	)
 	for child != nil {
 		xmlContent = child.Bytes()
 		if len(xmlContent) > 0 {
@@ -290,41 +481,36 @@ func (tag *Tag) Bytes() []byte {
 		}
 		child = child.nextSibling
 	}
+	tagCopy := tag.ShallowCopy()
+	tagCopy.xmlContent = append(tagCopy.xmlContent, tag.content...)
+	tagCopy.xmlContent = append(tagCopy.xmlContent, content...)
+	tagCopy.xmlContent = append(tagCopy.xmlContent, tag.lastContent...)
+	return tagCopy.getFlatXML()
+}
 
-	tag.xmlContent = append(tag.xmlContent, tag.content...)
-	tag.xmlContent = append(tag.xmlContent, content...)
-	tag.xmlContent = append(tag.xmlContent, tag.lastContent...)
-
-	return tag.getFlatXML()
+// WriteTo renders XML for a tag, recursively.
+// The generated XML is written to the given io.Writer.
+// This also fullfills the io.WriterTo interface.
+func (tag *Tag) WriteTo(w io.Writer) (n int64, err error) {
+	if tag.CountChildren() == 0 {
+		return tag.writeFlatXML(w)
+	}
+	var (
+		content bytes.Buffer
+		child   = tag.firstChild
+	)
+	for child != nil {
+		child.WriteTo(&content)
+		child = child.nextSibling
+	}
+	tagCopy := tag.ShallowCopy()
+	tagCopy.xmlContent = append(tagCopy.xmlContent, tag.content...)
+	tagCopy.xmlContent = append(tagCopy.xmlContent, content.Bytes()...)
+	tagCopy.xmlContent = append(tagCopy.xmlContent, tag.lastContent...)
+	return tagCopy.writeFlatXML(w)
 }
 
 // String returns the XML contents as a string
 func (tag *Tag) String() string {
 	return string(tag.Bytes())
-}
-
-// AddContent adds content to the body tag.
-// Returns the body tag and nil if successful.
-// Returns and an error if no body tag is found, else nil.
-func (image *Document) AddContent(content []byte) (*Tag, error) {
-	body, err := image.root.GetTag([]byte("body"))
-	if err == nil {
-		body.AddContent(content)
-	}
-	return body, err
-}
-
-// Bytes renders the image as an XML document
-func (image *Document) Bytes() []byte {
-	return image.root.Bytes()
-}
-
-// String renders the image as an XML document
-func (image *Document) String() string {
-	return image.root.String()
-}
-
-// SaveSVG will save the current image as an SVG file
-func (image *Document) SaveSVG(filename string) error {
-	return ioutil.WriteFile(filename, image.Bytes(), 0644)
 }

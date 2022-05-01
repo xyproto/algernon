@@ -380,7 +380,9 @@ func (p *parser) skipTypeScriptTypeWithOpts(level js_ast.L, opts skipTypeOpts) {
 					p.lexer.Next()
 				}
 
-				p.skipTypeScriptTypeArguments(false /* isInsideJSXElement */)
+				if !p.lexer.HasNewlineBefore {
+					p.skipTypeScriptTypeArguments(false /* isInsideJSXElement */)
+				}
 			}
 
 		case js_lexer.TOpenBracket:
@@ -743,11 +745,11 @@ func (p *parser) trySkipTypeScriptTypeArgumentsWithBacktracking() bool {
 		}
 	}()
 
-	p.skipTypeScriptTypeArguments(false /* isInsideJSXElement */)
-
-	// Check the token after this and backtrack if it's the wrong one
-	if !p.canFollowTypeArgumentsInExpression() {
-		p.lexer.Unexpected()
+	if p.skipTypeScriptTypeArguments(false /* isInsideJSXElement */) {
+		// Check the token after the type argument list and backtrack if it's invalid
+		if !p.canFollowTypeArgumentsInExpression() {
+			p.lexer.Unexpected()
+		}
 	}
 
 	// Restore the log disabled flag. Note that we can't just set it back to false
@@ -854,6 +856,19 @@ func (p *parser) isTSArrowFnJSX() (isTSArrowFn bool) {
 	return
 }
 
+func (p *parser) nextTokenIsOpenParenOrLessThanOrDot() (result bool) {
+	oldLexer := p.lexer
+	p.lexer.Next()
+
+	result = p.lexer.Token == js_lexer.TOpenParen ||
+		p.lexer.Token == js_lexer.TLessThan ||
+		p.lexer.Token == js_lexer.TDot
+
+	// Restore the lexer
+	p.lexer = oldLexer
+	return
+}
+
 // This function is taken from the official TypeScript compiler source code:
 // https://github.com/microsoft/TypeScript/blob/master/src/compiler/parser.ts
 func (p *parser) canFollowTypeArgumentsInExpression() bool {
@@ -865,35 +880,75 @@ func (p *parser) canFollowTypeArgumentsInExpression() bool {
 		js_lexer.TTemplateHead:                  // foo<T> `...${100}...`
 		return true
 
+	// Consider something a type argument list only if the following token can't start an expression.
 	case
-		// These tokens can't follow in a call expression, nor can they start an
-		// expression. So, consider the type argument list part of an instantiation
-		// expression.
-		js_lexer.TComma,                   // foo<x>,
-		js_lexer.TDot,                     // foo<x>.
-		js_lexer.TQuestionDot,             // foo<x>?.
-		js_lexer.TCloseParen,              // foo<x>)
-		js_lexer.TCloseBracket,            // foo<x>]
-		js_lexer.TColon,                   // foo<x>:
-		js_lexer.TSemicolon,               // foo<x>;
-		js_lexer.TQuestion,                // foo<x>?
-		js_lexer.TEqualsEquals,            // foo<x> ==
-		js_lexer.TEqualsEqualsEquals,      // foo<x> ===
-		js_lexer.TExclamationEquals,       // foo<x> !=
-		js_lexer.TExclamationEqualsEquals, // foo<x> !==
-		js_lexer.TAmpersandAmpersand,      // foo<x> &&
-		js_lexer.TBarBar,                  // foo<x> ||
-		js_lexer.TQuestionQuestion,        // foo<x> ??
-		js_lexer.TCaret,                   // foo<x> ^
-		js_lexer.TAmpersand,               // foo<x> &
-		js_lexer.TBar,                     // foo<x> |
-		js_lexer.TCloseBrace,              // foo<x> }
-		js_lexer.TEndOfFile:               // foo<x>
-		return true
+		// From "isStartOfExpression()"
+		js_lexer.TPlus,
+		js_lexer.TMinus,
+		js_lexer.TTilde,
+		js_lexer.TExclamation,
+		js_lexer.TDelete,
+		js_lexer.TTypeof,
+		js_lexer.TVoid,
+		js_lexer.TPlusPlus,
+		js_lexer.TMinusMinus,
+		js_lexer.TLessThan,
+
+		// From "isStartOfLeftHandSideExpression()"
+		js_lexer.TThis,
+		js_lexer.TSuper,
+		js_lexer.TNull,
+		js_lexer.TTrue,
+		js_lexer.TFalse,
+		js_lexer.TNumericLiteral,
+		js_lexer.TBigIntegerLiteral,
+		js_lexer.TStringLiteral,
+		js_lexer.TOpenBracket,
+		js_lexer.TOpenBrace,
+		js_lexer.TFunction,
+		js_lexer.TClass,
+		js_lexer.TNew,
+		js_lexer.TSlash,
+		js_lexer.TSlashEquals,
+		js_lexer.TIdentifier,
+
+		// From "isBinaryOperator()"
+		js_lexer.TQuestionQuestion,
+		js_lexer.TBarBar,
+		js_lexer.TAmpersandAmpersand,
+		js_lexer.TBar,
+		js_lexer.TCaret,
+		js_lexer.TAmpersand,
+		js_lexer.TEqualsEquals,
+		js_lexer.TExclamationEquals,
+		js_lexer.TEqualsEqualsEquals,
+		js_lexer.TExclamationEqualsEquals,
+		js_lexer.TGreaterThan,
+		js_lexer.TLessThanEquals,
+		js_lexer.TGreaterThanEquals,
+		js_lexer.TInstanceof,
+		js_lexer.TLessThanLessThan,
+		js_lexer.TGreaterThanGreaterThan,
+		js_lexer.TGreaterThanGreaterThanGreaterThan,
+		js_lexer.TAsterisk,
+		js_lexer.TPercent,
+		js_lexer.TAsteriskAsterisk,
+
+		// TypeScript always sees "TGreaterThan" instead of these tokens since
+		// their scanner works a little differently than our lexer. So since
+		// "TGreaterThan" is forbidden above, we also forbid these too.
+		js_lexer.TGreaterThanGreaterThanEquals,
+		js_lexer.TGreaterThanGreaterThanGreaterThanEquals:
+		return false
+
+	case js_lexer.TIn:
+		return !p.allowIn
+
+	case js_lexer.TImport:
+		return !p.nextTokenIsOpenParenOrLessThanOrDot()
 
 	default:
-		// Anything else treat as an expression.
-		return false
+		return true
 	}
 }
 
