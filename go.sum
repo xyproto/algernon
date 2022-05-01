@@ -315,8 +315,8 @@ github.com/xyproto/onthefly v1.2.3 h1:91QuXkfqP7l4yFsGTGbN3S+iqYZLLJfVEWo4BFpewn
 github.com/xyproto/onthefly v1.2.3/go.mod h1:FQNxGnPtw8YSfZMHGbNKMGqtoI5ZZS+66Sw+eDTcTRE=
 github.com/xyproto/permissionbolt v1.2.6 h1:deCnwY4/IIWy6wizYt6DHcs5fPcYx9VRd7JV7Doa1H0=
 github.com/xyproto/permissionbolt v1.2.6/go.mod h1:kgZa0zLTspHMBF1Fk5sBIp6IuHvqAgr1HE9RA/C2+NU=
-github.com/xyproto/permissions2 v0.0.0-20220117115243-74ad74d1250f h1:AmQkrRd+2WMFMUpL+FtNm2HdluuvjMol3i2javJUFn4=
-github.com/xyproto/permissions2 v0.0.0-20220117115243-74ad74d1250f/go.mod h1:VLPISlniKpsxUAjTyaJT4r65K3j6w1eE+x83ehX3LmM=
+github.com/xyproto/permissions2 v0.0.0-20220501203256-fd4f1e1ce602 h1:R2YN1CmyYX8N1KDcvtewe4kVL85TdJTl5fZ+SNUInzY=
+github.com/xyproto/permissions2 v0.0.0-20220501203256-fd4f1e1ce602/go.mod h1:HHbgjQ+u5HCQtA/hr0xquQNF74THzLx18v0LwlPffBA=
 github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0 h1:cwuqKB6ZfVGziPB3PRlPT5oLnK4cpJNiGyOoI2PmJ9g=
 github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0/go.mod h1:dYsgHuBYu4M/DR/kAlRr+EGcjzwKlx8zgyiwLEzhh10=
 github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684/go.mod h1:BzQLxcJwPQpzFgOyNEL02hGO5T4VqXB1BX+lp5bE040=
@@ -405,7 +405,6 @@ golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.0.0-20211202192323-5770296d904e/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
-golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f h1:OeJjE6G4dgCY4PIXvIRQbE8+RX+uXZyGhUy/ksMGJoc=
 golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
