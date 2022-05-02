@@ -403,7 +403,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220429233432-b5fbb4746d32
+# golang.org/x/sys v0.0.0-20220502124256-b6088ccd6cba
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
