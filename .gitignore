@@ -84,3 +84,5 @@ regtest/issue13/large-file
 algernon.1.gz
 
 *.out
+
+release/

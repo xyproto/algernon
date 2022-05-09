@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	versionString = "Algernon 1.12.14"
+	versionString = "Algernon 1.13.0"
 	description   = "Web Server"
 )
 
