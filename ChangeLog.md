@@ -1,5 +1,30 @@
 # Changelog
 
+Changes from 1.12.14 to 1.13.0
+==============================
+
+* Add a flag for serving domains with CertMagic and Let's Encrypt
+* Add a flag for redirecting from HTTP to HTTPS
+* Use `req.Context` since `CloseNotifier` has been deprecated
+* Switch to Go 1.18
+* Switch from the MIT license to BSD-3
+* Fix double drawn frames around syntax highlighted code in Markdown documents
+* URL encode links when listing directories
+* Use the same directory as the pongo2 template when importing macros, ref #84
+* Let plugins continue to run if an optional argument is passed in, ref #64 (otherwise close them)
+* Switch from jvatic/goja-babel to wvanw/esbuild, ref #77 (#91)
+* Improve JSX-related error messages
+* Use yuin/gopher-lua and yuin/gluamapper
+* Use a context when running Lua functions and use the background context when creating the Lua pool
+* Update the alg2docker and benchmark scripts
+* Update the `--help` output
+* Fix a typo in the "single.alg" example Algernon application
+* Update example service and Dockerfiles
+* Add a base URL flag for the directory listing (#90 ?)
+* Follow the advice of the "fieldalignment" and "staticcheck" utilies
+* Fix the `serve2` function so that the registration form example works
+* Update tests, dependencies, examples and documentation
+
 Changes from 1.12.13 to 1.12.14
 ===============================
 
