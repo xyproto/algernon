@@ -84,6 +84,12 @@ const (
 	ObjectRestSpread
 	OptionalCatchBinding
 	OptionalChain
+	RegExpDotAllFlag
+	RegExpLookbehindAssertions
+	RegExpMatchIndices
+	RegExpNamedCaptureGroups
+	RegExpStickyAndUnicodeFlags
+	RegExpUnicodePropertyEscapes
 	RestArgument
 	TemplateLiteral
 	TopLevelAwait
@@ -243,9 +249,12 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Safari:  {{start: v{15, 0, 0}}},
 	},
 	ClassStaticBlocks: {
-		Chrome: {{start: v{91, 0, 0}}},
-		ES:     {{start: v{2022, 0, 0}}},
-		Node:   {{start: v{16, 11, 0}}},
+		Chrome:  {{start: v{91, 0, 0}}},
+		Edge:    {{start: v{94, 0, 0}}},
+		ES:      {{start: v{2022, 0, 0}}},
+		Firefox: {{start: v{93, 0, 0}}},
+		Node:    {{start: v{16, 11, 0}}},
+		Opera:   {{start: v{80, 0, 0}}},
 	},
 	ClassStaticField: {
 		Chrome:  {{start: v{73, 0, 0}}},
@@ -295,6 +304,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Firefox: {{start: v{67, 0, 0}}},
 		IOS:     {{start: v{11, 0, 0}}},
 		Node:    {{start: v{12, 20, 0}, end: v{13, 0, 0}}, {start: v{13, 2, 0}}},
+		Opera:   {{start: v{50, 0, 0}}},
 		Safari:  {{start: v{11, 1, 0}}},
 	},
 	ExponentOperator: {
@@ -313,6 +323,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		ES:      {{start: v{2020, 0, 0}}},
 		Firefox: {{start: v{80, 0, 0}}},
 		Node:    {{start: v{12, 0, 0}}},
+		Opera:   {{start: v{60, 0, 0}}},
 	},
 	ForAwait: {
 		Chrome:  {{start: v{63, 0, 0}}},
@@ -364,6 +375,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Firefox: {{start: v{62, 0, 0}}},
 		IOS:     {{start: v{12, 0, 0}}},
 		Node:    {{start: v{10, 4, 0}}},
+		Opera:   {{start: v{51, 0, 0}}},
 		Safari:  {{start: v{11, 1, 0}}},
 	},
 	Let: {
@@ -430,7 +442,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Firefox: {{start: v{2, 0, 0}}},
 		IE:      {{start: v{9, 0, 0}}},
 		IOS:     {{start: v{6, 0, 0}}},
-		Node:    {{start: v{0, 4, 0}}},
+		Node:    {{start: v{0, 10, 0}}},
 		Opera:   {{start: v{10, 10, 0}}},
 		Safari:  {{start: v{3, 1, 0}}},
 	},
@@ -471,6 +483,63 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Opera:   {{start: v{77, 0, 0}}},
 		Safari:  {{start: v{13, 1, 0}}},
 	},
+	RegExpDotAllFlag: {
+		Chrome:  {{start: v{62, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		ES:      {{start: v{2018, 0, 0}}},
+		Firefox: {{start: v{78, 0, 0}}},
+		IOS:     {{start: v{11, 3, 0}}},
+		Node:    {{start: v{8, 10, 0}}},
+		Opera:   {{start: v{49, 0, 0}}},
+		Safari:  {{start: v{11, 1, 0}}},
+	},
+	RegExpLookbehindAssertions: {
+		Chrome:  {{start: v{62, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		ES:      {{start: v{2018, 0, 0}}},
+		Firefox: {{start: v{78, 0, 0}}},
+		Node:    {{start: v{8, 10, 0}}},
+		Opera:   {{start: v{49, 0, 0}}},
+	},
+	RegExpMatchIndices: {
+		Chrome:  {{start: v{90, 0, 0}}},
+		Edge:    {{start: v{90, 0, 0}}},
+		ES:      {{start: v{2022, 0, 0}}},
+		Firefox: {{start: v{88, 0, 0}}},
+		IOS:     {{start: v{15, 0, 0}}},
+		Opera:   {{start: v{76, 0, 0}}},
+		Safari:  {{start: v{15, 0, 0}}},
+	},
+	RegExpNamedCaptureGroups: {
+		Chrome:  {{start: v{64, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		ES:      {{start: v{2018, 0, 0}}},
+		Firefox: {{start: v{78, 0, 0}}},
+		IOS:     {{start: v{11, 3, 0}}},
+		Node:    {{start: v{10, 0, 0}}},
+		Opera:   {{start: v{51, 0, 0}}},
+		Safari:  {{start: v{11, 1, 0}}},
+	},
+	RegExpStickyAndUnicodeFlags: {
+		Chrome:  {{start: v{50, 0, 0}}},
+		Edge:    {{start: v{13, 0, 0}}},
+		ES:      {{start: v{2015, 0, 0}}},
+		Firefox: {{start: v{46, 0, 0}}},
+		IOS:     {{start: v{12, 0, 0}}},
+		Node:    {{start: v{6, 0, 0}}},
+		Opera:   {{start: v{37, 0, 0}}},
+		Safari:  {{start: v{12, 0, 0}}},
+	},
+	RegExpUnicodePropertyEscapes: {
+		Chrome:  {{start: v{64, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		ES:      {{start: v{2018, 0, 0}}},
+		Firefox: {{start: v{78, 0, 0}}},
+		IOS:     {{start: v{11, 3, 0}}},
+		Node:    {{start: v{10, 0, 0}}},
+		Opera:   {{start: v{51, 0, 0}}},
+		Safari:  {{start: v{11, 1, 0}}},
+	},
 	RestArgument: {
 		Chrome:  {{start: v{47, 0, 0}}},
 		Edge:    {{start: v{12, 0, 0}}},
@@ -497,6 +566,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		ES:      {{start: v{2022, 0, 0}}},
 		Firefox: {{start: v{89, 0, 0}}},
 		Node:    {{start: v{14, 8, 0}}},
+		Opera:   {{start: v{75, 0, 0}}},
 		Safari:  {{start: v{15, 0, 0}}},
 	},
 	TypeofExoticObjectIsObject: {

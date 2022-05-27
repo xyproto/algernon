@@ -787,7 +787,7 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 				sess.logger.Log(ctx, msdsn.LogMessages, info.Message)
 			}
 			if outs.msgq != nil {
-				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNotice{Message: info.Message})
+				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNotice{Message: info})
 			}
 		case tokenReturnValue:
 			nv := parseReturnValue(sess.buf)

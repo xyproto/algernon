@@ -27,6 +27,10 @@ func (e Error) Error() string {
 	return "mssql: " + e.Message
 }
 
+func (e Error) String() string {
+	return e.Message
+}
+
 // SQLErrorNumber returns the SQL Server error number.
 func (e Error) SQLErrorNumber() int32 {
 	return e.Number

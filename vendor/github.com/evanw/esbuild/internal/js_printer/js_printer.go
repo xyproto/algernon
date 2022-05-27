@@ -898,6 +898,7 @@ func (p *printer) printClass(class js_ast.Class) {
 		p.printIndent()
 
 		if item.Kind == js_ast.PropertyClassStaticBlock {
+			p.addSourceMapping(item.Loc)
 			p.print("static")
 			p.printSpace()
 			p.printBlock(item.ClassStaticBlock.Loc, item.ClassStaticBlock.Block)
@@ -925,13 +926,15 @@ func (p *printer) printClass(class js_ast.Class) {
 }
 
 func (p *printer) printProperty(item js_ast.Property) {
+	p.addSourceMapping(item.Loc)
+
 	if item.Kind == js_ast.PropertySpread {
 		p.print("...")
 		p.printExpr(item.ValueOrNil, js_ast.LComma, 0)
 		return
 	}
 
-	if item.IsStatic {
+	if item.Flags.Has(js_ast.PropertyIsStatic) {
 		p.print("static")
 		p.printSpace()
 	}
@@ -948,7 +951,7 @@ func (p *printer) printProperty(item js_ast.Property) {
 		p.printSpace()
 	}
 
-	if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.IsMethod && ok {
+	if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.Flags.Has(js_ast.PropertyIsMethod) && ok {
 		if fn.Fn.IsAsync {
 			p.printSpaceBeforeIdentifier()
 			p.print("async")
@@ -959,13 +962,13 @@ func (p *printer) printProperty(item js_ast.Property) {
 		}
 	}
 
-	if item.IsComputed {
+	if item.Flags.Has(js_ast.PropertyIsComputed) {
 		p.print("[")
 		p.printExpr(item.Key, js_ast.LComma, 0)
 		p.print("]")
 
 		if item.ValueOrNil.Data != nil {
-			if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.IsMethod && ok {
+			if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.Flags.Has(js_ast.PropertyIsMethod) && ok {
 				p.printFn(fn.Fn)
 				return
 			}
@@ -1030,7 +1033,7 @@ func (p *printer) printProperty(item js_ast.Property) {
 
 	case *js_ast.EString:
 		p.addSourceMapping(item.Key.Loc)
-		if !item.PreferQuotedKey && p.canPrintIdentifierUTF16(key.Value) {
+		if !item.Flags.Has(js_ast.PropertyPreferQuotedKey) && p.canPrintIdentifierUTF16(key.Value) {
 			p.printSpaceBeforeIdentifier()
 			p.printIdentifierUTF16(key.Value)
 
@@ -1080,7 +1083,7 @@ func (p *printer) printProperty(item js_ast.Property) {
 	}
 
 	if item.ValueOrNil.Data != nil {
-		if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.IsMethod && ok {
+		if fn, ok := item.ValueOrNil.Data.(*js_ast.EFunction); item.Flags.Has(js_ast.PropertyIsMethod) && ok {
 			p.printFn(fn.Fn)
 			return
 		}
@@ -1661,7 +1664,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			}
 
 			// Implicit "true" value
-			if boolean, ok := property.ValueOrNil.Data.(*js_ast.EBoolean); ok && boolean.Value && property.WasShorthand {
+			if boolean, ok := property.ValueOrNil.Data.(*js_ast.EBoolean); ok && boolean.Value && property.Flags.Has(js_ast.PropertyWasShorthand) {
 				continue
 			}
 
@@ -2026,6 +2029,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			if e.OptionalChain != js_ast.OptionalChainStart {
 				p.print(".")
 			}
+			p.addSourceMapping(e.Index.Loc)
 			p.printSymbol(index.Ref)
 
 		case *js_ast.EMangledProp:
@@ -2527,6 +2531,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 
 		// Special-case "#foo in bar"
 		if private, ok := e.Left.Data.(*js_ast.EPrivateIdentifier); ok && e.Op == js_ast.BinOpIn {
+			p.addSourceMapping(e.Left.Loc)
 			p.printSymbol(private.Ref)
 		} else if e.Op == js_ast.BinOpComma {
 			// The result of the left operand of the comma operator is unused

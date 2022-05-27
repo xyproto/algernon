@@ -122,7 +122,7 @@ type ResolveResult struct {
 	UseDefineForClassFieldsTS config.MaybeBool
 
 	// This is the "importsNotUsedAsValues" and "preserveValueImports" fields from "package.json"
-	UnusedImportsTS config.UnusedImportsTS
+	UnusedImportFlagsTS config.UnusedImportFlagsTS
 }
 
 type DebugMeta struct {
@@ -626,7 +626,7 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 						result.JSXFactory = dirInfo.enclosingTSConfigJSON.JSXFactory
 						result.JSXFragment = dirInfo.enclosingTSConfigJSON.JSXFragmentFactory
 						result.UseDefineForClassFieldsTS = dirInfo.enclosingTSConfigJSON.UseDefineForClassFields
-						result.UnusedImportsTS = config.UnusedImportsFromTsconfigValues(
+						result.UnusedImportFlagsTS = config.UnusedImportFlagsFromTsconfigValues(
 							dirInfo.enclosingTSConfigJSON.PreserveImportsNotUsedAsValues,
 							dirInfo.enclosingTSConfigJSON.PreserveValueImports,
 						)
@@ -1033,7 +1033,7 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 
 	// List the directories
 	entries, err, originalError := r.fs.ReadDirectory(path)
-	if err == syscall.EACCES {
+	if err == syscall.EACCES || err == syscall.EPERM {
 		// Just pretend this directory is empty if we can't access it. This is the
 		// case on Unix for directories that only have the execute permission bit
 		// set. It means we will just pass through the empty directory and
