@@ -261,30 +261,19 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		EOFcount int
 	)
 
-	// TODO: Automatically generate a list of all words that should be completed
-	//       based on the documentation or repl help text. Then add each word
-	//       to the completer.
-	completer := readline.NewPrefixCompleter(
-		&readline.PrefixCompleter{Name: []rune("bye")},
-		&readline.PrefixCompleter{Name: []rune("confighelp")},
-		&readline.PrefixCompleter{Name: []rune("cwd")},
-		&readline.PrefixCompleter{Name: []rune("dir")},
-		&readline.PrefixCompleter{Name: []rune("exit")},
-		&readline.PrefixCompleter{Name: []rune("help")},
-		&readline.PrefixCompleter{Name: []rune("pwd")},
-		&readline.PrefixCompleter{Name: []rune("quit")},
-		&readline.PrefixCompleter{Name: []rune("serverdir")},
-		&readline.PrefixCompleter{Name: []rune("serverfile")},
-		&readline.PrefixCompleter{Name: []rune("webhelp")},
-		&readline.PrefixCompleter{Name: []rune("zalgo")},
-	)
+	var initialPrefixCompleters []readline.PrefixCompleterInterface
+	for _, word := range []string{"bye", "confighelp", "cwd", "dir", "exit", "help", "pwd", "quit", "serverdir", "serverfile", "webhelp", "zalgo"} {
+		initialPrefixCompleters = append(initialPrefixCompleters, &readline.PrefixCompleter{Name: []rune(word)})
+	}
 
-	addFunctionsFromHelptextToCompleter(generalHelpText, completer)
+	prefixCompleter := readline.NewPrefixCompleter(initialPrefixCompleters...)
+
+	addFunctionsFromHelptextToCompleter(generalHelpText, prefixCompleter)
 
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:            prompt,
 		HistoryFile:       historyFilename,
-		AutoComplete:      completer,
+		AutoComplete:      prefixCompleter,
 		InterruptPrompt:   "^C",
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,
