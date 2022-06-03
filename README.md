@@ -760,6 +760,15 @@ PQ([string], [string]) -> table
 
 The default connection string is `host=localhost port=5432 user=postgres dbname=test sslmode=disable` and the default SQL query is `SELECT version()`. Database connections are re-used if they still answer to `.Ping()`, for the same connection string.
 
+~~~c
+// Query a MSSQL database with SQL, a connection string, and a parameter table
+MSSQL([string], [string], [table]) -> table
+~~~
+
+- The default connection string is `server=localhost;user=sa;password=Password123,port=1433` and the default SQL query is `"SELECT @@VERSION`. Database connections are re-used if they still answer to `.Ping()`, for the same connection string.
+- If the param table is numerically indexed, positional placeholders are expected: `MSSQL("SELECT * FROM users WHERE first = @p1 AND last = @p2", conn, {"John", "Smith"})`
+- If the param table is keyed with strings, named placeholders are expected: `MSSQL("SELECT * FROM users WHERE first = @first AND last = @last", conn, {first = "John", last = "Smith"})`
+
 
 Lua functions for handling users and permissions
 ------------------------------------------------
