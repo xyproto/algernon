@@ -10,7 +10,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.14.40
+	github.com/evanw/esbuild v0.14.42
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.6
 	github.com/lucas-clemente/quic-go v0.27.1
@@ -44,7 +44,7 @@ require (
 	github.com/yosssi/gcss v0.1.0
 	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7
 	github.com/yuin/gopher-lua v0.0.0-20220504180219-658193537a64
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
+	golang.org/x/net v0.0.0-20220531201128-c960675eff93
 )
 
 require (
