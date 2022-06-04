@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/algernon/lua/onthefly"
 	"github.com/xyproto/algernon/lua/pquery"
 	"github.com/xyproto/algernon/lua/pure"
+	"github.com/xyproto/algernon/lua/teal"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
@@ -147,7 +148,23 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 
 	// Run the script and return the error value.
 	// Logging and/or HTTP response is handled elsewhere.
-	return L.DoFile(filename)
+    if filepath.Ext(filename) == ".tl" {
+    	return L.DoString(`
+        	local result, err = tl.process([[`+filename+`]])
+            if err ~= nil then
+            	throw(err)
+            end
+            local code, gen_error = tl.pretty_print_ast(result.ast, "5.1")
+            if gen_error ~= nil then
+            	throw(err)
+            end
+            local chunk = load(code)
+            chunk()
+        `)
+    } else {
+    	return L.DoFile(filename)
+    }
+
 }
 
 // RunConfiguration runs a Lua file as a configuration script. Also has access
@@ -207,6 +224,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// Cache
 	ac.LoadCacheFunctions(L)
+    
+    // Teal
+    teal.Load(L)
 
 	// Pages and Tags
 	onthefly.Load(L)
