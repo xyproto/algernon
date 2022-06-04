@@ -403,7 +403,7 @@ func (ac *Config) shouldCache(ext string) bool {
 		return true
 	case cachemode.Production, cachemode.Small:
 		switch ext {
-		case ".amber", ".lua", ".po2", ".tpl", ".pongo2":
+		case ".amber", ".lua", ".tl", ".po2", ".tpl", ".pongo2":
 			return false
 		default:
 			return true
@@ -421,7 +421,7 @@ func (ac *Config) shouldCache(ext string) bool {
 		fallthrough
 	default:
 		switch ext {
-		case ".amber", ".lua", ".md", ".gcss", ".jsx", ".po2", ".tpl", ".pongo2", ".happ", ".js", ".scss":
+		case ".amber", ".lua", ".tl", ".md", ".gcss", ".jsx", ".po2", ".tpl", ".pongo2", ".happ", ".js", ".scss":
 			return false
 		default:
 			return true
