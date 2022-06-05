@@ -1,4 +1,5 @@
 // Package teal supplies the Lua modules for Teal language support
+// teal.lua and compat52.lua were modified as per https://github.com/yuin/gopher-lua/issues/314
 package teal
 
 import (
