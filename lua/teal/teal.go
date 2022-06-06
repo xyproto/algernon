@@ -32,7 +32,7 @@ func Load(L *lua.LState) {
 		log.Errorf("Failed to load Teal: %v", err)
 		return
 	}
-	if err := L.DoString("tl = require('tl')"); err != nil {
+	if err := L.DoString("tl = require('tl'); tl.cache = {}"); err != nil {
 		log.Errorf("Failed to set `tl` global variable: %v", err)
 	}
 }
