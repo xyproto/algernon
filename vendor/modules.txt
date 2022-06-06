@@ -156,10 +156,10 @@ github.com/marten-seemann/qpack
 # github.com/marten-seemann/qtls-go1-16 v0.1.5
 ## explicit; go 1.16
 github.com/marten-seemann/qtls-go1-16
-# github.com/marten-seemann/qtls-go1-17 v0.1.1
+# github.com/marten-seemann/qtls-go1-17 v0.1.2
 ## explicit; go 1.17
 github.com/marten-seemann/qtls-go1-17
-# github.com/marten-seemann/qtls-go1-18 v0.1.1
+# github.com/marten-seemann/qtls-go1-18 v0.1.2
 ## explicit; go 1.18
 github.com/marten-seemann/qtls-go1-18
 # github.com/mattetti/filebuffer v1.0.1
@@ -331,7 +331,7 @@ github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 ## explicit; go 1.9
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.13.0
+# github.com/xyproto/textoutput v1.14.0
 ## explicit; go 1.10
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v1.1.0
@@ -340,7 +340,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.10.2
+# github.com/xyproto/vt100 v1.10.3
 ## explicit; go 1.10
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0

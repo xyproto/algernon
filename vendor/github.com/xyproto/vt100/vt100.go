@@ -1,7 +1,6 @@
 package vt100
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -514,12 +513,23 @@ func ShowCursor(enable bool) {
 // reads the results and tries to interpret it as the RGB background color.
 // Returns three float64 values, and possibly an error value.
 func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
+	// First try the escape code used by ie. alacritty
 	if err := tty.WriteString("\033]11;?\a"); err != nil {
 		return 0, 0, 0, err
 	}
 	result, err := tty.ReadString()
 	if err != nil {
 		return 0, 0, 0, err
+	}
+	if !strings.Contains(result, "rgb:") {
+		// Then try the escape code used by ie. gnome-terminal
+		if err := tty.WriteString("\033]10;?\a\033]11;?\a"); err != nil {
+			return 0, 0, 0, err
+		}
+		result, err = tty.ReadString()
+		if err != nil {
+			return 0, 0, 0, err
+		}
 	}
 	if pos := strings.Index(result, "rgb:"); pos != -1 {
 		rgb := result[pos+4:]
@@ -536,5 +546,6 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 			}
 		}
 	}
-	return 0, 0, 0, errors.New("could not read rgb value from terminal emulator")
+
+	return 0, 0, 0, fmt.Errorf("could not read rgb value from terminal emulator, got: %q", result)
 }
