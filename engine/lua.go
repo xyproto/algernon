@@ -3,10 +3,12 @@ package engine
 import (
 	"html/template"
 	"net/http"
+    "strconv"
 
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
+    "github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
@@ -150,15 +152,29 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 	// Logging and/or HTTP response is handled elsewhere.
     if filepath.Ext(filename) == ".tl" {
     	return L.DoString(`
-        	local result, err = tl.process([[`+filename+`]])
+        	local fname = [[`+filename+`]]
+            local do_cache = `+strconv.FormatBool(ac.cacheMode == cachemode.Production)+`
+            
+            if  do_cache and tl.cache[fname] then
+            	tl.cache[fname]()
+                return
+            end
+            
+        	local result, err = tl.process(fname)
             if err ~= nil then
             	throw(err)
             end
+            
             local code, gen_error = tl.pretty_print_ast(result.ast, "5.1")
             if gen_error ~= nil then
             	throw(err)
             end
+            
             local chunk = load(code)
+            if do_cache then
+            	tl.cache[fname] = chunk
+            end
+            
             chunk()
         `)
     } else {
