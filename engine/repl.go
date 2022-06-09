@@ -17,7 +17,6 @@ import (
 	"github.com/xyproto/algernon/lua/datastruct"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
-	"github.com/xyproto/algernon/lua/teal"
 	"github.com/xyproto/ask"
 	"github.com/xyproto/env"
 	"github.com/xyproto/textoutput"
@@ -212,9 +211,6 @@ func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *textoutput.TextOutpu
 
 	// Cache
 	ac.LoadCacheFunctions(L)
-    
-    // Teal
-    teal.Load(L)
 }
 
 // REPL provides a "Read Eval Print" loop for interacting with Lua.
