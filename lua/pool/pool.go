@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	lua "github.com/yuin/gopher-lua"
+    "github.com/xyproto/algernon/lua/teal"
 )
 
 // The LState pool pattern, as recommended by the author of gopher-lua:
@@ -27,6 +28,10 @@ func (pl *LStatePool) New() *lua.LState {
 	L := lua.NewState()
 	ctx := context.Background()
 	L.SetContext(ctx)
+    
+    // Teal
+    teal.Load(L)
+    
 	return L
 }
 
