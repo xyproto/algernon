@@ -18,7 +18,6 @@ import (
 	"github.com/xyproto/algernon/lua/onthefly"
 	"github.com/xyproto/algernon/lua/pquery"
 	"github.com/xyproto/algernon/lua/pure"
-	"github.com/xyproto/algernon/lua/teal"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
@@ -240,9 +239,6 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// Cache
 	ac.LoadCacheFunctions(L)
-    
-    // Teal
-    teal.Load(L)
 
 	// Pages and Tags
 	onthefly.Load(L)
