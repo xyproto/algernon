@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -28,13 +29,14 @@ type TextOutput struct {
 	enabled       bool
 }
 
+// Respect the NO_COLOR environment variable
+var EnvNoColor = env.Bool("NO_COLOR")
+
 // New creates a new TextOutput struct, which is
 // enabled by default and with colors turned on.
 // If the NO_COLOR environment variable is set, colors are disabled.
 func New() *TextOutput {
-	// Respect the NO_COLOR environment variable
-	color := len(os.Getenv("NO_COLOR")) == 0
-	o := &TextOutput{nil, nil, color, true}
+	o := &TextOutput{nil, nil, !EnvNoColor, true}
 	o.initializeTagReplacers()
 	return o
 }
@@ -44,8 +46,7 @@ func New() *TextOutput {
 // output can be enabled (verbose) or disabled (silent).
 // If NO_COLOR is set, colors are disabled, regardless.
 func NewTextOutput(color, enabled bool) *TextOutput {
-	// Respect the NO_COLOR environment variable
-	if os.Getenv("NO_COLOR") != "" {
+	if EnvNoColor {
 		color = false
 	}
 	o := &TextOutput{nil, nil, color, enabled}
