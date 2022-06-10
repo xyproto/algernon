@@ -161,12 +161,17 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
             
         	local result, err = tl.process(fname)
             if err ~= nil then
-            	throw(err)
+            	throw('Teal failed to process file: '..err)
+            end
+            
+            if #result.syntax_errors > 0 then
+            	local err = result.syntax_errors[1]
+                throw(err.filename..':'..err.y..': Teal processing error: '..err.msg, 0)
             end
             
             local code, gen_error = tl.pretty_print_ast(result.ast, "5.1")
             if gen_error ~= nil then
-            	throw(err)
+            	throw('Teal failed to generate Lua: '..err)
             end
             
             local chunk = load(code)
