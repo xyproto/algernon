@@ -255,7 +255,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 		}
 		return
 
-	case ".lua":
+	case ".lua", ".tl":
 		// If in debug mode, let the Lua script print to a buffer first, in
 		// case there are errors that should be displayed instead.
 
