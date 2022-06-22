@@ -16,15 +16,31 @@ import (
 
 func (p *parser) prettyPrintTargetEnvironment(feature compat.JSFeature) (where string, notes []logger.MsgData) {
 	where = "the configured target environment"
+	overrides := ""
+	if p.options.unsupportedJSFeatureOverridesMask != 0 {
+		count := 0
+		mask := p.options.unsupportedJSFeatureOverridesMask
+		for mask != 0 {
+			if (mask & 1) != 0 {
+				count++
+			}
+			mask >>= 1
+		}
+		s := "s"
+		if count == 1 {
+			s = ""
+		}
+		overrides = fmt.Sprintf(" + %d override%s", count, s)
+	}
 	if tsTarget := p.options.tsTarget; tsTarget != nil &&
 		p.options.targetFromAPI == config.TargetWasUnconfigured &&
 		tsTarget.UnsupportedJSFeatures.Has(feature) {
 		tracker := logger.MakeLineColumnTracker(&tsTarget.Source)
-		where = fmt.Sprintf("%s (%q)", where, tsTarget.Target)
+		where = fmt.Sprintf("%s (%q%s)", where, tsTarget.Target, overrides)
 		notes = []logger.MsgData{tracker.MsgData(tsTarget.Range, fmt.Sprintf(
 			"The target environment was set to %q here:", tsTarget.Target))}
 	} else if p.options.originalTargetEnv != "" {
-		where = fmt.Sprintf("%s (%s)", where, p.options.originalTargetEnv)
+		where = fmt.Sprintf("%s (%s%s)", where, p.options.originalTargetEnv, overrides)
 	}
 	return
 }
@@ -71,11 +87,8 @@ func (p *parser) markSyntaxFeature(feature compat.JSFeature, r logger.Range) (di
 	case compat.NewTarget:
 		name = "new.target"
 
-	case compat.Const:
-		name = "const"
-
-	case compat.Let:
-		name = "let"
+	case compat.ConstAndLet:
+		name = p.source.TextForRange(r)
 
 	case compat.Class:
 		name = "class syntax"
@@ -110,7 +123,7 @@ func (p *parser) markSyntaxFeature(feature compat.JSFeature, r logger.Range) (di
 			"Using a string as a module namespace identifier name is not supported in %s", where), notes)
 		return
 
-	case compat.BigInt:
+	case compat.Bigint:
 		// Transforming these will never be supported
 		p.log.AddErrorWithNotes(&p.tracker, r, fmt.Sprintf(
 			"Big integer literals are not available in %s", where), notes)
@@ -201,6 +214,12 @@ func (p *parser) markStrictModeFeature(feature strictModeFeature, r logger.Range
 			notes = []logger.MsgData{p.tracker.MsgData(p.enclosingClassKeyword,
 				"All code inside a class is implicitly in strict mode")}
 
+		case js_ast.ImplicitStrictModeTSAlwaysStrict:
+			tsAlwaysStrict := p.options.tsAlwaysStrict
+			t := logger.MakeLineColumnTracker(&tsAlwaysStrict.Source)
+			notes = []logger.MsgData{t.MsgData(tsAlwaysStrict.Range, fmt.Sprintf(
+				"TypeScript's %q setting was enabled here:", tsAlwaysStrict.Name))}
+
 		case js_ast.ExplicitStrictMode:
 			notes = []logger.MsgData{p.tracker.MsgData(p.source.RangeOfString(p.currentScope.UseStrictLoc),
 				"Strict mode is triggered by the \"use strict\" directive here:")}
@@ -236,7 +255,10 @@ func (p *parser) captureThis() js_ast.Ref {
 		ref := p.newSymbol(js_ast.SymbolHoisted, "_this")
 		p.fnOnlyDataVisit.thisCaptureRef = &ref
 	}
-	return *p.fnOnlyDataVisit.thisCaptureRef
+
+	ref := *p.fnOnlyDataVisit.thisCaptureRef
+	p.recordUsage(ref)
+	return ref
 }
 
 func (p *parser) captureArguments() js_ast.Ref {
@@ -244,7 +266,10 @@ func (p *parser) captureArguments() js_ast.Ref {
 		ref := p.newSymbol(js_ast.SymbolHoisted, "_arguments")
 		p.fnOnlyDataVisit.argumentsCaptureRef = &ref
 	}
-	return *p.fnOnlyDataVisit.argumentsCaptureRef
+
+	ref := *p.fnOnlyDataVisit.argumentsCaptureRef
+	p.recordUsage(ref)
+	return ref
 }
 
 func (p *parser) lowerFunction(
@@ -1421,7 +1446,7 @@ func (p *parser) lowerObjectRestHelper(
 		return nil, false
 	}
 
-	// Scan for object rest bindings and initalize rest binding containment
+	// Scan for object rest bindings and initialize rest binding containment
 	containsRestBinding := make(map[js_ast.E]bool)
 	var findRestBindings func(js_ast.Expr) bool
 	findRestBindings = func(expr js_ast.Expr) bool {

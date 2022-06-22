@@ -229,30 +229,32 @@ func validateTreeShaking(value TreeShaking, bundle bool, format Format) bool {
 
 func validateLoader(value Loader) config.Loader {
 	switch value {
-	case LoaderNone:
-		return config.LoaderNone
-	case LoaderJS:
-		return config.LoaderJS
-	case LoaderJSX:
-		return config.LoaderJSX
-	case LoaderTS:
-		return config.LoaderTS
-	case LoaderTSX:
-		return config.LoaderTSX
-	case LoaderJSON:
-		return config.LoaderJSON
-	case LoaderText:
-		return config.LoaderText
 	case LoaderBase64:
 		return config.LoaderBase64
+	case LoaderBinary:
+		return config.LoaderBinary
+	case LoaderCopy:
+		return config.LoaderCopy
+	case LoaderCSS:
+		return config.LoaderCSS
 	case LoaderDataURL:
 		return config.LoaderDataURL
 	case LoaderFile:
 		return config.LoaderFile
-	case LoaderBinary:
-		return config.LoaderBinary
-	case LoaderCSS:
-		return config.LoaderCSS
+	case LoaderJS:
+		return config.LoaderJS
+	case LoaderJSON:
+		return config.LoaderJSON
+	case LoaderJSX:
+		return config.LoaderJSX
+	case LoaderNone:
+		return config.LoaderNone
+	case LoaderText:
+		return config.LoaderText
+	case LoaderTS:
+		return config.LoaderTS
+	case LoaderTSX:
+		return config.LoaderTSX
 	case LoaderDefault:
 		return config.LoaderDefault
 	default:
@@ -373,6 +375,30 @@ func validateFeatures(log logger.Log, target Target, engines []Engine) (config.T
 	return targetFromAPI, compat.UnsupportedJSFeatures(constraints), compat.UnsupportedCSSFeatures(constraints), targetEnv
 }
 
+func validateSupported(log logger.Log, supported map[string]bool) (
+	jsFeature compat.JSFeature,
+	jsMask compat.JSFeature,
+	cssFeature compat.CSSFeature,
+	cssMask compat.CSSFeature,
+) {
+	for k, v := range supported {
+		if js, ok := compat.StringToJSFeature[k]; ok {
+			jsMask |= js
+			if !v {
+				jsFeature |= js
+			}
+		} else if css, ok := compat.StringToCSSFeature[k]; ok {
+			cssMask |= css
+			if !v {
+				cssFeature |= css
+			}
+		} else {
+			log.AddError(nil, logger.Range{}, fmt.Sprintf("%q is not a valid feature name for the \"supported\" setting", k))
+		}
+	}
+	return
+}
+
 func validateGlobalName(log logger.Log, text string) []string {
 	if text != "" {
 		source := logger.Source{
@@ -466,12 +492,14 @@ func validateLoaders(log logger.Log, loaders map[string]Loader) map[string]confi
 	return result
 }
 
-func validateJSXExpr(log logger.Log, text string, name string, kind js_parser.JSXExprKind) config.JSXExpr {
-	if expr, ok := js_parser.ParseJSXExpr(text, kind); ok {
-		return expr
+func validateJSXExpr(log logger.Log, text string, name string) config.DefineExpr {
+	if text != "" {
+		if expr, _ := js_parser.ParseDefineExprOrJSON(text); len(expr.Parts) > 0 || (name == "fragment" && expr.Constant != nil) {
+			return expr
+		}
+		log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid JSX %s: %q", name, text))
 	}
-	log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid JSX %s: %q", name, text))
-	return config.JSXExpr{}
+	return config.DefineExpr{}
 }
 
 func validateDefines(
@@ -499,65 +527,31 @@ func validateDefines(
 			}
 		}
 
-		// Allow substituting for an identifier
-		if js_lexer.IsIdentifier(value) {
-			if _, ok := js_lexer.Keywords[value]; !ok {
-				switch value {
-				case "undefined":
-					rawDefines[key] = config.DefineData{
-						DefineFunc: func(config.DefineArgs) js_ast.E { return js_ast.EUndefinedShared },
-					}
-				case "NaN":
-					rawDefines[key] = config.DefineData{
-						DefineFunc: func(config.DefineArgs) js_ast.E { return &js_ast.ENumber{Value: math.NaN()} },
-					}
-				case "Infinity":
-					rawDefines[key] = config.DefineData{
-						DefineFunc: func(config.DefineArgs) js_ast.E { return &js_ast.ENumber{Value: math.Inf(1)} },
-					}
-				default:
-					name := value // The closure must close over a variable inside the loop
-					rawDefines[key] = config.DefineData{
-						DefineFunc: func(args config.DefineArgs) js_ast.E {
-							return &js_ast.EIdentifier{Ref: args.FindSymbol(args.Loc, name)}
-						},
-					}
-				}
-				continue
-			}
-		}
+		// Parse the value
+		defineExpr, injectExpr := js_parser.ParseDefineExprOrJSON(value)
 
-		// Parse the value as JSON
-		source := logger.Source{Contents: value}
-		expr, ok := js_parser.ParseJSON(logger.NewDeferLog(logger.DeferLogAll, nil), source, js_parser.JSONOptions{})
-		if !ok {
-			log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid define value (must be valid JSON syntax or a single identifier): %s", value))
+		// Define simple expressions
+		if defineExpr.Constant != nil || len(defineExpr.Parts) > 0 {
+			rawDefines[key] = config.DefineData{DefineExpr: &defineExpr}
 			continue
 		}
 
-		var fn config.DefineFunc
-		switch e := expr.Data.(type) {
-		// These values are inserted inline, and can participate in constant folding
-		case *js_ast.ENull:
-			fn = func(config.DefineArgs) js_ast.E { return js_ast.ENullShared }
-		case *js_ast.EBoolean:
-			fn = func(config.DefineArgs) js_ast.E { return &js_ast.EBoolean{Value: e.Value} }
-		case *js_ast.EString:
-			fn = func(config.DefineArgs) js_ast.E { return &js_ast.EString{Value: e.Value} }
-		case *js_ast.ENumber:
-			fn = func(config.DefineArgs) js_ast.E { return &js_ast.ENumber{Value: e.Value} }
-
-		// These values are extracted into a shared symbol reference
-		case *js_ast.EArray, *js_ast.EObject:
+		// Inject complex expressions
+		if injectExpr != nil {
 			definesToInject = append(definesToInject, key)
 			if valueToInject == nil {
 				valueToInject = make(map[string]config.InjectedDefine)
 			}
-			valueToInject[key] = config.InjectedDefine{Source: source, Data: e, Name: key}
+			valueToInject[key] = config.InjectedDefine{
+				Source: logger.Source{Contents: value},
+				Data:   injectExpr,
+				Name:   key,
+			}
 			continue
 		}
 
-		rawDefines[key] = config.DefineData{DefineFunc: fn}
+		// Anything else is unsupported
+		log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid define value (must be an entity name or valid JSON syntax): %s", value))
 	}
 
 	// Sort injected defines for determinism, since the imports will be injected
@@ -567,11 +561,8 @@ func validateDefines(
 		injectedDefines = make([]config.InjectedDefine, len(definesToInject))
 		sort.Strings(definesToInject)
 		for i, key := range definesToInject {
-			index := i // Capture this for the closure below
 			injectedDefines[i] = valueToInject[key]
-			rawDefines[key] = config.DefineData{DefineFunc: func(args config.DefineArgs) js_ast.E {
-				return &js_ast.EIdentifier{Ref: args.SymbolForDefine(index)}
-			}}
+			rawDefines[key] = config.DefineData{DefineExpr: &config.DefineExpr{InjectedDefineIndex: ast.MakeIndex32(uint32(i))}}
 		}
 	}
 
@@ -591,11 +582,7 @@ func validateDefines(
 					} else {
 						value = helpers.StringToUTF16("development")
 					}
-					rawDefines["process.env.NODE_ENV"] = config.DefineData{
-						DefineFunc: func(args config.DefineArgs) js_ast.E {
-							return &js_ast.EString{Value: value}
-						},
-					}
+					rawDefines["process.env.NODE_ENV"] = config.DefineData{DefineExpr: &config.DefineExpr{Constant: &js_ast.EString{Value: value}}}
 				}
 			}
 		}
@@ -632,112 +619,7 @@ func validateDefines(
 func validateLogOverrides(input map[string]LogLevel) (output map[logger.MsgID]logger.LogLevel) {
 	output = make(map[uint8]logger.LogLevel)
 	for k, v := range input {
-		logLevel := validateLogLevel(v)
-
-		switch k {
-		// JS
-		case "assign-to-constant":
-			output[logger.MsgID_JS_AssignToConstant] = logLevel
-		case "call-import-namespace":
-			output[logger.MsgID_JS_CallImportNamespace] = logLevel
-		case "commonjs-variable-in-esm":
-			output[logger.MsgID_JS_CommonJSVariableInESM] = logLevel
-		case "delete-super-property":
-			output[logger.MsgID_JS_DeleteSuperProperty] = logLevel
-		case "direct-eval":
-			output[logger.MsgID_JS_DirectEval] = logLevel
-		case "duplicate-case":
-			output[logger.MsgID_JS_DuplicateCase] = logLevel
-		case "duplicate-object-key":
-			output[logger.MsgID_JS_DuplicateObjectKey] = logLevel
-		case "empty-import-meta":
-			output[logger.MsgID_JS_EmptyImportMeta] = logLevel
-		case "equals-nan":
-			output[logger.MsgID_JS_EqualsNaN] = logLevel
-		case "equals-negative-zero":
-			output[logger.MsgID_JS_EqualsNegativeZero] = logLevel
-		case "equals-new-object":
-			output[logger.MsgID_JS_EqualsNewObject] = logLevel
-		case "html-comment-in-js":
-			output[logger.MsgID_JS_HTMLCommentInJS] = logLevel
-		case "impossible-typeof":
-			output[logger.MsgID_JS_ImpossibleTypeof] = logLevel
-		case "private-name-will-throw":
-			output[logger.MsgID_JS_PrivateNameWillThrow] = logLevel
-		case "semicolon-after-return":
-			output[logger.MsgID_JS_SemicolonAfterReturn] = logLevel
-		case "suspicious-boolean-not":
-			output[logger.MsgID_JS_SuspiciousBooleanNot] = logLevel
-		case "this-is-undefined-in-esm":
-			output[logger.MsgID_JS_ThisIsUndefinedInESM] = logLevel
-		case "unsupported-dynamic-import":
-			output[logger.MsgID_JS_UnsupportedDynamicImport] = logLevel
-		case "unsupported-jsx-comment":
-			output[logger.MsgID_JS_UnsupportedJSXComment] = logLevel
-		case "unsupported-regexp":
-			output[logger.MsgID_JS_UnsupportedRegExp] = logLevel
-		case "unsupported-require-call":
-			output[logger.MsgID_JS_UnsupportedRequireCall] = logLevel
-
-		// CSS
-		case "css-syntax-error":
-			output[logger.MsgID_CSS_CSSSyntaxError] = logLevel
-		case "invalid-@charset":
-			output[logger.MsgID_CSS_InvalidAtCharset] = logLevel
-		case "invalid-@import":
-			output[logger.MsgID_CSS_InvalidAtImport] = logLevel
-		case "invalid-@nest":
-			output[logger.MsgID_CSS_InvalidAtNest] = logLevel
-		case "invalid-@layer":
-			output[logger.MsgID_CSS_InvalidAtLayer] = logLevel
-		case "invalid-calc":
-			output[logger.MsgID_CSS_InvalidCalc] = logLevel
-		case "js-comment-in-css":
-			output[logger.MsgID_CSS_JSCommentInCSS] = logLevel
-		case "unsupported-@charset":
-			output[logger.MsgID_CSS_UnsupportedAtCharset] = logLevel
-		case "unsupported-@namespace":
-			output[logger.MsgID_CSS_UnsupportedAtNamespace] = logLevel
-		case "unsupported-css-property":
-			output[logger.MsgID_CSS_UnsupportedCSSProperty] = logLevel
-
-		// Bundler
-		case "different-path-case":
-			output[logger.MsgID_Bundler_DifferentPathCase] = logLevel
-		case "ignored-bare-import":
-			output[logger.MsgID_Bundler_IgnoredBareImport] = logLevel
-		case "ignored-dynamic-import":
-			output[logger.MsgID_Bundler_IgnoredDynamicImport] = logLevel
-		case "import-is-undefined":
-			output[logger.MsgID_Bundler_ImportIsUndefined] = logLevel
-		case "require-resolve-not-external":
-			output[logger.MsgID_Bundler_RequireResolveNotExternal] = logLevel
-
-		// Source maps
-		case "invalid-source-mappings":
-			output[logger.MsgID_SourceMap_InvalidSourceMappings] = logLevel
-		case "sections-in-source-map":
-			output[logger.MsgID_SourceMap_SectionsInSourceMap] = logLevel
-		case "missing-source-map":
-			output[logger.MsgID_SourceMap_MissingSourceMap] = logLevel
-		case "unsupported-source-map-comment":
-			output[logger.MsgID_SourceMap_UnsupportedSourceMapComment] = logLevel
-
-		case "package.json":
-			for i := logger.MsgID_PackageJSON_FIRST; i <= logger.MsgID_PackageJSON_LAST; i++ {
-				output[i] = logLevel
-			}
-
-		case "tsconfig.json":
-			for i := logger.MsgID_TsconfigJSON_FIRST; i <= logger.MsgID_TsconfigJSON_LAST; i++ {
-				output[i] = logLevel
-			}
-
-		default:
-			// Ignore invalid entries since this message id may have
-			// been renamed/removed since when this code was written
-			continue
-		}
+		logger.StringToMsgIDs(k, validateLogLevel(v), output)
 	}
 	return
 }
@@ -811,6 +693,7 @@ func convertMessagesToPublic(kind logger.MsgKind, msgs []logger.Msg) []Message {
 				})
 			}
 			filtered = append(filtered, Message{
+				ID:         logger.MsgIDToString(msg.ID),
 				PluginName: msg.PluginName,
 				Text:       msg.Data.Text,
 				Location:   convertLocationToPublic(msg.Data.Location),
@@ -851,6 +734,7 @@ func convertMessagesToInternal(msgs []logger.Msg, kind logger.MsgKind, messages 
 			})
 		}
 		msgs = append(msgs, logger.Msg{
+			ID:         logger.StringToMaximumMsgID(message.ID),
 			PluginName: message.PluginName,
 			Kind:       kind,
 			Data: logger.MsgData{
@@ -1012,6 +896,7 @@ func rebuildImpl(
 		panic(err.Error())
 	}
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, buildOpts.Target, buildOpts.Engines)
+	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, buildOpts.Supported)
 	outJS, outCSS := validateOutputExtensions(log, buildOpts.OutExtensions)
 	bannerJS, bannerCSS := validateBannerOrFooter(log, "banner", buildOpts.Banner)
 	footerJS, footerCSS := validateBannerOrFooter(log, "footer", buildOpts.Footer)
@@ -1019,14 +904,18 @@ func rebuildImpl(
 	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, buildOpts.Platform, minify, buildOpts.Drop)
 	mangleCache := cloneMangleCache(log, buildOpts.MangleCache)
 	options := config.Options{
-		TargetFromAPI:          targetFromAPI,
-		UnsupportedJSFeatures:  jsFeatures,
-		UnsupportedCSSFeatures: cssFeatures,
-		OriginalTargetEnv:      targetEnv,
+		TargetFromAPI:                      targetFromAPI,
+		UnsupportedJSFeatures:              jsFeatures.ApplyOverrides(jsOverrides, jsMask),
+		UnsupportedCSSFeatures:             cssFeatures.ApplyOverrides(cssOverrides, cssMask),
+		UnsupportedJSFeatureOverrides:      jsOverrides,
+		UnsupportedJSFeatureOverridesMask:  jsMask,
+		UnsupportedCSSFeatureOverrides:     cssOverrides,
+		UnsupportedCSSFeatureOverridesMask: cssMask,
+		OriginalTargetEnv:                  targetEnv,
 		JSX: config.JSXOptions{
 			Preserve: buildOpts.JSXMode == JSXModePreserve,
-			Factory:  validateJSXExpr(log, buildOpts.JSXFactory, "factory", js_parser.JSXFactory),
-			Fragment: validateJSXExpr(log, buildOpts.JSXFragment, "fragment", js_parser.JSXFragment),
+			Factory:  validateJSXExpr(log, buildOpts.JSXFactory, "factory"),
+			Fragment: validateJSXExpr(log, buildOpts.JSXFragment, "fragment"),
 		},
 		Defines:               defines,
 		InjectedDefines:       injectedDefines,
@@ -1127,6 +1016,10 @@ func rebuildImpl(
 		for _, loader := range options.ExtensionToLoader {
 			if loader == config.LoaderFile {
 				log.AddError(nil, logger.Range{}, "Cannot use the \"file\" loader without an output path")
+				break
+			}
+			if loader == config.LoaderCopy {
+				log.AddError(nil, logger.Range{}, "Cannot use the \"copy\" loader without an output path")
 				break
 			}
 		}
@@ -1480,12 +1373,13 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	useDefineForClassFieldsTS := config.Unspecified
 	jsx := config.JSXOptions{
 		Preserve: transformOpts.JSXMode == JSXModePreserve,
-		Factory:  validateJSXExpr(log, transformOpts.JSXFactory, "factory", js_parser.JSXFactory),
-		Fragment: validateJSXExpr(log, transformOpts.JSXFragment, "fragment", js_parser.JSXFragment),
+		Factory:  validateJSXExpr(log, transformOpts.JSXFactory, "factory"),
+		Fragment: validateJSXExpr(log, transformOpts.JSXFragment, "fragment"),
 	}
 
 	// Settings from "tsconfig.json" override those
 	var tsTarget *config.TSTarget
+	var tsAlwaysStrict *config.TSAlwaysStrict
 	caches := cache.MakeCacheSet()
 	if transformOpts.TsconfigRaw != "" {
 		source := logger.Source{
@@ -1495,10 +1389,10 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		}
 		if result := resolver.ParseTSConfigJSON(log, source, &caches.JSONCache, nil); result != nil {
 			if len(result.JSXFactory) > 0 {
-				jsx.Factory = config.JSXExpr{Parts: result.JSXFactory}
+				jsx.Factory = config.DefineExpr{Parts: result.JSXFactory}
 			}
 			if len(result.JSXFragmentFactory) > 0 {
-				jsx.Fragment = config.JSXExpr{Parts: result.JSXFragmentFactory}
+				jsx.Fragment = config.DefineExpr{Parts: result.JSXFragmentFactory}
 			}
 			if result.UseDefineForClassFields != config.Unspecified {
 				useDefineForClassFieldsTS = result.UseDefineForClassFields
@@ -1508,6 +1402,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 				result.PreserveValueImports,
 			)
 			tsTarget = result.TSTarget
+			tsAlwaysStrict = result.TSAlwaysStrict
 		}
 	}
 
@@ -1521,37 +1416,43 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 
 	// Convert and validate the transformOpts
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, transformOpts.Target, transformOpts.Engines)
+	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, transformOpts.Supported)
 	defines, injectedDefines := validateDefines(log, transformOpts.Define, transformOpts.Pure, PlatformNeutral, false /* minify */, transformOpts.Drop)
 	mangleCache := cloneMangleCache(log, transformOpts.MangleCache)
 	options := config.Options{
-		TargetFromAPI:           targetFromAPI,
-		UnsupportedJSFeatures:   jsFeatures,
-		UnsupportedCSSFeatures:  cssFeatures,
-		OriginalTargetEnv:       targetEnv,
-		TSTarget:                tsTarget,
-		JSX:                     jsx,
-		Defines:                 defines,
-		InjectedDefines:         injectedDefines,
-		SourceMap:               validateSourceMap(transformOpts.Sourcemap),
-		LegalComments:           validateLegalComments(transformOpts.LegalComments, false /* bundle */),
-		SourceRoot:              transformOpts.SourceRoot,
-		ExcludeSourcesContent:   transformOpts.SourcesContent == SourcesContentExclude,
-		OutputFormat:            validateFormat(transformOpts.Format),
-		GlobalName:              validateGlobalName(log, transformOpts.GlobalName),
-		MinifySyntax:            transformOpts.MinifySyntax,
-		MinifyWhitespace:        transformOpts.MinifyWhitespace,
-		MinifyIdentifiers:       transformOpts.MinifyIdentifiers,
-		MangleProps:             validateRegex(log, "mangle props", transformOpts.MangleProps),
-		ReserveProps:            validateRegex(log, "reserve props", transformOpts.ReserveProps),
-		MangleQuoted:            transformOpts.MangleQuoted == MangleQuotedTrue,
-		DropDebugger:            (transformOpts.Drop & DropDebugger) != 0,
-		ASCIIOnly:               validateASCIIOnly(transformOpts.Charset),
-		IgnoreDCEAnnotations:    transformOpts.IgnoreAnnotations,
-		TreeShaking:             validateTreeShaking(transformOpts.TreeShaking, false /* bundle */, transformOpts.Format),
-		AbsOutputFile:           transformOpts.Sourcefile + "-out",
-		KeepNames:               transformOpts.KeepNames,
-		UseDefineForClassFields: useDefineForClassFieldsTS,
-		UnusedImportFlagsTS:     unusedImportFlagsTS,
+		TargetFromAPI:                      targetFromAPI,
+		UnsupportedJSFeatures:              jsFeatures.ApplyOverrides(jsOverrides, jsMask),
+		UnsupportedCSSFeatures:             cssFeatures.ApplyOverrides(cssOverrides, cssMask),
+		UnsupportedJSFeatureOverrides:      jsOverrides,
+		UnsupportedJSFeatureOverridesMask:  jsMask,
+		UnsupportedCSSFeatureOverrides:     cssOverrides,
+		UnsupportedCSSFeatureOverridesMask: cssMask,
+		OriginalTargetEnv:                  targetEnv,
+		TSTarget:                           tsTarget,
+		TSAlwaysStrict:                     tsAlwaysStrict,
+		JSX:                                jsx,
+		Defines:                            defines,
+		InjectedDefines:                    injectedDefines,
+		SourceMap:                          validateSourceMap(transformOpts.Sourcemap),
+		LegalComments:                      validateLegalComments(transformOpts.LegalComments, false /* bundle */),
+		SourceRoot:                         transformOpts.SourceRoot,
+		ExcludeSourcesContent:              transformOpts.SourcesContent == SourcesContentExclude,
+		OutputFormat:                       validateFormat(transformOpts.Format),
+		GlobalName:                         validateGlobalName(log, transformOpts.GlobalName),
+		MinifySyntax:                       transformOpts.MinifySyntax,
+		MinifyWhitespace:                   transformOpts.MinifyWhitespace,
+		MinifyIdentifiers:                  transformOpts.MinifyIdentifiers,
+		MangleProps:                        validateRegex(log, "mangle props", transformOpts.MangleProps),
+		ReserveProps:                       validateRegex(log, "reserve props", transformOpts.ReserveProps),
+		MangleQuoted:                       transformOpts.MangleQuoted == MangleQuotedTrue,
+		DropDebugger:                       (transformOpts.Drop & DropDebugger) != 0,
+		ASCIIOnly:                          validateASCIIOnly(transformOpts.Charset),
+		IgnoreDCEAnnotations:               transformOpts.IgnoreAnnotations,
+		TreeShaking:                        validateTreeShaking(transformOpts.TreeShaking, false /* bundle */, transformOpts.Format),
+		AbsOutputFile:                      transformOpts.Sourcefile + "-out",
+		KeepNames:                          transformOpts.KeepNames,
+		UseDefineForClassFields:            useDefineForClassFieldsTS,
+		UnusedImportFlagsTS:                unusedImportFlagsTS,
 		Stdin: &config.StdinInfo{
 			Loader:     validateLoader(transformOpts.Loader),
 			Contents:   input,

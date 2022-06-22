@@ -252,8 +252,11 @@ func link(
 		c.esmRuntimeRef = runtimeRepr.AST.NamedExports["__esmMin"].Ref
 	}
 
+	var additionalFiles []graph.OutputFile
 	for _, entryPoint := range entryPoints {
-		if repr, ok := c.graph.Files[entryPoint.SourceIndex].InputFile.Repr.(*graph.JSRepr); ok {
+		file := &c.graph.Files[entryPoint.SourceIndex].InputFile
+		switch repr := file.Repr.(type) {
+		case *graph.JSRepr:
 			// Loaders default to CommonJS when they are the entry point and the output
 			// format is not ESM-compatible since that avoids generating the ESM-to-CJS
 			// machinery.
@@ -271,6 +274,13 @@ func link(
 				repr.AST.UsesExportsRef = true
 				repr.Meta.ForceIncludeExportsForEntryPoint = true
 			}
+
+		case *graph.CopyRepr:
+			// If an entry point uses the copy loader, then copy the file manually
+			// here. Other uses of the copy loader will automatically be included
+			// along with the corresponding bundled chunk but that doesn't happen
+			// for entry points.
+			additionalFiles = append(additionalFiles, file.AdditionalFiles...)
 		}
 	}
 
@@ -313,7 +323,7 @@ func link(
 	// won't hit concurrent map mutation hazards
 	js_ast.FollowAllSymbols(c.graph.Symbols)
 
-	return c.generateChunksInParallel(chunks)
+	return c.generateChunksInParallel(chunks, additionalFiles)
 }
 
 func (c *linkerContext) mangleProps(mangleCache map[string]interface{}) {
@@ -448,7 +458,7 @@ func (c *linkerContext) enforceNoCyclicChunkImports(chunks []chunkInfo) {
 	}
 }
 
-func (c *linkerContext) generateChunksInParallel(chunks []chunkInfo) []graph.OutputFile {
+func (c *linkerContext) generateChunksInParallel(chunks []chunkInfo, additionalFiles []graph.OutputFile) []graph.OutputFile {
 	c.timer.Begin("Generate chunks")
 	defer c.timer.End("Generate chunks")
 
@@ -616,11 +626,12 @@ func (c *linkerContext) generateChunksInParallel(chunks []chunkInfo) []graph.Out
 	c.timer.End("Generate final output files")
 
 	// Merge the output files from the different goroutines together in order
-	outputFilesLen := 0
+	outputFilesLen := len(additionalFiles)
 	for _, result := range results {
 		outputFilesLen += len(result)
 	}
 	outputFiles := make([]graph.OutputFile, 0, outputFilesLen)
+	outputFiles = append(outputFiles, additionalFiles...)
 	for _, result := range results {
 		outputFiles = append(outputFiles, result...)
 	}
@@ -666,7 +677,7 @@ func (c *linkerContext) substituteFinalPaths(
 
 			importPath := modifyPath(relPath)
 			j.AddString(importPath)
-			shift.Before.AdvanceString(file.InputFile.UniqueKeyForFileLoader)
+			shift.Before.AdvanceString(file.InputFile.UniqueKeyForAdditionalFile)
 			shift.After.AdvanceString(importPath)
 			shifts = append(shifts, shift)
 
@@ -1195,10 +1206,11 @@ func (c *linkerContext) scanImportsAndExports() {
 	c.timer.Begin("Step 1")
 	for _, sourceIndex := range c.graph.ReachableFiles {
 		file := &c.graph.Files[sourceIndex]
+		additionalFiles := file.InputFile.AdditionalFiles
+
 		switch repr := file.InputFile.Repr.(type) {
 		case *graph.CSSRepr:
 			// Inline URLs for non-CSS files into the CSS file
-			var additionalFiles []graph.OutputFile
 			for importRecordIndex := range repr.AST.ImportRecords {
 				if record := &repr.AST.ImportRecords[importRecordIndex]; record.SourceIndex.IsValid() {
 					otherFile := &c.graph.Files[record.SourceIndex.GetIndex()]
@@ -1210,14 +1222,34 @@ func (c *linkerContext) scanImportsAndExports() {
 						// Copy the additional files to the output directory
 						additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
 					}
+				} else if record.CopySourceIndex.IsValid() {
+					otherFile := &c.graph.Files[record.CopySourceIndex.GetIndex()]
+					if otherRepr, ok := otherFile.InputFile.Repr.(*graph.CopyRepr); ok {
+						record.Path.Text = otherRepr.URLForCode
+						record.Path.Namespace = ""
+						record.CopySourceIndex = ast.Index32{}
+
+						// Copy the additional files to the output directory
+						additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
+					}
 				}
 			}
-			file.InputFile.AdditionalFiles = additionalFiles
 
 		case *graph.JSRepr:
 			for importRecordIndex := range repr.AST.ImportRecords {
 				record := &repr.AST.ImportRecords[importRecordIndex]
 				if !record.SourceIndex.IsValid() {
+					if record.CopySourceIndex.IsValid() {
+						otherFile := &c.graph.Files[record.CopySourceIndex.GetIndex()]
+						if otherRepr, ok := otherFile.InputFile.Repr.(*graph.CopyRepr); ok {
+							record.Path.Text = otherRepr.URLForCode
+							record.Path.Namespace = ""
+							record.CopySourceIndex = ast.Index32{}
+
+							// Copy the additional files to the output directory
+							additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
+						}
+					}
 					continue
 				}
 
@@ -1284,6 +1316,8 @@ func (c *linkerContext) scanImportsAndExports() {
 				repr.Meta.Wrap = graph.WrapCJS
 			}
 		}
+
+		file.InputFile.AdditionalFiles = additionalFiles
 	}
 	c.timer.End("Step 1")
 
@@ -1409,21 +1443,42 @@ func (c *linkerContext) scanImportsAndExports() {
 			aliases := make([]string, 0, len(repr.Meta.ResolvedExports))
 		nextAlias:
 			for alias, export := range repr.Meta.ResolvedExports {
+				otherFile := &c.graph.Files[export.SourceIndex].InputFile
+				otherRepr := otherFile.Repr.(*graph.JSRepr)
+
 				// Re-exporting multiple symbols with the same name causes an ambiguous
 				// export. These names cannot be used and should not end up in generated code.
-				otherRepr := c.graph.Files[export.SourceIndex].InputFile.Repr.(*graph.JSRepr)
 				if len(export.PotentiallyAmbiguousExportStarRefs) > 0 {
 					mainRef := export.Ref
+					mainLoc := export.NameLoc
 					if imported, ok := otherRepr.Meta.ImportsToBind[export.Ref]; ok {
 						mainRef = imported.Ref
+						mainLoc = imported.NameLoc
 					}
+
 					for _, ambiguousExport := range export.PotentiallyAmbiguousExportStarRefs {
-						ambiguousRepr := c.graph.Files[ambiguousExport.SourceIndex].InputFile.Repr.(*graph.JSRepr)
+						ambiguousFile := &c.graph.Files[ambiguousExport.SourceIndex].InputFile
+						ambiguousRepr := ambiguousFile.Repr.(*graph.JSRepr)
 						ambiguousRef := ambiguousExport.Ref
+						ambiguousLoc := ambiguousExport.NameLoc
 						if imported, ok := ambiguousRepr.Meta.ImportsToBind[ambiguousExport.Ref]; ok {
 							ambiguousRef = imported.Ref
+							ambiguousLoc = imported.NameLoc
 						}
+
 						if mainRef != ambiguousRef {
+							file := &c.graph.Files[sourceIndex].InputFile
+							otherTracker := logger.MakeLineColumnTracker(&otherFile.Source)
+							ambiguousTracker := logger.MakeLineColumnTracker(&ambiguousFile.Source)
+							c.log.AddIDWithNotes(logger.MsgID_Bundler_AmbiguousReexport, logger.Debug, nil, logger.Range{},
+								fmt.Sprintf("Re-export of %q in %q is ambiguous and has been removed", alias, file.Source.PrettyPath),
+								[]logger.MsgData{
+									otherTracker.MsgData(js_lexer.RangeOfIdentifier(otherFile.Source, mainLoc),
+										fmt.Sprintf("One definition of %q comes from %q here:", alias, otherFile.Source.PrettyPath)),
+									ambiguousTracker.MsgData(js_lexer.RangeOfIdentifier(ambiguousFile.Source, ambiguousLoc),
+										fmt.Sprintf("Another definition of %q comes from %q here:", alias, ambiguousFile.Source.PrettyPath)),
+								},
+							)
 							continue nextAlias
 						}
 					}
@@ -1857,69 +1912,58 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 	// parts so they can be tree shaken individually.
 	part.Stmts = nil
 
-	type prevExport struct {
-		ref       js_ast.Ref
-		partIndex uint32
-	}
-
-	generateExport := func(name string, alias string, value js_ast.Expr) prevExport {
-		// Generate a new symbol
+	// Generate a new symbol and link the export into the graph for tree shaking
+	generateExport := func(name string, alias string) (js_ast.Ref, uint32) {
 		ref := c.graph.GenerateNewSymbol(sourceIndex, js_ast.SymbolOther, name)
-
-		// Generate an ES6 export
-		var stmt js_ast.Stmt
-		if alias == "default" {
-			stmt = js_ast.Stmt{Loc: value.Loc, Data: &js_ast.SExportDefault{
-				DefaultName: js_ast.LocRef{Loc: value.Loc, Ref: ref},
-				Value:       js_ast.Stmt{Loc: value.Loc, Data: &js_ast.SExpr{Value: value}},
-			}}
-		} else {
-			stmt = js_ast.Stmt{Loc: value.Loc, Data: &js_ast.SLocal{
-				IsExport: true,
-				Decls: []js_ast.Decl{{
-					Binding:    js_ast.Binding{Loc: value.Loc, Data: &js_ast.BIdentifier{Ref: ref}},
-					ValueOrNil: value,
-				}},
-			}}
-		}
-
-		// Link the export into the graph for tree shaking
 		partIndex := c.graph.AddPartToFile(sourceIndex, js_ast.Part{
-			Stmts:                []js_ast.Stmt{stmt},
 			DeclaredSymbols:      []js_ast.DeclaredSymbol{{Ref: ref, IsTopLevel: true}},
 			CanBeRemovedIfUnused: true,
 		})
 		c.graph.GenerateSymbolImportAndUse(sourceIndex, partIndex, repr.AST.ModuleRef, 1, sourceIndex)
+		repr.Meta.TopLevelSymbolToPartsOverlay[ref] = []uint32{partIndex}
 		repr.Meta.ResolvedExports[alias] = graph.ExportData{Ref: ref, SourceIndex: sourceIndex}
-		return prevExport{ref: ref, partIndex: partIndex}
+		return ref, partIndex
 	}
 
 	// Unwrap JSON objects into separate top-level variables
-	var prevExports []js_ast.Ref
 	jsonValue := lazy.Value
 	if object, ok := jsonValue.Data.(*js_ast.EObject); ok {
-		clone := *object
-		clone.Properties = append(make([]js_ast.Property, 0, len(clone.Properties)), clone.Properties...)
-		for i, property := range clone.Properties {
+		for _, property := range object.Properties {
 			if str, ok := property.Key.Data.(*js_ast.EString); ok &&
 				(!file.IsEntryPoint() || js_lexer.IsIdentifierUTF16(str.Value) ||
 					!c.options.UnsupportedJSFeatures.Has(compat.ArbitraryModuleNamespaceNames)) {
-				name := helpers.UTF16ToString(str.Value)
-				exportRef := generateExport(name, name, property.ValueOrNil).ref
-				prevExports = append(prevExports, exportRef)
-				clone.Properties[i].ValueOrNil = js_ast.Expr{Loc: property.Key.Loc, Data: &js_ast.EIdentifier{Ref: exportRef}}
+				if name := helpers.UTF16ToString(str.Value); name != "default" {
+					ref, partIndex := generateExport(name, name)
+
+					// This initializes the generated variable with a copy of the property
+					// value, which is INCORRECT for values that are objects/arrays because
+					// they will have separate object identity. This is fixed up later in
+					// "generateCodeForFileInChunkJS" by changing the object literal to
+					// reference this generated variable instead.
+					//
+					// Changing the object literal is deferred until that point instead of
+					// doing it now because we only want to do this for top-level variables
+					// that actually end up being used, and we don't know which ones will
+					// end up actually being used at this point (since import binding hasn't
+					// happened yet). So we need to wait until after tree shaking happens.
+					repr.AST.Parts[partIndex].Stmts = []js_ast.Stmt{{Loc: property.ValueOrNil.Loc, Data: &js_ast.SLocal{
+						IsExport: true,
+						Decls: []js_ast.Decl{{
+							Binding:    js_ast.Binding{Loc: property.ValueOrNil.Loc, Data: &js_ast.BIdentifier{Ref: ref}},
+							ValueOrNil: property.ValueOrNil,
+						}},
+					}}}
+				}
 			}
 		}
-		jsonValue.Data = &clone
 	}
 
 	// Generate the default export
-	finalExportPartIndex := generateExport(file.InputFile.Source.IdentifierName+"_default", "default", jsonValue).partIndex
-
-	// The default export depends on all of the previous exports
-	for _, exportRef := range prevExports {
-		c.graph.GenerateSymbolImportAndUse(sourceIndex, finalExportPartIndex, exportRef, 1, sourceIndex)
-	}
+	ref, partIndex := generateExport(file.InputFile.Source.IdentifierName+"_default", "default")
+	repr.AST.Parts[partIndex].Stmts = []js_ast.Stmt{{Loc: jsonValue.Loc, Data: &js_ast.SExportDefault{
+		DefaultName: js_ast.LocRef{Loc: jsonValue.Loc, Ref: ref},
+		Value:       js_ast.Stmt{Loc: jsonValue.Loc, Data: &js_ast.SExpr{Value: jsonValue}},
+	}}}
 }
 
 func (c *linkerContext) createExportsForFile(sourceIndex uint32) {
@@ -3872,6 +3916,13 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 		stmtList.insideWrapperSuffix = nil
 	}
 
+	var partIndexForLazyDefaultExport ast.Index32
+	if repr.AST.HasLazyExport {
+		if defaultExport, ok := repr.Meta.ResolvedExports["default"]; ok {
+			partIndexForLazyDefaultExport = ast.MakeIndex32(repr.TopLevelSymbolToParts(defaultExport.Ref)[0])
+		}
+	}
+
 	// Add all other parts in this chunk
 	for partIndex := partRange.partIndexBegin; partIndex < partRange.partIndexEnd; partIndex++ {
 		part := repr.AST.Parts[partIndex]
@@ -3891,7 +3942,71 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 			continue
 		}
 
-		c.convertStmtsForChunk(partRange.sourceIndex, &stmtList, part.Stmts)
+		stmts := part.Stmts
+
+		// If this could be a JSON file that exports a top-level object literal, go
+		// over the non-default top-level properties that ended up being imported
+		// and substitute references to them into the main top-level object literal.
+		// So this JSON file:
+		//
+		//   {
+		//     "foo": [1, 2, 3],
+		//     "bar": [4, 5, 6],
+		//   }
+		//
+		// is initially compiled into this:
+		//
+		//   export var foo = [1, 2, 3];
+		//   export var bar = [4, 5, 6];
+		//   export default {
+		//     foo: [1, 2, 3],
+		//     bar: [4, 5, 6],
+		//   };
+		//
+		// But we turn it into this if both "foo" and "default" are imported:
+		//
+		//   export var foo = [1, 2, 3];
+		//   export default {
+		//     foo,
+		//     bar: [4, 5, 6],
+		//   };
+		//
+		if partIndexForLazyDefaultExport.IsValid() && partIndex == partIndexForLazyDefaultExport.GetIndex() {
+			stmt := stmts[0]
+			defaultExport := stmt.Data.(*js_ast.SExportDefault)
+			defaultExpr := defaultExport.Value.Data.(*js_ast.SExpr)
+
+			// Be careful: the top-level value in a JSON file is not necessarily an object
+			if object, ok := defaultExpr.Value.Data.(*js_ast.EObject); ok {
+				objectClone := *object
+				objectClone.Properties = append([]js_ast.Property{}, objectClone.Properties...)
+
+				// If any top-level properties ended up being imported directly, change
+				// the property to just reference the corresponding variable instead
+				for i, property := range object.Properties {
+					if str, ok := property.Key.Data.(*js_ast.EString); ok {
+						if name := helpers.UTF16ToString(str.Value); name != "default" {
+							if export, ok := repr.Meta.ResolvedExports[name]; ok {
+								if part := repr.AST.Parts[repr.TopLevelSymbolToParts(export.Ref)[0]]; part.IsLive {
+									ref := part.Stmts[0].Data.(*js_ast.SLocal).Decls[0].Binding.Data.(*js_ast.BIdentifier).Ref
+									objectClone.Properties[i].ValueOrNil = js_ast.Expr{Loc: property.Key.Loc, Data: &js_ast.EIdentifier{Ref: ref}}
+								}
+							}
+						}
+					}
+				}
+
+				// Avoid mutating the original AST
+				defaultExprClone := *defaultExpr
+				defaultExprClone.Value.Data = &objectClone
+				defaultExportClone := *defaultExport
+				defaultExportClone.Value.Data = &defaultExprClone
+				stmt.Data = &defaultExportClone
+				stmts = []js_ast.Stmt{stmt}
+			}
+		}
+
+		c.convertStmtsForChunk(partRange.sourceIndex, &stmtList, stmts)
 	}
 
 	// Hoist all import statements before any normal statements. ES6 imports
@@ -5016,13 +5131,39 @@ func (c *linkerContext) generateChunkJS(chunks []chunkInfo, chunkIndex int, chun
 
 func (c *linkerContext) generateGlobalNamePrefix() string {
 	var text string
-	prefix := c.options.GlobalName[0]
+	globalName := c.options.GlobalName
+	prefix := globalName[0]
 	space := " "
 	join := ";\n"
 
 	if c.options.MinifyWhitespace {
 		space = ""
 		join = ";"
+	}
+
+	// Use "||=" to make the code more compact when it's supported
+	if len(globalName) > 1 && !c.options.UnsupportedJSFeatures.Has(compat.LogicalAssignment) {
+		if js_printer.CanEscapeIdentifier(prefix, c.options.UnsupportedJSFeatures, c.options.ASCIIOnly) {
+			if c.options.ASCIIOnly {
+				prefix = string(js_printer.QuoteIdentifier(nil, prefix, c.options.UnsupportedJSFeatures))
+			}
+			text = fmt.Sprintf("var %s%s", prefix, join)
+		} else {
+			prefix = fmt.Sprintf("this[%s]", js_printer.QuoteForJSON(prefix, c.options.ASCIIOnly))
+		}
+		for _, name := range globalName[1:] {
+			var dotOrIndex string
+			if js_printer.CanEscapeIdentifier(name, c.options.UnsupportedJSFeatures, c.options.ASCIIOnly) {
+				if c.options.ASCIIOnly {
+					name = string(js_printer.QuoteIdentifier(nil, name, c.options.UnsupportedJSFeatures))
+				}
+				dotOrIndex = fmt.Sprintf(".%s", name)
+			} else {
+				dotOrIndex = fmt.Sprintf("[%s]", js_printer.QuoteForJSON(name, c.options.ASCIIOnly))
+			}
+			prefix = fmt.Sprintf("(%s%s||=%s{})%s", prefix, space, space, dotOrIndex)
+		}
+		return fmt.Sprintf("%s%s%s=%s", text, prefix, space, space)
 	}
 
 	if js_printer.CanEscapeIdentifier(prefix, c.options.UnsupportedJSFeatures, c.options.ASCIIOnly) {
@@ -5035,7 +5176,7 @@ func (c *linkerContext) generateGlobalNamePrefix() string {
 		text = fmt.Sprintf("%s%s=%s", prefix, space, space)
 	}
 
-	for _, name := range c.options.GlobalName[1:] {
+	for _, name := range globalName[1:] {
 		oldPrefix := prefix
 		if js_printer.CanEscapeIdentifier(name, c.options.UnsupportedJSFeatures, c.options.ASCIIOnly) {
 			if c.options.ASCIIOnly {

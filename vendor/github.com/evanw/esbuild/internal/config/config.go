@@ -13,15 +13,10 @@ import (
 )
 
 type JSXOptions struct {
-	Factory  JSXExpr
-	Fragment JSXExpr
+	Factory  DefineExpr
+	Fragment DefineExpr
 	Parse    bool
 	Preserve bool
-}
-
-type JSXExpr struct {
-	Constant js_ast.E
-	Parts    []string
 }
 
 type TSOptions struct {
@@ -65,19 +60,20 @@ type Loader uint8
 
 const (
 	LoaderNone Loader = iota
+	LoaderBase64
+	LoaderBinary
+	LoaderCopy
+	LoaderCSS
+	LoaderDataURL
+	LoaderDefault
+	LoaderFile
 	LoaderJS
+	LoaderJSON
 	LoaderJSX
+	LoaderText
 	LoaderTS
 	LoaderTSNoAmbiguousLessThan // Used with ".mts" and ".cts"
 	LoaderTSX
-	LoaderJSON
-	LoaderText
-	LoaderBase64
-	LoaderDataURL
-	LoaderFile
-	LoaderBinary
-	LoaderCSS
-	LoaderDefault
 )
 
 func (loader Loader) IsTypeScript() bool {
@@ -199,6 +195,7 @@ type Options struct {
 	ModuleTypeData js_ast.ModuleTypeData
 	Defines        *ProcessedDefines
 	TSTarget       *TSTarget
+	TSAlwaysStrict *TSAlwaysStrict
 	MangleProps    *regexp.Regexp
 	ReserveProps   *regexp.Regexp
 
@@ -257,6 +254,11 @@ type Options struct {
 
 	UnsupportedJSFeatures  compat.JSFeature
 	UnsupportedCSSFeatures compat.CSSFeature
+
+	UnsupportedJSFeatureOverrides      compat.JSFeature
+	UnsupportedJSFeatureOverridesMask  compat.JSFeature
+	UnsupportedCSSFeatureOverrides     compat.CSSFeature
+	UnsupportedCSSFeatureOverridesMask compat.CSSFeature
 
 	TS                TSOptions
 	Mode              Mode
@@ -357,6 +359,16 @@ type TSTarget struct {
 	// This information can affect code transformation
 	UnsupportedJSFeatures compat.JSFeature
 	TargetIsAtLeastES2022 bool
+}
+
+type TSAlwaysStrict struct {
+	// This information is only used for error messages
+	Name   string
+	Source logger.Source
+	Range  logger.Range
+
+	// This information can affect code transformation
+	Value bool
 }
 
 type PathPlaceholder uint8

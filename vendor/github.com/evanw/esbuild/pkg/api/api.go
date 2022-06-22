@@ -132,18 +132,19 @@ type Loader uint8
 
 const (
 	LoaderNone Loader = iota
+	LoaderBase64
+	LoaderBinary
+	LoaderCopy
+	LoaderCSS
+	LoaderDataURL
+	LoaderDefault
+	LoaderFile
 	LoaderJS
+	LoaderJSON
 	LoaderJSX
+	LoaderText
 	LoaderTS
 	LoaderTSX
-	LoaderJSON
-	LoaderText
-	LoaderBase64
-	LoaderDataURL
-	LoaderFile
-	LoaderBinary
-	LoaderCSS
-	LoaderDefault
 )
 
 type Platform uint8
@@ -192,6 +193,7 @@ type Location struct {
 }
 
 type Message struct {
+	ID         string
 	PluginName string
 	Text       string
 	Location   *Location
@@ -269,8 +271,9 @@ type BuildOptions struct {
 	SourceRoot     string         // Documentation: https://esbuild.github.io/api/#source-root
 	SourcesContent SourcesContent // Documentation: https://esbuild.github.io/api/#sources-content
 
-	Target  Target   // Documentation: https://esbuild.github.io/api/#target
-	Engines []Engine // Documentation: https://esbuild.github.io/api/#target
+	Target    Target          // Documentation: https://esbuild.github.io/api/#target
+	Engines   []Engine        // Documentation: https://esbuild.github.io/api/#target
+	Supported map[string]bool // Documentation: https://esbuild.github.io/api/#supported
 
 	MangleProps       string                 // Documentation: https://esbuild.github.io/api/#mangle-props
 	ReserveProps      string                 // Documentation: https://esbuild.github.io/api/#mangle-props
@@ -384,8 +387,9 @@ type TransformOptions struct {
 	SourceRoot     string         // Documentation: https://esbuild.github.io/api/#source-root
 	SourcesContent SourcesContent // Documentation: https://esbuild.github.io/api/#sources-content
 
-	Target  Target   // Documentation: https://esbuild.github.io/api/#target
-	Engines []Engine // Documentation: https://esbuild.github.io/api/#target
+	Target    Target          // Documentation: https://esbuild.github.io/api/#target
+	Engines   []Engine        // Documentation: https://esbuild.github.io/api/#target
+	Supported map[string]bool // Documentation: https://esbuild.github.io/api/#supported
 
 	Format     Format // Documentation: https://esbuild.github.io/api/#format
 	GlobalName string // Documentation: https://esbuild.github.io/api/#global-name
