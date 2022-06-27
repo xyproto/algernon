@@ -331,7 +331,7 @@ github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 ## explicit; go 1.9
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.14.0
+# github.com/xyproto/textoutput v1.14.1
 ## explicit; go 1.10
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v1.1.0
@@ -340,7 +340,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.10.3
+# github.com/xyproto/vt100 v1.10.4
 ## explicit; go 1.10
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
@@ -392,7 +392,7 @@ golang.org/x/crypto/ocsp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220622184535-263ec571b305
+# golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -403,7 +403,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664
+# golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs

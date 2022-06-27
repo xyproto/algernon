@@ -1,6 +1,6 @@
 # VT100
 
-[![Build Status](https://travis-ci.com/xyproto/vt100.svg?branch=master)](https://travis-ci.com/xyproto/vt100) [![GoDoc](https://godoc.org/github.com/xyproto/vt100?status.svg)](https://godoc.org/github.com/xyproto/vt100) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/vt100/master/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/vt100)](https://goreportcard.com/report/github.com/xyproto/vt100)
+[![Build Status](https://travis-ci.com/xyproto/vt100.svg?branch=master)](https://travis-ci.com/xyproto/vt100) [![GoDoc](https://godoc.org/github.com/xyproto/vt100?status.svg)](https://godoc.org/github.com/xyproto/vt100) [![License](https://img.shields.io/badge/license-BSD-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/vt100/master/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/vt100)](https://goreportcard.com/report/github.com/xyproto/vt100)
 
 * Supports colors and attributes.
 * Supports platforms with VT100 support and a `/dev/tty` device.
@@ -70,12 +70,14 @@ See `cmd/move` for a more advanced example, where a character can be moved aroun
 
 ### A small editor using `vt100`
 
-The `o` editor that uses `vt100` can be used for editing ie. Go, Bash or C++ code. Quick installation:
+The [`o` editor](https://github.com/xyproto/o) that uses `vt100` can be used for editing Go, Bash or for example C++ code.
 
-    go get -u github.com/xyproto/o
+Quick installation:
+
+    go install github.com/xyproto/o@latest
 
 ### General info
 
-* Version: 1.10.3
-* Licence: BSD
+* Version: 1.10.4
+* Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
