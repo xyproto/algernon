@@ -10,7 +10,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.14.47
+	github.com/evanw/esbuild v0.14.48
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.6
 	github.com/lucas-clemente/quic-go v0.27.2
