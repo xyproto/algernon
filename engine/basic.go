@@ -245,7 +245,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		w.WriteHeader(code)
 		return 0 // number of results
 	}))
-    
+
 	// Throw an error/exception in Lua
 	L.SetGlobal("throw", L.GetGlobal("error"))
 
