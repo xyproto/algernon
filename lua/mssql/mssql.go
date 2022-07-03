@@ -9,8 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/pinterface"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/pinterface"
 
 	// Using the MSSQL database engine
 	_ "github.com/denisenkom/go-mssqldb"

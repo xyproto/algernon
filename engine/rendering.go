@@ -18,10 +18,10 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
-	lua "github.com/xyproto/gopher-lua"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.

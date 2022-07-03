@@ -19,8 +19,8 @@ import (
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/ask"
 	"github.com/xyproto/env"
-	"github.com/xyproto/textoutput"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/textoutput"
 )
 
 const exitMessage = "bye"

@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/natefinch/pie"
-	"github.com/xyproto/textoutput"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/textoutput"
 )
 
 type luaPlugin struct {
