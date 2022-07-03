@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/jpath"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/jpath"
 )
 
 const (
@@ -389,12 +389,6 @@ func LoadJSONFunctions(L *lua.LState) {
 		table := L.ToTable(1)
 		if table == nil {
 			L.ArgError(1, "Expected a table as the first argument")
-		}
-
-		// Is the given table empty?
-		if table.Len() == 0 {
-			L.Push(lua.LString("{}"))
-			return 1 // number of results
 		}
 
 		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
