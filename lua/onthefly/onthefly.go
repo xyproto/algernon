@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/onthefly"
 	"github.com/xyproto/tinysvg"
 )

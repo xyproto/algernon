@@ -20,7 +20,7 @@ import (
 	"github.com/xyproto/ask"
 	"github.com/xyproto/env"
 	"github.com/xyproto/textoutput"
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 const exitMessage = "bye"

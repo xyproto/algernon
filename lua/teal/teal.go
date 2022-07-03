@@ -1,5 +1,5 @@
 // Package teal supplies the Lua modules for Teal language support
-// teal.lua and compat52.lua were modified as per https://github.com/yuin/gopher-lua/issues/314
+// teal.lua and compat52.lua were modified as per https://github.com/xyproto/gopher-lua/issues/314
 package teal
 
 import (
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 //go:embed *.lua

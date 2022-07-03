@@ -21,7 +21,7 @@ import (
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.

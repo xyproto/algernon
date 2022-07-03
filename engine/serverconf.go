@@ -17,7 +17,7 @@ import (
 	"github.com/xyproto/pinterface"
 	postgres "github.com/xyproto/pstore"
 	"github.com/xyproto/simpleredis"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // Info returns a string with various info about the current configuration

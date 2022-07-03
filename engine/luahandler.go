@@ -8,7 +8,7 @@ import (
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // LoadLuaHandlerFunctions makes functions related to handling HTTP requests

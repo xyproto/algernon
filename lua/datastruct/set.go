@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
 )
 

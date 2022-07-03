@@ -1,7 +1,7 @@
 package datastruct
 
 import (
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
 
 	log "github.com/sirupsen/logrus"

@@ -21,8 +21,8 @@ import (
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/utils"
-	"github.com/yuin/gluamapper"
-	lua "github.com/yuin/gopher-lua"
+	"github.com/xyproto/gluamapper"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // LoadCommonFunctions adds most of the available Lua functions in algernon to

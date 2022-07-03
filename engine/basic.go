@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
-	"github.com/yuin/gopher-lua"
+	"github.com/xyproto/gopher-lua"
 )
 
 // FutureStatus is useful when redirecting in combination with writing to a
