@@ -89,7 +89,7 @@ func ToGoValue(lv lua.LValue, opt Option) interface{} {
 	case *lua.LTable:
 		maxn := v.MaxN()
 		if maxn == 0 { // table
-			ret := make(map[interface{}]interface{})
+			ret := make(map[string]interface{})
 			v.ForEach(func(key, value lua.LValue) {
 				keystr := fmt.Sprint(ToGoValue(key, opt))
 				ret[opt.NameFunc(keystr)] = ToGoValue(value, opt)
