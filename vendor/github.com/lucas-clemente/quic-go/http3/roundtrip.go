@@ -16,7 +16,7 @@ import (
 )
 
 type roundTripCloser interface {
-	http.RoundTripper
+	RoundTripOpt(*http.Request, RoundTripOpt) (*http.Response, error)
 	io.Closer
 }
 
@@ -47,10 +47,28 @@ type RoundTripper struct {
 	// See https://www.ietf.org/archive/id/draft-schinazi-masque-h3-datagram-02.html.
 	EnableDatagrams bool
 
+	// Additional HTTP/3 settings.
+	// It is invalid to specify any settings defined by the HTTP/3 draft and the datagram draft.
+	AdditionalSettings map[uint64]uint64
+
+	// When set, this callback is called for the first unknown frame parsed on a bidirectional stream.
+	// It is called right after parsing the frame type.
+	// If parsing the frame type fails, the error is passed to the callback.
+	// In that case, the frame type will not be set.
+	// Callers can either ignore the frame and return control of the stream back to HTTP/3
+	// (by returning hijacked false).
+	// Alternatively, callers can take over the QUIC stream (by returning hijacked true).
+	StreamHijacker func(FrameType, quic.Connection, quic.Stream, error) (hijacked bool, err error)
+
+	// When set, this callback is called for unknown unidirectional stream of unknown stream type.
+	// If parsing the stream type fails, the error is passed to the callback.
+	// In that case, the stream type will not be set.
+	UniStreamHijacker func(StreamType, quic.Connection, quic.ReceiveStream, error) (hijacked bool)
+
 	// Dial specifies an optional dial function for creating QUIC
 	// connections for requests.
 	// If Dial is nil, quic.DialAddrEarlyContext will be used.
-	Dial func(ctx context.Context, network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error)
+	Dial func(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error)
 
 	// MaxResponseHeaderBytes specifies a limit on how many response bytes are
 	// allowed in the server's response header.
@@ -63,11 +81,16 @@ type RoundTripper struct {
 // RoundTripOpt are options for the Transport.RoundTripOpt method.
 type RoundTripOpt struct {
 	// OnlyCachedConn controls whether the RoundTripper may create a new QUIC connection.
-	// If set true and no cached connection is available, RoundTrip will return ErrNoCachedConn.
+	// If set true and no cached connection is available, RoundTripOpt will return ErrNoCachedConn.
 	OnlyCachedConn bool
+	// DontCloseRequestStream controls whether the request stream is closed after sending the request.
+	DontCloseRequestStream bool
 }
 
-var _ roundTripCloser = &RoundTripper{}
+var (
+	_ http.RoundTripper = &RoundTripper{}
+	_ io.Closer         = &RoundTripper{}
+)
 
 // ErrNoCachedConn is returned when RoundTripper.OnlyCachedConn is set
 var ErrNoCachedConn = errors.New("http3: no cached connection was available")
@@ -113,7 +136,7 @@ func (r *RoundTripper) RoundTripOpt(req *http.Request, opt RoundTripOpt) (*http.
 	if err != nil {
 		return nil, err
 	}
-	return cl.RoundTrip(req)
+	return cl.RoundTripOpt(req, opt)
 }
 
 // RoundTrip does a round trip.
@@ -121,7 +144,7 @@ func (r *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return r.RoundTripOpt(req, RoundTripOpt{})
 }
 
-func (r *RoundTripper) getClient(hostname string, onlyCached bool) (http.RoundTripper, error) {
+func (r *RoundTripper) getClient(hostname string, onlyCached bool) (roundTripCloser, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -142,6 +165,8 @@ func (r *RoundTripper) getClient(hostname string, onlyCached bool) (http.RoundTr
 				EnableDatagram:     r.EnableDatagrams,
 				DisableCompression: r.DisableCompression,
 				MaxHeaderBytes:     r.MaxResponseHeaderBytes,
+				StreamHijacker:     r.StreamHijacker,
+				UniStreamHijacker:  r.UniStreamHijacker,
 			},
 			r.QuicConfig,
 			r.Dial,

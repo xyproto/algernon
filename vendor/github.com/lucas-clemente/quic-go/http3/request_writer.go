@@ -38,62 +38,21 @@ func newRequestWriter(logger utils.Logger) *requestWriter {
 	}
 }
 
-func (w *requestWriter) WriteRequest(str quic.Stream, req *http.Request, gzip bool) error {
+func (w *requestWriter) WriteRequestHeader(str quic.Stream, req *http.Request, gzip bool) error {
+	// TODO: figure out how to add support for trailers
 	buf := &bytes.Buffer{}
 	if err := w.writeHeaders(buf, req, gzip); err != nil {
 		return err
 	}
-	if _, err := str.Write(buf.Bytes()); err != nil {
-		return err
-	}
-	// TODO: add support for trailers
-	if req.Body == nil {
-		str.Close()
-		return nil
-	}
-
-	// send the request body asynchronously
-	go func() {
-		defer req.Body.Close()
-		b := make([]byte, bodyCopyBufferSize)
-		for {
-			n, rerr := req.Body.Read(b)
-			if n == 0 {
-				if rerr == nil {
-					continue
-				} else if rerr == io.EOF {
-					break
-				}
-			}
-			buf := &bytes.Buffer{}
-			(&dataFrame{Length: uint64(n)}).Write(buf)
-			if _, err := str.Write(buf.Bytes()); err != nil {
-				w.logger.Errorf("Error writing request: %s", err)
-				return
-			}
-			if _, err := str.Write(b[:n]); err != nil {
-				w.logger.Errorf("Error writing request: %s", err)
-				return
-			}
-			if rerr != nil {
-				if rerr == io.EOF {
-					break
-				}
-				str.CancelWrite(quic.StreamErrorCode(errorRequestCanceled))
-				w.logger.Errorf("Error writing request: %s", rerr)
-				return
-			}
-		}
-		str.Close()
-	}()
-
-	return nil
+	_, err := str.Write(buf.Bytes())
+	return err
 }
 
 func (w *requestWriter) writeHeaders(wr io.Writer, req *http.Request, gzip bool) error {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 	defer w.encoder.Close()
+	defer w.headerBuf.Reset()
 
 	if err := w.encodeHeaders(req, gzip, "", actualContentLength(req)); err != nil {
 		return err
@@ -105,11 +64,8 @@ func (w *requestWriter) writeHeaders(wr io.Writer, req *http.Request, gzip bool)
 	if _, err := wr.Write(buf.Bytes()); err != nil {
 		return err
 	}
-	if _, err := wr.Write(w.headerBuf.Bytes()); err != nil {
-		return err
-	}
-	w.headerBuf.Reset()
-	return nil
+	_, err := wr.Write(w.headerBuf.Bytes())
+	return err
 }
 
 // copied from net/transport.go
