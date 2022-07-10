@@ -246,7 +246,7 @@ func DialContext(ctx context.Context, network, address string, options ...DialOp
 		if do.tlsConfig == nil {
 			tlsConfig = &tls.Config{InsecureSkipVerify: do.skipVerify}
 		} else {
-			tlsConfig = cloneTLSConfig(do.tlsConfig)
+			tlsConfig = do.tlsConfig.Clone()
 		}
 		if tlsConfig.ServerName == "" {
 			host, _, err := net.SplitHostPort(address)
@@ -291,21 +291,21 @@ func DialContext(ctx context.Context, network, address string, options ...DialOp
 			authArgs = append(authArgs, do.username)
 		}
 		authArgs = append(authArgs, do.password)
-		if _, err := c.Do("AUTH", authArgs...); err != nil {
+		if _, err := c.DoContext(ctx, "AUTH", authArgs...); err != nil {
 			netConn.Close()
 			return nil, err
 		}
 	}
 
 	if do.clientName != "" {
-		if _, err := c.Do("CLIENT", "SETNAME", do.clientName); err != nil {
+		if _, err := c.DoContext(ctx, "CLIENT", "SETNAME", do.clientName); err != nil {
 			netConn.Close()
 			return nil, err
 		}
 	}
 
 	if do.db != 0 {
-		if _, err := c.Do("SELECT", do.db); err != nil {
+		if _, err := c.DoContext(ctx, "SELECT", do.db); err != nil {
 			netConn.Close()
 			return nil, err
 		}

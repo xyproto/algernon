@@ -499,7 +499,7 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 			c.Logger.Error("cleaning up solver",
 				zap.String("identifier", authz.IdentifierValue()),
 				zap.String("challenge_type", authz.currentChallenge.Type),
-				zap.Error(err))
+				zap.Error(cleanupErr))
 		}
 		authz.currentSolver = nil // avoid cleaning it up again later
 	}
