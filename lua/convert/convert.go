@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/gluamapper"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/jpath"
 )
 
@@ -40,11 +40,25 @@ func PprintToWriter(w io.Writer, value lua.LValue) {
 			// Order the map
 			length := len(m)
 			for i := 1; i <= length; i++ {
-				val := m[float64(i)] // gluamapper uses float64 for all numbers
-				buf.WriteString(fmt.Sprintf("%#v", val))
-				if i != length {
-					// Output a comma for every element except the last one
-					buf.WriteString(", ")
+				// gluamapper uses float64 for all numbers?
+				if val, ok := m[float64(i)]; ok {
+					buf.WriteString(fmt.Sprintf("%#v", val))
+					if i != length {
+						// Output a comma for every element except the last one
+						buf.WriteString(", ")
+					}
+				} else if val, ok := m[i]; ok {
+					buf.WriteString(fmt.Sprintf("%#v", val))
+					if i != length {
+						// Output a comma for every element except the last one
+						buf.WriteString(", ")
+					}
+				} else {
+					// Unrecognized type of array or map, just return the sprintf representation
+					buf.Reset()
+					buf.WriteString(fmt.Sprintf("%v", m))
+					buf.WriteTo(w)
+					return
 				}
 			}
 			buf.WriteString("}")
