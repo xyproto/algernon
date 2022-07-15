@@ -185,15 +185,16 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 	return L.DoFile(filename)
 }
 
-// RunConfiguration runs a Lua file as a configuration script. Also has access
-// to the userstate and permissions. Returns an error if there was a problem
-// with running the lua script, otherwise nil. perm can be nil, but then several
-// Lua functions will not be exposed.
-//
-// The idea is not to change the Lua struct or the luapool, but to set the
-// configuration variables with the given Lua configuration script.
-//
-// luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
+/* RunConfiguration runs a Lua file as a configuration script. Also has access
+ * to the userstate and permissions. Returns an error if there was a problem
+ * with running the lua script, otherwise nil. perm can be nil, but then several
+ * Lua functions will not be exposed.
+ *
+ * The idea is not to change the Lua struct or the luapool, but to set the
+ * configuration variables with the given Lua configuration script.
+ *
+ * luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
+ */
 func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
 
 	// Retrieve a Lua state
@@ -269,7 +270,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 	return nil
 }
 
-/*LuaFunctionMap returns the functions available in the given Lua code as
+/* LuaFunctionMap returns the functions available in the given Lua code as
  * functions in a map that can be used by templates.
  *
  * Note that the lua functions must only accept and return strings
