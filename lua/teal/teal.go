@@ -1,5 +1,5 @@
 // Package teal supplies the Lua modules for Teal language support
-// teal.lua and compat52.lua were modified as per https://github.com/xyproto/gopher-lua/issues/314
+// teal.lua and compat52.lua were modified as per https://github.com/yuin/gopher-lua/issues/314
 package teal
 
 import (
@@ -8,35 +8,33 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
-//go:embed *.lua
-var fs embed.FS
+var (
+	//go:embed *.lua
+	fs embed.FS
 
-// Load makes Teal available in the Lua VM.
+	// Teal files that should be preloaded when Teal is loaded
+	preloadTealFilenames = []string{"bit.lua", "bit32.lua", "compat52.lua", "tl.lua"}
+)
+
+const tealLoadScript = "require('compat52'); tl = require('tl'); tl.cache = {}"
+
+// Load makes Teal available in the Lua VM
 func Load(L *lua.LState) {
-	if err := preloadModuleFromFS(L, "bit.lua"); err != nil {
-		log.Errorf("Failed to load Teal: %v", err)
-		return
+	for _, fname := range preloadTealFilenames {
+		if err := preloadModuleFromFS(L, fname); err != nil {
+			log.Errorf("Failed to load Teal: %v", err)
+			return
+		}
 	}
-	if err := preloadModuleFromFS(L, "bit32.lua"); err != nil {
-		log.Errorf("Failed to load Teal: %v", err)
-		return
-	}
-	if err := preloadModuleFromFS(L, "compat52.lua"); err != nil {
-		log.Errorf("Failed to load Teal: %v", err)
-		return
-	}
-	if err := preloadModuleFromFS(L, "tl.lua"); err != nil {
-		log.Errorf("Failed to load Teal: %v", err)
-		return
-	}
-	if err := L.DoString("require('compat52'); tl = require('tl'); tl.cache = {}"); err != nil {
+	if err := L.DoString(tealLoadScript); err != nil {
 		log.Errorf("Failed to set `tl` global variable: %v", err)
 	}
 }
 
+// preloadModuleFromFS loads the given Lua filename from the embedded filesystem
 func preloadModuleFromFS(L *lua.LState, fname string) error {
 	pkgname := fname[:len(fname)-len(filepath.Ext(fname))]
 	b, err := fs.ReadFile(fname)

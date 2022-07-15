@@ -57,7 +57,7 @@ global render: function(filename: string): string
 -- Return a table with keys and values as given in a posted form, or as given in the URL.
 global formdata: function(): {string:string}
 
--- Return a table with keys and values as given in the request URL, or in the given URL (`/some/page?:7` makes the key `x` with the value `7` available).
+-- Return a table with keys and values as given in the request URL, or in the given URL (`/some/page?x=7` makes the key `x` with the value `7` available).
 global urldata: function(url: string | nil): {string:string}
 
 -- Redirect to an absolute or relative URL. May take an HTTP status code that will be used when redirecting.
