@@ -14,11 +14,11 @@ import (
 
 // HTTPClient represents a HTTP client
 type HTTPClient struct {
-	client    *httpclient.HttpClient
-	cookieMap map[string]string
+	timeout   int
 	userAgent string
 	language  string
-	timeout   int
+	client    *httpclient.HttpClient
+	cookieMap map[string]string
 	invalid   bool
 }
 

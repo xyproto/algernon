@@ -14,8 +14,8 @@ import (
 
 // LStatePool is a pool of Lua states, with a mutex
 type LStatePool struct {
-	saved []*lua.LState
 	m     sync.Mutex
+	saved []*lua.LState
 }
 
 // New returns a new Lua pool structure
