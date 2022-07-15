@@ -37,10 +37,10 @@ const (
 // written to file.
 type UploadedFile struct {
 	req       *http.Request
-	scriptdir string
 	header    textproto.MIMEHeader
-	filename  string
 	buf       *bytes.Buffer
+	scriptdir string
+	filename  string
 }
 
 // New creates a struct that is used for accepting an uploaded file
