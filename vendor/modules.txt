@@ -43,7 +43,7 @@ github.com/cheekybits/genny
 github.com/cheekybits/genny/generic
 github.com/cheekybits/genny/out
 github.com/cheekybits/genny/parse
-# github.com/chzyer/readline v1.5.0
+# github.com/chzyer/readline v1.5.1
 ## explicit; go 1.15
 github.com/chzyer/readline
 # github.com/ddliu/go-httpclient v0.6.9
@@ -352,7 +352,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.10.4
+# github.com/xyproto/vt100 v1.11.0
 ## explicit; go 1.10
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
@@ -406,7 +406,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e
+# golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
