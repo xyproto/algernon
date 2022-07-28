@@ -13,10 +13,39 @@ import (
 )
 
 type JSXOptions struct {
-	Factory  DefineExpr
-	Fragment DefineExpr
-	Parse    bool
-	Preserve bool
+	Factory          DefineExpr
+	Fragment         DefineExpr
+	Parse            bool
+	Preserve         bool
+	AutomaticRuntime bool
+	ImportSource     string
+	Development      bool
+}
+
+type TSJSX uint8
+
+const (
+	TSJSXNone TSJSX = iota
+	TSJSXPreserve
+	TSJSXReact
+	TSJSXReactJSX
+	TSJSXReactJSXDev
+)
+
+func (jsxOptions *JSXOptions) SetOptionsFromTSJSX(tsx TSJSX) {
+	switch tsx {
+	case TSJSXPreserve:
+		jsxOptions.Preserve = true
+	case TSJSXReact:
+		jsxOptions.AutomaticRuntime = false
+		jsxOptions.Development = false
+	case TSJSXReactJSX:
+		jsxOptions.AutomaticRuntime = true
+		// Don't set Development = false implicitly
+	case TSJSXReactJSXDev:
+		jsxOptions.AutomaticRuntime = true
+		jsxOptions.Development = true
+	}
 }
 
 type TSOptions struct {
@@ -276,6 +305,7 @@ type Options struct {
 	WriteToStdout bool
 
 	OmitRuntimeForTests     bool
+	OmitJSXRuntimeForTests  bool
 	UnusedImportFlagsTS     UnusedImportFlagsTS
 	UseDefineForClassFields MaybeBool
 	ASCIIOnly               bool
@@ -309,32 +339,31 @@ type UnusedImportFlagsTS uint8
 
 // With !UnusedImportKeepStmt && !UnusedImportKeepValues:
 //
-//   "import 'foo'"                      => "import 'foo'"
-//   "import * as unused from 'foo'"     => ""
-//   "import { unused } from 'foo'"      => ""
-//   "import { type unused } from 'foo'" => ""
+//	"import 'foo'"                      => "import 'foo'"
+//	"import * as unused from 'foo'"     => ""
+//	"import { unused } from 'foo'"      => ""
+//	"import { type unused } from 'foo'" => ""
 //
 // With UnusedImportKeepStmt && !UnusedImportKeepValues:
 //
-//   "import 'foo'"                      => "import 'foo'"
-//   "import * as unused from 'foo'"     => "import 'foo'"
-//   "import { unused } from 'foo'"      => "import 'foo'"
-//   "import { type unused } from 'foo'" => "import 'foo'"
+//	"import 'foo'"                      => "import 'foo'"
+//	"import * as unused from 'foo'"     => "import 'foo'"
+//	"import { unused } from 'foo'"      => "import 'foo'"
+//	"import { type unused } from 'foo'" => "import 'foo'"
 //
 // With !UnusedImportKeepStmt && UnusedImportKeepValues:
 //
-//   "import 'foo'"                      => "import 'foo'"
-//   "import * as unused from 'foo'"     => "import * as unused from 'foo'"
-//   "import { unused } from 'foo'"      => "import { unused } from 'foo'"
-//   "import { type unused } from 'foo'" => ""
+//	"import 'foo'"                      => "import 'foo'"
+//	"import * as unused from 'foo'"     => "import * as unused from 'foo'"
+//	"import { unused } from 'foo'"      => "import { unused } from 'foo'"
+//	"import { type unused } from 'foo'" => ""
 //
 // With UnusedImportKeepStmt && UnusedImportKeepValues:
 //
-//   "import 'foo'"                      => "import 'foo'"
-//   "import * as unused from 'foo'"     => "import * as unused from 'foo'"
-//   "import { unused } from 'foo'"      => "import { unused } from 'foo'"
-//   "import { type unused } from 'foo'" => "import {} from 'foo'"
-//
+//	"import 'foo'"                      => "import 'foo'"
+//	"import * as unused from 'foo'"     => "import * as unused from 'foo'"
+//	"import { unused } from 'foo'"      => "import { unused } from 'foo'"
+//	"import { type unused } from 'foo'" => "import {} from 'foo'"
 const (
 	UnusedImportKeepStmt   UnusedImportFlagsTS = 1 << iota // "importsNotUsedAsValues" != "remove"
 	UnusedImportKeepValues                                 // "preserveValueImports" == true

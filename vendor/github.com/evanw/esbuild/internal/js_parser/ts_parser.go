@@ -130,18 +130,17 @@ func (p *parser) skipTypeScriptFnArgs() {
 // This is a spot where the TypeScript grammar is highly ambiguous. Here are
 // some cases that are valid:
 //
-//     let x = (y: any): (() => {}) => { };
-//     let x = (y: any): () => {} => { };
-//     let x = (y: any): (y) => {} => { };
-//     let x = (y: any): (y[]) => {};
-//     let x = (y: any): (a | b) => {};
+//	let x = (y: any): (() => {}) => { };
+//	let x = (y: any): () => {} => { };
+//	let x = (y: any): (y) => {} => { };
+//	let x = (y: any): (y[]) => {};
+//	let x = (y: any): (a | b) => {};
 //
 // Here are some cases that aren't valid:
 //
-//     let x = (y: any): (y) => {};
-//     let x = (y: any): (y) => {return 0};
-//     let x = (y: any): asserts y is (y) => {};
-//
+//	let x = (y: any): (y) => {};
+//	let x = (y: any): (y) => {return 0};
+//	let x = (y: any): asserts y is (y) => {};
 func (p *parser) skipTypeScriptParenOrFnType() {
 	if p.trySkipTypeScriptArrowArgsWithBacktracking() {
 		p.skipTypeScriptReturnType()
@@ -863,7 +862,7 @@ func (p *parser) isTSArrowFnJSX() (isTSArrowFn bool) {
 	// Look ahead to see if this should be an arrow function instead
 	if p.lexer.Token == js_lexer.TIdentifier {
 		p.lexer.Next()
-		if p.lexer.Token == js_lexer.TComma {
+		if p.lexer.Token == js_lexer.TComma || p.lexer.Token == js_lexer.TEquals {
 			isTSArrowFn = true
 		} else if p.lexer.Token == js_lexer.TExtends {
 			p.lexer.Next()

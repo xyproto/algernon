@@ -220,6 +220,13 @@ func (p *parser) markStrictModeFeature(feature strictModeFeature, r logger.Range
 			notes = []logger.MsgData{t.MsgData(tsAlwaysStrict.Range, fmt.Sprintf(
 				"TypeScript's %q setting was enabled here:", tsAlwaysStrict.Name))}
 
+		case js_ast.ImplicitStrictModeJSXAutomaticRuntime:
+			notes = []logger.MsgData{p.tracker.MsgData(logger.Range{Loc: p.firstJSXElementLoc, Len: 1},
+				"This file is implicitly in strict mode due to the JSX element here:"),
+				{Text: "When React's \"automatic\" JSX transform is enabled, using a JSX element automatically inserts " +
+					"an \"import\" statement at the top of the file for the corresponding the JSX helper function. " +
+					"This means the file is considered an ECMAScript module, and all ECMAScript modules use strict mode."}}
+
 		case js_ast.ExplicitStrictMode:
 			notes = []logger.MsgData{p.tracker.MsgData(p.source.RangeOfString(p.currentScope.UseStrictLoc),
 				"Strict mode is triggered by the \"use strict\" directive here:")}
@@ -709,6 +716,7 @@ flatten:
 					}},
 					Args:                   append([]js_ast.Expr{thisArg}, e.Args...),
 					CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
+					IsMultiLine:            e.IsMultiLine,
 				}}
 				break
 			}
@@ -726,6 +734,7 @@ flatten:
 					}},
 					Args:                   append([]js_ast.Expr{privateThisFunc()}, e.Args...),
 					CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
+					IsMultiLine:            e.IsMultiLine,
 				}})
 				privateThisFunc = nil
 				break
@@ -735,6 +744,7 @@ flatten:
 				Target:                 result,
 				Args:                   e.Args,
 				CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
+				IsMultiLine:            e.IsMultiLine,
 			}}
 
 		case *js_ast.EUnary:
@@ -784,7 +794,8 @@ func (p *parser) lowerParenthesizedOptionalChain(loc logger.Loc, e *js_ast.ECall
 			Name:    "call",
 			NameLoc: loc,
 		}},
-		Args: append(append(make([]js_ast.Expr, 0, len(e.Args)+1), childOut.thisArgFunc()), e.Args...),
+		Args:        append(append(make([]js_ast.Expr, 0, len(e.Args)+1), childOut.thisArgFunc()), e.Args...),
+		IsMultiLine: e.IsMultiLine,
 	}})
 }
 
@@ -937,26 +948,26 @@ func (p *parser) lowerNullishCoalescing(loc logger.Loc, left js_ast.Expr, right 
 // properties are grouped into object literals and then passed to the
 // "__spreadValues" and "__spreadProps" functions like this:
 //
-//   "{a, b, ...c, d, e}" => "__spreadProps(__spreadValues(__spreadProps({a, b}, c), {d, e})"
+//	"{a, b, ...c, d, e}" => "__spreadProps(__spreadValues(__spreadProps({a, b}, c), {d, e})"
 //
 // If the object literal starts with a spread, then we pass an empty object
 // literal to "__spreadValues" to make sure we clone the object:
 //
-//   "{...a, b}" => "__spreadProps(__spreadValues({}, a), {b})"
+//	"{...a, b}" => "__spreadProps(__spreadValues({}, a), {b})"
 //
 // It's not immediately obvious why we don't compile everything to a single
 // call to a function that takes any number of arguments, since that would be
 // shorter. The reason is to preserve the order of side effects. Consider
 // this code:
 //
-//   let a = {
-//     get x() {
-//       b = {y: 2}
-//       return 1
-//     }
-//   }
-//   let b = {}
-//   let c = {...a, ...b}
+//	let a = {
+//	  get x() {
+//	    b = {y: 2}
+//	    return 1
+//	  }
+//	}
+//	let b = {}
+//	let c = {...a, ...b}
 //
 // Converting the above code to "let c = __spreadFn({}, a, null, b)" means "c"
 // becomes "{x: 1}" which is incorrect. Converting the above code instead to

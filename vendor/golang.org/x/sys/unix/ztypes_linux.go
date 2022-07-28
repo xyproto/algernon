@@ -945,6 +945,9 @@ type PerfEventAttr struct {
 	Aux_watermark      uint32
 	Sample_max_stack   uint16
 	_                  uint16
+	Aux_sample_size    uint32
+	_                  uint32
+	Sig_data           uint64
 }
 
 type PerfEventMmapPage struct {
