@@ -81,7 +81,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.disableRateLimiting, "nolimit", false, "Disable rate limiting")
 	flag.BoolVar(&ac.devMode, "dev", false, "Development mode")
 	flag.BoolVar(&ac.showVersion, "version", false, "Version")
-	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, Lua, GCSS and Markdown")
+	flag.StringVar(&cacheModeString, "cache", "", "Cache everything but Amber, GCSS, Jade, Lua and Markdown")
 	flag.Uint64Var(&ac.cacheSize, "cachesize", ac.defaultCacheSize, "Cache size, in bytes")
 	flag.Uint64Var(&ac.largeFileSize, "largesize", ac.defaultLargeFileSize, "Threshold for not reading static files into memory, in bytes")
 	flag.Uint64Var(&ac.writeTimeout, "timeout", 10, "Timeout when writing to a client, in seconds")

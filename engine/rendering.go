@@ -22,6 +22,7 @@ import (
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
+	"github.com/Joker/jade"
 )
 
 // ValidGCSS checks if the given data is valid GCSS.
@@ -46,7 +47,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		return 0 // number of results
 	}))
 
-	// Output text as rendered amber.
+	// Output text as rendered Amber.
 	L.SetGlobal("aprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
@@ -64,6 +65,32 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		// Using "MISSING" instead of nil for a slightly better error message
 		// if the values in the template should not be found.
 		tpl.Execute(w, "MISSING")
+		return 0 // number of results
+	}))
+
+	// Output text as rendered Jade.
+	L.SetGlobal("jadeprint", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := convert.Arguments2buffer(L, true)
+
+		// Use the buffer as a template
+		jadeTemplate, err := jade.Parse("jade", buf.Bytes())
+		var htmlTemplate int
+		if err == nil {
+			htmlTemplate, err = template.New("html").Parse(jadeTemplate)
+		}
+		if err != nil {
+			if ac.debugMode {
+				fmt.Fprint(w, "Could not compile Jade template:\n\t"+err.Error()+"\n\n"+buf.String())
+			} else {
+				log.Errorf("Could not compile Jade template:\n%s\n%s", err, buf.String())
+			}
+			return 0 // number of results
+		}
+
+		// Using "MISSING" instead of nil for a slightly better error message
+		// if the values in the template should not be found.
+		htmlTemplate.Execute(w, "MISSING")
 		return 0 // number of results
 	}))
 

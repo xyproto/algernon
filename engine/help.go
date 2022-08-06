@@ -117,6 +117,8 @@ gprint(...)
 hprint(...)
 // Output rendered JavaScript given JSX for React. Takes a variable number of strings.
 jprint(...)
+// Output rendered Jade. Takes a variable number of strings.
+jadeprint(...)
 // Output a Pongo2 template and key/value table as rendered HTML. Use "{{ key }}" to insert a key.
 poprint(string[, table])
 // Output a simple HTML page with a message, title and theme.
@@ -551,9 +553,9 @@ Available flags:
   --boltdb=FILENAME            Use a specific file for the Bolt database
   --cache=MODE                 Sets a cache mode. The default is "on".
                                "on"      - Cache everything.
-                               "dev"     - Everything, except Amber,
-                                           Lua, GCSS, Markdown and JSX.
-                               "prod"    - Everything, except Amber and Lua.
+                               "dev"     - Everything, except Amber, GCSS
+                                           Jade, JSX, Lua, and Markdown.
+                               "prod"    - Everything, except Amber, Jade and Lua.
                                "small"   - Like "prod", but only files <= 64KB.
                                "images"  - Only images (png, jpg, gif, svg).
                                "off"     - Disable caching.

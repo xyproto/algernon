@@ -88,6 +88,8 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 					}
 				}
 			}
+		} else if lang == "jade" {
+			errormessage = "not implemented yet: pretty errors for Jade"
 		}
 
 		// Escape any HTML in the code, so that the pretty printer is not confused
