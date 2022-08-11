@@ -691,6 +691,18 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 }
 
 func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *dirInfo, importPath string) *ResolveResult {
+	// Find the parent directory with the Yarn PnP data
+	for info := sourceDirInfo; info != nil; info = info.parent {
+		if info.pnpData != nil {
+			if result, ok := r.pnpResolve(importPath, sourceDirInfo.absPath, info.pnpData); ok {
+				importPath = result // Continue with the module resolution algorithm from node.js
+			} else {
+				return nil // This is a module resolution error
+			}
+			break
+		}
+	}
+
 	// This implements the module resolution algorithm from node.js, which is
 	// described here: https://nodejs.org/api/modules.html#modules_all_together
 	var result ResolveResult
@@ -848,6 +860,7 @@ type dirInfo struct {
 	// All relevant information about this directory
 	absPath               string
 	entries               fs.DirEntries
+	pnpData               *pnpData
 	packageJSON           *packageJSON  // Is there a "package.json" file in this directory?
 	enclosingPackageJSON  *packageJSON  // Is there a "package.json" file in this directory or a parent directory?
 	enclosingTSConfigJSON *TSConfigJSON // Is there a "tsconfig.json" file in this directory or a parent directory?
@@ -1176,6 +1189,48 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 		}
 	}
 
+	// Record if this directory has a Yarn PnP manifest. This must not be done
+	// for Yarn virtual paths because that will result in duplicate copies of
+	// the same manifest which will result in multiple copies of the same virtual
+	// directory in the same path, which we don't handle (and which also doesn't
+	// match Yarn's behavior).
+	//
+	// For example, imagine a project with a manifest here:
+	//
+	//   /project/.pnp.cjs
+	//
+	// and a source file with an import of "bar" here:
+	//
+	//   /project/.yarn/__virtual__/pkg/1/foo.js
+	//
+	// If we didn't ignore Yarn PnP manifests in virtual folders, then we would
+	// pick up on the one here:
+	//
+	//   /project/.yarn/__virtual__/pkg/1/.pnp.cjs
+	//
+	// which means we would potentially resolve the import to something like this:
+	//
+	//   /project/.yarn/__virtual__/pkg/1/.yarn/__virtual__/pkg/1/bar
+	//
+	if _, _, ok := fs.ParseYarnPnPVirtualPath(path); !ok {
+		if pnp, _ := entries.Get(".pnp.data.json"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+			absPath := r.fs.Join(path, ".pnp.data.json")
+			if json := r.extractYarnPnPDataFromJSON(absPath, &r.caches.JSONCache); json.Data != nil {
+				info.pnpData = compileYarnPnPData(absPath, path, json)
+			}
+		} else if pnp, _ := entries.Get(".pnp.cjs"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+			absPath := r.fs.Join(path, ".pnp.cjs")
+			if json := r.tryToExtractYarnPnPDataFromJS(absPath, &r.caches.JSONCache); json.Data != nil {
+				info.pnpData = compileYarnPnPData(absPath, path, json)
+			}
+		} else if pnp, _ := entries.Get(".pnp.js"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+			absPath := r.fs.Join(path, ".pnp.js")
+			if json := r.tryToExtractYarnPnPDataFromJS(absPath, &r.caches.JSONCache); json.Data != nil {
+				info.pnpData = compileYarnPnPData(absPath, path, json)
+			}
+		}
+	}
+
 	return info
 }
 
@@ -1221,7 +1276,7 @@ func (r resolverQuery) loadAsFile(path string, extensionOrder []string) (string,
 	if err != nil {
 		if err != syscall.ENOENT {
 			r.log.AddError(nil, logger.Range{},
-				fmt.Sprintf("  Cannot read directory %q: %s",
+				fmt.Sprintf("Cannot read directory %q: %s",
 					r.PrettyPath(logger.Path{Text: dirPath, Namespace: "file"}), err.Error()))
 		}
 		return "", false, nil

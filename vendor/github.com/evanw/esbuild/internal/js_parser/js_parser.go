@@ -54,7 +54,7 @@ type parser struct {
 	importSymbolPropertyUses   map[js_ast.Ref]map[string]js_ast.SymbolUse
 	symbolCallUses             map[js_ast.Ref]js_ast.SymbolCallUse
 	declaredSymbols            []js_ast.DeclaredSymbol
-	runtimeImports             map[string]js_ast.Ref
+	runtimeImports             map[string]js_ast.LocRef
 	duplicateCaseChecker       duplicateCaseChecker
 	unrepresentableIdentifiers map[string]bool
 	legacyOctalLiterals        map[js_ast.E]logger.Range
@@ -149,6 +149,10 @@ type parser struct {
 	loopBody         js_ast.S
 	moduleScope      *js_ast.Scope
 
+	// This is internal-only data used for the implementation of Yarn PnP
+	manifestForYarnPnP     js_ast.Expr
+	stringLocalsForYarnPnP map[js_ast.Ref]stringLocalForYarnPnP
+
 	// This helps recognize the "await import()" pattern. When this is present,
 	// warnings about non-string import paths will be omitted inside try blocks.
 	awaitTarget js_ast.E
@@ -211,8 +215,8 @@ type parser struct {
 
 	// Imports from "react/jsx-runtime" and "react", respectively.
 	// (Or whatever was specified in the "importSource" option)
-	jsxRuntimeImports map[string]js_ast.Ref
-	jsxLegacyImports  map[string]js_ast.Ref
+	jsxRuntimeImports map[string]js_ast.LocRef
+	jsxLegacyImports  map[string]js_ast.LocRef
 
 	// For lowering private methods
 	weakMapRef js_ast.Ref
@@ -341,6 +345,11 @@ type parser struct {
 	isControlFlowDead        bool
 }
 
+type stringLocalForYarnPnP struct {
+	value []uint16
+	loc   logger.Loc
+}
+
 type injectedSymbolSource struct {
 	source logger.Source
 	loc    logger.Loc
@@ -414,6 +423,17 @@ type optionsThatSupportStructuralEquality struct {
 	mangleQuoted            bool
 	unusedImportFlagsTS     config.UnusedImportFlagsTS
 	useDefineForClassFields config.MaybeBool
+
+	// This is an internal-only option used for the implementation of Yarn PnP
+	decodeHydrateRuntimeStateYarnPnP bool
+}
+
+func OptionsForYarnPnP() Options {
+	return Options{
+		optionsThatSupportStructuralEquality: optionsThatSupportStructuralEquality{
+			decodeHydrateRuntimeStateYarnPnP: true,
+		},
+	}
 }
 
 func OptionsFromConfig(options *config.Options) Options {
@@ -1508,17 +1528,18 @@ func (p *parser) ignoreUsageOfIdentifierInDotChain(expr js_ast.Expr) {
 }
 
 func (p *parser) importFromRuntime(loc logger.Loc, name string) js_ast.Expr {
-	ref, ok := p.runtimeImports[name]
+	it, ok := p.runtimeImports[name]
 	if !ok {
-		ref = p.newSymbol(js_ast.SymbolOther, name)
-		p.moduleScope.Generated = append(p.moduleScope.Generated, ref)
-		p.runtimeImports[name] = ref
+		it.Loc = loc
+		it.Ref = p.newSymbol(js_ast.SymbolOther, name)
+		p.moduleScope.Generated = append(p.moduleScope.Generated, it.Ref)
+		p.runtimeImports[name] = it
 		if name == "__publicField" {
-			p.runtimePublicFieldImport = ref
+			p.runtimePublicFieldImport = it.Ref
 		}
 	}
-	p.recordUsage(ref)
-	return js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: ref}}
+	p.recordUsage(it.Ref)
+	return js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: it.Ref}}
 }
 
 func (p *parser) callRuntime(loc logger.Loc, name string, args []js_ast.Expr) js_ast.Expr {
@@ -1538,7 +1559,7 @@ const (
 )
 
 func (p *parser) importJSXSymbol(loc logger.Loc, jsx JSXImport) js_ast.Expr {
-	var symbols map[string]js_ast.Ref
+	var symbols map[string]js_ast.LocRef
 	var name string
 
 	switch jsx {
@@ -1549,6 +1570,7 @@ func (p *parser) importJSXSymbol(loc logger.Loc, jsx JSXImport) js_ast.Expr {
 		} else {
 			name = "jsx"
 		}
+
 	case JSXImportJSXS:
 		symbols = p.jsxRuntimeImports
 		if p.options.jsx.Development {
@@ -1556,23 +1578,27 @@ func (p *parser) importJSXSymbol(loc logger.Loc, jsx JSXImport) js_ast.Expr {
 		} else {
 			name = "jsxs"
 		}
+
 	case JSXImportFragment:
 		symbols = p.jsxRuntimeImports
 		name = "Fragment"
+
 	case JSXImportCreateElement:
 		symbols = p.jsxLegacyImports
 		name = "createElement"
 	}
 
-	ref, ok := symbols[name]
+	it, ok := symbols[name]
 	if !ok {
-		ref = p.newSymbol(js_ast.SymbolOther, name)
-		p.moduleScope.Generated = append(p.moduleScope.Generated, ref)
-		p.isImportItem[ref] = true
-		symbols[name] = ref
+		it.Loc = loc
+		it.Ref = p.newSymbol(js_ast.SymbolOther, name)
+		p.moduleScope.Generated = append(p.moduleScope.Generated, it.Ref)
+		p.isImportItem[it.Ref] = true
+		symbols[name] = it
 	}
-	p.recordUsage(ref)
-	return p.handleIdentifier(loc, &js_ast.EIdentifier{Ref: ref}, identifierOpts{
+
+	p.recordUsage(it.Ref)
+	return p.handleIdentifier(loc, &js_ast.EIdentifier{Ref: it.Ref}, identifierOpts{
 		wasOriginallyIdentifier: true,
 	})
 }
@@ -9457,6 +9483,18 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 						}
 					}
 				}
+
+				// Yarn's PnP data may be stored in a variable: https://github.com/yarnpkg/berry/pull/4320
+				if p.options.decodeHydrateRuntimeStateYarnPnP {
+					if str, ok := d.ValueOrNil.Data.(*js_ast.EString); ok {
+						if id, ok := d.Binding.Data.(*js_ast.BIdentifier); ok {
+							if p.stringLocalsForYarnPnP == nil {
+								p.stringLocalsForYarnPnP = make(map[js_ast.Ref]stringLocalForYarnPnP)
+							}
+							p.stringLocalsForYarnPnP[id.Ref] = stringLocalForYarnPnP{value: str.Value, loc: d.ValueOrNil.Loc}
+						}
+					}
+				}
 			}
 
 			// Attempt to continue the const local prefix
@@ -14033,6 +14071,46 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			e.Args[i] = arg
 		}
 
+		// Our hack for reading Yarn PnP files is implemented here:
+		if p.options.decodeHydrateRuntimeStateYarnPnP {
+			if id, ok := e.Target.Data.(*js_ast.EIdentifier); ok && p.symbols[id.Ref.InnerIndex].OriginalName == "hydrateRuntimeState" && len(e.Args) >= 1 {
+				switch arg := e.Args[0].Data.(type) {
+				case *js_ast.EObject:
+					// "hydrateRuntimeState(<object literal>)"
+					if arg := e.Args[0]; isValidJSON(arg) {
+						p.manifestForYarnPnP = arg
+					}
+
+				case *js_ast.ECall:
+					// "hydrateRuntimeState(JSON.parse(<something>))"
+					if len(arg.Args) == 1 {
+						if dot, ok := arg.Target.Data.(*js_ast.EDot); ok && dot.Name == "parse" {
+							if id, ok := dot.Target.Data.(*js_ast.EIdentifier); ok {
+								if symbol := &p.symbols[id.Ref.InnerIndex]; symbol.Kind == js_ast.SymbolUnbound && symbol.OriginalName == "JSON" {
+									arg := arg.Args[0]
+									switch a := arg.Data.(type) {
+									case *js_ast.EString:
+										// "hydrateRuntimeState(JSON.parse(<string literal>))"
+										source := logger.Source{KeyPath: p.source.KeyPath, Contents: helpers.UTF16ToString(a.Value)}
+										log := logger.NewStringInJSLog(p.log, &p.tracker, arg.Loc, source.Contents)
+										p.manifestForYarnPnP, _ = ParseJSON(log, source, JSONOptions{})
+
+									case *js_ast.EIdentifier:
+										// "hydrateRuntimeState(JSON.parse(<identifier>))"
+										if data, ok := p.stringLocalsForYarnPnP[a.Ref]; ok {
+											source := logger.Source{KeyPath: p.source.KeyPath, Contents: helpers.UTF16ToString(data.value)}
+											log := logger.NewStringInJSLog(p.log, &p.tracker, data.loc, source.Contents)
+											p.manifestForYarnPnP, _ = ParseJSON(log, source, JSONOptions{})
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		// Stop now if this call must be removed
 		if out.methodCallMustBeReplacedWithUndefined {
 			p.isControlFlowDead = oldIsControlFlowDead
@@ -14048,7 +14126,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		case *js_ast.EImportIdentifier:
 			// If this function is inlined, allow it to be tree-shaken
 			if p.options.minifySyntax && !p.isControlFlowDead {
-				p.convertSymbolUseToCall(t.Ref, len(e.Args) == 1)
+				p.convertSymbolUseToCall(t.Ref, len(e.Args) == 1 && !hasSpread)
 			}
 
 		case *js_ast.EIdentifier:
@@ -14095,7 +14173,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 
 			// If this function is inlined, allow it to be tree-shaken
 			if p.options.minifySyntax && !p.isControlFlowDead {
-				p.convertSymbolUseToCall(t.Ref, len(e.Args) == 1)
+				p.convertSymbolUseToCall(t.Ref, len(e.Args) == 1 && !hasSpread)
 			}
 
 		case *js_ast.EDot:
@@ -14385,7 +14463,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 	return expr, exprOut{}
 }
 
-func (p *parser) convertSymbolUseToCall(ref js_ast.Ref, isSingleArgCall bool) {
+func (p *parser) convertSymbolUseToCall(ref js_ast.Ref, isSingleNonSpreadArgCall bool) {
 	// Remove the normal symbol use
 	use := p.symbolUses[ref]
 	use.CountEstimate--
@@ -14401,8 +14479,8 @@ func (p *parser) convertSymbolUseToCall(ref js_ast.Ref, isSingleArgCall bool) {
 	}
 	callUse := p.symbolCallUses[ref]
 	callUse.CallCountEstimate++
-	if isSingleArgCall {
-		callUse.SingleArgCallCountEstimate++
+	if isSingleNonSpreadArgCall {
+		callUse.SingleArgNonSpreadCallCountEstimate++
 	}
 	p.symbolCallUses[ref] = callUse
 }
@@ -15609,7 +15687,7 @@ func newParser(log logger.Log, source logger.Source, lexer js_lexer.Lexer, optio
 		lexer:                    lexer,
 		allowIn:                  true,
 		options:                  *options,
-		runtimeImports:           make(map[string]js_ast.Ref),
+		runtimeImports:           make(map[string]js_ast.LocRef),
 		promiseRef:               js_ast.InvalidRef,
 		regExpRef:                js_ast.InvalidRef,
 		afterArrowBodyLoc:        logger.Loc{Start: -1},
@@ -15638,8 +15716,8 @@ func newParser(log logger.Log, source logger.Source, lexer js_lexer.Lexer, optio
 		namedExports:            make(map[string]js_ast.NamedExport),
 
 		// For JSX runtime imports
-		jsxRuntimeImports: make(map[string]js_ast.Ref),
-		jsxLegacyImports:  make(map[string]js_ast.Ref),
+		jsxRuntimeImports: make(map[string]js_ast.LocRef),
+		jsxLegacyImports:  make(map[string]js_ast.LocRef),
 
 		suppressWarningsAboutWeirdCode: helpers.IsInsideNodeModules(source.KeyPath.Text),
 	}
@@ -15770,11 +15848,11 @@ func Parse(log logger.Log, source logger.Source, options Options) (result js_ast
 	// Insert any injected import statements now that symbols have been declared
 	for _, file := range p.options.injectedFiles {
 		exportsNoConflict := make([]string, 0, len(file.Exports))
-		symbols := make(map[string]js_ast.Ref)
+		symbols := make(map[string]js_ast.LocRef)
 		if file.DefineName != "" {
 			ref := p.newSymbol(js_ast.SymbolOther, file.DefineName)
 			p.moduleScope.Generated = append(p.moduleScope.Generated, ref)
-			symbols["default"] = ref
+			symbols["default"] = js_ast.LocRef{Ref: ref}
 			exportsNoConflict = append(exportsNoConflict, "default")
 			p.injectedDefineSymbols = append(p.injectedDefineSymbols, ref)
 		} else {
@@ -15782,7 +15860,7 @@ func Parse(log logger.Log, source logger.Source, options Options) (result js_ast
 				if _, ok := p.moduleScope.Members[export.Alias]; !ok {
 					ref := p.newSymbol(js_ast.SymbolInjected, export.Alias)
 					p.moduleScope.Members[export.Alias] = js_ast.ScopeMember{Ref: ref}
-					symbols[export.Alias] = ref
+					symbols[export.Alias] = js_ast.LocRef{Ref: ref}
 					exportsNoConflict = append(exportsNoConflict, export.Alias)
 					if p.injectedSymbolSources == nil {
 						p.injectedSymbolSources = make(map[js_ast.Ref]injectedSymbolSource)
@@ -16202,25 +16280,39 @@ func (p *parser) generateImportStmt(
 	imports []string,
 	sourceIndex *uint32,
 	parts []js_ast.Part,
-	symbols map[string]js_ast.Ref,
+	symbols map[string]js_ast.LocRef,
 ) []js_ast.Part {
+	var loc logger.Loc
+	isFirst := true
+	for _, it := range symbols {
+		if isFirst || it.Loc.Start < loc.Start {
+			loc = it.Loc
+		}
+		isFirst = false
+	}
+
 	namespaceRef := p.newSymbol(js_ast.SymbolOther, "import_"+js_ast.GenerateNonUniqueNameFromPath(path))
 	p.moduleScope.Generated = append(p.moduleScope.Generated, namespaceRef)
 	declaredSymbols := make([]js_ast.DeclaredSymbol, len(imports))
 	clauseItems := make([]js_ast.ClauseItem, len(imports))
-	importRecordIndex := p.addImportRecord(ast.ImportStmt, logger.Loc{}, path, nil)
+	importRecordIndex := p.addImportRecord(ast.ImportStmt, loc, path, nil)
 	if sourceIndex != nil {
 		p.importRecords[importRecordIndex].SourceIndex = ast.MakeIndex32(*sourceIndex)
 	}
 
 	// Create per-import information
 	for i, alias := range imports {
-		ref := symbols[alias]
-		declaredSymbols[i] = js_ast.DeclaredSymbol{Ref: ref, IsTopLevel: true}
-		clauseItems[i] = js_ast.ClauseItem{Alias: alias, Name: js_ast.LocRef{Ref: ref}}
-		p.isImportItem[ref] = true
-		p.namedImports[ref] = js_ast.NamedImport{
+		it := symbols[alias]
+		declaredSymbols[i] = js_ast.DeclaredSymbol{Ref: it.Ref, IsTopLevel: true}
+		clauseItems[i] = js_ast.ClauseItem{
+			Alias:    alias,
+			AliasLoc: it.Loc,
+			Name:     js_ast.LocRef{Loc: it.Loc, Ref: it.Ref},
+		}
+		p.isImportItem[it.Ref] = true
+		p.namedImports[it.Ref] = js_ast.NamedImport{
 			Alias:             alias,
+			AliasLoc:          it.Loc,
 			NamespaceRef:      namespaceRef,
 			ImportRecordIndex: importRecordIndex,
 		}
@@ -16231,7 +16323,7 @@ func (p *parser) generateImportStmt(
 	return append(parts, js_ast.Part{
 		DeclaredSymbols:     declaredSymbols,
 		ImportRecordIndices: []uint32{importRecordIndex},
-		Stmts: []js_ast.Stmt{{Data: &js_ast.SImport{
+		Stmts: []js_ast.Stmt{{Loc: loc, Data: &js_ast.SImport{
 			NamespaceRef:      namespaceRef,
 			Items:             &clauseItems,
 			ImportRecordIndex: importRecordIndex,
@@ -16241,7 +16333,7 @@ func (p *parser) generateImportStmt(
 }
 
 // Sort the keys for determinism
-func sortedKeysOfMapStringRef(in map[string]js_ast.Ref) []string {
+func sortedKeysOfMapStringLocRef(in map[string]js_ast.LocRef) []string {
 	keys := make([]string, 0, len(in))
 	for key := range in {
 		keys = append(keys, key)
@@ -16253,14 +16345,14 @@ func sortedKeysOfMapStringRef(in map[string]js_ast.Ref) []string {
 func (p *parser) toAST(before, parts, after []js_ast.Part, hashbang string, directive string) js_ast.AST {
 	// Insert an import statement for any runtime imports we generated
 	if len(p.runtimeImports) > 0 && !p.options.omitRuntimeForTests {
-		keys := sortedKeysOfMapStringRef(p.runtimeImports)
+		keys := sortedKeysOfMapStringLocRef(p.runtimeImports)
 		sourceIndex := runtime.SourceIndex
 		before = p.generateImportStmt("<runtime>", keys, &sourceIndex, before, p.runtimeImports)
 	}
 
 	// Insert an import statement for any jsx runtime imports we generated
 	if len(p.jsxRuntimeImports) > 0 && !p.options.omitJSXRuntimeForTests {
-		keys := sortedKeysOfMapStringRef(p.jsxRuntimeImports)
+		keys := sortedKeysOfMapStringLocRef(p.jsxRuntimeImports)
 
 		// Determine the runtime source and whether it's prod or dev
 		path := p.options.jsx.ImportSource
@@ -16275,7 +16367,7 @@ func (p *parser) toAST(before, parts, after []js_ast.Part, hashbang string, dire
 
 	// Insert an import statement for any legacy jsx imports we generated (i.e., createElement)
 	if len(p.jsxLegacyImports) > 0 && !p.options.omitJSXRuntimeForTests {
-		keys := sortedKeysOfMapStringRef(p.jsxLegacyImports)
+		keys := sortedKeysOfMapStringLocRef(p.jsxLegacyImports)
 		path := p.options.jsx.ImportSource
 		before = p.generateImportStmt(path, keys, nil, before, p.jsxLegacyImports)
 	}
@@ -16466,6 +16558,7 @@ func (p *parser) toAST(before, parts, after []js_ast.Part, hashbang string, dire
 		ApproximateLineCount:            int32(p.lexer.ApproximateNewlineCount) + 1,
 		MangledProps:                    p.mangledProps,
 		ReservedProps:                   p.reservedProps,
+		ManifestForYarnPnP:              p.manifestForYarnPnP,
 
 		// CommonJS features
 		UsesExportsRef: usesExportsRef,

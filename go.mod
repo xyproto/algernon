@@ -10,7 +10,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.14.53
+	github.com/evanw/esbuild v0.15.1
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.6
 	github.com/lucas-clemente/quic-go v0.28.1
@@ -44,7 +44,7 @@ require (
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.0.0-20220802222814-0bcc04d9c69b
+	golang.org/x/net v0.0.0-20220811182439-13a9a731de15
 )
 
 require (
@@ -85,19 +85,18 @@ require (
 	github.com/xyproto/simplehstore v1.8.1 // indirect
 	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.11.1 // indirect
+	github.com/xyproto/vt100 v1.11.2 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
+	go.uber.org/zap v1.22.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sys v0.0.0-20220803195053-6e608f9ce704 // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

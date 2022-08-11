@@ -1771,6 +1771,9 @@ type AST struct {
 	ModuleScope    *Scope
 	CharFreq       *CharFreq
 
+	// This is internal-only data used for the implementation of Yarn PnP
+	ManifestForYarnPnP Expr
+
 	Hashbang  string
 	Directive string
 	URLForCSS string
@@ -2100,8 +2103,8 @@ type SymbolUse struct {
 }
 
 type SymbolCallUse struct {
-	CallCountEstimate          uint32
-	SingleArgCallCountEstimate uint32
+	CallCountEstimate                   uint32
+	SingleArgNonSpreadCallCountEstimate uint32
 }
 
 // Returns the canonical ref that represents the ref for the provided symbol.

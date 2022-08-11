@@ -273,6 +273,12 @@ func (c *Canvas) Draw() {
 	// and it will appear like the first line(s) are lost!
 
 	c.mut.RLock()
+
+	if len((*c).chars) == 0 {
+		c.mut.RUnlock()
+		return
+	}
+
 	firstRun := len(c.oldchars) == 0
 	skipAll := !firstRun // true by default, except for the first run
 
