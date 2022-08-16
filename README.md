@@ -22,7 +22,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.18 or later.
+Requires Go 1.19 or later.
 
     go install github.com/xyproto/algernon@latest
 
@@ -110,7 +110,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go >= 1.17 or GCC >= 10 (`gccgo`).
+* Requires Go >= 1.19 or a version of GCC/`gccgo` that supports Go 1.19.
 
 Q&A
 ---
@@ -1084,7 +1084,7 @@ Releases
 Requirements
 ------------
 
-* `go 1.17` or later is a requirement for building Algernon.
+* `go 1.19` or later is a requirement for building Algernon.
 * For `go 1.10`, `1.11`, `1.12`, `1.13`, `1.14`, '1.15`, `1.16` + `gcc-go <10` version `1.12.7` of Algernon is the last supported version.
 
 Access logs
