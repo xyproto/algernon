@@ -2,8 +2,8 @@ package engine
 
 import (
 	"html/template"
-	"io/ioutil"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -19,7 +19,7 @@ func pongoPageTest(n int, t *testing.T) {
 
 	filename := "testdata/index.po2"
 	luafilename := "testdata/data.lua"
-	pongodata, err := ioutil.ReadFile(filename)
+	pongodata, err := os.ReadFile(filename)
 	assert.Equal(t, err, nil)
 
 	ac, err := New("Algernon 123", "Just a test")

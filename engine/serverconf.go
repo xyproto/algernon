@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	bolt "github.com/xyproto/permissionbolt"
 	redis "github.com/xyproto/permissions2"
 	mariadb "github.com/xyproto/permissionsql"
@@ -264,7 +263,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		perm, err = bolt.NewWithConf(ac.boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				tempFile, errTemp := ioutil.TempFile("", "algernon")
+				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
 					log.Fatal("Unable to find a temporary file to use:", errTemp)
 				} else {
@@ -368,7 +367,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		perm, err = bolt.NewWithConf(ac.boltFilename)
 		if err != nil {
 			if err.Error() == "timeout" {
-				tempFile, errTemp := ioutil.TempFile("", "algernon")
+				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
 					log.Fatal("Unable to find a temporary file to use:", errTemp)
 				} else {

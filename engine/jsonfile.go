@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/jpath"
 )
 
@@ -213,7 +212,7 @@ func constructJFile(L *lua.LState, filename string, fperm os.FileMode, fs *datab
 	// Check if the file exists
 	if !fs.Exists(fullFilename) {
 		// Create an empty JSON document/file
-		if err := ioutil.WriteFile(fullFilename, []byte("[]\n"), fperm); err != nil {
+		if err := os.WriteFile(fullFilename, []byte("[]\n"), fperm); err != nil {
 			return nil, err
 		}
 	}

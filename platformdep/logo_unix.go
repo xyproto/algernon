@@ -1,3 +1,4 @@
+//go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris
 
 package platformdep
@@ -6,7 +7,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/xyproto/algernon/utils"
@@ -52,7 +53,7 @@ func decompressImage(asciigfx string) string {
 	if err != nil {
 		panic("Could not read buffer: " + err.Error())
 	}
-	decompressedBytes, err := ioutil.ReadAll(decompressorReader)
+	decompressedBytes, err := io.ReadAll(decompressorReader)
 	decompressorReader.Close()
 	if err != nil {
 		panic("Could not decompress: " + err.Error())

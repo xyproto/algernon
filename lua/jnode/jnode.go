@@ -4,7 +4,7 @@ package jnode
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http" // For sending JSON requests
 	"strings"
 
@@ -289,7 +289,7 @@ func jnodeGETFromURL(L *lua.LState) int {
 		return 1 // number of results
 	}
 
-	bodyData, err := ioutil.ReadAll(resp.Body)
+	bodyData, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		log.Error(err)

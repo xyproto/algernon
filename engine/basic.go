@@ -3,7 +3,7 @@ package engine
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // FutureStatus is useful when redirecting in combination with writing to a
@@ -225,7 +225,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Return the HTTP body in the request
 	L.SetGlobal("body", L.NewFunction(func(L *lua.LState) int {
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		var result lua.LString
 		if err != nil {
 			result = lua.LString("")

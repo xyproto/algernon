@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	internallog "log"
 	"net/http"
 	"os"
@@ -239,7 +239,7 @@ func (ac *Config) SetFileStatCache(fs *datablock.FileStat) {
 // Initialize a temporary directory, handle flags, output version and handle profiling
 func (ac *Config) initFilesAndCache() error {
 	// Temporary directory that might be used for logging, databases or file extraction
-	serverTempDir, err := ioutil.TempDir("", "algernon")
+	serverTempDir, err := os.MkdirTemp("", "algernon")
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (ac *Config) setupLogging() {
 		}
 	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	// Close stdout and stderr if quite mode has been enabled
 	if ac.quietMode {
@@ -431,7 +431,7 @@ func (ac *Config) shouldCache(ext string) bool {
 
 // hasHandlers checks if the given filename contains "handle(" or "handle ("
 func hasHandlers(fn string) bool {
-	data, err := ioutil.ReadFile(fn)
+	data, err := os.ReadFile(fn)
 	return err == nil && (bytes.Contains(data, []byte("handle(")) || bytes.Contains(data, []byte("handle (")))
 }
 

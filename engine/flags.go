@@ -2,7 +2,6 @@ package engine
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -242,7 +241,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		// Use a random database, so that several lua REPLs can be started without colliding,
 		// but only if the current default bolt database file can not be opened.
 		if ac.boltFilename != os.DevNull && !utils.CanRead(ac.boltFilename) {
-			tempFile, err := ioutil.TempFile("", "algernon_repl*.db")
+			tempFile, err := os.CreateTemp("", "algernon_repl*.db")
 			if err == nil { // no issue
 				ac.boltFilename = tempFile.Name()
 			}
@@ -375,14 +374,14 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// CertMagic and Let's Encrypt
 	if ac.useCertMagic {
 		log.Info("Use Cert Magic")
-		if files, err := ioutil.ReadDir(ac.serverDirOrFilename); err != nil {
+		if dirEntries, err := os.ReadDir(ac.serverDirOrFilename); err != nil {
 			log.Error("Could not use Cert Magic:" + err.Error())
 			ac.useCertMagic = false
 		} else {
 			//log.Infof("Looping over %v files", len(files))
-			for _, f := range files {
-				basename := filepath.Base(f.Name())
-				dirOrSymlink := f.Mode().IsDir() || ((f.Mode() & os.ModeSymlink) == os.ModeSymlink)
+			for _, dirEntry := range dirEntries {
+				basename := filepath.Base(dirEntry.Name())
+				dirOrSymlink := dirEntry.IsDir() || ((dirEntry.Type() & os.ModeSymlink) == os.ModeSymlink)
 				// TODO: Confirm that the symlink is a symlink to a directory, if it's a symlink
 				if dirOrSymlink && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
 					ac.certMagicDomains = append(ac.certMagicDomains, basename)
