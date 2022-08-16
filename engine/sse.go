@@ -43,10 +43,10 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
     </script>`
 
 	// Reduce the size slightly
-	js = strings.TrimSpace(strings.Replace(js, "\n", "", utils.EveryInstance))
+	js = strings.TrimSpace(strings.ReplaceAll(js, "\n", ""))
 	// Remove all whitespace that is more than one space
 	for strings.Contains(js, "  ") {
-		js = strings.Replace(js, "  ", " ", utils.EveryInstance)
+		js = strings.ReplaceAll(js, "  ", " ")
 	}
 	// Place the script at the end of the body, if there is a body
 	switch {

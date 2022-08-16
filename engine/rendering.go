@@ -195,7 +195,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 		}
 		data := result.Code
 		// Use "h" instead of "React.createElement" for hyperApp apps
-		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+		data = bytes.ReplaceAll(data, []byte("React.createElement("), []byte("h("))
 		n, err := w.Write(data)
 		if err != nil || n == 0 {
 			if ac.debugMode {
@@ -267,16 +267,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	}
 
 	// Checkboxes
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[ ] "), []byte("<li><input type=\"checkbox\" disabled> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li><p>[ ] "), []byte("<li><p><input type=\"checkbox\" disabled> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[x] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("<li><p>[x] "), []byte("<li><p><input type=\"checkbox\" disabled checked> "), utils.EveryInstance)
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li>[ ] "), []byte("<li><input type=\"checkbox\" disabled> "))
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li><p>[ ] "), []byte("<li><p><input type=\"checkbox\" disabled> "))
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li>[x] "), []byte("<li><input type=\"checkbox\" disabled checked> "))
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li>[X] "), []byte("<li><input type=\"checkbox\" disabled checked> "))
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li><p>[x] "), []byte("<li><p><input type=\"checkbox\" disabled checked> "))
 
 	// These should work by default, but does not.
 	// TODO: Look into how blackfriday handles this.
-	htmlbody = bytes.Replace(htmlbody, []byte("&amp;gt;"), []byte("&gt;"), utils.EveryInstance)
-	htmlbody = bytes.Replace(htmlbody, []byte("&amp;lt;"), []byte("&lt;"), utils.EveryInstance)
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("&amp;gt;"), []byte("&gt;"))
+	htmlbody = bytes.ReplaceAll(htmlbody, []byte("&amp;lt;"), []byte("&lt;"))
 
 	// If there is no given title, use the h1title
 	title := kwmap["title"]
@@ -305,7 +305,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	replaceWithTheme := kwmap["replace_with_theme"]
 	if len(replaceWithTheme) != 0 {
 		// Replace all instances of the value given with "replace_with_theme: ..." with the current theme name
-		htmlbody = bytes.Replace(htmlbody, replaceWithTheme, []byte(theme), utils.EveryInstance)
+		htmlbody = bytes.ReplaceAll(htmlbody, replaceWithTheme, []byte(theme))
 	}
 
 	// If the theme is a filename, create a custom theme where the file is imported from the CSS
@@ -774,7 +774,7 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 
 	// Use "h" instead of "React.createElement" for hyperApp apps
 	if ac.hyperApp {
-		data = bytes.Replace(data, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+		data = bytes.ReplaceAll(data, []byte("React.createElement("), []byte("h("))
 	}
 
 	ac.DataToClient(w, req, filename, data)
@@ -874,7 +874,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	jsxData := jsxResult.Code
 
 	// Use "h" instead of "React.createElement"
-	jsxData = bytes.Replace(jsxData, []byte("React.createElement("), []byte("h("), utils.EveryInstance)
+	jsxData = bytes.ReplaceAll(jsxData, []byte("React.createElement("), []byte("h("))
 
 	// If the file does not seem to contain the hyper app import: add it to the top of the script
 	// TODO: Consider making a more robust (and slower) check that splits the data into words first

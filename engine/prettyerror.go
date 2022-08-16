@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/xyproto/algernon/utils"
 )
 
 const (
@@ -91,7 +89,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 		}
 
 		// Escape any HTML in the code, so that the pretty printer is not confused
-		filebytes = bytes.Replace(filebytes, []byte("<"), []byte("&lt;"), utils.EveryInstance)
+		filebytes = bytes.ReplaceAll(filebytes, []byte("<"), []byte("&lt;"))
 
 		// Modify the line that is to be highlighted
 		bytelines := bytes.Split(filebytes, []byte("\n"))

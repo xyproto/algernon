@@ -88,7 +88,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		title = strings.TrimPrefix(title, dotSlash)
 
 		// Replace "//" with just "/"
-		title = strings.Replace(title, doubleP, utils.Pathsep, utils.EveryInstance)
+		title = strings.ReplaceAll(title, doubleP, utils.Pathsep)
 	}
 
 	// Check if the current page contents are empty

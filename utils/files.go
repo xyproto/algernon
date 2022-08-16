@@ -16,9 +16,6 @@ const (
 	// Pathsep is the path separator for the current platform
 	Pathsep = string(filepath.Separator)
 
-	// EveryInstance can be used when replacing strings
-	EveryInstance = -1
-
 	// KiB is a kilobyte (kibibyte)
 	KiB = 1024
 

@@ -290,7 +290,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		targetpath := strings.TrimPrefix(filepath.Join(filepath.Dir(filename), fn), ac.serverDirOrFilename)
 		if utils.Pathsep != "/" {
 			// For operating systems that use another path separator for files than for URLs
-			targetpath = strings.Replace(targetpath, utils.Pathsep, "/", utils.EveryInstance)
+			targetpath = strings.ReplaceAll(targetpath, utils.Pathsep, "/")
 		}
 		withSlashPrefix := path.Join("/", targetpath)
 		L.Push(lua.LString(withSlashPrefix))
