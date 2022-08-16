@@ -33,7 +33,7 @@ type LValueWrapper struct {
 }
 
 // Scan implements the sql.Scanner interface for database deserialization.
-func (w *LValueWrapper) Scan(value interface{}) error {
+func (w *LValueWrapper) Scan(value any) error {
 
 	if value == nil {
 		*w = LValueWrapper{lua.LNil}
@@ -80,9 +80,9 @@ func (w LValueWrappers) Unwrap() (s []lua.LValue) {
 	return
 }
 
-// Interfaces returns a slice of interface{} values from the given LValueWrappers
-func (w LValueWrappers) Interfaces() (s []interface{}) {
-	s = make([]interface{}, len(w))
+// Interfaces returns a slice of any values from the given LValueWrappers
+func (w LValueWrappers) Interfaces() (s []any) {
+	s = make([]any, len(w))
 	for i := range w {
 		s[i] = &w[i]
 	}
@@ -109,7 +109,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		}
 
 		// Get arguments
-		var queryArgs []interface{}
+		var queryArgs []any
 		if L.GetTop() >= 3 {
 			args := L.ToTable(3)
 			args.ForEach(func(k lua.LValue, v lua.LValue) {

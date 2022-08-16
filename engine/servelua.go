@@ -71,14 +71,14 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 				},
 			})
 
-			if interfaceMap, ok := goMap.(map[interface{}]interface{}); ok {
-				// Try to convert from map[interface{}]interface{} to map[string]interface{}
-				convertedMap := make(map[string]interface{})
+			if interfaceMap, ok := goMap.(map[any]any); ok {
+				// Try to convert from map[any]any to map[string]any
+				convertedMap := make(map[string]any)
 				for k, v := range interfaceMap {
 					convertedMap[k.(string)] = v
 				}
 				pongoMap = pongo2.Context(convertedMap)
-			} else if m, ok := goMap.(map[string]interface{}); ok {
+			} else if m, ok := goMap.(map[string]any); ok {
 				pongoMap = pongo2.Context(m)
 			}
 

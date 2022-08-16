@@ -391,7 +391,7 @@ func LoadJSONFunctions(L *lua.LState) {
 			L.ArgError(1, "Expected a table as the first argument")
 		}
 
-		// Convert the Lua table to a map that can be used when converting to JSON (map[string]interface{})
+		// Convert the Lua table to a map that can be used when converting to JSON (map[string]any)
 		mapinterface := gluamapper.ToGoValue(table, gluamapper.Option{
 			NameFunc: func(s string) string {
 				return s

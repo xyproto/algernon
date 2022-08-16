@@ -174,13 +174,15 @@ func LValueMaps2table(L *lua.LState, maps []map[string]lua.LValue) *lua.LTable {
 
 // Table2map converts a Lua table to **one** of the following types, depending
 // on the content:
-//   map[string]string
-//   map[string]int
-//   map[int]string
-//   map[int]int
+//
+//	map[string]string
+//	map[string]int
+//	map[int]string
+//	map[int]int
+//
 // If no suitable keys and values are found, a nil interface is returned.
 // If several different types are found, it returns true.
-func Table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
+func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 
 	mapSS, mapSI, mapIS, mapII := Table2maps(luaTable)
 
@@ -195,30 +197,30 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
 	if !preferInt {
 		if lss > 0 {
 			//log.Println(key, "STRING -> STRING map")
-			return interface{}(mapSS), lss < total
+			return any(mapSS), lss < total
 		} else if lsi > 0 {
 			//log.Println(key, "STRING -> INT map")
-			return interface{}(mapSI), lsi < total
+			return any(mapSI), lsi < total
 		} else if lis > 0 {
 			//log.Println(key, "INT -> STRING map")
-			return interface{}(mapIS), lis < total
+			return any(mapIS), lis < total
 		} else if lii > 0 {
 			//log.Println(key, "INT -> INT map")
-			return interface{}(mapII), lii < total
+			return any(mapII), lii < total
 		}
 	} else {
 		if lii > 0 {
 			//log.Println(key, "INT -> INT map")
-			return interface{}(mapII), lii < total
+			return any(mapII), lii < total
 		} else if lis > 0 {
 			//log.Println(key, "INT -> STRING map")
-			return interface{}(mapIS), lis < total
+			return any(mapIS), lis < total
 		} else if lsi > 0 {
 			//log.Println(key, "STRING -> INT map")
-			return interface{}(mapSI), lsi < total
+			return any(mapSI), lsi < total
 		} else if lss > 0 {
 			//log.Println(key, "STRING -> STRING map")
-			return interface{}(mapSS), lss < total
+			return any(mapSS), lss < total
 		}
 	}
 
@@ -227,10 +229,11 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (interface{}, bool) {
 
 // Table2maps converts a Lua table to **all** of the following types,
 // depending on the content:
-//   map[string]string
-//   map[string]int
-//   map[int]string
-//   map[int]int
+//
+//	map[string]string
+//	map[string]int
+//	map[int]string
+//	map[int]int
 func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[int]string, map[int]int) {
 
 	// Initialize possible maps we want to convert to
@@ -266,14 +269,14 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 	return mapSS, mapSI, mapIS, mapII
 }
 
-// Table2interfaceMap converts a Lua table to a map[string]interface{}
-// If values are also tables, they are also attempted converted to map[string]interface{}
-func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
+// Table2interfaceMap converts a Lua table to a map[string]any
+// If values are also tables, they are also attempted converted to map[string]any
+func Table2interfaceMap(luaTable *lua.LTable) map[string]any {
 
 	// Even if luaTable.Len() is 0, the table may be full of things
 
 	// Initialize possible maps we want to convert to
-	everything := make(map[string]interface{})
+	everything := make(map[string]any)
 
 	var skey, svalue lua.LString
 	var nkey, nvalue lua.LNumber
@@ -291,14 +294,14 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
 
 		// Store the right keys and values in the right maps
 		if hasSkey && hasTvalue {
-			// Recursive call if the value is another table that can be converted to a string->interface{} map
+			// Recursive call if the value is another table that can be converted to a string->any map
 			everything[skey.String()] = Table2interfaceMap(secondTableValue)
 		} else if hasNkey && hasTvalue {
 			floatKey := float64(nkey)
 			intKey := int(nkey)
 			// Use the int key if it's the same as the float representation
 			if floatKey == float64(intKey) {
-				// Recursive call if the value is another table that can be converted to a string->interface{} map
+				// Recursive call if the value is another table that can be converted to a string->any map
 				everything[fmt.Sprintf("%d", intKey)] = Table2interfaceMap(secondTableValue)
 			} else {
 				everything[fmt.Sprintf("%f", floatKey)] = Table2interfaceMap(secondTableValue)
@@ -352,9 +355,9 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]interface{} {
 
 // Table2interfaceMapGlua converts a Lua table to a map by using gluamapper.
 // If the map really is an array (all the keys are indices), return true.
-func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[interface{}]interface{}, isArray bool, err error) {
+func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[any]any, isArray bool, err error) {
 	var (
-		m         = make(map[interface{}]interface{})
+		m         = make(map[any]any)
 		opt       = gluamapper.Option{}
 		indices   []uint64
 		i, length uint64

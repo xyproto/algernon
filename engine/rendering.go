@@ -514,7 +514,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		//}
 
 		// Check if the name in question is a function
-		if f, ok := v.(func(...string) (interface{}, error)); ok {
+		if f, ok := v.(func(...string) (any, error)); ok {
 
 			// For the closure to correctly wrap the key value
 			k := k

@@ -338,7 +338,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 
 				// Register the function, with a variable number of string arguments
 				// Functions returning (string, error) are supported by html.template
-				funcs[functionName] = func(args ...string) (interface{}, error) {
+				funcs[functionName] = func(args ...string) (any, error) {
 
 					// Create a brand new Lua state
 					L2 := ac.luapool.New()
@@ -363,7 +363,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 					}
 
 					// Empty return value if no values were returned
-					var retval interface{}
+					var retval any
 
 					// Return the first of the returned arguments, as a string
 					if L2.GetTop() >= 1 {
