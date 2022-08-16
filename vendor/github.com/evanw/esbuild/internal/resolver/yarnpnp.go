@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"syscall"
 
-	"github.com/evanw/esbuild/internal/cache"
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/js_ast"
 	"github.com/evanw/esbuild/internal/js_parser"
@@ -15,11 +15,6 @@ import (
 // This file implements the Yarn PnP specification: https://yarnpkg.com/advanced/pnp-spec/
 
 type pnpData struct {
-	// A list of package locators that are roots of the dependency tree. There
-	// will typically be one entry for each workspace in the project (always at
-	// least one, as the top-level package is a workspace by itself).
-	dependencyTreeRoots map[string]string
-
 	// Keys are the package idents, values are sets of references. Combining the
 	// ident with each individual reference yields the set of affected locators.
 	fallbackExclusionList map[string]map[string]bool
@@ -266,10 +261,6 @@ func (r resolverQuery) resolveToUnqualified(specifier string, parentURL string, 
 
 	// Return path.resolve(manifest.dirPath, dependencyPkg.packageLocation, modulePath)
 	result := r.fs.Join(manifest.absDirPath, dependencyPkg.packageLocation, modulePath)
-	if !strings.HasSuffix(result, "/") && ((modulePath != "" && strings.HasSuffix(modulePath, "/")) ||
-		(modulePath == "" && strings.HasSuffix(dependencyPkg.packageLocation, "/"))) {
-		result += "/" // This is important for matching Yarn PnP's expectations in tests
-	}
 	if r.debugLogs != nil {
 		r.debugLogs.addNote(fmt.Sprintf("  Resolved %q via Yarn PnP to %q", specifier, result))
 	}
@@ -281,6 +272,10 @@ func (r resolverQuery) findLocator(manifest *pnpData, moduleUrl string) (pnpIden
 	relativeUrl, ok := r.fs.Rel(manifest.absDirPath, moduleUrl)
 	if !ok {
 		return pnpIdentAndReference{}, false
+	} else {
+		// Relative URLs on Windows will use \ instead of /, which will break
+		// everything we do below. Use normal slashes to keep things working.
+		relativeUrl = strings.ReplaceAll(relativeUrl, "\\", "/")
 	}
 
 	// The relative path must not start with ./; trim it if needed
@@ -392,24 +387,6 @@ func compileYarnPnPData(absPath string, absDirPath string, json js_ast.Expr) *pn
 	data := pnpData{
 		absPath:    absPath,
 		absDirPath: absDirPath,
-	}
-
-	if value, _, ok := getProperty(json, "dependencyTreeRoots"); ok {
-		if array, ok := value.Data.(*js_ast.EArray); ok {
-			data.dependencyTreeRoots = make(map[string]string, len(array.Items))
-
-			for _, item := range array.Items {
-				if name, _, ok := getProperty(item, "name"); ok {
-					if reference, _, ok := getProperty(item, "reference"); ok {
-						if name, ok := getString(name); ok {
-							if reference, ok := getString(reference); ok {
-								data.dependencyTreeRoots[name] = reference
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 
 	if value, _, ok := getProperty(json, "enableTopLevelFallback"); ok {
@@ -577,15 +554,24 @@ func getDependencyTarget(json js_ast.Expr) (pnpIdentAndReference, bool) {
 	return pnpIdentAndReference{}, false
 }
 
-func (r resolverQuery) extractYarnPnPDataFromJSON(pnpDataPath string, jsonCache *cache.JSONCache) (result js_ast.Expr) {
+type pnpDataMode uint8
+
+const (
+	pnpIgnoreErrorsAboutMissingFiles pnpDataMode = iota
+	pnpReportErrorsAboutMissingFiles
+)
+
+func (r resolverQuery) extractYarnPnPDataFromJSON(pnpDataPath string, mode pnpDataMode) (result js_ast.Expr) {
 	contents, err, originalError := r.caches.FSCache.ReadFile(r.fs, pnpDataPath)
 	if r.debugLogs != nil && originalError != nil {
 		r.debugLogs.addNote(fmt.Sprintf("Failed to read file %q: %s", pnpDataPath, originalError.Error()))
 	}
 	if err != nil {
-		r.log.AddError(nil, logger.Range{},
-			fmt.Sprintf("Cannot read file %q: %s",
-				r.PrettyPath(logger.Path{Text: pnpDataPath, Namespace: "file"}), err.Error()))
+		if mode == pnpReportErrorsAboutMissingFiles || err != syscall.ENOENT {
+			r.log.AddError(nil, logger.Range{},
+				fmt.Sprintf("Cannot read file %q: %s",
+					r.PrettyPath(logger.Path{Text: pnpDataPath, Namespace: "file"}), err.Error()))
+		}
 		return
 	}
 	if r.debugLogs != nil {
@@ -597,19 +583,21 @@ func (r resolverQuery) extractYarnPnPDataFromJSON(pnpDataPath string, jsonCache 
 		PrettyPath: r.PrettyPath(keyPath),
 		Contents:   contents,
 	}
-	result, _ = jsonCache.Parse(r.log, source, js_parser.JSONOptions{})
+	result, _ = r.caches.JSONCache.Parse(r.log, source, js_parser.JSONOptions{})
 	return
 }
 
-func (r resolverQuery) tryToExtractYarnPnPDataFromJS(pnpDataPath string, jsonCache *cache.JSONCache) (result js_ast.Expr) {
+func (r resolverQuery) tryToExtractYarnPnPDataFromJS(pnpDataPath string, mode pnpDataMode) (result js_ast.Expr) {
 	contents, err, originalError := r.caches.FSCache.ReadFile(r.fs, pnpDataPath)
 	if r.debugLogs != nil && originalError != nil {
 		r.debugLogs.addNote(fmt.Sprintf("Failed to read file %q: %s", pnpDataPath, originalError.Error()))
 	}
 	if err != nil {
-		r.log.AddError(nil, logger.Range{},
-			fmt.Sprintf("Cannot read file %q: %s",
-				r.PrettyPath(logger.Path{Text: pnpDataPath, Namespace: "file"}), err.Error()))
+		if mode == pnpReportErrorsAboutMissingFiles || err != syscall.ENOENT {
+			r.log.AddError(nil, logger.Range{},
+				fmt.Sprintf("Cannot read file %q: %s",
+					r.PrettyPath(logger.Path{Text: pnpDataPath, Namespace: "file"}), err.Error()))
+		}
 		return
 	}
 	if r.debugLogs != nil {
@@ -622,7 +610,7 @@ func (r resolverQuery) tryToExtractYarnPnPDataFromJS(pnpDataPath string, jsonCac
 		PrettyPath: r.PrettyPath(keyPath),
 		Contents:   contents,
 	}
-	ast, _ := js_parser.Parse(r.log, source, js_parser.OptionsForYarnPnP())
+	ast, _ := r.caches.JSCache.Parse(r.log, source, js_parser.OptionsForYarnPnP())
 
 	if r.debugLogs != nil && ast.ManifestForYarnPnP.Data != nil {
 		r.debugLogs.addNote(fmt.Sprintf("  Extracted JSON data from %q", pnpDataPath))

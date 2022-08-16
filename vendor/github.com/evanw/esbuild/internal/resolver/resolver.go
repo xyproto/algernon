@@ -205,6 +205,9 @@ type resolver struct {
 	// all parent directories
 	dirCache map[string]*dirInfo
 
+	pnpManifestWasChecked bool
+	pnpManifest           *pnpData
+
 	options config.Options
 
 	// This mutex serves two purposes. First of all, it guards access to "dirCache"
@@ -253,6 +256,8 @@ func NewResolver(fs fs.FS, log logger.Log, caches *cache.CacheSet, options confi
 		esmConditionsImport[key] = true
 		esmConditionsRequire[key] = true
 	}
+
+	fs.Cwd()
 
 	return &resolver{
 		fs:                     fs,
@@ -408,6 +413,30 @@ func (rr *resolver) Resolve(sourceDir string, importPath string, kind ast.Import
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	sourceDirInfo := r.loadModuleSuffixesForSourceDir(sourceDir)
+
+	// Check for the Yarn PnP manifest if it hasn't already been checked for
+	if !r.pnpManifestWasChecked {
+		r.pnpManifestWasChecked = true
+
+		// Use the current working directory to find the Yarn PnP manifest. We
+		// can't necessarily use the entry point locations because the entry
+		// point locations aren't necessarily file paths. For example, they could
+		// be HTTP URLs that will be handled by a plugin.
+		for dirInfo := r.dirInfoCached(r.fs.Cwd()); dirInfo != nil; dirInfo = dirInfo.parent {
+			if absPath := dirInfo.pnpManifestAbsPath; absPath != "" {
+				if strings.HasSuffix(absPath, ".json") {
+					if json := r.extractYarnPnPDataFromJSON(absPath, pnpReportErrorsAboutMissingFiles); json.Data != nil {
+						r.pnpManifest = compileYarnPnPData(absPath, r.fs.Dir(absPath), json)
+					}
+				} else {
+					if json := r.tryToExtractYarnPnPDataFromJS(absPath, pnpReportErrorsAboutMissingFiles); json.Data != nil {
+						r.pnpManifest = compileYarnPnPData(absPath, r.fs.Dir(absPath), json)
+					}
+				}
+				break
+			}
+		}
+	}
 
 	result := r.resolveWithoutSymlinks(sourceDir, sourceDirInfo, importPath)
 	if result == nil {
@@ -578,13 +607,14 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 				if pkgJSON := dirInfo.enclosingPackageJSON; pkgJSON != nil && *path == result.PathPair.Primary {
 					if pkgJSON.sideEffectsMap != nil {
 						hasSideEffects := false
-						if pkgJSON.sideEffectsMap[path.Text] {
+						pathLookup := strings.ReplaceAll(path.Text, "\\", "/") // Avoid problems with Windows-style slashes
+						if pkgJSON.sideEffectsMap[pathLookup] {
 							// Fast path: map lookup
 							hasSideEffects = true
 						} else {
 							// Slow path: glob tests
 							for _, re := range pkgJSON.sideEffectsRegexps {
-								if re.MatchString(path.Text) {
+								if re.MatchString(pathLookup) {
 									hasSideEffects = true
 									break
 								}
@@ -691,15 +721,12 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 }
 
 func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *dirInfo, importPath string) *ResolveResult {
-	// Find the parent directory with the Yarn PnP data
-	for info := sourceDirInfo; info != nil; info = info.parent {
-		if info.pnpData != nil {
-			if result, ok := r.pnpResolve(importPath, sourceDirInfo.absPath, info.pnpData); ok {
-				importPath = result // Continue with the module resolution algorithm from node.js
-			} else {
-				return nil // This is a module resolution error
-			}
-			break
+	// If Yarn PnP is active, use it to rewrite the path
+	if r.pnpManifest != nil {
+		if result, ok := r.pnpResolve(importPath, sourceDirInfo.absPath, r.pnpManifest); ok {
+			importPath = result // Continue with the module resolution algorithm from node.js
+		} else {
+			return nil // This is a module resolution error
 		}
 	}
 
@@ -859,8 +886,8 @@ type dirInfo struct {
 
 	// All relevant information about this directory
 	absPath               string
+	pnpManifestAbsPath    string
 	entries               fs.DirEntries
-	pnpData               *pnpData
 	packageJSON           *packageJSON  // Is there a "package.json" file in this directory?
 	enclosingPackageJSON  *packageJSON  // Is there a "package.json" file in this directory or a parent directory?
 	enclosingTSConfigJSON *TSConfigJSON // Is there a "tsconfig.json" file in this directory or a parent directory?
@@ -936,12 +963,57 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 	fileDir := r.fs.Dir(file)
 
 	result := ParseTSConfigJSON(r.log, source, &r.caches.JSONCache, func(extends string, extendsRange logger.Range) *TSConfigJSON {
+		// Note: This doesn't use the normal node module resolution algorithm
+		// both because it's different (e.g. we don't want to match a directory)
+		// and because it would deadlock since we're currently in the middle of
+		// populating the directory info cache.
+
+		// Check for a Yarn PnP manifest and use that to rewrite the path
 		if IsPackagePath(extends) {
-			// If this is a package path, try to resolve it to a "node_modules"
-			// folder. This doesn't use the normal node module resolution algorithm
-			// both because it's different (e.g. we don't want to match a directory)
-			// and because it would deadlock since we're currently in the middle of
-			// populating the directory info cache.
+			pnpData := r.pnpManifest
+
+			// If we haven't loaded the Yarn PnP manifest yet, try to find one
+			if pnpData == nil {
+				current := fileDir
+				for {
+					if _, _, ok := fs.ParseYarnPnPVirtualPath(current); !ok {
+						absPath := r.fs.Join(current, ".pnp.data.json")
+						if json := r.extractYarnPnPDataFromJSON(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
+							pnpData = compileYarnPnPData(absPath, current, json)
+							break
+						}
+
+						absPath = r.fs.Join(current, ".pnp.cjs")
+						if json := r.extractYarnPnPDataFromJSON(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
+							pnpData = compileYarnPnPData(absPath, current, json)
+							break
+						}
+
+						absPath = r.fs.Join(current, ".pnp.js")
+						if json := r.extractYarnPnPDataFromJSON(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
+							pnpData = compileYarnPnPData(absPath, current, json)
+							break
+						}
+					}
+
+					// Go to the parent directory, stopping at the file system root
+					next := r.fs.Dir(current)
+					if current == next {
+						break
+					}
+					current = next
+				}
+			}
+
+			if pnpData != nil {
+				if result, ok := r.pnpResolve(extends, fileDir, pnpData); ok {
+					extends = result // Continue with the module resolution algorithm from node.js
+				}
+			}
+		}
+
+		if IsPackagePath(extends) && !r.fs.IsAbs(extends) {
+			// If this is still a package path, try to resolve it to a "node_modules" directory
 			current := fileDir
 			for {
 				// Skip "node_modules" folders
@@ -1212,21 +1284,14 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 	//
 	//   /project/.yarn/__virtual__/pkg/1/.yarn/__virtual__/pkg/1/bar
 	//
-	if _, _, ok := fs.ParseYarnPnPVirtualPath(path); !ok {
-		if pnp, _ := entries.Get(".pnp.data.json"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
-			absPath := r.fs.Join(path, ".pnp.data.json")
-			if json := r.extractYarnPnPDataFromJSON(absPath, &r.caches.JSONCache); json.Data != nil {
-				info.pnpData = compileYarnPnPData(absPath, path, json)
-			}
-		} else if pnp, _ := entries.Get(".pnp.cjs"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
-			absPath := r.fs.Join(path, ".pnp.cjs")
-			if json := r.tryToExtractYarnPnPDataFromJS(absPath, &r.caches.JSONCache); json.Data != nil {
-				info.pnpData = compileYarnPnPData(absPath, path, json)
-			}
-		} else if pnp, _ := entries.Get(".pnp.js"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
-			absPath := r.fs.Join(path, ".pnp.js")
-			if json := r.tryToExtractYarnPnPDataFromJS(absPath, &r.caches.JSONCache); json.Data != nil {
-				info.pnpData = compileYarnPnPData(absPath, path, json)
+	if r.pnpManifest == nil {
+		if _, _, ok := fs.ParseYarnPnPVirtualPath(path); !ok {
+			if pnp, _ := entries.Get(".pnp.data.json"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+				info.pnpManifestAbsPath = r.fs.Join(path, ".pnp.data.json")
+			} else if pnp, _ := entries.Get(".pnp.cjs"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+				info.pnpManifestAbsPath = r.fs.Join(path, ".pnp.cjs")
+			} else if pnp, _ := entries.Get(".pnp.js"); pnp != nil && pnp.Kind(r.fs) == fs.FileEntry {
+				info.pnpManifestAbsPath = r.fs.Join(path, ".pnp.js")
 			}
 		}
 	}
