@@ -1,5 +1,4 @@
-//go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build unix
 
 package platformdep
 
@@ -9,8 +8,6 @@ import (
 	"encoding/base64"
 	"io"
 	"strings"
-
-	"github.com/xyproto/algernon/utils"
 )
 
 /*
@@ -78,10 +75,8 @@ func insertText(s, tabs string, linenr, offset int, message string, removal int)
 
 // Banner returns ANSI graphics with the current version number embedded in the text
 func Banner(versionString, description string) string {
-	s := "\n" + decompressImage(image)
 	tabs := "\t\t\t\t"
-	s = tabs + strings.Replace(s, "\n", "\n"+tabs, utils.EveryInstance)
-
+	s := tabs + strings.ReplaceAll("\n"+decompressImage(image), "\n", "\n"+tabs)
 	parts := strings.Fields(versionString)
 
 	// See https://github.com/shiena/ansicolor/blob/master/README.md for ANSI color code table

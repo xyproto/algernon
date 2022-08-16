@@ -1,4 +1,4 @@
-// +build darwin,cgo dragonfly,cgo freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
+//go:build unix && cgo
 
 package platformdep
 

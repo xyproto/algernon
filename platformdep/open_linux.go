@@ -1,4 +1,4 @@
-// +build linux solaris
+//go:build linux || solaris
 
 package platformdep
 

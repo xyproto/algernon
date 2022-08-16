@@ -1,4 +1,4 @@
-// +build !linux,!solaris,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd
+//go:build !unix
 
 package platformdep
 
