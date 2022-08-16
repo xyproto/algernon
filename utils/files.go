@@ -2,7 +2,6 @@ package utils
 
 import (
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -79,25 +78,17 @@ func DescribeBytes(size int64) string {
 	return strconv.Itoa(int(round(float64(size)*100.0/MiB)/100)) + " MiB"
 }
 
-// Round a float64 to the nearest integer and return as a float64
-func roundf(x float64) float64 {
-	return math.Floor(0.5 + x)
-}
-
 // Round a float64 to the nearest integer
 func round(x float64) int64 {
-	return int64(roundf(x))
+	return int64(math.Round(x))
 }
 
 // ReadString returns the contents of the given filename as a string.
 // Does not use the cache.  Returns an empty string if there were errors.
 func ReadString(filename string) string {
-	data, err := ioutil.ReadFile(filename)
-	if err == nil {
-		// No error, return the file as a string
+	if data, err := os.ReadFile(filename); err == nil { // success
 		return string(data)
 	}
-	// There were errors, return an empty string
 	return ""
 }
 
@@ -110,11 +101,6 @@ func CanRead(filename string) bool {
 	defer f.Close()
 	var onebyte [1]byte
 	n, err := io.ReadFull(f, onebyte[:])
-	if err != nil {
-		return false
-	}
-	if n != 1 {
-		return false
-	}
-	return true
+	// could exactly 1 byte be read?
+	return err == nil && n == 1
 }
