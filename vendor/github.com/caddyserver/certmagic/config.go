@@ -56,7 +56,7 @@ type Config struct {
 	// to subscribe to certain things happening
 	// internally by this config; invocations are
 	// synchronous, so make them return quickly!
-	OnEvent func(event string, data interface{})
+	OnEvent func(event string, data any)
 
 	// DefaultServerName specifies a server name
 	// to use when choosing a certificate if the
@@ -1065,12 +1065,12 @@ func (cfg *Config) managedCertNeedsRenewal(certRes CertificateResource) (time.Du
 	if err != nil {
 		return 0, true
 	}
-	remaining := time.Until(certChain[0].NotAfter)
-	needsRenew := currentlyInRenewalWindow(certChain[0].NotBefore, certChain[0].NotAfter, cfg.RenewalWindowRatio)
+	remaining := time.Until(expiresAt(certChain[0]))
+	needsRenew := currentlyInRenewalWindow(certChain[0].NotBefore, expiresAt(certChain[0]), cfg.RenewalWindowRatio)
 	return remaining, needsRenew
 }
 
-func (cfg *Config) emit(eventName string, data interface{}) {
+func (cfg *Config) emit(eventName string, data any) {
 	if cfg.OnEvent == nil {
 		return
 	}

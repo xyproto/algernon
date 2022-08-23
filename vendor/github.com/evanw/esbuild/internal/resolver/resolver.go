@@ -721,15 +721,6 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 }
 
 func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *dirInfo, importPath string) *ResolveResult {
-	// If Yarn PnP is active, use it to rewrite the path
-	if r.pnpManifest != nil {
-		if result, ok := r.pnpResolve(importPath, sourceDirInfo.absPath, r.pnpManifest); ok {
-			importPath = result // Continue with the module resolution algorithm from node.js
-		} else {
-			return nil // This is a module resolution error
-		}
-	}
-
 	// This implements the module resolution algorithm from node.js, which is
 	// described here: https://nodejs.org/api/modules.html#modules_all_together
 	var result ResolveResult
@@ -984,13 +975,13 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 						}
 
 						absPath = r.fs.Join(current, ".pnp.cjs")
-						if json := r.extractYarnPnPDataFromJSON(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
+						if json := r.tryToExtractYarnPnPDataFromJS(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
 							pnpData = compileYarnPnPData(absPath, current, json)
 							break
 						}
 
 						absPath = r.fs.Join(current, ".pnp.js")
-						if json := r.extractYarnPnPDataFromJSON(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
+						if json := r.tryToExtractYarnPnPDataFromJS(absPath, pnpIgnoreErrorsAboutMissingFiles); json.Data != nil {
 							pnpData = compileYarnPnPData(absPath, current, json)
 							break
 						}
@@ -1006,8 +997,14 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 			}
 
 			if pnpData != nil {
-				if result, ok := r.pnpResolve(extends, fileDir, pnpData); ok {
-					extends = result // Continue with the module resolution algorithm from node.js
+				if result := r.resolveToUnqualified(extends, fileDir, pnpData); result.status == pnpError {
+					if r.debugLogs != nil {
+						r.debugLogs.addNote("The Yarn PnP path resolution algorithm returned an error")
+					}
+					goto pnpError
+				} else if result.status == pnpSuccess {
+					// Continue with the module resolution algorithm from node.js
+					extends = r.fs.Join(result.pkgDirPath, result.pkgSubpath)
 				}
 			}
 		}
@@ -1095,6 +1092,7 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 		}
 
 		// Suppress warnings about missing base config files inside "node_modules"
+	pnpError:
 		if !helpers.IsInsideNodeModules(file) {
 			r.log.AddID(logger.MsgID_TsconfigJSON_Missing, logger.Warning, &tracker, extendsRange,
 				fmt.Sprintf("Cannot find base config file %q", extends))
@@ -1988,6 +1986,49 @@ func (r resolverQuery) loadNodeModules(importPath string, dirInfo *dirInfo, forb
 			if absolute, ok, diffCase := r.loadAsFileOrDirectory(basePath); ok {
 				return absolute, true, diffCase
 			}
+		}
+	}
+
+	// If Yarn PnP is active, use it to find the package
+	if r.pnpManifest != nil {
+		if result := r.resolveToUnqualified(importPath, dirInfo.absPath, r.pnpManifest); result.status == pnpError {
+			if r.debugLogs != nil {
+				r.debugLogs.addNote("The Yarn PnP path resolution algorithm returned an error")
+			}
+			return PathPair{}, false, nil
+		} else if result.status == pnpSuccess {
+			absPath := r.fs.Join(result.pkgDirPath, result.pkgSubpath)
+
+			// If Yarn PnP path resolution succeeded, run a custom abbreviated
+			// version of node's module resolution algorithm. The Yarn PnP
+			// specification says to use node's module resolution algorithm verbatim
+			// but that isn't what Yarn actually does. See this for more info:
+			// https://github.com/evanw/esbuild/issues/2473#issuecomment-1216774461
+			if pkgDirInfo := r.dirInfoCached(result.pkgDirPath); pkgDirInfo != nil {
+				// Check the "exports" map
+				if packageJSON := pkgDirInfo.packageJSON; packageJSON != nil && packageJSON.exportsMap != nil {
+					return r.esmResolveAlgorithm(result.pkgIdent, "."+result.pkgSubpath, packageJSON, pkgDirInfo.absPath, absPath)
+				}
+
+				// Check the "browser" map
+				if remapped, ok := r.checkBrowserMap(pkgDirInfo, absPath, absolutePathKind); ok {
+					if remapped == nil {
+						return PathPair{Primary: logger.Path{Text: absPath, Namespace: "file", Flags: logger.PathDisabled}}, true, nil
+					}
+					if remappedResult, ok, diffCase := r.resolveWithoutRemapping(pkgDirInfo.enclosingBrowserScope, *remapped); ok {
+						return remappedResult, true, diffCase
+					}
+				}
+
+				if absolute, ok, diffCase := r.loadAsFileOrDirectory(absPath); ok {
+					return absolute, true, diffCase
+				}
+			}
+
+			if r.debugLogs != nil {
+				r.debugLogs.addNote(fmt.Sprintf("Failed to resolve %q to a file", absPath))
+			}
+			return PathPair{}, false, nil
 		}
 	}
 
