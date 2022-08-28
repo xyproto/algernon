@@ -37,12 +37,6 @@ github.com/bmizerany/assert
 # github.com/caddyserver/certmagic v0.16.3
 ## explicit; go 1.18
 github.com/caddyserver/certmagic
-# github.com/cheekybits/genny v1.0.0
-## explicit
-github.com/cheekybits/genny
-github.com/cheekybits/genny/generic
-github.com/cheekybits/genny/out
-github.com/cheekybits/genny/parse
 # github.com/chzyer/readline v1.5.1
 ## explicit; go 1.15
 github.com/chzyer/readline
@@ -114,6 +108,10 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
+# github.com/golang/mock v1.6.0
+## explicit; go 1.11
+github.com/golang/mock/mockgen
+github.com/golang/mock/mockgen/model
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
@@ -134,8 +132,8 @@ github.com/lib/pq/scram
 # github.com/libdns/libdns v0.2.1
 ## explicit; go 1.14
 github.com/libdns/libdns
-# github.com/lucas-clemente/quic-go v0.28.1
-## explicit; go 1.16
+# github.com/lucas-clemente/quic-go v0.29.0
+## explicit; go 1.18
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/http3
 github.com/lucas-clemente/quic-go/internal/ackhandler
@@ -147,18 +145,13 @@ github.com/lucas-clemente/quic-go/internal/protocol
 github.com/lucas-clemente/quic-go/internal/qerr
 github.com/lucas-clemente/quic-go/internal/qtls
 github.com/lucas-clemente/quic-go/internal/utils
+github.com/lucas-clemente/quic-go/internal/utils/linkedlist
 github.com/lucas-clemente/quic-go/internal/wire
 github.com/lucas-clemente/quic-go/logging
 github.com/lucas-clemente/quic-go/quicvarint
 # github.com/marten-seemann/qpack v0.2.1
 ## explicit; go 1.14
 github.com/marten-seemann/qpack
-# github.com/marten-seemann/qtls-go1-16 v0.1.5
-## explicit; go 1.16
-github.com/marten-seemann/qtls-go1-16
-# github.com/marten-seemann/qtls-go1-17 v0.1.2
-## explicit; go 1.17
-github.com/marten-seemann/qtls-go1-17
 # github.com/marten-seemann/qtls-go1-18 v0.1.2
 ## explicit; go 1.18
 github.com/marten-seemann/qtls-go1-18
@@ -376,7 +369,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20220824171710-5757bc0c5503
+# golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -391,12 +384,16 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
+# golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
+## explicit; go 1.18
+golang.org/x/exp/constraints
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/internal/lazyregexp
+golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c
+# golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
