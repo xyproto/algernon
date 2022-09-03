@@ -34,7 +34,7 @@ github.com/alecthomas/chroma/styles
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 github.com/bmizerany/assert
-# github.com/caddyserver/certmagic v0.16.3
+# github.com/caddyserver/certmagic v0.17.0
 ## explicit; go 1.18
 github.com/caddyserver/certmagic
 # github.com/chzyer/readline v1.5.1
@@ -64,7 +64,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.15.5
+# github.com/evanw/esbuild v0.15.6
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -324,8 +324,8 @@ github.com/xyproto/simpleform
 # github.com/xyproto/simplehstore v1.8.1
 ## explicit; go 1.11
 github.com/xyproto/simplehstore
-# github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92
-## explicit
+# github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98
+## explicit; go 1.19
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af
 ## explicit; go 1.8
@@ -369,7 +369,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
+# golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -404,7 +404,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
+# golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs

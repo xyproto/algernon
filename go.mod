@@ -4,13 +4,13 @@ go 1.19
 
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.16.3
+	github.com/caddyserver/certmagic v0.17.0
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.6.9
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.15.5
+	github.com/evanw/esbuild v0.15.6
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.6
 	github.com/lucas-clemente/quic-go v0.29.0
@@ -81,17 +81,17 @@ require (
 	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
 	github.com/xyproto/randomstring v0.0.0-20220311122621-4964ec363205 // indirect
 	github.com/xyproto/simplehstore v1.8.1 // indirect
-	github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92 // indirect
+	github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/xyproto/vt100 v1.11.3 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d // indirect
+	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/tools v0.1.12 // indirect
