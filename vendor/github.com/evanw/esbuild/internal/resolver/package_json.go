@@ -442,8 +442,8 @@ func (r resolverQuery) parsePackageJSON(inputPath string) *packageJSON {
 	}
 
 	// Read the "imports" map
-	if importsJSON, _, ok := getProperty(json, "imports"); ok {
-		if importsMap := parseImportsExportsMap(jsonSource, r.log, importsJSON); importsMap != nil {
+	if importsJSON, importsLoc, ok := getProperty(json, "imports"); ok {
+		if importsMap := parseImportsExportsMap(jsonSource, r.log, importsJSON, importsLoc); importsMap != nil {
 			if importsMap.root.kind != pjObject {
 				r.log.AddID(logger.MsgID_PackageJSON_InvalidImportsOrExports, logger.Warning, &tracker, importsMap.root.firstToken,
 					"The value for \"imports\" must be an object")
@@ -453,8 +453,8 @@ func (r resolverQuery) parsePackageJSON(inputPath string) *packageJSON {
 	}
 
 	// Read the "exports" map
-	if exportsJSON, _, ok := getProperty(json, "exports"); ok {
-		if exportsMap := parseImportsExportsMap(jsonSource, r.log, exportsJSON); exportsMap != nil {
+	if exportsJSON, exportsLoc, ok := getProperty(json, "exports"); ok {
+		if exportsMap := parseImportsExportsMap(jsonSource, r.log, exportsJSON, exportsLoc); exportsMap != nil {
 			packageJSON.exportsMap = exportsMap
 		}
 	}
@@ -524,7 +524,8 @@ func globstarToEscapedRegexp(glob string) (string, bool) {
 
 // Reference: https://nodejs.org/api/esm.html#esm_resolver_algorithm_specification
 type pjMap struct {
-	root pjEntry
+	root           pjEntry
+	propertyKeyLoc logger.Loc
 }
 
 type pjKind uint8
@@ -571,7 +572,7 @@ func (entry pjEntry) valueForKey(key string) (pjEntry, bool) {
 	return pjEntry{}, false
 }
 
-func parseImportsExportsMap(source logger.Source, log logger.Log, json js_ast.Expr) *pjMap {
+func parseImportsExportsMap(source logger.Source, log logger.Log, json js_ast.Expr, propertyKeyLoc logger.Loc) *pjMap {
 	var visit func(expr js_ast.Expr) pjEntry
 	tracker := logger.MakeLineColumnTracker(&source)
 
@@ -679,7 +680,7 @@ func parseImportsExportsMap(source logger.Source, log logger.Log, json js_ast.Ex
 		return nil
 	}
 
-	return &pjMap{root: root}
+	return &pjMap{root: root, propertyKeyLoc: propertyKeyLoc}
 }
 
 func (entry pjEntry) keysStartWithDot() bool {
@@ -693,6 +694,7 @@ const (
 	pjStatusUndefinedNoConditionsMatch          // A more friendly error message for when no conditions are matched
 	pjStatusNull
 	pjStatusExact
+	pjStatusExactEndsWithStar
 	pjStatusInexact        // This means we may need to try CommonJS-style extension suffixes
 	pjStatusPackageResolve // Need to re-run package resolution on the result
 
@@ -713,9 +715,11 @@ const (
 
 	// The package or module requested does not exist.
 	pjStatusModuleNotFound
+	pjStatusModuleNotFoundMissingExtension // The user just needs to add the missing extension
 
 	// The resolved path corresponds to a directory, which is not a supported target for module imports.
 	pjStatusUnsupportedDirectoryImport
+	pjStatusUnsupportedDirectoryImportMissingIndex // The user just needs to add the missing "/index.js" suffix
 )
 
 func (status pjStatus) isUndefined() bool {
@@ -737,7 +741,7 @@ func (r resolverQuery) esmHandlePostConditions(
 	status pjStatus,
 	debug pjDebug,
 ) (string, pjStatus, pjDebug) {
-	if status != pjStatusExact && status != pjStatusInexact {
+	if status != pjStatusExact && status != pjStatusExactEndsWithStar && status != pjStatusInexact {
 		return resolved, status, debug
 	}
 
@@ -886,7 +890,7 @@ func (r resolverQuery) esmPackageImportsExportsResolve(
 				r.debugLogs.addNote(fmt.Sprintf("The key %q matched with %q left over", expansion.key, subpath))
 			}
 			result, status, debug := r.esmPackageTargetResolve(packageURL, target, subpath, false, isImports, conditions)
-			if status == pjStatusExact {
+			if status == pjStatusExact || status == pjStatusExactEndsWithStar {
 				// Return the object { resolved, exact: false }.
 				status = pjStatusInexact
 			}
@@ -1002,7 +1006,11 @@ func (r resolverQuery) esmPackageTargetResolve(
 			if r.debugLogs != nil {
 				r.debugLogs.addNote(fmt.Sprintf("Substituted %q for \"*\" in %q to get %q", subpath, "."+resolvedTarget, "."+result))
 			}
-			return result, pjStatusExact, pjDebug{token: target.firstToken}
+			status := pjStatusExact
+			if strings.HasSuffix(resolvedTarget, "*") && strings.IndexByte(resolvedTarget, '*') == len(resolvedTarget)-1 {
+				status = pjStatusExactEndsWithStar
+			}
+			return result, status, pjDebug{token: target.firstToken}
 		} else {
 			// Return the URL resolution of the concatenation of subpath and resolvedTarget.
 			result := path.Join(resolvedTarget, subpath)

@@ -1,3 +1,4 @@
+// Package env provides convenience functions for retrieving data from environment variables
 package env
 
 import (
@@ -157,16 +158,23 @@ func AsBool(s string) bool {
 // HomeDir returns the path to the home directory of the user, if available.
 // If not available, $LOGNAME or $USER are used to construct a path starting with /home/.
 // If $LOGNAME and $USER are not available, just "/tmp" is returned.
+// The returned string is what the home directory should have been named, if it would have existed.
+// No checks are made for if the directory exists.
 func HomeDir() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		// Use $LOGNAME, $USER or "user", in that order
 		userName := StrAlt("LOGNAME", "USER", "user")
-		// Use $HOME or /home/username
-		homeDir = Str("HOME", "/home/"+userName)
-		if homeDir == "/home/user" {
-			homeDir = "/tmp"
+		// If the user name is "root", use /root
+		if userName == "root" {
+			return "/root"
 		}
+		// If the user name is "user", use either $HOME or /tmp
+		if userName == "user" {
+			return Str("HOME", "/tmp")
+		}
+		// Use $HOME if it's available, and a constructed home directory path if not
+		return Str("HOME", "/home/"+userName)
 	}
 	return homeDir
 }
