@@ -115,7 +115,6 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 	defer ac.luapool.Put(L)
 
 	// Warn if the connection is closed before the script has finished.
-	// Requires that the requestWriter has CloseNotify.
 	if ac.verboseMode {
 
 		done := make(chan bool)
