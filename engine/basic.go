@@ -112,6 +112,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Print text to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"print\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
@@ -131,6 +138,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Pretty print text to the web page that is being served. Add a newline.
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"pprint\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
@@ -169,14 +183,48 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Flush the ResponseWriter.
 	// Needed in debug mode, where ResponseWriter is buffered.
 	L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"flush\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		if flushFunc != nil {
 			flushFunc()
 		}
 		return 0 // number of results
 	}))
 
+	// Close the communication with the client by setting a "Connection: close" header,
+	// flushing and setting req.Close to true.
+	L.SetGlobal("close", L.NewFunction(func(L *lua.LState) int {
+		// Close the connection.
+		// Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
+		w.Header().Add("Connection", "close")
+		// Flush, if possible
+		if flushFunc != nil {
+			flushFunc()
+		}
+		// Stop Lua functions from writing more to this client
+		req.Close = true
+
+		// TODO: Set up the HTTP/QUIC/HTTP/2 Server structs with a ConnContext
+		//       field and then fetch the connection from the req.Context()
+		//       and use it here for closing the connection.
+
+		return 0 // number of results
+	}))
+
 	// Set the Content-Type for the page
 	L.SetGlobal("content", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"content\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		lv := L.ToString(1)
 		w.Header().Add("Content-Type", lv)
 		return 0 // number of results
@@ -217,6 +265,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Set the HTTP header in the request, for a given key and value
 	L.SetGlobal("setheader", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"setheader\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		key := L.ToString(1)
 		value := L.ToString(2)
 		w.Header().Set(key, value)
@@ -238,6 +293,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Set the HTTP status code (must come before print)
 	L.SetGlobal("status", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"status\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		code := int(L.ToNumber(1))
 		if httpStatus != nil {
 			httpStatus.code = code
@@ -251,6 +313,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Set a HTTP status code and print a message (optional)
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("call to \"error\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		code := int(L.ToNumber(1))
 		if httpStatus != nil {
 			httpStatus.code = code
@@ -312,10 +381,10 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Retrieve a table with keys and values from the URL in the request
 	L.SetGlobal("urldata", L.NewFunction(func(L *lua.LState) int {
-
-		var valueMap url.Values
-		var err error
-
+		var (
+			valueMap url.Values
+			err      error
+		)
 		if L.GetTop() == 1 {
 			// If given an argument
 			rawurl := L.ToString(1)
@@ -344,6 +413,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Redirect a request (as found, by default)
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("redirect after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		newurl := L.ToString(1)
 		httpStatusCode := http.StatusFound
 		if L.GetTop() == 2 {
@@ -358,6 +434,13 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Permanently redirect a request, which is the same as redirect(url, 301)
 	L.SetGlobal("permanent_redirect", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				log.Error("permanent_redirect after closing the connection")
+			}
+			return 0 // number of results
+		}
+
 		newurl := L.ToString(1)
 		httpStatusCode := http.StatusMovedPermanently
 		if httpStatus != nil {

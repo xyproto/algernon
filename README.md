@@ -372,6 +372,10 @@ redirect(string[, number])
 // Permanent redirect to an absolute or relative URL. Uses status code 302.
 permanent_redirect(string)
 
+// Send "Connection: close" as a header to the client, flush the body and also
+// stop Lua functions from writing more data to the HTTP body.
+close()
+
 // Transmit what has been outputted so far, to the client.
 flush()
 ~~~
