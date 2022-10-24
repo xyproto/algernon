@@ -52,7 +52,7 @@ func IsTimeoutError(err error) bool {
 	}
 
 	// TODO: make it reliable
-	if strings.Contains(err.Error(), "timeout") {
+	if strings.Contains(strings.ToLower(err.Error()), "timeout") {
 		return true
 	}
 

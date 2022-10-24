@@ -34,7 +34,7 @@ import (
 // Constants definations
 // CURL options, see https://github.com/bagder/curl/blob/169fedbdce93ecf14befb6e0e1ce6a2d480252a3/packages/OS400/curl.inc.in
 const (
-	VERSION   = "0.6.9"
+	VERSION   = "0.7.0"
 	USERAGENT = "go-httpclient v" + VERSION
 )
 
@@ -186,52 +186,70 @@ func prepareRequest(method string, url_ string, headers map[string]string,
 	return req, nil
 }
 
-// Prepare a transport.
-//
-// Handles timemout, proxy and maybe other transport related options here.
-func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
-	transport := &http.Transport{}
-
-	var connectTimeout time.Duration
-
-	if connectTimeoutMS_, ok := options[OPT_CONNECTTIMEOUT_MS]; ok {
-		if connectTimeoutMS, ok := connectTimeoutMS_.(int); ok {
-			connectTimeout = time.Duration(connectTimeoutMS) * time.Millisecond
-		} else {
-			return nil, fmt.Errorf("OPT_CONNECTTIMEOUT_MS must be int")
-		}
-	} else if connectTimeout_, ok := options[OPT_CONNECTTIMEOUT]; ok {
-		if connectTimeout, ok = connectTimeout_.(time.Duration); !ok {
-			if connectTimeoutS, ok := connectTimeout_.(int); ok {
-				connectTimeout = time.Duration(connectTimeoutS) * time.Second
-			} else {
-				return nil, fmt.Errorf("OPT_CONNECTTIMEOUT must be int or time.Duration")
-			}
-		}
-	}
-
+func prepareTimeout(options map[int]interface{}) (time.Duration, error) {
 	var timeout time.Duration
 
 	if timeoutMS_, ok := options[OPT_TIMEOUT_MS]; ok {
 		if timeoutMS, ok := timeoutMS_.(int); ok {
 			timeout = time.Duration(timeoutMS) * time.Millisecond
 		} else {
-			return nil, fmt.Errorf("OPT_TIMEOUT_MS must be int")
+			return 0, fmt.Errorf("OPT_TIMEOUT_MS must be int")
 		}
 	} else if timeout_, ok := options[OPT_TIMEOUT]; ok {
 		if timeout, ok = timeout_.(time.Duration); !ok {
 			if timeoutS, ok := timeout_.(int); ok {
 				timeout = time.Duration(timeoutS) * time.Second
 			} else {
-				return nil, fmt.Errorf("OPT_TIMEOUT must be int or time.Duration")
+				return 0, fmt.Errorf("OPT_TIMEOUT must be int or time.Duration")
 			}
 		}
+	}
+
+	return timeout, nil
+}
+
+func prepareConnTimeout(options map[int]interface{}) (time.Duration, error) {
+	var connectTimeout time.Duration
+
+	if connectTimeoutMS_, ok := options[OPT_CONNECTTIMEOUT_MS]; ok {
+		if connectTimeoutMS, ok := connectTimeoutMS_.(int); ok {
+			connectTimeout = time.Duration(connectTimeoutMS) * time.Millisecond
+		} else {
+			return 0, fmt.Errorf("OPT_CONNECTTIMEOUT_MS must be int")
+		}
+	} else if connectTimeout_, ok := options[OPT_CONNECTTIMEOUT]; ok {
+		if connectTimeout, ok = connectTimeout_.(time.Duration); !ok {
+			if connectTimeoutS, ok := connectTimeout_.(int); ok {
+				connectTimeout = time.Duration(connectTimeoutS) * time.Second
+			} else {
+				return 0, fmt.Errorf("OPT_CONNECTTIMEOUT must be int or time.Duration")
+			}
+		}
+	}
+
+	timeout, err := prepareTimeout(options)
+	if err != nil {
+		return 0, err
 	}
 
 	// fix connect timeout(important, or it might cause a long time wait during
 	//connection)
 	if timeout > 0 && (connectTimeout > timeout || connectTimeout == 0) {
 		connectTimeout = timeout
+	}
+
+	return connectTimeout, nil
+}
+
+// Prepare a transport.
+//
+// Handles timemout, proxy and maybe other transport related options here.
+func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
+	transport := &http.Transport{}
+
+	connectTimeout, err := prepareConnTimeout(options)
+	if err != nil {
+		return nil, err
 	}
 
 	transport.Dial = func(network, addr string) (net.Conn, error) {
@@ -247,10 +265,6 @@ func prepareTransport(options map[int]interface{}) (http.RoundTripper, error) {
 			if err != nil {
 				return nil, err
 			}
-		}
-
-		if timeout > 0 {
-			conn.SetDeadline(time.Now().Add(timeout))
 		}
 
 		return conn, nil
@@ -596,24 +610,25 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
 		jar = this.jar
 	}
 
-	// release lock
-	this.reset()
-
-	redirect, err := prepareRedirect(options)
+	// timeout
+	timeout, err := prepareTimeout(options)
 	if err != nil {
+		this.reset()
 		return nil, err
 	}
 
-	c := &http.Client{
-		Transport:     transport,
-		CheckRedirect: redirect,
-		Jar:           jar,
+	redirect, err := prepareRedirect(options)
+	if err != nil {
+		this.reset()
+		return nil, err
 	}
 
 	req, err := prepareRequest(method, url, headers, body, options)
 	if err != nil {
+		this.reset()
 		return nil, err
 	}
+
 	if debugEnabled, ok := options[OPT_DEBUG]; ok {
 		if debugEnabled.(bool) {
 			dump, err := httputil.DumpRequestOut(req, true)
@@ -637,7 +652,19 @@ func (this *HttpClient) Do(method string, url string, headers map[string]string,
 		}
 	}
 
-	if beforeReqFunc, ok := options[OPT_BEFORE_REQUEST_FUNC]; ok {
+	beforeReqFunc := options[OPT_BEFORE_REQUEST_FUNC]
+
+	// release lock
+	this.reset()
+
+	c := &http.Client{
+		Transport:     transport,
+		CheckRedirect: redirect,
+		Jar:           jar,
+		Timeout:       timeout,
+	}
+
+	if beforeReqFunc != nil {
 		if f, ok := beforeReqFunc.(func(c *http.Client, r *http.Request)); ok {
 			f(c, req)
 		}

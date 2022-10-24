@@ -110,8 +110,10 @@ const (
 	ENQCMD                              // Enqueue Command
 	ERMS                                // Enhanced REP MOVSB/STOSB
 	F16C                                // Half-precision floating-point conversion
+	FLUSH_L1D                           // Flush L1D cache
 	FMA3                                // Intel FMA 3. Does not imply AVX.
 	FMA4                                // Bulldozer FMA4 functions
+	FSRM                                // Fast Short Rep Mov
 	FXSR                                // FXSAVE, FXRESTOR instructions, CR4 bit 9
 	FXSROPT                             // FXSAVE/FXRSTOR optimizations
 	GFNI                                // Galois Field New Instructions. May require other features (AVX, AVX512VL,AVX512F) based on usage.
@@ -119,7 +121,10 @@ const (
 	HRESET                              // If set CPU supports history reset and the IA32_HRESET_ENABLE MSR
 	HTT                                 // Hyperthreading (enabled)
 	HWA                                 // Hardware assert supported. Indicates support for MSRC001_10
+	HYBRID_CPU                          // This part has CPUs of more than one type.
 	HYPERVISOR                          // This bit has been reserved by Intel & AMD for use by hypervisors
+	IA32_ARCH_CAP                       // IA32_ARCH_CAPABILITIES MSR (Intel)
+	IA32_CORE_CAP                       // IA32_CORE_CAPABILITIES MSR
 	IBPB                                // Indirect Branch Restricted Speculation (IBRS) and Indirect Branch Predictor Barrier (IBPB)
 	IBS                                 // Instruction Based Sampling (AMD)
 	IBSBRNTRGT                          // Instruction Based Sampling Feature (AMD)
@@ -138,7 +143,9 @@ const (
 	LBRVIRT                             // LBR virtualization
 	LZCNT                               // LZCNT instruction
 	MCAOVERFLOW                         // MCA overflow recovery support.
+	MCDT_NO                             // Processor do not exhibit MXCSR Configuration Dependent Timing behavior and do not need to mitigate it.
 	MCOMMIT                             // MCOMMIT instruction supported
+	MD_CLEAR                            // VERW clears CPU buffers
 	MMX                                 // standard MMX
 	MMXEXT                              // SSE integer functions or AMD MMX ext
 	MOVBE                               // MOVBE instruction (big-endian)
@@ -172,6 +179,8 @@ const (
 	SHA                                 // Intel SHA Extensions
 	SME                                 // AMD Secure Memory Encryption supported
 	SME_COHERENT                        // AMD Hardware cache coherency across encryption domains enforced
+	SPEC_CTRL_SSBD                      // Speculative Store Bypass Disable
+	SRBDS_CTRL                          // SRBDS mitigation MSR available
 	SSE                                 // SSE functions
 	SSE2                                // P4 SSE functions
 	SSE3                                // Prescott SSE3 functions
@@ -192,8 +201,8 @@ const (
 	SYSCALL                             // System-Call Extension (SCE): SYSCALL and SYSRET instructions.
 	SYSEE                               // SYSENTER and SYSEXIT instructions
 	TBM                                 // AMD Trailing Bit Manipulation
-	TOPEXT                              // TopologyExtensions: topology extensions support. Indicates support for CPUID Fn8000_001D_EAX_x[N:0]-CPUID Fn8000_001E_EDX.
 	TME                                 // Intel Total Memory Encryption. The following MSRs are supported: IA32_TME_CAPABILITY, IA32_TME_ACTIVATE, IA32_TME_EXCLUDE_MASK, and IA32_TME_EXCLUDE_BASE.
+	TOPEXT                              // TopologyExtensions: topology extensions support. Indicates support for CPUID Fn8000_001D_EAX_x[N:0]-CPUID Fn8000_001E_EDX.
 	TSCRATEMSR                          // MSR based TSC rate control. Indicates support for MSR TSC ratio MSRC000_0104
 	TSXLDTRK                            // Intel TSX Suspend Load Address Tracking
 	VAES                                // Vector AES. AVX(512) versions requires additional checks.
@@ -1093,13 +1102,21 @@ func support() flagSet {
 		fs.setIf(ecx&(1<<30) != 0, SGXLC)
 
 		// CPUID.(EAX=7, ECX=0).EDX
+		fs.setIf(edx&(1<<4) != 0, FSRM)
+		fs.setIf(edx&(1<<9) != 0, SRBDS_CTRL)
+		fs.setIf(edx&(1<<10) != 0, MD_CLEAR)
 		fs.setIf(edx&(1<<11) != 0, RTM_ALWAYS_ABORT)
 		fs.setIf(edx&(1<<14) != 0, SERIALIZE)
+		fs.setIf(edx&(1<<15) != 0, HYBRID_CPU)
 		fs.setIf(edx&(1<<16) != 0, TSXLDTRK)
 		fs.setIf(edx&(1<<18) != 0, PCONFIG)
 		fs.setIf(edx&(1<<20) != 0, CETIBT)
 		fs.setIf(edx&(1<<26) != 0, IBPB)
 		fs.setIf(edx&(1<<27) != 0, STIBP)
+		fs.setIf(edx&(1<<28) != 0, FLUSH_L1D)
+		fs.setIf(edx&(1<<29) != 0, IA32_ARCH_CAP)
+		fs.setIf(edx&(1<<30) != 0, IA32_CORE_CAP)
+		fs.setIf(edx&(1<<31) != 0, SPEC_CTRL_SSBD)
 
 		// CPUID.(EAX=7, ECX=1)
 		eax1, _, _, _ := cpuidex(7, 1)
@@ -1147,7 +1164,12 @@ func support() flagSet {
 				fs.setIf(eax1&(1<<5) != 0, AVX512BF16)
 			}
 		}
+
+		// CPUID.(EAX=7, ECX=2)
+		_, _, _, edx = cpuidex(7, 2)
+		fs.setIf(edx&(1<<5) != 0, MCDT_NO)
 	}
+
 	// Processor Extended State Enumeration Sub-leaf (EAX = 0DH, ECX = 1)
 	// EAX
 	// Bit 00: XSAVEOPT is available.
