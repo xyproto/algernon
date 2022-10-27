@@ -373,7 +373,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20221023144134-a1e5550cf13e
+# golang.org/x/exp v0.0.0-20221026153819-32f3d567a233
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.6.0
