@@ -11,8 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/pprof"
-	"runtime/trace"
 	"strconv"
 	"strings"
 	"sync"
@@ -76,9 +74,6 @@ type Config struct {
 	openExecutable               string // open the URL after serving, with a specific executable
 	serverAddrLua                string // configuration that may only be set in the server configuration script(s)
 	dbName                       string
-	traceFilename                string // trace filename
-	profileMem                   string // memory profiling filename
-	profileCPU                   string // CPU profiling filename
 	serverHeaderName             string // used in the HTTP headers as the "Server" name
 	eventAddr                    string // for the Server-Sent Event (SSE) server (host and port)
 	eventRefresh                 string // for the Server-Sent Event (SSE) server (duration of an event cycle)
@@ -256,57 +251,9 @@ func (ac *Config) initFilesAndCache() error {
 		return ErrVersion
 	}
 
-	// CPU profiling
-	if ac.profileCPU != "" {
-		f, errProfile := os.Create(ac.profileCPU)
-		if errProfile != nil {
-			return errProfile
-		}
-		go func() {
-			log.Info("Profiling CPU usage")
-			pprof.StartCPUProfile(f)
-		}()
-		AtShutdown(func() {
-			pprof.StopCPUProfile()
-			log.Info("Done profiling CPU usage")
-			f.Close()
-		})
-	}
-
-	// Memory profiling at server shutdown
-	if ac.profileMem != "" {
-		AtShutdown(func() {
-			f, errProfile := os.Create(ac.profileMem)
-			if errProfile != nil {
-				// Fatal is okay here, since it's inside the anonymous shutdown function
-				log.Fatalln(errProfile)
-			}
-			defer f.Close()
-			log.Info("Saving heap profile to ", ac.profileMem)
-			pprof.WriteHeapProfile(f)
-		})
-	}
-
-	// Tracing
-	if ac.traceFilename != "" {
-
-		f, errTrace := os.Create(ac.traceFilename)
-		if errTrace != nil {
-			return errTrace
-		}
-		go func() {
-			log.Info("Tracing")
-			if err = trace.Start(f); err != nil {
-				panic(err)
-			}
-		}()
-		AtShutdown(func() {
-			pprof.StopCPUProfile()
-			trace.Stop()
-			log.Info("Done tracing")
-			f.Close()
-		})
-	}
+	// CPU and memory profiling, if it is enabled at build time, and one of these
+	// flags are provided (+ a filename): -cpuprofile, -memprofile, -fgtrace or -trace
+	traceStart()
 
 	// Touch the common access log, if specified
 	if ac.commonAccessLogFilename != "" {
