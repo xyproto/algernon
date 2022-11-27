@@ -4,7 +4,7 @@
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/ddliu/go-httpclient)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ddliu/go-httpclient)](https://goreportcard.com/report/github.com/ddliu/go-httpclient)
-[![cover.run](https://cover.run/go/github.com/ddliu/go-httpclient.svg?style=flat&tag=golang-1.10)](https://cover.run/go?tag=golang-1.10&repo=github.com%2Fddliu%2Fgo-httpclient)
+[![Coverage Status](https://coveralls.io/repos/github/ddliu/go-httpclient/badge.svg?branch=master)](https://coveralls.io/github/ddliu/go-httpclient?branch=master)
 
 Advanced HTTP client for golang.
 

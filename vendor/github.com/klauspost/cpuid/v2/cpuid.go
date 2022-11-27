@@ -106,13 +106,17 @@ const (
 	CMPSB_SCADBS_SHORT                  // Fast short CMPSB and SCASB
 	CMPXCHG8                            // CMPXCHG8 instruction
 	CPBOOST                             // Core Performance Boost
+	CPPC                                // AMD: Collaborative Processor Performance Control
 	CX16                                // CMPXCHG16B Instruction
+	EFER_LMSLE_UNS                      // AMD: =Core::X86::Msr::EFER[LMSLE] is not supported, and MBZ
 	ENQCMD                              // Enqueue Command
 	ERMS                                // Enhanced REP MOVSB/STOSB
 	F16C                                // Half-precision floating-point conversion
 	FLUSH_L1D                           // Flush L1D cache
 	FMA3                                // Intel FMA 3. Does not imply AVX.
 	FMA4                                // Bulldozer FMA4 functions
+	FP128                               // AMD: When set, the internal FP/SIMD execution datapath is no more than 128-bits wide
+	FP256                               // AMD: When set, the internal FP/SIMD execution datapath is no more than 256-bits wide
 	FSRM                                // Fast Short Rep Mov
 	FXSR                                // FXSAVE, FXRESTOR instructions, CR4 bit 9
 	FXSROPT                             // FXSAVE/FXRSTOR optimizations
@@ -126,6 +130,9 @@ const (
 	IA32_ARCH_CAP                       // IA32_ARCH_CAPABILITIES MSR (Intel)
 	IA32_CORE_CAP                       // IA32_CORE_CAPABILITIES MSR
 	IBPB                                // Indirect Branch Restricted Speculation (IBRS) and Indirect Branch Predictor Barrier (IBPB)
+	IBRS                                // AMD: Indirect Branch Restricted Speculation
+	IBRS_PREFERRED                      // AMD: IBRS is preferred over software solution
+	IBRS_PROVIDES_SMP                   // AMD: IBRS provides Same Mode Protection
 	IBS                                 // Instruction Based Sampling (AMD)
 	IBSBRNTRGT                          // Instruction Based Sampling Feature (AMD)
 	IBSFETCHSAM                         // Instruction Based Sampling Feature (AMD)
@@ -135,7 +142,11 @@ const (
 	IBSOPSAM                            // Instruction Based Sampling Feature (AMD)
 	IBSRDWROPCNT                        // Instruction Based Sampling Feature (AMD)
 	IBSRIPINVALIDCHK                    // Instruction Based Sampling Feature (AMD)
+	IBS_FETCH_CTLX                      // AMD: IBS fetch control extended MSR supported
+	IBS_OPDATA4                         // AMD: IBS op data 4 MSR supported
+	IBS_OPFUSE                          // AMD: Indicates support for IbsOpFuse
 	IBS_PREVENTHOST                     // Disallowing IBS use by the host supported
+	IBS_ZEN4                            // AMD: Fetch and Op IBS support IBS extensions added with Zen4
 	INT_WBINVD                          // WBINVD/WBNOINVD are interruptible.
 	INVLPGB                             // NVLPGB and TLBSYNC instruction supported
 	LAHF                                // LAHF/SAHF in long mode
@@ -152,6 +163,7 @@ const (
 	MOVDIR64B                           // Move 64 Bytes as Direct Store
 	MOVDIRI                             // Move Doubleword as Direct Store
 	MOVSB_ZL                            // Fast Zero-Length MOVSB
+	MOVU                                // AMD: MOVU SSE instructions are more efficient and should be preferred to SSE	MOVL/MOVH. MOVUPS is more efficient than MOVLPS/MOVHPS. MOVUPD is more efficient than MOVLPD/MOVHPD
 	MPX                                 // Intel MPX (Memory Protection Extensions)
 	MSRIRC                              // Instruction Retired Counter MSR available
 	MSR_PAGEFLUSH                       // Page Flush MSR available
@@ -160,6 +172,8 @@ const (
 	OSXSAVE                             // XSAVE enabled by OS
 	PCONFIG                             // PCONFIG for Intel Multi-Key Total Memory Encryption
 	POPCNT                              // POPCNT instruction
+	PPIN                                // AMD: Protected Processor Inventory Number support. Indicates that Protected Processor Inventory Number (PPIN) capability can be enabled
+	PSFD                                // AMD: Predictive Store Forward Disable
 	RDPRU                               // RDPRU instruction supported
 	RDRAND                              // RDRAND instruction is available
 	RDSEED                              // RDSEED instruction is available
@@ -189,6 +203,7 @@ const (
 	SSE4A                               // AMD Barcelona microarchitecture SSE4a instructions
 	SSSE3                               // Conroe SSSE3 functions
 	STIBP                               // Single Thread Indirect Branch Predictors
+	STIBP_ALWAYSON                      // AMD: Single Thread Indirect Branch Prediction Mode has Enhanced Performance and may be left Always On
 	STOSB_SHORT                         // Fast short STOSB
 	SUCCOR                              // Software uncorrectable error containment and recovery capability.
 	SVM                                 // AMD Secure Virtual Machine
@@ -201,6 +216,7 @@ const (
 	SYSCALL                             // System-Call Extension (SCE): SYSCALL and SYSRET instructions.
 	SYSEE                               // SYSENTER and SYSEXIT instructions
 	TBM                                 // AMD Trailing Bit Manipulation
+	TLB_FLUSH_NESTED                    // AMD: Flushing includes all the nested translations for guest translations
 	TME                                 // Intel Total Memory Encryption. The following MSRs are supported: IA32_TME_CAPABILITY, IA32_TME_ACTIVATE, IA32_TME_EXCLUDE_MASK, and IA32_TME_EXCLUDE_BASE.
 	TOPEXT                              // TopologyExtensions: topology extensions support. Indicates support for CPUID Fn8000_001D_EAX_x[N:0]-CPUID Fn8000_001E_EDX.
 	TSCRATEMSR                          // MSR based TSC rate control. Indicates support for MSR TSC ratio MSRC000_0104
@@ -367,7 +383,7 @@ func (c CPUInfo) Supports(ids ...FeatureID) bool {
 
 // Has allows for checking a single feature.
 // Should be inlined by the compiler.
-func (c CPUInfo) Has(id FeatureID) bool {
+func (c *CPUInfo) Has(id FeatureID) bool {
 	return c.featureSet.inSet(id)
 }
 
@@ -381,26 +397,47 @@ func (c CPUInfo) AnyOf(ids ...FeatureID) bool {
 	return false
 }
 
+// Features contains several features combined for a fast check using
+// CpuInfo.HasAll
+type Features *flagSet
+
+// CombineFeatures allows to combine several features for a close to constant time lookup.
+func CombineFeatures(ids ...FeatureID) Features {
+	var v flagSet
+	for _, id := range ids {
+		v.set(id)
+	}
+	return &v
+}
+
+func (c *CPUInfo) HasAll(f Features) bool {
+	return c.featureSet.hasSetP(f)
+}
+
 // https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
-var level1Features = flagSetWith(CMOV, CMPXCHG8, X87, FXSR, MMX, SYSCALL, SSE, SSE2)
-var level2Features = flagSetWith(CMOV, CMPXCHG8, X87, FXSR, MMX, SYSCALL, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3)
-var level3Features = flagSetWith(CMOV, CMPXCHG8, X87, FXSR, MMX, SYSCALL, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3, AVX, AVX2, BMI1, BMI2, F16C, FMA3, LZCNT, MOVBE, OSXSAVE)
-var level4Features = flagSetWith(CMOV, CMPXCHG8, X87, FXSR, MMX, SYSCALL, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3, AVX, AVX2, BMI1, BMI2, F16C, FMA3, LZCNT, MOVBE, OSXSAVE, AVX512F, AVX512BW, AVX512CD, AVX512DQ, AVX512VL)
+var oneOfLevel = CombineFeatures(SYSEE, SYSCALL)
+var level1Features = CombineFeatures(CMOV, CMPXCHG8, X87, FXSR, MMX, SSE, SSE2)
+var level2Features = CombineFeatures(CMOV, CMPXCHG8, X87, FXSR, MMX, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3)
+var level3Features = CombineFeatures(CMOV, CMPXCHG8, X87, FXSR, MMX, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3, AVX, AVX2, BMI1, BMI2, F16C, FMA3, LZCNT, MOVBE, OSXSAVE)
+var level4Features = CombineFeatures(CMOV, CMPXCHG8, X87, FXSR, MMX, SSE, SSE2, CX16, LAHF, POPCNT, SSE3, SSE4, SSE42, SSSE3, AVX, AVX2, BMI1, BMI2, F16C, FMA3, LZCNT, MOVBE, OSXSAVE, AVX512F, AVX512BW, AVX512CD, AVX512DQ, AVX512VL)
 
 // X64Level returns the microarchitecture level detected on the CPU.
 // If features are lacking or non x64 mode, 0 is returned.
 // See https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
 func (c CPUInfo) X64Level() int {
-	if c.featureSet.hasSet(level4Features) {
+	if !c.featureSet.hasOneOf(oneOfLevel) {
+		return 0
+	}
+	if c.featureSet.hasSetP(level4Features) {
 		return 4
 	}
-	if c.featureSet.hasSet(level3Features) {
+	if c.featureSet.hasSetP(level3Features) {
 		return 3
 	}
-	if c.featureSet.hasSet(level2Features) {
+	if c.featureSet.hasSetP(level2Features) {
 		return 2
 	}
-	if c.featureSet.hasSet(level1Features) {
+	if c.featureSet.hasSetP(level1Features) {
 		return 1
 	}
 	return 0
@@ -564,7 +601,7 @@ const flagMask = flagBits - 1
 // flagSet contains detected cpu features and characteristics in an array of flags
 type flagSet [(lastID + flagMask) / flagBits]flags
 
-func (s flagSet) inSet(feat FeatureID) bool {
+func (s *flagSet) inSet(feat FeatureID) bool {
 	return s[feat>>flagBitsLog2]&(1<<(feat&flagMask)) != 0
 }
 
@@ -594,7 +631,7 @@ func (s *flagSet) or(other flagSet) {
 }
 
 // hasSet returns whether all features are present.
-func (s flagSet) hasSet(other flagSet) bool {
+func (s *flagSet) hasSet(other flagSet) bool {
 	for i, v := range other[:] {
 		if s[i]&v != v {
 			return false
@@ -603,8 +640,28 @@ func (s flagSet) hasSet(other flagSet) bool {
 	return true
 }
 
+// hasSet returns whether all features are present.
+func (s *flagSet) hasSetP(other *flagSet) bool {
+	for i, v := range other[:] {
+		if s[i]&v != v {
+			return false
+		}
+	}
+	return true
+}
+
+// hasOneOf returns whether one or more features are present.
+func (s *flagSet) hasOneOf(other *flagSet) bool {
+	for i, v := range other[:] {
+		if s[i]&v != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // nEnabled will return the number of enabled flags.
-func (s flagSet) nEnabled() (n int) {
+func (s *flagSet) nEnabled() (n int) {
 	for _, v := range s[:] {
 		n += bits.OnesCount64(uint64(v))
 	}
@@ -1234,9 +1291,21 @@ func support() flagSet {
 
 	if maxExtendedFunction() >= 0x80000008 {
 		_, b, _, _ := cpuid(0x80000008)
+		fs.setIf(b&(1<<28) != 0, PSFD)
+		fs.setIf(b&(1<<27) != 0, CPPC)
+		fs.setIf(b&(1<<24) != 0, SPEC_CTRL_SSBD)
+		fs.setIf(b&(1<<23) != 0, PPIN)
+		fs.setIf(b&(1<<21) != 0, TLB_FLUSH_NESTED)
+		fs.setIf(b&(1<<20) != 0, EFER_LMSLE_UNS)
+		fs.setIf(b&(1<<19) != 0, IBRS_PROVIDES_SMP)
+		fs.setIf(b&(1<<18) != 0, IBRS_PREFERRED)
+		fs.setIf(b&(1<<17) != 0, STIBP_ALWAYSON)
+		fs.setIf(b&(1<<15) != 0, STIBP)
+		fs.setIf(b&(1<<14) != 0, IBRS)
+		fs.setIf((b&(1<<13)) != 0, INT_WBINVD)
+		fs.setIf(b&(1<<12) != 0, IBPB)
 		fs.setIf((b&(1<<9)) != 0, WBNOINVD)
 		fs.setIf((b&(1<<8)) != 0, MCOMMIT)
-		fs.setIf((b&(1<<13)) != 0, INT_WBINVD)
 		fs.setIf((b&(1<<4)) != 0, RDPRU)
 		fs.setIf((b&(1<<3)) != 0, INVLPGB)
 		fs.setIf((b&(1<<1)) != 0, MSRIRC)
@@ -1257,6 +1326,13 @@ func support() flagSet {
 		fs.setIf((edx>>12)&1 == 1, SVMPFT)
 	}
 
+	if maxExtendedFunction() >= 0x8000001a {
+		eax, _, _, _ := cpuid(0x8000001a)
+		fs.setIf((eax>>0)&1 == 1, FP128)
+		fs.setIf((eax>>1)&1 == 1, MOVU)
+		fs.setIf((eax>>2)&1 == 1, FP256)
+	}
+
 	if maxExtendedFunction() >= 0x8000001b && fs.inSet(IBS) {
 		eax, _, _, _ := cpuid(0x8000001b)
 		fs.setIf((eax>>0)&1 == 1, IBSFFV)
@@ -1267,6 +1343,10 @@ func support() flagSet {
 		fs.setIf((eax>>5)&1 == 1, IBSBRNTRGT)
 		fs.setIf((eax>>6)&1 == 1, IBSOPCNTEXT)
 		fs.setIf((eax>>7)&1 == 1, IBSRIPINVALIDCHK)
+		fs.setIf((eax>>8)&1 == 1, IBS_OPFUSE)
+		fs.setIf((eax>>9)&1 == 1, IBS_FETCH_CTLX)
+		fs.setIf((eax>>10)&1 == 1, IBS_OPDATA4) // Doc says "Fixed,0. IBS op data 4 MSR supported", but assuming they mean 1.
+		fs.setIf((eax>>11)&1 == 1, IBS_ZEN4)
 	}
 
 	if maxExtendedFunction() >= 0x8000001f && vend == AMD {

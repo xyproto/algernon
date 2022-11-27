@@ -6,14 +6,14 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/caddyserver/certmagic v0.17.2
 	github.com/chzyer/readline v1.5.1
-	github.com/ddliu/go-httpclient v0.7.0
+	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.15.13
+	github.com/evanw/esbuild v0.15.15
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.7
-	github.com/lucas-clemente/quic-go v0.30.0
+	github.com/lucas-clemente/quic-go v0.31.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/russross/blackfriday/v2 v2.1.0
@@ -44,7 +44,7 @@ require (
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.1.0
+	golang.org/x/net v0.2.0
 )
 
 require (
@@ -57,8 +57,8 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/pprof v0.0.0-20221103000818-d260c55eee4c // indirect
-	github.com/klauspost/cpuid/v2 v2.1.2 // indirect
+	github.com/google/pprof v0.0.0-20221118152302-e6195bd50e26 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/mholt/acmez v1.0.4 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.4.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.5.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
@@ -88,13 +88,13 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326 // indirect
-	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
+	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	golang.org/x/time v0.1.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/time v0.2.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
