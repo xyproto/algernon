@@ -36,7 +36,7 @@ require (
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
 	github.com/xyproto/pstore v1.3.1
 	github.com/xyproto/recwatch v1.1.0
-	github.com/xyproto/sheepcounter v1.6.1-0.20190122175537-f11b139b0d83
+	github.com/xyproto/sheepcounter v1.6.1
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simpleredis v0.0.0-20220117114834-9a1000fbd7af

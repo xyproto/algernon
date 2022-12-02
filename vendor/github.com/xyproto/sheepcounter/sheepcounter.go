@@ -1,3 +1,4 @@
+// Package sheepcounter is a byte counter that wraps a http.ResponseWriter
 package sheepcounter
 
 import (
@@ -21,11 +22,11 @@ type SheepCounter struct {
 	overflow              bool
 }
 
-// NewSheepCounter is a deprecated alias for the New function
-var NewSheepCounter = New
+// New is an alias for the NewSheepCounter function
+var New = NewSheepCounter
 
-// New creates a struct that wraps an existing http.ResponseWriter
-func New(w http.ResponseWriter) *SheepCounter {
+// NewSheepCounter creates a struct that wraps an existing http.ResponseWriter
+func NewSheepCounter(w http.ResponseWriter) *SheepCounter {
 	return &SheepCounter{w, 0, false}
 }
 
@@ -68,7 +69,7 @@ func (sc *SheepCounter) Counter2() (int64, error) {
 	return int64(sc.bytesWritten), nil
 }
 
-// Ucounter returns the bytes written so far, as an uint64
+// UCounter returns the bytes written so far, as an uint64
 func (sc *SheepCounter) UCounter() uint64 {
 	return sc.bytesWritten
 }
