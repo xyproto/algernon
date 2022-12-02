@@ -1,0 +1,46 @@
+// Unless explicitly stated otherwise all files in this repository are licensed
+// under the Apache License Version 2.0.
+// This product includes software developed at Datadog (https://www.datadoghq.com/).
+// Copyright 2021 Datadog, Inc.
+
+// NOTE(fg): To run this benchmark you have to drop the ".disabled" suffix from
+// the filename. This is done to avoid the panicparse library ending up in the
+// go.mod file of this package. If anybody has better ideas, please let me know
+// : ).
+
+package gostackparse
+
+import (
+	"bytes"
+	"io"
+	"io/ioutil"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/maruel/panicparse/v2/stack"
+	"github.com/stretchr/testify/require"
+)
+
+func BenchmarkPanicparse(b *testing.B) {
+	data, err := ioutil.ReadFile(filepath.Join("test-fixtures", "waitsince.txt"))
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	start := time.Now()
+	parsedBytes := 0
+	for i := 0; i < b.N; i++ {
+		parsedBytes += len(data)
+		s, _, err := stack.ScanSnapshot(bytes.NewReader(data), io.Discard, stack.DefaultOpts())
+		if err != nil && err != io.EOF {
+			b.Fatal(err)
+		} else if l := len(s.Goroutines); l != 9 {
+			b.Fatal(l)
+		}
+	}
+
+	mbPerSec := float64(parsedBytes) / time.Since(start).Seconds() / 1024 / 1024
+	b.ReportMetric(mbPerSec, "MiB/s")
+}
