@@ -73,6 +73,7 @@ const (
 	AMD3DNOW                            // AMD 3DNOW
 	AMD3DNOWEXT                         // AMD 3DNowExt
 	AMXBF16                             // Tile computational operations on BFLOAT16 numbers
+	AMXFP16                             // Tile computational operations on FP16 numbers
 	AMXINT8                             // Tile computational operations on 8-bit integers
 	AMXTILE                             // Tile architecture
 	AVX                                 // AVX functions
@@ -173,6 +174,7 @@ const (
 	PCONFIG                             // PCONFIG for Intel Multi-Key Total Memory Encryption
 	POPCNT                              // POPCNT instruction
 	PPIN                                // AMD: Protected Processor Inventory Number support. Indicates that Protected Processor Inventory Number (PPIN) capability can be enabled
+	PREFETCHI                           // PREFETCHIT0/1 instructions
 	PSFD                                // AMD: Predictive Store Forward Disable
 	RDPRU                               // RDPRU instruction supported
 	RDRAND                              // RDRAND instruction is available
@@ -1175,6 +1177,9 @@ func support() flagSet {
 		fs.setIf(edx&(1<<30) != 0, IA32_CORE_CAP)
 		fs.setIf(edx&(1<<31) != 0, SPEC_CTRL_SSBD)
 
+		// CPUID.(EAX=7, ECX=1).EDX
+		fs.setIf(edx&(1<<14) != 0, PREFETCHI)
+
 		// CPUID.(EAX=7, ECX=1)
 		eax1, _, _, _ := cpuidex(7, 1)
 		fs.setIf(fs.inSet(AVX) && eax1&(1<<4) != 0, AVXVNNI)
@@ -1219,6 +1224,7 @@ func support() flagSet {
 				fs.setIf(edx&(1<<25) != 0, AMXINT8)
 				// eax1 = CPUID.(EAX=7, ECX=1).EAX
 				fs.setIf(eax1&(1<<5) != 0, AVX512BF16)
+				fs.setIf(eax1&(1<<21) != 0, AMXFP16)
 			}
 		}
 

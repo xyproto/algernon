@@ -4203,6 +4203,7 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 		ConstValues:                  c.graph.ConstValues,
 		LegalComments:                c.options.LegalComments,
 		UnsupportedFeatures:          c.options.UnsupportedJSFeatures,
+		SourceMap:                    c.options.SourceMap,
 		AddSourceMappings:            addSourceMappings,
 		InputSourceMap:               inputSourceMap,
 		LineOffsetTables:             lineOffsetTables,
@@ -5321,12 +5322,14 @@ func (c *linkerContext) generateChunkCSS(chunks []chunkInfo, chunkIndex int, chu
 			}
 
 			cssOptions := css_printer.Options{
-				MinifyWhitespace:  c.options.MinifyWhitespace,
-				ASCIIOnly:         c.options.ASCIIOnly,
-				LegalComments:     c.options.LegalComments,
-				AddSourceMappings: addSourceMappings,
-				InputSourceMap:    inputSourceMap,
-				LineOffsetTables:  lineOffsetTables,
+				MinifyWhitespace:    c.options.MinifyWhitespace,
+				ASCIIOnly:           c.options.ASCIIOnly,
+				LegalComments:       c.options.LegalComments,
+				SourceMap:           c.options.SourceMap,
+				UnsupportedFeatures: c.options.UnsupportedCSSFeatures,
+				AddSourceMappings:   addSourceMappings,
+				InputSourceMap:      inputSourceMap,
+				LineOffsetTables:    lineOffsetTables,
 			}
 			compileResult.PrintResult = css_printer.Print(asts[i], cssOptions)
 			compileResult.sourceIndex = sourceIndex

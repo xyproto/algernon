@@ -97,11 +97,9 @@ func validatePathTemplate(template string) []config.PathTemplate {
 	return parts
 }
 
-func validatePlatform(value Platform, defaultPlatform config.Platform) config.Platform {
+func validatePlatform(value Platform) config.Platform {
 	switch value {
-	case PlatformDefault:
-		return defaultPlatform
-	case PlatformBrowser:
+	case PlatformDefault, PlatformBrowser:
 		return config.PlatformBrowser
 	case PlatformNode:
 		return config.PlatformNode
@@ -146,13 +144,7 @@ func validateSourceMap(value SourceMap) config.SourceMap {
 
 func validateLegalComments(value LegalComments, bundle bool) config.LegalComments {
 	switch value {
-	case LegalCommentsDefault:
-		if bundle {
-			return config.LegalCommentsEndOfFile
-		} else {
-			return config.LegalCommentsInline
-		}
-	case LegalCommentsNone:
+	case LegalCommentsDefault, LegalCommentsNone:
 		return config.LegalCommentsNone
 	case LegalCommentsInline:
 		return config.LegalCommentsInline
@@ -921,8 +913,8 @@ func printSummary(logOptions logger.OutputOptions, outputFiles []OutputFile, sta
 
 	// Don't print the time taken by the build if we're running under Yarn 1
 	// since Yarn 1 always prints its own copy of the time taken by each command
-	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "npm_config_user_agent=") && strings.Contains(env, "yarn/1.") {
+	if userAgent, ok := os.LookupEnv("npm_config_user_agent"); ok {
+		if strings.Contains(userAgent, "yarn/1.") {
 			logger.PrintSummary(logOptions.Color, table, nil)
 			return
 		}
@@ -952,11 +944,11 @@ func rebuildImpl(
 	}
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, buildOpts.Target, buildOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, buildOpts.Supported)
-	outJS, outCSS := validateOutputExtensions(log, buildOpts.OutExtensions)
+	outJS, outCSS := validateOutputExtensions(log, buildOpts.OutExtension)
 	bannerJS, bannerCSS := validateBannerOrFooter(log, "banner", buildOpts.Banner)
 	footerJS, footerCSS := validateBannerOrFooter(log, "footer", buildOpts.Footer)
 	minify := buildOpts.MinifyWhitespace && buildOpts.MinifyIdentifiers && buildOpts.MinifySyntax
-	platform := validatePlatform(buildOpts.Platform, config.PlatformBrowser)
+	platform := validatePlatform(buildOpts.Platform)
 	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, platform, minify, buildOpts.Drop)
 	mangleCache := cloneMangleCache(log, buildOpts.MangleCache)
 	options := config.Options{
@@ -969,8 +961,8 @@ func rebuildImpl(
 		UnsupportedCSSFeatureOverridesMask: cssMask,
 		OriginalTargetEnv:                  targetEnv,
 		JSX: config.JSXOptions{
-			Preserve:         buildOpts.JSXMode == JSXModePreserve,
-			AutomaticRuntime: buildOpts.JSXMode == JSXModeAutomatic,
+			Preserve:         buildOpts.JSX == JSXPreserve,
+			AutomaticRuntime: buildOpts.JSX == JSXAutomatic,
 			Factory:          validateJSXExpr(log, buildOpts.JSXFactory, "factory"),
 			Fragment:         validateJSXExpr(log, buildOpts.JSXFragment, "fragment"),
 			Development:      buildOpts.JSXDev,
@@ -1013,7 +1005,6 @@ func rebuildImpl(
 		PackageAliases:        validateAlias(log, realFS, buildOpts.Alias),
 		TsConfigOverride:      validatePath(log, realFS, buildOpts.Tsconfig, "tsconfig path"),
 		MainFields:            buildOpts.MainFields,
-		Conditions:            append([]string{}, buildOpts.Conditions...),
 		PublicPath:            buildOpts.PublicPath,
 		KeepNames:             buildOpts.KeepNames,
 		InjectAbsPaths:        make([]string, len(buildOpts.Inject)),
@@ -1025,6 +1016,9 @@ func rebuildImpl(
 		PreserveSymlinks:      buildOpts.PreserveSymlinks,
 		WatchMode:             buildOpts.Watch != nil,
 		Plugins:               plugins,
+	}
+	if buildOpts.Conditions != nil {
+		options.Conditions = append([]string{}, buildOpts.Conditions...)
 	}
 	if options.MainFields != nil {
 		options.MainFields = append([]string{}, options.MainFields...)
@@ -1115,6 +1109,11 @@ func rebuildImpl(
 		options.Mode = config.ModeBundle
 	} else if options.OutputFormat != config.FormatPreserve {
 		options.Mode = config.ModeConvertFormat
+	}
+
+	// Automatically enable the "module" condition for better tree shaking
+	if options.Conditions == nil && options.Platform != config.PlatformNeutral {
+		options.Conditions = []string{"module"}
 	}
 
 	// Code splitting is experimental and currently only enabled for ES6 modules
@@ -1436,8 +1435,8 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	var unusedImportFlagsTS config.UnusedImportFlagsTS
 	useDefineForClassFieldsTS := config.Unspecified
 	jsx := config.JSXOptions{
-		Preserve:         transformOpts.JSXMode == JSXModePreserve,
-		AutomaticRuntime: transformOpts.JSXMode == JSXModeAutomatic,
+		Preserve:         transformOpts.JSX == JSXPreserve,
+		AutomaticRuntime: transformOpts.JSX == JSXAutomatic,
 		Factory:          validateJSXExpr(log, transformOpts.JSXFactory, "factory"),
 		Fragment:         validateJSXExpr(log, transformOpts.JSXFragment, "fragment"),
 		Development:      transformOpts.JSXDev,
@@ -1491,7 +1490,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	// Convert and validate the transformOpts
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, transformOpts.Target, transformOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, transformOpts.Supported)
-	platform := validatePlatform(transformOpts.Platform, config.PlatformNeutral)
+	platform := validatePlatform(transformOpts.Platform)
 	defines, injectedDefines := validateDefines(log, transformOpts.Define, transformOpts.Pure, platform, false /* minify */, transformOpts.Drop)
 	mangleCache := cloneMangleCache(log, transformOpts.MangleCache)
 	options := config.Options{
@@ -1850,6 +1849,10 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 			// change the initial options object, which can affect path resolution.
 			if buildOptions == nil {
 				return ResolveResult{Errors: []Message{{Text: "Cannot call \"resolve\" before plugin setup has completed"}}}
+			}
+
+			if options.Kind == ResolveNone {
+				return ResolveResult{Errors: []Message{{Text: "Must specify \"kind\" when calling \"resolve\""}}}
 			}
 
 			// Make a new resolver so it has its own log

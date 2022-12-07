@@ -269,6 +269,7 @@ Exit Code 1
 | AMD3DNOWEXT        | AMD 3DNowExt                                                                                                                                                                       |
 | AMXBF16            | Tile computational operations on BFLOAT16 numbers                                                                                                                                  |
 | AMXINT8            | Tile computational operations on 8-bit integers                                                                                                                                    |
+| AMXFP16            | Tile computational operations on FP16 numbers                                                                                                                                      |
 | AMXTILE            | Tile architecture                                                                                                                                                                  |
 | AVX                | AVX functions                                                                                                                                                                      |
 | AVX2               | AVX2 functions                                                                                                                                                                     |
@@ -368,6 +369,7 @@ Exit Code 1
 | PCONFIG            | PCONFIG for Intel Multi-Key Total Memory Encryption                                                                                                                                |
 | POPCNT             | POPCNT instruction                                                                                                                                                                 |
 | PPIN               | AMD: Protected Processor Inventory Number support. Indicates that Protected Processor Inventory Number (PPIN) capability can be enabled                                            |
+| PREFETCHI          | PREFETCHIT0/1 instructions                                            |
 | PSFD               | AMD: Predictive Store Forward Disable                                                                                                                                              |
 | RDPRU              | RDPRU instruction supported                                                                                                                                                        |
 | RDRAND             | RDRAND instruction is available                                                                                                                                                    |

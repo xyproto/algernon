@@ -152,17 +152,24 @@ func (p *parser) skipTypeScriptParenOrFnType() {
 }
 
 func (p *parser) skipTypeScriptReturnType() {
-	p.skipTypeScriptTypeWithOpts(js_ast.LLowest, skipTypeOpts{isReturnType: true})
+	p.skipTypeScriptTypeWithFlags(js_ast.LLowest, isReturnTypeFlag)
 }
 
 func (p *parser) skipTypeScriptType(level js_ast.L) {
-	p.skipTypeScriptTypeWithOpts(level, skipTypeOpts{})
+	p.skipTypeScriptTypeWithFlags(level, 0)
 }
 
-type skipTypeOpts struct {
-	isReturnType     bool
-	isIndexSignature bool
-	allowTupleLabels bool
+type skipTypeFlags uint8
+
+const (
+	isReturnTypeFlag skipTypeFlags = 1 << iota
+	isIndexSignatureFlag
+	allowTupleLabelsFlag
+	disallowConditionalTypesFlag
+)
+
+func (flags skipTypeFlags) has(flag skipTypeFlags) bool {
+	return (flags & flag) != 0
 }
 
 type tsTypeIdentifierKind uint8
@@ -200,7 +207,7 @@ var tsTypeIdentifierMap = map[string]tsTypeIdentifierKind{
 	"infer": tsTypeIdentifierInfer,
 }
 
-func (p *parser) skipTypeScriptTypeWithOpts(level js_ast.L, opts skipTypeOpts) {
+func (p *parser) skipTypeScriptTypeWithFlags(level js_ast.L, flags skipTypeFlags) {
 loop:
 	for {
 		switch p.lexer.Token {
@@ -214,7 +221,7 @@ loop:
 			p.lexer.Next()
 
 			// "[const: number]"
-			if opts.allowTupleLabels && p.lexer.Token == js_lexer.TColon {
+			if flags.has(allowTupleLabelsFlag) && p.lexer.Token == js_lexer.TColon {
 				p.log.AddError(&p.tracker, r, "Unexpected \"const\"")
 			}
 
@@ -249,7 +256,7 @@ loop:
 			p.lexer.Next()
 
 			// "[import: number]"
-			if opts.allowTupleLabels && p.lexer.Token == js_lexer.TColon {
+			if flags.has(allowTupleLabelsFlag) && p.lexer.Token == js_lexer.TColon {
 				return
 			}
 
@@ -275,7 +282,7 @@ loop:
 			p.lexer.Next()
 
 			// "[new: number]"
-			if opts.allowTupleLabels && p.lexer.Token == js_lexer.TColon {
+			if flags.has(allowTupleLabelsFlag) && p.lexer.Token == js_lexer.TColon {
 				return
 			}
 
@@ -306,7 +313,7 @@ loop:
 				// Invalid:
 				//   "A extends B ? keyof : string"
 				//
-				if p.lexer.Token != js_lexer.TColon || (!opts.isIndexSignature && !opts.allowTupleLabels) {
+				if p.lexer.Token != js_lexer.TColon || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
 					p.skipTypeScriptType(js_ast.LPrefix)
 				}
 				break loop
@@ -317,10 +324,10 @@ loop:
 				// "type Foo = Bar extends [infer T] ? T : null"
 				// "type Foo = Bar extends [infer T extends string] ? T : null"
 				// "type Foo = Bar extends [infer T extends string ? infer T : never] ? T : null"
-				if p.lexer.Token != js_lexer.TColon || (!opts.isIndexSignature && !opts.allowTupleLabels) {
+				if p.lexer.Token != js_lexer.TColon || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
 					p.lexer.Expect(js_lexer.TIdentifier)
 					if p.lexer.Token == js_lexer.TExtends {
-						p.trySkipTypeScriptConstraintOfInferTypeWithBacktracking()
+						p.trySkipTypeScriptConstraintOfInferTypeWithBacktracking(flags)
 					}
 				}
 				break loop
@@ -347,7 +354,7 @@ loop:
 
 				// "function assert(x: boolean): asserts x"
 				// "function assert(x: boolean): asserts x is boolean"
-				if opts.isReturnType && !p.lexer.HasNewlineBefore && (p.lexer.Token == js_lexer.TIdentifier || p.lexer.Token == js_lexer.TThis) {
+				if flags.has(isReturnTypeFlag) && !p.lexer.HasNewlineBefore && (p.lexer.Token == js_lexer.TIdentifier || p.lexer.Token == js_lexer.TThis) {
 					p.lexer.Next()
 				}
 
@@ -375,7 +382,7 @@ loop:
 			p.lexer.Next()
 
 			// "[typeof: number]"
-			if opts.allowTupleLabels && p.lexer.Token == js_lexer.TColon {
+			if flags.has(allowTupleLabelsFlag) && p.lexer.Token == js_lexer.TColon {
 				return
 			}
 
@@ -412,7 +419,7 @@ loop:
 				if p.lexer.Token == js_lexer.TDotDotDot {
 					p.lexer.Next()
 				}
-				p.skipTypeScriptTypeWithOpts(js_ast.LLowest, skipTypeOpts{allowTupleLabels: true})
+				p.skipTypeScriptTypeWithFlags(js_ast.LLowest, allowTupleLabelsFlag)
 				if p.lexer.Token == js_lexer.TQuestion {
 					p.lexer.Next()
 				}
@@ -444,7 +451,7 @@ loop:
 
 		default:
 			// "[function: number]"
-			if opts.allowTupleLabels && p.lexer.IsIdentifierOrKeyword() {
+			if flags.has(allowTupleLabelsFlag) && p.lexer.IsIdentifierOrKeyword() {
 				if p.lexer.Token != js_lexer.TFunction {
 					p.log.AddError(&p.tracker, p.lexer.Range(), fmt.Sprintf("Unexpected %q", p.lexer.Raw()))
 				}
@@ -512,13 +519,13 @@ loop:
 
 		case js_lexer.TExtends:
 			// "{ x: number \n extends: boolean }" must not become a single type
-			if p.lexer.HasNewlineBefore || level >= js_ast.LConditional {
+			if p.lexer.HasNewlineBefore || flags.has(disallowConditionalTypesFlag) {
 				return
 			}
 			p.lexer.Next()
 
 			// The type following "extends" is not permitted to be another conditional type
-			p.skipTypeScriptType(js_ast.LConditional)
+			p.skipTypeScriptTypeWithFlags(js_ast.LLowest, disallowConditionalTypesFlag)
 			p.lexer.Expect(js_lexer.TQuestion)
 			p.skipTypeScriptType(js_ast.LLowest)
 			p.lexer.Expect(js_lexer.TColon)
@@ -552,7 +559,7 @@ func (p *parser) skipTypeScriptObjectType() {
 		if p.lexer.Token == js_lexer.TOpenBracket {
 			// Index signature or computed property
 			p.lexer.Next()
-			p.skipTypeScriptTypeWithOpts(js_ast.LLowest, skipTypeOpts{isIndexSignature: true})
+			p.skipTypeScriptTypeWithFlags(js_ast.LLowest, isIndexSignatureFlag)
 
 			// "{ [key: string]: number }"
 			// "{ readonly [K in keyof T]: T[K] }"
@@ -853,7 +860,7 @@ func (p *parser) trySkipTypeScriptArrowArgsWithBacktracking() bool {
 	return true
 }
 
-func (p *parser) trySkipTypeScriptConstraintOfInferTypeWithBacktracking() bool {
+func (p *parser) trySkipTypeScriptConstraintOfInferTypeWithBacktracking(flags skipTypeFlags) bool {
 	oldLexer := p.lexer
 	p.lexer.IsLogDisabled = true
 
@@ -868,8 +875,8 @@ func (p *parser) trySkipTypeScriptConstraintOfInferTypeWithBacktracking() bool {
 	}()
 
 	p.lexer.Expect(js_lexer.TExtends)
-	p.skipTypeScriptType(js_ast.LPrefix)
-	if p.lexer.Token == js_lexer.TQuestion {
+	p.skipTypeScriptTypeWithFlags(js_ast.LPrefix, disallowConditionalTypesFlag)
+	if !flags.has(disallowConditionalTypesFlag) && p.lexer.Token == js_lexer.TQuestion {
 		p.lexer.Unexpected()
 	}
 

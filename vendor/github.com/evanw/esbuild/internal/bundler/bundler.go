@@ -288,6 +288,9 @@ func parseFile(args parseArgs) {
 		mimeType := guessMimeType(ext, source.Contents)
 		encoded := base64.StdEncoding.EncodeToString([]byte(source.Contents))
 		url := fmt.Sprintf("data:%s;base64,%s", mimeType, encoded)
+		if percentURL, ok := helpers.EncodeStringAsPercentEscapedDataURL(mimeType, source.Contents); ok && len(percentURL) < len(url) {
+			url = percentURL
+		}
 		expr := js_ast.Expr{Data: &js_ast.EString{Value: helpers.StringToUTF16(url)}}
 		ast := js_parser.LazyExportAST(args.log, source, js_parser.OptionsFromConfig(&args.options), expr, "")
 		ast.URLForCSS = url
@@ -465,19 +468,22 @@ func parseFile(args parseArgs) {
 		case *graph.CSSRepr:
 			sourceMapComment = repr.AST.SourceMapComment
 		}
+
 		if sourceMapComment.Text != "" {
 			tracker := logger.MakeLineColumnTracker(&source)
+
 			if path, contents := extractSourceMapFromComment(args.log, args.fs, &args.caches.FSCache,
 				args.res, &source, &tracker, sourceMapComment, absResolveDir); contents != nil {
 				prettyPath := args.res.PrettyPath(path)
 				log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, args.log.Overrides)
-				result.file.inputFile.InputSourceMap = js_parser.ParseSourceMap(log, logger.Source{
+
+				sourceMap := js_parser.ParseSourceMap(log, logger.Source{
 					KeyPath:    path,
 					PrettyPath: prettyPath,
 					Contents:   *contents,
 				})
-				msgs := log.Done()
-				if len(msgs) > 0 {
+
+				if msgs := log.Done(); len(msgs) > 0 {
 					var text string
 					if path.Namespace == "file" {
 						text = fmt.Sprintf("The source map %q was referenced by the file %q here:", prettyPath, args.prettyPath)
@@ -490,6 +496,28 @@ func parseFile(args parseArgs) {
 						args.log.AddMsg(msg)
 					}
 				}
+
+				// If "sourcesContent" isn't present, try filling it in using the file system
+				if sourceMap != nil && sourceMap.SourcesContent == nil && !args.options.ExcludeSourcesContent {
+					for _, source := range sourceMap.Sources {
+						var absPath string
+						if args.fs.IsAbs(source) {
+							absPath = source
+						} else if path.Namespace == "file" {
+							absPath = args.fs.Join(args.fs.Dir(path.Text), source)
+						} else {
+							sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourcemap.SourceContent{})
+							continue
+						}
+						var sourceContent sourcemap.SourceContent
+						if contents, err, _ := args.caches.FSCache.ReadFile(args.fs, absPath); err == nil {
+							sourceContent.Value = helpers.StringToUTF16(contents)
+						}
+						sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourceContent)
+					}
+				}
+
+				result.file.inputFile.InputSourceMap = sourceMap
 			}
 		}
 	}
@@ -1814,7 +1842,8 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 				}
 
 				// Generate metadata about each import
-				otherFile := &s.results[record.SourceIndex.GetIndex()].file
+				otherResult := &s.results[record.SourceIndex.GetIndex()]
+				otherFile := &otherResult.file
 				if s.options.NeedsMetafile {
 					if isFirstImport {
 						isFirstImport = false
@@ -1825,6 +1854,21 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 					sb.WriteString(fmt.Sprintf("{\n          \"path\": %s,\n          \"kind\": %s\n        }",
 						helpers.QuoteForJSON(otherFile.inputFile.Source.PrettyPath, s.options.ASCIIOnly),
 						helpers.QuoteForJSON(record.Kind.StringForMetafile(), s.options.ASCIIOnly)))
+				}
+
+				// Validate that imports with "assert { type: 'json' }" were imported
+				// with the JSON loader. This is done to match the behavior of these
+				// import assertions in a real JavaScript runtime. In addition, we also
+				// allow the copy loader since this is sort of like marking the path
+				// as external (the import assertions are kept and the real JavaScript
+				// runtime evaluates them, not us).
+				if record.Flags.Has(ast.AssertTypeJSON) && otherResult.ok && otherFile.inputFile.Loader != config.LoaderJSON && otherFile.inputFile.Loader != config.LoaderCopy {
+					s.log.AddErrorWithNotes(&tracker, record.Range,
+						fmt.Sprintf("The file %q was loaded with the %q loader", otherFile.inputFile.Source.PrettyPath, config.LoaderToString[otherFile.inputFile.Loader]),
+						[]logger.MsgData{
+							tracker.MsgData(js_lexer.RangeOfImportAssertion(result.file.inputFile.Source, *ast.FindAssertion(*record.Assertions, "type")),
+								"This import assertion requires the loader to be \"json\" instead:"),
+							{Text: "You need to either reconfigure esbuild to ensure that the loader for this file is \"json\" or you need to remove this import assertion."}})
 				}
 
 				switch record.Kind {
@@ -2181,6 +2225,17 @@ func applyOptionDefaults(options *config.Options) {
 		compat.ClassField|compat.ClassPrivateAccessor|compat.ClassPrivateBrandCheck|compat.ClassPrivateField|
 			compat.ClassPrivateMethod|compat.ClassPrivateStaticAccessor|compat.ClassPrivateStaticField|
 			compat.ClassPrivateStaticMethod|compat.ClassStaticBlocks|compat.ClassStaticField)
+
+	// If we're not building for the browser, automatically disable support for
+	// inline </script> and </style> tags if there aren't currently any overrides
+	if options.Platform != config.PlatformBrowser {
+		if !options.UnsupportedJSFeatureOverridesMask.Has(compat.InlineScript) {
+			options.UnsupportedJSFeatures |= compat.InlineScript
+		}
+		if !options.UnsupportedCSSFeatureOverridesMask.Has(compat.InlineStyle) {
+			options.UnsupportedCSSFeatures |= compat.InlineStyle
+		}
+	}
 }
 
 func fixInvalidUnsupportedJSFeatureOverrides(options *config.Options, implies compat.JSFeature, implied compat.JSFeature) {
@@ -2426,14 +2481,16 @@ func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, rea
 							// Missing contents become a "null" literal
 							quotedContents := nullContents
 							if i < len(sm.SourcesContent) {
-								if value := sm.SourcesContent[i]; value.Quoted != "" {
-									if options.ASCIIOnly && !isASCIIOnly(value.Quoted) {
-										// Re-quote non-ASCII values if output is ASCII-only
-										quotedContents = helpers.QuoteForJSON(helpers.UTF16ToString(value.Value), options.ASCIIOnly)
-									} else {
-										// Otherwise just use the value directly from the input file
-										quotedContents = []byte(value.Quoted)
-									}
+								if value := sm.SourcesContent[i]; value.Quoted != "" && (!options.ASCIIOnly || !isASCIIOnly(value.Quoted)) {
+									// Just use the value directly from the input file
+									quotedContents = []byte(value.Quoted)
+								} else if value.Value != nil {
+									// Re-quote non-ASCII values if output is ASCII-only.
+									// Also quote values that haven't been quoted yet
+									// (happens when the entire "sourcesContent" array is
+									// absent and the source has been found on the file
+									// system using the "sources" array).
+									quotedContents = helpers.QuoteForJSON(helpers.UTF16ToString(value.Value), options.ASCIIOnly)
 								}
 							}
 							result.quotedContents[i] = quotedContents

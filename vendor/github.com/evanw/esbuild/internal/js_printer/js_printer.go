@@ -117,7 +117,7 @@ func (p *printer) printUnquotedUTF16(text []uint16, quote rune) {
 
 		case '/':
 			// Avoid generating the sequence "</script" in JS code
-			if i >= 2 && text[i-2] == '<' && i+6 <= len(text) {
+			if !p.options.UnsupportedFeatures.Has(compat.InlineScript) && i >= 2 && text[i-2] == '<' && i+6 <= len(text) {
 				script := "script"
 				matches := true
 				for j := 0; j < 6; j++ {
@@ -1090,7 +1090,7 @@ func (p *printer) printQuotedUTF16(data []uint16, allowBacktick bool) {
 
 func (p *printer) printRequireOrImportExpr(
 	importRecordIndex uint32,
-	leadingInteriorComments []js_ast.Comment,
+	webpackComments []js_ast.Comment,
 	level js_ast.L,
 	flags printExprFlags,
 ) {
@@ -1175,10 +1175,10 @@ func (p *printer) printRequireOrImportExpr(
 			p.print("(")
 			defer p.print(")")
 		}
-		if len(leadingInteriorComments) > 0 {
+		if len(webpackComments) > 0 {
 			p.printNewline()
 			p.options.Indent++
-			for _, comment := range leadingInteriorComments {
+			for _, comment := range webpackComments {
 				p.printIndentedComment(comment.Text)
 			}
 			p.printIndent()
@@ -1188,7 +1188,7 @@ func (p *printer) printRequireOrImportExpr(
 		if !p.options.UnsupportedFeatures.Has(compat.DynamicImport) {
 			p.printImportCallAssertions(record.Assertions)
 		}
-		if len(leadingInteriorComments) > 0 {
+		if len(webpackComments) > 0 {
 			p.printNewline()
 			p.options.Indent--
 			p.printIndent()
@@ -1743,27 +1743,40 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 
 		// Omit the "()" when minifying, but only when safe to do so
 		if !p.options.MinifyWhitespace || len(e.Args) > 0 || level >= js_ast.LPostfix {
-			isMultiLine := e.IsMultiLine && len(e.Args) > 0 && !p.options.MinifyWhitespace
+			isMultiLine := !p.options.MinifyWhitespace && ((e.IsMultiLine && len(e.Args) > 0 && !p.options.MinifyWhitespace) || len(e.WebpackComments) > 0)
+			needsNewline := true
 			p.print("(")
 			if isMultiLine {
 				p.options.Indent++
+				if len(e.WebpackComments) > 0 {
+					p.printNewline()
+					needsNewline = false
+					for _, comment := range e.WebpackComments {
+						p.printIndentedComment(comment.Text)
+					}
+				}
 			}
 			for i, arg := range e.Args {
 				if isMultiLine {
 					if i != 0 {
 						p.print(",")
 					}
-					p.printNewline()
+					if needsNewline {
+						p.printNewline()
+					}
 					p.printIndent()
 				} else if i != 0 {
 					p.print(",")
 					p.printSpace()
 				}
 				p.printExpr(arg, js_ast.LComma, 0)
+				needsNewline = true
 			}
 			if isMultiLine {
 				p.options.Indent--
-				p.printNewline()
+				if needsNewline {
+					p.printNewline()
+				}
 				p.printIndent()
 			}
 			if e.CloseParenLoc.Start > expr.Loc.Start {
@@ -1915,17 +1928,17 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		}
 
 	case *js_ast.EImportString:
-		var leadingInteriorComments []js_ast.Comment
+		var webpackComments []js_ast.Comment
 		if !p.options.MinifyWhitespace {
-			leadingInteriorComments = e.LeadingInteriorComments
+			webpackComments = e.WebpackComments
 		}
 		p.addSourceMapping(expr.Loc)
-		p.printRequireOrImportExpr(e.ImportRecordIndex, leadingInteriorComments, level, flags)
+		p.printRequireOrImportExpr(e.ImportRecordIndex, webpackComments, level, flags)
 
 	case *js_ast.EImportCall:
-		var leadingInteriorComments []js_ast.Comment
+		var webpackComments []js_ast.Comment
 		if !p.options.MinifyWhitespace {
-			leadingInteriorComments = e.LeadingInteriorComments
+			webpackComments = e.WebpackComments
 		}
 		wrap := level >= js_ast.LNew || (flags&forbidCall) != 0
 		if wrap {
@@ -1934,10 +1947,10 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		p.printSpaceBeforeIdentifier()
 		p.addSourceMapping(expr.Loc)
 		p.print("import(")
-		if len(leadingInteriorComments) > 0 {
+		if len(webpackComments) > 0 {
 			p.printNewline()
 			p.options.Indent++
-			for _, comment := range leadingInteriorComments {
+			for _, comment := range webpackComments {
 				p.printIndentedComment(comment.Text)
 			}
 			p.printIndent()
@@ -1947,11 +1960,16 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		// Just omit import assertions if they aren't supported
 		if e.OptionsOrNil.Data != nil && !p.options.UnsupportedFeatures.Has(compat.ImportAssertions) {
 			p.print(",")
-			p.printSpace()
+			if len(webpackComments) > 0 {
+				p.printNewline()
+				p.printIndent()
+			} else {
+				p.printSpace()
+			}
 			p.printExpr(e.OptionsOrNil, js_ast.LComma, 0)
 		}
 
-		if len(leadingInteriorComments) > 0 {
+		if len(webpackComments) > 0 {
 			p.printNewline()
 			p.options.Indent--
 			p.printIndent()
@@ -2360,7 +2378,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		n := len(buffer)
 
 		// Avoid forming a single-line comment or "</script" sequence
-		if n > 0 {
+		if !p.options.UnsupportedFeatures.Has(compat.InlineScript) && n > 0 {
 			if last := buffer[n-1]; last == '/' || (last == '<' && len(e.Value) >= 7 && strings.EqualFold(e.Value[:7], "/script")) {
 				p.print(" ")
 			}
@@ -3035,7 +3053,9 @@ func (p *printer) printIf(s *js_ast.SIf) {
 
 func (p *printer) printIndentedComment(text string) {
 	// Avoid generating a comment containing the character sequence "</script"
-	text = helpers.EscapeClosingTag(text, "/script")
+	if !p.options.UnsupportedFeatures.Has(compat.InlineScript) {
+		text = helpers.EscapeClosingTag(text, "/script")
+	}
 
 	if strings.HasPrefix(text, "/*") {
 		// Re-indent multi-line comments
@@ -3828,6 +3848,7 @@ type Options struct {
 	MinifySyntax        bool
 	ASCIIOnly           bool
 	LegalComments       config.LegalComments
+	SourceMap           config.SourceMap
 	AddSourceMappings   bool
 }
 
@@ -3887,9 +3908,13 @@ func Print(tree js_ast.AST, symbols js_ast.SymbolMap, r renamer.Renamer, options
 		}
 	}
 
-	return PrintResult{
+	result := PrintResult{
 		JS:                     p.js,
 		ExtractedLegalComments: p.extractedLegalComments,
-		SourceMapChunk:         p.builder.GenerateChunk(p.js),
 	}
+	if options.SourceMap != config.SourceMapNone {
+		// This is expensive. Only do this if it's necessary.
+		result.SourceMapChunk = p.builder.GenerateChunk(p.js)
+	}
+	return result
 }

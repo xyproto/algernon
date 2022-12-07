@@ -245,8 +245,9 @@ type MaybeSubstring struct {
 }
 
 type Lexer struct {
-	CommentsToPreserveBefore     []js_ast.Comment
-	AllOriginalComments          []js_ast.Comment
+	LegalCommentsBeforeToken     []js_ast.Comment
+	WebpackComments              *[]js_ast.Comment
+	AllOriginalComments          []logger.Range
 	Identifier                   MaybeSubstring
 	log                          logger.Log
 	source                       logger.Source
@@ -288,7 +289,6 @@ type Lexer struct {
 	ts                              config.TSOptions
 	HasNewlineBefore                bool
 	HasPureCommentBefore            bool
-	PreserveAllCommentsBefore       bool
 	IsLegacyOctalLiteral            bool
 	PrevTokenWasAwaitKeyword        bool
 	rescanCloseBraceAsTemplateToken bool
@@ -894,6 +894,11 @@ func RangeOfIdentifier(source logger.Source, loc logger.Loc) logger.Range {
 	return source.RangeOfString(loc)
 }
 
+func RangeOfImportAssertion(source logger.Source, assertion ast.AssertEntry) logger.Range {
+	loc := RangeOfIdentifier(source, assertion.KeyLoc).Loc
+	return logger.Range{Loc: loc, Len: source.RangeOfString(assertion.ValueLoc).End() - loc.Start}
+}
+
 func (lexer *Lexer) ExpectJSXElementChild(token T) {
 	if lexer.Token != token {
 		lexer.Expected(token)
@@ -1212,7 +1217,7 @@ func (lexer *Lexer) Next() {
 	lexer.HasNewlineBefore = lexer.end == 0
 	lexer.HasPureCommentBefore = false
 	lexer.PrevTokenWasAwaitKeyword = false
-	lexer.CommentsToPreserveBefore = nil
+	lexer.LegalCommentsBeforeToken = nil
 
 	for {
 		lexer.start = lexer.end
@@ -1757,23 +1762,49 @@ func (lexer *Lexer) Next() {
 				lexer.addRangeError(lexer.Range(), "JSON strings must use double quotes")
 			}
 
+		// Note: This case is hot in profiles
 		case '_', '$',
 			'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
 			'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 			'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-			lexer.step()
-			for IsIdentifierContinue(lexer.codePoint) {
-				lexer.step()
+			// This is a fast path for long ASCII identifiers. Doing this in a loop
+			// first instead of doing "step()" and "IsIdentifierContinue()" like we
+			// do after this is noticeably faster in the common case of ASCII-only
+			// text. For example, doing this sped up end-to-end consuming of a large
+			// TypeScript type declaration file from 97ms to 79ms (around 20% faster).
+			contents := lexer.source.Contents
+			n := len(contents)
+			i := lexer.current
+			for i < n {
+				c := contents[i]
+				if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '$' {
+					break
+				}
+				i++
 			}
+			lexer.current = i
+
+			// Now do the slow path for any remaining non-ASCII identifier characters
+			lexer.step()
+			if lexer.codePoint >= 0x80 {
+				for IsIdentifierContinue(lexer.codePoint) {
+					lexer.step()
+				}
+			}
+
+			// If there's a slash, then we're in the extra-slow (and extra-rare) case
+			// where the identifier has embedded escapes
 			if lexer.codePoint == '\\' {
 				lexer.Identifier, lexer.Token = lexer.scanIdentifierWithEscapes(normalIdentifier)
-			} else {
-				lexer.Identifier = lexer.rawIdentifier()
-				lexer.Token = Keywords[lexer.Raw()]
-				if lexer.Token == 0 {
-					lexer.Token = TIdentifier
-				}
+				break
+			}
+
+			// Otherwise (if there was no escape) we can slice the code verbatim
+			lexer.Identifier = lexer.rawIdentifier()
+			lexer.Token = Keywords[lexer.Raw()]
+			if lexer.Token == 0 {
+				lexer.Token = TIdentifier
 			}
 
 		case '\\':
@@ -2746,17 +2777,23 @@ func scanForPragmaArg(kind pragmaArg, start int, pragma string, text string) (lo
 	}, true
 }
 
+func isUpperASCII(c byte) bool {
+	return c >= 'A' && c <= 'Z'
+}
+
+func isLetterASCII(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
 func (lexer *Lexer) scanCommentText() {
 	text := lexer.source.Contents[lexer.start:lexer.end]
 	hasLegalAnnotation := len(text) > 2 && text[2] == '!'
 	isMultiLineComment := text[1] == '*'
+	isWebpackComment := false
 
 	// Save the original comment text so we can subtract comments from the
 	// character frequency analysis used by symbol minification
-	lexer.AllOriginalComments = append(lexer.AllOriginalComments, js_ast.Comment{
-		Loc:  logger.Loc{Start: int32(lexer.start)},
-		Text: text,
-	})
+	lexer.AllOriginalComments = append(lexer.AllOriginalComments, lexer.Range())
 
 	// Omit the trailing "*/" from the checks below
 	endOfCommentText := len(text)
@@ -2803,15 +2840,44 @@ func (lexer *Lexer) scanCommentText() {
 					lexer.SourceMappingURL = arg
 				}
 			}
+
+		case 'w':
+			// Webpack magic comments use this regular expression: /(^|\W)webpack[A-Z]{1,}[A-Za-z]{1,}:/
+			if lexer.WebpackComments != nil && !isWebpackComment && strings.HasPrefix(text[i:], "webpack") && !isLetterASCII(text[i-1]) {
+				n := len(text)
+				j := i + 7
+				upperCount := 0
+				for j < n && isUpperASCII(text[j]) {
+					upperCount++
+					j++
+				}
+				if upperCount > 0 {
+					letterCount := 0
+					for j < n && isLetterASCII(text[j]) {
+						letterCount++
+						j++
+					}
+					if letterCount > 0 && j < n && text[j] == ':' {
+						isWebpackComment = true
+					}
+				}
+			}
 		}
 	}
 
-	if hasLegalAnnotation || lexer.PreserveAllCommentsBefore {
-		if isMultiLineComment {
-			text = helpers.RemoveMultiLineCommentIndent(lexer.source.Contents[:lexer.start], text)
-		}
+	if isMultiLineComment && (hasLegalAnnotation || isWebpackComment) {
+		text = helpers.RemoveMultiLineCommentIndent(lexer.source.Contents[:lexer.start], text)
+	}
 
-		lexer.CommentsToPreserveBefore = append(lexer.CommentsToPreserveBefore, js_ast.Comment{
+	if hasLegalAnnotation {
+		lexer.LegalCommentsBeforeToken = append(lexer.LegalCommentsBeforeToken, js_ast.Comment{
+			Loc:  logger.Loc{Start: int32(lexer.start)},
+			Text: text,
+		})
+	}
+
+	if isWebpackComment {
+		*lexer.WebpackComments = append(*lexer.WebpackComments, js_ast.Comment{
 			Loc:  logger.Loc{Start: int32(lexer.start)},
 			Text: text,
 		})

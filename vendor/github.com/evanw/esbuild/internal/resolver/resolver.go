@@ -330,7 +330,7 @@ func (rr *resolver) Resolve(sourceDir string, importPath string, kind ast.Import
 	}
 
 	// Certain types of URLs default to being external for convenience
-	if isExplicitlyExternal := r.isExternal(r.options.ExternalSettings.PreResolve, importPath); isExplicitlyExternal ||
+	if isExplicitlyExternal := r.isExternal(r.options.ExternalSettings.PreResolve, importPath, kind); isExplicitlyExternal ||
 
 		// "fill: url(#filter);"
 		(kind == ast.ImportURL && strings.HasPrefix(importPath, "#")) ||
@@ -536,7 +536,11 @@ func (r *resolverQuery) loadModuleSuffixesForSourceDir(sourceDir string) *dirInf
 	return sourceDirInfo
 }
 
-func (r resolverQuery) isExternal(matchers config.ExternalMatchers, path string) bool {
+func (r resolverQuery) isExternal(matchers config.ExternalMatchers, path string, kind ast.ImportKind) bool {
+	if kind == ast.ImportEntryPoint {
+		// Never mark an entry point as external. This is not useful.
+		return false
+	}
 	if _, ok := matchers.Exact[path]; ok {
 		return true
 	}
@@ -629,7 +633,7 @@ func (r resolverQuery) flushDebugLogs(mode flushMode) {
 }
 
 func (r resolverQuery) finalizeResolve(result *ResolveResult) {
-	if !result.IsExternal && r.isExternal(r.options.ExternalSettings.PostResolve, result.PathPair.Primary.Text) {
+	if !result.IsExternal && r.isExternal(r.options.ExternalSettings.PostResolve, result.PathPair.Primary.Text, r.kind) {
 		if r.debugLogs != nil {
 			r.debugLogs.addNote(fmt.Sprintf("The path %q was marked as external by the user", result.PathPair.Primary.Text))
 		}
@@ -806,7 +810,7 @@ func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *d
 		absPath := r.fs.Join(sourceDir, importPath)
 
 		// Check for external packages first
-		if r.isExternal(r.options.ExternalSettings.PostResolve, absPath) {
+		if r.isExternal(r.options.ExternalSettings.PostResolve, absPath, r.kind) {
 			if r.debugLogs != nil {
 				r.debugLogs.addNote(fmt.Sprintf("The path %q was marked as external by the user", absPath))
 			}
@@ -1095,10 +1099,28 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 				current = next
 			}
 		} else {
-			// If this is a regular path, search relative to the enclosing directory
 			extendsFile := extends
-			if !r.fs.IsAbs(extends) {
-				extendsFile = r.fs.Join(fileDir, extends)
+
+			// The TypeScript compiler has a strange behavior that seems like a bug
+			// where "." and ".." behave differently than other forms such as "./."
+			// or "../." and are interpreted as having an implicit "tsconfig.json"
+			// suffix.
+			//
+			// I believe their bug is caused by some parts of their code checking for
+			// relative paths using the literal "./" and "../" prefixes (requiring
+			// the slash) and other parts checking using the regular expression
+			// /^\.\.?($|[\\/])/ (with the slash optional).
+			//
+			// In any case, people are now relying on this behavior. One example is
+			// this: https://github.com/esbuild-kit/tsx/pull/158. So we replicate this
+			// bug in esbuild as well.
+			if extendsFile == "." || extendsFile == ".." {
+				extendsFile += "/tsconfig.json"
+			}
+
+			// If this is a regular path, search relative to the enclosing directory
+			if !r.fs.IsAbs(extendsFile) {
+				extendsFile = r.fs.Join(fileDir, extendsFile)
 			}
 			base, err := r.parseTSConfig(extendsFile, visited)
 
