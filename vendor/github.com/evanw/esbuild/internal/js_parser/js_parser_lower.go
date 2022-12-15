@@ -131,7 +131,11 @@ func (p *parser) markSyntaxFeature(feature compat.JSFeature, r logger.Range) (di
 
 	case compat.ImportMeta:
 		// This can't be polyfilled
-		p.log.AddIDWithNotes(logger.MsgID_JS_EmptyImportMeta, logger.Warning, &p.tracker, r, fmt.Sprintf(
+		kind := logger.Warning
+		if p.suppressWarningsAboutWeirdCode || p.fnOrArrowDataVisit.tryBodyCount > 0 {
+			kind = logger.Debug
+		}
+		p.log.AddIDWithNotes(logger.MsgID_JS_EmptyImportMeta, kind, &p.tracker, r, fmt.Sprintf(
 			"\"import.meta\" is not available in %s and will be empty", where), notes)
 		return
 
@@ -727,6 +731,7 @@ flatten:
 					Args:                   append([]js_ast.Expr{thisArg}, e.Args...),
 					CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
 					IsMultiLine:            e.IsMultiLine,
+					Kind:                   js_ast.TargetWasOriginallyPropertyAccess,
 				}}
 				break
 			}
@@ -745,6 +750,7 @@ flatten:
 					Args:                   append([]js_ast.Expr{privateThisFunc()}, e.Args...),
 					CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
 					IsMultiLine:            e.IsMultiLine,
+					Kind:                   js_ast.TargetWasOriginallyPropertyAccess,
 				}})
 				privateThisFunc = nil
 				break
@@ -755,12 +761,17 @@ flatten:
 				Args:                   e.Args,
 				CanBeUnwrappedIfUnused: e.CanBeUnwrappedIfUnused,
 				IsMultiLine:            e.IsMultiLine,
+				Kind:                   e.Kind,
 			}}
 
 		case *js_ast.EUnary:
 			result = js_ast.Expr{Loc: loc, Data: &js_ast.EUnary{
 				Op:    js_ast.UnOpDelete,
 				Value: result,
+
+				// If a delete of an optional chain takes place, it behaves as if the
+				// optional chain isn't there with regard to the "delete" semantics.
+				WasOriginallyDeleteOfIdentifierOrPropertyAccess: e.WasOriginallyDeleteOfIdentifierOrPropertyAccess,
 			}}
 
 		default:
@@ -806,6 +817,7 @@ func (p *parser) lowerParenthesizedOptionalChain(loc logger.Loc, e *js_ast.ECall
 		}},
 		Args:        append(append(make([]js_ast.Expr, 0, len(e.Args)+1), childOut.thisArgFunc()), e.Args...),
 		IsMultiLine: e.IsMultiLine,
+		Kind:        js_ast.TargetWasOriginallyPropertyAccess,
 	}})
 }
 
@@ -1265,6 +1277,7 @@ func (p *parser) lowerForAwaitLoop(loc logger.Loc, loop *js_ast.SForOf, stmts []
 			NameLoc: loc,
 			Name:    "next",
 		}},
+		Kind: js_ast.TargetWasOriginallyPropertyAccess,
 	}}
 	awaitTempCallIter := js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
 		Target: js_ast.Expr{Loc: loc, Data: &js_ast.EDot{
@@ -1273,6 +1286,7 @@ func (p *parser) lowerForAwaitLoop(loc logger.Loc, loop *js_ast.SForOf, stmts []
 			Name:    "call",
 		}},
 		Args: []js_ast.Expr{{Loc: loc, Data: &js_ast.EIdentifier{Ref: iterRef}}},
+		Kind: js_ast.TargetWasOriginallyPropertyAccess,
 	}}
 
 	// "await" expressions turn into "yield" expressions when lowering
@@ -2518,11 +2532,17 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 					})
 					p.recordUsage(ref)
 				} else if private == nil && classLoweringInfo.useDefineForClassFields {
+					var args []js_ast.Expr
 					if _, ok := init.Data.(*js_ast.EUndefined); ok {
-						memberExpr = p.callRuntime(loc, "__publicField", []js_ast.Expr{target, prop.Key})
+						args = []js_ast.Expr{target, prop.Key}
 					} else {
-						memberExpr = p.callRuntime(loc, "__publicField", []js_ast.Expr{target, prop.Key, init})
+						args = []js_ast.Expr{target, prop.Key, init}
 					}
+					memberExpr = js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
+						Target: p.importFromRuntime(loc, "__publicField"),
+						Args:   args,
+						Kind:   js_ast.InternalPublicFieldCall,
+					}}
 				} else {
 					if key, ok := prop.Key.Data.(*js_ast.EString); ok && !prop.Flags.Has(js_ast.PropertyIsComputed) && !prop.Flags.Has(js_ast.PropertyPreferQuotedKey) {
 						target = js_ast.Expr{Loc: loc, Data: &js_ast.EDot{
@@ -3064,7 +3084,7 @@ func findFirstTopLevelSuperCall(expr js_ast.Expr, superCtorRef js_ast.Ref) (js_a
 	return js_ast.Expr{}, logger.Loc{}, nil, js_ast.Expr{}
 }
 
-func (p *parser) lowerTemplateLiteral(loc logger.Loc, e *js_ast.ETemplate) js_ast.Expr {
+func (p *parser) lowerTemplateLiteral(loc logger.Loc, e *js_ast.ETemplate, tagThisFunc func() js_ast.Expr, tagWrapFunc func(js_ast.Expr) js_ast.Expr) js_ast.Expr {
 	// If there is no tag, turn this into normal string concatenation
 	if e.TagOrNil.Data == nil {
 		var value js_ast.Expr
@@ -3096,6 +3116,7 @@ func (p *parser) lowerTemplateLiteral(loc logger.Loc, e *js_ast.ETemplate) js_as
 					NameLoc: part.Value.Loc,
 				}},
 				Args: args,
+				Kind: js_ast.TargetWasOriginallyPropertyAccess,
 			}}
 		}
 
@@ -3160,10 +3181,28 @@ func (p *parser) lowerTemplateLiteral(loc logger.Loc, e *js_ast.ETemplate) js_as
 		}},
 	}}
 
+	// If this optional chain was used as a template tag, then also forward the value for "this"
+	if tagThisFunc != nil {
+		return tagWrapFunc(js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
+			Target: js_ast.Expr{Loc: loc, Data: &js_ast.EDot{
+				Target:  e.TagOrNil,
+				Name:    "call",
+				NameLoc: e.HeadLoc,
+			}},
+			Args: append([]js_ast.Expr{tagThisFunc()}, args...),
+			Kind: js_ast.TargetWasOriginallyPropertyAccess,
+		}})
+	}
+
 	// Call the tag function
+	kind := js_ast.NormalCall
+	if e.TagWasOriginallyPropertyAccess {
+		kind = js_ast.TargetWasOriginallyPropertyAccess
+	}
 	return js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
 		Target: e.TagOrNil,
 		Args:   args,
+		Kind:   kind,
 	}}
 }
 

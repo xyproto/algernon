@@ -548,7 +548,7 @@ func ResolveFailureErrorTextSuggestionNotes(
 	}
 	hint := ""
 
-	if resolver.IsPackagePath(path) {
+	if resolver.IsPackagePath(path) && !fs.IsAbs(path) {
 		hint = fmt.Sprintf("You can mark the path %q as external to exclude it from the bundle, which will remove this error.", path)
 		if kind == ast.ImportRequire {
 			hint += " You can also surround this \"require\" call with a try/catch block to handle this failure at run-time instead of bundle-time."
@@ -1819,6 +1819,17 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 				// Skip this import record if the previous resolver call failed
 				resolveResult := result.resolveResults[importRecordIndex]
 				if resolveResult == nil || !record.SourceIndex.IsValid() {
+					if s.options.NeedsMetafile {
+						if isFirstImport {
+							isFirstImport = false
+							sb.WriteString("\n        ")
+						} else {
+							sb.WriteString(",\n        ")
+						}
+						sb.WriteString(fmt.Sprintf("{\n          \"path\": %s,\n          \"kind\": %s,\n          \"external\": true\n        }",
+							helpers.QuoteForJSON(record.Path.Text, s.options.ASCIIOnly),
+							helpers.QuoteForJSON(record.Kind.StringForMetafile(), s.options.ASCIIOnly)))
+					}
 					continue
 				}
 

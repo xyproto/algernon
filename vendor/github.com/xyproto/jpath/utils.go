@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Return the last part of a given JSON path
+// lastpart returns the last part of a given JSON path
 func lastpart(JSONpath string) string {
 	if !strings.Contains(JSONpath, ".") {
 		return JSONpath
@@ -14,7 +14,7 @@ func lastpart(JSONpath string) string {
 	return parts[len(parts)-1]
 }
 
-// Add any number of byte slices together
+// badd can concatenate several byte slices
 func badd(args ...[]byte) []byte {
 	var buf bytes.Buffer
 	for _, byteslice := range args {

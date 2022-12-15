@@ -25,7 +25,6 @@ import (
 	"github.com/evanw/esbuild/internal/graph"
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/js_ast"
-	"github.com/evanw/esbuild/internal/js_lexer"
 	"github.com/evanw/esbuild/internal/js_parser"
 	"github.com/evanw/esbuild/internal/logger"
 	"github.com/evanw/esbuild/internal/resolver"
@@ -554,6 +553,7 @@ func validateDefines(
 	defines map[string]string,
 	pureFns []string,
 	platform config.Platform,
+	isBuildAPI bool,
 	minify bool,
 	drop Drop,
 ) (*config.ProcessedDefines, []config.InjectedDefine) {
@@ -564,7 +564,7 @@ func validateDefines(
 	for key, value := range defines {
 		// The key must be a dot-separated identifier list
 		for _, part := range strings.Split(key, ".") {
-			if !js_lexer.IsIdentifier(part) {
+			if !js_ast.IsIdentifier(part) {
 				if part == key {
 					log.AddError(nil, logger.Range{}, fmt.Sprintf("The define key %q must be a valid identifier", key))
 				} else {
@@ -619,7 +619,7 @@ func validateDefines(
 	// that must be handled to avoid all React code crashing instantly. This
 	// is only done if it's not already defined so that you can override it if
 	// necessary.
-	if platform == config.PlatformBrowser {
+	if isBuildAPI && platform == config.PlatformBrowser {
 		if _, process := rawDefines["process"]; !process {
 			if _, processEnv := rawDefines["process.env"]; !processEnv {
 				if _, processEnvNodeEnv := rawDefines["process.env.NODE_ENV"]; !processEnvNodeEnv {
@@ -645,7 +645,7 @@ func validateDefines(
 	for _, key := range pureFns {
 		// The key must be a dot-separated identifier list
 		for _, part := range strings.Split(key, ".") {
-			if !js_lexer.IsIdentifier(part) {
+			if !js_ast.IsIdentifier(part) {
 				log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid pure function: %q", key))
 				continue
 			}
@@ -949,7 +949,7 @@ func rebuildImpl(
 	footerJS, footerCSS := validateBannerOrFooter(log, "footer", buildOpts.Footer)
 	minify := buildOpts.MinifyWhitespace && buildOpts.MinifyIdentifiers && buildOpts.MinifySyntax
 	platform := validatePlatform(buildOpts.Platform)
-	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, platform, minify, buildOpts.Drop)
+	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, platform, true /* isBuildAPI */, minify, buildOpts.Drop)
 	mangleCache := cloneMangleCache(log, buildOpts.MangleCache)
 	options := config.Options{
 		TargetFromAPI:                      targetFromAPI,
@@ -1002,6 +1002,7 @@ func rebuildImpl(
 		ExtensionToLoader:     validateLoaders(log, buildOpts.Loader),
 		ExtensionOrder:        validateResolveExtensions(log, buildOpts.ResolveExtensions),
 		ExternalSettings:      validateExternals(log, realFS, buildOpts.External),
+		ExternalPackages:      buildOpts.Packages == PackagesExternal,
 		PackageAliases:        validateAlias(log, realFS, buildOpts.Alias),
 		TsConfigOverride:      validatePath(log, realFS, buildOpts.Tsconfig, "tsconfig path"),
 		MainFields:            buildOpts.MainFields,
@@ -1491,7 +1492,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, transformOpts.Target, transformOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, transformOpts.Supported)
 	platform := validatePlatform(transformOpts.Platform)
-	defines, injectedDefines := validateDefines(log, transformOpts.Define, transformOpts.Pure, platform, false /* minify */, transformOpts.Drop)
+	defines, injectedDefines := validateDefines(log, transformOpts.Define, transformOpts.Pure, platform, false /* isBuildAPI */, false /* minify */, transformOpts.Drop)
 	mangleCache := cloneMangleCache(log, transformOpts.MangleCache)
 	options := config.Options{
 		TargetFromAPI:                      targetFromAPI,

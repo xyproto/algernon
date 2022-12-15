@@ -453,6 +453,39 @@ type EArray struct {
 type EUnary struct {
 	Value Expr
 	Op    OpCode
+
+	// The expression "typeof (0, x)" must not become "typeof x" if "x"
+	// is unbound because that could suppress a ReferenceError from "x".
+	//
+	// Also if we know a typeof operator was originally an identifier, then
+	// we know that this typeof operator always has no side effects (even if
+	// we consider the identifier by itself to have a side effect).
+	//
+	// Note that there *is* actually a case where "typeof x" can throw an error:
+	// when "x" is being referenced inside of its TDZ (temporal dead zone). TDZ
+	// checks are not yet handled correctly by esbuild, so this possibility is
+	// currently ignored.
+	WasOriginallyTypeofIdentifier bool
+
+	// Similarly the expression "delete (0, x)" must not become "delete x"
+	// because that syntax is invalid in strict mode. We also need to make sure
+	// we don't accidentally change the return value:
+	//
+	//   Returns false:
+	//     "var a; delete (a)"
+	//     "var a = Object.freeze({b: 1}); delete (a.b)"
+	//     "var a = Object.freeze({b: 1}); delete (a?.b)"
+	//     "var a = Object.freeze({b: 1}); delete (a['b'])"
+	//     "var a = Object.freeze({b: 1}); delete (a?.['b'])"
+	//
+	//   Returns true:
+	//     "var a; delete (0, a)"
+	//     "var a = Object.freeze({b: 1}); delete (true && a.b)"
+	//     "var a = Object.freeze({b: 1}); delete (false || a?.b)"
+	//     "var a = Object.freeze({b: 1}); delete (null ?? a?.['b'])"
+	//     "var a = Object.freeze({b: 1}); delete (true ? a['b'] : a['b'])"
+	//
+	WasOriginallyDeleteOfIdentifierOrPropertyAccess bool
 }
 
 type EBinary struct {
@@ -506,6 +539,15 @@ type ENew struct {
 	CanBeUnwrappedIfUnused bool
 }
 
+type CallKind uint8
+
+const (
+	NormalCall CallKind = iota
+	DirectEval
+	TargetWasOriginallyPropertyAccess
+	InternalPublicFieldCall
+)
+
 type OptionalChain uint8
 
 const (
@@ -525,7 +567,7 @@ type ECall struct {
 	Args          []Expr
 	CloseParenLoc logger.Loc
 	OptionalChain OptionalChain
-	IsDirectEval  bool
+	Kind          CallKind
 	IsMultiLine   bool
 
 	// True if there is a comment containing "@__PURE__" or "#__PURE__" preceding
@@ -541,7 +583,7 @@ type ECall struct {
 
 func (a *ECall) HasSameFlagsAs(b *ECall) bool {
 	return a.OptionalChain == b.OptionalChain &&
-		a.IsDirectEval == b.IsDirectEval &&
+		a.Kind == b.Kind &&
 		a.CanBeUnwrappedIfUnused == b.CanBeUnwrappedIfUnused
 }
 
@@ -707,6 +749,14 @@ type ETemplate struct {
 	Parts          []TemplatePart
 	HeadLoc        logger.Loc
 	LegacyOctalLoc logger.Loc
+
+	// If the tag is present, it is expected to be a function and is called. If
+	// the tag is a syntactic property access, then the value for "this" in the
+	// function call is the object whose property was accessed (e.g. in "a.b``"
+	// the value for "this" in "a.b" is "a"). We need to ensure that if "a``"
+	// ever becomes "b.c``" later on due to optimizations, it is written as
+	// "(0, b.c)``" to avoid a behavior change.
+	TagWasOriginallyPropertyAccess bool
 }
 
 type ERegExp struct{ Value string }

@@ -2,13 +2,13 @@ package jpath
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"sync"
 )
 
 var (
 	// ErrSpecificNode is for when retrieving a node does not return a specific key/value, but perhaps a map
-	ErrSpecificNode = errors.New("Could not find a specific node that matched the given path")
+	ErrSpecificNode = errors.New("could not find a specific node that matched the given path")
 )
 
 // JFile represents a JSON file and contains the filename and root node
@@ -21,7 +21,7 @@ type JFile struct {
 
 // NewFile will read the given filename and return a JFile struct
 func NewFile(filename string) (*JFile, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (jf *JFile) SetString(JSONpath, value string) error {
 func (jf *JFile) Write(data []byte) error {
 	jf.rw.Lock()
 	defer jf.rw.Unlock()
-	return ioutil.WriteFile(jf.filename, data, 0666)
+	return os.WriteFile(jf.filename, data, 0666)
 }
 
 // AddJSON adds JSON data at the given JSON path. If pretty is true, the JSON is indented.

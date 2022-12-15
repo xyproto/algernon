@@ -84,10 +84,7 @@ func ParseTSConfigJSON(
 	// these particular files. This is likely not a completely accurate
 	// emulation of what the TypeScript compiler does (e.g. string escape
 	// behavior may also be different).
-	json, ok := jsonCache.Parse(log, source, js_parser.JSONOptions{
-		AllowComments:       true, // https://github.com/microsoft/TypeScript/issues/4987
-		AllowTrailingCommas: true,
-	})
+	json, ok := jsonCache.Parse(log, source, js_parser.JSONOptions{Flavor: js_lexer.TSConfigJSON})
 	if !ok {
 		return nil
 	}
@@ -347,7 +344,7 @@ func parseMemberExpressionForJSX(log logger.Log, source *logger.Source, tracker 
 	}
 	parts := strings.Split(text, ".")
 	for _, part := range parts {
-		if !js_lexer.IsIdentifier(part) {
+		if !js_ast.IsIdentifier(part) {
 			warnRange := source.RangeOfString(loc)
 			log.AddID(logger.MsgID_TsconfigJSON_InvalidJSX, logger.Warning, tracker, warnRange, fmt.Sprintf("Invalid JSX member expression: %q", text))
 			return nil

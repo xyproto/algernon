@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/evanw/esbuild/internal/ast"
@@ -212,11 +211,6 @@ var StrictModeReservedWords = map[string]bool{
 	"yield":      true,
 }
 
-type json struct {
-	parse         bool
-	allowComments bool
-}
-
 // This represents a string that is maybe a substring of the current file's
 // "source.Contents" string. The point of doing this is that if it is a
 // substring (the common case), then we can represent it more efficiently.
@@ -284,7 +278,7 @@ type Lexer struct {
 	LegacyHTMLCommentRange          logger.Range
 	codePoint                       rune
 	prevErrorLoc                    logger.Loc
-	json                            json
+	json                            JSONFlavor
 	Token                           T
 	ts                              config.TSOptions
 	HasNewlineBefore                bool
@@ -308,6 +302,7 @@ func NewLexer(log logger.Log, source logger.Source, ts config.TSOptions) Lexer {
 		prevErrorLoc:      logger.Loc{Start: -1},
 		FnOrArrowStartLoc: logger.Loc{Start: -1},
 		ts:                ts,
+		json:              NotJSON,
 	}
 	lexer.step()
 	lexer.Next()
@@ -322,13 +317,30 @@ func NewLexerGlobalName(log logger.Log, source logger.Source) Lexer {
 		prevErrorLoc:      logger.Loc{Start: -1},
 		FnOrArrowStartLoc: logger.Loc{Start: -1},
 		forGlobalName:     true,
+		json:              NotJSON,
 	}
 	lexer.step()
 	lexer.Next()
 	return lexer
 }
 
-func NewLexerJSON(log logger.Log, source logger.Source, allowComments bool, errorSuffix string) Lexer {
+type JSONFlavor uint8
+
+const (
+	// Specification: https://json.org/
+	JSON JSONFlavor = iota
+
+	// TypeScript's JSON superset is not documented but appears to allow:
+	// - Comments: https://github.com/microsoft/TypeScript/issues/4987
+	// - Trailing commas
+	// - Full JS number syntax
+	TSConfigJSON
+
+	// This is used by the JavaScript lexer
+	NotJSON
+)
+
+func NewLexerJSON(log logger.Log, source logger.Source, json JSONFlavor, errorSuffix string) Lexer {
 	lexer := Lexer{
 		log:               log,
 		source:            source,
@@ -336,10 +348,7 @@ func NewLexerJSON(log logger.Log, source logger.Source, allowComments bool, erro
 		prevErrorLoc:      logger.Loc{Start: -1},
 		FnOrArrowStartLoc: logger.Loc{Start: -1},
 		errorSuffix:       errorSuffix,
-		json: json{
-			parse:         true,
-			allowComments: allowComments,
-		},
+		json:              json,
 	}
 	lexer.step()
 	lexer.Next()
@@ -611,244 +620,6 @@ func (lexer *Lexer) maybeExpandEquals() {
 	}
 }
 
-func IsIdentifier(text string) bool {
-	if len(text) == 0 {
-		return false
-	}
-	for i, codePoint := range text {
-		if i == 0 {
-			if !IsIdentifierStart(codePoint) {
-				return false
-			}
-		} else {
-			if !IsIdentifierContinue(codePoint) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func IsIdentifierES5AndESNext(text string) bool {
-	if len(text) == 0 {
-		return false
-	}
-	for i, codePoint := range text {
-		if i == 0 {
-			if !IsIdentifierStartES5AndESNext(codePoint) {
-				return false
-			}
-		} else {
-			if !IsIdentifierContinueES5AndESNext(codePoint) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func ForceValidIdentifier(text string) string {
-	if IsIdentifier(text) {
-		return text
-	}
-	sb := strings.Builder{}
-
-	// Identifier start
-	c, width := utf8.DecodeRuneInString(text)
-	text = text[width:]
-	if IsIdentifierStart(c) {
-		sb.WriteRune(c)
-	} else {
-		sb.WriteRune('_')
-	}
-
-	// Identifier continue
-	for text != "" {
-		c, width := utf8.DecodeRuneInString(text)
-		text = text[width:]
-		if IsIdentifierContinue(c) {
-			sb.WriteRune(c)
-		} else {
-			sb.WriteRune('_')
-		}
-	}
-
-	return sb.String()
-}
-
-// This does "IsIdentifier(UTF16ToString(text))" without any allocations
-func IsIdentifierUTF16(text []uint16) bool {
-	n := len(text)
-	if n == 0 {
-		return false
-	}
-	for i := 0; i < n; i++ {
-		isStart := i == 0
-		r1 := rune(text[i])
-		if r1 >= 0xD800 && r1 <= 0xDBFF && i+1 < n {
-			if r2 := rune(text[i+1]); r2 >= 0xDC00 && r2 <= 0xDFFF {
-				r1 = (r1 << 10) + r2 + (0x10000 - (0xD800 << 10) - 0xDC00)
-				i++
-			}
-		}
-		if isStart {
-			if !IsIdentifierStart(r1) {
-				return false
-			}
-		} else {
-			if !IsIdentifierContinue(r1) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-// This does "IsIdentifierES5AndESNext(UTF16ToString(text))" without any allocations
-func IsIdentifierES5AndESNextUTF16(text []uint16) bool {
-	n := len(text)
-	if n == 0 {
-		return false
-	}
-	for i := 0; i < n; i++ {
-		isStart := i == 0
-		r1 := rune(text[i])
-		if r1 >= 0xD800 && r1 <= 0xDBFF && i+1 < n {
-			if r2 := rune(text[i+1]); r2 >= 0xDC00 && r2 <= 0xDFFF {
-				r1 = (r1 << 10) + r2 + (0x10000 - (0xD800 << 10) - 0xDC00)
-				i++
-			}
-		}
-		if isStart {
-			if !IsIdentifierStartES5AndESNext(r1) {
-				return false
-			}
-		} else {
-			if !IsIdentifierContinueES5AndESNext(r1) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func IsIdentifierStart(codePoint rune) bool {
-	switch codePoint {
-	case '_', '$',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-		return true
-	}
-
-	// All ASCII identifier start code points are listed above
-	if codePoint < 0x7F {
-		return false
-	}
-
-	return unicode.Is(idStartES5OrESNext, codePoint)
-}
-
-func IsIdentifierContinue(codePoint rune) bool {
-	switch codePoint {
-	case '_', '$', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-		return true
-	}
-
-	// All ASCII identifier start code points are listed above
-	if codePoint < 0x7F {
-		return false
-	}
-
-	// ZWNJ and ZWJ are allowed in identifiers
-	if codePoint == 0x200C || codePoint == 0x200D {
-		return true
-	}
-
-	return unicode.Is(idContinueES5OrESNext, codePoint)
-}
-
-func IsIdentifierStartES5AndESNext(codePoint rune) bool {
-	switch codePoint {
-	case '_', '$',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-		return true
-	}
-
-	// All ASCII identifier start code points are listed above
-	if codePoint < 0x7F {
-		return false
-	}
-
-	return unicode.Is(idStartES5AndESNext, codePoint)
-}
-
-func IsIdentifierContinueES5AndESNext(codePoint rune) bool {
-	switch codePoint {
-	case '_', '$', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-		return true
-	}
-
-	// All ASCII identifier start code points are listed above
-	if codePoint < 0x7F {
-		return false
-	}
-
-	// ZWNJ and ZWJ are allowed in identifiers
-	if codePoint == 0x200C || codePoint == 0x200D {
-		return true
-	}
-
-	return unicode.Is(idContinueES5AndESNext, codePoint)
-}
-
-// See the "White Space Code Points" table in the ECMAScript standard
-func IsWhitespace(codePoint rune) bool {
-	switch codePoint {
-	case
-		'\u0009', // character tabulation
-		'\u000B', // line tabulation
-		'\u000C', // form feed
-		'\u0020', // space
-		'\u00A0', // no-break space
-
-		// Unicode "Space_Separator" code points
-		'\u1680', // ogham space mark
-		'\u2000', // en quad
-		'\u2001', // em quad
-		'\u2002', // en space
-		'\u2003', // em space
-		'\u2004', // three-per-em space
-		'\u2005', // four-per-em space
-		'\u2006', // six-per-em space
-		'\u2007', // figure space
-		'\u2008', // punctuation space
-		'\u2009', // thin space
-		'\u200A', // hair space
-		'\u202F', // narrow no-break space
-		'\u205F', // medium mathematical space
-		'\u3000', // ideographic space
-
-		'\uFEFF': // zero width non-breaking space
-		return true
-
-	default:
-		return false
-	}
-}
-
 func RangeOfIdentifier(source logger.Source, loc logger.Loc) logger.Range {
 	text := source.Contents[loc.Start:]
 	if len(text) == 0 {
@@ -864,7 +635,7 @@ func RangeOfIdentifier(source logger.Source, loc logger.Loc) logger.Range {
 		c, _ = utf8.DecodeRuneInString(text[i:])
 	}
 
-	if IsIdentifierStart(c) || c == '\\' {
+	if js_ast.IsIdentifierStart(c) || c == '\\' {
 		// Search for the end of the identifier
 		for i < len(text) {
 			c2, width2 := utf8.DecodeRuneInString(text[i:])
@@ -882,7 +653,7 @@ func RangeOfIdentifier(source logger.Source, loc logger.Loc) logger.Range {
 						i++
 					}
 				}
-			} else if !IsIdentifierContinue(c2) {
+			} else if !js_ast.IsIdentifierContinue(c2) {
 				return logger.Range{Loc: loc, Len: int32(i)}
 			} else {
 				i += width2
@@ -1189,14 +960,14 @@ func (lexer *Lexer) NextInsideJSXElement() {
 
 		default:
 			// Check for unusual whitespace characters
-			if IsWhitespace(lexer.codePoint) {
+			if js_ast.IsWhitespace(lexer.codePoint) {
 				lexer.step()
 				continue
 			}
 
-			if IsIdentifierStart(lexer.codePoint) {
+			if js_ast.IsIdentifierStart(lexer.codePoint) {
 				lexer.step()
-				for IsIdentifierContinue(lexer.codePoint) || lexer.codePoint == '-' {
+				for js_ast.IsIdentifierContinue(lexer.codePoint) || lexer.codePoint == '-' {
 					lexer.step()
 				}
 
@@ -1249,11 +1020,11 @@ func (lexer *Lexer) Next() {
 				if lexer.codePoint == '\\' {
 					lexer.Identifier, _ = lexer.scanIdentifierWithEscapes(privateIdentifier)
 				} else {
-					if !IsIdentifierStart(lexer.codePoint) {
+					if !js_ast.IsIdentifierStart(lexer.codePoint) {
 						lexer.SyntaxError()
 					}
 					lexer.step()
-					for IsIdentifierContinue(lexer.codePoint) {
+					for js_ast.IsIdentifierContinue(lexer.codePoint) {
 						lexer.step()
 					}
 					if lexer.codePoint == '\\' {
@@ -1457,6 +1228,9 @@ func (lexer *Lexer) Next() {
 				lexer.Token = TMinusMinus
 			default:
 				lexer.Token = TMinus
+				if lexer.json == JSON && lexer.codePoint != '.' && (lexer.codePoint < '0' || lexer.codePoint > '9') {
+					lexer.Unexpected()
+				}
 			}
 
 		case '*':
@@ -1506,7 +1280,7 @@ func (lexer *Lexer) Next() {
 						break singleLineComment
 					}
 				}
-				if lexer.json.parse && !lexer.json.allowComments {
+				if lexer.json == JSON {
 					lexer.addRangeError(lexer.Range(), "JSON does not support comments")
 				}
 				lexer.scanCommentText()
@@ -1539,7 +1313,7 @@ func (lexer *Lexer) Next() {
 						lexer.step()
 					}
 				}
-				if lexer.json.parse && !lexer.json.allowComments {
+				if lexer.json == JSON {
 					lexer.addRangeError(lexer.Range(), "JSON does not support comments")
 				}
 				lexer.scanCommentText()
@@ -1683,7 +1457,7 @@ func (lexer *Lexer) Next() {
 					lexer.step()
 
 					// Handle Windows CRLF
-					if lexer.codePoint == '\r' && !lexer.json.parse {
+					if lexer.codePoint == '\r' && lexer.json != JSON {
 						lexer.step()
 						if lexer.codePoint == '\n' {
 							lexer.step()
@@ -1734,7 +1508,7 @@ func (lexer *Lexer) Next() {
 					// Non-ASCII strings need the slow path
 					if lexer.codePoint >= 0x80 {
 						needsSlowPath = true
-					} else if lexer.json.parse && lexer.codePoint < 0x20 {
+					} else if lexer.json == JSON && lexer.codePoint < 0x20 {
 						lexer.SyntaxError()
 					}
 				}
@@ -1758,7 +1532,7 @@ func (lexer *Lexer) Next() {
 				lexer.decodedStringLiteralOrNil = copy
 			}
 
-			if quote == '\'' && lexer.json.parse {
+			if quote == '\'' && (lexer.json == JSON || lexer.json == TSConfigJSON) {
 				lexer.addRangeError(lexer.Range(), "JSON strings must use double quotes")
 			}
 
@@ -1769,7 +1543,7 @@ func (lexer *Lexer) Next() {
 			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 			'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
 			// This is a fast path for long ASCII identifiers. Doing this in a loop
-			// first instead of doing "step()" and "IsIdentifierContinue()" like we
+			// first instead of doing "step()" and "js_ast.IsIdentifierContinue()" like we
 			// do after this is noticeably faster in the common case of ASCII-only
 			// text. For example, doing this sped up end-to-end consuming of a large
 			// TypeScript type declaration file from 97ms to 79ms (around 20% faster).
@@ -1788,7 +1562,7 @@ func (lexer *Lexer) Next() {
 			// Now do the slow path for any remaining non-ASCII identifier characters
 			lexer.step()
 			if lexer.codePoint >= 0x80 {
-				for IsIdentifierContinue(lexer.codePoint) {
+				for js_ast.IsIdentifierContinue(lexer.codePoint) {
 					lexer.step()
 				}
 			}
@@ -1815,14 +1589,14 @@ func (lexer *Lexer) Next() {
 
 		default:
 			// Check for unusual whitespace characters
-			if IsWhitespace(lexer.codePoint) {
+			if js_ast.IsWhitespace(lexer.codePoint) {
 				lexer.step()
 				continue
 			}
 
-			if IsIdentifierStart(lexer.codePoint) {
+			if js_ast.IsIdentifierStart(lexer.codePoint) {
 				lexer.step()
-				for IsIdentifierContinue(lexer.codePoint) {
+				for js_ast.IsIdentifierContinue(lexer.codePoint) {
 					lexer.step()
 				}
 				if lexer.codePoint == '\\' {
@@ -1893,7 +1667,7 @@ func (lexer *Lexer) scanIdentifierWithEscapes(kind identifierKind) (MaybeSubstri
 		}
 
 		// Stop when we reach the end of the identifier
-		if !IsIdentifierContinue(lexer.codePoint) {
+		if !js_ast.IsIdentifierContinue(lexer.codePoint) {
 			break
 		}
 		lexer.step()
@@ -1912,7 +1686,7 @@ func (lexer *Lexer) scanIdentifierWithEscapes(kind identifierKind) (MaybeSubstri
 	if kind == privateIdentifier {
 		identifier = identifier[1:] // Skip over the "#"
 	}
-	if !IsIdentifier(identifier) {
+	if !js_ast.IsIdentifier(identifier) {
 		lexer.addRangeError(logger.Range{Loc: logger.Loc{Start: int32(lexer.start)}, Len: int32(lexer.end - lexer.start)},
 			fmt.Sprintf("Invalid identifier: %q", text))
 	}
@@ -1961,6 +1735,7 @@ func (lexer *Lexer) parseNumericLiteralOrDot() {
 	underscoreCount := 0
 	lastUnderscoreEnd := 0
 	hasDotOrExponent := first == '.'
+	isMissingDigitAfterDot := false
 	base := 0.0
 	lexer.IsLegacyOctalLiteral = false
 
@@ -2128,8 +1903,11 @@ func (lexer *Lexer) parseNumericLiteralOrDot() {
 			if lexer.codePoint == '_' {
 				lexer.SyntaxError()
 			}
+			isMissingDigitAfterDot = true
 			for {
-				if lexer.codePoint < '0' || lexer.codePoint > '9' {
+				if lexer.codePoint >= '0' && lexer.codePoint <= '9' {
+					isMissingDigitAfterDot = false
+				} else {
 					if lexer.codePoint != '_' {
 						break
 					}
@@ -2230,8 +2008,13 @@ func (lexer *Lexer) parseNumericLiteralOrDot() {
 	}
 
 	// Identifiers can't occur immediately after numbers
-	if IsIdentifierStart(lexer.codePoint) {
+	if js_ast.IsIdentifierStart(lexer.codePoint) {
 		lexer.SyntaxError()
+	}
+
+	// None of these are allowed in JSON
+	if lexer.json == JSON && (first == '.' || base != 0 || underscoreCount > 0 || isMissingDigitAfterDot) {
+		lexer.Unexpected()
 	}
 }
 
@@ -2257,7 +2040,7 @@ func (lexer *Lexer) ScanRegExp() {
 		case '/':
 			lexer.step()
 			bits := uint32(0)
-			for IsIdentifierContinue(lexer.codePoint) {
+			for js_ast.IsIdentifierContinue(lexer.codePoint) {
 				switch lexer.codePoint {
 				case 'd', 'g', 'i', 'm', 's', 'u', 'y':
 					bit := uint32(1) << uint32(lexer.codePoint-'a')
@@ -2368,7 +2151,7 @@ func fixWhitespaceAndDecodeJSXEntities(text string) []uint16 {
 
 		default:
 			// Check for unusual whitespace characters
-			if !IsWhitespace(c) {
+			if !js_ast.IsWhitespace(c) {
 				afterLastNonWhitespace = i + width
 				if firstNonWhitespace == -1 {
 					firstNonWhitespace = i
@@ -2447,7 +2230,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				continue
 
 			case 'v':
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					return nil, false, start + i - width2
 				}
 
@@ -2456,7 +2239,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 
 			case '0', '1', '2', '3', '4', '5', '6', '7':
 				octalStart := i - 2
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					return nil, false, start + i - width2
 				}
 
@@ -2496,7 +2279,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				lexer.LegacyOctalLoc = logger.Loc{Start: int32(start + i - 2)}
 
 			case 'x':
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					return nil, false, start + i - width2
 				}
 
@@ -2527,7 +2310,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				i += width3
 
 				if c3 == '{' {
-					if lexer.json.parse {
+					if lexer.json == JSON {
 						return nil, false, start + i - width2
 					}
 
@@ -2591,7 +2374,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				c = value
 
 			case '\r':
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					return nil, false, start + i - width2
 				}
 
@@ -2603,7 +2386,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				continue
 
 			case '\n', '\u2028', '\u2029':
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					return nil, false, start + i - width2
 				}
 
@@ -2611,7 +2394,7 @@ func (lexer *Lexer) tryToDecodeEscapeSequences(start int, text string, reportErr
 				continue
 
 			default:
-				if lexer.json.parse {
+				if lexer.json == JSON {
 					switch c2 {
 					case '"', '\\', '/':
 
@@ -2717,7 +2500,7 @@ func hasPrefixWithWordBoundary(text string, prefix string) bool {
 			return true
 		}
 		c, _ := utf8.DecodeRuneInString(text[p:])
-		if !IsIdentifierContinue(c) {
+		if !js_ast.IsIdentifierContinue(c) {
 			return true
 		}
 	}
@@ -2742,10 +2525,10 @@ func scanForPragmaArg(kind pragmaArg, start int, pragma string, text string) (lo
 	// One or more whitespace characters
 	c, width := utf8.DecodeRuneInString(text)
 	if kind == pragmaSkipSpaceFirst {
-		if !IsWhitespace(c) {
+		if !js_ast.IsWhitespace(c) {
 			return logger.Span{}, false
 		}
-		for IsWhitespace(c) {
+		for js_ast.IsWhitespace(c) {
 			text = text[width:]
 			start += width
 			if text == "" {
@@ -2757,13 +2540,13 @@ func scanForPragmaArg(kind pragmaArg, start int, pragma string, text string) (lo
 
 	// One or more non-whitespace characters
 	i := 0
-	for !IsWhitespace(c) {
+	for !js_ast.IsWhitespace(c) {
 		i += width
 		if i >= len(text) {
 			break
 		}
 		c, width = utf8.DecodeRuneInString(text[i:])
-		if IsWhitespace(c) {
+		if js_ast.IsWhitespace(c) {
 			break
 		}
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/evanw/esbuild/internal/config"
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/js_ast"
-	"github.com/evanw/esbuild/internal/js_lexer"
 	"github.com/evanw/esbuild/internal/logger"
 	"github.com/evanw/esbuild/internal/renamer"
 	"github.com/evanw/esbuild/internal/sourcemap"
@@ -337,6 +336,7 @@ type printer struct {
 	callTarget             js_ast.E
 	extractedLegalComments map[string]bool
 	js                     []byte
+	jsonMetadataImports    []string
 	options                Options
 	builder                sourcemap.ChunkBuilder
 	stmtStart              int
@@ -399,7 +399,7 @@ func (p *printer) mangledPropName(ref js_ast.Ref) string {
 }
 
 func (p *printer) printClauseAlias(alias string) {
-	if js_lexer.IsIdentifier(alias) {
+	if js_ast.IsIdentifier(alias) {
 		p.printSpaceBeforeIdentifier()
 		p.printIdentifier(alias)
 	} else {
@@ -419,19 +419,19 @@ func (p *printer) printClauseAlias(alias string) {
 // JavaScript language target that we support.
 
 func CanEscapeIdentifier(name string, UnsupportedFeatures compat.JSFeature, asciiOnly bool) bool {
-	return js_lexer.IsIdentifierES5AndESNext(name) && (!asciiOnly ||
+	return js_ast.IsIdentifierES5AndESNext(name) && (!asciiOnly ||
 		!UnsupportedFeatures.Has(compat.UnicodeEscapes) ||
 		!helpers.ContainsNonBMPCodePoint(name))
 }
 
 func (p *printer) canPrintIdentifier(name string) bool {
-	return js_lexer.IsIdentifierES5AndESNext(name) && (!p.options.ASCIIOnly ||
+	return js_ast.IsIdentifierES5AndESNext(name) && (!p.options.ASCIIOnly ||
 		!p.options.UnsupportedFeatures.Has(compat.UnicodeEscapes) ||
 		!helpers.ContainsNonBMPCodePoint(name))
 }
 
 func (p *printer) canPrintIdentifierUTF16(name []uint16) bool {
-	return js_lexer.IsIdentifierES5AndESNextUTF16(name) && (!p.options.ASCIIOnly ||
+	return js_ast.IsIdentifierES5AndESNextUTF16(name) && (!p.options.ASCIIOnly ||
 		!p.options.UnsupportedFeatures.Has(compat.UnicodeEscapes) ||
 		!helpers.ContainsNonBMPCodePointUTF16(name))
 }
@@ -746,7 +746,7 @@ func (p *printer) printSemicolonIfNeeded() {
 func (p *printer) printSpaceBeforeIdentifier() {
 	buffer := p.js
 	n := len(buffer)
-	if n > 0 && (js_lexer.IsIdentifierContinue(rune(buffer[n-1])) || n == p.prevRegExpEnd) {
+	if n > 0 && (js_ast.IsIdentifierContinue(rune(buffer[n-1])) || n == p.prevRegExpEnd) {
 		p.print(" ")
 	}
 }
@@ -1122,8 +1122,7 @@ func (p *printer) printRequireOrImportExpr(
 			}
 
 			p.print("(")
-			p.addSourceMapping(record.Range.Loc)
-			p.printQuotedUTF8(record.Path.Text, true /* allowBacktick */)
+			p.printPath(importRecordIndex, ast.ImportRequire)
 			p.print(")")
 
 			// Finish the call to "__toESM()"
@@ -1139,11 +1138,13 @@ func (p *printer) printRequireOrImportExpr(
 		}
 
 		// External "import()"
+		kind := ast.ImportDynamic
 		if !p.options.UnsupportedFeatures.Has(compat.DynamicImport) {
 			p.printSpaceBeforeIdentifier()
 			p.print("import(")
 			defer p.print(")")
 		} else {
+			kind = ast.ImportRequire
 			p.printSpaceBeforeIdentifier()
 			p.print("Promise.resolve()")
 			p.printDotThenPrefix()
@@ -1184,7 +1185,7 @@ func (p *printer) printRequireOrImportExpr(
 			p.printIndent()
 		}
 		p.addSourceMapping(record.Range.Loc)
-		p.printQuotedUTF8(record.Path.Text, true /* allowBacktick */)
+		p.printPath(importRecordIndex, kind)
 		if !p.options.UnsupportedFeatures.Has(compat.DynamicImport) {
 			p.printImportCallAssertions(record.Assertions)
 		}
@@ -1487,31 +1488,38 @@ func (p *printer) lateConstantFoldUnaryOrBinaryExpr(expr js_ast.Expr) js_ast.Exp
 		left := p.lateConstantFoldUnaryOrBinaryExpr(e.Left)
 		right := p.lateConstantFoldUnaryOrBinaryExpr(e.Right)
 
-		// Only fold again if something chained
+		// Only fold again if something changed
 		if left.Data != e.Left.Data || right.Data != e.Right.Data {
+			binary := &js_ast.EBinary{Op: e.Op, Left: left, Right: right}
+
 			// Only fold certain operations (just like the parser)
-			if l, r, ok := js_ast.ExtractNumericValues(left, right); ok {
-				switch e.Op {
-				case js_ast.BinOpShr:
-					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: float64(js_ast.ToInt32(l) >> js_ast.ToInt32(r))}}
-
-				case js_ast.BinOpBitwiseAnd:
-					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: float64(js_ast.ToInt32(l) & js_ast.ToInt32(r))}}
-
-				case js_ast.BinOpBitwiseOr:
-					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: float64(js_ast.ToInt32(l) | js_ast.ToInt32(r))}}
-
-				case js_ast.BinOpBitwiseXor:
-					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: float64(js_ast.ToInt32(l) ^ js_ast.ToInt32(r))}}
+			if js_ast.ShouldFoldBinaryArithmeticWhenMinifying(e.Op) {
+				if result := js_ast.FoldBinaryArithmetic(expr.Loc, binary); result.Data != nil {
+					return result
 				}
 			}
 
 			// Don't mutate the original AST
-			expr.Data = &js_ast.EBinary{Op: e.Op, Left: left, Right: right}
+			expr.Data = binary
 		}
 	}
 
 	return expr
+}
+
+func (p *printer) isUnboundIdentifier(expr js_ast.Expr) bool {
+	id, ok := expr.Data.(*js_ast.EIdentifier)
+	return ok && p.symbols.Get(js_ast.FollowSymbols(p.symbols, id.Ref)).Kind == js_ast.SymbolUnbound
+}
+
+func (p *printer) isIdentifierOrNumericConstantOrPropertyAccess(expr js_ast.Expr) bool {
+	switch e := expr.Data.(type) {
+	case *js_ast.EIdentifier, *js_ast.EDot, *js_ast.EIndex:
+		return true
+	case *js_ast.ENumber:
+		return math.IsInf(e.Value, 1) || math.IsNaN(e.Value)
+	}
+	return false
 }
 
 type printExprFlags uint16
@@ -1861,12 +1869,10 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 
 		// We don't ever want to accidentally generate a direct eval expression here
 		p.callTarget = e.Target.Data
-		if !e.IsDirectEval && p.isUnboundEvalIdentifier(e.Target) {
-			if p.options.MinifyWhitespace {
-				p.print("(0,")
-			} else {
-				p.print("(0, ")
-			}
+		if (e.Kind != js_ast.DirectEval && p.isUnboundEvalIdentifier(e.Target) && e.OptionalChain == js_ast.OptionalChainNone) ||
+			(e.Kind != js_ast.TargetWasOriginallyPropertyAccess && js_ast.IsPropertyAccess(e.Target)) {
+			p.print("(0,")
+			p.printSpace()
 			p.printExpr(e.Target, js_ast.LPostfix, isCallTargetOrTemplateTag)
 			p.print(")")
 		} else {
@@ -1921,7 +1927,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		p.printSpaceBeforeIdentifier()
 		p.addSourceMapping(expr.Loc)
 		p.print("require.resolve(")
-		p.printQuotedUTF8(p.importRecords[e.ImportRecordIndex].Path.Text, true /* allowBacktick */)
+		p.printPath(e.ImportRecordIndex, ast.ImportRequireResolve)
 		p.print(")")
 		if wrap {
 			p.print(")")
@@ -2344,8 +2350,19 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		}
 
 		if e.TagOrNil.Data != nil {
-			// Optional chains are forbidden in template tags
-			if js_ast.IsOptionalChain(e.TagOrNil) {
+			tagIsPropertyAccess := false
+			switch e.TagOrNil.Data.(type) {
+			case *js_ast.EDot, *js_ast.EIndex:
+				tagIsPropertyAccess = true
+			}
+			if !e.TagWasOriginallyPropertyAccess && tagIsPropertyAccess {
+				// Prevent "x``" from becoming "y.z``"
+				p.print("(0,")
+				p.printSpace()
+				p.printExpr(e.TagOrNil, js_ast.LLowest, isCallTargetOrTemplateTag)
+				p.print(")")
+			} else if js_ast.IsOptionalChain(e.TagOrNil) {
+				// Optional chains are forbidden in template tags
 				p.print("(")
 				p.printExpr(e.TagOrNil, js_ast.LLowest, isCallTargetOrTemplateTag)
 				p.print(")")
@@ -2543,7 +2560,17 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			if e.Op == js_ast.UnOpDelete {
 				valueFlags |= isDeleteTarget
 			}
-			p.printExpr(e.Value, js_ast.LPrefix-1, valueFlags)
+
+			// Never turn "typeof (0, x)" into "typeof x" or "delete (0, x)" into "delete x"
+			if (e.Op == js_ast.UnOpTypeof && !e.WasOriginallyTypeofIdentifier && p.isUnboundIdentifier(e.Value)) ||
+				(e.Op == js_ast.UnOpDelete && !e.WasOriginallyDeleteOfIdentifierOrPropertyAccess && p.isIdentifierOrNumericConstantOrPropertyAccess(e.Value)) {
+				p.print("(0,")
+				p.printSpace()
+				p.printExpr(e.Value, js_ast.LPrefix-1, valueFlags)
+				p.print(")")
+			} else {
+				p.printExpr(e.Value, js_ast.LPrefix-1, valueFlags)
+			}
 		}
 
 		if wrap {
@@ -3079,17 +3106,28 @@ func (p *printer) printIndentedComment(text string) {
 	}
 }
 
-func (p *printer) printPath(importRecordIndex uint32) {
+func (p *printer) printPath(importRecordIndex uint32, importKind ast.ImportKind) {
 	record := p.importRecords[importRecordIndex]
 	p.addSourceMapping(record.Range.Loc)
 	p.printQuotedUTF8(record.Path.Text, false /* allowBacktick */)
+
+	if p.options.NeedsMetafile {
+		external := ""
+		if (record.Flags & ast.ShouldNotBeExternalInMetafile) == 0 {
+			external = ",\n          \"external\": true"
+		}
+		p.jsonMetadataImports = append(p.jsonMetadataImports, fmt.Sprintf("\n        {\n          \"path\": %s,\n          \"kind\": %s%s\n        }",
+			helpers.QuoteForJSON(record.Path.Text, p.options.ASCIIOnly),
+			helpers.QuoteForJSON(importKind.StringForMetafile(), p.options.ASCIIOnly),
+			external))
+	}
 
 	// Just omit import assertions if they aren't supported
 	if p.options.UnsupportedFeatures.Has(compat.ImportAssertions) {
 		return
 	}
 
-	if record.Assertions != nil {
+	if record.Assertions != nil && importKind == ast.ImportStmt {
 		p.printSpace()
 		p.print("assert")
 		p.printSpace()
@@ -3286,7 +3324,7 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 		}
 		p.print("from")
 		p.printSpace()
-		p.printPath(s.ImportRecordIndex)
+		p.printPath(s.ImportRecordIndex, ast.ImportStmt)
 		p.printSemicolonAfterStatement()
 
 	case *js_ast.SExportClause:
@@ -3381,7 +3419,7 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 		p.printSpace()
 		p.print("from")
 		p.printSpace()
-		p.printPath(s.ImportRecordIndex)
+		p.printPath(s.ImportRecordIndex, ast.ImportStmt)
 		p.printSemicolonAfterStatement()
 
 	case *js_ast.SLocal:
@@ -3711,7 +3749,7 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 			p.printSpace()
 		}
 
-		p.printPath(s.ImportRecordIndex)
+		p.printPath(s.ImportRecordIndex, ast.ImportStmt)
 		p.printSemicolonAfterStatement()
 
 	case *js_ast.SBlock:
@@ -3850,6 +3888,7 @@ type Options struct {
 	LegalComments       config.LegalComments
 	SourceMap           config.SourceMap
 	AddSourceMappings   bool
+	NeedsMetafile       bool
 }
 
 type RequireOrImportMeta struct {
@@ -3864,6 +3903,7 @@ type RequireOrImportMeta struct {
 type PrintResult struct {
 	JS                     []byte
 	ExtractedLegalComments map[string]bool
+	JSONMetadataImports    []string
 
 	// This source map chunk just contains the VLQ-encoded offsets for the "JS"
 	// field above. It's not a full source map. The bundler will be joining many
@@ -3910,6 +3950,7 @@ func Print(tree js_ast.AST, symbols js_ast.SymbolMap, r renamer.Renamer, options
 
 	result := PrintResult{
 		JS:                     p.js,
+		JSONMetadataImports:    p.jsonMetadataImports,
 		ExtractedLegalComments: p.extractedLegalComments,
 	}
 	if options.SourceMap != config.SourceMapNone {

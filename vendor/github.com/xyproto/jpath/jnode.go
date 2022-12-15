@@ -30,7 +30,7 @@ type (
 // NilNode is an empty node. Used when not finding nodes with Get.
 var (
 	NilNode        = &Node{nil}
-	ErrKeyNotFound = errors.New("Key not found")
+	ErrKeyNotFound = errors.New("key not found")
 )
 
 // New returns a pointer to a new `Node` object
@@ -167,7 +167,7 @@ func (j *Node) GetIndex(index int) (*Node, bool) {
 // within a nested Node and returns a new Node pointer
 // the pointer is always a valid Node, allowing for chained operations
 //
-//   newJs := js.Get("top_level", "entries", 3, "dict")
+//	newJs := js.Get("top_level", "entries", 3, "dict")
 func (j *Node) Get(branch ...interface{}) *Node {
 	jin, ok := j.CheckGet(branch...)
 	if !ok {
@@ -180,16 +180,16 @@ func (j *Node) Get(branch ...interface{}) *Node {
 // indicating whenever the branch was found or not
 // the Node pointer may be nil
 //
-//   newJs, ok := js.Get("top_level", "entries", 3, "dict")
+//	newJs, ok := js.Get("top_level", "entries", 3, "dict")
 func (j *Node) CheckGet(branch ...interface{}) (*Node, bool) {
 	jin := j
 	var ok bool
 	for _, p := range branch {
-		switch p.(type) {
+		switch p := p.(type) {
 		case string:
-			jin, ok = jin.GetKey(p.(string))
+			jin, ok = jin.GetKey(p)
 		case int:
-			jin, ok = jin.GetIndex(p.(int))
+			jin, ok = jin.GetIndex(p)
 		default:
 			ok = false
 		}
@@ -299,9 +299,10 @@ func (j *Node) NodeMap(args ...NodeMap) NodeMap {
 // List guarantees the return of a `[]interface{}` (with optional default)
 //
 // useful when you want to interate over array values in a succinct manner:
-//		for i, v := range js.Get("results").List() {
-//			fmt.Println(i, v)
-//		}
+//
+//	for i, v := range js.Get("results").List() {
+//		fmt.Println(i, v)
+//	}
 func (j *Node) List(args ...[]interface{}) []interface{} {
 	var def []interface{}
 
@@ -323,9 +324,10 @@ func (j *Node) List(args ...[]interface{}) []interface{} {
 // Map guarantees the return of a `map[string]interface{}` (with optional default)
 //
 // useful when you want to interate over map values in a succinct manner:
-//		for k, v := range js.Get("dictionary").Map() {
-//			fmt.Println(k, v)
-//		}
+//
+//	for k, v := range js.Get("dictionary").Map() {
+//		fmt.Println(k, v)
+//	}
 func (j *Node) Map(args ...map[string]interface{}) map[string]interface{} {
 	var def map[string]interface{}
 
@@ -348,7 +350,8 @@ func (j *Node) Map(args ...map[string]interface{}) map[string]interface{} {
 // String guarantees the return of a `string` (with optional default)
 //
 // useful when you explicitly want a `string` in a single value return context:
-//     myFunc(js.Get("param1").String(), js.Get("optional_param").String("my_default"))
+//
+//	myFunc(js.Get("param1").String(), js.Get("optional_param").String("my_default"))
 func (j *Node) String(args ...string) string {
 	var def string
 
@@ -371,7 +374,8 @@ func (j *Node) String(args ...string) string {
 // Int guarantees the return of an `int` (with optional default)
 //
 // useful when you explicitly want an `int` in a single value return context:
-//     myFunc(js.Get("param1").Int(), js.Get("optional_param").Int(5150))
+//
+//	myFunc(js.Get("param1").Int(), js.Get("optional_param").Int(5150))
 func (j *Node) Int(args ...int) int {
 	var def int
 
@@ -394,7 +398,8 @@ func (j *Node) Int(args ...int) int {
 // Float64 guarantees the return of a `float64` (with optional default)
 //
 // useful when you explicitly want a `float64` in a single value return context:
-//     myFunc(js.Get("param1").Float64(), js.Get("optional_param").Float64(5.150))
+//
+//	myFunc(js.Get("param1").Float64(), js.Get("optional_param").Float64(5.150))
 func (j *Node) Float64(args ...float64) float64 {
 	var def float64
 
@@ -417,7 +422,8 @@ func (j *Node) Float64(args ...float64) float64 {
 // Bool guarantees the return of a `bool` (with optional default)
 //
 // useful when you explicitly want a `bool` in a single value return context:
-//     myFunc(js.Get("param1").Bool(), js.Get("optional_param").Bool(true))
+//
+//	myFunc(js.Get("param1").Bool(), js.Get("optional_param").Bool(true))
 func (j *Node) Bool(args ...bool) bool {
 	var def bool
 
@@ -440,7 +446,8 @@ func (j *Node) Bool(args ...bool) bool {
 // Int64 guarantees the return of an `int64` (with optional default)
 //
 // useful when you explicitly want an `int64` in a single value return context:
-//     myFunc(js.Get("param1").Int64(), js.Get("optional_param").Int64(5150))
+//
+//	myFunc(js.Get("param1").Int64(), js.Get("optional_param").Int64(5150))
 func (j *Node) Int64(args ...int64) int64 {
 	var def int64
 
@@ -463,7 +470,8 @@ func (j *Node) Int64(args ...int64) int64 {
 // Uint64 guarantees the return of an `uint64` (with optional default)
 //
 // useful when you explicitly want an `uint64` in a single value return context:
-//     myFunc(js.Get("param1").Uint64(), js.Get("optional_param").Uint64(5150))
+//
+//	myFunc(js.Get("param1").Uint64(), js.Get("optional_param").Uint64(5150))
 func (j *Node) Uint64(args ...uint64) uint64 {
 	var def uint64
 
