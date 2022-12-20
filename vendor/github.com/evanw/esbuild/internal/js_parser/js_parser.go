@@ -1163,8 +1163,10 @@ func (p *parser) canMergeSymbols(scope *js_ast.Scope, existing js_ast.SymbolKind
 	// "function foo() {} var foo;"
 	// "function *foo() {} function *foo() {}" but not "{ function *foo() {} function *foo() {} }"
 	if new.IsHoistedOrFunction() && existing.IsHoistedOrFunction() &&
-		(scope.Kind == js_ast.ScopeEntry || scope.Kind == js_ast.ScopeFunctionBody ||
-			(new.IsHoisted() && existing.IsHoisted())) {
+		(scope.Kind == js_ast.ScopeEntry ||
+			scope.Kind == js_ast.ScopeFunctionBody ||
+			scope.Kind == js_ast.ScopeFunctionArgs ||
+			(new == existing && new.IsHoisted())) {
 		return mergeReplaceWithNew
 	}
 
@@ -1229,6 +1231,7 @@ func (p *parser) declareSymbol(kind js_ast.SymbolKind, loc logger.Loc, name stri
 
 		case mergeReplaceWithNew:
 			symbol.Link = ref
+			p.currentScope.Replaced = append(p.currentScope.Replaced, existing)
 
 			// If these are both functions, remove the overwritten declaration
 			if p.options.minifySyntax && kind.IsFunction() && symbol.Kind.IsFunction() {
@@ -1266,6 +1269,42 @@ func (a scopeMemberArray) Less(i int, j int) bool {
 }
 
 func (p *parser) hoistSymbols(scope *js_ast.Scope) {
+	// Duplicate function declarations are forbidden in nested blocks in strict
+	// mode. Separately, they are also forbidden at the top-level of modules.
+	// This check needs to be delayed until now instead of being done when the
+	// functions are declared because we potentially need to scan the whole file
+	// to know if the file is considered to be in strict mode (or is considered
+	// to be a module). We might only encounter an "export {}" clause at the end
+	// of the file.
+	if (scope.StrictMode != js_ast.SloppyMode && scope.Kind == js_ast.ScopeBlock) || (scope.Parent == nil && p.isFileConsideredESM) {
+		for _, replaced := range scope.Replaced {
+			symbol := &p.symbols[replaced.Ref.InnerIndex]
+			if symbol.Kind.IsFunction() {
+				if member, ok := scope.Members[symbol.OriginalName]; ok && p.symbols[member.Ref.InnerIndex].Kind.IsFunction() {
+					var notes []logger.MsgData
+					if scope.Parent == nil && p.isFileConsideredESM {
+						_, notes = p.whyESModule()
+						notes[0].Text = fmt.Sprintf("Duplicate top-level function declarations are not allowed in an ECMAScript module. %s", notes[0].Text)
+					} else {
+						var where string
+						where, notes = p.whyStrictMode(scope)
+						notes[0].Text = fmt.Sprintf("Duplicate function declarations are not allowed in nested blocks %s. %s", where, notes[0].Text)
+					}
+
+					p.log.AddErrorWithNotes(&p.tracker,
+						js_lexer.RangeOfIdentifier(p.source, member.Loc),
+						fmt.Sprintf("The symbol %q has already been declared", symbol.OriginalName),
+
+						append([]logger.MsgData{p.tracker.MsgData(
+							js_lexer.RangeOfIdentifier(p.source, replaced.Loc),
+							fmt.Sprintf("The symbol %q was originally declared here:", symbol.OriginalName),
+						)}, notes...),
+					)
+				}
+			}
+		}
+	}
+
 	if !scope.Kind.StopsHoisting() {
 		// We create new symbols in the loop below, so the iteration order of the
 		// loop must be deterministic to avoid generating different minified names
@@ -9078,7 +9117,14 @@ func (p *parser) isAnonymousNamedExpr(expr js_ast.Expr) bool {
 	case *js_ast.EFunction:
 		return e.Fn.Name == nil
 	case *js_ast.EClass:
-		return e.Class.Name == nil
+		if e.Class.Name == nil {
+			for _, prop := range e.Class.Properties {
+				if propertyPreventsKeepNames(&prop) {
+					return false
+				}
+			}
+			return true
+		}
 	}
 	return false
 }
@@ -11640,6 +11686,12 @@ pattern:
 					continue // This is part of ES2022
 				}
 				feature = compat.RegexpMatchIndices
+
+			case 'v':
+				if !p.options.unsupportedJSFeatures.Has(compat.RegexpSetNotation) {
+					continue // This is from a proposal: https://github.com/tc39/proposal-regexp-v-flag
+				}
+				feature = compat.RegexpSetNotation
 
 			default:
 				// Unknown flags are never supported

@@ -46,16 +46,16 @@ type scannerFile struct {
 // This is data related to source maps. It's computed in parallel with linking
 // and must be ready by the time printing happens. This is beneficial because
 // it is somewhat expensive to produce.
-type dataForSourceMap struct {
+type DataForSourceMap struct {
 	// This data is for the printer. It maps from byte offsets in the file (which
 	// are stored at every AST node) to UTF-16 column offsets (required by source
 	// maps).
-	lineOffsetTables []sourcemap.LineOffsetTable
+	LineOffsetTables []sourcemap.LineOffsetTable
 
 	// This contains the quoted contents of the original source file. It's what
 	// needs to be embedded in the "sourcesContent" array in the final source
 	// map. Quoting is precomputed because it's somewhat expensive.
-	quotedContents [][]byte
+	QuotedContents [][]byte
 }
 
 type Bundle struct {
@@ -66,7 +66,7 @@ type Bundle struct {
 	uniqueKeyPrefix string
 
 	fs          fs.FS
-	res         resolver.Resolver
+	res         *resolver.Resolver
 	files       []scannerFile
 	entryPoints []graph.EntryPoint
 	options     config.Options
@@ -75,7 +75,7 @@ type Bundle struct {
 type parseArgs struct {
 	fs              fs.FS
 	log             logger.Log
-	res             resolver.Resolver
+	res             *resolver.Resolver
 	caches          *cache.CacheSet
 	prettyPath      string
 	importSource    *logger.Source
@@ -160,6 +160,10 @@ func parseFile(args parseArgs) {
 		loader = loaderFromFileExtension(args.options.ExtensionToLoader, base+ext)
 	}
 
+	if loader == config.LoaderEmpty {
+		source.Contents = ""
+	}
+
 	result := parseResult{
 		file: scannerFile{
 			inputFile: graph.InputFile{
@@ -182,7 +186,7 @@ func parseFile(args parseArgs) {
 	}()
 
 	switch loader {
-	case config.LoaderJS:
+	case config.LoaderJS, config.LoaderEmpty:
 		ast, ok := args.caches.JSCache.Parse(args.log, source, js_parser.OptionsFromConfig(&args.options))
 		if len(ast.Parts) <= 1 { // Ignore the implicitly-generated namespace export part
 			result.file.inputFile.SideEffects.Kind = graph.NoSideEffects_EmptyAST
@@ -341,9 +345,166 @@ func parseFile(args parseArgs) {
 		args.log.AddError(&tracker, args.importPathRange, message)
 	}
 
-	// This must come before we send on the "results" channel to avoid deadlock
+	// Only continue now if parsing was successful
+	if result.ok {
+		// Run the resolver on the parse thread so it's not run on the main thread.
+		// That way the main thread isn't blocked if the resolver takes a while.
+		if recordsPtr := result.file.inputFile.Repr.ImportRecords(); args.options.Mode == config.ModeBundle && !args.skipResolve && recordsPtr != nil {
+			// Clone the import records because they will be mutated later
+			records := append([]ast.ImportRecord{}, *recordsPtr...)
+			*recordsPtr = records
+			result.resolveResults = make([]*resolver.ResolveResult, len(records))
+
+			if len(records) > 0 {
+				resolverCache := make(map[ast.ImportKind]map[string]*resolver.ResolveResult)
+				tracker := logger.MakeLineColumnTracker(&source)
+
+				for importRecordIndex := range records {
+					// Don't try to resolve imports that are already resolved
+					record := &records[importRecordIndex]
+					if record.SourceIndex.IsValid() {
+						continue
+					}
+
+					// Ignore records that the parser has discarded. This is used to remove
+					// type-only imports in TypeScript files.
+					if record.Flags.Has(ast.IsUnused) {
+						continue
+					}
+
+					// Cache the path in case it's imported multiple times in this file
+					cache, ok := resolverCache[record.Kind]
+					if !ok {
+						cache = make(map[string]*resolver.ResolveResult)
+						resolverCache[record.Kind] = cache
+					}
+					if resolveResult, ok := cache[record.Path.Text]; ok {
+						result.resolveResults[importRecordIndex] = resolveResult
+						continue
+					}
+
+					// Run the resolver and log an error if the path couldn't be resolved
+					resolveResult, didLogError, debug := RunOnResolvePlugins(
+						args.options.Plugins,
+						args.res,
+						args.log,
+						args.fs,
+						&args.caches.FSCache,
+						&source,
+						record.Range,
+						source.KeyPath,
+						record.Path.Text,
+						record.Kind,
+						absResolveDir,
+						pluginData,
+					)
+					cache[record.Path.Text] = resolveResult
+
+					// All "require.resolve()" imports should be external because we don't
+					// want to waste effort traversing into them
+					if record.Kind == ast.ImportRequireResolve {
+						if resolveResult != nil && resolveResult.IsExternal {
+							// Allow path substitution as long as the result is external
+							result.resolveResults[importRecordIndex] = resolveResult
+						} else if !record.Flags.Has(ast.HandlesImportErrors) {
+							args.log.AddID(logger.MsgID_Bundler_RequireResolveNotExternal, logger.Warning, &tracker, record.Range,
+								fmt.Sprintf("%q should be marked as external for use with \"require.resolve\"", record.Path.Text))
+						}
+						continue
+					}
+
+					if resolveResult == nil {
+						// Failed imports inside a try/catch are silently turned into
+						// external imports instead of causing errors. This matches a common
+						// code pattern for conditionally importing a module with a graceful
+						// fallback.
+						if !didLogError && !record.Flags.Has(ast.HandlesImportErrors) {
+							text, suggestion, notes := ResolveFailureErrorTextSuggestionNotes(args.res, record.Path.Text, record.Kind,
+								pluginName, args.fs, absResolveDir, args.options.Platform, source.PrettyPath, debug.ModifiedImportPath)
+							debug.LogErrorMsg(args.log, &source, record.Range, text, suggestion, notes)
+						} else if !didLogError && record.Flags.Has(ast.HandlesImportErrors) {
+							args.log.AddIDWithNotes(logger.MsgID_Bundler_IgnoredDynamicImport, logger.Debug, &tracker, record.Range,
+								fmt.Sprintf("Importing %q was allowed even though it could not be resolved because dynamic import failures appear to be handled here:",
+									record.Path.Text), []logger.MsgData{tracker.MsgData(js_lexer.RangeOfIdentifier(source, record.ErrorHandlerLoc),
+									"The handler for dynamic import failures is here:")})
+						}
+						continue
+					}
+
+					result.resolveResults[importRecordIndex] = resolveResult
+				}
+			}
+		}
+
+		// Attempt to parse the source map if present
+		if loader.CanHaveSourceMap() && args.options.SourceMap != config.SourceMapNone {
+			var sourceMapComment logger.Span
+			switch repr := result.file.inputFile.Repr.(type) {
+			case *graph.JSRepr:
+				sourceMapComment = repr.AST.SourceMapComment
+			case *graph.CSSRepr:
+				sourceMapComment = repr.AST.SourceMapComment
+			}
+
+			if sourceMapComment.Text != "" {
+				tracker := logger.MakeLineColumnTracker(&source)
+
+				if path, contents := extractSourceMapFromComment(args.log, args.fs, &args.caches.FSCache,
+					args.res, &source, &tracker, sourceMapComment, absResolveDir); contents != nil {
+					prettyPath := args.res.PrettyPath(path)
+					log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, args.log.Overrides)
+
+					sourceMap := js_parser.ParseSourceMap(log, logger.Source{
+						KeyPath:    path,
+						PrettyPath: prettyPath,
+						Contents:   *contents,
+					})
+
+					if msgs := log.Done(); len(msgs) > 0 {
+						var text string
+						if path.Namespace == "file" {
+							text = fmt.Sprintf("The source map %q was referenced by the file %q here:", prettyPath, args.prettyPath)
+						} else {
+							text = fmt.Sprintf("This source map came from the file %q here:", args.prettyPath)
+						}
+						note := tracker.MsgData(sourceMapComment.Range, text)
+						for _, msg := range msgs {
+							msg.Notes = append(msg.Notes, note)
+							args.log.AddMsg(msg)
+						}
+					}
+
+					// If "sourcesContent" isn't present, try filling it in using the file system
+					if sourceMap != nil && sourceMap.SourcesContent == nil && !args.options.ExcludeSourcesContent {
+						for _, source := range sourceMap.Sources {
+							var absPath string
+							if args.fs.IsAbs(source) {
+								absPath = source
+							} else if path.Namespace == "file" {
+								absPath = args.fs.Join(args.fs.Dir(path.Text), source)
+							} else {
+								sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourcemap.SourceContent{})
+								continue
+							}
+							var sourceContent sourcemap.SourceContent
+							if contents, err, _ := args.caches.FSCache.ReadFile(args.fs, absPath); err == nil {
+								sourceContent.Value = helpers.StringToUTF16(contents)
+							}
+							sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourceContent)
+						}
+					}
+
+					result.file.inputFile.InputSourceMap = sourceMap
+				}
+			}
+		}
+	}
+
+	// Note: We must always send on the "inject" channel before we send on the
+	// "results" channel to avoid deadlock
 	if args.inject != nil {
 		var exports []config.InjectableExport
+
 		if repr, ok := result.file.inputFile.Repr.(*graph.JSRepr); ok {
 			aliases := make([]string, 0, len(repr.AST.NamedExports))
 			for alias := range repr.AST.NamedExports {
@@ -358,167 +519,14 @@ func parseFile(args parseArgs) {
 				}
 			}
 		}
+
+		// Once we send on the "inject" channel, the main thread may mutate the
+		// "options" object to populate the "InjectedFiles" field. So we must
+		// only send on the "inject" channel after we're done using the "options"
+		// object so we don't introduce a data race.
 		args.inject <- config.InjectedFile{
 			Source:  source,
 			Exports: exports,
-		}
-	}
-
-	// Stop now if parsing failed
-	if !result.ok {
-		args.results <- result
-		return
-	}
-
-	// Run the resolver on the parse thread so it's not run on the main thread.
-	// That way the main thread isn't blocked if the resolver takes a while.
-	if recordsPtr := result.file.inputFile.Repr.ImportRecords(); args.options.Mode == config.ModeBundle && !args.skipResolve && recordsPtr != nil {
-		// Clone the import records because they will be mutated later
-		records := append([]ast.ImportRecord{}, *recordsPtr...)
-		*recordsPtr = records
-		result.resolveResults = make([]*resolver.ResolveResult, len(records))
-
-		if len(records) > 0 {
-			resolverCache := make(map[ast.ImportKind]map[string]*resolver.ResolveResult)
-			tracker := logger.MakeLineColumnTracker(&source)
-
-			for importRecordIndex := range records {
-				// Don't try to resolve imports that are already resolved
-				record := &records[importRecordIndex]
-				if record.SourceIndex.IsValid() {
-					continue
-				}
-
-				// Ignore records that the parser has discarded. This is used to remove
-				// type-only imports in TypeScript files.
-				if record.Flags.Has(ast.IsUnused) {
-					continue
-				}
-
-				// Cache the path in case it's imported multiple times in this file
-				cache, ok := resolverCache[record.Kind]
-				if !ok {
-					cache = make(map[string]*resolver.ResolveResult)
-					resolverCache[record.Kind] = cache
-				}
-				if resolveResult, ok := cache[record.Path.Text]; ok {
-					result.resolveResults[importRecordIndex] = resolveResult
-					continue
-				}
-
-				// Run the resolver and log an error if the path couldn't be resolved
-				resolveResult, didLogError, debug := RunOnResolvePlugins(
-					args.options.Plugins,
-					args.res,
-					args.log,
-					args.fs,
-					&args.caches.FSCache,
-					&source,
-					record.Range,
-					source.KeyPath,
-					record.Path.Text,
-					record.Kind,
-					absResolveDir,
-					pluginData,
-				)
-				cache[record.Path.Text] = resolveResult
-
-				// All "require.resolve()" imports should be external because we don't
-				// want to waste effort traversing into them
-				if record.Kind == ast.ImportRequireResolve {
-					if resolveResult != nil && resolveResult.IsExternal {
-						// Allow path substitution as long as the result is external
-						result.resolveResults[importRecordIndex] = resolveResult
-					} else if !record.Flags.Has(ast.HandlesImportErrors) {
-						args.log.AddID(logger.MsgID_Bundler_RequireResolveNotExternal, logger.Warning, &tracker, record.Range,
-							fmt.Sprintf("%q should be marked as external for use with \"require.resolve\"", record.Path.Text))
-					}
-					continue
-				}
-
-				if resolveResult == nil {
-					// Failed imports inside a try/catch are silently turned into
-					// external imports instead of causing errors. This matches a common
-					// code pattern for conditionally importing a module with a graceful
-					// fallback.
-					if !didLogError && !record.Flags.Has(ast.HandlesImportErrors) {
-						text, suggestion, notes := ResolveFailureErrorTextSuggestionNotes(args.res, record.Path.Text, record.Kind,
-							pluginName, args.fs, absResolveDir, args.options.Platform, source.PrettyPath, debug.ModifiedImportPath)
-						debug.LogErrorMsg(args.log, &source, record.Range, text, suggestion, notes)
-					} else if !didLogError && record.Flags.Has(ast.HandlesImportErrors) {
-						args.log.AddIDWithNotes(logger.MsgID_Bundler_IgnoredDynamicImport, logger.Debug, &tracker, record.Range,
-							fmt.Sprintf("Importing %q was allowed even though it could not be resolved because dynamic import failures appear to be handled here:",
-								record.Path.Text), []logger.MsgData{tracker.MsgData(js_lexer.RangeOfIdentifier(source, record.ErrorHandlerLoc),
-								"The handler for dynamic import failures is here:")})
-					}
-					continue
-				}
-
-				result.resolveResults[importRecordIndex] = resolveResult
-			}
-		}
-	}
-
-	// Attempt to parse the source map if present
-	if loader.CanHaveSourceMap() && args.options.SourceMap != config.SourceMapNone {
-		var sourceMapComment logger.Span
-		switch repr := result.file.inputFile.Repr.(type) {
-		case *graph.JSRepr:
-			sourceMapComment = repr.AST.SourceMapComment
-		case *graph.CSSRepr:
-			sourceMapComment = repr.AST.SourceMapComment
-		}
-
-		if sourceMapComment.Text != "" {
-			tracker := logger.MakeLineColumnTracker(&source)
-
-			if path, contents := extractSourceMapFromComment(args.log, args.fs, &args.caches.FSCache,
-				args.res, &source, &tracker, sourceMapComment, absResolveDir); contents != nil {
-				prettyPath := args.res.PrettyPath(path)
-				log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, args.log.Overrides)
-
-				sourceMap := js_parser.ParseSourceMap(log, logger.Source{
-					KeyPath:    path,
-					PrettyPath: prettyPath,
-					Contents:   *contents,
-				})
-
-				if msgs := log.Done(); len(msgs) > 0 {
-					var text string
-					if path.Namespace == "file" {
-						text = fmt.Sprintf("The source map %q was referenced by the file %q here:", prettyPath, args.prettyPath)
-					} else {
-						text = fmt.Sprintf("This source map came from the file %q here:", args.prettyPath)
-					}
-					note := tracker.MsgData(sourceMapComment.Range, text)
-					for _, msg := range msgs {
-						msg.Notes = append(msg.Notes, note)
-						args.log.AddMsg(msg)
-					}
-				}
-
-				// If "sourcesContent" isn't present, try filling it in using the file system
-				if sourceMap != nil && sourceMap.SourcesContent == nil && !args.options.ExcludeSourcesContent {
-					for _, source := range sourceMap.Sources {
-						var absPath string
-						if args.fs.IsAbs(source) {
-							absPath = source
-						} else if path.Namespace == "file" {
-							absPath = args.fs.Join(args.fs.Dir(path.Text), source)
-						} else {
-							sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourcemap.SourceContent{})
-							continue
-						}
-						var sourceContent sourcemap.SourceContent
-						if contents, err, _ := args.caches.FSCache.ReadFile(args.fs, absPath); err == nil {
-							sourceContent.Value = helpers.StringToUTF16(contents)
-						}
-						sourceMap.SourcesContent = append(sourceMap.SourcesContent, sourceContent)
-					}
-				}
-
-				result.file.inputFile.InputSourceMap = sourceMap
-			}
 		}
 	}
 
@@ -526,7 +534,7 @@ func parseFile(args parseArgs) {
 }
 
 func ResolveFailureErrorTextSuggestionNotes(
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	path string,
 	kind ast.ImportKind,
 	pluginName string,
@@ -607,35 +615,6 @@ func ResolveFailureErrorTextSuggestionNotes(
 	return
 }
 
-func joinWithPublicPath(publicPath string, relPath string) string {
-	if strings.HasPrefix(relPath, "./") {
-		relPath = relPath[2:]
-
-		// Strip any amount of further no-op slashes (i.e. ".///././/x/y" => "x/y")
-		for {
-			if strings.HasPrefix(relPath, "/") {
-				relPath = relPath[1:]
-			} else if strings.HasPrefix(relPath, "./") {
-				relPath = relPath[2:]
-			} else {
-				break
-			}
-		}
-	}
-
-	// Use a relative path if there is no public path
-	if publicPath == "" {
-		publicPath = "."
-	}
-
-	// Join with a slash
-	slash := "/"
-	if strings.HasSuffix(publicPath, "/") {
-		slash = ""
-	}
-	return fmt.Sprintf("%s%s%s", publicPath, slash, relPath)
-}
-
 func isASCIIOnly(text string) bool {
 	for _, c := range text {
 		if c < 0x20 || c > 0x7E {
@@ -659,7 +638,7 @@ func extractSourceMapFromComment(
 	log logger.Log,
 	fs fs.FS,
 	fsCache *cache.FSCache,
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	source *logger.Source,
 	tracker *logger.LineColumnTracker,
 	comment logger.Span,
@@ -701,7 +680,7 @@ func extractSourceMapFromComment(
 	return logger.Path{}, nil
 }
 
-func sanitizeLocation(res resolver.Resolver, loc *logger.MsgLocation) {
+func sanitizeLocation(res *resolver.Resolver, loc *logger.MsgLocation) {
 	if loc != nil {
 		if loc.Namespace == "" {
 			loc.Namespace = "file"
@@ -713,7 +692,7 @@ func sanitizeLocation(res resolver.Resolver, loc *logger.MsgLocation) {
 }
 
 func logPluginMessages(
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	log logger.Log,
 	name string,
 	msgs []logger.Msg,
@@ -773,7 +752,7 @@ func logPluginMessages(
 
 func RunOnResolvePlugins(
 	plugins []config.Plugin,
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	log logger.Log,
 	fs fs.FS,
 	fsCache *cache.FSCache,
@@ -899,7 +878,7 @@ type loaderPluginResult struct {
 
 func runOnLoadPlugins(
 	plugins []config.Plugin,
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	fs fs.FS,
 	fsCache *cache.FSCache,
 	log logger.Log,
@@ -974,7 +953,7 @@ func runOnLoadPlugins(
 
 	// Force disabled modules to be empty
 	if source.KeyPath.IsDisabled() {
-		return loaderPluginResult{loader: config.LoaderJS}, true
+		return loaderPluginResult{loader: config.LoaderEmpty}, true
 	}
 
 	// Read normal modules from disk
@@ -1054,14 +1033,14 @@ func canonicalFileSystemPathForWindows(absPath string) string {
 	return strings.ReplaceAll(strings.ToLower(absPath), "\\", "/")
 }
 
-func hashForFileName(hashBytes []byte) string {
+func HashForFileName(hashBytes []byte) string {
 	return base32.StdEncoding.EncodeToString(hashBytes)[:8]
 }
 
 type scanner struct {
 	log             logger.Log
 	fs              fs.FS
-	res             resolver.Resolver
+	res             *resolver.Resolver
 	caches          *cache.CacheSet
 	timer           *helpers.Timer
 	uniqueKeyPrefix string
@@ -1103,7 +1082,7 @@ func generateUniqueKeyPrefix() (string, error) {
 func ScanBundle(
 	log logger.Log,
 	fs fs.FS,
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	caches *cache.CacheSet,
 	entryPoints []EntryPoint,
 	options config.Options,
@@ -1241,6 +1220,9 @@ func (s *scanner) maybeParseFile(
 	// Only parse a given file path once
 	visited, ok := s.visited[visitedKey]
 	if ok {
+		if inject != nil {
+			inject <- config.InjectedFile{}
+		}
 		return visited.sourceIndex
 	}
 
@@ -1371,9 +1353,7 @@ func (s *scanner) preprocessInjectedFiles() {
 	s.timer.Begin("Preprocess injected files")
 	defer s.timer.End("Preprocess injected files")
 
-	injectedFiles := make([]config.InjectedFile, 0, len(s.options.InjectedDefines)+len(s.options.InjectAbsPaths))
-	duplicateInjectedFiles := make(map[string]bool)
-	injectWaitGroup := sync.WaitGroup{}
+	injectedFiles := make([]config.InjectedFile, 0, len(s.options.InjectedDefines)+len(s.options.InjectPaths))
 
 	// These are virtual paths that are generated for compound "--define" values.
 	// They are special-cased and are not available for plugins to intercept.
@@ -1419,41 +1399,91 @@ func (s *scanner) preprocessInjectedFiles() {
 		go func() { s.resultChannel <- result }()
 	}
 
-	results := make([]config.InjectedFile, len(s.options.InjectAbsPaths))
-	j := 0
-	for _, absPath := range s.options.InjectAbsPaths {
-		prettyPath := s.res.PrettyPath(logger.Path{Text: absPath, Namespace: "file"})
-		absPathKey := canonicalFileSystemPathForWindows(absPath)
+	// Add user-specified injected files. Run resolver plugins on these files
+	// so plugins can alter where they resolve to. These are run in parallel in
+	// case any of these plugins block.
+	injectResolveResults := make([]*resolver.ResolveResult, len(s.options.InjectPaths))
+	injectAbsResolveDir := s.fs.Cwd()
+	injectResolveWaitGroup := sync.WaitGroup{}
+	injectResolveWaitGroup.Add(len(s.options.InjectPaths))
+	for i, importPath := range s.options.InjectPaths {
+		go func(i int, importPath string) {
+			var importer logger.Path
 
-		if duplicateInjectedFiles[absPathKey] {
-			s.log.AddError(nil, logger.Range{}, fmt.Sprintf("Duplicate injected file %q", prettyPath))
-			continue
-		}
+			// Add a leading "./" if it's missing, similar to entry points
+			absPath := importPath
+			if !s.fs.IsAbs(absPath) {
+				absPath = s.fs.Join(injectAbsResolveDir, absPath)
+			}
+			dir := s.fs.Dir(absPath)
+			base := s.fs.Base(absPath)
+			if entries, err, originalError := s.fs.ReadDirectory(dir); err == nil {
+				if entry, _ := entries.Get(base); entry != nil && entry.Kind(s.fs) == fs.FileEntry {
+					importer.Namespace = "file"
+					if !s.fs.IsAbs(importPath) && resolver.IsPackagePath(importPath) {
+						importPath = "./" + importPath
+					}
+				}
+			} else if s.log.Level <= logger.LevelDebug && originalError != nil {
+				s.log.AddID(logger.MsgID_None, logger.Debug, nil, logger.Range{}, fmt.Sprintf("Failed to read directory %q: %s", absPath, originalError.Error()))
+			}
 
-		duplicateInjectedFiles[absPathKey] = true
-		resolveResult := s.res.ResolveAbs(absPath)
-
-		if resolveResult == nil {
-			s.log.AddError(nil, logger.Range{}, fmt.Sprintf("Could not resolve %q", prettyPath))
-			continue
-		}
-
-		channel := make(chan config.InjectedFile)
-		s.maybeParseFile(*resolveResult, prettyPath, nil, logger.Range{}, nil, inputKindNormal, channel)
-
-		// Wait for the results in parallel. The results slice is large enough so
-		// it is not reallocated during the computations.
-		injectWaitGroup.Add(1)
-		go func(i int) {
-			results[i] = <-channel
-			injectWaitGroup.Done()
-		}(j)
-		j++
+			// Run the resolver and log an error if the path couldn't be resolved
+			resolveResult, didLogError, debug := RunOnResolvePlugins(
+				s.options.Plugins,
+				s.res,
+				s.log,
+				s.fs,
+				&s.caches.FSCache,
+				nil,
+				logger.Range{},
+				importer,
+				importPath,
+				ast.ImportEntryPoint,
+				injectAbsResolveDir,
+				nil,
+			)
+			if resolveResult != nil {
+				if resolveResult.IsExternal {
+					s.log.AddError(nil, logger.Range{}, fmt.Sprintf("The injected path %q cannot be marked as external", importPath))
+				} else {
+					injectResolveResults[i] = resolveResult
+				}
+			} else if !didLogError {
+				debug.LogErrorMsg(s.log, nil, logger.Range{}, fmt.Sprintf("Could not resolve %q", importPath), "", nil)
+			}
+			injectResolveWaitGroup.Done()
+		}(i, importPath)
 	}
+	injectResolveWaitGroup.Wait()
 
+	// Parse all entry points that were resolved successfully
+	results := make([]config.InjectedFile, len(s.options.InjectPaths))
+	j := 0
+	var injectWaitGroup sync.WaitGroup
+	for _, resolveResult := range injectResolveResults {
+		if resolveResult != nil {
+			channel := make(chan config.InjectedFile, 1)
+			s.maybeParseFile(*resolveResult, s.res.PrettyPath(resolveResult.PathPair.Primary), nil, logger.Range{}, nil, inputKindNormal, channel)
+			injectWaitGroup.Add(1)
+
+			// Wait for the results in parallel. The results slice is large enough so
+			// it is not reallocated during the computations.
+			go func(i int) {
+				results[i] = <-channel
+				injectWaitGroup.Done()
+			}(j)
+			j++
+		}
+	}
 	injectWaitGroup.Wait()
 	injectedFiles = append(injectedFiles, results[:j]...)
 
+	// It's safe to mutate the options object to add the injected files here
+	// because there aren't any concurrent "parseFile" goroutines at this point.
+	// The only ones that were created by this point are the ones we created
+	// above, and we've already waited for all of them to finish using the
+	// "options" object.
 	s.options.InjectedFiles = injectedFiles
 }
 
@@ -1885,7 +1915,7 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 				switch record.Kind {
 				case ast.ImportAt, ast.ImportAtConditional:
 					// Using a JavaScript file with CSS "@import" is not allowed
-					if _, ok := otherFile.inputFile.Repr.(*graph.JSRepr); ok {
+					if _, ok := otherFile.inputFile.Repr.(*graph.JSRepr); ok && otherFile.inputFile.Loader != config.LoaderEmpty {
 						s.log.AddError(&tracker, record.Range,
 							fmt.Sprintf("Cannot import %q into a CSS file", otherFile.inputFile.Source.PrettyPath))
 					} else if record.Kind == ast.ImportAtConditional {
@@ -1901,7 +1931,7 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 							fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath))
 
 					case *graph.JSRepr:
-						if otherRepr.AST.URLForCSS == "" {
+						if otherRepr.AST.URLForCSS == "" && otherFile.inputFile.Loader != config.LoaderEmpty {
 							s.log.AddError(&tracker, record.Range,
 								fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath))
 						}
@@ -2030,12 +2060,12 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 			if config.HasPlaceholder(template, config.HashPlaceholder) {
 				h := xxhash.New()
 				h.Write(bytes)
-				hash = hashForFileName(h.Sum(nil))
+				hash = HashForFileName(h.Sum(nil))
 			}
 
 			// Generate the input for the template
 			_, _, originalExt := logger.PlatformIndependentPathDirBaseExt(result.file.inputFile.Source.KeyPath.Text)
-			dir, base := pathRelativeToOutbase(
+			dir, base := PathRelativeToOutbase(
 				&result.file.inputFile,
 				&s.options,
 				s.fs,
@@ -2258,7 +2288,20 @@ func fixInvalidUnsupportedJSFeatureOverrides(options *config.Options, implies co
 	}
 }
 
-func (b *Bundle) Compile(log logger.Log, timer *helpers.Timer, mangleCache map[string]interface{}) ([]graph.OutputFile, string) {
+type Linker func(
+	options *config.Options,
+	timer *helpers.Timer,
+	log logger.Log,
+	fs fs.FS,
+	res *resolver.Resolver,
+	inputFiles []graph.InputFile,
+	entryPoints []graph.EntryPoint,
+	uniqueKeyPrefix string,
+	reachableFiles []uint32,
+	dataForSourceMaps func() []DataForSourceMap,
+) []graph.OutputFile
+
+func (b *Bundle) Compile(log logger.Log, timer *helpers.Timer, mangleCache map[string]interface{}, link Linker) ([]graph.OutputFile, string) {
 	timer.Begin("Compile phase")
 	defer timer.End("Compile phase")
 
@@ -2456,15 +2499,15 @@ func findReachableFiles(files []graph.InputFile, entryPoints []graph.EntryPoint)
 // it could be good to optionally have this be computed during the parsing
 // phase when incremental builds are active but otherwise still have it be
 // computed during linking for optimal speed during non-incremental builds.
-func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, reachableFiles []uint32) func() []dataForSourceMap {
+func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, reachableFiles []uint32) func() []DataForSourceMap {
 	if options.SourceMap == config.SourceMapNone {
-		return func() []dataForSourceMap {
+		return func() []DataForSourceMap {
 			return nil
 		}
 	}
 
 	var waitGroup sync.WaitGroup
-	results := make([]dataForSourceMap, len(b.files))
+	results := make([]DataForSourceMap, len(b.files))
 
 	for _, sourceIndex := range reachableFiles {
 		if f := &b.files[sourceIndex]; f.inputFile.Loader.CanHaveSourceMap() {
@@ -2478,15 +2521,15 @@ func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, rea
 			waitGroup.Add(1)
 			go func(sourceIndex uint32, f *scannerFile, approximateLineCount int32) {
 				result := &results[sourceIndex]
-				result.lineOffsetTables = sourcemap.GenerateLineOffsetTables(f.inputFile.Source.Contents, approximateLineCount)
+				result.LineOffsetTables = sourcemap.GenerateLineOffsetTables(f.inputFile.Source.Contents, approximateLineCount)
 				sm := f.inputFile.InputSourceMap
 				if !options.ExcludeSourcesContent {
 					if sm == nil {
 						// Simple case: no nested source map
-						result.quotedContents = [][]byte{helpers.QuoteForJSON(f.inputFile.Source.Contents, options.ASCIIOnly)}
+						result.QuotedContents = [][]byte{helpers.QuoteForJSON(f.inputFile.Source.Contents, options.ASCIIOnly)}
 					} else {
 						// Complex case: nested source map
-						result.quotedContents = make([][]byte, len(sm.Sources))
+						result.QuotedContents = make([][]byte, len(sm.Sources))
 						nullContents := []byte("null")
 						for i := range sm.Sources {
 							// Missing contents become a "null" literal
@@ -2504,7 +2547,7 @@ func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, rea
 									quotedContents = helpers.QuoteForJSON(helpers.UTF16ToString(value.Value), options.ASCIIOnly)
 								}
 							}
-							result.quotedContents[i] = quotedContents
+							result.QuotedContents[i] = quotedContents
 						}
 					}
 				}
@@ -2513,7 +2556,7 @@ func (b *Bundle) computeDataForSourceMapsInParallel(options *config.Options, rea
 		}
 	}
 
-	return func() []dataForSourceMap {
+	return func() []DataForSourceMap {
 		waitGroup.Wait()
 		return results
 	}
@@ -2634,4 +2677,139 @@ func (cache *runtimeCache) parseRuntime(options *config.Options) (source logger.
 		cache.astMap[key] = runtimeAST
 	}
 	return
+}
+
+// Returns the path of this file relative to "outbase", which is then ready to
+// be joined with the absolute output directory path. The directory and name
+// components are returned separately for convenience.
+func PathRelativeToOutbase(
+	inputFile *graph.InputFile,
+	options *config.Options,
+	fs fs.FS,
+	avoidIndex bool,
+	customFilePath string,
+) (relDir string, baseName string) {
+	relDir = "/"
+	absPath := inputFile.Source.KeyPath.Text
+
+	if customFilePath != "" {
+		// Use the configured output path if present
+		absPath = customFilePath
+		if !fs.IsAbs(absPath) {
+			absPath = fs.Join(options.AbsOutputBase, absPath)
+		}
+	} else if inputFile.Source.KeyPath.Namespace != "file" {
+		// Come up with a path for virtual paths (i.e. non-file-system paths)
+		dir, base, _ := logger.PlatformIndependentPathDirBaseExt(absPath)
+		if avoidIndex && base == "index" {
+			_, base, _ = logger.PlatformIndependentPathDirBaseExt(dir)
+		}
+		baseName = sanitizeFilePathForVirtualModulePath(base)
+		return
+	} else {
+		// Heuristic: If the file is named something like "index.js", then use
+		// the name of the parent directory instead. This helps avoid the
+		// situation where many chunks are named "index" because of people
+		// dynamically-importing npm packages that make use of node's implicit
+		// "index" file name feature.
+		if avoidIndex {
+			base := fs.Base(absPath)
+			base = base[:len(base)-len(fs.Ext(base))]
+			if base == "index" {
+				absPath = fs.Dir(absPath)
+			}
+		}
+	}
+
+	// Try to get a relative path to the base directory
+	relPath, ok := fs.Rel(options.AbsOutputBase, absPath)
+	if !ok {
+		// This can fail in some situations such as on different drives on
+		// Windows. In that case we just use the file name.
+		baseName = fs.Base(absPath)
+	} else {
+		// Now we finally have a relative path
+		relDir = fs.Dir(relPath) + "/"
+		baseName = fs.Base(relPath)
+
+		// Use platform-independent slashes
+		relDir = strings.ReplaceAll(relDir, "\\", "/")
+
+		// Replace leading "../" so we don't try to write outside of the output
+		// directory. This normally can't happen because "AbsOutputBase" is
+		// automatically computed to contain all entry point files, but it can
+		// happen if someone sets it manually via the "outbase" API option.
+		//
+		// Note that we can't just strip any leading "../" because that could
+		// cause two separate entry point paths to collide. For example, there
+		// could be both "src/index.js" and "../src/index.js" as entry points.
+		dotDotCount := 0
+		for strings.HasPrefix(relDir[dotDotCount*3:], "../") {
+			dotDotCount++
+		}
+		if dotDotCount > 0 {
+			// The use of "_.._" here is somewhat arbitrary but it is unlikely to
+			// collide with a folder named by a human and it works on Windows
+			// (Windows doesn't like names that end with a "."). And not starting
+			// with a "." means that it will not be hidden on Unix.
+			relDir = strings.Repeat("_.._/", dotDotCount) + relDir[dotDotCount*3:]
+		}
+		for strings.HasSuffix(relDir, "/") {
+			relDir = relDir[:len(relDir)-1]
+		}
+		relDir = "/" + relDir
+		if strings.HasSuffix(relDir, "/.") {
+			relDir = relDir[:len(relDir)-1]
+		}
+	}
+
+	// Strip the file extension if the output path is an input file
+	if customFilePath == "" {
+		ext := fs.Ext(baseName)
+		baseName = baseName[:len(baseName)-len(ext)]
+	}
+	return
+}
+
+func sanitizeFilePathForVirtualModulePath(path string) string {
+	// Convert it to a safe file path. See: https://stackoverflow.com/a/31976060
+	sb := strings.Builder{}
+	needsGap := false
+	for _, c := range path {
+		switch c {
+		case 0:
+			// These characters are forbidden on Unix and Windows
+
+		case '<', '>', ':', '"', '|', '?', '*':
+			// These characters are forbidden on Windows
+
+		default:
+			if c < 0x20 {
+				// These characters are forbidden on Windows
+				break
+			}
+
+			// Turn runs of invalid characters into a '_'
+			if needsGap {
+				sb.WriteByte('_')
+				needsGap = false
+			}
+
+			sb.WriteRune(c)
+			continue
+		}
+
+		if sb.Len() > 0 {
+			needsGap = true
+		}
+	}
+
+	// Make sure the name isn't empty
+	if sb.Len() == 0 {
+		return "_"
+	}
+
+	// Note: An extension will be added to this base name, so there is no need to
+	// avoid forbidden file names such as ".." since ".js" is a valid file name.
+	return sb.String()
 }

@@ -97,6 +97,7 @@ const (
 	RegexpLookbehindAssertions
 	RegexpMatchIndices
 	RegexpNamedCaptureGroups
+	RegexpSetNotation
 	RegexpStickyAndUnicodeFlags
 	RegexpUnicodePropertyEscapes
 	RestArgument
@@ -152,6 +153,7 @@ var StringToJSFeature = map[string]JSFeature{
 	"regexp-lookbehind-assertions":     RegexpLookbehindAssertions,
 	"regexp-match-indices":             RegexpMatchIndices,
 	"regexp-named-capture-groups":      RegexpNamedCaptureGroups,
+	"regexp-set-notation":              RegexpSetNotation,
 	"regexp-sticky-and-unicode-flags":  RegexpStickyAndUnicodeFlags,
 	"regexp-unicode-property-escapes":  RegexpUnicodePropertyEscapes,
 	"rest-argument":                    RestArgument,
@@ -633,6 +635,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Opera:   {{start: v{51, 0, 0}}},
 		Safari:  {{start: v{11, 1, 0}}},
 	},
+	RegexpSetNotation: {},
 	RegexpStickyAndUnicodeFlags: {
 		Chrome:  {{start: v{50, 0, 0}}},
 		Deno:    {{start: v{1, 0, 0}}},
@@ -715,6 +718,9 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 // Return all features that are not available in at least one environment
 func UnsupportedJSFeatures(constraints map[Engine][]int) (unsupported JSFeature) {
 	for feature, engines := range jsTable {
+		if feature == InlineScript {
+			continue // This is purely user-specified
+		}
 		for engine, version := range constraints {
 			if versionRanges, ok := engines[engine]; !ok || !isVersionSupported(versionRanges, version) {
 				unsupported |= feature

@@ -67,7 +67,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.16.7
+# github.com/evanw/esbuild v0.16.10
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -86,6 +86,7 @@ github.com/evanw/esbuild/internal/js_ast
 github.com/evanw/esbuild/internal/js_lexer
 github.com/evanw/esbuild/internal/js_parser
 github.com/evanw/esbuild/internal/js_printer
+github.com/evanw/esbuild/internal/linker
 github.com/evanw/esbuild/internal/logger
 github.com/evanw/esbuild/internal/renamer
 github.com/evanw/esbuild/internal/resolver
@@ -122,7 +123,7 @@ github.com/golang/mock/mockgen/model
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20221212185716-aee1124e3a93
+# github.com/google/pprof v0.0.0-20221219190121-3cb0bae90811
 ## explicit; go 1.18
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.2
@@ -380,7 +381,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20221212164502-fae10dda9338
+# golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.7.0

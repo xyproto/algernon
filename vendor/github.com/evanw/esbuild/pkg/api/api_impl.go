@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/js_ast"
 	"github.com/evanw/esbuild/internal/js_parser"
+	"github.com/evanw/esbuild/internal/linker"
 	"github.com/evanw/esbuild/internal/logger"
 	"github.com/evanw/esbuild/internal/resolver"
 )
@@ -143,7 +145,13 @@ func validateSourceMap(value SourceMap) config.SourceMap {
 
 func validateLegalComments(value LegalComments, bundle bool) config.LegalComments {
 	switch value {
-	case LegalCommentsDefault, LegalCommentsNone:
+	case LegalCommentsDefault:
+		if bundle {
+			return config.LegalCommentsEndOfFile
+		} else {
+			return config.LegalCommentsInline
+		}
+	case LegalCommentsNone:
 		return config.LegalCommentsNone
 	case LegalCommentsInline:
 		return config.LegalCommentsInline
@@ -232,6 +240,10 @@ func validateLoader(value Loader) config.Loader {
 		return config.LoaderCSS
 	case LoaderDataURL:
 		return config.LoaderDataURL
+	case LoaderDefault:
+		return config.LoaderDefault
+	case LoaderEmpty:
+		return config.LoaderEmpty
 	case LoaderFile:
 		return config.LoaderFile
 	case LoaderJS:
@@ -248,8 +260,6 @@ func validateLoader(value Loader) config.Loader {
 		return config.LoaderTS
 	case LoaderTSX:
 		return config.LoaderTSX
-	case LoaderDefault:
-		return config.LoaderDefault
 	default:
 		panic("Invalid loader")
 	}
@@ -479,28 +489,24 @@ func validateAlias(log logger.Log, fs fs.FS, alias map[string]string) map[string
 
 		// Valid alias names:
 		//   "foo"
+		//   "foo/bar"
 		//   "@foo"
 		//   "@foo/bar"
+		//   "@foo/bar/baz"
 		//
 		// Invalid alias names:
 		//   "./foo"
-		//   "foo/bar"
+		//   "../foo"
+		//   "/foo"
+		//   "C:\\foo"
+		//   ".foo"
+		//   "foo/"
 		//   "@foo/"
-		//   "@foo/bar/baz"
+		//   "foo/../bar"
 		//
-		if !strings.HasPrefix(old, ".") && !strings.HasPrefix(old, "/") && !fs.IsAbs(old) {
-			slash := strings.IndexByte(old, '/')
-			isScope := strings.HasPrefix(old, "@")
-			if slash != -1 && isScope {
-				pkgAfterScope := old[slash+1:]
-				if slash2 := strings.IndexByte(pkgAfterScope, '/'); slash2 == -1 && pkgAfterScope != "" {
-					valid[old] = new
-					continue
-				}
-			} else if slash == -1 {
-				valid[old] = new
-				continue
-			}
+		if !strings.HasPrefix(old, ".") && !strings.HasPrefix(old, "/") && !fs.IsAbs(old) && path.Clean(strings.ReplaceAll(old, "\\", "/")) == old {
+			valid[old] = new
+			continue
 		}
 
 		log.AddError(nil, logger.Range{}, fmt.Sprintf("Invalid alias name: %q", old))
@@ -1008,7 +1014,7 @@ func rebuildImpl(
 		MainFields:            buildOpts.MainFields,
 		PublicPath:            buildOpts.PublicPath,
 		KeepNames:             buildOpts.KeepNames,
-		InjectAbsPaths:        make([]string, len(buildOpts.Inject)),
+		InjectPaths:           append([]string{}, buildOpts.Inject...),
 		AbsNodePaths:          make([]string, len(buildOpts.NodePaths)),
 		JSBanner:              bannerJS,
 		JSFooter:              footerJS,
@@ -1023,9 +1029,6 @@ func rebuildImpl(
 	}
 	if options.MainFields != nil {
 		options.MainFields = append([]string{}, options.MainFields...)
-	}
-	for i, path := range buildOpts.Inject {
-		options.InjectAbsPaths[i] = validatePath(log, realFS, path, "inject path")
 	}
 	for i, path := range buildOpts.NodePaths {
 		options.AbsNodePaths[i] = validatePath(log, realFS, path, "node path")
@@ -1146,7 +1149,7 @@ func rebuildImpl(
 		// Stop now if there were errors
 		if !log.HasErrors() {
 			// Compile the bundle
-			results, metafile := bundle.Compile(log, timer, mangleCache)
+			results, metafile := bundle.Compile(log, timer, mangleCache, linker.Link)
 
 			// Stop now if there were errors
 			if !log.HasErrors() {
@@ -1277,7 +1280,7 @@ func rebuildImpl(
 
 type watcher struct {
 	data              fs.WatchData
-	resolver          resolver.Resolver
+	resolver          *resolver.Resolver
 	rebuild           func() fs.WatchData
 	recentItems       []string
 	itemsToScan       []string
@@ -1550,8 +1553,12 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		log.AddError(nil, logger.Range{},
 			"Must use \"sourcefile\" with \"sourcemap\" to set the original file name")
 	}
-	if options.LegalComments.HasExternalFile() {
-		log.AddError(nil, logger.Range{}, "Cannot transform with linked or external legal comments")
+	if logger.API == logger.CLIAPI {
+		if options.LegalComments.HasExternalFile() {
+			log.AddError(nil, logger.Range{}, "Cannot transform with linked or external legal comments")
+		}
+	} else if options.LegalComments == config.LegalCommentsLinkedWithComment {
+		log.AddError(nil, logger.Range{}, "Cannot transform with linked legal comments")
 	}
 
 	// Set the output mode using other settings
@@ -1576,7 +1583,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		// Stop now if there were errors
 		if !log.HasErrors() {
 			// Compile the bundle
-			results, _ = bundle.Compile(log, timer, mangleCache)
+			results, _ = bundle.Compile(log, timer, mangleCache, linker.Link)
 		}
 
 		timer.Log(log)
@@ -1585,16 +1592,24 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	// Return the results
 	var code []byte
 	var sourceMap []byte
+	var legalComments []byte
 
-	// Unpack the JavaScript file and the source map file
-	if len(results) == 1 {
-		code = results[0].Contents
-	} else if len(results) == 2 {
-		a, b := results[0], results[1]
-		if a.AbsPath == b.AbsPath+".map" {
-			sourceMap, code = a.Contents, b.Contents
-		} else if a.AbsPath+".map" == b.AbsPath {
-			code, sourceMap = a.Contents, b.Contents
+	var shortestAbsPath string
+	for _, result := range results {
+		if shortestAbsPath == "" || len(result.AbsPath) < len(shortestAbsPath) {
+			shortestAbsPath = result.AbsPath
+		}
+	}
+
+	// Unpack the JavaScript file, the source map file, and the legal comments file
+	for _, result := range results {
+		switch result.AbsPath {
+		case shortestAbsPath:
+			code = result.Contents
+		case shortestAbsPath + ".map":
+			sourceMap = result.Contents
+		case shortestAbsPath + ".LEGAL.txt":
+			legalComments = result.Contents
 		}
 	}
 
@@ -1605,11 +1620,12 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 
 	msgs := log.Done()
 	return TransformResult{
-		Errors:      convertMessagesToPublic(logger.Error, msgs),
-		Warnings:    convertMessagesToPublic(logger.Warning, msgs),
-		Code:        code,
-		Map:         sourceMap,
-		MangleCache: mangleCache,
+		Errors:        convertMessagesToPublic(logger.Error, msgs),
+		Warnings:      convertMessagesToPublic(logger.Warning, msgs),
+		Code:          code,
+		Map:           sourceMap,
+		LegalComments: legalComments,
+		MangleCache:   mangleCache,
 	}
 }
 

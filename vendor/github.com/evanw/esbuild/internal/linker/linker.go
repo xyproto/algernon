@@ -1,4 +1,4 @@
-package bundler
+package linker
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/evanw/esbuild/internal/ast"
+	"github.com/evanw/esbuild/internal/bundler"
 	"github.com/evanw/esbuild/internal/compat"
 	"github.com/evanw/esbuild/internal/config"
 	"github.com/evanw/esbuild/internal/css_ast"
@@ -36,7 +37,7 @@ type linkerContext struct {
 	timer   *helpers.Timer
 	log     logger.Log
 	fs      fs.FS
-	res     resolver.Resolver
+	res     *resolver.Resolver
 	graph   graph.LinkerGraph
 	chunks  []chunkInfo
 
@@ -46,7 +47,7 @@ type linkerContext struct {
 	// This represents the parallel computation of source map related data.
 	// Calling this will block until the computation is done. The resulting value
 	// is shared between threads and must be treated as immutable.
-	dataForSourceMaps func() []dataForSourceMap
+	dataForSourceMaps func() []bundler.DataForSourceMap
 
 	// This is passed to us from the bundling phase
 	uniqueKeyPrefix      string
@@ -214,17 +215,17 @@ func wrappedLog(log logger.Log) logger.Log {
 	return log
 }
 
-func link(
+func Link(
 	options *config.Options,
 	timer *helpers.Timer,
 	log logger.Log,
 	fs fs.FS,
-	res resolver.Resolver,
+	res *resolver.Resolver,
 	inputFiles []graph.InputFile,
 	entryPoints []graph.EntryPoint,
 	uniqueKeyPrefix string,
 	reachableFiles []uint32,
-	dataForSourceMaps func() []dataForSourceMap,
+	dataForSourceMaps func() []bundler.DataForSourceMap,
 ) []graph.OutputFile {
 	timer.Begin("Link")
 	defer timer.End("Link")
@@ -507,7 +508,7 @@ func (c *linkerContext) generateChunksInParallel(additionalFiles []graph.OutputF
 			hash := xxhash.New()
 			c.appendIsolatedHashesForImportedChunks(hash, uint32(chunkIndex), visited, ^uint32(chunkIndex))
 			finalBytes = hash.Sum(finalBytes[:0])
-			finalString := hashForFileName(finalBytes)
+			finalString := bundler.HashForFileName(finalBytes)
 			hashSubstitution = &finalString
 		}
 
@@ -766,98 +767,6 @@ func (c *linkerContext) pathBetweenChunks(fromRelDir string, toRelPath string) s
 	}
 
 	return relPath
-}
-
-// Returns the path of this file relative to "outbase", which is then ready to
-// be joined with the absolute output directory path. The directory and name
-// components are returned separately for convenience.
-func pathRelativeToOutbase(
-	inputFile *graph.InputFile,
-	options *config.Options,
-	fs fs.FS,
-	avoidIndex bool,
-	customFilePath string,
-) (relDir string, baseName string) {
-	relDir = "/"
-	absPath := inputFile.Source.KeyPath.Text
-
-	if customFilePath != "" {
-		// Use the configured output path if present
-		absPath = customFilePath
-		if !fs.IsAbs(absPath) {
-			absPath = fs.Join(options.AbsOutputBase, absPath)
-		}
-	} else if inputFile.Source.KeyPath.Namespace != "file" {
-		// Come up with a path for virtual paths (i.e. non-file-system paths)
-		dir, base, _ := logger.PlatformIndependentPathDirBaseExt(absPath)
-		if avoidIndex && base == "index" {
-			_, base, _ = logger.PlatformIndependentPathDirBaseExt(dir)
-		}
-		baseName = sanitizeFilePathForVirtualModulePath(base)
-		return
-	} else {
-		// Heuristic: If the file is named something like "index.js", then use
-		// the name of the parent directory instead. This helps avoid the
-		// situation where many chunks are named "index" because of people
-		// dynamically-importing npm packages that make use of node's implicit
-		// "index" file name feature.
-		if avoidIndex {
-			base := fs.Base(absPath)
-			base = base[:len(base)-len(fs.Ext(base))]
-			if base == "index" {
-				absPath = fs.Dir(absPath)
-			}
-		}
-	}
-
-	// Try to get a relative path to the base directory
-	relPath, ok := fs.Rel(options.AbsOutputBase, absPath)
-	if !ok {
-		// This can fail in some situations such as on different drives on
-		// Windows. In that case we just use the file name.
-		baseName = fs.Base(absPath)
-	} else {
-		// Now we finally have a relative path
-		relDir = fs.Dir(relPath) + "/"
-		baseName = fs.Base(relPath)
-
-		// Use platform-independent slashes
-		relDir = strings.ReplaceAll(relDir, "\\", "/")
-
-		// Replace leading "../" so we don't try to write outside of the output
-		// directory. This normally can't happen because "AbsOutputBase" is
-		// automatically computed to contain all entry point files, but it can
-		// happen if someone sets it manually via the "outbase" API option.
-		//
-		// Note that we can't just strip any leading "../" because that could
-		// cause two separate entry point paths to collide. For example, there
-		// could be both "src/index.js" and "../src/index.js" as entry points.
-		dotDotCount := 0
-		for strings.HasPrefix(relDir[dotDotCount*3:], "../") {
-			dotDotCount++
-		}
-		if dotDotCount > 0 {
-			// The use of "_.._" here is somewhat arbitrary but it is unlikely to
-			// collide with a folder named by a human and it works on Windows
-			// (Windows doesn't like names that end with a "."). And not starting
-			// with a "." means that it will not be hidden on Unix.
-			relDir = strings.Repeat("_.._/", dotDotCount) + relDir[dotDotCount*3:]
-		}
-		for strings.HasSuffix(relDir, "/") {
-			relDir = relDir[:len(relDir)-1]
-		}
-		relDir = "/" + relDir
-		if strings.HasSuffix(relDir, "/.") {
-			relDir = relDir[:len(relDir)-1]
-		}
-	}
-
-	// Strip the file extension if the output path is an input file
-	if customFilePath == "" {
-		ext := fs.Ext(baseName)
-		baseName = baseName[:len(baseName)-len(ext)]
-	}
-	return
 }
 
 func (c *linkerContext) computeCrossChunkDependencies() {
@@ -1267,7 +1176,11 @@ func (c *linkerContext) scanImportsAndExports() {
 						record.Path.Text = otherRepr.AST.URLForCSS
 						record.Path.Namespace = ""
 						record.SourceIndex = ast.Index32{}
-						record.Flags |= ast.ShouldNotBeExternalInMetafile
+						if otherFile.InputFile.Loader == config.LoaderEmpty {
+							record.Flags |= ast.WasLoadedWithEmptyLoader
+						} else {
+							record.Flags |= ast.ShouldNotBeExternalInMetafile
+						}
 
 						// Copy the additional files to the output directory
 						additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
@@ -2758,13 +2671,8 @@ func (c *linkerContext) advanceImportTracker(tracker importTracker) (importTrack
 		return importTracker{}, importExternal, nil
 	}
 
-	// Is this a disabled file?
-	otherSourceIndex := record.SourceIndex.GetIndex()
-	if c.graph.Files[otherSourceIndex].InputFile.Source.KeyPath.IsDisabled() {
-		return importTracker{sourceIndex: otherSourceIndex, importRef: js_ast.InvalidRef}, importDisabled, nil
-	}
-
 	// Is this a named import of a file without any exports?
+	otherSourceIndex := record.SourceIndex.GetIndex()
 	otherRepr := c.graph.Files[otherSourceIndex].InputFile.Repr.(*graph.JSRepr)
 	if !namedImport.AliasIsStar && !otherRepr.AST.HasLazyExport &&
 		// CommonJS exports
@@ -2974,49 +2882,6 @@ func (c *linkerContext) markPartLiveForTreeShaking(sourceIndex uint32, partIndex
 	}
 }
 
-func sanitizeFilePathForVirtualModulePath(path string) string {
-	// Convert it to a safe file path. See: https://stackoverflow.com/a/31976060
-	sb := strings.Builder{}
-	needsGap := false
-	for _, c := range path {
-		switch c {
-		case 0:
-			// These characters are forbidden on Unix and Windows
-
-		case '<', '>', ':', '"', '|', '?', '*':
-			// These characters are forbidden on Windows
-
-		default:
-			if c < 0x20 {
-				// These characters are forbidden on Windows
-				break
-			}
-
-			// Turn runs of invalid characters into a '_'
-			if needsGap {
-				sb.WriteByte('_')
-				needsGap = false
-			}
-
-			sb.WriteRune(c)
-			continue
-		}
-
-		if sb.Len() > 0 {
-			needsGap = true
-		}
-	}
-
-	// Make sure the name isn't empty
-	if sb.Len() == 0 {
-		return "_"
-	}
-
-	// Note: An extension will be added to this base name, so there is no need to
-	// avoid forbidden file names such as ".." since ".js" is a valid file name.
-	return sb.String()
-}
-
 // JavaScript modules are traversed in depth-first postorder. This is the
 // order that JavaScript modules were evaluated in before the top-level await
 // feature was introduced.
@@ -3124,7 +2989,7 @@ func (c *linkerContext) findImportedFilesInCSSOrder(entryPoints []uint32) (exter
 					if record := &repr.AST.ImportRecords[atImport.ImportRecordIndex]; record.SourceIndex.IsValid() {
 						// Follow internal dependencies
 						visit(record.SourceIndex.GetIndex())
-					} else {
+					} else if (record.Flags & ast.WasLoadedWithEmptyLoader) == 0 {
 						// Record external dependencies
 						external := externals[record.Path]
 
@@ -3371,7 +3236,7 @@ func (c *linkerContext) computeChunks() {
 				}
 			} else {
 				// Otherwise, derive the output path from the input path
-				dir, base = pathRelativeToOutbase(
+				dir, base = bundler.PathRelativeToOutbase(
 					&c.graph.Files[chunk.sourceIndex].InputFile,
 					c.options,
 					c.fs,
@@ -3948,7 +3813,7 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 	toESMRef js_ast.Ref,
 	runtimeRequireRef js_ast.Ref,
 	result *compileResultJS,
-	dataForSourceMaps []dataForSourceMap,
+	dataForSourceMaps []bundler.DataForSourceMap,
 ) {
 	defer c.recoverInternalError(waitGroup, partRange.sourceIndex)
 
@@ -4222,7 +4087,7 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 	if file.InputFile.Loader.CanHaveSourceMap() && c.options.SourceMap != config.SourceMapNone {
 		addSourceMappings = true
 		inputSourceMap = file.InputFile.InputSourceMap
-		lineOffsetTables = dataForSourceMaps[partRange.sourceIndex].lineOffsetTables
+		lineOffsetTables = dataForSourceMaps[partRange.sourceIndex].LineOffsetTables
 	}
 
 	// Indent the file if everything is wrapped in an IIFE
@@ -5073,10 +4938,9 @@ func (c *linkerContext) generateChunkJS(chunkIndex int, chunkWaitGroup *sync.Wai
 
 	// Concatenate the generated JavaScript chunks together
 	var compileResultsForSourceMap []compileResultForSourceMap
-	var legalCommentList []string
+	var legalCommentList []legalCommentEntry
 	var metaOrder []uint32
 	var metaBytes map[uint32][][]byte
-	legalCommentSet := make(map[string]bool)
 	prevFileNameComment := uint32(0)
 	if c.options.NeedsMetafile {
 		metaOrder = make([]uint32, 0, len(compileResults))
@@ -5084,11 +4948,11 @@ func (c *linkerContext) generateChunkJS(chunkIndex int, chunkWaitGroup *sync.Wai
 	}
 	for _, compileResult := range compileResults {
 		isRuntime := compileResult.sourceIndex == runtime.SourceIndex
-		for text := range compileResult.ExtractedLegalComments {
-			if !legalCommentSet[text] {
-				legalCommentSet[text] = true
-				legalCommentList = append(legalCommentList, text)
-			}
+		if len(compileResult.ExtractedLegalComments) > 0 {
+			legalCommentList = append(legalCommentList, legalCommentEntry{
+				sourceIndex: compileResult.sourceIndex,
+				comments:    compileResult.ExtractedLegalComments,
+			})
 		}
 
 		// Add a comment with the file path before the file contents
@@ -5177,7 +5041,11 @@ func (c *linkerContext) generateChunkJS(chunkIndex int, chunkWaitGroup *sync.Wai
 
 	// Make sure the file ends with a newline
 	j.EnsureNewlineAtEnd()
-	maybeAppendLegalComments(c.options.LegalComments, legalCommentList, chunk, &j, "/script")
+	slashTag := "/script"
+	if c.options.UnsupportedJSFeatures.Has(compat.InlineScript) {
+		slashTag = ""
+	}
+	c.maybeAppendLegalComments(c.options.LegalComments, legalCommentList, chunk, &j, slashTag)
 
 	if len(c.options.JSFooter) > 0 {
 		j.AddString(c.options.JSFooter)
@@ -5388,7 +5256,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 			if file.InputFile.Loader.CanHaveSourceMap() && c.options.SourceMap != config.SourceMapNone {
 				addSourceMappings = true
 				inputSourceMap = file.InputFile.InputSourceMap
-				lineOffsetTables = dataForSourceMaps[sourceIndex].lineOffsetTables
+				lineOffsetTables = dataForSourceMaps[sourceIndex].LineOffsetTables
 			}
 
 			cssOptions := css_printer.Options{
@@ -5511,14 +5379,13 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 
 	// Concatenate the generated CSS chunks together
 	var compileResultsForSourceMap []compileResultForSourceMap
-	var legalCommentList []string
-	legalCommentSet := make(map[string]bool)
+	var legalCommentList []legalCommentEntry
 	for _, compileResult := range compileResults {
-		for text := range compileResult.ExtractedLegalComments {
-			if !legalCommentSet[text] {
-				legalCommentSet[text] = true
-				legalCommentList = append(legalCommentList, text)
-			}
+		if len(compileResult.ExtractedLegalComments) > 0 {
+			legalCommentList = append(legalCommentList, legalCommentEntry{
+				sourceIndex: compileResult.sourceIndex,
+				comments:    compileResult.ExtractedLegalComments,
+			})
 		}
 
 		if c.options.Mode == config.ModeBundle && !c.options.MinifyWhitespace {
@@ -5557,7 +5424,11 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 
 	// Make sure the file ends with a newline
 	j.EnsureNewlineAtEnd()
-	maybeAppendLegalComments(c.options.LegalComments, legalCommentList, chunk, &j, "/style")
+	slashTag := "/style"
+	if c.options.UnsupportedCSSFeatures.Has(compat.InlineStyle) {
+		slashTag = ""
+	}
+	c.maybeAppendLegalComments(c.options.LegalComments, legalCommentList, chunk, &j, slashTag)
 
 	if len(c.options.CSSFooter) > 0 {
 		j.AddString(c.options.CSSFooter)
@@ -5604,36 +5475,133 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 	chunkWaitGroup.Done()
 }
 
+type legalCommentEntry struct {
+	sourceIndex uint32
+	comments    []string
+}
+
 // Add all unique legal comments to the end of the file. These are
 // deduplicated because some projects have thousands of files with the same
 // comment. The comment must be preserved in the output for legal reasons but
 // at the same time we want to generate a small bundle when minifying.
-func maybeAppendLegalComments(
+func (c *linkerContext) maybeAppendLegalComments(
 	legalComments config.LegalComments,
-	legalCommentList []string,
+	legalCommentList []legalCommentEntry,
 	chunk *chunkInfo,
 	j *helpers.Joiner,
 	slashTag string,
 ) {
-	if len(legalCommentList) > 0 {
-		sort.Strings(legalCommentList)
+	switch legalComments {
+	case config.LegalCommentsNone, config.LegalCommentsInline:
+		return
+	}
 
-		switch legalComments {
-		case config.LegalCommentsEndOfFile:
-			for _, text := range legalCommentList {
-				j.AddString(helpers.EscapeClosingTag(text, slashTag))
-				j.AddString("\n")
+	type thirdPartyEntry struct {
+		packagePath string
+		comments    []string
+	}
+
+	var uniqueFirstPartyComments []string
+	var thirdPartyComments []thirdPartyEntry
+	hasFirstPartyComment := make(map[string]struct{})
+
+	for _, entry := range legalCommentList {
+		source := c.graph.Files[entry.sourceIndex].InputFile.Source
+		packagePath := ""
+
+		// Try to extract a package name from the source path. If we can find a
+		// "node_modules" path component in the path, then assume this is a legal
+		// comment in third-party code and that everything after "node_modules" is
+		// the package name and subpath. If we can't, then assume this is a legal
+		// comment in first-party code.
+		//
+		// The rationale for this behavior: If we just include third-party comments
+		// as-is and the third-party comments don't say what package they're from
+		// (which isn't uncommon), then it'll look like that comment applies to
+		// all code in the file which is very wrong. So we need to somehow say
+		// where the comment comes from. But we don't want to say where every
+		// comment comes from because people probably won't appreciate this for
+		// first-party comments. And we don't want to include the whole path to
+		// each third-part module because a) that could contain information about
+		// the local machine that people don't want in their bundle and b) that
+		// could differ depending on unimportant details like the package manager
+		// used to install the packages (npm vs. pnpm vs. yarn).
+		if source.KeyPath.Namespace != "dataurl" {
+			path := source.KeyPath.Text
+			previous := len(path)
+			for previous > 0 {
+				slash := strings.LastIndexAny(path[:previous], "\\/")
+				component := path[slash+1 : previous]
+				if component == "node_modules" {
+					if previous < len(path) {
+						packagePath = strings.ReplaceAll(path[previous+1:], "\\", "/")
+					}
+					break
+				}
+				previous = slash
 			}
+		}
 
-		case config.LegalCommentsLinkedWithComment,
-			config.LegalCommentsExternalWithoutComment:
-			jComments := helpers.Joiner{}
-			for _, text := range legalCommentList {
-				jComments.AddString(text)
+		if packagePath != "" {
+			thirdPartyComments = append(thirdPartyComments, thirdPartyEntry{
+				packagePath: packagePath,
+				comments:    entry.comments,
+			})
+		} else {
+			for _, comment := range entry.comments {
+				if _, ok := hasFirstPartyComment[comment]; !ok {
+					hasFirstPartyComment[comment] = struct{}{}
+					uniqueFirstPartyComments = append(uniqueFirstPartyComments, comment)
+				}
+			}
+		}
+	}
+
+	switch legalComments {
+	case config.LegalCommentsEndOfFile:
+		for _, comment := range uniqueFirstPartyComments {
+			j.AddString(helpers.EscapeClosingTag(comment, slashTag))
+			j.AddString("\n")
+		}
+
+		if len(thirdPartyComments) > 0 {
+			j.AddString("/*! Bundled license information:\n")
+			for _, entry := range thirdPartyComments {
+				j.AddString(fmt.Sprintf("\n%s:\n", helpers.EscapeClosingTag(entry.packagePath, slashTag)))
+				for _, comment := range entry.comments {
+					comment = helpers.EscapeClosingTag(comment, slashTag)
+					if strings.HasPrefix(comment, "//") {
+						j.AddString(fmt.Sprintf("  (*%s *)\n", comment[2:]))
+					} else if strings.HasPrefix(comment, "/*") && strings.HasSuffix(comment, "*/") {
+						j.AddString(fmt.Sprintf("  (%s)\n", strings.ReplaceAll(comment[1:len(comment)-1], "\n", "\n  ")))
+					}
+				}
+			}
+			j.AddString("*/\n")
+		}
+
+	case config.LegalCommentsLinkedWithComment, config.LegalCommentsExternalWithoutComment:
+		var jComments helpers.Joiner
+
+		for _, comment := range uniqueFirstPartyComments {
+			jComments.AddString(comment)
+			jComments.AddString("\n")
+		}
+
+		if len(thirdPartyComments) > 0 {
+			if len(uniqueFirstPartyComments) > 0 {
 				jComments.AddString("\n")
 			}
-			chunk.externalLegalComments = jComments.Done()
+			jComments.AddString("Bundled license information:\n")
+			for _, entry := range thirdPartyComments {
+				jComments.AddString(fmt.Sprintf("\n%s:\n", entry.packagePath))
+				for _, comment := range entry.comments {
+					jComments.AddString(fmt.Sprintf("  %s\n", strings.ReplaceAll(comment, "\n", "\n  ")))
+				}
+			}
 		}
+
+		chunk.externalLegalComments = jComments.Done()
 	}
 }
 
@@ -5969,7 +5937,7 @@ type compileResultForSourceMap struct {
 func (c *linkerContext) generateSourceMapForChunk(
 	results []compileResultForSourceMap,
 	chunkAbsDir string,
-	dataForSourceMaps []dataForSourceMap,
+	dataForSourceMaps []bundler.DataForSourceMap,
 	canHaveShifts bool,
 ) (pieces sourcemap.SourceMapPieces) {
 	j := helpers.Joiner{}
@@ -5997,7 +5965,7 @@ func (c *linkerContext) generateSourceMapForChunk(
 		if file.InputFile.InputSourceMap == nil {
 			var quotedContents []byte
 			if !c.options.ExcludeSourcesContent {
-				quotedContents = dataForSourceMaps[result.sourceIndex].quotedContents[0]
+				quotedContents = dataForSourceMaps[result.sourceIndex].QuotedContents[0]
 			}
 			items = append(items, item{
 				path:           file.InputFile.Source.KeyPath,
@@ -6024,7 +5992,7 @@ func (c *linkerContext) generateSourceMapForChunk(
 
 			var quotedContents []byte
 			if !c.options.ExcludeSourcesContent {
-				quotedContents = dataForSourceMaps[result.sourceIndex].quotedContents[i]
+				quotedContents = dataForSourceMaps[result.sourceIndex].QuotedContents[i]
 			}
 			items = append(items, item{
 				path:           path,
@@ -6184,4 +6152,33 @@ func (c *linkerContext) recoverInternalError(waitGroup *sync.WaitGroup, sourceIn
 			[]logger.MsgData{{Text: helpers.PrettyPrintedStack()}})
 		waitGroup.Done()
 	}
+}
+
+func joinWithPublicPath(publicPath string, relPath string) string {
+	if strings.HasPrefix(relPath, "./") {
+		relPath = relPath[2:]
+
+		// Strip any amount of further no-op slashes (i.e. ".///././/x/y" => "x/y")
+		for {
+			if strings.HasPrefix(relPath, "/") {
+				relPath = relPath[1:]
+			} else if strings.HasPrefix(relPath, "./") {
+				relPath = relPath[2:]
+			} else {
+				break
+			}
+		}
+	}
+
+	// Use a relative path if there is no public path
+	if publicPath == "" {
+		publicPath = "."
+	}
+
+	// Join with a slash
+	slash := "/"
+	if strings.HasSuffix(publicPath, "/") {
+		slash = ""
+	}
+	return fmt.Sprintf("%s%s%s", publicPath, slash, relPath)
 }

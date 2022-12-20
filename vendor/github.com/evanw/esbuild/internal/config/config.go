@@ -96,6 +96,7 @@ const (
 	LoaderCSS
 	LoaderDataURL
 	LoaderDefault
+	LoaderEmpty
 	LoaderFile
 	LoaderJS
 	LoaderJSON
@@ -114,6 +115,7 @@ var LoaderToString = []string{
 	"css",
 	"dataurl",
 	"default",
+	"empty",
 	"file",
 	"js",
 	"json",
@@ -284,7 +286,7 @@ type Options struct {
 	ExtensionToLoader  map[string]Loader
 
 	PublicPath      string
-	InjectAbsPaths  []string
+	InjectPaths     []string
 	InjectedDefines []InjectedDefine
 	InjectedFiles   []InjectedFile
 
