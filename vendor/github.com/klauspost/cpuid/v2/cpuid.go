@@ -94,8 +94,11 @@ const (
 	AVX512VNNI                          // AVX-512 Vector Neural Network Instructions
 	AVX512VP2INTERSECT                  // AVX-512 Intersect for D/Q
 	AVX512VPOPCNTDQ                     // AVX-512 Vector Population Count Doubleword and Quadword
+	AVXIFMA                             // AVX-IFMA instructions
+	AVXNECONVERT                        // AVX-NE-CONVERT instructions
 	AVXSLOW                             // Indicates the CPU performs 2 128 bit operations instead of one
 	AVXVNNI                             // AVX (VEX encoded) VNNI neural network instructions
+	AVXVNNIINT8                         // AVX-VNNI-INT8 instructions
 	BMI1                                // Bit Manipulation Instruction Set 1
 	BMI2                                // Bit Manipulation Instruction Set 2
 	CETIBT                              // Intel CET Indirect Branch Tracking
@@ -104,6 +107,7 @@ const (
 	CLMUL                               // Carry-less Multiplication
 	CLZERO                              // CLZERO instruction supported
 	CMOV                                // i686 CMOV
+	CMPCCXADD                           // CMPCCXADD instructions
 	CMPSB_SCADBS_SHORT                  // Fast short CMPSB and SCASB
 	CMPXCHG8                            // CMPXCHG8 instruction
 	CPBOOST                             // Core Performance Boost
@@ -1178,15 +1182,19 @@ func support() flagSet {
 		fs.setIf(edx&(1<<31) != 0, SPEC_CTRL_SSBD)
 
 		// CPUID.(EAX=7, ECX=1).EDX
+		fs.setIf(edx&(1<<4) != 0, AVXVNNIINT8)
+		fs.setIf(edx&(1<<5) != 0, AVXNECONVERT)
 		fs.setIf(edx&(1<<14) != 0, PREFETCHI)
 
-		// CPUID.(EAX=7, ECX=1)
+		// CPUID.(EAX=7, ECX=1).EAX
 		eax1, _, _, _ := cpuidex(7, 1)
 		fs.setIf(fs.inSet(AVX) && eax1&(1<<4) != 0, AVXVNNI)
+		fs.setIf(eax1&(1<<7) != 0, CMPCCXADD)
 		fs.setIf(eax1&(1<<10) != 0, MOVSB_ZL)
 		fs.setIf(eax1&(1<<11) != 0, STOSB_SHORT)
 		fs.setIf(eax1&(1<<12) != 0, CMPSB_SCADBS_SHORT)
 		fs.setIf(eax1&(1<<22) != 0, HRESET)
+		fs.setIf(eax1&(1<<23) != 0, AVXIFMA)
 		fs.setIf(eax1&(1<<26) != 0, LAM)
 
 		// Only detect AVX-512 features if XGETBV is supported

@@ -19,6 +19,14 @@ Package home: https://github.com/klauspost/cpuid
 `go get -u github.com/klauspost/cpuid/v2` using modules.
 Drop `v2` for others.
 
+### Homebrew
+
+For macOS/Linux users, you can install via [brew](https://brew.sh/)
+
+```sh
+$ brew install cpuid
+```
+
 ## example
 
 ```Go
@@ -289,8 +297,11 @@ Exit Code 1
 | AVX512VNNI         | AVX-512 Vector Neural Network Instructions                                                                                                                                         |
 | AVX512VP2INTERSECT | AVX-512 Intersect for D/Q                                                                                                                                                          |
 | AVX512VPOPCNTDQ    | AVX-512 Vector Population Count Doubleword and Quadword                                                                                                                            |
+| AVXIFMA            | AVX-IFMA instructions                                                                                                                                                              |
+| AVXNECONVERT       | AVX-NE-CONVERT instructions                                                                                                                                                        |
 | AVXSLOW            | Indicates the CPU performs 2 128 bit operations instead of one                                                                                                                     |
 | AVXVNNI            | AVX (VEX encoded) VNNI neural network instructions                                                                                                                                 |
+| AVXVNNIINT8        | AVX-VNNI-INT8 instructions                                                                                                                                                         |
 | BMI1               | Bit Manipulation Instruction Set 1                                                                                                                                                 |
 | BMI2               | Bit Manipulation Instruction Set 2                                                                                                                                                 |
 | CETIBT             | Intel CET Indirect Branch Tracking                                                                                                                                                 |
@@ -299,6 +310,7 @@ Exit Code 1
 | CLMUL              | Carry-less Multiplication                                                                                                                                                          |
 | CLZERO             | CLZERO instruction supported                                                                                                                                                       |
 | CMOV               | i686 CMOV                                                                                                                                                                          |
+| CMPCCXADD          | CMPCCXADD instructions                                                                                                                                                             |
 | CMPSB_SCADBS_SHORT | Fast short CMPSB and SCASB                                                                                                                                                         |
 | CMPXCHG8           | CMPXCHG8 instruction                                                                                                                                                               |
 | CPBOOST            | Core Performance Boost                                                                                                                                                             |

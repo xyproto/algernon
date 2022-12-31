@@ -8,3 +8,5 @@ output*.html
 docs/docs
 cmd/gendoc/gendoc
 cmd/simple/simple
+cmd/selfupdate/selfupdate
+selfupdate

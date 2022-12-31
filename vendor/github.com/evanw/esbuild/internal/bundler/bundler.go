@@ -1012,15 +1012,22 @@ func loaderFromFileExtension(extensionToLoader map[string]config.Loader, base st
 	// Pick the loader with the longest matching extension. So if there's an
 	// extension for ".css" and for ".module.css", we want to match the one for
 	// ".module.css" before the one for ".css".
-	for {
-		i := strings.IndexByte(base, '.')
-		if i == -1 {
-			break
+	if i := strings.IndexByte(base, '.'); i != -1 {
+		for {
+			if loader, ok := extensionToLoader[base[i:]]; ok {
+				return loader
+			}
+			base = base[i+1:]
+			i = strings.IndexByte(base, '.')
+			if i == -1 {
+				break
+			}
 		}
-		if loader, ok := extensionToLoader[base[i:]]; ok {
+	} else {
+		// If there's no extension, explicitly check for an extensionless loader
+		if loader, ok := extensionToLoader[""]; ok {
 			return loader
 		}
-		base = base[i+1:]
 	}
 	return config.LoaderNone
 }
@@ -1271,8 +1278,12 @@ func (s *scanner) maybeParseFile(
 		optionsClone.ModuleTypeData.Type = js_ast.ModuleCommonJS_CJS
 	} else if strings.HasSuffix(path.Text, ".cts") {
 		optionsClone.ModuleTypeData.Type = js_ast.ModuleCommonJS_CTS
-	} else {
+	} else if strings.HasSuffix(path.Text, ".js") || strings.HasSuffix(path.Text, ".jsx") ||
+		strings.HasSuffix(path.Text, ".ts") || strings.HasSuffix(path.Text, ".tsx") {
 		optionsClone.ModuleTypeData = resolveResult.ModuleTypeData
+	} else {
+		// The "type" setting in "package.json" only applies to ".js" files
+		optionsClone.ModuleTypeData.Type = js_ast.ModuleUnknown
 	}
 
 	// Enable bundling for injected files so we always do tree shaking. We
@@ -2209,6 +2220,7 @@ func (s *scanner) validateTLA(sourceIndex uint32) tlaCheck {
 
 func DefaultExtensionToLoaderMap() map[string]config.Loader {
 	return map[string]config.Loader{
+		"":      config.LoaderJS, // This represents files without an extension
 		".js":   config.LoaderJS,
 		".mjs":  config.LoaderJS,
 		".cjs":  config.LoaderJS,
