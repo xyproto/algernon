@@ -1,13 +1,13 @@
 package ast
 
+// This file contains data structures that are used with the AST packages for
+// both JavaScript and CSS. This helps the bundler treat both AST formats in
+// a somewhat format-agnostic manner.
+
 import (
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/logger"
 )
-
-// This file contains data structures that are used with the AST packages for
-// both JavaScript and CSS. This helps the bundler treat both AST formats in
-// a somewhat format-agnostic manner.
 
 type ImportKind uint8
 
@@ -129,7 +129,7 @@ func (flags ImportRecordFlags) Has(flag ImportRecordFlags) bool {
 }
 
 type ImportRecord struct {
-	Assertions *[]AssertEntry
+	Assertions *ImportAssertions
 	Path       logger.Path
 	Range      logger.Range
 
@@ -147,6 +147,15 @@ type ImportRecord struct {
 
 	Flags ImportRecordFlags
 	Kind  ImportKind
+}
+
+type ImportAssertions struct {
+	Entries            []AssertEntry
+	AssertLoc          logger.Loc
+	InnerOpenBraceLoc  logger.Loc
+	InnerCloseBraceLoc logger.Loc
+	OuterOpenBraceLoc  logger.Loc
+	OuterCloseBraceLoc logger.Loc
 }
 
 type AssertEntry struct {

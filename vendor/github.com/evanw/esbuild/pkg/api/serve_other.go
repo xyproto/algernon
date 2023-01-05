@@ -3,6 +3,16 @@
 
 package api
 
+// This file implements the "Serve()" function in esbuild's public API. It
+// provides a basic web server that can serve a directory tree over HTTP. When
+// a directory is visited the "index.html" will be served if present, otherwise
+// esbuild will automatically generate a directory listing page with links for
+// each file in the directory. If there is a build configured that generates
+// output files, those output files are not written to disk but are instead
+// "overlayed" virtually on top of the real file system. The server responds to
+// HTTP requests for output files from the build with the latest in-memory
+// build results.
+
 import (
 	"fmt"
 	"net"
@@ -15,7 +25,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/evanw/esbuild/internal/config"
 	"github.com/evanw/esbuild/internal/fs"
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/logger"
@@ -25,12 +34,12 @@ import (
 // Serve API
 
 type apiHandler struct {
-	options          *config.Options
 	onRequest        func(ServeOnRequestArgs)
 	rebuild          func() BuildResult
 	currentBuild     *runningBuild
 	fs               fs.FS
 	serveError       error
+	absOutputDir     string
 	outdirPathPrefix string
 	servedir         string
 	serveWaitGroup   sync.WaitGroup
@@ -344,9 +353,13 @@ func (h *apiHandler) matchQueryPathToResult(
 		queryDir += "/"
 	}
 
+	h.mutex.Lock()
+	absOutputDir := h.absOutputDir
+	h.mutex.Unlock()
+
 	// Check the output files for a match
 	for _, file := range result.OutputFiles {
-		if relPath, ok := h.fs.Rel(h.options.AbsOutputDir, file.Path); ok {
+		if relPath, ok := h.fs.Rel(absOutputDir, file.Path); ok {
 			relPath = strings.ReplaceAll(relPath, "\\", "/")
 
 			// An exact match
@@ -593,9 +606,9 @@ func serveImpl(serveOptions ServeOptions, buildOptions BuildOptions) (ServeResul
 			}
 
 			build := buildImpl(buildOptions)
-			if handler.options == nil {
-				handler.options = &build.options
-			}
+			handler.mutex.Lock()
+			handler.absOutputDir = build.options.AbsOutputDir
+			handler.mutex.Unlock()
 			return build.result
 		},
 		fs: realFS,

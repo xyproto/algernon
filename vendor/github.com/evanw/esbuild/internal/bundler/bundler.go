@@ -1,5 +1,11 @@
 package bundler
 
+// The bundler is the core of the "build" and "transform" API calls. Each
+// operation has two phases. The first phase scans the module graph, and is
+// represented by the "ScanBundle" function. The second phase generates the
+// output files from the module graph, and is implemented by the "Compile"
+// function.
+
 import (
 	"bytes"
 	"encoding/base32"
@@ -451,7 +457,7 @@ func parseFile(args parseArgs) {
 
 				if path, contents := extractSourceMapFromComment(args.log, args.fs, &args.caches.FSCache,
 					args.res, &source, &tracker, sourceMapComment, absResolveDir); contents != nil {
-					prettyPath := args.res.PrettyPath(path)
+					prettyPath := resolver.PrettyPath(args.fs, path)
 					log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, args.log.Overrides)
 
 					sourceMap := js_parser.ParseSourceMap(log, logger.Source{
@@ -567,7 +573,7 @@ func ResolveFailureErrorTextSuggestionNotes(
 			if query := res.ProbeResolvePackageAsRelative(absResolveDir, path, kind); query != nil {
 				hint = fmt.Sprintf("Use the relative path %q to reference the file %q. "+
 					"Without the leading \"./\", the path %q is being interpreted as a package path instead.",
-					"./"+path, res.PrettyPath(query.PathPair.Primary), path)
+					"./"+path, resolver.PrettyPath(fs, query.PathPair.Primary), path)
 				suggestion = string(helpers.QuoteForJSON("./"+path, false))
 			}
 		}
@@ -661,7 +667,7 @@ func extractSourceMapFromComment(
 		path := logger.Path{Text: absPath, Namespace: "file"}
 		contents, err, originalError := fsCache.ReadFile(fs, absPath)
 		if log.Level <= logger.LevelDebug && originalError != nil {
-			log.AddID(logger.MsgID_None, logger.Debug, tracker, comment.Range, fmt.Sprintf("Failed to read file %q: %s", res.PrettyPath(path), originalError.Error()))
+			log.AddID(logger.MsgID_None, logger.Debug, tracker, comment.Range, fmt.Sprintf("Failed to read file %q: %s", resolver.PrettyPath(fs, path), originalError.Error()))
 		}
 		if err != nil {
 			kind := logger.Warning
@@ -670,7 +676,7 @@ func extractSourceMapFromComment(
 				kind = logger.Debug
 			}
 			log.AddID(logger.MsgID_SourceMap_MissingSourceMap, kind, tracker, comment.Range,
-				fmt.Sprintf("Cannot read file %q: %s", res.PrettyPath(path), err.Error()))
+				fmt.Sprintf("Cannot read file %q: %s", resolver.PrettyPath(fs, path), err.Error()))
 			return logger.Path{}, nil
 		}
 		return path, &contents
@@ -680,19 +686,19 @@ func extractSourceMapFromComment(
 	return logger.Path{}, nil
 }
 
-func sanitizeLocation(res *resolver.Resolver, loc *logger.MsgLocation) {
+func sanitizeLocation(fs fs.FS, loc *logger.MsgLocation) {
 	if loc != nil {
 		if loc.Namespace == "" {
 			loc.Namespace = "file"
 		}
 		if loc.File != "" {
-			loc.File = res.PrettyPath(logger.Path{Text: loc.File, Namespace: loc.Namespace})
+			loc.File = resolver.PrettyPath(fs, logger.Path{Text: loc.File, Namespace: loc.Namespace})
 		}
 	}
 }
 
 func logPluginMessages(
-	res *resolver.Resolver,
+	fs fs.FS,
 	log logger.Log,
 	name string,
 	msgs []logger.Msg,
@@ -714,12 +720,12 @@ func logPluginMessages(
 
 		// Sanitize the locations
 		for _, note := range msg.Notes {
-			sanitizeLocation(res, note.Location)
+			sanitizeLocation(fs, note.Location)
 		}
 		if msg.Data.Location == nil {
 			msg.Data.Location = tracker.MsgLocationOrNil(importPathRange)
 		} else {
-			sanitizeLocation(res, msg.Data.Location)
+			sanitizeLocation(fs, msg.Data.Location)
 			if importSource != nil {
 				if msg.Data.Location.File == "" {
 					msg.Data.Location.File = importSource.PrettyPath
@@ -789,7 +795,7 @@ func RunOnResolvePlugins(
 			if pluginName == "" {
 				pluginName = plugin.Name
 			}
-			didLogError := logPluginMessages(res, log, pluginName, result.Msgs, result.ThrownError, importSource, importPathRange)
+			didLogError := logPluginMessages(fs, log, pluginName, result.Msgs, result.ThrownError, importSource, importPathRange)
 
 			// Plugins can also provide additional file system paths to watch
 			for _, file := range result.AbsWatchFiles {
@@ -861,8 +867,8 @@ func RunOnResolvePlugins(
 		diffCase := *result.DifferentCase
 		log.AddID(logger.MsgID_Bundler_DifferentPathCase, logger.Warning, &tracker, importPathRange, fmt.Sprintf(
 			"Use %q instead of %q to avoid issues with case-sensitive file systems",
-			res.PrettyPath(logger.Path{Text: fs.Join(diffCase.Dir, diffCase.Actual), Namespace: "file"}),
-			res.PrettyPath(logger.Path{Text: fs.Join(diffCase.Dir, diffCase.Query), Namespace: "file"}),
+			resolver.PrettyPath(fs, logger.Path{Text: fs.Join(diffCase.Dir, diffCase.Actual), Namespace: "file"}),
+			resolver.PrettyPath(fs, logger.Path{Text: fs.Join(diffCase.Dir, diffCase.Query), Namespace: "file"}),
 		))
 	}
 
@@ -906,7 +912,7 @@ func runOnLoadPlugins(
 			if pluginName == "" {
 				pluginName = plugin.Name
 			}
-			didLogError := logPluginMessages(res, log, pluginName, result.Msgs, result.ThrownError, importSource, importPathRange)
+			didLogError := logPluginMessages(fs, log, pluginName, result.Msgs, result.ThrownError, importSource, importPathRange)
 
 			// Plugins can also provide additional file system paths to watch
 			for _, file := range result.AbsWatchFiles {
@@ -974,7 +980,7 @@ func runOnLoadPlugins(
 				return loaderPluginResult{}, false
 			} else {
 				log.AddError(&tracker, importPathRange,
-					fmt.Sprintf("Cannot read file %q: %s", res.PrettyPath(source.KeyPath), err.Error()))
+					fmt.Sprintf("Cannot read file %q: %s", resolver.PrettyPath(fs, source.KeyPath), err.Error()))
 				return loaderPluginResult{}, false
 			}
 		}
@@ -1086,10 +1092,14 @@ func generateUniqueKeyPrefix() (string, error) {
 	return base64.URLEncoding.EncodeToString(data[:]), nil
 }
 
+// This creates a bundle by scanning over the whole module graph starting from
+// the entry points until all modules are reached. Each module has some number
+// of import paths which are resolved to module identifiers (i.e. "onResolve"
+// in the plugin API). Each unique module identifier is loaded once (i.e.
+// "onLoad" in the plugin API).
 func ScanBundle(
 	log logger.Log,
 	fs fs.FS,
-	res *resolver.Resolver,
 	caches *cache.CacheSet,
 	entryPoints []EntryPoint,
 	options config.Options,
@@ -1107,7 +1117,7 @@ func ScanBundle(
 			onStartWaitGroup.Add(1)
 			go func(plugin config.Plugin, onStart config.OnStart) {
 				result := onStart.Callback()
-				logPluginMessages(res, log, plugin.Name, result.Msgs, result.ThrownError, nil, logger.Range{})
+				logPluginMessages(fs, log, plugin.Name, result.Msgs, result.ThrownError, nil, logger.Range{})
 				onStartWaitGroup.Done()
 			}(plugin, onStart)
 		}
@@ -1122,7 +1132,7 @@ func ScanBundle(
 	s := scanner{
 		log:             log,
 		fs:              fs,
-		res:             res,
+		res:             resolver.NewResolver(fs, log, caches, options),
 		caches:          caches,
 		options:         options,
 		timer:           timer,
@@ -1192,7 +1202,7 @@ func ScanBundle(
 
 	return Bundle{
 		fs:              fs,
-		res:             res,
+		res:             s.res,
 		files:           files,
 		entryPoints:     entryPointMeta,
 		uniqueKeyPrefix: uniqueKeyPrefix,
@@ -1376,7 +1386,7 @@ func (s *scanner) preprocessInjectedFiles() {
 		source := logger.Source{
 			Index:          sourceIndex,
 			KeyPath:        visitedKey,
-			PrettyPath:     s.res.PrettyPath(visitedKey),
+			PrettyPath:     resolver.PrettyPath(s.fs, visitedKey),
 			IdentifierName: js_ast.EnsureValidIdentifier(visitedKey.Text),
 		}
 
@@ -1475,7 +1485,7 @@ func (s *scanner) preprocessInjectedFiles() {
 	for _, resolveResult := range injectResolveResults {
 		if resolveResult != nil {
 			channel := make(chan config.InjectedFile, 1)
-			s.maybeParseFile(*resolveResult, s.res.PrettyPath(resolveResult.PathPair.Primary), nil, logger.Range{}, nil, inputKindNormal, channel)
+			s.maybeParseFile(*resolveResult, resolver.PrettyPath(s.fs, resolveResult.PathPair.Primary), nil, logger.Range{}, nil, inputKindNormal, channel)
 			injectWaitGroup.Add(1)
 
 			// Wait for the results in parallel. The results slice is large enough so
@@ -1518,7 +1528,7 @@ func (s *scanner) addEntryPoints(entryPoints []EntryPoint) []graph.EntryPoint {
 			}
 		}
 		resolveResult := resolver.ResolveResult{PathPair: resolver.PathPair{Primary: stdinPath}}
-		sourceIndex := s.maybeParseFile(resolveResult, s.res.PrettyPath(stdinPath), nil, logger.Range{}, nil, inputKindStdin, nil)
+		sourceIndex := s.maybeParseFile(resolveResult, resolver.PrettyPath(s.fs, stdinPath), nil, logger.Range{}, nil, inputKindStdin, nil)
 		entryMetas = append(entryMetas, graph.EntryPoint{
 			OutputPath:  "stdin",
 			SourceIndex: sourceIndex,
@@ -1607,7 +1617,7 @@ func (s *scanner) addEntryPoints(entryPoints []EntryPoint) []graph.EntryPoint {
 						notes = append(notes, logger.MsgData{
 							Text: fmt.Sprintf("Use the relative path %q to reference the file %q. "+
 								"Without the leading \"./\", the path %q is being interpreted as a package path instead.",
-								"./"+entryPoint.InputPath, s.res.PrettyPath(query.PathPair.Primary), entryPoint.InputPath),
+								"./"+entryPoint.InputPath, resolver.PrettyPath(s.fs, query.PathPair.Primary), entryPoint.InputPath),
 						})
 					}
 				}
@@ -1621,7 +1631,7 @@ func (s *scanner) addEntryPoints(entryPoints []EntryPoint) []graph.EntryPoint {
 	// Parse all entry points that were resolved successfully
 	for i, resolveResult := range entryPointResolveResults {
 		if resolveResult != nil {
-			prettyPath := s.res.PrettyPath(resolveResult.PathPair.Primary)
+			prettyPath := resolver.PrettyPath(s.fs, resolveResult.PathPair.Primary)
 			sourceIndex := s.maybeParseFile(*resolveResult, prettyPath, nil, logger.Range{}, resolveResult.PluginData, inputKindEntryPoint, nil)
 			outputPath := entryPoints[i].OutputPath
 			outputPathWasAutoGenerated := false
@@ -1791,7 +1801,7 @@ func (s *scanner) scanAllDependencies() {
 				path := resolveResult.PathPair.Primary
 				if !resolveResult.IsExternal {
 					// Handle a path within the bundle
-					sourceIndex := s.maybeParseFile(*resolveResult, s.res.PrettyPath(path),
+					sourceIndex := s.maybeParseFile(*resolveResult, resolver.PrettyPath(s.fs, path),
 						&result.file.inputFile.Source, record.Range, resolveResult.PluginData, inputKindNormal, nil)
 					record.SourceIndex = ast.MakeIndex32(sourceIndex)
 				} else {
@@ -1903,9 +1913,10 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 					} else {
 						sb.WriteString(",\n        ")
 					}
-					sb.WriteString(fmt.Sprintf("{\n          \"path\": %s,\n          \"kind\": %s\n        }",
+					sb.WriteString(fmt.Sprintf("{\n          \"path\": %s,\n          \"kind\": %s,\n          \"original\": %s\n        }",
 						helpers.QuoteForJSON(otherFile.inputFile.Source.PrettyPath, s.options.ASCIIOnly),
-						helpers.QuoteForJSON(record.Kind.StringForMetafile(), s.options.ASCIIOnly)))
+						helpers.QuoteForJSON(record.Kind.StringForMetafile(), s.options.ASCIIOnly),
+						helpers.QuoteForJSON(record.Path.Text, s.options.ASCIIOnly)))
 				}
 
 				// Validate that imports with "assert { type: 'json' }" were imported
@@ -1918,7 +1929,7 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 					s.log.AddErrorWithNotes(&tracker, record.Range,
 						fmt.Sprintf("The file %q was loaded with the %q loader", otherFile.inputFile.Source.PrettyPath, config.LoaderToString[otherFile.inputFile.Loader]),
 						[]logger.MsgData{
-							tracker.MsgData(js_lexer.RangeOfImportAssertion(result.file.inputFile.Source, *ast.FindAssertion(*record.Assertions, "type")),
+							tracker.MsgData(js_lexer.RangeOfImportAssertion(result.file.inputFile.Source, *ast.FindAssertion(record.Assertions.Entries, "type")),
 								"This import assertion requires the loader to be \"json\" instead:"),
 							{Text: "You need to either reconfigure esbuild to ensure that the loader for this file is \"json\" or you need to remove this import assertion."}})
 				}
@@ -1927,8 +1938,11 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 				case ast.ImportAt, ast.ImportAtConditional:
 					// Using a JavaScript file with CSS "@import" is not allowed
 					if _, ok := otherFile.inputFile.Repr.(*graph.JSRepr); ok && otherFile.inputFile.Loader != config.LoaderEmpty {
-						s.log.AddError(&tracker, record.Range,
-							fmt.Sprintf("Cannot import %q into a CSS file", otherFile.inputFile.Source.PrettyPath))
+						s.log.AddErrorWithNotes(&tracker, record.Range,
+							fmt.Sprintf("Cannot import %q into a CSS file", otherFile.inputFile.Source.PrettyPath),
+							[]logger.MsgData{{Text: fmt.Sprintf(
+								"An \"@import\" rule can only be used to import another CSS file, and %q is not a CSS file (it was loaded with the %q loader).",
+								otherFile.inputFile.Source.PrettyPath, config.LoaderToString[otherFile.inputFile.Loader])}})
 					} else if record.Kind == ast.ImportAtConditional {
 						s.log.AddError(&tracker, record.Range,
 							"Bundling with conditional \"@import\" rules is not currently supported")
@@ -1938,13 +1952,19 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 					// Using a JavaScript or CSS file with CSS "url()" is not allowed
 					switch otherRepr := otherFile.inputFile.Repr.(type) {
 					case *graph.CSSRepr:
-						s.log.AddError(&tracker, record.Range,
-							fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath))
+						s.log.AddErrorWithNotes(&tracker, record.Range,
+							fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath),
+							[]logger.MsgData{{Text: fmt.Sprintf(
+								"You can't use a \"url()\" token to reference a CSS file, and %q is a CSS file (it was loaded with the %q loader).",
+								otherFile.inputFile.Source.PrettyPath, config.LoaderToString[otherFile.inputFile.Loader])}})
 
 					case *graph.JSRepr:
 						if otherRepr.AST.URLForCSS == "" && otherFile.inputFile.Loader != config.LoaderEmpty {
-							s.log.AddError(&tracker, record.Range,
-								fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath))
+							s.log.AddErrorWithNotes(&tracker, record.Range,
+								fmt.Sprintf("Cannot use %q as a URL", otherFile.inputFile.Source.PrettyPath),
+								[]logger.MsgData{{Text: fmt.Sprintf(
+									"You can't use a \"url()\" token to reference the file %q because it was loaded with the %q loader, which doesn't provide a URL to embed in the resulting CSS.",
+									otherFile.inputFile.Source.PrettyPath, config.LoaderToString[otherFile.inputFile.Loader])}})
 						}
 					}
 				}
@@ -2602,7 +2622,7 @@ func (b *Bundle) generateMetadataJSON(results []graph.OutputFile, allReachableFi
 	paths := make(map[string]bool)
 	for _, result := range results {
 		if len(result.JSONMetadataChunk) > 0 {
-			path := b.res.PrettyPath(logger.Path{Text: result.AbsPath, Namespace: "file"})
+			path := resolver.PrettyPath(b.fs, logger.Path{Text: result.AbsPath, Namespace: "file"})
 			if paths[path] {
 				// Don't write out the same path twice (can happen with the "file" loader)
 				continue

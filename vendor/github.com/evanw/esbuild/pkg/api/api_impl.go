@@ -1,10 +1,12 @@
 package api
 
+// This file implements most of the API. This includes the "Build", "Transform",
+// "FormatMessages", and "AnalyzeMetafile" functions.
+
 import (
 	"fmt"
 	"io/ioutil"
 	"math"
-	"math/rand"
 	"os"
 	"path"
 	"regexp"
@@ -12,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -835,13 +836,7 @@ func cloneMangleCache(log logger.Log, mangleCache map[string]interface{}) map[st
 ////////////////////////////////////////////////////////////////////////////////
 // Build API
 
-type internalBuildResult struct {
-	result    BuildResult
-	watchData fs.WatchData
-	options   config.Options
-}
-
-func buildImpl(buildOpts BuildOptions) internalBuildResult {
+func buildImpl(buildOpts BuildOptions) rebuildResult {
 	start := time.Now()
 	logOptions := logger.OutputOptions{
 		IncludeSource: true,
@@ -853,8 +848,9 @@ func buildImpl(buildOpts BuildOptions) internalBuildResult {
 	log := logger.NewStderrLog(logOptions)
 
 	// Validate that the current working directory is an absolute path
+	absWorkingDir := buildOpts.AbsWorkingDir
 	realFS, err := fs.RealFS(fs.RealFSOptions{
-		AbsWorkingDir: buildOpts.AbsWorkingDir,
+		AbsWorkingDir: absWorkingDir,
 
 		// This is a long-lived file system object so do not cache calls to
 		// ReadDirectory() (they are normally cached for the duration of a build
@@ -863,25 +859,38 @@ func buildImpl(buildOpts BuildOptions) internalBuildResult {
 	})
 	if err != nil {
 		log.AddError(nil, logger.Range{}, err.Error())
-		return internalBuildResult{result: BuildResult{Errors: convertMessagesToPublic(logger.Error, log.Done())}}
+		return rebuildResult{result: BuildResult{Errors: convertMessagesToPublic(logger.Error, log.Done())}}
 	}
 
 	// Do not re-evaluate plugins when rebuilding. Also make sure the working
 	// directory doesn't change, since breaking that invariant would break the
 	// validation that we just did above.
 	caches := cache.MakeCacheSet()
-	oldAbsWorkingDir := buildOpts.AbsWorkingDir
-	plugins, onEndCallbacks, finalizeBuildOptions := loadPlugins(&buildOpts, realFS, log, caches)
-	if buildOpts.AbsWorkingDir != oldAbsWorkingDir {
+	onEndCallbacks, finalizeBuildOptions := loadPlugins(&buildOpts, realFS, log, caches)
+	options, entryPoints := validateBuildOptions(buildOpts, log, realFS)
+	finalizeBuildOptions(&options)
+	if buildOpts.AbsWorkingDir != absWorkingDir {
 		panic("Mutating \"AbsWorkingDir\" is not allowed")
 	}
 
-	internalResult := rebuildImpl(buildOpts, caches, plugins, finalizeBuildOptions, onEndCallbacks, logOptions, log, false /* isRebuild */)
+	args := rebuildArgs{
+		caches:         caches,
+		onEndCallbacks: onEndCallbacks,
+		logOptions:     logOptions,
+		entryPoints:    entryPoints,
+		options:        options,
+		mangleCache:    buildOpts.MangleCache,
+		watch:          buildOpts.Watch,
+		absWorkingDir:  absWorkingDir,
+		incremental:    buildOpts.Incremental,
+		write:          buildOpts.Write,
+	}
+	internalResult := rebuildImpl(args, log, false /* isRebuild */)
 
 	// Print a summary of the generated files to stderr. Except don't do
 	// this if the terminal is already being used for something else.
 	if logOptions.LogLevel <= logger.LevelInfo && len(internalResult.result.OutputFiles) > 0 &&
-		buildOpts.Watch == nil && !buildOpts.Incremental && !internalResult.options.WriteToStdout {
+		buildOpts.Watch == nil && !buildOpts.Incremental && !options.WriteToStdout {
 		printSummary(logOptions, internalResult.result.OutputFiles, start)
 	}
 
@@ -939,25 +948,14 @@ func printSummary(logOptions logger.OutputOptions, outputFiles []OutputFile, sta
 	logger.PrintSummary(logOptions.Color, table, &start)
 }
 
-func rebuildImpl(
+func validateBuildOptions(
 	buildOpts BuildOptions,
-	caches *cache.CacheSet,
-	plugins []config.Plugin,
-	finalizeBuildOptions func(*config.Options),
-	onEndCallbacks []func(*BuildResult),
-	logOptions logger.OutputOptions,
 	log logger.Log,
-	isRebuild bool,
-) internalBuildResult {
-	// Convert and validate the buildOpts
-	realFS, err := fs.RealFS(fs.RealFSOptions{
-		AbsWorkingDir: buildOpts.AbsWorkingDir,
-		WantWatchData: buildOpts.Watch != nil,
-	})
-	if err != nil {
-		// This should already have been checked above
-		panic(err.Error())
-	}
+	realFS fs.FS,
+) (
+	options config.Options,
+	entryPoints []bundler.EntryPoint,
+) {
 	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, buildOpts.Target, buildOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, buildOpts.Supported)
 	outJS, outCSS := validateOutputExtensions(log, buildOpts.OutExtension)
@@ -966,8 +964,7 @@ func rebuildImpl(
 	minify := buildOpts.MinifyWhitespace && buildOpts.MinifyIdentifiers && buildOpts.MinifySyntax
 	platform := validatePlatform(buildOpts.Platform)
 	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, platform, true /* isBuildAPI */, minify, buildOpts.Drop)
-	mangleCache := cloneMangleCache(log, buildOpts.MangleCache)
-	options := config.Options{
+	options = config.Options{
 		TargetFromAPI:                      targetFromAPI,
 		UnsupportedJSFeatures:              jsFeatures.ApplyOverrides(jsOverrides, jsMask),
 		UnsupportedCSSFeatures:             cssFeatures.ApplyOverrides(cssOverrides, cssMask),
@@ -1032,7 +1029,6 @@ func rebuildImpl(
 		CSSFooter:             footerCSS,
 		PreserveSymlinks:      buildOpts.PreserveSymlinks,
 		WatchMode:             buildOpts.Watch != nil,
-		Plugins:               plugins,
 	}
 	if buildOpts.Conditions != nil {
 		options.Conditions = append([]string{}, buildOpts.Conditions...)
@@ -1043,7 +1039,7 @@ func rebuildImpl(
 	for i, path := range buildOpts.NodePaths {
 		options.AbsNodePaths[i] = validatePath(log, realFS, path, "node path")
 	}
-	entryPoints := make([]bundler.EntryPoint, 0, len(buildOpts.EntryPoints)+len(buildOpts.EntryPointsAdvanced))
+	entryPoints = make([]bundler.EntryPoint, 0, len(buildOpts.EntryPoints)+len(buildOpts.EntryPointsAdvanced))
 	for _, ep := range buildOpts.EntryPoints {
 		entryPoints = append(entryPoints, bundler.EntryPoint{InputPath: ep})
 	}
@@ -1135,30 +1131,63 @@ func rebuildImpl(
 		log.AddError(nil, logger.Range{}, "Splitting currently only works with the \"esm\" format")
 	}
 
+	return
+}
+
+type rebuildArgs struct {
+	caches         *cache.CacheSet
+	onEndCallbacks []func(*BuildResult)
+	logOptions     logger.OutputOptions
+	entryPoints    []bundler.EntryPoint
+	options        config.Options
+	mangleCache    map[string]interface{}
+	watch          *WatchMode
+	absWorkingDir  string
+	incremental    bool
+	write          bool
+}
+
+type rebuildResult struct {
+	result    BuildResult
+	watchData fs.WatchData
+	options   config.Options
+}
+
+func rebuildImpl(
+	args rebuildArgs,
+	log logger.Log,
+	isRebuild bool,
+) rebuildResult {
+	// Convert and validate the buildOpts
+	realFS, err := fs.RealFS(fs.RealFSOptions{
+		AbsWorkingDir: args.absWorkingDir,
+		WantWatchData: args.options.WatchMode,
+	})
+	if err != nil {
+		// This should already have been checked by the caller
+		panic(err.Error())
+	}
+
 	var outputFiles []OutputFile
 	var metafileJSON string
 	var watchData fs.WatchData
+	var mangleCache map[string]interface{}
 
 	// Stop now if there were errors
-	resolver := resolver.NewResolver(realFS, log, caches, options)
 	if !log.HasErrors() {
 		var timer *helpers.Timer
 		if api_helpers.UseTimer {
 			timer = &helpers.Timer{}
 		}
 
-		// Finalize the build options, which will enable API methods that need them such as the "resolve" API
-		if finalizeBuildOptions != nil {
-			finalizeBuildOptions(&options)
-		}
-
 		// Scan over the bundle
-		bundle := bundler.ScanBundle(log, realFS, resolver, caches, entryPoints, options, timer)
+		bundle := bundler.ScanBundle(log, realFS, args.caches, args.entryPoints, args.options, timer)
 		watchData = realFS.WatchData()
 
 		// Stop now if there were errors
 		if !log.HasErrors() {
 			// Compile the bundle
+			mangleCache = cloneMangleCache(log, args.mangleCache)
 			results, metafile := bundle.Compile(log, timer, mangleCache, linker.Link)
 
 			// Stop now if there were errors
@@ -1168,9 +1197,9 @@ func rebuildImpl(
 				// Flush any deferred warnings now
 				log.AlmostDone()
 
-				if buildOpts.Write {
+				if args.write {
 					timer.Begin("Write output files")
-					if options.WriteToStdout {
+					if args.options.WriteToStdout {
 						// Special-case writing to stdout
 						if len(results) != 1 {
 							log.AddError(nil, logger.Range{}, fmt.Sprintf(
@@ -1211,7 +1240,7 @@ func rebuildImpl(
 				// Return the results
 				outputFiles = make([]OutputFile, len(results))
 				for i, result := range results {
-					if options.WriteToStdout {
+					if args.options.WriteToStdout {
 						result.AbsPath = "<stdout>"
 					}
 					outputFiles[i] = OutputFile{
@@ -1231,30 +1260,29 @@ func rebuildImpl(
 	// Start watching, but only for the top-level build
 	var watch *watcher
 	var stop func()
-	if buildOpts.Watch != nil && !isRebuild {
-		onRebuild := buildOpts.Watch.OnRebuild
+	if args.watch != nil && !isRebuild {
+		onRebuild := args.watch.OnRebuild
 		watch = &watcher{
-			data:     watchData,
-			resolver: resolver,
+			data: watchData,
+			fs:   realFS,
 			rebuild: func() fs.WatchData {
-				value := rebuildImpl(buildOpts, caches, plugins, nil, onEndCallbacks, logOptions, logger.NewStderrLog(logOptions), true /* isRebuild */)
+				value := rebuildImpl(args, logger.NewStderrLog(args.logOptions), true /* isRebuild */)
 				if onRebuild != nil {
 					go onRebuild(value.result)
 				}
 				return value.watchData
 			},
 		}
-		mode := *buildOpts.Watch
-		watch.start(buildOpts.LogLevel, buildOpts.Color, mode)
+		watch.start(args.logOptions.LogLevel, args.logOptions.Color)
 		stop = func() {
 			watch.stop()
 		}
 	}
 
 	var rebuild func() BuildResult
-	if buildOpts.Incremental {
+	if args.incremental {
 		rebuild = func() BuildResult {
-			value := rebuildImpl(buildOpts, caches, plugins, nil, onEndCallbacks, logOptions, logger.NewStderrLog(logOptions), true /* isRebuild */)
+			value := rebuildImpl(args, logger.NewStderrLog(args.logOptions), true /* isRebuild */)
 			if watch != nil {
 				watch.setWatchData(value.watchData)
 			}
@@ -1277,160 +1305,15 @@ func rebuildImpl(
 		MangleCache: mangleCache,
 	}
 
-	for _, onEnd := range onEndCallbacks {
+	for _, onEnd := range args.onEndCallbacks {
 		onEnd(&result)
 	}
 
-	return internalBuildResult{
+	return rebuildResult{
 		result:    result,
-		options:   options,
+		options:   args.options,
 		watchData: watchData,
 	}
-}
-
-type watcher struct {
-	data              fs.WatchData
-	resolver          *resolver.Resolver
-	rebuild           func() fs.WatchData
-	recentItems       []string
-	itemsToScan       []string
-	mutex             sync.Mutex
-	itemsPerIteration int
-	shouldStop        int32
-}
-
-func (w *watcher) setWatchData(data fs.WatchData) {
-	defer w.mutex.Unlock()
-	w.mutex.Lock()
-	w.data = data
-	w.itemsToScan = w.itemsToScan[:0] // Reuse memory
-
-	// Remove any recent items that weren't a part of the latest build
-	end := 0
-	for _, path := range w.recentItems {
-		if data.Paths[path] != nil {
-			w.recentItems[end] = path
-			end++
-		}
-	}
-	w.recentItems = w.recentItems[:end]
-}
-
-// The time to wait between watch intervals
-const watchIntervalSleep = 100 * time.Millisecond
-
-// The maximum number of recently-edited items to check every interval
-const maxRecentItemCount = 16
-
-// The minimum number of non-recent items to check every interval
-const minItemCountPerIter = 64
-
-// The maximum number of intervals before a change is detected
-const maxIntervalsBeforeUpdate = 20
-
-func (w *watcher) start(logLevel LogLevel, color StderrColor, mode WatchMode) {
-	useColor := validateColor(color)
-
-	go func() {
-		shouldLog := logLevel == LogLevelInfo || logLevel == LogLevelDebug
-
-		// Note: Do not change these log messages without a breaking version change.
-		// People want to run regexes over esbuild's stderr stream to look for these
-		// messages instead of using esbuild's API.
-
-		if shouldLog {
-			logger.PrintTextWithColor(os.Stderr, useColor, func(colors logger.Colors) string {
-				return fmt.Sprintf("%s[watch] build finished, watching for changes...%s\n", colors.Dim, colors.Reset)
-			})
-		}
-
-		for atomic.LoadInt32(&w.shouldStop) == 0 {
-			// Sleep for the watch interval
-			time.Sleep(watchIntervalSleep)
-
-			// Rebuild if we're dirty
-			if absPath := w.tryToFindDirtyPath(); absPath != "" {
-				if shouldLog {
-					logger.PrintTextWithColor(os.Stderr, useColor, func(colors logger.Colors) string {
-						prettyPath := w.resolver.PrettyPath(logger.Path{Text: absPath, Namespace: "file"})
-						return fmt.Sprintf("%s[watch] build started (change: %q)%s\n", colors.Dim, prettyPath, colors.Reset)
-					})
-				}
-
-				// Run the build
-				w.setWatchData(w.rebuild())
-
-				if shouldLog {
-					logger.PrintTextWithColor(os.Stderr, useColor, func(colors logger.Colors) string {
-						return fmt.Sprintf("%s[watch] build finished%s\n", colors.Dim, colors.Reset)
-					})
-				}
-			}
-		}
-	}()
-}
-
-func (w *watcher) stop() {
-	atomic.StoreInt32(&w.shouldStop, 1)
-}
-
-func (w *watcher) tryToFindDirtyPath() string {
-	defer w.mutex.Unlock()
-	w.mutex.Lock()
-
-	// If we ran out of items to scan, fill the items back up in a random order
-	if len(w.itemsToScan) == 0 {
-		items := w.itemsToScan[:0] // Reuse memory
-		for path := range w.data.Paths {
-			items = append(items, path)
-		}
-		rand.Seed(time.Now().UnixNano())
-		for i := int32(len(items) - 1); i > 0; i-- { // Fisher-Yates shuffle
-			j := rand.Int31n(i + 1)
-			items[i], items[j] = items[j], items[i]
-		}
-		w.itemsToScan = items
-
-		// Determine how many items to check every iteration, rounded up
-		perIter := (len(items) + maxIntervalsBeforeUpdate - 1) / maxIntervalsBeforeUpdate
-		if perIter < minItemCountPerIter {
-			perIter = minItemCountPerIter
-		}
-		w.itemsPerIteration = perIter
-	}
-
-	// Always check all recent items every iteration
-	for i, path := range w.recentItems {
-		if dirtyPath := w.data.Paths[path](); dirtyPath != "" {
-			// Move this path to the back of the list (i.e. the "most recent" position)
-			copy(w.recentItems[i:], w.recentItems[i+1:])
-			w.recentItems[len(w.recentItems)-1] = path
-			return dirtyPath
-		}
-	}
-
-	// Check a constant number of items every iteration
-	remainingCount := len(w.itemsToScan) - w.itemsPerIteration
-	if remainingCount < 0 {
-		remainingCount = 0
-	}
-	toCheck, remaining := w.itemsToScan[remainingCount:], w.itemsToScan[:remainingCount]
-	w.itemsToScan = remaining
-
-	// Check if any of the entries in this iteration have been modified
-	for _, path := range toCheck {
-		if dirtyPath := w.data.Paths[path](); dirtyPath != "" {
-			// Mark this item as recent by adding it to the back of the list
-			w.recentItems = append(w.recentItems, path)
-			if len(w.recentItems) > maxRecentItemCount {
-				// Remove items from the front of the list when we hit the limit
-				copy(w.recentItems, w.recentItems[1:])
-				w.recentItems = w.recentItems[:maxRecentItemCount]
-			}
-			return dirtyPath
-		}
-	}
-	return ""
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1587,8 +1470,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 
 		// Scan over the bundle
 		mockFS := fs.MockFS(make(map[string]string), fs.MockUnix)
-		resolver := resolver.NewResolver(mockFS, log, caches, options)
-		bundle := bundler.ScanBundle(log, mockFS, resolver, caches, nil, options, timer)
+		bundle := bundler.ScanBundle(log, mockFS, caches, nil, options, timer)
 
 		// Stop now if there were errors
 		if !log.HasErrors() {
@@ -1830,7 +1712,6 @@ func (impl *pluginImpl) validatePathsArray(pathsIn []string, name string) (paths
 }
 
 func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches *cache.CacheSet) (
-	plugins []config.Plugin,
 	onEndCallbacks []func(*BuildResult),
 	finalizeBuildOptions func(*config.Options),
 ) {
@@ -1841,16 +1722,13 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 	// Clone the plugin array to guard against mutation during iteration
 	clone := append(make([]Plugin, 0, len(initialOptions.Plugins)), initialOptions.Plugins...)
 
-	var resolveMutex sync.Mutex
 	var optionsForResolve *config.Options
+	var plugins []config.Plugin
 
-	// This is called when the build options are finalized
+	// This is called after the build options have been validated
 	finalizeBuildOptions = func(options *config.Options) {
-		resolveMutex.Lock()
-		if optionsForResolve == nil {
-			optionsForResolve = options
-		}
-		resolveMutex.Unlock()
+		options.Plugins = plugins
+		optionsForResolve = options
 	}
 
 	for i, item := range clone {
@@ -1866,15 +1744,10 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 		}
 
 		resolve := func(path string, options ResolveOptions) (result ResolveResult) {
-			// Try to grab the resolver options
-			resolveMutex.Lock()
-			buildOptions := optionsForResolve
-			resolveMutex.Unlock()
-
-			// If we couldn't grab them, then this is being called before plugin setup
+			// If options are missing, then this is being called before plugin setup
 			// has finished. That isn't allowed because plugin setup is allowed to
 			// change the initial options object, which can affect path resolution.
-			if buildOptions == nil {
+			if optionsForResolve == nil {
 				return ResolveResult{Errors: []Message{{Text: "Cannot call \"resolve\" before plugin setup has completed"}}}
 			}
 
@@ -1884,7 +1757,7 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 
 			// Make a new resolver so it has its own log
 			log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, validateLogOverrides(initialOptions.LogOverride))
-			resolver := resolver.NewResolver(fs, log, caches, *buildOptions)
+			resolver := resolver.NewResolver(fs, log, caches, *optionsForResolve)
 
 			// Make sure the resolve directory is an absolute path, which can fail
 			absResolveDir := validatePath(log, fs, options.ResolveDir, "resolve directory")
@@ -1929,7 +1802,7 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 				if options.PluginName != "" {
 					pluginName = options.PluginName
 				}
-				text, _, notes := bundler.ResolveFailureErrorTextSuggestionNotes(resolver, path, kind, pluginName, fs, absResolveDir, buildOptions.Platform, "", "")
+				text, _, notes := bundler.ResolveFailureErrorTextSuggestionNotes(resolver, path, kind, pluginName, fs, absResolveDir, optionsForResolve.Platform, "", "")
 				result.Errors = append(result.Errors, convertMessagesToPublic(logger.Error, []logger.Msg{{
 					Data:  logger.MsgData{Text: text},
 					Notes: notes,

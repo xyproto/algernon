@@ -1,5 +1,12 @@
 package linker
 
+// This package implements the second phase of the bundling operation that
+// generates the output files when given a module graph. It has been split off
+// into separate package to allow two linkers to cleanly exist in the same code
+// base. This will be useful when rewriting the linker because the new one can
+// be off by default to minimize disruption, but can still be enabled by anyone
+// to assist in giving feedback on the rewrite.
+
 import (
 	"bytes"
 	"encoding/base64"
@@ -624,7 +631,7 @@ func (c *linkerContext) generateChunksInParallel(additionalFiles []graph.OutputF
 			if c.options.NeedsMetafile {
 				jsonMetadataChunkPieces := c.breakJoinerIntoPieces(chunk.jsonMetadataChunkCallback(len(outputContents)))
 				jsonMetadataChunkBytes, _ := c.substituteFinalPaths(jsonMetadataChunkPieces, func(finalRelPathForImport string) string {
-					return c.res.PrettyPath(logger.Path{Text: c.fs.Join(c.options.AbsOutputDir, finalRelPathForImport), Namespace: "file"})
+					return resolver.PrettyPath(c.fs, logger.Path{Text: c.fs.Join(c.options.AbsOutputDir, finalRelPathForImport), Namespace: "file"})
 				})
 				jsonMetadataChunk = string(jsonMetadataChunkBytes.Done())
 			}
@@ -1912,10 +1919,10 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 					// that actually end up being used, and we don't know which ones will
 					// end up actually being used at this point (since import binding hasn't
 					// happened yet). So we need to wait until after tree shaking happens.
-					repr.AST.Parts[partIndex].Stmts = []js_ast.Stmt{{Loc: property.ValueOrNil.Loc, Data: &js_ast.SLocal{
+					repr.AST.Parts[partIndex].Stmts = []js_ast.Stmt{{Loc: property.Key.Loc, Data: &js_ast.SLocal{
 						IsExport: true,
 						Decls: []js_ast.Decl{{
-							Binding:    js_ast.Binding{Loc: property.ValueOrNil.Loc, Data: &js_ast.BIdentifier{Ref: ref}},
+							Binding:    js_ast.Binding{Loc: property.Key.Loc, Data: &js_ast.BIdentifier{Ref: ref}},
 							ValueOrNil: property.ValueOrNil,
 						}},
 					}}}
