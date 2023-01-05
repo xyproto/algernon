@@ -1,4 +1,4 @@
-$title="The Garden of Prosperine"
+$title="The Garden of Proserpine"
 $font="Indie+Flower"
 doctype 5
 html
@@ -123,4 +123,3 @@ html
         button[onClick="history.go(-1)"] Back
       script[src="js/three.min.js"][type="text/javascript"]
       script[src="js/torus.js"][type="text/javascript"]
-
