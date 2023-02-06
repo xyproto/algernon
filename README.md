@@ -86,7 +86,7 @@ Features and limitations
 * Also supports regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * The Algernon executable is compiled to native and is reasonably fast.
-* Works on Linux, OS X and 64-bit Windows.
+* Works on Linux, macOS and 64-bit Windows.
 * The [Lua interpreter](https://github.com/yuin/gopher-lua) is compiled into the executable.
 * The [Teal typechecker](https://github.com/teal-language/tl) is loaded into the Lua VM.
 * Live editing/preview when using the auto-refresh feature.
@@ -97,7 +97,7 @@ Features and limitations
 * Algernon will fall back to the built-in Bolt database if no Redis server is available.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
-* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
+* If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and macOS, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Includes an interactive REPL.
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
 * Full multi-threading. All available CPUs will be used.
@@ -137,10 +137,10 @@ Utilities
 Installation
 ------------------
 
-##### OS X
+##### macOS
 
-* `brew install algernon`
 * Install [Homebrew](https://brew.sh), if needed.
+* `brew install algernon`
 
 ##### Arch Linux
 
@@ -1080,8 +1080,8 @@ Releases
 
 * [Arch Linux package](https://aur.archlinux.org/packages/algernon) in the AUR.
 * [Windows executable](https://github.com/xyproto/algernon/releases/tag/v1.0-win8-64).
-* [OS X homebrew package](https://raw.githubusercontent.com/xyproto/algernon/main/system/homebrew/algernon.rb)
-* [Algernon Tray Launcher for OS X, in App Store](https://itunes.apple.com/no/app/algernon-server/id1030394926?l=nb&mt=12)
+* [macOS homebrew package](https://raw.githubusercontent.com/xyproto/algernon/main/system/homebrew/algernon.rb)
+* [Algernon Tray Launcher for macOS, in App Store](https://itunes.apple.com/no/app/algernon-server/id1030394926?l=nb&mt=12)
 * Source releases are tagged with a version number at release.
 
 
