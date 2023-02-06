@@ -99,6 +99,23 @@ func errorsToString(errors []Message) string {
 	return sb.String()
 }
 
+func stripDirPrefix(path string, prefix string, allowedSlashes string) (string, bool) {
+	if strings.HasPrefix(path, prefix) {
+		pathLen := len(path)
+		prefixLen := len(prefix)
+		if prefixLen == 0 {
+			return path, true
+		}
+		if pathLen > prefixLen && strings.IndexByte(allowedSlashes, path[prefixLen]) >= 0 {
+			return path[prefixLen+1:], true
+		}
+		if pathLen == prefixLen {
+			return "", true
+		}
+	}
+	return "", false
+}
+
 func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 
@@ -108,8 +125,15 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Handle get requests
-	if req.Method == "GET" && strings.HasPrefix(req.URL.Path, "/") {
+	// HEAD requests omit the body
+	maybeWriteResponseBody := func(bytes []byte) { res.Write(bytes) }
+	isHEAD := req.Method == "HEAD"
+	if isHEAD {
+		maybeWriteResponseBody = func(bytes []byte) { res.Write(nil) }
+	}
+
+	// Handle GET and HEAD requests
+	if (isHEAD || req.Method == "GET") && strings.HasPrefix(req.URL.Path, "/") {
 		res.Header().Set("Access-Control-Allow-Origin", "*")
 		queryPath := path.Clean(req.URL.Path)[1:]
 		result := h.rebuild()
@@ -119,7 +143,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			go h.notifyRequest(time.Since(start), req, http.StatusServiceUnavailable)
 			res.WriteHeader(http.StatusServiceUnavailable)
-			res.Write([]byte(errorsToString(result.Errors)))
+			maybeWriteResponseBody([]byte(errorsToString(result.Errors)))
 			return
 		}
 
@@ -129,11 +153,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		fileEntries := make(map[string]bool)
 
 		// Check for a match with the results if we're within the output directory
-		if strings.HasPrefix(queryPath, h.outdirPathPrefix) {
-			outdirQueryPath := queryPath[len(h.outdirPathPrefix):]
-			if strings.HasPrefix(outdirQueryPath, "/") {
-				outdirQueryPath = outdirQueryPath[1:]
-			}
+		if outdirQueryPath, ok := stripDirPrefix(queryPath, h.outdirPathPrefix, "/"); ok {
 			resultKind, inMemoryBytes, isImplicitIndexHTML := h.matchQueryPathToResult(outdirQueryPath, &result, dirEntries, fileEntries)
 			kind = resultKind
 			fileContents = &fs.InMemoryOpenedFile{Contents: inMemoryBytes}
@@ -173,7 +193,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 								// insensitive check because some file systems are case-sensitive.
 								go h.notifyRequest(time.Since(start), req, http.StatusForbidden)
 								res.WriteHeader(http.StatusForbidden)
-								res.Write([]byte("403 - Forbidden"))
+								maybeWriteResponseBody([]byte("403 - Forbidden"))
 								return
 							}
 						}
@@ -184,7 +204,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 						} else if err != syscall.ENOENT {
 							go h.notifyRequest(time.Since(start), req, http.StatusInternalServerError)
 							res.WriteHeader(http.StatusInternalServerError)
-							res.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
+							maybeWriteResponseBody([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
 							return
 						}
 					}
@@ -212,7 +232,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			} else if err != syscall.ENOENT {
 				go h.notifyRequest(time.Since(start), req, http.StatusInternalServerError)
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
+				maybeWriteResponseBody([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
 				return
 			}
 		}
@@ -222,7 +242,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			res.Header().Set("Location", req.URL.Path+"/")
 			go h.notifyRequest(time.Since(start), req, http.StatusFound)
 			res.WriteHeader(http.StatusFound)
-			res.Write(nil)
+			maybeWriteResponseBody(nil)
 			return
 		}
 
@@ -236,7 +256,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			} else if err != syscall.ENOENT {
 				go h.notifyRequest(time.Since(start), req, http.StatusInternalServerError)
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
+				maybeWriteResponseBody([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
 				return
 			}
 		}
@@ -264,7 +284,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				go h.notifyRequest(time.Since(start), req, http.StatusInternalServerError)
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
+				maybeWriteResponseBody([]byte(fmt.Sprintf("500 - Internal server error: %s", err.Error())))
 				return
 			}
 
@@ -280,7 +300,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			res.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileBytes)))
 			go h.notifyRequest(time.Since(start), req, status)
 			res.WriteHeader(status)
-			res.Write(fileBytes)
+			maybeWriteResponseBody(fileBytes)
 			return
 		}
 
@@ -290,7 +310,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			res.Header().Set("Content-Type", "text/html; charset=utf-8")
 			res.Header().Set("Content-Length", fmt.Sprintf("%d", len(html)))
 			go h.notifyRequest(time.Since(start), req, http.StatusOK)
-			res.Write(html)
+			maybeWriteResponseBody(html)
 			return
 		}
 	}
@@ -299,7 +319,7 @@ func (h *apiHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	go h.notifyRequest(time.Since(start), req, http.StatusNotFound)
 	res.WriteHeader(http.StatusNotFound)
-	res.Write([]byte("404 - Not Found"))
+	maybeWriteResponseBody([]byte("404 - Not Found"))
 }
 
 // This exposes an event stream to clients using server-sent events:
@@ -358,11 +378,16 @@ func (h *apiHandler) serveEventStream(start time.Time, req *http.Request, res ht
 					end := len(h.activeStreams) - 1
 					h.activeStreams[i] = h.activeStreams[end]
 					h.activeStreams = h.activeStreams[:end]
+
+					// Only close the stream if it's present in the list of active
+					// streams. Stopping the server can also call close on this
+					// stream and Go only lets you close a channel once before
+					// panicking, so we don't want to close it twice.
+					close(stream)
 					break
 				}
 			}
 			h.mutex.Unlock()
-			close(stream)
 			return
 		}
 	}
@@ -381,13 +406,15 @@ func (h *apiHandler) broadcastBuildResult(result BuildResult, newSummary buildSu
 	var updated []string
 
 	urlForPath := func(absPath string) (string, bool) {
-		if relPath, ok := h.fs.Rel(h.servedir, absPath); ok {
+		if relPath, ok := stripDirPrefix(absPath, h.absOutputDir, "\\/"); ok {
+			relPath = strings.ReplaceAll(relPath, "\\", "/")
+			relPath = path.Join(h.outdirPathPrefix, relPath)
 			publicPath := h.publicPath
 			slash := "/"
 			if publicPath != "" && strings.HasSuffix(h.publicPath, "/") {
 				slash = ""
 			}
-			return fmt.Sprintf("%s%s%s", publicPath, slash, strings.ReplaceAll(relPath, "\\", "/")), true
+			return fmt.Sprintf("%s%s%s", publicPath, slash, relPath), true
 		}
 		return "", false
 	}

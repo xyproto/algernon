@@ -10,7 +10,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.17.0
+	github.com/evanw/esbuild v0.17.5
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.7
@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt v1.2.6
-	github.com/xyproto/permissions2 v0.0.0-20220501203256-fd4f1e1ce602
+	github.com/xyproto/permissions2/v2 v2.6.5
 	github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0
 	github.com/xyproto/pinterface v1.5.3
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
@@ -50,7 +50,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.4.1-0.20221211204142-45e3bfb67168 // indirect
+	github.com/alecthomas/chroma/v2 v2.5.0 // indirect
 	github.com/dlclark/regexp2 v1.8.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/pprof v0.0.0-20230111200839-76d1ae5aea2b // indirect
+	github.com/google/pprof v0.0.0-20230131232505-5a9e8f65f08f // indirect
 	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -74,24 +74,25 @@ require (
 	github.com/mholt/acmez v1.0.4 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.7.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.8.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
-	github.com/xyproto/randomstring v0.0.0-20220311122621-4964ec363205 // indirect
+	github.com/xyproto/cookie/v2 v2.2.3 // indirect
+	github.com/xyproto/randomstring v1.0.5 // indirect
 	github.com/xyproto/simplehstore v1.8.1 // indirect
 	github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/xyproto/vt100 v1.11.3 // indirect
-	go.etcd.io/bbolt v1.3.6 // indirect
+	go.etcd.io/bbolt v1.3.7 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4 // indirect
+	golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect

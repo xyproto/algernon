@@ -7,7 +7,7 @@ import (
 	"github.com/bmizerany/assert"
 	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt"
-	"github.com/xyproto/permissions2"
+	"github.com/xyproto/permissions2/v2"
 	//"github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
 	//"github.com/xyproto/pstore"

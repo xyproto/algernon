@@ -1,7 +1,7 @@
 # github.com/DataDog/gostackparse v0.6.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
-# github.com/alecthomas/chroma/v2 v2.4.1-0.20221211204142-45e3bfb67168
+# github.com/alecthomas/chroma/v2 v2.5.0
 ## explicit; go 1.19
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
@@ -40,7 +40,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.17.0
+# github.com/evanw/esbuild v0.17.5
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -96,7 +96,7 @@ github.com/golang/mock/mockgen/model
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20230111200839-76d1ae5aea2b
+# github.com/google/pprof v0.0.0-20230131232505-5a9e8f65f08f
 ## explicit; go 1.18
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.3
@@ -170,7 +170,7 @@ github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 ## explicit
 github.com/natefinch/pie
-# github.com/onsi/ginkgo/v2 v2.7.0
+# github.com/onsi/ginkgo/v2 v2.8.0
 ## explicit; go 1.18
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
@@ -234,6 +234,9 @@ github.com/xyproto/ask
 # github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9
 ## explicit; go 1.16
 github.com/xyproto/cookie
+# github.com/xyproto/cookie/v2 v2.2.3
+## explicit; go 1.16
+github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 ## explicit; go 1.12
 github.com/xyproto/datablock
@@ -261,9 +264,9 @@ github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v1.2.6
 ## explicit; go 1.9
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2 v0.0.0-20220501203256-fd4f1e1ce602
-## explicit; go 1.8
-github.com/xyproto/permissions2
+# github.com/xyproto/permissions2/v2 v2.6.5
+## explicit; go 1.17
+github.com/xyproto/permissions2/v2
 # github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0
 ## explicit; go 1.9
 github.com/xyproto/permissionsql
@@ -276,7 +279,7 @@ github.com/xyproto/pongo2
 # github.com/xyproto/pstore v1.3.1
 ## explicit; go 1.12
 github.com/xyproto/pstore
-# github.com/xyproto/randomstring v0.0.0-20220311122621-4964ec363205
+# github.com/xyproto/randomstring v1.0.5
 ## explicit; go 1.17
 github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v1.1.0
@@ -321,8 +324,8 @@ github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
 ## explicit
 github.com/yosssi/gcss
-# go.etcd.io/bbolt v1.3.6
-## explicit; go 1.12
+# go.etcd.io/bbolt v1.3.7
+## explicit; go 1.17
 go.etcd.io/bbolt
 # go.uber.org/atomic v1.10.0
 ## explicit; go 1.18
@@ -354,7 +357,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4
+# golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.7.0

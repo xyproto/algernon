@@ -4,12 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/xyproto/cookie"
+	"github.com/xyproto/cookie/v2"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simpleredis"
 )
@@ -172,14 +171,13 @@ func NewUserState(dbindex int, randomseed bool, redisHostPort string) *UserState
 
 	state.dbindex = dbindex
 
-	// For the secure cookies
-	// This must happen before the random seeding, or
-	// else people will have to log in again after every server restart
+	// For the secure cookies. It uses its own random number generator with a fixed seed, unless cookie.Seed is called.
+	// Using a fixed seed is useful to not force users to log in again if there is a new random seed after each server restart.
 	state.cookieSecret = cookie.RandomCookieFriendlyString(30)
 
-	// Seed the random number generator
+	// Seed the random number generator for the cookie package
 	if randomseed {
-		rand.Seed(time.Now().UnixNano())
+		cookie.Seed()
 	}
 
 	// Cookies lasts for 24 hours by default. Specified in seconds.
@@ -238,14 +236,13 @@ func NewUserState2(dbindex int, randomseed bool, redisHostPort string) (*UserSta
 
 	state.dbindex = dbindex
 
-	// For the secure cookies
-	// This must happen before the random seeding, or
-	// else people will have to log in again after every server restart
+	// For the secure cookies. It uses its own random number generator with a fixed seed, unless cookie.Seed is called.
+	// Using a fixed seed is useful to not force users to log in again if there is a new random seed after each server restart.
 	state.cookieSecret = cookie.RandomCookieFriendlyString(30)
 
-	// Seed the random number generator
+	// Seed the random number generator for the cookie package
 	if randomseed {
-		rand.Seed(time.Now().UnixNano())
+		cookie.Seed()
 	}
 
 	// Cookies lasts for 24 hours by default. Specified in seconds.
@@ -627,11 +624,12 @@ func (state *UserState) PasswordAlgo() string {
 // SetPasswordAlgo can set the password hashing algorithm that should be used.
 // The default is "bcrypt+".
 // Possible values are:
-//    bcrypt  -> Store and check passwords with the bcrypt hash.
-//    sha256  -> Store and check passwords with the sha256 hash.
-//    bcrypt+ -> Store passwords with bcrypt, but check with both
-//               bcrypt and sha256, for backwards compatibility
-//               with old passwords that has been stored as sha256.
+//
+//	bcrypt  -> Store and check passwords with the bcrypt hash.
+//	sha256  -> Store and check passwords with the sha256 hash.
+//	bcrypt+ -> Store passwords with bcrypt, but check with both
+//	           bcrypt and sha256, for backwards compatibility
+//	           with old passwords that has been stored as sha256.
 func (state *UserState) SetPasswordAlgo(algorithm string) error {
 	switch algorithm {
 	case "sha256", "bcrypt", "bcrypt+":

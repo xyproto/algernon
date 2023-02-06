@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var random = rand.New(rand.NewSource(1))
+
 var freq = map[rune]int{
 	'e': 21912,
 	't': 16587,
@@ -97,7 +99,7 @@ var freqsumCons = func() int {
 
 // PickLetter will pick a letter, weighted by the frequency table
 func PickLetter() rune {
-	target := rand.Intn(freqsum)
+	target := random.Intn(freqsum)
 	selected := 'a'
 	n := 0
 	for k, v := range freq {
@@ -112,7 +114,7 @@ func PickLetter() rune {
 
 // PickVowel will pick a vowel, weighted by the frequency table
 func PickVowel() rune {
-	target := rand.Intn(freqsumVowel)
+	target := random.Intn(freqsumVowel)
 	selected := 'a'
 	n := 0
 	for k, v := range freqVowel {
@@ -127,7 +129,7 @@ func PickVowel() rune {
 
 // PickCons will pick a consonant, weighted by the frequency table
 func PickCons() rune {
-	target := rand.Intn(freqsumCons)
+	target := random.Intn(freqsumCons)
 	selected := 't'
 	n := 0
 	for k, v := range freqCons {
@@ -142,14 +144,14 @@ func PickCons() rune {
 
 // Seed the random number generator in one of many possible ways.
 func Seed() {
-	rand.Seed(time.Now().UTC().UnixNano() + 1337)
+	random = rand.New(rand.NewSource(time.Now().UTC().UnixNano() + 1337))
 }
 
 // String generates a random string of a given length.
 func String(length int) string {
 	b := make([]byte, length)
 	for i := 0; i < length; i++ {
-		b[i] = byte(rand.Int63() & 0xff)
+		b[i] = byte(random.Int63() & 0xff)
 	}
 	return string(b)
 }
@@ -178,15 +180,15 @@ func HumanFriendlyString(length int) string {
 		someConsonants = "bdfgklmnoprstv" // a selection of consonants
 		moreLetters    = "chjqwxyz"       // the rest of the letters from a-z
 	)
-	vowelOffset := rand.Intn(2)
+	vowelOffset := random.Intn(2)
 	vowelDistribution := 2
 	b := make([]byte, length)
 	for i := 0; i < length; i++ {
 	again:
 		if (i+vowelOffset)%vowelDistribution == 0 {
-			b[i] = someVowels[rand.Intn(len(someVowels))]
-		} else if rand.Intn(100) > 0 { // 99 of 100 times
-			b[i] = someConsonants[rand.Intn(len(someConsonants))]
+			b[i] = someVowels[random.Intn(len(someVowels))]
+		} else if random.Intn(100) > 0 { // 99 of 100 times
+			b[i] = someConsonants[random.Intn(len(someConsonants))]
 			// Don't repeat
 			if i >= 1 && b[i] == b[i-1] {
 				// Also use more vowels
@@ -195,7 +197,7 @@ func HumanFriendlyString(length int) string {
 				goto again
 			}
 		} else {
-			b[i] = moreLetters[rand.Intn(len(moreLetters))]
+			b[i] = moreLetters[random.Intn(len(moreLetters))]
 			// Don't repeat
 			if i >= 1 && b[i] == b[i-1] {
 				// Also use more vowels
@@ -219,7 +221,7 @@ func CookieFriendlyString(length int) string {
 	const allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := 0; i < length; i++ {
-		b[i] = allowed[rand.Intn(len(allowed))]
+		b[i] = allowed[random.Intn(len(allowed))]
 	}
 	return string(b)
 }
@@ -231,14 +233,14 @@ func CookieFriendlyString(length int) string {
  * The vowels and consontants are wighted by the frequency table
  */
 func HumanFriendlyEnglishString(length int) string {
-	vowelOffset := rand.Intn(2)
+	vowelOffset := random.Intn(2)
 	vowelDistribution := 2
 	b := make([]byte, length)
 	for i := 0; i < length; i++ {
 	again:
 		if (i+vowelOffset)%vowelDistribution == 0 {
 			b[i] = byte(PickVowel())
-		} else if rand.Intn(100) > 0 { // 99 of 100 times
+		} else if random.Intn(100) > 0 { // 99 of 100 times
 			b[i] = byte(PickCons())
 			// Don't repeat
 			if i >= 1 && b[i] == b[i-1] {

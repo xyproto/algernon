@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 	bolt "github.com/xyproto/permissionbolt"
-	redis "github.com/xyproto/permissions2"
+	redis "github.com/xyproto/permissions2/v2"
 	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
 	postgres "github.com/xyproto/pstore"

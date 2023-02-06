@@ -879,7 +879,7 @@ func contextImpl(buildOpts BuildOptions) (*internalContext, []Message) {
 	// directory doesn't change, since breaking that invariant would break the
 	// validation that we just did above.
 	caches := cache.MakeCacheSet()
-	onEndCallbacks, finalizeBuildOptions := loadPlugins(&buildOpts, realFS, log, caches)
+	onEndCallbacks, onDisposeCallbacks, finalizeBuildOptions := loadPlugins(&buildOpts, realFS, log, caches)
 	options, entryPoints := validateBuildOptions(buildOpts, log, realFS)
 	finalizeBuildOptions(&options)
 	if buildOpts.AbsWorkingDir != absWorkingDir {
@@ -893,14 +893,15 @@ func contextImpl(buildOpts BuildOptions) (*internalContext, []Message) {
 	}
 
 	args := rebuildArgs{
-		caches:         caches,
-		onEndCallbacks: onEndCallbacks,
-		logOptions:     logOptions,
-		entryPoints:    entryPoints,
-		options:        options,
-		mangleCache:    buildOpts.MangleCache,
-		absWorkingDir:  absWorkingDir,
-		write:          buildOpts.Write,
+		caches:             caches,
+		onEndCallbacks:     onEndCallbacks,
+		onDisposeCallbacks: onDisposeCallbacks,
+		logOptions:         logOptions,
+		entryPoints:        entryPoints,
+		options:            options,
+		mangleCache:        buildOpts.MangleCache,
+		absWorkingDir:      absWorkingDir,
+		write:              buildOpts.Write,
 	}
 
 	return &internalContext{
@@ -913,6 +914,7 @@ func contextImpl(buildOpts BuildOptions) (*internalContext, []Message) {
 type buildInProgress struct {
 	state     rebuildState
 	waitGroup sync.WaitGroup
+	cancel    config.CancelFlag
 }
 
 type internalContext struct {
@@ -952,6 +954,7 @@ func (ctx *internalContext) rebuild() rebuildState {
 	watcher := ctx.watcher
 	handler := ctx.handler
 	oldSummary := ctx.latestSummary
+	args.options.CancelFlag = &build.cancel
 	ctx.mutex.Unlock()
 
 	// Do the build without holding the mutex
@@ -1066,6 +1069,27 @@ func (ctx *internalContext) Watch(options WatchOptions) error {
 	return nil
 }
 
+func (ctx *internalContext) Cancel() {
+	ctx.mutex.Lock()
+
+	// Ignore disposed contexts
+	if ctx.didDispose {
+		ctx.mutex.Unlock()
+		return
+	}
+
+	build := ctx.activeBuild
+	ctx.mutex.Unlock()
+
+	if build != nil {
+		// Tell observers to cut this build short
+		build.cancel.Cancel()
+
+		// Wait for the build to finish before returning
+		build.waitGroup.Wait()
+	}
+}
+
 func (ctx *internalContext) Dispose() {
 	// Only dispose once
 	ctx.mutex.Lock()
@@ -1092,6 +1116,11 @@ func (ctx *internalContext) Dispose() {
 	// we then print to the terminal, which would be confusing.
 	if build != nil {
 		build.waitGroup.Wait()
+	}
+
+	// Run each "OnDispose" callback on its own goroutine
+	for _, fn := range ctx.args.onDisposeCallbacks {
+		go fn()
 	}
 }
 
@@ -1345,14 +1374,15 @@ type onEndCallback struct {
 }
 
 type rebuildArgs struct {
-	caches         *cache.CacheSet
-	onEndCallbacks []onEndCallback
-	logOptions     logger.OutputOptions
-	entryPoints    []bundler.EntryPoint
-	options        config.Options
-	mangleCache    map[string]interface{}
-	absWorkingDir  string
-	write          bool
+	caches             *cache.CacheSet
+	onEndCallbacks     []onEndCallback
+	onDisposeCallbacks []func()
+	logOptions         logger.OutputOptions
+	entryPoints        []bundler.EntryPoint
+	options            config.Options
+	mangleCache        map[string]interface{}
+	absWorkingDir      string
+	write              bool
 }
 
 type rebuildState struct {
@@ -1397,6 +1427,11 @@ func rebuildImpl(args rebuildArgs, oldSummary buildSummary) rebuildState {
 		// Compile the bundle
 		result.MangleCache = cloneMangleCache(log, args.mangleCache)
 		results, metafile := bundle.Compile(log, timer, result.MangleCache, linker.Link)
+
+		// Canceling a build generates a single error at the end of the build
+		if args.options.CancelFlag.DidCancel() {
+			log.AddError(nil, logger.Range{}, "The build was canceled")
+		}
 
 		// Stop now if there were errors
 		if !log.HasErrors() {
@@ -1492,7 +1527,10 @@ func rebuildImpl(args rebuildArgs, oldSummary buildSummary) rebuildState {
 	result.Errors = convertMessagesToPublic(logger.Error, msgs)
 	result.Warnings = convertMessagesToPublic(logger.Warning, msgs)
 
-	// Run any registered "OnEnd" callbacks now
+	// Run any registered "OnEnd" callbacks now. These always run regardless of
+	// whether the current build has bee canceled or not. They can check for
+	// errors by checking the error array in the build result, and canceled
+	// builds should always have at least one error.
 	timer.Begin("On-end callbacks")
 	for _, onEnd := range args.onEndCallbacks {
 		fromPlugin, thrown := onEnd.fn(&result)
@@ -1709,7 +1747,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		}
 
 		// Scan over the bundle
-		mockFS := fs.MockFS(make(map[string]string), fs.MockUnix)
+		mockFS := fs.MockFS(make(map[string]string), fs.MockUnix, "/")
 		bundle := bundler.ScanBundle(log, mockFS, caches, nil, options, timer)
 
 		// Stop now if there were errors
@@ -1935,6 +1973,7 @@ func (impl *pluginImpl) validatePathsArray(pathsIn []string, name string) (paths
 
 func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches *cache.CacheSet) (
 	onEndCallbacks []onEndCallback,
+	onDisposeCallbacks []func(),
 	finalizeBuildOptions func(*config.Options),
 ) {
 	// Clone the plugin array to guard against mutation during iteration
@@ -2036,11 +2075,16 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 			})
 		}
 
+		onDispose := func(fn func()) {
+			onDisposeCallbacks = append(onDisposeCallbacks, fn)
+		}
+
 		item.Setup(PluginBuild{
 			InitialOptions: initialOptions,
 			Resolve:        resolve,
 			OnStart:        impl.onStart,
 			OnEnd:          onEnd,
+			OnDispose:      onDispose,
 			OnResolve:      impl.onResolve,
 			OnLoad:         impl.onLoad,
 		})

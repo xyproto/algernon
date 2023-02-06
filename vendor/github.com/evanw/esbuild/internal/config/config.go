@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/evanw/esbuild/internal/ast"
 	"github.com/evanw/esbuild/internal/compat"
@@ -183,7 +184,7 @@ const (
 	FormatESModule
 )
 
-func (f Format) KeepES6ImportExportSyntax() bool {
+func (f Format) KeepESMImportExportSyntax() bool {
 	return f == FormatPreserve || f == FormatESModule
 }
 
@@ -241,6 +242,19 @@ const (
 	False
 )
 
+type CancelFlag struct {
+	uint32
+}
+
+func (flag *CancelFlag) Cancel() {
+	atomic.StoreUint32(&flag.uint32, 1)
+}
+
+// This checks for nil in one place so we don't have to do that everywhere
+func (flag *CancelFlag) DidCancel() bool {
+	return flag != nil && atomic.LoadUint32(&flag.uint32) != 0
+}
+
 type Options struct {
 	ModuleTypeData js_ast.ModuleTypeData
 	Defines        *ProcessedDefines
@@ -248,6 +262,7 @@ type Options struct {
 	TSAlwaysStrict *TSAlwaysStrict
 	MangleProps    *regexp.Regexp
 	ReserveProps   *regexp.Regexp
+	CancelFlag     *CancelFlag
 
 	// When mangling property names, call this function with a callback and do
 	// the property name mangling inside the callback. The callback takes an
