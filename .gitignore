@@ -86,3 +86,5 @@ algernon.1.gz
 *.out
 
 release/
+
+*.bak
