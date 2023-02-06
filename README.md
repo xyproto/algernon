@@ -62,7 +62,7 @@ Design decisions
     * index.hyper.js or index.hyper.jsx is JSX+HyperApp code that is rendered as HTML
     * index.tl is Teal code that is interpreted as a handler function for the current directory.
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
-    * If a single Lua script is given as a commandline argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
+    * If a single Lua script is given as a command line argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
     * style.gcss is GCSS code that is used as the style for all Pongo2, Amber and Markdown pages in the same directory.
 * The following filename extensions are handled by Algernon:
     * Markdown: .md (rendered as HTML)
@@ -75,9 +75,9 @@ Design decisions
     * Teal: .tl (same as .lua but with type safety)
     * HyperApp: .hyper.js or .hyper.jsx (rendered as HTML)
 * Other files are given a mimetype based on the extension.
-* Directories without an index file are shown as a directory listing, where the design is hardcoded.
+* Directories without an index file are shown as a directory listing, where the design is hard coded.
 * UTF-8 is used whenever possible.
-* The server can be configured by commandline flags or with a lua script, but no configuration should be needed for getting started.
+* The server can be configured by command line flags or with a lua script, but no configuration should be needed for getting started.
 
 Features and limitations
 ------------------------
@@ -100,7 +100,7 @@ Features and limitations
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and OS X, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Includes an interactive REPL.
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
-* Full multithreading. All available CPUs will be used.
+* Full multi-threading. All available CPUs will be used.
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
 * Can load plugins written in any language. Plugins must offer the `Lua.Code` and `Lua.Help` functions and talk JSON-RPC over stderr+stdin. See [pie](https://github.com/natefinch/pie) for more information. Sample plugins for Go and Python are in the `plugins` directory.
