@@ -340,6 +340,7 @@ type printer struct {
 	extractedLegalComments []string
 	js                     []byte
 	jsonMetadataImports    []string
+	binaryExprStack        []binaryExprVisitor
 	options                Options
 	builder                sourcemap.ChunkBuilder
 
@@ -810,9 +811,7 @@ func (p *printer) printSemicolonIfNeeded() {
 }
 
 func (p *printer) printSpaceBeforeIdentifier() {
-	buffer := p.js
-	n := len(buffer)
-	if n > 0 && (js_ast.IsIdentifierContinue(rune(buffer[n-1])) || n == p.prevRegExpEnd) {
+	if c, _ := utf8.DecodeLastRune(p.js); js_ast.IsIdentifierContinue(c) || p.prevRegExpEnd == len(p.js) {
 		p.print(" ")
 	}
 }
@@ -2886,123 +2885,209 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		}
 
 	case *js_ast.EBinary:
-		// If this is a comma operator then either the result is unused (and we
-		// should have already simplified unused expressions), or the result is used
-		// (and we can still simplify unused expressions inside the left operand)
-		if e.Op == js_ast.BinOpComma {
-			if (flags & didAlreadySimplifyUnusedExprs) == 0 {
-				left := p.simplifyUnusedExpr(e.Left)
-				right := e.Right
-				if (flags & exprResultIsUnused) != 0 {
-					right = p.simplifyUnusedExpr(right)
-				}
-				if left.Data != e.Left.Data || right.Data != e.Right.Data {
-					// Pass a flag so we don't needlessly re-simplify the same expression
-					p.printExpr(p.guardAgainstBehaviorChangeDueToSubstitution(js_ast.JoinWithComma(left, right), flags), level, flags|didAlreadySimplifyUnusedExprs)
-					break
-				}
-			} else {
-				// Pass a flag so we don't needlessly re-simplify the same expression
-				flags |= didAlreadySimplifyUnusedExprs
+		// The handling of binary expressions is convoluted because we're using
+		// iteration on the heap instead of recursion on the call stack to avoid
+		// stack overflow for deeply-nested ASTs. See the comments for the similar
+		// code in the JavaScript parser for details.
+		v := binaryExprVisitor{
+			e:     e,
+			level: level,
+			flags: flags,
+		}
+
+		// Use a single stack to reduce allocation overhead
+		stackBottom := len(p.binaryExprStack)
+
+		for {
+			// Check whether this node is a special case, and stop if it is
+			if !v.checkAndPrepare(p) {
+				break
+			}
+
+			left := v.e.Left
+			leftBinary, ok := left.Data.(*js_ast.EBinary)
+
+			// Stop iterating if iteration doesn't apply to the left node
+			if !ok {
+				p.printExpr(left, v.leftLevel, v.leftFlags)
+				v.visitRightAndFinish(p)
+				break
+			}
+
+			// Manually run the code at the start of "printExpr"
+			p.printExprCommentsAtLoc(left.Loc)
+
+			// Only allocate heap memory on the stack for nested binary expressions
+			p.binaryExprStack = append(p.binaryExprStack, v)
+			v = binaryExprVisitor{
+				e:     leftBinary,
+				level: v.leftLevel,
+				flags: v.leftFlags,
 			}
 		}
 
-		entry := js_ast.OpTable[e.Op]
-		wrap := level >= entry.Level || (e.Op == js_ast.BinOpIn && (flags&forbidIn) != 0)
-
-		// Destructuring assignments must be parenthesized
-		if n := len(p.js); p.stmtStart == n || p.arrowExprStart == n {
-			if _, ok := e.Left.Data.(*js_ast.EObject); ok {
-				wrap = true
+		// Process all binary operations from the deepest-visited node back toward
+		// our original top-level binary operation
+		for {
+			n := len(p.binaryExprStack) - 1
+			if n < stackBottom {
+				break
 			}
-		}
-
-		if wrap {
-			p.print("(")
-			flags &= ^forbidIn
-		}
-
-		leftLevel := entry.Level - 1
-		rightLevel := entry.Level - 1
-
-		if e.Op.IsRightAssociative() {
-			leftLevel = entry.Level
-		}
-		if e.Op.IsLeftAssociative() {
-			rightLevel = entry.Level
-		}
-
-		switch e.Op {
-		case js_ast.BinOpNullishCoalescing:
-			// "??" can't directly contain "||" or "&&" without being wrapped in parentheses
-			if left, ok := e.Left.Data.(*js_ast.EBinary); ok && (left.Op == js_ast.BinOpLogicalOr || left.Op == js_ast.BinOpLogicalAnd) {
-				leftLevel = js_ast.LPrefix
-			}
-			if right, ok := e.Right.Data.(*js_ast.EBinary); ok && (right.Op == js_ast.BinOpLogicalOr || right.Op == js_ast.BinOpLogicalAnd) {
-				rightLevel = js_ast.LPrefix
-			}
-
-		case js_ast.BinOpPow:
-			// "**" can't contain certain unary expressions
-			if left, ok := e.Left.Data.(*js_ast.EUnary); ok && left.Op.UnaryAssignTarget() == js_ast.AssignTargetNone {
-				leftLevel = js_ast.LCall
-			} else if _, ok := e.Left.Data.(*js_ast.EAwait); ok {
-				leftLevel = js_ast.LCall
-			} else if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
-				// Undefined is printed as "void 0"
-				leftLevel = js_ast.LCall
-			} else if _, ok := e.Left.Data.(*js_ast.ENumber); ok {
-				// Negative numbers are printed using a unary operator
-				leftLevel = js_ast.LCall
-			} else if p.options.MinifySyntax {
-				// When minifying, booleans are printed as "!0 and "!1"
-				if _, ok := e.Left.Data.(*js_ast.EBoolean); ok {
-					leftLevel = js_ast.LCall
-				}
-			}
-		}
-
-		// Special-case "#foo in bar"
-		if private, ok := e.Left.Data.(*js_ast.EPrivateIdentifier); ok && e.Op == js_ast.BinOpIn {
-			name := p.renamer.NameForSymbol(private.Ref)
-			p.addSourceMappingForName(e.Left.Loc, name, private.Ref)
-			p.printIdentifier(name)
-		} else if e.Op == js_ast.BinOpComma {
-			// The result of the left operand of the comma operator is unused
-			p.printExpr(e.Left, leftLevel, (flags&forbidIn)|exprResultIsUnused|parentWasUnaryOrBinary)
-		} else {
-			p.printExpr(e.Left, leftLevel, (flags&forbidIn)|parentWasUnaryOrBinary)
-		}
-
-		if e.Op != js_ast.BinOpComma {
-			p.printSpace()
-		}
-
-		if entry.IsKeyword {
-			p.printSpaceBeforeIdentifier()
-			p.print(entry.Text)
-		} else {
-			p.printSpaceBeforeOperator(e.Op)
-			p.print(entry.Text)
-			p.prevOp = e.Op
-			p.prevOpEnd = len(p.js)
-		}
-
-		p.printSpace()
-
-		if e.Op == js_ast.BinOpComma {
-			// The result of the right operand of the comma operator is unused if the caller doesn't use it
-			p.printExpr(e.Right, rightLevel, (flags&(forbidIn|exprResultIsUnused))|parentWasUnaryOrBinary)
-		} else {
-			p.printExpr(e.Right, rightLevel, (flags&forbidIn)|parentWasUnaryOrBinary)
-		}
-
-		if wrap {
-			p.print(")")
+			v := p.binaryExprStack[n]
+			p.binaryExprStack = p.binaryExprStack[:n]
+			v.visitRightAndFinish(p)
 		}
 
 	default:
 		panic(fmt.Sprintf("Unexpected expression of type %T", expr.Data))
+	}
+}
+
+// The handling of binary expressions is convoluted because we're using
+// iteration on the heap instead of recursion on the call stack to avoid
+// stack overflow for deeply-nested ASTs. See the comments for the similar
+// code in the JavaScript parser for details.
+type binaryExprVisitor struct {
+	// Inputs
+	e     *js_ast.EBinary
+	level js_ast.L
+	flags printExprFlags
+
+	// Input for visiting the left child
+	leftLevel js_ast.L
+	leftFlags printExprFlags
+
+	// "Local variables" passed from "checkAndPrepare" to "visitRightAndFinish"
+	entry      js_ast.OpTableEntry
+	wrap       bool
+	rightLevel js_ast.L
+}
+
+func (v *binaryExprVisitor) checkAndPrepare(p *printer) bool {
+	e := v.e
+
+	// If this is a comma operator then either the result is unused (and we
+	// should have already simplified unused expressions), or the result is used
+	// (and we can still simplify unused expressions inside the left operand)
+	if e.Op == js_ast.BinOpComma {
+		if (v.flags & didAlreadySimplifyUnusedExprs) == 0 {
+			left := p.simplifyUnusedExpr(e.Left)
+			right := e.Right
+			if (v.flags & exprResultIsUnused) != 0 {
+				right = p.simplifyUnusedExpr(right)
+			}
+			if left.Data != e.Left.Data || right.Data != e.Right.Data {
+				// Pass a flag so we don't needlessly re-simplify the same expression
+				p.printExpr(p.guardAgainstBehaviorChangeDueToSubstitution(js_ast.JoinWithComma(left, right), v.flags), v.level, v.flags|didAlreadySimplifyUnusedExprs)
+				return false
+			}
+		} else {
+			// Pass a flag so we don't needlessly re-simplify the same expression
+			v.flags |= didAlreadySimplifyUnusedExprs
+		}
+	}
+
+	v.entry = js_ast.OpTable[e.Op]
+	v.wrap = v.level >= v.entry.Level || (e.Op == js_ast.BinOpIn && (v.flags&forbidIn) != 0)
+
+	// Destructuring assignments must be parenthesized
+	if n := len(p.js); p.stmtStart == n || p.arrowExprStart == n {
+		if _, ok := e.Left.Data.(*js_ast.EObject); ok {
+			v.wrap = true
+		}
+	}
+
+	if v.wrap {
+		p.print("(")
+		v.flags &= ^forbidIn
+	}
+
+	v.leftLevel = v.entry.Level - 1
+	v.rightLevel = v.entry.Level - 1
+
+	if e.Op.IsRightAssociative() {
+		v.leftLevel = v.entry.Level
+	}
+	if e.Op.IsLeftAssociative() {
+		v.rightLevel = v.entry.Level
+	}
+
+	switch e.Op {
+	case js_ast.BinOpNullishCoalescing:
+		// "??" can't directly contain "||" or "&&" without being wrapped in parentheses
+		if left, ok := e.Left.Data.(*js_ast.EBinary); ok && (left.Op == js_ast.BinOpLogicalOr || left.Op == js_ast.BinOpLogicalAnd) {
+			v.leftLevel = js_ast.LPrefix
+		}
+		if right, ok := e.Right.Data.(*js_ast.EBinary); ok && (right.Op == js_ast.BinOpLogicalOr || right.Op == js_ast.BinOpLogicalAnd) {
+			v.rightLevel = js_ast.LPrefix
+		}
+
+	case js_ast.BinOpPow:
+		// "**" can't contain certain unary expressions
+		if left, ok := e.Left.Data.(*js_ast.EUnary); ok && left.Op.UnaryAssignTarget() == js_ast.AssignTargetNone {
+			v.leftLevel = js_ast.LCall
+		} else if _, ok := e.Left.Data.(*js_ast.EAwait); ok {
+			v.leftLevel = js_ast.LCall
+		} else if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
+			// Undefined is printed as "void 0"
+			v.leftLevel = js_ast.LCall
+		} else if _, ok := e.Left.Data.(*js_ast.ENumber); ok {
+			// Negative numbers are printed using a unary operator
+			v.leftLevel = js_ast.LCall
+		} else if p.options.MinifySyntax {
+			// When minifying, booleans are printed as "!0 and "!1"
+			if _, ok := e.Left.Data.(*js_ast.EBoolean); ok {
+				v.leftLevel = js_ast.LCall
+			}
+		}
+	}
+
+	// Special-case "#foo in bar"
+	if private, ok := e.Left.Data.(*js_ast.EPrivateIdentifier); ok && e.Op == js_ast.BinOpIn {
+		name := p.renamer.NameForSymbol(private.Ref)
+		p.addSourceMappingForName(e.Left.Loc, name, private.Ref)
+		p.printIdentifier(name)
+		v.visitRightAndFinish(p)
+		return false
+	}
+
+	if e.Op == js_ast.BinOpComma {
+		// The result of the left operand of the comma operator is unused
+		v.leftFlags = (v.flags & forbidIn) | exprResultIsUnused | parentWasUnaryOrBinary
+	} else {
+		v.leftFlags = (v.flags & forbidIn) | parentWasUnaryOrBinary
+	}
+	return true
+}
+
+func (v *binaryExprVisitor) visitRightAndFinish(p *printer) {
+	e := v.e
+
+	if e.Op != js_ast.BinOpComma {
+		p.printSpace()
+	}
+
+	if v.entry.IsKeyword {
+		p.printSpaceBeforeIdentifier()
+		p.print(v.entry.Text)
+	} else {
+		p.printSpaceBeforeOperator(e.Op)
+		p.print(v.entry.Text)
+		p.prevOp = e.Op
+		p.prevOpEnd = len(p.js)
+	}
+
+	p.printSpace()
+
+	if e.Op == js_ast.BinOpComma {
+		// The result of the right operand of the comma operator is unused if the caller doesn't use it
+		p.printExpr(e.Right, v.rightLevel, (v.flags&(forbidIn|exprResultIsUnused))|parentWasUnaryOrBinary)
+	} else {
+		p.printExpr(e.Right, v.rightLevel, (v.flags&forbidIn)|parentWasUnaryOrBinary)
+	}
+
+	if v.wrap {
+		p.print(")")
 	}
 }
 

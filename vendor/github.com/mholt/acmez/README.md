@@ -30,12 +30,13 @@ In other words, the `acmez` package is **porcelain** while the `acme` package is
 - Supports niche aspects of RFC 8555 (such as alt cert chains and account key rollover)
 - Efficient solving of large SAN lists (e.g. for slow DNS record propagation)
 - Utility functions for solving challenges
-- Helpers for RFC 8737 (tls-alpn-01 challenge)
+	- [Device attestation challenges](https://datatracker.ietf.org/doc/draft-acme-device-attest/)
+	- RFC 8737 (tls-alpn-01 challenge)
 
 
 ## Examples
 
-See the [`examples` folder](https://github.com/mholt/acmez/tree/master/examples) for tutorials on how to use either package. **Most users should follow the [porcelain guide](https://github.com/mholt/acmez/blob/master/examples/porcelain/main.go).**
+See the [`examples` folder](https://github.com/mholt/acmez/tree/master/examples) for tutorials on how to use either package. **Most users should follow the [porcelain guide](https://github.com/mholt/acmez/blob/master/examples/porcelain/main.go) to get started.**
 
 
 ## Challenge solvers
@@ -71,7 +72,7 @@ Since then, Caddy has seen use in production longer than any other ACME client i
 
 A few years later, Caddy's novel auto-HTTPS logic was extracted into a library called [CertMagic](https://github.com/caddyserver/certmagic) to be usable by any Go program. Caddy would continue to use CertMagic, which implemented the certificate _automation and management_ logic on top of the low-level certificate _obtain_ logic that lego provided.
 
-Soon thereafter, the lego project shifted maintainership and the goals and vision of the project diverged from those of Caddy's use case of managing tens of thousands of certificates per instance. Eventually, [the original Caddy author announced work on a new ACME client library in Go](https://github.com/caddyserver/certmagic/issues/71) that exceeded Caddy's harsh requirements for large-scale enterprise deployments, lean builds, and simple API. This work finally came to fruition in 2020 as ACMEz.
+Soon thereafter, the lego project shifted maintainership and the goals and vision of the project diverged from those of Caddy's use case of managing tens of thousands of certificates per instance. Eventually, [the original Caddy author announced work on a new ACME client library in Go](https://github.com/caddyserver/certmagic/issues/71) that satisfied Caddy's harsh requirements for large-scale enterprise deployments, lean builds, and simple API. This work exceeded expectations and finally came to fruition in 2020 as ACMEz. It is much more lightweight with zero core dependencies, has a simple and elegant code base, and is thoroughly documented and easy to build upon.
 
 ---
 

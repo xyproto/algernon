@@ -59,6 +59,8 @@ type parser struct {
 	duplicateCaseChecker       duplicateCaseChecker
 	unrepresentableIdentifiers map[string]bool
 	legacyOctalLiterals        map[js_ast.E]logger.Range
+	scopesInOrderForEnum       map[logger.Loc][]scopeOrder
+	binaryExprStack            []binaryExprVisitor
 
 	// For strict mode handling
 	hoistedRefForSloppyModeBlockFn map[js_ast.Ref]js_ast.Ref
@@ -3674,12 +3676,16 @@ func (p *parser) parsePrefix(level js_ast.L, errors *deferredErrors, flags exprF
 		//
 		//   A JSX element:
 		//     <A>(x) => {}</A>
+		//     <A extends/>
 		//     <A extends>(x) => {}</A>
 		//     <A extends={false}>(x) => {}</A>
+		//     <const A extends/>
 		//     <const A extends>(x) => {}</const>
 		//
 		//   An arrow function with type parameters:
+		//     <A,>(x) => {}
 		//     <A, B>(x) => {}
+		//     <A = B>(x) => {}
 		//     <A extends B>(x) => {}
 		//     <const>(x)</const>
 		//     <const A extends B>(x) => {}
@@ -3688,7 +3694,6 @@ func (p *parser) parsePrefix(level js_ast.L, errors *deferredErrors, flags exprF
 		//     <[]>(x)
 		//     <A[]>(x)
 		//     <A>(x) => {}
-		//     <A = B>(x) => {}
 
 		if p.options.ts.Parse && p.options.jsx.Parse && p.isTSArrowFnJSX() {
 			p.skipTypeScriptTypeParameters(allowConstModifier)
@@ -5015,8 +5020,8 @@ func (p *parser) parseJSXElement(loc logger.Loc) js_ast.Expr {
 			if startText != endText {
 				msg := logger.Msg{
 					Kind:  logger.Error,
-					Data:  p.tracker.MsgData(endRange, fmt.Sprintf("Expected closing tag %q to match opening tag %q", endText, startText)),
-					Notes: []logger.MsgData{p.tracker.MsgData(startRange, fmt.Sprintf("The opening tag %q is here:", startText))},
+					Data:  p.tracker.MsgData(endRange, fmt.Sprintf("Expected closing %q tag to match opening %q tag", endText, startText)),
+					Notes: []logger.MsgData{p.tracker.MsgData(startRange, fmt.Sprintf("The opening %q tag is here:", startText))},
 				}
 				msg.Data.Location.Suggestion = startText
 				p.log.AddMsg(msg)
@@ -5032,6 +5037,16 @@ func (p *parser) parseJSXElement(loc logger.Loc) js_ast.Expr {
 				CloseLoc:        lessThanLoc,
 				IsTagSingleLine: isSingleLine,
 			}}
+
+		case js_lexer.TEndOfFile:
+			msg := logger.Msg{
+				Kind:  logger.Error,
+				Data:  p.tracker.MsgData(p.lexer.Range(), fmt.Sprintf("Unexpected end of file before a closing %q tag", startText)),
+				Notes: []logger.MsgData{p.tracker.MsgData(startRange, fmt.Sprintf("The opening %q tag is here:", startText))},
+			}
+			msg.Data.Location.Suggestion = fmt.Sprintf("</%s>", startText)
+			p.log.AddMsg(msg)
+			panic(js_lexer.LexerPanic{})
 
 		default:
 			p.lexer.Unexpected()
@@ -7897,7 +7912,29 @@ func (p *parser) visitStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt {
 	visited := make([]js_ast.Stmt, 0, len(stmts))
 	var before []js_ast.Stmt
 	var after []js_ast.Stmt
-	for _, stmt := range stmts {
+	var preprocessedEnums map[int][]js_ast.Stmt
+	if p.scopesInOrderForEnum != nil {
+		// Preprocess TypeScript enums to improve code generation. Otherwise
+		// uses of an enum before that enum has been declared won't be inlined:
+		//
+		//   console.log(Foo.FOO) // We want "FOO" to be inlined here
+		//   const enum Foo { FOO = 0 }
+		//
+		// The TypeScript compiler itself contains code with this pattern, so
+		// it's important to implement this optimization.
+		for i, stmt := range stmts {
+			if _, ok := stmt.Data.(*js_ast.SEnum); ok {
+				if preprocessedEnums == nil {
+					preprocessedEnums = make(map[int][]js_ast.Stmt)
+				}
+				oldScopesInOrder := p.scopesInOrder
+				p.scopesInOrder = p.scopesInOrderForEnum[stmt.Loc]
+				preprocessedEnums[i] = p.visitAndAppendStmt(nil, stmt)
+				p.scopesInOrder = oldScopesInOrder
+			}
+		}
+	}
+	for i, stmt := range stmts {
 		switch s := stmt.Data.(type) {
 		case *js_ast.SExportEquals:
 			// TypeScript "export = value;" becomes "module.exports = value;". This
@@ -7915,6 +7952,11 @@ func (p *parser) visitStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt {
 				before = p.visitAndAppendStmt(before, stmt)
 				continue
 			}
+
+		case *js_ast.SEnum:
+			visited = append(visited, preprocessedEnums[i]...)
+			p.scopesInOrder = p.scopesInOrder[len(p.scopesInOrderForEnum[stmt.Loc]):]
+			continue
 		}
 		visited = p.visitAndAppendStmt(visited, stmt)
 	}
@@ -8488,20 +8530,14 @@ func (p *parser) mangleStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt 
 						left, right = right, left
 					}
 
-					// Handle the returned values being the same
-					if boolean, ok := js_ast.CheckEqualityIfNoSideEffects(left.Data, right.Data); ok && boolean {
-						// "if (a) return b; return b;" => "return a, b;"
-						lastReturn = &js_ast.SReturn{ValueOrNil: js_ast.JoinWithComma(prevS.Test, left)}
+					if comma, ok := prevS.Test.Data.(*js_ast.EBinary); ok && comma.Op == js_ast.BinOpComma {
+						// "if (a, b) return c; return d;" => "return a, b ? c : d;"
+						lastReturn = &js_ast.SReturn{ValueOrNil: js_ast.JoinWithComma(comma.Left,
+							js_ast.MangleIfExpr(comma.Right.Loc, &js_ast.EIf{Test: comma.Right, Yes: left, No: right}, p.options.unsupportedJSFeatures, p.isUnbound))}
 					} else {
-						if comma, ok := prevS.Test.Data.(*js_ast.EBinary); ok && comma.Op == js_ast.BinOpComma {
-							// "if (a, b) return c; return d;" => "return a, b ? c : d;"
-							lastReturn = &js_ast.SReturn{ValueOrNil: js_ast.JoinWithComma(comma.Left,
-								js_ast.MangleIfExpr(comma.Right.Loc, &js_ast.EIf{Test: comma.Right, Yes: left, No: right}, p.options.unsupportedJSFeatures, p.isUnbound))}
-						} else {
-							// "if (a) return b; return c;" => "return a ? b : c;"
-							lastReturn = &js_ast.SReturn{ValueOrNil: js_ast.MangleIfExpr(
-								prevS.Test.Loc, &js_ast.EIf{Test: prevS.Test, Yes: left, No: right}, p.options.unsupportedJSFeatures, p.isUnbound)}
-						}
+						// "if (a) return b; return c;" => "return a ? b : c;"
+						lastReturn = &js_ast.SReturn{ValueOrNil: js_ast.MangleIfExpr(
+							prevS.Test.Loc, &js_ast.EIf{Test: prevS.Test, Yes: left, No: right}, p.options.unsupportedJSFeatures, p.isUnbound)}
 					}
 
 					// Merge the last two statements
@@ -8885,6 +8921,17 @@ func (p *parser) visitLoopBody(stmt js_ast.Stmt) js_ast.Stmt {
 }
 
 func (p *parser) visitSingleStmt(stmt js_ast.Stmt, kind stmtsKind) js_ast.Stmt {
+	// To reduce stack depth, special-case blocks and process their children directly
+	if block, ok := stmt.Data.(*js_ast.SBlock); ok {
+		p.pushScopeForVisitPass(js_ast.ScopeBlock, stmt.Loc)
+		block.Stmts = p.visitStmts(block.Stmts, kind)
+		p.popScope()
+		if p.options.minifySyntax {
+			stmt = stmtsToSingleStmt(stmt.Loc, block.Stmts)
+		}
+		return stmt
+	}
+
 	// Introduce a fake block scope for function declarations inside if statements
 	fn, ok := stmt.Data.(*js_ast.SFunction)
 	hasIfScope := ok && fn.Fn.HasIfScope
@@ -8910,11 +8957,8 @@ func stmtsToSingleStmt(loc logger.Loc, stmts []js_ast.Stmt) js_ast.Stmt {
 	if len(stmts) == 0 {
 		return js_ast.Stmt{Loc: loc, Data: js_ast.SEmptyShared}
 	}
-	if len(stmts) == 1 {
-		// "let" and "const" must be put in a block when in a single-statement context
-		if s, ok := stmts[0].Data.(*js_ast.SLocal); !ok || s.Kind == js_ast.LocalVar {
-			return stmts[0]
-		}
+	if len(stmts) == 1 && !statementCaresAboutScope(stmts[0]) {
+		return stmts[0]
 	}
 	return js_ast.Stmt{Loc: loc, Data: &js_ast.SBlock{Stmts: stmts}}
 }
@@ -9028,7 +9072,7 @@ func statementCaresAboutScope(stmt js_ast.Stmt) bool {
 	case *js_ast.SBlock, *js_ast.SEmpty, *js_ast.SDebugger, *js_ast.SExpr, *js_ast.SIf,
 		*js_ast.SFor, *js_ast.SForIn, *js_ast.SForOf, *js_ast.SDoWhile, *js_ast.SWhile,
 		*js_ast.SWith, *js_ast.STry, *js_ast.SSwitch, *js_ast.SReturn, *js_ast.SThrow,
-		*js_ast.SBreak, *js_ast.SContinue, *js_ast.SDirective:
+		*js_ast.SBreak, *js_ast.SContinue, *js_ast.SDirective, *js_ast.SLabel:
 		return false
 
 	case *js_ast.SLocal:
@@ -10090,6 +10134,11 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 		return stmts
 
 	case *js_ast.SEnum:
+		// Do not end the const local prefix after TypeScript enums. We process
+		// them first within their scope so that they are inlined into all code in
+		// that scope. We don't want that to cause the const local prefix to end.
+		p.currentScope.IsAfterConstLocalPrefix = wasAfterAfterConstLocalPrefix
+
 		// Track cross-module enum constants during bundling
 		var tsTopLevelEnumValues map[string]js_ast.TSEnumValue
 		if p.currentScope == p.moduleScope && p.options.mode == config.ModeBundle {
@@ -11902,6 +11951,11 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		p.log.AddError(&p.tracker, logger.Range{Loc: expr.Loc}, "Invalid assignment target")
 	}
 
+	// Note: Anything added before or after this switch statement will be bypassed
+	// when visiting nested "EBinary" nodes due to stack overflow mitigations for
+	// deeply-nested ASTs. If anything like that is added, care must be taken that
+	// it doesn't affect these mitigations by ensuring that the mitigations are not
+	// applied in those cases (e.g. by adding an additional conditional check).
 	switch e := expr.Data.(type) {
 	case *js_ast.ENull, *js_ast.ESuper, *js_ast.EBoolean, *js_ast.EBigInt, *js_ast.EUndefined:
 
@@ -12482,484 +12536,76 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		}
 
 	case *js_ast.EBinary:
-		// Special-case EPrivateIdentifier to allow it here
-		if private, ok := e.Left.Data.(*js_ast.EPrivateIdentifier); ok && e.Op == js_ast.BinOpIn {
-			name := p.loadNameFromRef(private.Ref)
-			result := p.findSymbol(e.Left.Loc, name)
-			private.Ref = result.ref
-
-			// Unlike regular identifiers, there are no unbound private identifiers
-			symbol := &p.symbols[result.ref.InnerIndex]
-			if !symbol.Kind.IsPrivate() {
-				r := logger.Range{Loc: e.Left.Loc, Len: int32(len(name))}
-				p.log.AddError(&p.tracker, r, fmt.Sprintf("Private name %q must be declared in an enclosing class", name))
-			}
-
-			e.Right = p.visitExpr(e.Right)
-
-			if p.privateSymbolNeedsToBeLowered(private) {
-				return p.lowerPrivateBrandCheck(e.Right, expr.Loc, private), exprOut{}
-			}
-			break
+		// The handling of binary expressions is convoluted because we're using
+		// iteration on the heap instead of recursion on the call stack to avoid
+		// stack overflow for deeply-nested ASTs. See the comment before the
+		// definition of "binaryExprVisitor" for details.
+		v := binaryExprVisitor{
+			e:   e,
+			loc: expr.Loc,
+			in:  in,
 		}
 
-		isStmtExpr := e == p.stmtExprValue
-		wasAnonymousNamedExpr := p.isAnonymousNamedExpr(e.Right)
-		oldSilenceWarningAboutThisBeingUndefined := p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined
-		if _, ok := e.Left.Data.(*js_ast.EThis); ok && e.Op == js_ast.BinOpLogicalAnd {
-			p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined = true
-		}
-		e.Left, _ = p.visitExprInOut(e.Left, exprIn{
-			assignTarget:               e.Op.BinaryAssignTarget(),
-			shouldMangleStringsAsProps: e.Op == js_ast.BinOpIn,
-		})
+		// Everything uses a single stack to reduce allocation overhead. This stack
+		// should almost always be very small, and almost all visits should reuse
+		// existing memory without allocating anything.
+		stackBottom := len(p.binaryExprStack)
 
-		// Mark the control flow as dead if the branch is never taken
-		switch e.Op {
-		case js_ast.BinOpLogicalOr:
-			if boolean, _, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok && boolean {
-				// "true || dead"
-				old := p.isControlFlowDead
-				p.isControlFlowDead = true
-				e.Right = p.visitExpr(e.Right)
-				p.isControlFlowDead = old
-			} else {
-				e.Right = p.visitExpr(e.Right)
+		// Iterate down into the AST along the left node of the binary operation.
+		// Continue iterating until we encounter something that's not a binary node.
+		for {
+			// Check whether this node is a special case. If it is, a result will be
+			// provided which ends our iteration. Otherwise, the visitor object will
+			// be prepared for visiting.
+			if result := v.checkAndPrepare(p); result.Data != nil {
+				expr = result
+				break
 			}
 
-		case js_ast.BinOpLogicalAnd:
-			if boolean, _, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok && !boolean {
-				// "false && dead"
-				old := p.isControlFlowDead
-				p.isControlFlowDead = true
-				e.Right = p.visitExpr(e.Right)
-				p.isControlFlowDead = old
-			} else {
-				e.Right = p.visitExpr(e.Right)
+			// Grab the arguments to our nested "visitExprInOut" call for the left
+			// node. We only care about deeply-nested left nodes because most binary
+			// operators in JavaScript are left-associative and the problematic edge
+			// cases we're trying to avoid crashing on have lots of left-associative
+			// binary operators chained together without parentheses (e.g. "1+2+...").
+			left := v.e.Left
+			leftIn := v.leftIn
+			leftBinary, ok := left.Data.(*js_ast.EBinary)
+
+			// Stop iterating if iteration doesn't apply to the left node. This checks
+			// the assignment target because "visitExprInOut" has additional behavior
+			// in that case that we don't want to miss (before the top-level "switch"
+			// statement).
+			if !ok || leftIn.assignTarget != js_ast.AssignTargetNone {
+				v.e.Left, _ = p.visitExprInOut(left, leftIn)
+				expr = v.visitRightAndFinish(p)
+				break
 			}
 
-		case js_ast.BinOpNullishCoalescing:
-			if isNullOrUndefined, _, ok := js_ast.ToNullOrUndefinedWithSideEffects(e.Left.Data); ok && !isNullOrUndefined {
-				// "notNullOrUndefined ?? dead"
-				old := p.isControlFlowDead
-				p.isControlFlowDead = true
-				e.Right = p.visitExpr(e.Right)
-				p.isControlFlowDead = old
-			} else {
-				e.Right = p.visitExpr(e.Right)
-			}
-
-		case js_ast.BinOpComma:
-			e.Right, _ = p.visitExprInOut(e.Right, exprIn{
-				shouldMangleStringsAsProps: in.shouldMangleStringsAsProps,
-			})
-
-		default:
-			e.Right = p.visitExpr(e.Right)
-		}
-		p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined = oldSilenceWarningAboutThisBeingUndefined
-
-		// Always put constants consistently on the same side for equality
-		// comparisons to help improve compression. In theory, dictionary-based
-		// compression methods may already have a dictionary entry for code that
-		// is similar to previous code. Note that we can only reorder expressions
-		// that do not have any side effects.
-		//
-		// Constants are currently ordered on the right instead of the left because
-		// it results in slightly smalller gzip size on our primary benchmark
-		// (although slightly larger uncompressed size). The size difference is
-		// less than 0.1% so it really isn't that important an optimization.
-		if p.options.minifySyntax {
-			switch e.Op {
-			case js_ast.BinOpLooseEq, js_ast.BinOpLooseNe, js_ast.BinOpStrictEq, js_ast.BinOpStrictNe:
-				// "1 === x" => "x === 1"
-				if js_ast.IsPrimitiveLiteral(e.Left.Data) && !js_ast.IsPrimitiveLiteral(e.Right.Data) {
-					e.Left, e.Right = e.Right, e.Left
-				}
+			// Note that we only append to the stack (and therefore allocate memory
+			// on the heap) when there are nested binary expressions. A single binary
+			// expression doesn't add anything to the stack.
+			p.binaryExprStack = append(p.binaryExprStack, v)
+			v = binaryExprVisitor{
+				e:   leftBinary,
+				loc: left.Loc,
+				in:  leftIn,
 			}
 		}
 
-		if p.shouldFoldTypeScriptConstantExpressions || (p.options.minifySyntax && js_ast.ShouldFoldBinaryArithmeticWhenMinifying(e.Op)) {
-			if result := js_ast.FoldBinaryArithmetic(expr.Loc, e); result.Data != nil {
-				return result, exprOut{}
+		// Process all binary operations from the deepest-visited node back toward
+		// our original top-level binary operation.
+		for {
+			n := len(p.binaryExprStack) - 1
+			if n < stackBottom {
+				break
 			}
+			v := p.binaryExprStack[n]
+			p.binaryExprStack = p.binaryExprStack[:n]
+			v.e.Left = expr
+			expr = v.visitRightAndFinish(p)
 		}
 
-		// Post-process the binary expression
-		switch e.Op {
-		case js_ast.BinOpComma:
-			// "(1, 2)" => "2"
-			// "(sideEffects(), 2)" => "(sideEffects(), 2)"
-			if p.options.minifySyntax {
-				e.Left = js_ast.SimplifyUnusedExpr(e.Left, p.options.unsupportedJSFeatures, p.isUnbound)
-				if e.Left.Data == nil {
-					return e.Right, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpLooseEq:
-			if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data); ok {
-				return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBoolean{Value: result}}, exprOut{}
-			}
-			afterOpLoc := locAfterOp(e)
-			if !p.warnAboutEqualityCheck("==", e.Left, afterOpLoc) {
-				p.warnAboutEqualityCheck("==", e.Right, afterOpLoc)
-			}
-			p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
-
-			if p.options.minifySyntax {
-				// "x == void 0" => "x == null"
-				if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
-					e.Left.Data = js_ast.ENullShared
-				} else if _, ok := e.Right.Data.(*js_ast.EUndefined); ok {
-					e.Right.Data = js_ast.ENullShared
-				}
-
-				if result, ok := js_ast.MaybeSimplifyEqualityComparison(expr.Loc, e, p.options.unsupportedJSFeatures); ok {
-					return result, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpStrictEq:
-			if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data); ok {
-				return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBoolean{Value: result}}, exprOut{}
-			}
-			afterOpLoc := locAfterOp(e)
-			if !p.warnAboutEqualityCheck("===", e.Left, afterOpLoc) {
-				p.warnAboutEqualityCheck("===", e.Right, afterOpLoc)
-			}
-			p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
-
-			if p.options.minifySyntax {
-				// "typeof x === 'undefined'" => "typeof x == 'undefined'"
-				if js_ast.CanChangeStrictToLoose(e.Left, e.Right) {
-					e.Op = js_ast.BinOpLooseEq
-				}
-
-				if result, ok := js_ast.MaybeSimplifyEqualityComparison(expr.Loc, e, p.options.unsupportedJSFeatures); ok {
-					return result, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpLooseNe:
-			if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data); ok {
-				return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBoolean{Value: !result}}, exprOut{}
-			}
-			afterOpLoc := locAfterOp(e)
-			if !p.warnAboutEqualityCheck("!=", e.Left, afterOpLoc) {
-				p.warnAboutEqualityCheck("!=", e.Right, afterOpLoc)
-			}
-			p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
-
-			if p.options.minifySyntax {
-				// "x != void 0" => "x != null"
-				if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
-					e.Left.Data = js_ast.ENullShared
-				} else if _, ok := e.Right.Data.(*js_ast.EUndefined); ok {
-					e.Right.Data = js_ast.ENullShared
-				}
-
-				if result, ok := js_ast.MaybeSimplifyEqualityComparison(expr.Loc, e, p.options.unsupportedJSFeatures); ok {
-					return result, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpStrictNe:
-			if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data); ok {
-				return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBoolean{Value: !result}}, exprOut{}
-			}
-			afterOpLoc := locAfterOp(e)
-			if !p.warnAboutEqualityCheck("!==", e.Left, afterOpLoc) {
-				p.warnAboutEqualityCheck("!==", e.Right, afterOpLoc)
-			}
-			p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
-
-			if p.options.minifySyntax {
-				// "typeof x !== 'undefined'" => "typeof x != 'undefined'"
-				if js_ast.CanChangeStrictToLoose(e.Left, e.Right) {
-					e.Op = js_ast.BinOpLooseNe
-				}
-
-				if result, ok := js_ast.MaybeSimplifyEqualityComparison(expr.Loc, e, p.options.unsupportedJSFeatures); ok {
-					return result, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpNullishCoalescing:
-			if isNullOrUndefined, sideEffects, ok := js_ast.ToNullOrUndefinedWithSideEffects(e.Left.Data); ok {
-				if !isNullOrUndefined {
-					return e.Left, exprOut{}
-				} else if sideEffects == js_ast.NoSideEffects {
-					return e.Right, exprOut{}
-				}
-			}
-
-			if p.options.minifySyntax {
-				// "a ?? (b ?? c)" => "a ?? b ?? c"
-				if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpNullishCoalescing {
-					e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpNullishCoalescing, e.Left, right.Left)
-					e.Right = right.Right
-				}
-			}
-
-			if p.options.unsupportedJSFeatures.Has(compat.NullishCoalescing) {
-				return p.lowerNullishCoalescing(expr.Loc, e.Left, e.Right), exprOut{}
-			}
-
-		case js_ast.BinOpLogicalOr:
-			if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
-				if boolean {
-					return e.Left, exprOut{}
-				} else if sideEffects == js_ast.NoSideEffects {
-					return e.Right, exprOut{}
-				}
-			}
-
-			if p.options.minifySyntax {
-				// "a || (b || c)" => "a || b || c"
-				if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpLogicalOr {
-					e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpLogicalOr, e.Left, right.Left)
-					e.Right = right.Right
-				}
-
-				// "a === null || a === undefined" => "a == null"
-				if left, right, ok := js_ast.IsBinaryNullAndUndefined(e.Left, e.Right, js_ast.BinOpStrictEq); ok {
-					e.Op = js_ast.BinOpLooseEq
-					e.Left = left
-					e.Right = right
-				}
-			}
-
-		case js_ast.BinOpLogicalAnd:
-			if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
-				if !boolean {
-					return e.Left, exprOut{}
-				} else if sideEffects == js_ast.NoSideEffects {
-					return e.Right, exprOut{}
-				}
-			}
-
-			if p.options.minifySyntax {
-				// "a && (b && c)" => "a && b && c"
-				if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpLogicalAnd {
-					e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpLogicalAnd, e.Left, right.Left)
-					e.Right = right.Right
-				}
-
-				// "a !== null && a !== undefined" => "a != null"
-				if left, right, ok := js_ast.IsBinaryNullAndUndefined(e.Left, e.Right, js_ast.BinOpStrictNe); ok {
-					e.Op = js_ast.BinOpLooseNe
-					e.Left = left
-					e.Right = right
-				}
-			}
-
-		case js_ast.BinOpAdd:
-			// "'abc' + 'xyz'" => "'abcxyz'"
-			if result := js_ast.FoldStringAddition(e.Left, e.Right, js_ast.StringAdditionNormal); result.Data != nil {
-				return result, exprOut{}
-			}
-
-			if left, ok := e.Left.Data.(*js_ast.EBinary); ok && left.Op == js_ast.BinOpAdd {
-				// "x + 'abc' + 'xyz'" => "x + 'abcxyz'"
-				if result := js_ast.FoldStringAddition(left.Right, e.Right, js_ast.StringAdditionWithNestedLeft); result.Data != nil {
-					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBinary{Op: left.Op, Left: left.Left, Right: result}}, exprOut{}
-				}
-			}
-
-		case js_ast.BinOpPow:
-			// Lower the exponentiation operator for browsers that don't support it
-			if p.options.unsupportedJSFeatures.Has(compat.ExponentOperator) {
-				return p.callRuntime(expr.Loc, "__pow", []js_ast.Expr{e.Left, e.Right}), exprOut{}
-			}
-
-			////////////////////////////////////////////////////////////////////////////////
-			// All assignment operators below here
-
-		case js_ast.BinOpAssign:
-			// Optionally preserve the name
-			if id, ok := e.Left.Data.(*js_ast.EIdentifier); ok {
-				e.Right = p.maybeKeepExprSymbolName(e.Right, p.symbols[id.Ref.InnerIndex].OriginalName, wasAnonymousNamedExpr)
-			}
-
-			if target, loc, private := p.extractPrivateIndex(e.Left); private != nil {
-				return p.lowerPrivateSet(target, loc, private, e.Right), exprOut{}
-			}
-
-			if property := p.extractSuperProperty(e.Left); property.Data != nil {
-				return p.lowerSuperPropertySet(e.Left.Loc, property, e.Right), exprOut{}
-			}
-
-			// Lower assignment destructuring patterns for browsers that don't
-			// support them. Note that assignment expressions are used to represent
-			// initializers in binding patterns, so only do this if we're not
-			// ourselves the target of an assignment. Example: "[a = b] = c"
-			if in.assignTarget == js_ast.AssignTargetNone {
-				mode := objRestMustReturnInitExpr
-				if isStmtExpr {
-					mode = objRestReturnValueIsUnused
-				}
-				if result, ok := p.lowerAssign(e.Left, e.Right, mode); ok {
-					return result, exprOut{}
-				}
-
-				// If CommonJS-style exports are disabled, then references to them are
-				// treated as global variable references. This is consistent with how
-				// they work in node and the browser, so it's the correct interpretation.
-				//
-				// However, people sometimes try to use both types of exports within the
-				// same module and expect it to work. We warn about this when module
-				// format conversion is enabled.
-				//
-				// Only warn about this for uses in assignment position since there are
-				// some legitimate other uses. For example, some people do "typeof module"
-				// to check for a CommonJS environment, and we shouldn't warn on that.
-				if p.options.mode != config.ModePassThrough && p.isFileConsideredToHaveESMExports && !p.isControlFlowDead {
-					if dot, ok := e.Left.Data.(*js_ast.EDot); ok {
-						var name string
-						var loc logger.Loc
-
-						switch target := dot.Target.Data.(type) {
-						case *js_ast.EIdentifier:
-							if symbol := &p.symbols[target.Ref.InnerIndex]; symbol.Kind == js_ast.SymbolUnbound &&
-								((symbol.OriginalName == "module" && dot.Name == "exports") || symbol.OriginalName == "exports") &&
-								!symbol.Flags.Has(js_ast.DidWarnAboutCommonJSInESM) {
-								// "module.exports = ..."
-								// "exports.something = ..."
-								name = symbol.OriginalName
-								loc = dot.Target.Loc
-								symbol.Flags |= js_ast.DidWarnAboutCommonJSInESM
-							}
-
-						case *js_ast.EDot:
-							if target.Name == "exports" {
-								if id, ok := target.Target.Data.(*js_ast.EIdentifier); ok {
-									if symbol := &p.symbols[id.Ref.InnerIndex]; symbol.Kind == js_ast.SymbolUnbound &&
-										symbol.OriginalName == "module" && !symbol.Flags.Has(js_ast.DidWarnAboutCommonJSInESM) {
-										// "module.exports.foo = ..."
-										name = symbol.OriginalName
-										loc = target.Target.Loc
-										symbol.Flags |= js_ast.DidWarnAboutCommonJSInESM
-									}
-								}
-							}
-						}
-
-						if name != "" {
-							kind := logger.Warning
-							if p.suppressWarningsAboutWeirdCode {
-								kind = logger.Debug
-							}
-							why, notes := p.whyESModule()
-							if why == whyESMTypeModulePackageJSON {
-								text := "Node's package format requires that CommonJS files in a \"type\": \"module\" package use the \".cjs\" file extension."
-								if p.options.ts.Parse {
-									text += " If you are using TypeScript, you can use the \".cts\" file extension with esbuild instead."
-								}
-								notes = append(notes, logger.MsgData{Text: text})
-							}
-							p.log.AddIDWithNotes(logger.MsgID_JS_CommonJSVariableInESM, kind, &p.tracker, js_lexer.RangeOfIdentifier(p.source, loc),
-								fmt.Sprintf("The CommonJS %q variable is treated as a global variable in an ECMAScript module and may not work as expected", name),
-								notes)
-						}
-					}
-				}
-			}
-
-		case js_ast.BinOpAddAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpAdd, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpSubAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpSub, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpMulAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpMul, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpDivAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpDiv, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpRemAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpRem, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpPowAssign:
-			// Lower the exponentiation operator for browsers that don't support it
-			if p.options.unsupportedJSFeatures.Has(compat.ExponentOperator) {
-				return p.lowerExponentiationAssignmentOperator(expr.Loc, e), exprOut{}
-			}
-
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpPow, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpShlAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpShl, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpShrAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpShr, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpUShrAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpUShr, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpBitwiseOrAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseOr, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpBitwiseAndAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseAnd, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpBitwiseXorAssign:
-			if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseXor, e.Right); result.Data != nil {
-				return result, exprOut{}
-			}
-
-		case js_ast.BinOpNullishCoalescingAssign:
-			if value, ok := p.lowerNullishCoalescingAssignmentOperator(expr.Loc, e); ok {
-				return value, exprOut{}
-			}
-
-		case js_ast.BinOpLogicalAndAssign:
-			if value, ok := p.lowerLogicalAssignmentOperator(expr.Loc, e, js_ast.BinOpLogicalAnd); ok {
-				return value, exprOut{}
-			}
-
-		case js_ast.BinOpLogicalOrAssign:
-			if value, ok := p.lowerLogicalAssignmentOperator(expr.Loc, e, js_ast.BinOpLogicalOr); ok {
-				return value, exprOut{}
-			}
-		}
-
-		// "(a, b) + c" => "a, b + c"
-		if p.options.minifySyntax && e.Op != js_ast.BinOpComma {
-			if comma, ok := e.Left.Data.(*js_ast.EBinary); ok && comma.Op == js_ast.BinOpComma {
-				return js_ast.JoinWithComma(comma.Left, js_ast.Expr{
-					Loc: comma.Right.Loc,
-					Data: &js_ast.EBinary{
-						Op:    e.Op,
-						Left:  comma.Right,
-						Right: e.Right,
-					},
-				}), exprOut{}
-			}
-		}
+		return expr, exprOut{}
 
 	case *js_ast.EDot:
 		isDeleteTarget := e == p.deleteTarget
@@ -14355,6 +14001,551 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 	return expr, exprOut{}
 }
 
+// This exists to handle very deeply-nested ASTs. For example, the "grapheme-splitter"
+// package contains this monstrosity:
+//
+//	if (
+//	  (0x0300 <= code && code <= 0x036F) ||
+//	  (0x0483 <= code && code <= 0x0487) ||
+//	  (0x0488 <= code && code <= 0x0489) ||
+//	  (0x0591 <= code && code <= 0x05BD) ||
+//	  ... many hundreds of lines later ...
+//	) {
+//	  return;
+//	}
+//
+// If "checkAndPrepare" returns non-nil, then the return value is the final
+// expression. Otherwise, the final expression can be obtained by manually
+// visiting the left child and then calling "visitRightAndFinish":
+//
+//	if result := v.checkAndPrepare(p); result.Data != nil {
+//	  return result
+//	}
+//	v.e.Left, _ = p.visitExprInOut(v.e.Left, v.leftIn)
+//	return v.visitRightAndFinish(p)
+//
+// This code is convoluted this way so that we can use our own stack on the
+// heap instead of the call stack when there are additional levels of nesting.
+// Before this transformation, the code previously looked something like this:
+//
+//	... The code in "checkAndPrepare" ...
+//	e.Left, _ = p.visitExprInOut(e.Left, in)
+//	... The code in "visitRightAndFinish" ...
+//
+// If this code is still confusing, it may be helpful to look back in git
+// history at the commit that introduced this transformation.
+//
+// Go normally has growable call stacks so this code transformation normally
+// doesn't do anything, but WebAssembly doesn't allow stack pointer manipulation
+// so Go's WebAssembly implementation doesn't support growable call stacks and
+// is therefore vulnerable to stack overflow. So this code transformation is
+// only really relevant for esbuild's WebAssembly-based API.
+type binaryExprVisitor struct {
+	// Inputs
+	e   *js_ast.EBinary
+	loc logger.Loc
+	in  exprIn
+
+	// Input for visiting the left child
+	leftIn exprIn
+
+	// "Local variables" passed from "checkAndPrepare" to "visitRightAndFinish"
+	isStmtExpr                               bool
+	wasAnonymousNamedExpr                    bool
+	oldSilenceWarningAboutThisBeingUndefined bool
+}
+
+func (v *binaryExprVisitor) checkAndPrepare(p *parser) js_ast.Expr {
+	e := v.e
+
+	// Special-case EPrivateIdentifier to allow it here
+	if private, ok := e.Left.Data.(*js_ast.EPrivateIdentifier); ok && e.Op == js_ast.BinOpIn {
+		name := p.loadNameFromRef(private.Ref)
+		result := p.findSymbol(e.Left.Loc, name)
+		private.Ref = result.ref
+
+		// Unlike regular identifiers, there are no unbound private identifiers
+		symbol := &p.symbols[result.ref.InnerIndex]
+		if !symbol.Kind.IsPrivate() {
+			r := logger.Range{Loc: e.Left.Loc, Len: int32(len(name))}
+			p.log.AddError(&p.tracker, r, fmt.Sprintf("Private name %q must be declared in an enclosing class", name))
+		}
+
+		e.Right = p.visitExpr(e.Right)
+
+		if p.privateSymbolNeedsToBeLowered(private) {
+			return p.lowerPrivateBrandCheck(e.Right, v.loc, private)
+		}
+		return js_ast.Expr{Loc: v.loc, Data: e}
+	}
+
+	v.isStmtExpr = e == p.stmtExprValue
+	v.wasAnonymousNamedExpr = p.isAnonymousNamedExpr(e.Right)
+	v.oldSilenceWarningAboutThisBeingUndefined = p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined
+
+	if _, ok := e.Left.Data.(*js_ast.EThis); ok && e.Op == js_ast.BinOpLogicalAnd {
+		p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined = true
+	}
+	v.leftIn = exprIn{
+		assignTarget:               e.Op.BinaryAssignTarget(),
+		shouldMangleStringsAsProps: e.Op == js_ast.BinOpIn,
+	}
+	return js_ast.Expr{}
+}
+
+func (v *binaryExprVisitor) visitRightAndFinish(p *parser) js_ast.Expr {
+	e := v.e
+
+	// Mark the control flow as dead if the branch is never taken
+	switch e.Op {
+	case js_ast.BinOpLogicalOr:
+		if boolean, _, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok && boolean {
+			// "true || dead"
+			old := p.isControlFlowDead
+			p.isControlFlowDead = true
+			e.Right = p.visitExpr(e.Right)
+			p.isControlFlowDead = old
+		} else {
+			e.Right = p.visitExpr(e.Right)
+		}
+
+	case js_ast.BinOpLogicalAnd:
+		if boolean, _, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok && !boolean {
+			// "false && dead"
+			old := p.isControlFlowDead
+			p.isControlFlowDead = true
+			e.Right = p.visitExpr(e.Right)
+			p.isControlFlowDead = old
+		} else {
+			e.Right = p.visitExpr(e.Right)
+		}
+
+	case js_ast.BinOpNullishCoalescing:
+		if isNullOrUndefined, _, ok := js_ast.ToNullOrUndefinedWithSideEffects(e.Left.Data); ok && !isNullOrUndefined {
+			// "notNullOrUndefined ?? dead"
+			old := p.isControlFlowDead
+			p.isControlFlowDead = true
+			e.Right = p.visitExpr(e.Right)
+			p.isControlFlowDead = old
+		} else {
+			e.Right = p.visitExpr(e.Right)
+		}
+
+	case js_ast.BinOpComma:
+		e.Right, _ = p.visitExprInOut(e.Right, exprIn{
+			shouldMangleStringsAsProps: v.in.shouldMangleStringsAsProps,
+		})
+
+	default:
+		e.Right = p.visitExpr(e.Right)
+	}
+	p.fnOnlyDataVisit.silenceMessageAboutThisBeingUndefined = v.oldSilenceWarningAboutThisBeingUndefined
+
+	// Always put constants consistently on the same side for equality
+	// comparisons to help improve compression. In theory, dictionary-based
+	// compression methods may already have a dictionary entry for code that
+	// is similar to previous code. Note that we can only reorder expressions
+	// that do not have any side effects.
+	//
+	// Constants are currently ordered on the right instead of the left because
+	// it results in slightly smalller gzip size on our primary benchmark
+	// (although slightly larger uncompressed size). The size difference is
+	// less than 0.1% so it really isn't that important an optimization.
+	if p.options.minifySyntax {
+		switch e.Op {
+		case js_ast.BinOpLooseEq, js_ast.BinOpLooseNe, js_ast.BinOpStrictEq, js_ast.BinOpStrictNe:
+			// "1 === x" => "x === 1"
+			if js_ast.IsPrimitiveLiteral(e.Left.Data) && !js_ast.IsPrimitiveLiteral(e.Right.Data) {
+				e.Left, e.Right = e.Right, e.Left
+			}
+		}
+	}
+
+	if p.shouldFoldTypeScriptConstantExpressions || (p.options.minifySyntax && js_ast.ShouldFoldBinaryArithmeticWhenMinifying(e.Op)) {
+		if result := js_ast.FoldBinaryArithmetic(v.loc, e); result.Data != nil {
+			return result
+		}
+	}
+
+	// Post-process the binary expression
+	switch e.Op {
+	case js_ast.BinOpComma:
+		// "(1, 2)" => "2"
+		// "(sideEffects(), 2)" => "(sideEffects(), 2)"
+		if p.options.minifySyntax {
+			e.Left = js_ast.SimplifyUnusedExpr(e.Left, p.options.unsupportedJSFeatures, p.isUnbound)
+			if e.Left.Data == nil {
+				return e.Right
+			}
+		}
+
+	case js_ast.BinOpLooseEq:
+		if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data, js_ast.LooseEquality); ok {
+			return js_ast.Expr{Loc: v.loc, Data: &js_ast.EBoolean{Value: result}}
+		}
+		afterOpLoc := locAfterOp(e)
+		if !p.warnAboutEqualityCheck("==", e.Left, afterOpLoc) {
+			p.warnAboutEqualityCheck("==", e.Right, afterOpLoc)
+		}
+		p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
+
+		if p.options.minifySyntax {
+			// "x == void 0" => "x == null"
+			if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
+				e.Left.Data = js_ast.ENullShared
+			} else if _, ok := e.Right.Data.(*js_ast.EUndefined); ok {
+				e.Right.Data = js_ast.ENullShared
+			}
+
+			if result, ok := js_ast.MaybeSimplifyEqualityComparison(v.loc, e, p.options.unsupportedJSFeatures); ok {
+				return result
+			}
+		}
+
+	case js_ast.BinOpStrictEq:
+		if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data, js_ast.StrictEquality); ok {
+			return js_ast.Expr{Loc: v.loc, Data: &js_ast.EBoolean{Value: result}}
+		}
+		afterOpLoc := locAfterOp(e)
+		if !p.warnAboutEqualityCheck("===", e.Left, afterOpLoc) {
+			p.warnAboutEqualityCheck("===", e.Right, afterOpLoc)
+		}
+		p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
+
+		if p.options.minifySyntax {
+			// "typeof x === 'undefined'" => "typeof x == 'undefined'"
+			if js_ast.CanChangeStrictToLoose(e.Left, e.Right) {
+				e.Op = js_ast.BinOpLooseEq
+			}
+
+			if result, ok := js_ast.MaybeSimplifyEqualityComparison(v.loc, e, p.options.unsupportedJSFeatures); ok {
+				return result
+			}
+		}
+
+	case js_ast.BinOpLooseNe:
+		if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data, js_ast.LooseEquality); ok {
+			return js_ast.Expr{Loc: v.loc, Data: &js_ast.EBoolean{Value: !result}}
+		}
+		afterOpLoc := locAfterOp(e)
+		if !p.warnAboutEqualityCheck("!=", e.Left, afterOpLoc) {
+			p.warnAboutEqualityCheck("!=", e.Right, afterOpLoc)
+		}
+		p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
+
+		if p.options.minifySyntax {
+			// "x != void 0" => "x != null"
+			if _, ok := e.Left.Data.(*js_ast.EUndefined); ok {
+				e.Left.Data = js_ast.ENullShared
+			} else if _, ok := e.Right.Data.(*js_ast.EUndefined); ok {
+				e.Right.Data = js_ast.ENullShared
+			}
+
+			if result, ok := js_ast.MaybeSimplifyEqualityComparison(v.loc, e, p.options.unsupportedJSFeatures); ok {
+				return result
+			}
+		}
+
+	case js_ast.BinOpStrictNe:
+		if result, ok := js_ast.CheckEqualityIfNoSideEffects(e.Left.Data, e.Right.Data, js_ast.StrictEquality); ok {
+			return js_ast.Expr{Loc: v.loc, Data: &js_ast.EBoolean{Value: !result}}
+		}
+		afterOpLoc := locAfterOp(e)
+		if !p.warnAboutEqualityCheck("!==", e.Left, afterOpLoc) {
+			p.warnAboutEqualityCheck("!==", e.Right, afterOpLoc)
+		}
+		p.warnAboutTypeofAndString(e.Left, e.Right, checkBothOrders)
+
+		if p.options.minifySyntax {
+			// "typeof x !== 'undefined'" => "typeof x != 'undefined'"
+			if js_ast.CanChangeStrictToLoose(e.Left, e.Right) {
+				e.Op = js_ast.BinOpLooseNe
+			}
+
+			if result, ok := js_ast.MaybeSimplifyEqualityComparison(v.loc, e, p.options.unsupportedJSFeatures); ok {
+				return result
+			}
+		}
+
+	case js_ast.BinOpNullishCoalescing:
+		if isNullOrUndefined, sideEffects, ok := js_ast.ToNullOrUndefinedWithSideEffects(e.Left.Data); ok {
+			if !isNullOrUndefined {
+				return e.Left
+			} else if sideEffects == js_ast.NoSideEffects {
+				return e.Right
+			}
+		}
+
+		if p.options.minifySyntax {
+			// "a ?? (b ?? c)" => "a ?? b ?? c"
+			if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpNullishCoalescing {
+				e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpNullishCoalescing, e.Left, right.Left)
+				e.Right = right.Right
+			}
+		}
+
+		if p.options.unsupportedJSFeatures.Has(compat.NullishCoalescing) {
+			return p.lowerNullishCoalescing(v.loc, e.Left, e.Right)
+		}
+
+	case js_ast.BinOpLogicalOr:
+		if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
+			if boolean {
+				return e.Left
+			} else if sideEffects == js_ast.NoSideEffects {
+				return e.Right
+			}
+		}
+
+		if p.options.minifySyntax {
+			// "a || (b || c)" => "a || b || c"
+			if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpLogicalOr {
+				e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpLogicalOr, e.Left, right.Left)
+				e.Right = right.Right
+			}
+
+			// "a === null || a === undefined" => "a == null"
+			if left, right, ok := js_ast.IsBinaryNullAndUndefined(e.Left, e.Right, js_ast.BinOpStrictEq); ok {
+				e.Op = js_ast.BinOpLooseEq
+				e.Left = left
+				e.Right = right
+			}
+		}
+
+	case js_ast.BinOpLogicalAnd:
+		if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
+			if !boolean {
+				return e.Left
+			} else if sideEffects == js_ast.NoSideEffects {
+				return e.Right
+			}
+		}
+
+		if p.options.minifySyntax {
+			// "a && (b && c)" => "a && b && c"
+			if right, ok := e.Right.Data.(*js_ast.EBinary); ok && right.Op == js_ast.BinOpLogicalAnd {
+				e.Left = js_ast.JoinWithLeftAssociativeOp(js_ast.BinOpLogicalAnd, e.Left, right.Left)
+				e.Right = right.Right
+			}
+
+			// "a !== null && a !== undefined" => "a != null"
+			if left, right, ok := js_ast.IsBinaryNullAndUndefined(e.Left, e.Right, js_ast.BinOpStrictNe); ok {
+				e.Op = js_ast.BinOpLooseNe
+				e.Left = left
+				e.Right = right
+			}
+		}
+
+	case js_ast.BinOpAdd:
+		// "'abc' + 'xyz'" => "'abcxyz'"
+		if result := js_ast.FoldStringAddition(e.Left, e.Right, js_ast.StringAdditionNormal); result.Data != nil {
+			return result
+		}
+
+		if left, ok := e.Left.Data.(*js_ast.EBinary); ok && left.Op == js_ast.BinOpAdd {
+			// "x + 'abc' + 'xyz'" => "x + 'abcxyz'"
+			if result := js_ast.FoldStringAddition(left.Right, e.Right, js_ast.StringAdditionWithNestedLeft); result.Data != nil {
+				return js_ast.Expr{Loc: v.loc, Data: &js_ast.EBinary{Op: left.Op, Left: left.Left, Right: result}}
+			}
+		}
+
+	case js_ast.BinOpPow:
+		// Lower the exponentiation operator for browsers that don't support it
+		if p.options.unsupportedJSFeatures.Has(compat.ExponentOperator) {
+			return p.callRuntime(v.loc, "__pow", []js_ast.Expr{e.Left, e.Right})
+		}
+
+		////////////////////////////////////////////////////////////////////////////////
+		// All assignment operators below here
+
+	case js_ast.BinOpAssign:
+		// Optionally preserve the name
+		if id, ok := e.Left.Data.(*js_ast.EIdentifier); ok {
+			e.Right = p.maybeKeepExprSymbolName(e.Right, p.symbols[id.Ref.InnerIndex].OriginalName, v.wasAnonymousNamedExpr)
+		}
+
+		if target, loc, private := p.extractPrivateIndex(e.Left); private != nil {
+			return p.lowerPrivateSet(target, loc, private, e.Right)
+		}
+
+		if property := p.extractSuperProperty(e.Left); property.Data != nil {
+			return p.lowerSuperPropertySet(e.Left.Loc, property, e.Right)
+		}
+
+		// Lower assignment destructuring patterns for browsers that don't
+		// support them. Note that assignment expressions are used to represent
+		// initializers in binding patterns, so only do this if we're not
+		// ourselves the target of an assignment. Example: "[a = b] = c"
+		if v.in.assignTarget == js_ast.AssignTargetNone {
+			mode := objRestMustReturnInitExpr
+			if v.isStmtExpr {
+				mode = objRestReturnValueIsUnused
+			}
+			if result, ok := p.lowerAssign(e.Left, e.Right, mode); ok {
+				return result
+			}
+
+			// If CommonJS-style exports are disabled, then references to them are
+			// treated as global variable references. This is consistent with how
+			// they work in node and the browser, so it's the correct interpretation.
+			//
+			// However, people sometimes try to use both types of exports within the
+			// same module and expect it to work. We warn about this when module
+			// format conversion is enabled.
+			//
+			// Only warn about this for uses in assignment position since there are
+			// some legitimate other uses. For example, some people do "typeof module"
+			// to check for a CommonJS environment, and we shouldn't warn on that.
+			if p.options.mode != config.ModePassThrough && p.isFileConsideredToHaveESMExports && !p.isControlFlowDead {
+				if dot, ok := e.Left.Data.(*js_ast.EDot); ok {
+					var name string
+					var loc logger.Loc
+
+					switch target := dot.Target.Data.(type) {
+					case *js_ast.EIdentifier:
+						if symbol := &p.symbols[target.Ref.InnerIndex]; symbol.Kind == js_ast.SymbolUnbound &&
+							((symbol.OriginalName == "module" && dot.Name == "exports") || symbol.OriginalName == "exports") &&
+							!symbol.Flags.Has(js_ast.DidWarnAboutCommonJSInESM) {
+							// "module.exports = ..."
+							// "exports.something = ..."
+							name = symbol.OriginalName
+							loc = dot.Target.Loc
+							symbol.Flags |= js_ast.DidWarnAboutCommonJSInESM
+						}
+
+					case *js_ast.EDot:
+						if target.Name == "exports" {
+							if id, ok := target.Target.Data.(*js_ast.EIdentifier); ok {
+								if symbol := &p.symbols[id.Ref.InnerIndex]; symbol.Kind == js_ast.SymbolUnbound &&
+									symbol.OriginalName == "module" && !symbol.Flags.Has(js_ast.DidWarnAboutCommonJSInESM) {
+									// "module.exports.foo = ..."
+									name = symbol.OriginalName
+									loc = target.Target.Loc
+									symbol.Flags |= js_ast.DidWarnAboutCommonJSInESM
+								}
+							}
+						}
+					}
+
+					if name != "" {
+						kind := logger.Warning
+						if p.suppressWarningsAboutWeirdCode {
+							kind = logger.Debug
+						}
+						why, notes := p.whyESModule()
+						if why == whyESMTypeModulePackageJSON {
+							text := "Node's package format requires that CommonJS files in a \"type\": \"module\" package use the \".cjs\" file extension."
+							if p.options.ts.Parse {
+								text += " If you are using TypeScript, you can use the \".cts\" file extension with esbuild instead."
+							}
+							notes = append(notes, logger.MsgData{Text: text})
+						}
+						p.log.AddIDWithNotes(logger.MsgID_JS_CommonJSVariableInESM, kind, &p.tracker, js_lexer.RangeOfIdentifier(p.source, loc),
+							fmt.Sprintf("The CommonJS %q variable is treated as a global variable in an ECMAScript module and may not work as expected", name),
+							notes)
+					}
+				}
+			}
+		}
+
+	case js_ast.BinOpAddAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpAdd, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpSubAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpSub, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpMulAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpMul, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpDivAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpDiv, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpRemAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpRem, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpPowAssign:
+		// Lower the exponentiation operator for browsers that don't support it
+		if p.options.unsupportedJSFeatures.Has(compat.ExponentOperator) {
+			return p.lowerExponentiationAssignmentOperator(v.loc, e)
+		}
+
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpPow, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpShlAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpShl, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpShrAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpShr, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpUShrAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpUShr, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpBitwiseOrAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseOr, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpBitwiseAndAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseAnd, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpBitwiseXorAssign:
+		if result := p.maybeLowerSetBinOp(e.Left, js_ast.BinOpBitwiseXor, e.Right); result.Data != nil {
+			return result
+		}
+
+	case js_ast.BinOpNullishCoalescingAssign:
+		if value, ok := p.lowerNullishCoalescingAssignmentOperator(v.loc, e); ok {
+			return value
+		}
+
+	case js_ast.BinOpLogicalAndAssign:
+		if value, ok := p.lowerLogicalAssignmentOperator(v.loc, e, js_ast.BinOpLogicalAnd); ok {
+			return value
+		}
+
+	case js_ast.BinOpLogicalOrAssign:
+		if value, ok := p.lowerLogicalAssignmentOperator(v.loc, e, js_ast.BinOpLogicalOr); ok {
+			return value
+		}
+	}
+
+	// "(a, b) + c" => "a, b + c"
+	if p.options.minifySyntax && e.Op != js_ast.BinOpComma {
+		if comma, ok := e.Left.Data.(*js_ast.EBinary); ok && comma.Op == js_ast.BinOpComma {
+			return js_ast.JoinWithComma(comma.Left, js_ast.Expr{
+				Loc: comma.Right.Loc,
+				Data: &js_ast.EBinary{
+					Op:    e.Op,
+					Left:  comma.Right,
+					Right: e.Right,
+				},
+			})
+		}
+	}
+
+	return js_ast.Expr{Loc: v.loc, Data: e}
+}
+
 func remapExprLocsInJSON(expr *js_ast.Expr, table []logger.StringInJSTableEntry) {
 	expr.Loc = logger.RemapStringInJSLoc(table, expr.Loc)
 
@@ -14509,7 +14700,7 @@ func (p *parser) maybeMarkKnownGlobalConstructorAsPure(e *js_ast.ENew) {
 				}
 
 				if n == 1 {
-					switch js_ast.KnownPrimitiveType(e.Args[0]) {
+					switch js_ast.KnownPrimitiveType(e.Args[0].Data) {
 					case js_ast.PrimitiveNull, js_ast.PrimitiveUndefined, js_ast.PrimitiveBoolean, js_ast.PrimitiveNumber, js_ast.PrimitiveString:
 						// "new Date('')" is pure
 						// "new Date(0)" is pure
@@ -15528,8 +15719,31 @@ func Parse(log logger.Log, source logger.Source, options Options) (result js_ast
 		// When tree shaking is disabled, everything comes in a single part
 		parts = p.appendPart(parts, stmts)
 	} else {
+		var preprocessedEnums map[int][]js_ast.Part
+		if p.scopesInOrderForEnum != nil {
+			// Preprocess TypeScript enums to improve code generation. Otherwise
+			// uses of an enum before that enum has been declared won't be inlined:
+			//
+			//   console.log(Foo.FOO) // We want "FOO" to be inlined here
+			//   const enum Foo { FOO = 0 }
+			//
+			// The TypeScript compiler itself contains code with this pattern, so
+			// it's important to implement this optimization.
+			for i, stmt := range stmts {
+				if _, ok := stmt.Data.(*js_ast.SEnum); ok {
+					if preprocessedEnums == nil {
+						preprocessedEnums = make(map[int][]js_ast.Part)
+					}
+					oldScopesInOrder := p.scopesInOrder
+					p.scopesInOrder = p.scopesInOrderForEnum[stmt.Loc]
+					preprocessedEnums[i] = p.appendPart(nil, []js_ast.Stmt{stmt})
+					p.scopesInOrder = oldScopesInOrder
+				}
+			}
+		}
+
 		// When tree shaking is enabled, each top-level statement is potentially a separate part
-		for _, stmt := range stmts {
+		for i, stmt := range stmts {
 			switch s := stmt.Data.(type) {
 			case *js_ast.SLocal:
 				// Split up top-level multi-declaration variable statements
@@ -15562,6 +15776,10 @@ func Parse(log logger.Log, source logger.Source, options Options) (result js_ast
 				// must happen at the end after everything is parsed because TypeScript
 				// moves this statement to the end when it generates code.
 				after = p.appendPart(after, []js_ast.Stmt{stmt})
+
+			case *js_ast.SEnum:
+				parts = append(parts, preprocessedEnums[i]...)
+				p.scopesInOrder = p.scopesInOrder[len(p.scopesInOrderForEnum[stmt.Loc]):]
 
 			default:
 				parts = p.appendPart(parts, []js_ast.Stmt{stmt})
