@@ -121,7 +121,6 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 
 // FilePage tries to serve a single file. The file must exist. Must be given a full filename.
 func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, dataFilename string) {
-
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
@@ -401,7 +400,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, d
 	fileSize := uint64(fInfo.Size())
 	// Cache size can be set to a low number to trigger this behavior
 	if fileSize > ac.largeFileSize {
-		//log.Info("Streaming " + filename + " directly...")
+		// log.Info("Streaming " + filename + " directly...")
 
 		// http.ServeContent will first seek to the end of the file, then
 		// serve the file. The alternative here is to use io.Copy(w, f),
@@ -439,7 +438,6 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 // RegisterHandlers configures the given mutex and request limiter to handle
 // HTTP requests
 func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir string, addDomain bool) {
-
 	theme := ac.defaultTheme
 	// Theme aliases. Use a map if there are more than 2 aliases in the future.
 	if theme == "light" {
@@ -449,7 +447,6 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
-
 		// Rejecting requests is handled by the permission system, which
 		// in turn requires a database backend.
 		if ac.perm != nil {

@@ -87,7 +87,6 @@ func listJSON(L *lua.LState) int {
 
 	L.Push(lua.LString("[" + strings.Join(all, ",") + "]"))
 	return 1 // Number of returned values
-
 }
 
 // Get the last element of the list
@@ -148,7 +147,6 @@ var listMethods = map[string]lua.LGFunction{
 
 // LoadList makes functions related to HTTP requests and responses available to Lua scripts
 func LoadList(L *lua.LState, creator pinterface.ICreator) {
-
 	// Register the list class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lListClass)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -182,5 +180,4 @@ func LoadList(L *lua.LState, creator pinterface.ICreator) {
 		L.Push(userdata)
 		return 1 // Number of returned values
 	}))
-
 }

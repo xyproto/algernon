@@ -105,7 +105,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 		}
 		// Several attempts failed
 		return errServe
-		//ac.fatalExit(errServe)
+		// ac.fatalExit(errServe)
 	}
 	return nil
 }

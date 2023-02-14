@@ -31,7 +31,6 @@ func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
 // LoadPluginFunctions takes a Lua state and a TextOutput
 // (the TextOutput struct should be nil if not in a REPL)
 func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
-
 	// Expose the functionality of a given plugin (executable file).
 	// If on Windows, ".exe" is added to the path.
 	// Returns true of successful.
@@ -240,5 +239,4 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 		L.Push(lua.LString(jsonreply)) // Resulting string
 		return 1                       // number of results
 	}))
-
 }

@@ -97,7 +97,6 @@ func (ac *Config) Info() string {
 // LoadServerConfigFunctions makes functions related to server configuration and
 // permissions available to the given Lua struct.
 func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) error {
-
 	if ac.perm == nil {
 		return errors.New("perm is nil when loading server config functions")
 	}

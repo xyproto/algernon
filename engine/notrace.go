@@ -3,5 +3,5 @@
 package engine
 
 func traceStart() {
-	//logf("%s\n", "no trace start")
+	// logf("%s\n", "no trace start")
 }

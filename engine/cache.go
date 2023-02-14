@@ -19,7 +19,6 @@ func DataToClientModernBrowsers(w http.ResponseWriter, req *http.Request, filena
 
 // LoadCacheFunctions loads functions related to caching into the given Lua state
 func (ac *Config) LoadCacheFunctions(L *lua.LState) {
-
 	const disabledMessage = "Caching is disabled"
 	const clearedMessage = "Cache cleared"
 
@@ -64,5 +63,4 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 		L.Push(lua.LBool(true)) // success
 		return 1                // number of results
 	}))
-
 }

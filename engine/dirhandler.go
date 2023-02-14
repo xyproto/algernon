@@ -14,10 +14,8 @@ import (
 	"github.com/xyproto/algernon/utils"
 )
 
-var (
-	// List of filenames that should be displayed instead of a directory listing
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl"}
-)
+// List of filenames that should be displayed instead of a directory listing
+var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl"}
 
 const (
 	dotSlash        = "." + utils.Pathsep           /* ./ */
@@ -114,7 +112,6 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
 func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
-
 	// Check if we are instructed to quit after serving the first file
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)

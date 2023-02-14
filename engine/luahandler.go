@@ -14,11 +14,9 @@ import (
 // LoadLuaHandlerFunctions makes functions related to handling HTTP requests
 // available to Lua scripts
 func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
-
 	luahandlermutex := &sync.RWMutex{}
 
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
-
 		handlePath := L.ToString(1)
 		handleFunc := L.ToFunction(2)
 
@@ -26,7 +24,6 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 		//       using the common luapool as needed
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
-
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
 			luahandlermutex.Lock()
 			ac.LoadCommonFunctions(w, req, filename, L, nil, httpStatus)
@@ -67,5 +64,4 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 
 		return 0 // number of results
 	}))
-
 }

@@ -13,7 +13,6 @@ import (
 
 // Lua2funcMap runs in a Lua file and returns the functions as a template.FuncMap (or an error)
 func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, errChan chan error, funcMapChan chan template.FuncMap) {
-
 	// Make functions from the given Lua data available
 	funcs := make(template.FuncMap)
 

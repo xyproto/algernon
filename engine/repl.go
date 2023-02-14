@@ -27,7 +27,6 @@ const exitMessage = "bye"
 
 // Export Lua functions specific to the REPL
 func exportREPLSpecific(L *lua.LState) {
-
 	// Attempt to return a more informative text than the memory location.
 	// Can take several arguments, just like print().
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
@@ -64,7 +63,6 @@ func exportREPLSpecific(L *lua.LState) {
 		L.Push(lua.LString(scriptpath))
 		return 1 // number of results
 	}))
-
 }
 
 // Split the given line in three parts, and color the parts
@@ -172,7 +170,6 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 
 // LoadLuaFunctionsForREPL exports the various Lua functions that might be needed in the REPL
 func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *textoutput.TextOutput) {
-
 	// Server configuration functions
 	ac.LoadServerConfigFunctions(L, "")
 

@@ -290,6 +290,7 @@ run(string) -> table
 // Lists the contents of the global namespace "_G" if no arguments are given.
 dir([table]) -> string
 `
+
 const usageMessage = `
 Type "webhelp" for an overview of functions that are available when
 handling requests. Or "confighelp" for an overview of functions that are

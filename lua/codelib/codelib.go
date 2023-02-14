@@ -157,7 +157,6 @@ var libMethods = map[string]lua.LGFunction{
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState, creator pinterface.ICreator) {
-
 	// Register the Library class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -184,5 +183,4 @@ func Load(L *lua.LState, creator pinterface.ICreator) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
-
 }

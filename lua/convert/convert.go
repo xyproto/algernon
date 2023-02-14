@@ -15,9 +15,7 @@ import (
 	"github.com/xyproto/jpath"
 )
 
-var (
-	errToMap = errors.New("could not represent Lua structure table as a map")
-)
+var errToMap = errors.New("could not represent Lua structure table as a map")
 
 // PprintToWriter outputs more informative information than the memory location.
 // Attempt to extract and print the values of the given lua.LValue.
@@ -29,7 +27,7 @@ func PprintToWriter(w io.Writer, value lua.LValue) {
 		// Even if t.Len() is 0, the table may be full of elements
 		m, isAnArray, err := Table2interfaceMapGlua(t)
 		if err != nil {
-			//log.Info("try: for k,v in pairs(t) do pprint(k,v) end")
+			// log.Info("try: for k,v in pairs(t) do pprint(k,v) end")
 			// Could not convert to a map
 			fmt.Fprint(w, v)
 			return
@@ -183,7 +181,6 @@ func LValueMaps2table(L *lua.LState, maps []map[string]lua.LValue) *lua.LTable {
 // If no suitable keys and values are found, a nil interface is returned.
 // If several different types are found, it returns true.
 func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
-
 	mapSS, mapSI, mapIS, mapII := Table2maps(luaTable)
 
 	lss := len(mapSS)
@@ -196,30 +193,30 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 	// Return the first map that has values
 	if !preferInt {
 		if lss > 0 {
-			//log.Println(key, "STRING -> STRING map")
+			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
 		} else if lsi > 0 {
-			//log.Println(key, "STRING -> INT map")
+			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
 		} else if lis > 0 {
-			//log.Println(key, "INT -> STRING map")
+			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
 		} else if lii > 0 {
-			//log.Println(key, "INT -> INT map")
+			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
 		}
 	} else {
 		if lii > 0 {
-			//log.Println(key, "INT -> INT map")
+			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
 		} else if lis > 0 {
-			//log.Println(key, "INT -> STRING map")
+			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
 		} else if lsi > 0 {
-			//log.Println(key, "STRING -> INT map")
+			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
 		} else if lss > 0 {
-			//log.Println(key, "STRING -> STRING map")
+			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
 		}
 	}
@@ -235,7 +232,6 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 //	map[int]string
 //	map[int]int
 func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[int]string, map[int]int) {
-
 	// Initialize possible maps we want to convert to
 	mapSS := make(map[string]string)
 	mapSI := make(map[string]int)
@@ -247,7 +243,6 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 	var hasSkey, hasIkey, hasSvalue, hasIvalue bool
 
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
-
 		// Convert the keys and values to strings or ints
 		skey, hasSkey = tkey.(lua.LString)
 		ikey, hasIkey = tkey.(lua.LNumber)
@@ -272,7 +267,6 @@ func Table2maps(luaTable *lua.LTable) (map[string]string, map[string]int, map[in
 // Table2interfaceMap converts a Lua table to a map[string]any
 // If values are also tables, they are also attempted converted to map[string]any
 func Table2interfaceMap(luaTable *lua.LTable) map[string]any {
-
 	// Even if luaTable.Len() is 0, the table may be full of things
 
 	// Initialize possible maps we want to convert to
@@ -283,7 +277,6 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]any {
 	var hasSkey, hasSvalue, hasNkey, hasNvalue bool
 
 	luaTable.ForEach(func(tkey, tvalue lua.LValue) {
-
 		// Convert the keys and values to strings or ints or maps
 		skey, hasSkey = tkey.(lua.LString)
 		nkey, hasNkey = tkey.(lua.LNumber)

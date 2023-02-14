@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/bmizerany/assert"
 	"github.com/xyproto/algernon/engine"
@@ -14,7 +15,6 @@ import (
 	"github.com/xyproto/simplebolt"
 	//"github.com/xyproto/simplehstore"
 	//"github.com/xyproto/simplemaria"
-	"testing"
 
 	"github.com/xyproto/simpleredis"
 )
@@ -48,8 +48,8 @@ func TestAPI(t *testing.T) {
 	assert.Equal(t, New("engine", engine.Version, 2.0).Check(), nil)
 
 	// These adds many dependencies when testing
-	//assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
-	//assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
-	//assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
-	//assert.Equal(t, New("pstore", pstore.Version, 3.1).Check(), nil)
+	// assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
+	// assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
+	// assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
+	// assert.Equal(t, New("pstore", pstore.Version, 3.1).Check(), nil)
 }

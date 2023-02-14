@@ -19,10 +19,8 @@ const (
 	DefaultTheme = "default"
 )
 
-var (
-	// MetaKeywords contains a selection of allowed keywords for the HTML meta tag
-	MetaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
-)
+// MetaKeywords contains a selection of allowed keywords for the HTML meta tag
+var MetaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 
 // MessagePage is an easy way to output a HTML page only given a title, the body
 // (will be placed between the <body></body> tags) and the name of one of the
@@ -100,9 +98,7 @@ func StyleAmber(amberdata []byte, url string) []byte {
 		if bytes.Contains(amberdata, []byte("head")) {
 			// Add a link to the stylesheet
 			return bytes.Replace(amberdata, []byte("head\n"), []byte("head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
-
 		} else if bytes.Contains(amberdata, []byte("body")) {
-
 			// Add a link to the stylesheet
 			return bytes.Replace(amberdata, []byte("html\n"), []byte("html\n"+whitespace+"head\n"+whitespace+whitespace+`link[href="`+url+`"][rel="stylesheet"][type="text/css"]`+"\n"), 1)
 		}

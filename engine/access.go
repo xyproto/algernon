@@ -70,7 +70,7 @@ func (ac *Config) CombinedLogFormat(req *http.Request, statusCode int, byteSize 
 // a HTTP status code and the amount of bytes that have been transferred.
 func (ac *Config) LogAccess(req *http.Request, statusCode int, byteSize int64) {
 	if ac.commonAccessLogFilename != "" {
-		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			log.Warnf("Can not open %s: %s", ac.commonAccessLogFilename, err)
 			return
@@ -83,7 +83,7 @@ func (ac *Config) LogAccess(req *http.Request, statusCode int, byteSize int64) {
 		}
 	}
 	if ac.combinedAccessLogFilename != "" {
-		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			log.Warnf("Can not open %s: %s", ac.combinedAccessLogFilename, err)
 			return

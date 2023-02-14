@@ -12,7 +12,6 @@ import (
 
 // Load makes functions related to users and permissions available to Lua scripts
 func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
-
 	// Check if the current user has "user rights", returns bool
 	// Takes no arguments
 	L.SetGlobal("UserRights", L.NewFunction(func(L *lua.LState) int {

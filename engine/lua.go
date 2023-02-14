@@ -3,9 +3,8 @@ package engine
 import (
 	"html/template"
 	"net/http"
-	"strconv"
-
 	"path/filepath"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
@@ -28,7 +27,6 @@ import (
 // LoadCommonFunctions adds most of the available Lua functions in algernon to
 // the given Lua state struct
 func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus) {
-
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
 	ac.LoadBasicWeb(w, req, L, filename, flushFunc, httpStatus)
@@ -87,7 +85,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 	pure.Load(L)
 
 	// pprint
-	//exportREPL(L)
+	// exportREPL(L)
 
 	// Plugins
 	ac.LoadPluginFunctions(L, nil)
@@ -109,7 +107,6 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 // and permissions. Returns an error if there was a problem with running the lua
 // script, otherwise nil.
 func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus) error {
-
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
 	defer ac.luapool.Put(L)
@@ -195,7 +192,6 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
  * luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
  */
 func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
-
 	// Retrieve a Lua state
 	L := ac.luapool.Get()
 
@@ -302,14 +298,11 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 	// Extract the available functions from the Lua state
 	globalTable := L.G.Global
 	globalTable.ForEach(func(key, value lua.LValue) {
-
 		// Check if the current value is a string variable
 		if luaString, ok := value.(lua.LString); ok {
-
 			// Store the variable in the same map as the functions (string -> interface)
 			// for ease of use together with templates.
 			funcs[key.String()] = luaString.String()
-
 		} else if luaTable, ok := value.(*lua.LTable); ok {
 
 			// Convert the table to a map and save it.
@@ -328,7 +321,6 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 
 			// Check if the current value is a function
 		} else if luaFunc, ok := value.(*lua.LFunction); ok {
-
 			// Only export the functions defined in the given Lua code,
 			// not all the global functions. IsG is true if the function is global.
 			if !luaFunc.IsG {
@@ -338,7 +330,6 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 				// Register the function, with a variable number of string arguments
 				// Functions returning (string, error) are supported by html.template
 				funcs[functionName] = func(args ...string) (any, error) {
-
 					// Create a brand new Lua state
 					L2 := ac.luapool.New()
 					defer L2.Close()

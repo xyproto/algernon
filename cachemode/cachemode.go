@@ -16,18 +16,16 @@ const (
 	Default     = On
 )
 
-var (
-	// Names is a map of cache mode setting string representations
-	Names = map[Setting]string{
-		Unset:       "unset",
-		On:          "On",
-		Development: "Development",
-		Production:  "Production",
-		Images:      "Images",
-		Small:       "Small",
-		Off:         "Off",
-	}
-)
+// Names is a map of cache mode setting string representations
+var Names = map[Setting]string{
+	Unset:       "unset",
+	On:          "On",
+	Development: "Development",
+	Production:  "Production",
+	Images:      "Images",
+	Small:       "Small",
+	Off:         "Off",
+}
 
 // New creates a CacheModeSetting based on a variety of string options, like "on" and "off".
 func New(mode string) Setting {

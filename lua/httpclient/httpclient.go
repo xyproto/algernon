@@ -2,14 +2,15 @@
 package httpclient
 
 import (
-	"github.com/ddliu/go-httpclient"
-	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/ddliu/go-httpclient"
+	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/lua/convert"
+	"github.com/xyproto/gopher-lua"
 )
 
 // HTTPClient represents a HTTP client
@@ -136,7 +137,7 @@ func hcGet(L *lua.LState) int {
 		}
 	}
 
-	//log.Info("GET " + URL)
+	// log.Info("GET " + URL)
 
 	// GET the given URL with the given HTTP headers
 	resp, err := hc.Begin().Do("GET", URL, headers, nil)
@@ -214,7 +215,7 @@ func hcPost(L *lua.LState) int {
 	// Body
 	bodyReader := strings.NewReader(L.ToString(5)) // arg 5 (optional)
 
-	//log.Info("POST " + URL)
+	// log.Info("POST " + URL)
 
 	// POST the given URL with the given HTTP headers
 	resp, err := hc.Begin().Do("POST", URL, headers, bodyReader)
@@ -408,7 +409,6 @@ var hcMethods = map[string]lua.LGFunction{
 
 // Load makes functions related to httpclient available to the given Lua state
 func Load(L *lua.LState, userAgent string) {
-
 	// Register the HTTPClient class and the methods that belongs with it.
 	metaTableHC := L.NewTypeMetatable(HTTPClientClass)
 	metaTableHC.RawSetH(lua.LString("__index"), metaTableHC)
@@ -463,5 +463,4 @@ func Load(L *lua.LState, userAgent string) {
 		L.Insert(userdata, 0)
 		return hcDo(L) // Return the number of returned values
 	}))
-
 }

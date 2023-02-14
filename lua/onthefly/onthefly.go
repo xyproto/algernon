@@ -52,7 +52,6 @@ func constructTag(L *lua.LState) (*lua.LUserData, error) {
 // Take a Tag and a onthefly.Tag path.
 // Remove a key from a map. Return true if successful.
 func tagAddNewTag(L *lua.LState) int {
-
 	tag := checkTag(L) // arg 1
 	name := L.ToString(2)
 	if name == "" {
@@ -160,7 +159,6 @@ func constructPage(L *lua.LState) (*lua.LUserData, error) {
 
 // Return the Page as a string
 func pageString(L *lua.LState) int {
-
 	page := checkPage(L) // arg 1
 
 	// Return the Page as a Lua string
@@ -175,7 +173,6 @@ var pageMethods = map[string]lua.LGFunction{
 
 // Load makes functions related to onthefly.Page nodes available to the given Lua state
 func Load(L *lua.LState) {
-
 	// Register the Page class and the methods that belongs with it.
 	metaTablePage := L.NewTypeMetatable(PageClass)
 	metaTablePage.RawSetH(lua.LString("__index"), metaTablePage)
@@ -244,5 +241,4 @@ func Load(L *lua.LState) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
-
 }

@@ -36,9 +36,8 @@ func errorPageTitle(lang string) string {
 // Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
 // programming/scripting/template language (i.e. "lua". Can be empty).
 func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
-
 	// HTTP status
-	//w.WriteHeader(http.StatusInternalServerError)
+	// w.WriteHeader(http.StatusInternalServerError)
 	w.WriteHeader(http.StatusOK)
 
 	// HTTP content type

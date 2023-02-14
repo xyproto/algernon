@@ -126,7 +126,6 @@ var setMethods = map[string]lua.LGFunction{
 
 // LoadSet makes functions related to HTTP requests and responses available to Lua scripts
 func LoadSet(L *lua.LState, creator pinterface.ICreator) {
-
 	// Register the set class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lSetClass)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -160,5 +159,4 @@ func LoadSet(L *lua.LState, creator pinterface.ICreator) {
 		L.Push(userdata)
 		return 1 // Number of returned values
 	}))
-
 }

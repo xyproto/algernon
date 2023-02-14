@@ -18,7 +18,6 @@ import (
 
 // LoadServeFile exposes functions for serving other files to Lua
 func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string) {
-
 	// Serve a file in the scriptdir
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
@@ -82,7 +81,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 				pongoMap = pongo2.Context(m)
 			}
 
-			//fmt.Println("PONGOMAP", pongoMap, "LUA TABLE", luaTable)
+			// fmt.Println("PONGOMAP", pongoMap, "LUA TABLE", luaTable)
 		} else if L.GetTop() > 2 {
 			log.Error("Too many arguments given to the serve2 function")
 			return 0 // number of restuls
@@ -138,5 +137,4 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		L.Push(lua.LString(utils.RecorderToString(recorder)))
 		return 1 // Number of results
 	}))
-
 }

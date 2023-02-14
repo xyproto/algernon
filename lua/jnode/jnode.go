@@ -354,7 +354,6 @@ var jnodeMethods = map[string]lua.LGFunction{
 
 // Load makes functions related JSON nodes available to the given Lua state
 func Load(L *lua.LState) {
-
 	// Register the JNode class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -374,12 +373,10 @@ func Load(L *lua.LState) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
-
 }
 
 // LoadJSONFunctions makes helper functions for converting to JSON available
 func LoadJSONFunctions(L *lua.LState) {
-
 	// Lua function for converting a table to JSON (string or int)
 	toJSON := L.NewFunction(func(L *lua.LState) int {
 		var (
@@ -430,5 +427,4 @@ func LoadJSONFunctions(L *lua.LState) {
 	L.SetGlobal("JSON", toJSON)
 	L.SetGlobal("toJSON", toJSON)
 	L.SetGlobal("ToJSON", toJSON)
-
 }

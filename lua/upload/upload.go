@@ -30,7 +30,7 @@ const (
 
 	// Chunk size when reading uploaded file
 	chunkSize int64 = 4 * utils.KiB
-	//chunkSize = defaultMemoryLimit
+	// chunkSize = defaultMemoryLimit
 )
 
 // UploadedFile represents a file that has been uploaded but not yet been
@@ -54,7 +54,6 @@ type UploadedFile struct {
 // Note that the client may appear to keep sending the file even when the
 // server has stopped receiving it, for files that are too large.
 func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*UploadedFile, error) {
-
 	clientLengthTotal, err := strconv.Atoi(req.Header.Get("Content-Length"))
 	if err != nil {
 		log.Error("Invalid Content-Length: ", req.Header.Get("Content-Length"))
@@ -190,7 +189,7 @@ func uploadedfileSave(L *lua.LState) int {
 		givenFilename = L.ToString(2) // optional argument
 	}
 	// optional argument, file permissions
-	var givenPermissions os.FileMode = 0660
+	var givenPermissions os.FileMode = 0o660
 	if L.GetTop() == 3 {
 		givenPermissions = os.FileMode(L.ToInt(3))
 	}
@@ -217,7 +216,7 @@ func uploadedfileSaveIn(L *lua.LState) int {
 	givenDirectory := L.ToString(2) // required argument
 
 	// optional argument, file permissions
-	var givenPermissions os.FileMode = 0660
+	var givenPermissions os.FileMode = 0o660
 	if L.GetTop() == 3 {
 		givenPermissions = os.FileMode(L.ToInt(3))
 	}
@@ -255,7 +254,6 @@ var uploadedfileMethods = map[string]lua.LGFunction{
 
 // Load makes functions related to saving an uploaded file available
 func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir string) {
-
 	// Register the UploadedFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -292,5 +290,4 @@ func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir str
 		L.Push(lua.LString(""))
 		return 2 // Number of returned values
 	}))
-
 }

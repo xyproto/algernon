@@ -190,7 +190,6 @@ var hashMethods = map[string]lua.LGFunction{
 
 // LoadHash makes functions related to HTTP requests and responses available to Lua scripts
 func LoadHash(L *lua.LState, creator pinterface.ICreator) {
-
 	// Register the hash map class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lHashClass)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -224,5 +223,4 @@ func LoadHash(L *lua.LState, creator pinterface.ICreator) {
 		L.Push(userdata)
 		return 1 // Number of returned values
 	}))
-
 }

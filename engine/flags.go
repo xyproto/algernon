@@ -214,7 +214,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	case ac.devMode:
 		// Change several defaults if development mode is enabled
 		ac.serveJustHTTP = true
-		//serverLogFile = defaultLogFile
+		// serverLogFile = defaultLogFile
 		ac.debugMode = true
 		// TODO: Make it possible to set --limit to the default limit also when -e is used
 		if ac.limitRequests == ac.defaultLimit {
@@ -375,7 +375,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			log.Error("Could not use Cert Magic:" + err.Error())
 			ac.useCertMagic = false
 		} else {
-			//log.Infof("Looping over %v files", len(files))
+			// log.Infof("Looping over %v files", len(files))
 			for _, dirEntry := range dirEntries {
 				basename := filepath.Base(dirEntry.Name())
 				dirOrSymlink := dirEntry.IsDir() || ((dirEntry.Type() & os.ModeSymlink) == os.ModeSymlink)
@@ -393,7 +393,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 // Set the values that has not been set by flags nor scripts (and can be set by both)
 // Returns true if a "ready function" has been run.
 func (ac *Config) finalConfiguration(host string) bool {
-
 	// Set the server host and port (commandline flags overrides Lua configuration)
 	if ac.serverAddr == "" {
 		if ac.serverAddrLua != "" {

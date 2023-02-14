@@ -34,7 +34,6 @@ type LValueWrapper struct {
 
 // Scan implements the sql.Scanner interface for database deserialization.
 func (w *LValueWrapper) Scan(value any) error {
-
 	if value == nil {
 		*w = LValueWrapper{lua.LNil}
 		return nil
@@ -91,10 +90,8 @@ func (w LValueWrappers) Interfaces() (s []any) {
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState, perm pinterface.IPermissions) {
-
 	// Register the MSSQL function
 	L.SetGlobal("MSSQL", L.NewFunction(func(L *lua.LState) int {
-
 		// Check if the optional argument is given
 		query := defaultQuery
 		if L.GetTop() >= 1 {
@@ -133,13 +130,13 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			err := conn.Ping()
 			if err != nil {
 				// no
-				//log.Info("did not reuse the connection")
+				// log.Info("did not reuse the connection")
 				reuseMut.Lock()
 				delete(reuseDB, connectionString)
 				reuseMut.Unlock()
 			} else {
 				// yes
-				//log.Info("reused the connection")
+				// log.Info("reused the connection")
 				db = conn
 			}
 		}
@@ -156,7 +153,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			reuseDB[connectionString] = db
 			reuseMut.Unlock()
 		}
-		//log.Info(fmt.Sprintf("MSSQL database: %v (%T)\n", db, db))
+		// log.Info(fmt.Sprintf("MSSQL database: %v (%T)\n", db, db))
 		reuseMut.Lock()
 		rows, err := db.Query(query, queryArgs...)
 		reuseMut.Unlock()
@@ -215,5 +212,4 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		L.Push(table)
 		return 1 // number of results
 	}))
-
 }

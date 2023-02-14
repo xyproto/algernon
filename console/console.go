@@ -15,7 +15,7 @@ type Output struct {
 func (o *Output) Disable() {
 	os.Stdout.Close()
 	os.Stderr.Close()
-	o.stdout, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0644)
+	o.stdout, _ = os.OpenFile(os.DevNull, os.O_WRONLY, 0o644)
 	o.enabled = false
 }
 

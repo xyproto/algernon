@@ -36,7 +36,6 @@ func ValidGCSS(gcssdata []byte, errorReturn chan error) {
 // LoadRenderFunctions adds functions related to rendering text to the given
 // Lua state struct
 func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
-
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
@@ -122,7 +121,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
 			}
 
-			//return 0 // number of results
+			// return 0 // number of results
 		}
 		return 0 // number of results
 	}))
@@ -213,7 +212,6 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 	// The seconds argument is an optional title.
 	// The third argument is an optional page style.
 	L.SetGlobal("msgpage", L.NewFunction(func(L *lua.LState) int {
-
 		title := ""
 		body := ""
 		if L.GetTop() < 2 {
@@ -235,7 +233,6 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, 
 
 		return 0 // number of results
 	}))
-
 }
 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
@@ -507,7 +504,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 
 	// Go through the global Lua scope
 	for k, v := range funcs {
-
 		// Skip the ones starting with an underscore
 		//if strings.HasPrefix(k, "_") {
 		//	continue
@@ -521,7 +517,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 
 			// Wrap the Lua functions as Pongo2 functions
 			wrapfunc := func(vals ...*pongo2.Value) *pongo2.Value {
-
 				// Convert the Pongo2 arguments to string arguments
 				strs := make([]string, len(vals))
 				for i, sv := range vals {
@@ -530,7 +525,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 
 				// Call the Lua function
 				retval, err := f(strs...)
-
 				// Return the error if things go wrong
 				if err != nil {
 					return pongo2.AsValue(err)
@@ -568,7 +562,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	// Render the Pongo2 template to the buffer
 	err = tpl.ExecuteWriter(pongo2.Globals, &buf)
 	if err != nil {
-		//if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
+		// if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
@@ -630,7 +624,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 // AmberPage the given source bytes (in Amber) converted to HTML, to a writer.
 // The filename is only used in error messages, if any.
 func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename string, amberdata []byte, funcs template.FuncMap) {
-
 	var (
 		buf bytes.Buffer
 		// If style.gcss is present, and a header is present, and it has not already been linked in, link it in
@@ -862,14 +855,14 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	}
 
 	// Include the hyperapp javascript from unpkg.com
-	//htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
+	// htmlbuf.WriteString("</head><body><script src=\"https://unpkg.com/hyperapp\"></script><script>")
 
 	// Embed the hyperapp script directly, for speed
 	htmlbuf.WriteString("</head><body><script>")
 	htmlbuf.Write(hyperAppJSBytes)
 
 	// The HyperApp library + compiled JSX can live in the same script tag. No need for this:
-	//htmlbuf.WriteString("</script><script>")
+	// htmlbuf.WriteString("</script><script>")
 
 	jsxData := jsxResult.Code
 

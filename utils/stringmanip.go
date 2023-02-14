@@ -43,7 +43,7 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 	//if bytes.Contains(data, backtick) {
 	//}
 
-	var stopLooking = false
+	stopLooking := false
 	// Find and separate the lines starting with one of the keywords in the special map
 	_, regular := FilterIntoGroups(bytes.Split(data, bnl), func(byteline []byte) bool {
 		lineCounter++
@@ -77,7 +77,7 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 			case bytes.HasSuffix(strippedLine, commentEnd):
 				inCommentBlock = false
 			}
-			//fmt.Println("LINE", string(strippedLine), "IN COMMENT BLOCK", inCommentBlock, "SINGLE LINE COMMENT", singleLineComment)
+			// fmt.Println("LINE", string(strippedLine), "IN COMMENT BLOCK", inCommentBlock, "SINGLE LINE COMMENT", singleLineComment)
 
 			keywordColon = append([]byte(keyword), ':')
 			// Lines starting with "% " can be used for specifying a title, ref pandoc
@@ -127,7 +127,6 @@ func Infostring(functionName string, args []string) string {
 // WriteStatus writes status messages to a string Builder
 // The flags argument contains the flag names, and if they are enabled or not
 func WriteStatus(sb *strings.Builder, title string, flags map[string]bool) {
-
 	// Check that at least one of the bools are true
 	found := false
 	for _, value := range flags {

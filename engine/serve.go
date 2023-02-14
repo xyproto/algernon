@@ -87,7 +87,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 		// Forced shutdown
 		if gracefulServer != nil {
 			if gracefulServer.Interrupted {
-				//gracefulServer.Stop(forcedShutdownTimeout)
+				// gracefulServer.Stop(forcedShutdownTimeout)
 				ac.fatalExit(errors.New("Interrupted"))
 			}
 		}
@@ -103,7 +103,6 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
 func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
-
 	// If we are not writing internal logs to a file, reduce the verbosity
 	http2.VerboseLogs = (ac.internalLogFilename != os.DevNull)
 
@@ -165,7 +164,6 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// TODO: Look at "Advanced use" at https://github.com/caddyserver/certmagic#examples
 		// Listen for HTTP and HTTPS requests, for specific domain(s)
 		go func() {
-
 			// If $XDG_CONFIG_DIR is not set, use $HOME.
 			// If $HOME is not set, use $TMPDIR.
 			// If $TMPDIR is not set, use /tmp.
@@ -186,7 +184,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				mut.Unlock()
 				log.Error(err)
 				// Don't serve HTTP if CertMagic fails, just quit
-				//justServeRegularHTTP <- true
+				// justServeRegularHTTP <- true
 			}
 		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP

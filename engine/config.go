@@ -165,7 +165,7 @@ func New(versionString, description string) (*Config, error) {
 		defaultEventRefresh:       "350ms",
 		defaultEventPath:          "/sse",
 		defaultLimit:              10,
-		defaultPermissions:        0660,
+		defaultPermissions:        0o660,
 		defaultCacheSize:          1 * utils.MiB,   // 1 MiB
 		defaultCacheMaxEntitySize: 64 * utils.KiB,  // 64 KB
 		defaultStatCacheRefresh:   time.Minute * 1, // Refresh the stat cache, if the stat cache feature is enabled
@@ -258,7 +258,7 @@ func (ac *Config) initFilesAndCache() error {
 	// Touch the common access log, if specified
 	if ac.commonAccessLogFilename != "" {
 		// Create if missing
-		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ func (ac *Config) initFilesAndCache() error {
 	// Touch the combined access log, if specified
 	if ac.combinedAccessLogFilename != "" {
 		// Create if missing
-		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 		if err != nil {
 			return err
 		}
@@ -501,7 +501,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	} else if !ac.quietMode {
 		timestamp := time.Now().Format("2006-01-02 15:04")
 		to.OutputTags("<cyan>" + ac.versionString + "<darkgray> - " + timestamp + "<off>")
-		//colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
+		// colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
@@ -550,7 +550,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Create a Colorize struct that will not reset colors after colorizing
 	// strings meant for the terminal.
-	//c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
+	// c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
 	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))

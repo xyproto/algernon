@@ -126,7 +126,7 @@ func jfileGet(L *lua.LState) int {
 		ud.Value = node
 		L.SetMetatable(ud, L.GetTypeMetatable(jnode.Class))
 		retval = ud
-		//buf.WriteString(fmt.Sprintf("Map with %d elements.", len(m)))
+		// buf.WriteString(fmt.Sprintf("Map with %d elements.", len(m)))
 	} else if _, ok := node.CheckList(); ok {
 		log.Info("Returning a JSON node instead of a Lua map")
 		// Return the JNode instead of converting the list
@@ -134,7 +134,7 @@ func jfileGet(L *lua.LState) int {
 		ud.Value = node
 		L.SetMetatable(ud, L.GetTypeMetatable(jnode.Class))
 		retval = ud
-		//buf.WriteString(fmt.Sprintf("List with %d elements.", len(l)))
+		// buf.WriteString(fmt.Sprintf("List with %d elements.", len(l)))
 	} else if s, ok := node.CheckString(); ok {
 		retval = lua.LString(s)
 	} else if s, ok := node.CheckInt(); ok {
@@ -243,7 +243,6 @@ var jfileMethods = map[string]lua.LGFunction{
 
 // LoadJFile makes functions related to building a library of Lua code available
 func (ac *Config) LoadJFile(L *lua.LState, scriptdir string) {
-
 	// Register the JFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(lJFileClass)
 	mt.RawSetH(lua.LString("__index"), mt)
@@ -266,5 +265,4 @@ func (ac *Config) LoadJFile(L *lua.LState, scriptdir string) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
-
 }

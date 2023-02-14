@@ -28,7 +28,6 @@ type FutureStatus struct {
 // LoadBasicSystemFunctions loads functions related to logging, markdown and the
 // current server directory into the given Lua state
 func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
-
 	// Return the version string
 	L.SetGlobal("version", L.NewFunction(func(L *lua.LState) int {
 		L.Push(lua.LString(ac.versionString))
@@ -102,14 +101,12 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results
 	}))
-
 }
 
 // LoadBasicWeb loads functions related to handling requests, outputting data to
 // the browser, setting headers, pretty printing and dealing with the directory
 // where files are being served, into the given Lua state.
 func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
-
 	// Print text to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
@@ -470,5 +467,4 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		L.Push(retval)
 		return 1 // number of results
 	}))
-
 }

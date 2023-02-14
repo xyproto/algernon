@@ -2,12 +2,13 @@ package pquery
 
 import (
 	"database/sql"
+	"strings"
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
-	"strings"
-	"sync"
 
 	// Using the PostgreSQL database engine
 	_ "github.com/lib/pq"
@@ -26,10 +27,8 @@ var (
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState, perm pinterface.IPermissions) {
-
 	// Register the PQ function
 	L.SetGlobal("PQ", L.NewFunction(func(L *lua.LState) int {
-
 		// Check if the optional argument is given
 		query := defaultQuery
 		if L.GetTop() >= 1 {
@@ -54,13 +53,13 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			err := conn.Ping()
 			if err != nil {
 				// no
-				//log.Info("did not reuse the connection")
+				// log.Info("did not reuse the connection")
 				reuseMut.Lock()
 				delete(reuseDB, connectionString)
 				reuseMut.Unlock()
 			} else {
 				// yes
-				//log.Info("reused the connection")
+				// log.Info("reused the connection")
 				db = conn
 			}
 		}
@@ -77,7 +76,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 			reuseDB[connectionString] = db
 			reuseMut.Unlock()
 		}
-		//log.Info(fmt.Sprintf("PostgreSQL database: %v (%T)\n", db, db))
+		// log.Info(fmt.Sprintf("PostgreSQL database: %v (%T)\n", db, db))
 		reuseMut.Lock()
 		rows, err := db.Query(query)
 		reuseMut.Unlock()
@@ -120,5 +119,4 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		L.Push(table)
 		return 1 // number of results
 	}))
-
 }
