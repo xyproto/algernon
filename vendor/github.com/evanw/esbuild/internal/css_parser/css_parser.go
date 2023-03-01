@@ -290,7 +290,7 @@ loop:
 	}
 
 	if p.options.MinifySyntax {
-		rules = mangleRules(rules, context.isTopLevel)
+		rules = p.mangleRules(rules, context.isTopLevel)
 	}
 	return rules
 }
@@ -305,19 +305,29 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 		case css_lexer.TEndOfFile, css_lexer.TCloseBrace:
 			list = p.processDeclarations(list)
 			if p.options.MinifySyntax {
-				list = mangleRules(list, false /* isTopLevel */)
+				list = p.mangleRules(list, false /* isTopLevel */)
 			}
 			return
 
 		case css_lexer.TAtKeyword:
+			p.maybeWarnAboutNesting(p.current().Range)
 			list = append(list, p.parseAtRule(atRuleContext{
 				isDeclarationList: true,
-				allowNesting:      true,
 			}))
 
-		case css_lexer.TDelimAmpersand:
-			// Reference: https://drafts.csswg.org/css-nesting-1/
-			list = append(list, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{allowNesting: true}))
+		// Reference: https://drafts.csswg.org/css-nesting-1/
+		case css_lexer.TDelimAmpersand,
+			css_lexer.TDelimDot,
+			css_lexer.THash,
+			css_lexer.TColon,
+			css_lexer.TOpenBracket,
+			css_lexer.TDelimAsterisk,
+			css_lexer.TDelimBar,
+			css_lexer.TDelimPlus,
+			css_lexer.TDelimGreaterThan,
+			css_lexer.TDelimTilde:
+			p.maybeWarnAboutNesting(p.current().Range)
+			list = append(list, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{}))
 
 		default:
 			list = append(list, p.parseDeclaration())
@@ -325,7 +335,7 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 	}
 }
 
-func mangleRules(rules []css_ast.Rule, isTopLevel bool) []css_ast.Rule {
+func (p *parser) mangleRules(rules []css_ast.Rule, isTopLevel bool) []css_ast.Rule {
 	type hashEntry struct {
 		indices []uint32
 	}
@@ -378,12 +388,12 @@ func mangleRules(rules []css_ast.Rule, isTopLevel bool) []css_ast.Rule {
 			// "a { color: red; } b { color: red; }" => "a, b { color: red; }"
 			if prevNonComment != nil {
 				if r, ok := rule.Data.(*css_ast.RSelector); ok {
-					if prev, ok := prevNonComment.(*css_ast.RSelector); ok && css_ast.RulesEqual(r.Rules, prev.Rules) &&
+					if prev, ok := prevNonComment.(*css_ast.RSelector); ok && css_ast.RulesEqual(r.Rules, prev.Rules, nil) &&
 						isSafeSelectors(r.Selectors) && isSafeSelectors(prev.Selectors) {
 					nextSelector:
 						for _, sel := range r.Selectors {
 							for _, prevSel := range prev.Selectors {
-								if sel.Equal(prevSel) {
+								if sel.Equal(prevSel, nil) {
 									// Don't add duplicate selectors more than once
 									continue nextSelector
 								}
@@ -411,25 +421,39 @@ func mangleRules(rules []css_ast.Rule, isTopLevel bool) []css_ast.Rule {
 	// Mangle non-top-level rules using a back-to-front pass. Top-level rules
 	// will be mangled by the linker instead for cross-file rule mangling.
 	if !isTopLevel {
-		rules = MakeDuplicateRuleMangler().RemoveDuplicateRulesInPlace(rules)
+		remover := MakeDuplicateRuleMangler()
+		rules = remover.RemoveDuplicateRulesInPlace(rules, p.importRecords)
 	}
 
 	return rules
 }
 
+type ruleEntry struct {
+	data        css_ast.R
+	callCounter uint32
+}
+
 type hashEntry struct {
-	rules []css_ast.R
+	rules []ruleEntry
 }
 
 type DuplicateRuleRemover struct {
 	entries map[uint32]hashEntry
+	calls   [][]ast.ImportRecord
+	check   css_ast.CrossFileEqualityCheck
 }
 
 func MakeDuplicateRuleMangler() DuplicateRuleRemover {
 	return DuplicateRuleRemover{entries: make(map[uint32]hashEntry)}
 }
 
-func (remover DuplicateRuleRemover) RemoveDuplicateRulesInPlace(rules []css_ast.Rule) []css_ast.Rule {
+func (remover *DuplicateRuleRemover) RemoveDuplicateRulesInPlace(rules []css_ast.Rule, importRecords []ast.ImportRecord) []css_ast.Rule {
+	// The caller may call this function multiple times, each with a different
+	// set of import records. Remember each set of import records for equality
+	// checks later.
+	callCounter := uint32(len(remover.calls))
+	remover.calls = append(remover.calls, importRecords)
+
 	// Remove duplicate rules, scanning from the back so we keep the last
 	// duplicate. Note that the linker calls this, so we do not want to do
 	// anything that modifies the rules themselves. One reason is that ASTs
@@ -445,12 +469,27 @@ skipRule:
 		// For duplicate rules, omit all but the last copy
 		if hash, ok := rule.Data.Hash(); ok {
 			entry := remover.entries[hash]
-			for _, data := range entry.rules {
-				if rule.Data.Equal(data) {
+			for _, current := range entry.rules {
+				var check *css_ast.CrossFileEqualityCheck
+
+				// If this rule was from another file, then pass along both arrays
+				// of import records so that the equality check for "url()" tokens
+				// can use them to check for equality.
+				if current.callCounter != callCounter {
+					// Reuse the same memory allocation
+					check = &remover.check
+					check.ImportRecordsA = importRecords
+					check.ImportRecordsB = remover.calls[current.callCounter]
+				}
+
+				if rule.Data.Equal(current.data, check) {
 					continue skipRule
 				}
 			}
-			entry.rules = append(entry.rules, rule.Data)
+			entry.rules = append(entry.rules, ruleEntry{
+				data:        rule.Data,
+				callCounter: callCounter,
+			})
 			remover.entries[hash] = entry
 		}
 
@@ -567,7 +606,7 @@ var nonDeprecatedElementsSupportedByIE7 = map[string]bool{
 func isSafeSelectors(complexSelectors []css_ast.ComplexSelector) bool {
 	for _, complex := range complexSelectors {
 		for _, compound := range complex.Selectors {
-			if compound.NestingSelector != css_ast.NestingSelectorNone {
+			if compound.HasNestingSelector {
 				// Bail because this is an extension: https://drafts.csswg.org/css-nesting-1/
 				return false
 			}
@@ -720,9 +759,6 @@ var specialAtRules = map[string]atRuleKind{
 	"scope":    atRuleInheritContext,
 	"supports": atRuleInheritContext,
 
-	// Reference: https://drafts.csswg.org/css-nesting-1/
-	"nest": atRuleDeclarations,
-
 	// Reference: https://drafts.csswg.org/css-fonts-4/#font-palette-values
 	"font-palette-values": atRuleDeclarations,
 
@@ -759,7 +795,6 @@ type atRuleContext struct {
 	charsetValidity   atRuleValidity
 	importValidity    atRuleValidity
 	isDeclarationList bool
-	allowNesting      bool
 	isTopLevel        bool
 }
 
@@ -977,18 +1012,6 @@ abortRuleParser:
 			return css_ast.Rule{Loc: atRange.Loc, Data: &css_ast.RUnknownAt{AtToken: atToken, Prelude: prelude, Block: block}}
 		}
 
-	case "nest":
-		// Reference: https://drafts.csswg.org/css-nesting-1/
-		p.eat(css_lexer.TWhitespace)
-		if kind := p.current().Kind; kind != css_lexer.TSemicolon && kind != css_lexer.TOpenBrace &&
-			kind != css_lexer.TCloseBrace && kind != css_lexer.TEndOfFile {
-			return p.parseSelectorRuleFrom(preludeStart-1, parseSelectorOpts{
-				atNestRange:  atRange,
-				allowNesting: context.allowNesting,
-				isTopLevel:   context.isTopLevel,
-			})
-		}
-
 	case "layer":
 		// Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@layer
 
@@ -1026,9 +1049,14 @@ abortRuleParser:
 		// Read the optional block
 		matchingLoc := p.current().Range.Loc
 		if len(names) <= 1 && p.eat(css_lexer.TOpenBrace) {
-			rules := p.parseListOfRules(ruleContext{
-				parseSelectors: true,
-			})
+			var rules []css_ast.Rule
+			if context.isDeclarationList {
+				rules = p.parseListOfDeclarations()
+			} else {
+				rules = p.parseListOfRules(ruleContext{
+					parseSelectors: true,
+				})
+			}
 			p.expectWithMatchingLoc(css_lexer.TCloseBrace, matchingLoc)
 			return css_ast.Rule{Loc: atRange.Loc, Data: &css_ast.RAtLayer{Names: names, Rules: rules}}
 		}
@@ -1165,6 +1193,16 @@ func (p *parser) expectValidLayerNameIdent() (string, bool) {
 		return "", false
 	}
 	return text, true
+}
+
+func (p *parser) maybeWarnAboutNesting(r logger.Range) {
+	if p.options.UnsupportedCSSFeatures.Has(compat.Nesting) {
+		text := "CSS nesting syntax is not supported in the configured target environment"
+		if p.options.OriginalTargetEnv != "" {
+			text = fmt.Sprintf("%s (%s)", text, p.options.OriginalTargetEnv)
+		}
+		p.log.AddID(logger.MsgID_CSS_UnsupportedCSSNesting, logger.Warning, &p.tracker, r, text)
+	}
 }
 
 func (p *parser) convertTokens(tokens []css_lexer.Token) []css_ast.Token {
@@ -1517,29 +1555,11 @@ func mangleNumber(t string) (string, bool) {
 func (p *parser) parseSelectorRuleFrom(preludeStart int, opts parseSelectorOpts) css_ast.Rule {
 	// Try parsing the prelude as a selector list
 	if list, ok := p.parseSelectorList(opts); ok {
-		selector := css_ast.RSelector{
-			Selectors: list,
-			HasAtNest: opts.atNestRange.Len != 0,
-		}
+		selector := css_ast.RSelector{Selectors: list}
 		matchingLoc := p.current().Range.Loc
 		if p.expect(css_lexer.TOpenBrace) {
 			selector.Rules = p.parseListOfDeclarations()
 			p.expectWithMatchingLoc(css_lexer.TCloseBrace, matchingLoc)
-
-			// Minify "@nest" when possible
-			if p.options.MinifySyntax && selector.HasAtNest {
-				allHaveNestPrefix := true
-				for _, complex := range selector.Selectors {
-					if len(complex.Selectors) == 0 || complex.Selectors[0].NestingSelector != css_ast.NestingSelectorPrefix {
-						allHaveNestPrefix = false
-						break
-					}
-				}
-				if allHaveNestPrefix {
-					selector.HasAtNest = false
-				}
-			}
-
 			return css_ast.Rule{Loc: p.tokens[preludeStart].Range.Loc, Data: &selector}
 		}
 	}
