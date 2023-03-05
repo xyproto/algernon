@@ -10,7 +10,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.17.10
+	github.com/evanw/esbuild v0.17.11
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/lib/pq v1.10.7
@@ -45,7 +45,7 @@ require (
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.7.0
+	golang.org/x/net v0.8.0
 )
 
 require (
@@ -71,7 +71,7 @@ require (
 	github.com/mholt/acmez v1.1.0 // indirect
 	github.com/miekg/dns v1.1.51 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.8.4 // indirect
+	github.com/onsi/ginkgo/v2 v2.9.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
@@ -91,11 +91,11 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect
-	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20230304125523-9ff063c70017 // indirect
+	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
