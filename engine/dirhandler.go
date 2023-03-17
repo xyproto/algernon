@@ -137,6 +137,20 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 		}
 	}
 
+	// Serve handler.lua, if found in ancestors
+	var ancestor string
+	ancestor = filepath.Dir(dirname)
+	for true {
+		filename= filepath.Join(ancestor, "handler.lua")
+		if ac.fs.Exists(filename) {
+			ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
+			return
+		}
+		if ancestor == "." { break }
+		ancestor= filepath.Dir(ancestor)
+	}
+
+
 	// Serve a directory listing if no index file is found
 	ac.DirectoryListing(w, req, rootdir, dirname, theme)
 }
