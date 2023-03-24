@@ -144,22 +144,10 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, *ecdh.PrivateKey, error) {
 
 	var key *ecdh.PrivateKey
 	if hello.supportedVersions[0] == VersionTLS13 {
-		var suites []uint16
-		for _, suiteID := range configCipherSuites {
-			for _, suite := range cipherSuitesTLS13 {
-				if suite.id == suiteID {
-					suites = append(suites, suiteID)
-				}
-			}
-		}
-		if len(suites) > 0 {
-			hello.cipherSuites = suites
+		if hasAESGCMHardwareSupport {
+			hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13...)
 		} else {
-			if hasAESGCMHardwareSupport {
-				hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13...)
-			} else {
-				hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13NoAES...)
-			}
+			hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13NoAES...)
 		}
 
 		curveID := config.curvePreferences()[0]
