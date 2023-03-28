@@ -15,18 +15,19 @@ import (
 // support for parsing https://drafts.csswg.org/css-nesting-1/.
 
 type parser struct {
-	log               logger.Log
-	source            logger.Source
-	tokens            []css_lexer.Token
-	legalComments     []css_lexer.Comment
-	stack             []css_lexer.T
-	importRecords     []ast.ImportRecord
-	tracker           logger.LineColumnTracker
-	index             int
-	end               int
-	legalCommentIndex int
-	prevError         logger.Loc
-	options           Options
+	log                logger.Log
+	source             logger.Source
+	tokens             []css_lexer.Token
+	legalComments      []css_lexer.Comment
+	stack              []css_lexer.T
+	importRecords      []ast.ImportRecord
+	tracker            logger.LineColumnTracker
+	index              int
+	end                int
+	legalCommentIndex  int
+	prevError          logger.Loc
+	options            Options
+	shouldLowerNesting bool
 }
 
 type Options struct {
@@ -199,6 +200,10 @@ func (p *parser) parseListOfRules(context ruleContext) []css_ast.Rule {
 
 loop:
 	for {
+		if context.isTopLevel {
+			p.shouldLowerNesting = false
+		}
+
 		// If there are any legal comments immediately before the current token,
 		// turn them all into comment rules and append them to the current rule list
 		for p.legalCommentIndex < len(p.legalComments) {
@@ -266,7 +271,12 @@ loop:
 				}
 			}
 
-			rules = append(rules, rule)
+			// Lower CSS nesting if it's not supported (but only at the top level)
+			if context.isTopLevel && p.shouldLowerNesting {
+				rules = lowerNestingInRule(rule, rules)
+			} else {
+				rules = append(rules, rule)
+			}
 			continue
 
 		case css_lexer.TCDO, css_lexer.TCDC:
@@ -282,10 +292,18 @@ loop:
 			atRuleContext.importValidity = atRuleInvalidAfter
 		}
 
+		var rule css_ast.Rule
 		if context.parseSelectors {
-			rules = append(rules, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{isTopLevel: context.isTopLevel}))
+			rule = p.parseSelectorRuleFrom(p.index, context.isTopLevel, parseSelectorOpts{})
 		} else {
-			rules = append(rules, p.parseQualifiedRuleFrom(p.index, parseQualifiedRuleOpts{isTopLevel: context.isTopLevel}))
+			rule = p.parseQualifiedRuleFrom(p.index, parseQualifiedRuleOpts{isTopLevel: context.isTopLevel})
+		}
+
+		// Lower CSS nesting if it's not supported (but only at the top level)
+		if context.isTopLevel && p.shouldLowerNesting {
+			rules = lowerNestingInRule(rule, rules)
+		} else {
+			rules = append(rules, rule)
 		}
 	}
 
@@ -295,8 +313,14 @@ loop:
 	return rules
 }
 
-func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
+type listOfDeclarationsOpts struct {
+	canInlineNoOpNesting bool
+}
+
+func (p *parser) parseListOfDeclarations(opts listOfDeclarationsOpts) (list []css_ast.Rule) {
 	list = []css_ast.Rule{}
+	foundNesting := false
+
 	for {
 		switch p.current().Kind {
 		case css_lexer.TWhitespace, css_lexer.TSemicolon:
@@ -306,13 +330,37 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 			list = p.processDeclarations(list)
 			if p.options.MinifySyntax {
 				list = p.mangleRules(list, false /* isTopLevel */)
+
+				// Pull out all unnecessarily-nested declarations and stick them at the end
+				if opts.canInlineNoOpNesting {
+					// "a { & { x: y } }" => "a { x: y }"
+					// "a { & { b: c } d: e }" => "a { d: e; b: c }"
+					if foundNesting {
+						var inlineDecls []css_ast.Rule
+						n := 0
+						for _, rule := range list {
+							if rule, ok := rule.Data.(*css_ast.RSelector); ok && len(rule.Selectors) == 1 {
+								if sel := rule.Selectors[0]; len(sel.Selectors) == 1 && sel.Selectors[0].IsSingleAmpersand() {
+									inlineDecls = append(inlineDecls, rule.Rules...)
+									continue
+								}
+							}
+							list[n] = rule
+							n++
+						}
+						list = append(list[:n], inlineDecls...)
+					}
+				} else {
+					// "a, b::before { & { x: y } }" => "a, b::before { & { x: y } }"
+				}
 			}
 			return
 
 		case css_lexer.TAtKeyword:
-			p.maybeWarnAboutNesting(p.current().Range)
+			p.reportUseOfNesting(p.current().Range, false)
 			list = append(list, p.parseAtRule(atRuleContext{
-				isDeclarationList: true,
+				isDeclarationList:    true,
+				canInlineNoOpNesting: opts.canInlineNoOpNesting,
 			}))
 
 		// Reference: https://drafts.csswg.org/css-nesting-1/
@@ -326,8 +374,9 @@ func (p *parser) parseListOfDeclarations() (list []css_ast.Rule) {
 			css_lexer.TDelimPlus,
 			css_lexer.TDelimGreaterThan,
 			css_lexer.TDelimTilde:
-			p.maybeWarnAboutNesting(p.current().Range)
-			list = append(list, p.parseSelectorRuleFrom(p.index, parseSelectorOpts{}))
+			p.reportUseOfNesting(p.current().Range, false)
+			list = append(list, p.parseSelectorRuleFrom(p.index, false, parseSelectorOpts{isDeclarationContext: true}))
+			foundNesting = true
 
 		default:
 			list = append(list, p.parseDeclaration())
@@ -611,7 +660,7 @@ func isSafeSelectors(complexSelectors []css_ast.ComplexSelector) bool {
 				return false
 			}
 
-			if compound.Combinator != "" {
+			if compound.Combinator != 0 {
 				// "Before Internet Explorer 10, the combinator only works in standards mode"
 				// Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors
 				return false
@@ -827,11 +876,12 @@ const (
 )
 
 type atRuleContext struct {
-	afterLoc          logger.Loc
-	charsetValidity   atRuleValidity
-	importValidity    atRuleValidity
-	isDeclarationList bool
-	isTopLevel        bool
+	afterLoc             logger.Loc
+	charsetValidity      atRuleValidity
+	importValidity       atRuleValidity
+	canInlineNoOpNesting bool
+	isDeclarationList    bool
+	isTopLevel           bool
 }
 
 func (p *parser) parseAtRule(context atRuleContext) css_ast.Rule {
@@ -985,7 +1035,7 @@ abortRuleParser:
 						case css_lexer.TOpenBrace:
 							blockMatchingLoc := p.current().Range.Loc
 							p.advance()
-							rules := p.parseListOfDeclarations()
+							rules := p.parseListOfDeclarations(listOfDeclarationsOpts{})
 							p.expectWithMatchingLoc(css_lexer.TCloseBrace, blockMatchingLoc)
 
 							// "@keyframes { from {} to { color: red } }" => "@keyframes { to { color: red } }"
@@ -1087,7 +1137,9 @@ abortRuleParser:
 		if len(names) <= 1 && p.eat(css_lexer.TOpenBrace) {
 			var rules []css_ast.Rule
 			if context.isDeclarationList {
-				rules = p.parseListOfDeclarations()
+				rules = p.parseListOfDeclarations(listOfDeclarationsOpts{
+					canInlineNoOpNesting: context.canInlineNoOpNesting,
+				})
 			} else {
 				rules = p.parseListOfRules(ruleContext{
 					parseSelectors: true,
@@ -1189,7 +1241,7 @@ prelude:
 		// Parse known rules whose blocks always consist of declarations
 		matchingLoc := p.current().Range.Loc
 		p.expect(css_lexer.TOpenBrace)
-		rules := p.parseListOfDeclarations()
+		rules := p.parseListOfDeclarations(listOfDeclarationsOpts{})
 		p.expectWithMatchingLoc(css_lexer.TCloseBrace, matchingLoc)
 		return css_ast.Rule{Loc: atRange.Loc, Data: &css_ast.RKnownAt{AtToken: atToken, Prelude: prelude, Rules: rules}}
 
@@ -1199,7 +1251,9 @@ prelude:
 		p.expect(css_lexer.TOpenBrace)
 		var rules []css_ast.Rule
 		if context.isDeclarationList {
-			rules = p.parseListOfDeclarations()
+			rules = p.parseListOfDeclarations(listOfDeclarationsOpts{
+				canInlineNoOpNesting: context.canInlineNoOpNesting,
+			})
 		} else {
 			rules = p.parseListOfRules(ruleContext{
 				parseSelectors: true,
@@ -1243,13 +1297,16 @@ func (p *parser) expectValidLayerNameIdent() (string, bool) {
 	return text, true
 }
 
-func (p *parser) maybeWarnAboutNesting(r logger.Range) {
+func (p *parser) reportUseOfNesting(r logger.Range, didWarnAlready bool) {
 	if p.options.UnsupportedCSSFeatures.Has(compat.Nesting) {
-		text := "CSS nesting syntax is not supported in the configured target environment"
-		if p.options.OriginalTargetEnv != "" {
-			text = fmt.Sprintf("%s (%s)", text, p.options.OriginalTargetEnv)
+		p.shouldLowerNesting = true
+		if p.options.UnsupportedCSSFeatures.Has(compat.IsPseudoClass) && !didWarnAlready {
+			text := "CSS nesting syntax is not supported in the configured target environment"
+			if p.options.OriginalTargetEnv != "" {
+				text = fmt.Sprintf("%s (%s)", text, p.options.OriginalTargetEnv)
+			}
+			p.log.AddID(logger.MsgID_CSS_UnsupportedCSSNesting, logger.Warning, &p.tracker, r, text)
 		}
-		p.log.AddID(logger.MsgID_CSS_UnsupportedCSSNesting, logger.Warning, &p.tracker, r, text)
 	}
 }
 
@@ -1265,7 +1322,7 @@ type convertTokensOpts struct {
 }
 
 func (p *parser) convertTokensHelper(tokens []css_lexer.Token, close css_lexer.T, opts convertTokensOpts) ([]css_ast.Token, []css_lexer.Token) {
-	var result []css_ast.Token
+	result := []css_ast.Token{}
 	var nextWhitespace css_ast.WhitespaceFlags
 
 	// Enable verbatim whitespace mode when the first two non-whitespace tokens
@@ -1600,13 +1657,29 @@ func mangleNumber(t string) (string, bool) {
 	return t, t != original
 }
 
-func (p *parser) parseSelectorRuleFrom(preludeStart int, opts parseSelectorOpts) css_ast.Rule {
+func (p *parser) parseSelectorRuleFrom(preludeStart int, isTopLevel bool, opts parseSelectorOpts) css_ast.Rule {
 	// Try parsing the prelude as a selector list
 	if list, ok := p.parseSelectorList(opts); ok {
+		canInlineNoOpNesting := true
+		for _, sel := range list {
+			// We cannot transform the CSS "a, b::before { & { color: red } }" into
+			// "a, b::before { color: red }" because it's basically equivalent to
+			// ":is(a, b::before) { color: red }" which only applies to "a", not to
+			// "b::before" because pseudo-elements are not valid within :is():
+			// https://www.w3.org/TR/selectors-4/#matches-pseudo. This restriction
+			// may be relaxed in the future, but this restriction hash shipped so
+			// we're stuck with it: https://github.com/w3c/csswg-drafts/issues/7433.
+			if sel.UsesPseudoElement() {
+				canInlineNoOpNesting = false
+				break
+			}
+		}
 		selector := css_ast.RSelector{Selectors: list}
 		matchingLoc := p.current().Range.Loc
 		if p.expect(css_lexer.TOpenBrace) {
-			selector.Rules = p.parseListOfDeclarations()
+			selector.Rules = p.parseListOfDeclarations(listOfDeclarationsOpts{
+				canInlineNoOpNesting: canInlineNoOpNesting,
+			})
 			p.expectWithMatchingLoc(css_lexer.TCloseBrace, matchingLoc)
 			return css_ast.Rule{Loc: p.tokens[preludeStart].Range.Loc, Data: &selector}
 		}
@@ -1615,7 +1688,7 @@ func (p *parser) parseSelectorRuleFrom(preludeStart int, opts parseSelectorOpts)
 	// Otherwise, parse a generic qualified rule
 	return p.parseQualifiedRuleFrom(preludeStart, parseQualifiedRuleOpts{
 		isAlreadyInvalid: true,
-		isTopLevel:       opts.isTopLevel,
+		isTopLevel:       isTopLevel,
 	})
 }
 
@@ -1650,7 +1723,7 @@ loop:
 
 	matchingLoc := p.current().Range.Loc
 	if p.eat(css_lexer.TOpenBrace) {
-		qualified.Rules = p.parseListOfDeclarations()
+		qualified.Rules = p.parseListOfDeclarations(listOfDeclarationsOpts{})
 		p.expectWithMatchingLoc(css_lexer.TCloseBrace, matchingLoc)
 	} else if !opts.isAlreadyInvalid {
 		p.expect(css_lexer.TOpenBrace)
@@ -1662,22 +1735,26 @@ loop:
 func (p *parser) parseDeclaration() css_ast.Rule {
 	// Parse the key
 	keyStart := p.index
-	keyLoc := p.tokens[keyStart].Range.Loc
+	keyRange := p.tokens[keyStart].Range
+	keyIsIdent := p.expect(css_lexer.TIdent)
 	ok := false
-	if p.expect(css_lexer.TIdent) {
+	if keyIsIdent {
 		p.eat(css_lexer.TWhitespace)
-		if p.expect(css_lexer.TColon) {
-			ok = true
-		}
+		ok = p.eat(css_lexer.TColon)
 	}
 
 	// Parse the value
 	valueStart := p.index
+	foundOpenBrace := false
 stop:
 	for {
 		switch p.current().Kind {
 		case css_lexer.TEndOfFile, css_lexer.TSemicolon, css_lexer.TCloseBrace:
 			break stop
+
+		case css_lexer.TOpenBrace:
+			foundOpenBrace = true
+			p.parseComponentValue()
 
 		default:
 			p.parseComponentValue()
@@ -1686,7 +1763,37 @@ stop:
 
 	// Stop now if this is not a valid declaration
 	if !ok {
-		return css_ast.Rule{Loc: keyLoc, Data: &css_ast.RBadDeclaration{
+		if keyIsIdent {
+			if foundOpenBrace {
+				// If we encountered a "{", assume this is someone trying to make a nested style rule
+				if keyRange.Loc.Start > p.prevError.Start {
+					p.prevError.Start = keyRange.Loc.Start
+					key := p.tokens[keyStart].DecodedText(p.source.Contents)
+					data := p.tracker.MsgData(keyRange, fmt.Sprintf("A nested style rule cannot start with %q because it looks like the start of a declaration", key))
+					data.Location.Suggestion = fmt.Sprintf(":is(%s)", p.source.TextForRange(keyRange))
+					p.log.AddMsgID(logger.MsgID_CSS_CSSSyntaxError, logger.Msg{
+						Kind: logger.Warning,
+						Data: data,
+						Notes: []logger.MsgData{{
+							Text: "To start a nested style rule with an identifier, you need to wrap the " +
+								"identifier in \":is(...)\" to prevent the rule from being parsed as a declaration."}},
+					})
+				}
+			} else {
+				// Otherwise, show a generic error about a missing ":"
+				if end := keyRange.End(); end > p.prevError.Start {
+					p.prevError.Start = end
+					data := p.tracker.MsgData(logger.Range{Loc: logger.Loc{Start: end}}, "Expected \":\"")
+					data.Location.Suggestion = ":"
+					p.log.AddMsgID(logger.MsgID_CSS_CSSSyntaxError, logger.Msg{
+						Kind: logger.Warning,
+						Data: data,
+					})
+				}
+			}
+		}
+
+		return css_ast.Rule{Loc: keyRange.Loc, Data: &css_ast.RBadDeclaration{
 			Tokens: p.convertTokens(p.tokens[keyStart:p.index]),
 		}}
 	}
@@ -1741,7 +1848,7 @@ stop:
 		}
 	}
 
-	return css_ast.Rule{Loc: keyLoc, Data: &css_ast.RDeclaration{
+	return css_ast.Rule{Loc: keyRange.Loc, Data: &css_ast.RDeclaration{
 		Key:       key,
 		KeyText:   keyText,
 		KeyRange:  keyToken.Range,

@@ -16,15 +16,17 @@ const (
 
 	InsetProperty
 	Nesting
+	IsPseudoClass
 )
 
 var StringToCSSFeature = map[string]CSSFeature{
-	"hex-rgba":       HexRGBA,
-	"inline-style":   InlineStyle,
-	"rebecca-purple": RebeccaPurple,
-	"modern-rgb-hsl": Modern_RGB_HSL,
-	"inset-property": InsetProperty,
-	"nesting":        Nesting,
+	"hex-rgba":        HexRGBA,
+	"inline-style":    InlineStyle,
+	"rebecca-purple":  RebeccaPurple,
+	"modern-rgb-hsl":  Modern_RGB_HSL,
+	"inset-property":  InsetProperty,
+	"nesting":         Nesting,
+	"is-pseudo-class": IsPseudoClass,
 }
 
 func (features CSSFeature) Has(feature CSSFeature) bool {
@@ -73,8 +75,20 @@ var cssTable = map[CSSFeature]map[Engine][]versionRange{
 		Safari:  {{start: v{14, 1, 0}}},
 	},
 
-	// This isn't supported anywhere right now: https://caniuse.com/css-nesting
-	Nesting: {},
+	// Data from: https://caniuse.com/css-nesting
+	Nesting: {
+		Chrome: {{start: v{112, 0, 0}}},
+	},
+
+	// Data from: https://caniuse.com/css-matches-pseudo
+	IsPseudoClass: {
+		Chrome:  {{start: v{88, 0, 0}}},
+		Edge:    {{start: v{88, 0, 0}}},
+		Firefox: {{start: v{78, 0, 0}}},
+		IOS:     {{start: v{14, 0, 0}}},
+		Opera:   {{start: v{75, 0, 0}}},
+		Safari:  {{start: v{14, 0, 0}}},
+	},
 }
 
 // Return all features that are not available in at least one environment

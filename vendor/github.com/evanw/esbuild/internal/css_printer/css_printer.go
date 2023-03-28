@@ -211,14 +211,14 @@ func (p *printer) printRule(rule css_ast.Rule, indent int32, omitTrailingSemicol
 			whitespace = canDiscardWhitespaceAfter
 		}
 		p.printIdent(r.AtToken, identNormal, whitespace)
-		if (!p.options.MinifyWhitespace && r.Block != nil) || len(r.Prelude) > 0 {
+		if (!p.options.MinifyWhitespace && len(r.Block) != 0) || len(r.Prelude) > 0 {
 			p.print(" ")
 		}
 		p.printTokens(r.Prelude, printTokensOpts{})
-		if !p.options.MinifyWhitespace && r.Block != nil && len(r.Prelude) > 0 {
+		if !p.options.MinifyWhitespace && len(r.Block) != 0 && len(r.Prelude) > 0 {
 			p.print(" ")
 		}
-		if r.Block == nil {
+		if len(r.Block) == 0 {
 			p.print(";")
 		} else {
 			p.printTokens(r.Block, printTokensOpts{})
@@ -351,18 +351,18 @@ func (p *printer) printComplexSelectors(selectors []css_ast.ComplexSelector, ind
 }
 
 func (p *printer) printCompoundSelector(sel css_ast.CompoundSelector, isFirst bool, isLast bool) {
-	if !isFirst && sel.Combinator == "" {
+	if !isFirst && sel.Combinator == 0 {
 		// A space is required in between compound selectors if there is no
 		// combinator in the middle. It's fine to convert "a + b" into "a+b"
 		// but not to convert "a b" into "ab".
 		p.print(" ")
 	}
 
-	if sel.Combinator != "" {
+	if sel.Combinator != 0 {
 		if !isFirst && !p.options.MinifyWhitespace {
 			p.print(" ")
 		}
-		p.print(sel.Combinator)
+		p.css = append(p.css, sel.Combinator)
 		if !p.options.MinifyWhitespace {
 			p.print(" ")
 		}
@@ -471,7 +471,8 @@ func (p *printer) printPseudoClassSelector(pseudo css_ast.SSPseudoClass, whitesp
 		p.print(":")
 	}
 
-	if len(pseudo.Args) > 0 {
+	// This checks for "nil" so we can distinguish ":is()" from ":is"
+	if pseudo.Args != nil {
 		p.printIdent(pseudo.Name, identNormal, canDiscardWhitespaceAfter)
 		p.print("(")
 		p.printTokens(pseudo.Args, printTokensOpts{})
