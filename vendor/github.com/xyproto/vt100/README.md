@@ -7,8 +7,8 @@
 * Can detect the terminal size.
 * Can get key-presses, including arrow keys (252, 253, 254, 255).
 * Has a Canvas struct, for drawing only the updated lines to the terminal.
-* Uses the spec directly, but memoizes the commands sent to the terminal, for speed.
-* Could be used for building a better `dialog` or `whiptail` utility.
+* Uses the a reference document directly, but memoizes the commands sent to the terminal, for performance.
+* Could be used for making an alternative to the `dialog` or `whiptail` utilities.
 
 ### Editor
 
@@ -32,13 +32,13 @@ Screen recording of the [`menu`](cmd/menu) example, which uses VT100 terminal co
 
 A physical VT100 terminal. Photo by [Jason Scott](https://www.flickr.com/photos/54568729@N00/9636183501), [CC BY 2.0](https://creativecommons.org/licenses/by/2.0)
 
-### The `vt100` Go Module
+### Requirements
 
-Requires Go 1.10 or later.
+* Go 1.10 or later.
 
 ### Features and limitations
 
-* Can detect letters, arrow keys and space. F12 and similar keys are not supported (they are supported by vt220 but not vt100).
+* Can detect letters, arrow keys and space. F12 and similar keys are not supported (they are supported by VT220 but not VT100).
 * Resizing the terminal when using the Canvas struct may cause artifacts, for a brief moment.
 * Holding down a key may trigger key repetition which may speed up the main loop.
 
@@ -56,7 +56,7 @@ Erase the current line:
 vt100.Do("Erase Line")
 ```
 
-Move the cursor 3 steps up (it's a bit verbose, but it's generated directly from spec, memoized for speed and is easy to wrap in a custom function):
+Move the cursor 3 steps up (it's a bit verbose, but it's generated directly from the reference document, is memoized for speed and is easy to wrap in a custom function):
 
 ```go
 vt100.Set("Cursor Up", map[string]string{"{COUNT}": "3"})
@@ -74,10 +74,10 @@ The [`o` editor](https://github.com/xyproto/o) that uses `vt100` can be used for
 
 Quick installation:
 
-    go install github.com/xyproto/o@latest
+    go install github.com/xyproto/o/v2@latest
 
 ### General info
 
-* Version: 1.11.3
+* Version: 1.11.4
 * Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

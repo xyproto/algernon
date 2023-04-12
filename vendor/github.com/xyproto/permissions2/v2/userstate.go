@@ -10,7 +10,7 @@ import (
 
 	"github.com/xyproto/cookie/v2"
 	"github.com/xyproto/pinterface"
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/simpleredis/v2"
 )
 
 const (

@@ -307,9 +307,16 @@ func (ac AttributeColor) Stop(text string) string {
 	return text + NoColor()
 }
 
+var maybeNoColor *string
+
 // Return a string for resetting the attributes
 func Stop() string {
-	return NoColor()
+	if maybeNoColor != nil {
+		return *maybeNoColor
+	}
+	s := NoColor()
+	maybeNoColor = &s
+	return s
 }
 
 // Use this color to output the given text. Will reset the attributes at the end of the string. Outputs a newline.

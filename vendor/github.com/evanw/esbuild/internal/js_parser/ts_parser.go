@@ -314,11 +314,12 @@ loop:
 				// Valid:
 				//   "[keyof: string]"
 				//   "{[keyof: string]: number}"
+				//   "{[keyof in string]: number}"
 				//
 				// Invalid:
 				//   "A extends B ? keyof : string"
 				//
-				if p.lexer.Token != js_lexer.TColon || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
+				if (p.lexer.Token != js_lexer.TColon && p.lexer.Token != js_lexer.TIn) || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
 					p.skipTypeScriptType(js_ast.LPrefix)
 				}
 				break loop
@@ -329,7 +330,8 @@ loop:
 				// "type Foo = Bar extends [infer T] ? T : null"
 				// "type Foo = Bar extends [infer T extends string] ? T : null"
 				// "type Foo = Bar extends [infer T extends string ? infer T : never] ? T : null"
-				if p.lexer.Token != js_lexer.TColon || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
+				// "type Foo = { [infer in Bar]: number }"
+				if (p.lexer.Token != js_lexer.TColon && p.lexer.Token != js_lexer.TIn) || (!flags.has(isIndexSignatureFlag) && !flags.has(allowTupleLabelsFlag)) {
 					p.lexer.Expect(js_lexer.TIdentifier)
 					if p.lexer.Token == js_lexer.TExtends {
 						p.trySkipTypeScriptConstraintOfInferTypeWithBacktracking(flags)
@@ -1232,65 +1234,6 @@ func (p *parser) skipTypeScriptTypeStmt(opts parseStmtOpts) {
 	p.lexer.Expect(js_lexer.TEquals)
 	p.skipTypeScriptType(js_ast.LLowest)
 	p.lexer.ExpectOrInsertSemicolon()
-}
-
-func (p *parser) parseTypeScriptDecorators(tsDecoratorScope *js_ast.Scope) []js_ast.Expr {
-	var tsDecorators []js_ast.Expr
-
-	if p.options.ts.Parse {
-		// TypeScript decorators cause us to temporarily revert to the scope that
-		// encloses the class declaration, since that's where the generated code
-		// for TypeScript decorators will be inserted.
-		oldScope := p.currentScope
-		p.currentScope = tsDecoratorScope
-
-		for p.lexer.Token == js_lexer.TAt {
-			p.lexer.Next()
-
-			// Parse a new/call expression with "exprFlagTSDecorator" so we ignore
-			// EIndex expressions, since they may be part of a computed property:
-			//
-			//   class Foo {
-			//     @foo ['computed']() {}
-			//   }
-			//
-			// This matches the behavior of the TypeScript compiler.
-			value := p.parseExprWithFlags(js_ast.LNew, exprFlagTSDecorator)
-			tsDecorators = append(tsDecorators, value)
-		}
-
-		// Avoid "popScope" because this decorator scope is not hierarchical
-		p.currentScope = oldScope
-	}
-
-	return tsDecorators
-}
-
-func (p *parser) logInvalidDecoratorError(classKeyword logger.Range) {
-	if p.options.ts.Parse && p.lexer.Token == js_lexer.TAt {
-		// Forbid decorators inside class expressions
-		p.lexer.AddRangeErrorWithNotes(p.lexer.Range(), "Decorators can only be used with class declarations in TypeScript",
-			[]logger.MsgData{p.tracker.MsgData(classKeyword, "This is a class expression, not a class declaration:")})
-
-		// Parse and discard decorators for error recovery
-		scopeIndex := len(p.scopesInOrder)
-		p.parseTypeScriptDecorators(p.currentScope)
-		p.discardScopesUpTo(scopeIndex)
-	}
-}
-
-func (p *parser) logMisplacedDecoratorError(tsDecorators *deferredTSDecorators) {
-	found := fmt.Sprintf("%q", p.lexer.Raw())
-	if p.lexer.Token == js_lexer.TEndOfFile {
-		found = "end of file"
-	}
-
-	// Try to be helpful by pointing out the decorator
-	p.lexer.AddRangeErrorWithNotes(p.lexer.Range(), fmt.Sprintf("Expected \"class\" after TypeScript decorator but found %s", found), []logger.MsgData{
-		p.tracker.MsgData(logger.Range{Loc: tsDecorators.values[0].Loc}, "The preceding TypeScript decorator is here:"),
-		{Text: "Decorators can only be used with class declarations in TypeScript."},
-	})
-	p.discardScopesUpTo(tsDecorators.scopeIndex)
 }
 
 func (p *parser) parseTypeScriptEnumStmt(loc logger.Loc, opts parseStmtOpts) js_ast.Stmt {

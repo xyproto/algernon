@@ -144,6 +144,9 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, ecdheParameters, error) {
 
 	var params ecdheParameters
 	if hello.supportedVersions[0] == VersionTLS13 {
+		if len(hello.supportedVersions) == 1 {
+			hello.cipherSuites = hello.cipherSuites[:0]
+		}
 		if hasAESGCMHardwareSupport {
 			hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13...)
 		} else {

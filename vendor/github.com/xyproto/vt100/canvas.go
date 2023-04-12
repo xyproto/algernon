@@ -136,8 +136,8 @@ func (c *Canvas) String() string {
 func (c *Canvas) PlotAll() {
 	w := c.w
 	h := c.h
+	c.mut.Lock()
 	for y := uint(0); y < h; y++ {
-		c.mut.Lock()
 		for x := int(w - 1); x >= 0; x-- {
 			cr := &((*c).chars[y*w+uint(x)])
 			r := cr.r
@@ -148,8 +148,8 @@ func (c *Canvas) PlotAll() {
 			SetXY(uint(x), y)
 			fmt.Print(cr.fg.Combine(cr.bg).String() + string(r) + NoColor())
 		}
-		c.mut.Unlock()
 	}
+	c.mut.Unlock()
 }
 
 // Return the size of the current canvas
