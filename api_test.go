@@ -16,7 +16,7 @@ import (
 	//"github.com/xyproto/simplehstore"
 	//"github.com/xyproto/simplemaria"
 
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/simpleredis/v2"
 )
 
 // VersionInfo helps to keep track of package names and versions

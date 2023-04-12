@@ -16,7 +16,7 @@ import (
 	mariadb "github.com/xyproto/permissionsql"
 	"github.com/xyproto/pinterface"
 	postgres "github.com/xyproto/pstore"
-	"github.com/xyproto/simpleredis"
+	"github.com/xyproto/simpleredis/v2"
 )
 
 // Info returns a string with various info about the current configuration
