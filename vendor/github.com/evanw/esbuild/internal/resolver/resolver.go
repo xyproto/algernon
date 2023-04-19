@@ -1017,6 +1017,27 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 		// and because it would deadlock since we're currently in the middle of
 		// populating the directory info cache.
 
+		maybeFinishOurSearch := func(base *TSConfigJSON, err error, extendsFile string) (*TSConfigJSON, bool) {
+			if err == nil {
+				return base, true
+			}
+
+			if err == syscall.ENOENT {
+				// Return false to indicate that we should continue searching
+				return nil, false
+			}
+
+			if err == errParseErrorImportCycle {
+				r.log.AddID(logger.MsgID_TsconfigJSON_Cycle, logger.Warning, &tracker, extendsRange,
+					fmt.Sprintf("Base config file %q forms cycle", extends))
+			} else if err != errParseErrorAlreadyLogged {
+				r.log.AddError(&tracker, extendsRange,
+					fmt.Sprintf("Cannot read file %q: %s",
+						PrettyPath(r.fs, logger.Path{Text: extendsFile, Namespace: "file"}), err.Error()))
+			}
+			return nil, true
+		}
+
 		// Check for a Yarn PnP manifest and use that to rewrite the path
 		if IsPackagePath(extends) {
 			pnpData := r.pnpManifest
@@ -1068,11 +1089,47 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 		}
 
 		if IsPackagePath(extends) && !r.fs.IsAbs(extends) {
+			esmPackageName, esmPackageSubpath, esmOK := esmParsePackageName(extends)
+			if r.debugLogs != nil && esmOK {
+				r.debugLogs.addNote(fmt.Sprintf("Parsed tsconfig package name %q and package subpath %q", esmPackageName, esmPackageSubpath))
+			}
+
 			// If this is still a package path, try to resolve it to a "node_modules" directory
 			current := fileDir
 			for {
 				// Skip "node_modules" folders
 				if r.fs.Base(current) != "node_modules" {
+					// if "package.json" exists, try checking the "exports" map. The
+					// ability to use "extends" like this was added in TypeScript 5.0.
+					pkgDir := r.fs.Join(current, "node_modules", esmPackageName)
+					pjFile := r.fs.Join(pkgDir, "package.json")
+					if _, err, originalError := r.fs.ReadFile(pjFile); err == nil {
+						if packageJSON := r.parsePackageJSON(pkgDir); packageJSON != nil && packageJSON.exportsMap != nil {
+							if r.debugLogs != nil {
+								r.debugLogs.addNote(fmt.Sprintf("Looking for %q in \"exports\" map in %q", esmPackageSubpath, packageJSON.source.KeyPath.Text))
+								r.debugLogs.increaseIndent()
+								defer r.debugLogs.decreaseIndent()
+							}
+
+							// Note: TypeScript appears to always treat this as a "require" import
+							conditions := r.esmConditionsRequire
+							resolvedPath, status, debug := r.esmPackageExportsResolve("/", esmPackageSubpath, packageJSON.exportsMap.root, conditions)
+							resolvedPath, status, debug = r.esmHandlePostConditions(resolvedPath, status, debug)
+
+							// This is a very abbreviated version of our ESM resolution
+							if status == pjStatusExact || status == pjStatusExactEndsWithStar {
+								fileToCheck := r.fs.Join(pkgDir, resolvedPath)
+								base, err := r.parseTSConfig(fileToCheck, visited)
+
+								if result, shouldReturn := maybeFinishOurSearch(base, err, fileToCheck); shouldReturn {
+									return result
+								}
+							}
+						}
+					} else if r.debugLogs != nil && originalError != nil {
+						r.debugLogs.addNote(fmt.Sprintf("Failed to read file %q: %s", pjFile, originalError.Error()))
+					}
+
 					join := r.fs.Join(current, "node_modules", extends)
 					filesToCheck := []string{r.fs.Join(join, "tsconfig.json"), join, join + ".json"}
 					for _, fileToCheck := range filesToCheck {
@@ -1087,19 +1144,9 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 							}
 						}
 
-						if err == nil {
-							return base
-						} else if err == syscall.ENOENT {
-							continue
-						} else if err == errParseErrorImportCycle {
-							r.log.AddID(logger.MsgID_TsconfigJSON_Cycle, logger.Warning, &tracker, extendsRange,
-								fmt.Sprintf("Base config file %q forms cycle", extends))
-						} else if err != errParseErrorAlreadyLogged {
-							r.log.AddError(&tracker, extendsRange,
-								fmt.Sprintf("Cannot read file %q: %s",
-									PrettyPath(r.fs, logger.Path{Text: fileToCheck, Namespace: "file"}), err.Error()))
+						if result, shouldReturn := maybeFinishOurSearch(base, err, fileToCheck); shouldReturn {
+							return result
 						}
-						return nil
 					}
 				}
 
@@ -1152,18 +1199,8 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 				}
 			}
 
-			if err == nil {
-				return base
-			} else if err != syscall.ENOENT {
-				if err == errParseErrorImportCycle {
-					r.log.AddID(logger.MsgID_TsconfigJSON_Cycle, logger.Warning, &tracker, extendsRange,
-						fmt.Sprintf("Base config file %q forms cycle", extends))
-				} else if err != errParseErrorAlreadyLogged {
-					r.log.AddError(&tracker, extendsRange,
-						fmt.Sprintf("Cannot read file %q: %s",
-							PrettyPath(r.fs, logger.Path{Text: extendsFile, Namespace: "file"}), err.Error()))
-				}
-				return nil
+			if result, shouldReturn := maybeFinishOurSearch(base, err, extendsFile); shouldReturn {
+				return result
 			}
 		}
 
