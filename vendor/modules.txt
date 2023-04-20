@@ -264,7 +264,7 @@ github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt v1.2.6
 ## explicit; go 1.9
 github.com/xyproto/permissionbolt
-# github.com/xyproto/permissions2/v2 v2.6.6
+# github.com/xyproto/permissions2/v2 v2.6.7
 ## explicit; go 1.17
 github.com/xyproto/permissions2/v2
 # github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0

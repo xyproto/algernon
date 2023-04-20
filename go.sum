@@ -232,8 +232,8 @@ github.com/xyproto/onthefly v1.2.3 h1:91QuXkfqP7l4yFsGTGbN3S+iqYZLLJfVEWo4BFpewn
 github.com/xyproto/onthefly v1.2.3/go.mod h1:FQNxGnPtw8YSfZMHGbNKMGqtoI5ZZS+66Sw+eDTcTRE=
 github.com/xyproto/permissionbolt v1.2.6 h1:deCnwY4/IIWy6wizYt6DHcs5fPcYx9VRd7JV7Doa1H0=
 github.com/xyproto/permissionbolt v1.2.6/go.mod h1:kgZa0zLTspHMBF1Fk5sBIp6IuHvqAgr1HE9RA/C2+NU=
-github.com/xyproto/permissions2/v2 v2.6.6 h1:d5GBweH8JrhhpXcmH3Cr8n2ZmQmNuWpCYJXyWf7ylr0=
-github.com/xyproto/permissions2/v2 v2.6.6/go.mod h1:A0HViSnQ3rjI15mQiAp43zLV7S4V/zTLaq2A9dxJzUM=
+github.com/xyproto/permissions2/v2 v2.6.7 h1:wJRpZcndr3cpguD0eVt9Q6kYaXMQCXgzPKVOXOEWcAw=
+github.com/xyproto/permissions2/v2 v2.6.7/go.mod h1:QIo7kKIMWtZSYZPcWi4NNvCyTe3oRoUoobKiWLhD2Z8=
 github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0 h1:cwuqKB6ZfVGziPB3PRlPT5oLnK4cpJNiGyOoI2PmJ9g=
 github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0/go.mod h1:dYsgHuBYu4M/DR/kAlRr+EGcjzwKlx8zgyiwLEzhh10=
 github.com/xyproto/pinterface v0.0.0-20181004125811-9710ef24b684/go.mod h1:BzQLxcJwPQpzFgOyNEL02hGO5T4VqXB1BX+lp5bE040=
