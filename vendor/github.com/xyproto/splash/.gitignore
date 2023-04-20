@@ -7,6 +7,7 @@ output*.html
 
 docs/docs
 cmd/gendoc/gendoc
+cmd/gendoc/gendoc/example/example
 cmd/simple/simple
 cmd/selfupdate/selfupdate
 selfupdate

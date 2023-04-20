@@ -10,25 +10,25 @@ Ask the user a question, using text.
 package main
 
 import (
-	"fmt"
-	"github.com/xyproto/ask"
+    "fmt"
+    "github.com/xyproto/ask"
 )
 
 func main() {
-	var (
-		yes  bool
-		name string
-	)
-	for !yes {
-		name = ask.Ask("What is your name? ")
-		yes = ask.YesNo("Your name is "+name+"?", false)
-	}
-	fmt.Printf("Greetings, %s!\n", name)
+    var (
+        yes  bool
+        name string
+    )
+    for !yes {
+        name = ask.Ask("What is your name? ")
+        yes = ask.YesNo("Your name is "+name+"?", false)
+    }
+    fmt.Printf("Greetings, %s!\n", name)
 }
 ```
 
 ### General info
 
-* Version: 1.0.0
-* Licence: MIT
+* Version: 1.0.2
+* Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

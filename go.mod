@@ -16,12 +16,12 @@ require (
 	github.com/lib/pq v1.10.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/quic-go/quic-go v0.33.0
+	github.com/quic-go/quic-go v0.34.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
-	github.com/xyproto/ask v1.0.1-0.20190918171905-3782b6dc3afd
+	github.com/xyproto/ask v1.0.2
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/env v1.9.1
 	github.com/xyproto/gluamapper v1.2.1
@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt v1.2.6
-	github.com/xyproto/permissions2/v2 v2.6.7
+	github.com/xyproto/permissions2/v2 v2.6.8
 	github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0
 	github.com/xyproto/pinterface v1.5.3
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
@@ -39,8 +39,8 @@ require (
 	github.com/xyproto/sheepcounter v1.6.1
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
-	github.com/xyproto/simpleredis/v2 v2.6.4
-	github.com/xyproto/splash v1.1.6-0.20221231000707-2bc36461a065
+	github.com/xyproto/simpleredis/v2 v2.6.5
+	github.com/xyproto/splash v1.1.7-0.20230420131850-c892c94b4a02
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
@@ -50,7 +50,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.7.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.7.1-0.20230409061740-3c219428245c // indirect
 	github.com/dlclark/regexp2 v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect

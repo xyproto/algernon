@@ -40,6 +40,6 @@ See the [Style Gallery](https://xyproto.github.io/splash/docs/) for a full overv
 
 ## General information
 
-* Version: 1.1.5
+* Version: 1.1.6
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
