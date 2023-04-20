@@ -217,6 +217,8 @@ github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7/go.mod h1:TT/Tba
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
+github.com/xyproto/env/v2 v2.0.0 h1:3Jv8xtqHDz25krhurZ/no8KPrB0X6ms+kdNccJCPbXo=
+github.com/xyproto/env/v2 v2.0.0/go.mod h1:n0AhHu2mZjNMK2auKEF6eUAU6LJ/1PQfss8UuT7Jhzc=
 github.com/xyproto/gluamapper v1.2.1 h1:7pDNxzX4P1QndBFkZEN7JmixrH0HSc7jKw2xyTZ0OjY=
 github.com/xyproto/gluamapper v1.2.1/go.mod h1:uN8tJzpgFmctChbuKGSlLGea/8p5q2v2+5WCnqcUS+8=
 github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=

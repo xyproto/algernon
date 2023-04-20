@@ -18,6 +18,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
+	"github.com/xyproto/env/v2"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
@@ -541,6 +542,11 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		} else {
 			// Exposing variable as it is.
 			// TODO: Add more tests for this codepath
+
+			if env.Bool("ALGERNON_DEBUG") {
+				log.Printf("GOT %v: %v ==> %v (%T)", f, k, v, v)
+			}
+
 			okfuncs[k] = v
 		}
 	}

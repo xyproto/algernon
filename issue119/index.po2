@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>{{title}}</title>
+  </head>
+  <body>
+    {{ title }}
+    <div>
+
+        {% for item in number_list %}
+        test 1: {{item}}
+        {% endfor %}
+
+        {% for item in object_list %}
+        test 2: {{item}}
+        {% endfor %}
+
+    </div>
+  </body>
+</html>

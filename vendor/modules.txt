@@ -243,6 +243,9 @@ github.com/xyproto/datablock
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
+# github.com/xyproto/env/v2 v2.0.0
+## explicit; go 1.15
+github.com/xyproto/env/v2
 # github.com/xyproto/gluamapper v1.2.1
 ## explicit; go 1.16
 github.com/xyproto/gluamapper

@@ -24,6 +24,7 @@ require (
 	github.com/xyproto/ask v1.0.2
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 	github.com/xyproto/env v1.9.1
+	github.com/xyproto/env/v2 v2.0.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
