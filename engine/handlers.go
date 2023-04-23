@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -471,6 +472,32 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 
 		urlpath := req.URL.Path
+		// TODO add reverse proxy check here
+		log.Debug("checking reverse proxy", urlpath, ac.staticConfig)
+		rproxy := ac.staticConfig.FindMatchingReverseProxy(urlpath)
+		if rproxy != nil {
+			log.Debug("Querying reverse proxy %+v, %+v", rproxy, req)
+			res, err := rproxy.DoProxyPass(*req)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
+			data, err := io.ReadAll(res.Body)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			res.Body.Close()
+			for k, vals := range res.Header {
+				for _, v := range vals {
+					w.Header().Set(k, v)
+				}
+			}
+			w.WriteHeader(res.StatusCode)
+			w.Write(data)
+			return
+		}
+
 		filename := utils.URL2filename(servedir, urlpath)
 		// Remove the trailing slash from the filename, if any
 		noslash := filename

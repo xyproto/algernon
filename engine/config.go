@@ -3,11 +3,14 @@ package engine
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	internallog "log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -35,6 +38,68 @@ const (
 	// Version number. Stable API within major version numbers.
 	Version = 2.0
 )
+
+type ReverseProxy struct {
+	PathPrefix  string  `json:"path_prefix"`
+	Endpoint    string  `json:"endpoint"`
+	EndpointURL url.URL `json:"-"`
+}
+
+func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
+	client := &http.Client{}
+	endpoint := rp.EndpointURL
+	req.RequestURI = ""
+	req.URL.Path = req.URL.Path[len(rp.PathPrefix):]
+	req.URL.Scheme = endpoint.Scheme
+	req.URL.Host = endpoint.Host
+	res, err := client.Do(&req)
+	if err != nil {
+		log.Error("error querying reverse proxy", err)
+		return nil, err
+	}
+	return res, nil
+}
+
+type StaticConfig struct {
+	ReverseProxies []ReverseProxy    `json:"reverse_proxies"`
+	proxyMatcher   utils.PrefixMatch `json:"-"`
+	prefix2rproxy  map[string]int    `json:"-"`
+}
+
+func (sc *StaticConfig) Init() {
+	keys := make([]string, 0, len(sc.ReverseProxies))
+	sc.prefix2rproxy = make(map[string]int)
+	for i, rp := range sc.ReverseProxies {
+		u, err := url.Parse(rp.Endpoint)
+		if err != nil {
+			log.Fatal("reverse proxy endpoint is invalid", rp.Endpoint)
+		}
+		sc.ReverseProxies[i].EndpointURL = *u
+		keys = append(keys, rp.PathPrefix)
+		sc.prefix2rproxy[rp.PathPrefix] = i
+	}
+	sc.proxyMatcher.Build(keys)
+}
+
+func (sc *StaticConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
+
+	matches := sc.proxyMatcher.Match(path)
+	if len(matches) == 0 {
+		return nil
+	}
+	if len(matches) > 1 {
+		log.Warnf("found more than one reverse proxy for `%s`: %+v. returning the longest", matches, path)
+	}
+	var match *ReverseProxy
+	maxlen := 0
+	for _, prefix := range matches {
+		if len(prefix) > maxlen {
+			maxlen = len(prefix)
+			match = &sc.ReverseProxies[sc.prefix2rproxy[prefix]]
+		}
+	}
+	return match
+}
 
 // Config is the main structure for the Algernon server.
 // It contains all the state and settings.
@@ -66,6 +131,7 @@ type Config struct {
 	serverCert                   string // exposed to the server configuration scripts(s)
 	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
+	serverConfStatic             string
 	defaultWebColonPort          string
 	serverLogFile                string // exposed to the server configuration scripts(s)
 	serverTempDir                string // temporary directory
@@ -142,6 +208,7 @@ type Config struct {
 	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
+	staticConfig                 StaticConfig
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -554,6 +621,26 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))
+	}
+
+	if len(ac.serverConfStatic) > 0 {
+		filename := ac.serverConfStatic
+		if ac.fs.Exists(filename) {
+			file, err := ioutil.ReadFile(filename)
+			if err != nil {
+				log.Errorf("failed to read static config file %s: %+v", filename, err)
+			} else {
+				var sconfig StaticConfig
+				err = json.Unmarshal([]byte(file), &sconfig)
+				if err != nil {
+					log.Errorf("failed to parse static config: %+v", err)
+				} else {
+					ac.staticConfig = sconfig
+					ac.staticConfig.Init()
+					log.Debug("static config parsed", ac.staticConfig)
+				}
+			}
+		}
 	}
 
 	// Read server configuration script, if present.
