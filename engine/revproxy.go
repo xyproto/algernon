@@ -8,11 +8,32 @@ import (
 	"github.com/xyproto/algernon/utils"
 )
 
+// ReverseProxy holds which path prefix (like "/api") should be sent where (like "http://localhost:8080")
 type ReverseProxy struct {
 	PathPrefix string
 	Endpoint   url.URL
 }
 
+// ReverseProxyConfig holds several "path prefix --> URL" ReverseProxy structs,
+// together with structures that speeds up the prefix matching.
+type ReverseProxyConfig struct {
+	ReverseProxies []ReverseProxy
+	proxyMatcher   utils.PrefixMatch
+	prefix2rproxy  map[string]int
+}
+
+// NewReverseProxyConfig creates a new and empty ReverseProxyConfig struct
+func NewReverseProxyConfig() *ReverseProxyConfig {
+	return &ReverseProxyConfig{}
+}
+
+// Add can add a ReverseProxy and will also (re-)initialize the internal proxy matcher
+func (rc *ReverseProxyConfig) Add(rp *ReverseProxy) {
+	rc.ReverseProxies = append(rc.ReverseProxies, *rp)
+	rc.Init()
+}
+
+// DoProxyPass tries to proxy the given http.Request to where the ReverseProxy points
 func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	client := &http.Client{}
 	endpoint := rp.Endpoint
@@ -28,22 +49,7 @@ func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-type ReverseProxyConfig struct {
-	ReverseProxies []ReverseProxy
-	proxyMatcher   utils.PrefixMatch
-	prefix2rproxy  map[string]int
-}
-
-func NewReverseProxyConfig() *ReverseProxyConfig {
-	return &ReverseProxyConfig{}
-}
-
-// Add a ReverseProxy and also initialize the internal proxy matcher
-func (rc *ReverseProxyConfig) Add(rp *ReverseProxy) {
-	rc.ReverseProxies = append(rc.ReverseProxies, *rp)
-	rc.Init()
-}
-
+// Init prepares the proxyMatcher and prefix2rproxy fields according to the ReverseProxy structs
 func (rc *ReverseProxyConfig) Init() {
 	keys := make([]string, 0, len(rc.ReverseProxies))
 	rc.prefix2rproxy = make(map[string]int)
@@ -54,6 +60,7 @@ func (rc *ReverseProxyConfig) Init() {
 	rc.proxyMatcher.Build(keys)
 }
 
+// FindMatchingReverseProxy checks if the given URL path should be proxied
 func (rc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
 	matches := rc.proxyMatcher.Match(path)
 	if len(matches) == 0 {

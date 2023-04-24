@@ -287,9 +287,8 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
 					log.Fatal("Unable to find a temporary file to use:", errTemp)
-				} else {
-					ac.boltFilename = tempFile.Name() + ".db"
 				}
+				ac.boltFilename = tempFile.Name() + ".db"
 			} else {
 				log.Errorf("Could not use Bolt as database backend: %s", err)
 			}
@@ -391,9 +390,8 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
 					log.Fatal("Unable to find a temporary file to use:", errTemp)
-				} else {
-					ac.boltFilename = tempFile.Name() + ".db"
 				}
+				ac.boltFilename = tempFile.Name() + ".db"
 			} else {
 				log.Errorf("Could not use Bolt as database backend: %s", err)
 			}

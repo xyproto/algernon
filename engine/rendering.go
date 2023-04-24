@@ -35,7 +35,7 @@ func ValidGCSS(gcssdata []byte, errorReturn chan error) {
 
 // LoadRenderFunctions adds functions related to rendering text to the given
 // Lua state struct
-func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, req *http.Request, L *lua.LState) {
+func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L *lua.LState) {
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
