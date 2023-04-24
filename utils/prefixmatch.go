@@ -9,8 +9,8 @@ import (
 )
 
 type Node struct {
-	IsTerminal bool
 	Children   map[rune]*Node
+	IsTerminal bool
 }
 
 func (node *Node) GetChild(c rune) *Node {
