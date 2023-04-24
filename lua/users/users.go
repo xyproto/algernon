@@ -50,7 +50,7 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	// GenerateToken generates a JWT token given a subject and the number of seconds the token should last
 	L.SetGlobal("GenerateToken", L.NewFunction(func(L *lua.LState) int {
 		subject := L.ToString(1)
-		seconds := L.ToNumber(2)
+		seconds := int(L.ToNumber(2))
 		L.Push(lua.LString(simplejwt.SimpleGenerate(subject, seconds)))
 		return 1 // number of results
 	}))
