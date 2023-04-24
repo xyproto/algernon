@@ -6,8 +6,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
+	"github.com/xyproto/simplejwt"
 )
 
 // Load makes functions related to users and permissions available to Lua scripts
@@ -46,6 +47,28 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		return 1 // number of results
 	}))
 
+	// GenerateToken generates a JWT token given a subject and the number of seconds the token should last
+	L.SetGlobal("GenerateToken", L.NewFunction(func(L *lua.LState) int {
+		subject := L.ToString(1)
+		seconds := L.ToNumber(2)
+		L.Push(lua.LString(simplejwt.SimpleGenerate(subject, seconds)))
+		return 1 // number of results
+	}))
+
+	// VaildateToken checks if the given token is valid and returns the subject. Returns an empty string if not.
+	L.SetGlobal("ValidateToken", L.NewFunction(func(L *lua.LState) int {
+		token := L.ToString(1)
+		L.Push(lua.LString(simplejwt.SimpleValidate(token)))
+		return 1 // number of results
+	}))
+
+	// SetTokenSecret sets the secret that will be used when generating and validating JWT tokens
+	L.SetGlobal("SetTokenSecret", L.NewFunction(func(L *lua.LState) int {
+		secret := L.ToString(1)
+		simplejwt.SetSecret(secret)
+		return 0 // number of results
+	}))
+
 	// Get the value from the given boolean field, returns bool
 	// Takes a username and field name
 	L.SetGlobal("BooleanField", L.NewFunction(func(L *lua.LState) int {
@@ -54,6 +77,7 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 		L.Push(lua.LBool(userstate.BooleanField(username, fieldname)))
 		return 1 // number of results
 	}))
+
 	// Save a value as a boolean field, returns nothing
 	// Takes a username, field name and boolean value
 	L.SetGlobal("SetBooleanField", L.NewFunction(func(L *lua.LState) int {
