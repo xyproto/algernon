@@ -476,7 +476,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		//log.Debug("checking reverse proxy", urlpath, ac.reverseProxyConfig)
 		rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath)
 		if rproxy != nil {
-			log.Debug("Querying reverse proxy %+v, %+v", rproxy, req)
+			//log.Debug("Querying reverse proxy %+v, %+v", rproxy, req)
 			res, err := rproxy.DoProxyPass(*req)
 			if err != nil {
 				w.WriteHeader(http.StatusBadGateway)
