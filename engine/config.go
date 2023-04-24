@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	internallog "log"
 	"net/http"
 	"net/url"
@@ -60,28 +59,28 @@ func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-type StaticConfig struct {
+type ReverseProxyConfig struct {
 	ReverseProxies []ReverseProxy    `json:"reverse_proxies"`
 	proxyMatcher   utils.PrefixMatch `json:"-"`
 	prefix2rproxy  map[string]int    `json:"-"`
 }
 
-func (sc *StaticConfig) Init() {
-	keys := make([]string, 0, len(sc.ReverseProxies))
-	sc.prefix2rproxy = make(map[string]int)
-	for i, rp := range sc.ReverseProxies {
+func (rc *ReverseProxyConfig) Init() {
+	keys := make([]string, 0, len(rc.ReverseProxies))
+	rc.prefix2rproxy = make(map[string]int)
+	for i, rp := range rc.ReverseProxies {
 		u, err := url.Parse(rp.Endpoint)
 		if err != nil {
 			log.Fatal("reverse proxy endpoint is invalid", rp.Endpoint)
 		}
-		sc.ReverseProxies[i].EndpointURL = *u
+		rc.ReverseProxies[i].EndpointURL = *u
 		keys = append(keys, rp.PathPrefix)
-		sc.prefix2rproxy[rp.PathPrefix] = i
+		rc.prefix2rproxy[rp.PathPrefix] = i
 	}
-	sc.proxyMatcher.Build(keys)
+	rc.proxyMatcher.Build(keys)
 }
 
-func (sc *StaticConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
+func (sc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
 
 	matches := sc.proxyMatcher.Match(path)
 	if len(matches) == 0 {
@@ -131,7 +130,7 @@ type Config struct {
 	serverCert                   string // exposed to the server configuration scripts(s)
 	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
-	serverConfStatic             string
+	serverRevProxyConf           string // the reverse proxy JSON configuration
 	defaultWebColonPort          string
 	serverLogFile                string // exposed to the server configuration scripts(s)
 	serverTempDir                string // temporary directory
@@ -208,7 +207,7 @@ type Config struct {
 	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
-	staticConfig                 StaticConfig
+	reverseProxyConfig           ReverseProxyConfig
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -623,21 +622,20 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))
 	}
 
-	if len(ac.serverConfStatic) > 0 {
-		filename := ac.serverConfStatic
-		if ac.fs.Exists(filename) {
-			file, err := ioutil.ReadFile(filename)
+	if len(ac.serverRevProxyConf) > 0 {
+		// Check if the reverse proxy configuration file exists, and assign it to "filename"
+		if filename := ac.serverRevProxyConf; ac.fs.Exists(filename) {
+			data, err := os.ReadFile(ac.serverRevProxyConf)
 			if err != nil {
-				log.Errorf("failed to read static config file %s: %+v", filename, err)
+				log.Errorf("failed to read static config file %s: %v", filename, err)
 			} else {
-				var sconfig StaticConfig
-				err = json.Unmarshal([]byte(file), &sconfig)
-				if err != nil {
-					log.Errorf("failed to parse static config: %+v", err)
+				var revConf ReverseProxyConfig
+				if err := json.Unmarshal(data, &revConf); err != nil {
+					log.Errorf("failed to parse static config: %v", err)
 				} else {
-					ac.staticConfig = sconfig
-					ac.staticConfig.Init()
-					log.Debug("static config parsed", ac.staticConfig)
+					// TODO: Use a NewReverseProxyConfig function instead
+					ac.reverseProxyConfig = revConf
+					ac.reverseProxyConfig.Init()
 				}
 			}
 		}

@@ -473,8 +473,8 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		urlpath := req.URL.Path
 		// TODO add reverse proxy check here
-		log.Debug("checking reverse proxy", urlpath, ac.staticConfig)
-		rproxy := ac.staticConfig.FindMatchingReverseProxy(urlpath)
+		//log.Debug("checking reverse proxy", urlpath, ac.reverseProxyConfig)
+		rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath)
 		if rproxy != nil {
 			log.Debug("Querying reverse proxy %+v, %+v", rproxy, req)
 			res, err := rproxy.DoProxyPass(*req)
