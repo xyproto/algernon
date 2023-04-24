@@ -83,7 +83,7 @@ Features and limitations
 ------------------------
 
 * Supports HTTP/2, with or without HTTPS (browsers may require HTTPS when using HTTP/2).
-* Also supports regular HTTP.
+* Also supports QUIC and regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * The Algernon executable is compiled to native and is reasonably fast.
 * Works on Linux, macOS and 64-bit Windows.
