@@ -38,68 +38,6 @@ const (
 	Version = 2.0
 )
 
-type ReverseProxy struct {
-	PathPrefix  string  `json:"path_prefix"`
-	Endpoint    string  `json:"endpoint"`
-	EndpointURL url.URL `json:"-"`
-}
-
-func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
-	client := &http.Client{}
-	endpoint := rp.EndpointURL
-	req.RequestURI = ""
-	req.URL.Path = req.URL.Path[len(rp.PathPrefix):]
-	req.URL.Scheme = endpoint.Scheme
-	req.URL.Host = endpoint.Host
-	res, err := client.Do(&req)
-	if err != nil {
-		log.Error("error querying reverse proxy", err)
-		return nil, err
-	}
-	return res, nil
-}
-
-type ReverseProxyConfig struct {
-	ReverseProxies []ReverseProxy    `json:"reverse_proxies"`
-	proxyMatcher   utils.PrefixMatch `json:"-"`
-	prefix2rproxy  map[string]int    `json:"-"`
-}
-
-func (rc *ReverseProxyConfig) Init() {
-	keys := make([]string, 0, len(rc.ReverseProxies))
-	rc.prefix2rproxy = make(map[string]int)
-	for i, rp := range rc.ReverseProxies {
-		u, err := url.Parse(rp.Endpoint)
-		if err != nil {
-			log.Fatal("reverse proxy endpoint is invalid", rp.Endpoint)
-		}
-		rc.ReverseProxies[i].EndpointURL = *u
-		keys = append(keys, rp.PathPrefix)
-		rc.prefix2rproxy[rp.PathPrefix] = i
-	}
-	rc.proxyMatcher.Build(keys)
-}
-
-func (sc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
-
-	matches := sc.proxyMatcher.Match(path)
-	if len(matches) == 0 {
-		return nil
-	}
-	if len(matches) > 1 {
-		log.Warnf("found more than one reverse proxy for `%s`: %+v. returning the longest", matches, path)
-	}
-	var match *ReverseProxy
-	maxlen := 0
-	for _, prefix := range matches {
-		if len(prefix) > maxlen {
-			maxlen = len(prefix)
-			match = &sc.ReverseProxies[sc.prefix2rproxy[prefix]]
-		}
-	}
-	return match
-}
-
 // Config is the main structure for the Algernon server.
 // It contains all the state and settings.
 // The order of the fields has been decided by the "fieldalignment" utility.
@@ -130,7 +68,6 @@ type Config struct {
 	serverCert                   string // exposed to the server configuration scripts(s)
 	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
-	serverRevProxyConf           string // the reverse proxy JSON configuration
 	defaultWebColonPort          string
 	serverLogFile                string // exposed to the server configuration scripts(s)
 	serverTempDir                string // temporary directory
@@ -172,6 +109,7 @@ type Config struct {
 	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
 	defaultCacheSize             uint64        // 1 MiB
 	defaultPermissions           os.FileMode
+	reverseProxyConfig           ReverseProxyConfig
 	quietMode                    bool // no output to the command line
 	autoRefresh                  bool // enable the event server and inject JavaScript to reload pages when sources change
 	serverMode                   bool // server mode: non-interactive
@@ -207,7 +145,6 @@ type Config struct {
 	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
-	reverseProxyConfig           ReverseProxyConfig
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
