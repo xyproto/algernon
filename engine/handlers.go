@@ -472,30 +472,31 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 
 		urlpath := req.URL.Path
-		// TODO add reverse proxy check here
-		//log.Debug("checking reverse proxy", urlpath, ac.reverseProxyConfig)
-		rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath)
-		if rproxy != nil {
-			//log.Debug("Querying reverse proxy %+v, %+v", rproxy, req)
-			res, err := rproxy.DoProxyPass(*req)
-			if err != nil {
-				w.WriteHeader(http.StatusBadGateway)
-				return
-			}
-			data, err := io.ReadAll(res.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			res.Body.Close()
-			for k, vals := range res.Header {
-				for _, v := range vals {
-					w.Header().Set(k, v)
+
+		log.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
+		if ac.reverseProxyConfig != nil {
+			if rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath); rproxy != nil {
+				log.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
+				res, err := rproxy.DoProxyPass(*req)
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
 				}
+				data, err := io.ReadAll(res.Body)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				res.Body.Close()
+				for k, vals := range res.Header {
+					for _, v := range vals {
+						w.Header().Set(k, v)
+					}
+				}
+				w.WriteHeader(res.StatusCode)
+				w.Write(data)
+				return
 			}
-			w.WriteHeader(res.StatusCode)
-			w.Write(data)
-			return
 		}
 
 		filename := utils.URL2filename(servedir, urlpath)

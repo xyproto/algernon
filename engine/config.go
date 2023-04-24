@@ -3,13 +3,11 @@ package engine
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	internallog "log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -109,7 +107,7 @@ type Config struct {
 	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
 	defaultCacheSize             uint64        // 1 MiB
 	defaultPermissions           os.FileMode
-	reverseProxyConfig           ReverseProxyConfig
+	reverseProxyConfig           *ReverseProxyConfig
 	quietMode                    bool // no output to the command line
 	autoRefresh                  bool // enable the event server and inject JavaScript to reload pages when sources change
 	serverMode                   bool // server mode: non-interactive
@@ -557,25 +555,6 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
 		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))
-	}
-
-	if len(ac.serverRevProxyConf) > 0 {
-		// Check if the reverse proxy configuration file exists, and assign it to "filename"
-		if filename := ac.serverRevProxyConf; ac.fs.Exists(filename) {
-			data, err := os.ReadFile(ac.serverRevProxyConf)
-			if err != nil {
-				log.Errorf("failed to read static config file %s: %v", filename, err)
-			} else {
-				var revConf ReverseProxyConfig
-				if err := json.Unmarshal(data, &revConf); err != nil {
-					log.Errorf("failed to parse static config: %v", err)
-				} else {
-					// TODO: Use a NewReverseProxyConfig function instead
-					ac.reverseProxyConfig = revConf
-					ac.reverseProxyConfig.Init()
-				}
-			}
-		}
 	}
 
 	// Read server configuration script, if present.

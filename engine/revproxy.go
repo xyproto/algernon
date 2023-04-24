@@ -1,3 +1,13 @@
+package engine
+
+import (
+	"net/http"
+	"net/url"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/utils"
+)
+
 type ReverseProxy struct {
 	PathPrefix  string
 	Endpoint    string
@@ -23,6 +33,16 @@ type ReverseProxyConfig struct {
 	ReverseProxies []ReverseProxy
 	proxyMatcher   utils.PrefixMatch
 	prefix2rproxy  map[string]int
+}
+
+func NewReverseProxyConfig() *ReverseProxyConfig {
+	return &ReverseProxyConfig{}
+}
+
+// Add a ReverseProxy and also initialize the internal proxy matcher
+func (rc *ReverseProxyConfig) Add(rp *ReverseProxy) {
+	rc.ReverseProxies = append(rc.ReverseProxies, *rp)
+	rc.Init()
 }
 
 func (rc *ReverseProxyConfig) Init() {

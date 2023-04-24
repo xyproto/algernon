@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -140,6 +141,28 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 	L.SetGlobal("AddAdminPrefix", L.NewFunction(func(L *lua.LState) int {
 		path := L.ToString(1)
 		ac.perm.AddAdminPath(path)
+		return 0 // number of results
+	}))
+
+	// Add a new reverse proxy given a: path prefix, endpoint and endpoint URL
+	L.SetGlobal("AddReverseProxy", L.NewFunction(func(L *lua.LState) int {
+		var rp ReverseProxy
+
+		rp.PathPrefix = L.ToString(1)
+		rp.Endpoint = L.ToString(2)
+
+		endpointURLString := L.ToString(3)
+		parsedURL, err := url.Parse(endpointURLString)
+		if err != nil {
+			log.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
+		}
+		rp.EndpointURL = *parsedURL
+
+		if ac.reverseProxyConfig == nil {
+			ac.reverseProxyConfig = NewReverseProxyConfig()
+		}
+		ac.reverseProxyConfig.Add(&rp)
+
 		return 0 // number of results
 	}))
 
