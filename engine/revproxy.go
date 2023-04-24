@@ -22,7 +22,7 @@ func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	req.URL.Host = endpoint.Host
 	res, err := client.Do(&req)
 	if err != nil {
-		log.Error("error querying reverse proxy", err)
+		log.Errorf("reverse proxy error: %v\n", err)
 		return nil, err
 	}
 	return res, nil
