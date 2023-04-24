@@ -473,10 +473,10 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		urlpath := req.URL.Path
 
-		log.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
+		//log.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
 		if ac.reverseProxyConfig != nil {
 			if rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath); rproxy != nil {
-				log.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
+				//log.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
 				res, err := rproxy.DoProxyPass(*req)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
