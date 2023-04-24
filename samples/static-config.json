@@ -1,0 +1,7 @@
+{
+  "reverse_proxies": [
+    {"path_prefix": "/api", "endpoint": "http://localhost:8000"},
+    {"path_prefix": "/api/auth", "endpoint": "http://localhost:8100"}
+
+  ]
+}
