@@ -89,8 +89,9 @@ Live server configuration
 ClearPermissions()
 // Add an URL prefix that will have *admin* rights.
 AddAdminPrefix(string)
-// Add a new reverse proxy given a path prefix, endpoint and an endpoint URL
-AddReverseProxy(string, string, string)
+// Add a reverse proxy given a path prefix and an endpoint URL
+AddReverseProxy(string, string)
+
 // Add an URL prefix that will have *user* rights.
 AddUserPrefix(string)
 // Provide a lua function that will be used as the permission denied handler.

@@ -149,14 +149,13 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		var rp ReverseProxy
 
 		rp.PathPrefix = L.ToString(1)
-		rp.Endpoint = L.ToString(2)
+		endpointURLString := L.ToString(2)
 
-		endpointURLString := L.ToString(3)
 		parsedURL, err := url.Parse(endpointURLString)
 		if err != nil {
 			log.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
 		}
-		rp.EndpointURL = *parsedURL
+		rp.Endpoint = *parsedURL
 
 		if ac.reverseProxyConfig == nil {
 			ac.reverseProxyConfig = NewReverseProxyConfig()
