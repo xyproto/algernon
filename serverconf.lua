@@ -23,6 +23,10 @@ AddUserPrefix("/samples/chat/chat")
 --- For the "chat" example, when running from the "chat" directory
 AddUserPrefix("/chat")
 
+--- Reverse proxy examples
+AddReverseProxy("/api", "http://localhost:8080")
+AddReverseProxy("/api/auth", "http://localhost:8100")
+
 -- Output server configuration after parsing this file and commandline arguments
 OnReady(function ()
   print(ServerInfo())
