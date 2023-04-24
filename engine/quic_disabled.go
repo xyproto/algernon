@@ -13,6 +13,6 @@ import (
 var quicEnabled = false
 
 // ListanAndServeQUIC is just a placeholder for platforms with QUIC disabled
-func (ac *Config) ListenAndServeQUIC(mux http.Handler, mut *sync.Mutex, justServeRegularHTTP chan bool, servingHTTPS *bool) {
+func (ac *Config) ListenAndServeQUIC(_ http.Handler, _ *sync.Mutex, _ chan bool, _ *bool) {
 	log.Error("Not serving QUIC. This Algernon executable was built without QUIC-support.")
 }

@@ -9,14 +9,13 @@ import (
 )
 
 type ReverseProxy struct {
-	PathPrefix  string
-	Endpoint    string
-	EndpointURL url.URL
+	PathPrefix string
+	Endpoint   url.URL
 }
 
 func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	client := &http.Client{}
-	endpoint := rp.EndpointURL
+	endpoint := rp.Endpoint
 	req.RequestURI = ""
 	req.URL.Path = req.URL.Path[len(rp.PathPrefix):]
 	req.URL.Scheme = endpoint.Scheme
@@ -49,19 +48,14 @@ func (rc *ReverseProxyConfig) Init() {
 	keys := make([]string, 0, len(rc.ReverseProxies))
 	rc.prefix2rproxy = make(map[string]int)
 	for i, rp := range rc.ReverseProxies {
-		u, err := url.Parse(rp.Endpoint)
-		if err != nil {
-			log.Fatal("reverse proxy endpoint is invalid", rp.Endpoint)
-		}
-		rc.ReverseProxies[i].EndpointURL = *u
 		keys = append(keys, rp.PathPrefix)
 		rc.prefix2rproxy[rp.PathPrefix] = i
 	}
 	rc.proxyMatcher.Build(keys)
 }
 
-func (sc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
-	matches := sc.proxyMatcher.Match(path)
+func (rc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
+	matches := rc.proxyMatcher.Match(path)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -73,7 +67,7 @@ func (sc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProx
 	for _, prefix := range matches {
 		if len(prefix) > maxlen {
 			maxlen = len(prefix)
-			match = &sc.ReverseProxies[sc.prefix2rproxy[prefix]]
+			match = &rc.ReverseProxies[rc.prefix2rproxy[prefix]]
 		}
 	}
 	return match

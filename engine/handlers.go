@@ -121,7 +121,7 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 }
 
 // FilePage tries to serve a single file. The file must exist. Must be given a full filename.
-func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, dataFilename string) {
+func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _ string) {
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
