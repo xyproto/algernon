@@ -40,7 +40,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.17.17
+# github.com/evanw/esbuild v0.17.18
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -357,8 +357,8 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230419192730-864b3d6c5c2c
-## explicit; go 1.18
+# golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
+## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.10.0
 ## explicit; go 1.17
