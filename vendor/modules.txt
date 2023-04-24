@@ -297,6 +297,9 @@ github.com/xyproto/simpleform
 # github.com/xyproto/simplehstore v1.8.1
 ## explicit; go 1.11
 github.com/xyproto/simplehstore
+# github.com/xyproto/simplejwt v1.2.0
+## explicit; go 1.20
+github.com/xyproto/simplejwt
 # github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98
 ## explicit; go 1.19
 github.com/xyproto/simplemaria

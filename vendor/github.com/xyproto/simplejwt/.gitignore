@@ -1,0 +1,11 @@
+*.o
+*.bak
+*.tmp
+*.swp
+
+include.txt
+
+cmd/server/server
+cmd/simple/simple
+cmd/simpler/simpler
+cmd/tinychat/tinychat

@@ -260,6 +260,8 @@ github.com/xyproto/simpleform v0.2.0/go.mod h1:Fn69YFlYOIDsfXl/eA1bBCjWGjdTfAEm/
 github.com/xyproto/simplehstore v1.8.0/go.mod h1:itttL9Art2cUE2XhHX02WIGMXXgRaCUa7NQTlEQQdaI=
 github.com/xyproto/simplehstore v1.8.1 h1:mmU0M3SIyVFg0algV46JfCew6eEpZBLz3+M1DxYykbE=
 github.com/xyproto/simplehstore v1.8.1/go.mod h1:itttL9Art2cUE2XhHX02WIGMXXgRaCUa7NQTlEQQdaI=
+github.com/xyproto/simplejwt v1.2.0 h1:Oy0xgBhYh47Nfc9Ij9hW9eHfP6QXq0prrM9C+5inqEI=
+github.com/xyproto/simplejwt v1.2.0/go.mod h1:qv4jgtIx6X5G+DLQac9NS4BTcSxxtDVhjhp8jasI4ao=
 github.com/xyproto/simplemaria v0.0.0-20190613092611-fe65bee4fd92/go.mod h1:8edMYeQzjObsOqqAczFoi/nKP8DMOztU0/25pTWQ/bw=
 github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98 h1:2o7Tt5KGhnlnqzAcK+UxwP1B4PwX9EZl9/u5clMfV1E=
 github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98/go.mod h1:7MR49f4rvsxDGfLAUXPUzml7LJsjI7npZS+4ALZgMFA=
@@ -382,7 +384,7 @@ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8T
 google.golang.org/appengine v1.6.1/go.mod h1:i06prIuMbXzDqacNJfV5OdTW448YApPu5ww/cMBSeb0=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
-google.golang.org/protobuf v1.28.1 h1:d0NfwRgPtno5B1Wa6L2DAG+KivqkdutMf1UhdNx175w=
+google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=

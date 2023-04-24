@@ -39,6 +39,7 @@ require (
 	github.com/xyproto/sheepcounter v1.6.1
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
+	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.6.5
 	github.com/xyproto/splash v1.1.7-0.20230420131850-c892c94b4a02
 	github.com/xyproto/textoutput v1.14.1
