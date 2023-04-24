@@ -50,7 +50,7 @@ Design decisions
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
   * If not, regular HTTP is used.
-* QUIC ("HTTP over UDP", supported by Chromium) can be enabled with a flag.
+* QUIC ("HTTP over UDP", HTTP/3) can be enabled with a flag.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is Lua code that is interpreted as a handler function for the current directory.
