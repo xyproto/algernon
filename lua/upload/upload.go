@@ -13,7 +13,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // For dealing with uploaded files in POST method handlers
@@ -37,10 +37,10 @@ const (
 // written to file.
 type UploadedFile struct {
 	req       *http.Request
-	scriptdir string
 	header    textproto.MIMEHeader
-	filename  string
 	buf       *bytes.Buffer
+	scriptdir string
+	filename  string
 }
 
 // New creates a struct that is used for accepting an uploaded file
@@ -96,7 +96,7 @@ func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*Uploa
 	}
 
 	// all ok
-	return &UploadedFile{req, scriptdir, handler.Header, handler.Filename, buf}, nil
+	return &UploadedFile{req, handler.Header, buf, scriptdir, handler.Filename}, nil
 }
 
 // Get the first argument, "self", and cast it from userdata to
