@@ -17,9 +17,9 @@ type ReverseProxy struct {
 // ReverseProxyConfig holds several "path prefix --> URL" ReverseProxy structs,
 // together with structures that speeds up the prefix matching.
 type ReverseProxyConfig struct {
-	ReverseProxies []ReverseProxy
 	proxyMatcher   utils.PrefixMatch
 	prefix2rproxy  map[string]int
+	ReverseProxies []ReverseProxy
 }
 
 // NewReverseProxyConfig creates a new and empty ReverseProxyConfig struct

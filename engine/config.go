@@ -47,6 +47,7 @@ type Config struct {
 	fs                           *datablock.FileStat // for checking if file exists, possibly in a cached way
 	luapool                      *pool.LStatePool    // a pool of Lua interpreters
 	cache                        *datablock.FileCache
+	reverseProxyConfig           *ReverseProxyConfig
 	redisAddr                    string
 	defaultEventPath             string
 	defaultEventRefresh          string
@@ -107,7 +108,6 @@ type Config struct {
 	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
 	defaultCacheSize             uint64        // 1 MiB
 	defaultPermissions           os.FileMode
-	reverseProxyConfig           *ReverseProxyConfig
 	quietMode                    bool // no output to the command line
 	autoRefresh                  bool // enable the event server and inject JavaScript to reload pages when sources change
 	serverMode                   bool // server mode: non-interactive
