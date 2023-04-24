@@ -959,6 +959,7 @@ ClearPermissions()
 AddAdminPrefix(string)
 
 // Add a reverse proxy given a path prefix and an endpoint URL
+// For example: "/api" and "http://localhost:8080"
 AddReverseProxy(string, string)
 
 // Add an URL prefix that will have *user* rights.
