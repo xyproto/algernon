@@ -44,11 +44,15 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 		// Create a Markdown parser with the desired extensions
 		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 		mdParser := parser.NewWithExtensions(extensions)
-		// Convert the buffer to markdown (+ syntax highlighted code)
+		// Convert the buffer from Markdown to HTML
 		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
-		if highlightedHTML, err := splash.Splash(htmlData, "base16-snazzy"); err == nil { // success
+
+		// Apply syntax highlighting
+		codeStyle := "base16-snazzy"
+		if highlightedHTML, err := splash.Splash(htmlData, codeStyle); err == nil { // success
 			htmlData = highlightedHTML
 		}
+
 		w.Write(htmlData)
 		return 0 // number of results
 	}))

@@ -85,7 +85,8 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		mdParser := parser.NewWithExtensions(extensions)
 		// Convert the buffer to markdown
 		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
-		if highlightedHTML, err := splash.Splash(htmlData, "base16-snazzy"); err == nil { // success
+		codeStyle := "base16-snazzy"
+		if highlightedHTML, err := splash.Splash(htmlData, codeStyle); err == nil { // success
 			htmlData = highlightedHTML
 		}
 		htmlString := strings.TrimSpace(string(htmlData))
