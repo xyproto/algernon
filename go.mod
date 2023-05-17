@@ -13,11 +13,11 @@ require (
 	github.com/evanw/esbuild v0.17.19
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
+	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/quic-go/quic-go v0.34.0
-	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/sirupsen/logrus v1.9.1
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
