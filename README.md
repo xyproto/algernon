@@ -111,6 +111,7 @@ Features and limitations
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
 * Requires Go >= 1.19 or a version of GCC/`gccgo` that supports Go 1.19.
+* The Lua implementation used in Algernon (gopherlua) does not support `package.loadlib`.
 
 Q&A
 ---
