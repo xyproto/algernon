@@ -1,5 +1,41 @@
 # Changelog
 
+Changes from 1.14.0 to 1.15.0
+=============================
+
+* Compile the release binaries with Go 1.20.4.
+* Add a `close()` function, ref #124 (thanks Malcolm Ke Win / @diyism).
+* Add a shell linter to the CI configuration, ref #120 (thanks Jan Macku / @jamacku).
+* Support reverse proxies, ref #131 (thanks Mohamed Abdel Maksoud / @mohamed--abdel-maksoud).
+* Look for `handler.lua` in parent directories, ref #95, #112 and #130 (thanks Giulio Lunati / @giuliolunati).
+* Add initial support for JWT tokens.
+* Use `os` and `io`instead of the deprecated `ioutil` package.
+* Use `any` instead of `interface{}`.
+* Use the new `unix` build constraint.
+* Use `strings.ReplaceAll` and `bytes.ReplaceAll`.
+* Use `simpleredis/v2`.
+* Use `math.Round`.
+* Add an `ulimit` check to the `welcome.sh` script that also works on macOS Ventura.
+* Format/lint the code with `gofumpt`, `golint` and `staticcheck`.
+* Use the `betteralign` tool, to improve struct field alignment.
+* Make the code debug/tracing/profiling features optional at compile time, using build tags.
+* Fix a typo in one of the examples.
+* Update the CI configuration.
+* Update dependencies.
+* Update documentation.
+
+Changes from 1.13.0 to 1.14.0
+=============================
+
+* Compile the release binaries with Go 1.19.
+* Improve the documentation (thanks Matt Mc / @tooolbox ).
+* Add support for Teal together with a Teal sample (thanks Matt Mc / @tooolbox).
+* Fix an issue with how Lua tables were pretty printed in the REPL.
+* Fix an issue with conversion from Lua tables to JSON, ref #107, #108 (thanks @linkerlin).
+* Fix an issue with the generated directory listing pages, where `%2F` would appear in the URL instead of `/`, ref #117.
+* Follow the advice of these utilities: `go fmt`, `golint`, `staticcheck` and to some extent `fieldalignment`.
+* Update dependencies.
+
 Changes from 1.12.14 to 1.13.0
 ==============================
 
