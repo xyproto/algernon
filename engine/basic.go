@@ -18,6 +18,7 @@ import (
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/splash"
 )
 
 // FutureStatus is useful when redirecting in combination with writing to a
@@ -82,9 +83,13 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		// Create a Markdown parser with the desired extensions
 		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 		mdParser := parser.NewWithExtensions(extensions)
-		// Convert the buffer to markdown and output the translated string
-		html := strings.TrimSpace(string(markdown.ToHTML(buf.Bytes(), mdParser, nil)))
-		L.Push(lua.LString(html))
+		// Convert the buffer to markdown
+		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
+		if highlightedHTML, err := splash.Splash(htmlData, "base16-snazzy"); err == nil { // success
+			htmlData = highlightedHTML
+		}
+		htmlString := strings.TrimSpace(string(htmlData))
+		L.Push(lua.LString(htmlString))
 		return 1 // number of results
 	}))
 

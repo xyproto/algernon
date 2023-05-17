@@ -44,8 +44,12 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 		// Create a Markdown parser with the desired extensions
 		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 		mdParser := parser.NewWithExtensions(extensions)
-		// Convert the buffer to markdown and output the translated string
-		w.Write(markdown.ToHTML(buf.Bytes(), mdParser, nil))
+		// Convert the buffer to markdown (+ syntax highlighted code)
+		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
+		if highlightedHTML, err := splash.Splash(htmlData, "base16-snazzy"); err == nil { // success
+			htmlData = highlightedHTML
+		}
+		w.Write(htmlData)
 		return 0 // number of results
 	}))
 
