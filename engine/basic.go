@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/russross/blackfriday/v2"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
@@ -78,8 +79,11 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 	L.SetGlobal("markdown", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
+		// Create a Markdown parser with the desired extensions
+		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+		mdParser := parser.NewWithExtensions(extensions)
 		// Convert the buffer to markdown and output the translated string
-		html := strings.TrimSpace(string(blackfriday.Run(buf.Bytes())))
+		html := strings.TrimSpace(string(markdown.ToHTML(buf.Bytes(), mdParser, nil)))
 		L.Push(lua.LString(html))
 		return 1 // number of results
 	}))

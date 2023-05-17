@@ -10,8 +10,8 @@ import (
 
 	"github.com/eknkc/amber"
 	"github.com/evanw/esbuild/pkg/api"
-
-	"github.com/russross/blackfriday/v2"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
 	log "github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
 	"github.com/xyproto/algernon/console"
@@ -36,12 +36,16 @@ func ValidGCSS(gcssdata []byte, errorReturn chan error) {
 // LoadRenderFunctions adds functions related to rendering text to the given
 // Lua state struct
 func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L *lua.LState) {
+
 	// Output Markdown as HTML
 	L.SetGlobal("mprint", L.NewFunction(func(L *lua.LState) int {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
+		// Create a Markdown parser with the desired extensions
+		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+		mdParser := parser.NewWithExtensions(extensions)
 		// Convert the buffer to markdown and output the translated string
-		w.Write(blackfriday.Run(buf.Bytes()))
+		w.Write(markdown.ToHTML(buf.Bytes(), mdParser, nil))
 		return 0 // number of results
 	}))
 
@@ -246,13 +250,17 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// Extract keywords from the given data, and remove the lines with keywords,
 	// but only the first time that keyword occurs.
 	var kwmap map[string][]byte
+
 	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
 
+	// Create a Markdown parser with the desired extensions
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+	mdParser := parser.NewWithExtensions(extensions)
 	// Convert from Markdown to HTML
-	htmlbody := blackfriday.Run(data)
+	htmlbody := markdown.ToHTML(data, mdParser, nil)
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
-	// Markdown or not. Submit a patch to blackfriday if it is.
+	// Markdown or not. Submit a patch to gomarkdown/markdown if it is.
 
 	var h1title []byte
 	if bytes.HasPrefix(htmlbody, []byte("<p>#")) {
@@ -271,7 +279,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	htmlbody = bytes.ReplaceAll(htmlbody, []byte("<li><p>[x] "), []byte("<li><p><input type=\"checkbox\" disabled checked> "))
 
 	// These should work by default, but does not.
-	// TODO: Look into how blackfriday handles this.
+	// TODO: Look into how gomarkdown/markdown handles this.
 	htmlbody = bytes.ReplaceAll(htmlbody, []byte("&amp;gt;"), []byte("&gt;"))
 	htmlbody = bytes.ReplaceAll(htmlbody, []byte("&amp;lt;"), []byte("&lt;"))
 
