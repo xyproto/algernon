@@ -373,19 +373,31 @@ func retryAfter(resp *http.Response, fallback time.Duration) (time.Duration, err
 	if resp == nil {
 		return fallback, nil
 	}
+	raTime, err := retryAfterTime(resp)
+	if err != nil {
+		return fallback, fmt.Errorf("response had invalid Retry-After header: %v", err)
+	}
+	if raTime.IsZero() {
+		return fallback, nil
+	}
+	return time.Until(raTime), nil
+}
+
+// retryAfterTime returns the timestamp represented by the Retry-After header of the response.
+// It returns a zero-value if there is no Retry-After header.
+func retryAfterTime(resp *http.Response) (time.Time, error) {
+	if resp == nil {
+		return time.Time{}, nil
+	}
 	raHeader := resp.Header.Get("Retry-After")
 	if raHeader == "" {
-		return fallback, nil
+		return time.Time{}, nil
 	}
 	raSeconds, err := strconv.Atoi(raHeader)
 	if err == nil && raSeconds >= 0 {
-		return time.Duration(raSeconds) * time.Second, nil
+		return time.Now().Add(time.Duration(raSeconds) * time.Second), nil
 	}
-	raTime, err := time.Parse(http.TimeFormat, raHeader)
-	if err == nil {
-		return time.Until(raTime), nil
-	}
-	return 0, fmt.Errorf("response had invalid Retry-After header: %s", raHeader)
+	return time.Parse(http.TimeFormat, raHeader)
 }
 
 var bufPool = sync.Pool{

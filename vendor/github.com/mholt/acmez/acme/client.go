@@ -46,10 +46,10 @@ import (
 // response. This package wraps errors that may be of type Problem,
 // so you can access the details using the conventional Go pattern:
 //
-//     var problem Problem
-//     if errors.As(err, &problem) {
-//         log.Printf("Houston, we have a problem: %+v", problem)
-//     }
+//	var problem Problem
+//	if errors.As(err, &problem) {
+//	    log.Printf("Houston, we have a problem: %+v", problem)
+//	}
 //
 // All Problem errors originate from the ACME server.
 type Client struct {
@@ -168,13 +168,14 @@ func (c *Client) pollTimeout() time.Duration {
 // ACME operation, ACME servers provide a directory
 // object." §7.1.1
 type Directory struct {
-	NewNonce   string         `json:"newNonce"`
-	NewAccount string         `json:"newAccount"`
-	NewOrder   string         `json:"newOrder"`
-	NewAuthz   string         `json:"newAuthz,omitempty"`
-	RevokeCert string         `json:"revokeCert"`
-	KeyChange  string         `json:"keyChange"`
-	Meta       *DirectoryMeta `json:"meta,omitempty"`
+	NewNonce    string         `json:"newNonce"`
+	NewAccount  string         `json:"newAccount"`
+	NewOrder    string         `json:"newOrder"`
+	NewAuthz    string         `json:"newAuthz,omitempty"`
+	RevokeCert  string         `json:"revokeCert"`
+	KeyChange   string         `json:"keyChange"`
+	RenewalInfo string         `json:"renewalInfo,omitempty"` // draft-ietf-acme-ari
+	Meta        *DirectoryMeta `json:"meta,omitempty"`
 }
 
 // DirectoryMeta is optional extra data that may be

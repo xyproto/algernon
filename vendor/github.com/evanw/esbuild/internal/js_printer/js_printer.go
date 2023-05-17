@@ -1649,7 +1649,7 @@ func (p *printer) lateConstantFoldUnaryOrBinaryExpr(expr js_ast.Expr) js_ast.Exp
 			binary := &js_ast.EBinary{Op: e.Op, Left: left, Right: right}
 
 			// Only fold certain operations (just like the parser)
-			if js_ast.ShouldFoldBinaryArithmeticWhenMinifying(e.Op) {
+			if js_ast.ShouldFoldBinaryArithmeticWhenMinifying(binary) {
 				if result := js_ast.FoldBinaryArithmetic(expr.Loc, binary); result.Data != nil {
 					return result
 				}
@@ -4608,9 +4608,9 @@ func Print(tree js_ast.AST, symbols js_ast.SymbolMap, r renamer.Renamer, options
 	}
 
 	// Add the top-level directive if present
-	if tree.Directive != "" {
+	for _, directive := range tree.Directives {
 		p.printIndent()
-		p.printQuotedUTF8(tree.Directive, options.ASCIIOnly)
+		p.printQuotedUTF8(directive, options.ASCIIOnly)
 		p.print(";")
 		p.printNewline()
 	}

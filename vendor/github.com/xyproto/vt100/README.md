@@ -12,7 +12,7 @@
 
 ### Editor
 
-For an editor that uses this module, take a look at [o](https://github.com/xyproto/o).
+For an editor that uses this module, take a look at [orbiton](https://github.com/xyproto/orbiton).
 
 ### Images
 
@@ -78,6 +78,6 @@ Quick installation:
 
 ### General info
 
-* Version: 1.11.4
+* Version: 1.11.5
 * Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -32,7 +32,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2 v1.9.0
+# github.com/dlclark/regexp2 v1.10.0
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
@@ -40,7 +40,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.17.18
+# github.com/evanw/esbuild v0.17.19
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -77,7 +77,7 @@ github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
-# github.com/go-sql-driver/mysql v1.7.0
+# github.com/go-sql-driver/mysql v1.7.1
 ## explicit; go 1.13
 github.com/go-sql-driver/mysql
 # github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572
@@ -96,7 +96,7 @@ github.com/golang/mock/mockgen/model
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20230406165453-00490a63f317
+# github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.4
@@ -108,7 +108,7 @@ github.com/kr/pretty
 # github.com/kr/text v0.2.0
 ## explicit
 github.com/kr/text
-# github.com/lib/pq v1.10.8
+# github.com/lib/pq v1.10.9
 ## explicit; go 1.13
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -128,11 +128,11 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/mholt/acmez v1.1.0
-## explicit; go 1.18
+# github.com/mholt/acmez v1.1.1
+## explicit; go 1.20
 github.com/mholt/acmez
 github.com/mholt/acmez/acme
-# github.com/miekg/dns v1.1.53
+# github.com/miekg/dns v1.1.54
 ## explicit; go 1.19
 github.com/miekg/dns
 # github.com/mitchellh/go-homedir v1.1.0
@@ -144,7 +144,7 @@ github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 ## explicit
 github.com/natefinch/pie
-# github.com/onsi/ginkgo/v2 v2.9.2
+# github.com/onsi/ginkgo/v2 v2.9.5
 ## explicit; go 1.18
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
@@ -206,7 +206,7 @@ github.com/russross/blackfriday/v2
 # github.com/shopspring/decimal v1.3.1
 ## explicit; go 1.13
 github.com/shopspring/decimal
-# github.com/sirupsen/logrus v1.9.0
+# github.com/sirupsen/logrus v1.9.1
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
@@ -243,6 +243,9 @@ github.com/xyproto/datablock
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
+# github.com/xyproto/env/v2 v2.0.0
+## explicit; go 1.15
+github.com/xyproto/env/v2
 # github.com/xyproto/gluamapper v1.2.1
 ## explicit; go 1.16
 github.com/xyproto/gluamapper
@@ -312,7 +315,7 @@ github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 ## explicit; go 1.9
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.14.1
+# github.com/xyproto/textoutput v1.14.2
 ## explicit; go 1.10
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v1.1.0
@@ -321,7 +324,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.11.4
+# github.com/xyproto/vt100 v1.11.5
 ## explicit; go 1.10
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
@@ -330,7 +333,7 @@ github.com/yosssi/gcss
 # go.etcd.io/bbolt v1.3.7
 ## explicit; go 1.17
 go.etcd.io/bbolt
-# go.uber.org/atomic v1.10.0
+# go.uber.org/atomic v1.11.0
 ## explicit; go 1.18
 go.uber.org/atomic
 # go.uber.org/multierr v1.11.0
@@ -345,7 +348,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.8.0
+# golang.org/x/crypto v0.9.0
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -360,7 +363,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230424174712-0ee363d48fb1
+# golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.10.0
@@ -369,7 +372,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.9.0
+# golang.org/x/net v0.10.0
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
@@ -380,7 +383,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.7.0
+# golang.org/x/sys v0.8.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -396,7 +399,7 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.8.0
+# golang.org/x/tools v0.9.1
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/inspector

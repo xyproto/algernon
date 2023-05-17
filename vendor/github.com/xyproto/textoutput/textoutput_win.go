@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/mgutz/ansi"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 // CharAttribute is a rune and a color attribute
