@@ -1,5 +1,14 @@
 # Changelog
 
+Changes from 1.15.0 to 1.15.1
+=============================
+
+* Switch from `blackfriday` to `gomarkdown/markdown`.
+* Add a simple example that uses the `markdown` function.
+* Update the CI configuration.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.14.0 to 1.15.0
 =============================
 
