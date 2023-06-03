@@ -1,5 +1,11 @@
 # Changelog
 
+Changes from 1.15.1 to 1.15.2
+=============================
+
+* Remove a duplicate word from the `README.md` file (thanks Philipp Gillé / @philippgille).
+* Update dependencies.
+
 Changes from 1.15.0 to 1.15.1
 =============================
 
