@@ -3,6 +3,7 @@
 Changes from 1.15.1 to 1.15.2
 =============================
 
+* Serve `.json` files a tiny bit faster.
 * Serve Algernon web applications (`.alg` files) from memory, ref #132 (thanks Dialga / @Dialga).
 * Remove a duplicate word from the `README.md` file (thanks Philipp Gillé / @philippgille).
 * Update dependencies.
