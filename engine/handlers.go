@@ -243,14 +243,22 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 
 	case ".alg":
 		// Assume this to be a compressed Algernon application
-		tempdir := ac.serverTempDir
-		if extractErr := unzip.Extract(filename, tempdir); extractErr == nil { // no error
+		webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
+		testfile := filepath.Join(webApplicationExtractionDir, "canary")
+		if _, err := os.Create(testfile); err == nil { // success
+			os.Remove(testfile)
+		} else {
+			// Could not create the test file
+			// Use the server temp dir (typically /tmp) instead of /dev/shm
+			webApplicationExtractionDir = ac.serverTempDir
+		}
+		if extractErr := unzip.Extract(filename, webApplicationExtractionDir); extractErr == nil { // no error
 			firstname := path.Base(filename)
 			if strings.HasSuffix(filename, ".alg") {
 				firstname = path.Base(filename[:len(filename)-4])
 			}
-			serveDir := path.Join(tempdir, firstname)
-			log.Warn(".alg apps must be given as an argument to algernon to be served correctly")
+			serveDir := path.Join(webApplicationExtractionDir, firstname)
+			log.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
 			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme)
 		}
 		return

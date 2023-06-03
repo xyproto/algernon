@@ -23,7 +23,7 @@ import (
 	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/recwatch"
@@ -448,12 +448,23 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 				}
 				return nil
 			case ".zip", ".alg":
+
 				// Assume this to be a compressed Algernon application
-				if extractErr := unzip.Extract(serverFile, ac.serverTempDir); extractErr != nil {
+				webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
+				testfile := filepath.Join(webApplicationExtractionDir, "canary")
+				if _, err := os.Create(testfile); err == nil { // success
+					os.Remove(testfile)
+				} else {
+					// Could not create the test file
+					// Use the server temp dir (typically /tmp) instead of /dev/shm
+					webApplicationExtractionDir = ac.serverTempDir
+				}
+				// Extract the web application
+				if extractErr := unzip.Extract(serverFile, webApplicationExtractionDir); extractErr != nil {
 					return extractErr
 				}
 				// Use the directory where the file was extracted as the server directory
-				ac.serverDirOrFilename = ac.serverTempDir
+				ac.serverDirOrFilename = webApplicationExtractionDir
 				// If there is only one directory there, assume it's the
 				// directory of the newly extracted ZIP file.
 				if filenames := utils.GetFilenames(ac.serverDirOrFilename); len(filenames) == 1 {
