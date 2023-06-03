@@ -354,13 +354,17 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 	// --- End of special handlers that returns early ---
 
 	// Text and configuration files (most likely)
-	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".gitignore", ".gitmodules", ".ini", ".log", ".lst", ".me", ".nfo", ".pem", ".readme", ".sub", ".tml", ".toml", ".txt", ".yaml", ".yml":
+	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".gitignore", ".gitmodules", ".ini", ".log", ".lst", ".me", ".nfo", ".pem", ".readme", ".sub", ".sum", ".tml", ".toml", ".txt", ".yaml", ".yml":
 		// Set headers for displaying it in the browser.
 		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
 
 	// Source files that may be used by web pages
 	case ".js":
 		w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
+
+	// JSON
+	case ".json":
+		w.Header().Add("Content-Type", "application/json;charset=utf-8")
 
 	// Source code files for viewing
 	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".mk", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh", ".ts", ".tsx":
