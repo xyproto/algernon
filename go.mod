@@ -23,7 +23,7 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.2
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
-	github.com/xyproto/env v1.9.1
+	github.com/xyproto/env/v2 v2.0.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
@@ -83,7 +83,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
 	github.com/xyproto/cookie/v2 v2.2.3 // indirect
-	github.com/xyproto/env/v2 v2.0.0 // indirect
+	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/randomstring v1.0.5 // indirect
 	github.com/xyproto/simplehstore v1.8.1 // indirect
 	github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98 // indirect

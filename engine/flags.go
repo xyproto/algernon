@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 // Parse the flags, return the default hostname

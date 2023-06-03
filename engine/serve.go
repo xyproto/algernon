@@ -11,7 +11,7 @@ import (
 	"github.com/caddyserver/certmagic"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
 )
 
@@ -167,7 +167,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			// If $XDG_CONFIG_DIR is not set, use $HOME.
 			// If $HOME is not set, use $TMPDIR.
 			// If $TMPDIR is not set, use /tmp.
-			certStorageDir := env.Str("XDG_CONFIG_DIR", env.Str("HOME", env.Str("TMPDIR", "/tmp")))
+			certStorageDir := env.StrAlt("XDG_CONFIG_DIR", "HOME", env.Str("TMPDIR", "/tmp"))
 
 			defaultEmail := env.Str("LOGNAME", "root") + "@localhost"
 			if len(ac.certMagicDomains) > 0 {
