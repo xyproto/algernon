@@ -18,7 +18,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/quic-go/quic-go v0.35.1
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.2
@@ -72,7 +72,7 @@ require (
 	github.com/mholt/acmez v1.1.1 // indirect
 	github.com/miekg/dns v1.1.54 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.9.7 // indirect
+	github.com/onsi/ginkgo/v2 v2.10.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect

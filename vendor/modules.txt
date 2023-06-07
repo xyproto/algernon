@@ -150,7 +150,7 @@ github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 ## explicit
 github.com/natefinch/pie
-# github.com/onsi/ginkgo/v2 v2.9.7
+# github.com/onsi/ginkgo/v2 v2.10.0
 ## explicit; go 1.18
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
@@ -209,7 +209,7 @@ github.com/rogpeppe/go-internal/fmtsort
 # github.com/shopspring/decimal v1.3.1
 ## explicit; go 1.13
 github.com/shopspring/decimal
-# github.com/sirupsen/logrus v1.9.2
+# github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/tylerb/graceful v1.2.15
