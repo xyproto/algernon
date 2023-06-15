@@ -89,9 +89,6 @@ Live server configuration
 ClearPermissions()
 // Add an URL prefix that will have *admin* rights.
 AddAdminPrefix(string)
-// Add a reverse proxy given a path prefix and an endpoint URL
-AddReverseProxy(string, string)
-
 // Add an URL prefix that will have *user* rights.
 AddUserPrefix(string)
 // Provide a lua function that will be used as the permission denied handler.
@@ -99,6 +96,8 @@ DenyHandler(function)
 // Direct the logging to the given filename. If the filename is an empty
 // string, direct logging to stderr. Returns true if successful.
 LogTo(string) -> bool
+// Add a reverse proxy given a path prefix and an endpoint URL
+AddReverseProxy(string, string)
 
 Output
 
