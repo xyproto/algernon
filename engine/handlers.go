@@ -492,6 +492,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 				res, err := rproxy.DoProxyPass(*req)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
+					w.Write([]byte("reverse proxy error, please check your server config for AddReverseProxy calls\n"))
 					return
 				}
 				data, err := io.ReadAll(res.Body)
