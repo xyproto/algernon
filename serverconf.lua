@@ -24,7 +24,7 @@ AddUserPrefix("/samples/chat/chat")
 AddUserPrefix("/chat")
 
 --- Reverse proxy examples
-AddReverseProxy("/api", "http://localhost:8080")
+AddReverseProxy("/api/", "http://localhost:8080")
 AddReverseProxy("/api/auth", "http://localhost:8100")
 
 -- Output server configuration after parsing this file and commandline arguments
