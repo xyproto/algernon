@@ -32,14 +32,7 @@ func (p *parser) prettyPrintTargetEnvironment(feature compat.JSFeature) (where s
 		}
 		overrides = fmt.Sprintf(" + %d override%s", count, s)
 	}
-	if tsTarget := p.options.tsTarget; tsTarget != nil &&
-		p.options.targetFromAPI == config.TargetWasUnconfigured &&
-		tsTarget.UnsupportedJSFeatures.Has(feature) {
-		tracker := logger.MakeLineColumnTracker(&tsTarget.Source)
-		where = fmt.Sprintf("%s (%q%s)", where, tsTarget.Target, overrides)
-		notes = []logger.MsgData{tracker.MsgData(tsTarget.Range, fmt.Sprintf(
-			"The target environment was set to %q here:", tsTarget.Target))}
-	} else if p.options.originalTargetEnv != "" {
+	if p.options.originalTargetEnv != "" {
 		where = fmt.Sprintf("%s (%s%s)", where, p.options.originalTargetEnv, overrides)
 	}
 	return
@@ -1969,24 +1962,37 @@ func (p *parser) captureKeyForObjectRest(originalKey js_ast.Expr) (finalKey js_a
 }
 
 type classLoweringInfo struct {
-	useDefineForClassFields bool
-	avoidTDZ                bool
-	lowerAllInstanceFields  bool
-	lowerAllStaticFields    bool
-	shimSuperCtorCalls      bool
+	lowerAllInstanceFields bool
+	lowerAllStaticFields   bool
+	shimSuperCtorCalls     bool
 }
 
 func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLoweringInfo) {
-	// TypeScript has legacy behavior that uses assignment semantics instead of
-	// define semantics for class fields by default. This happened before class
-	// fields were added to JavaScript, but then TC39 decided to go with define
-	// semantics for class fields instead, leaving TypeScript to deal with the
-	// incorrect assignment semantics. This behaves differently if the base class
-	// has a setter with the same name.
-	result.useDefineForClassFields = p.options.useDefineForClassFields != config.False
+	// Name keeping for classes is implemented with a static block. So we need to
+	// lower all static fields if static blocks are unsupported so that the name
+	// keeping comes first before other static initializers.
+	if p.options.keepNames && p.options.unsupportedJSFeatures.Has(compat.ClassStaticBlocks) {
+		result.lowerAllStaticFields = true
+	}
 
-	// Safari workaround: Automatically avoid TDZ issues when bundling
-	result.avoidTDZ = p.options.mode == config.ModeBundle && p.currentScope.Parent == nil
+	// TypeScript's "experimentalDecorators" feature replaces all references of
+	// the class name with the decorated class after class decorators have run.
+	// This cannot be done by only reassigning to the class symbol in JavaScript
+	// because it's shadowed by the class name within the class body. Instead,
+	// we need to hoist all code in static contexts out of the class body so
+	// that it's no longer shadowed:
+	//
+	//   const decorate = x => ({ x })
+	//   @decorate
+	//   class Foo {
+	//     static oldFoo = Foo
+	//     static newFoo = () => Foo
+	//   }
+	//   console.log('This must be false:', Foo.x.oldFoo === Foo.x.newFoo())
+	//
+	if p.options.ts.Parse && p.options.ts.Config.ExperimentalDecorators == config.True && len(class.Decorators) > 0 {
+		result.lowerAllStaticFields = true
+	}
 
 	// Conservatively lower fields of a given type (instance or static) when any
 	// member of that type needs to be lowered. This must be done to preserve
@@ -2022,7 +2028,7 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 	//
 	for _, prop := range class.Properties {
 		if prop.Kind == js_ast.PropertyClassStaticBlock {
-			if p.options.unsupportedJSFeatures.Has(compat.ClassStaticBlocks) && len(prop.ClassStaticBlock.Block.Stmts) > 0 {
+			if p.options.unsupportedJSFeatures.Has(compat.ClassStaticBlocks) {
 				result.lowerAllStaticFields = true
 			}
 			continue
@@ -2031,34 +2037,6 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 		if private, ok := prop.Key.Data.(*js_ast.EPrivateIdentifier); ok {
 			if prop.Flags.Has(js_ast.PropertyIsStatic) {
 				if p.privateSymbolNeedsToBeLowered(private) {
-					result.lowerAllStaticFields = true
-				}
-
-				// Be conservative and always lower static fields when we're doing TDZ-
-				// avoidance if the class's shadowing symbol is referenced at all (i.e.
-				// the class name within the class body, which can be referenced by name
-				// or by "this" in a static initializer). We can't transform this:
-				//
-				//   class Foo {
-				//     static #foo = new Foo();
-				//   }
-				//
-				// into this:
-				//
-				//   var Foo = class {
-				//     static #foo = new Foo();
-				//   };
-				//
-				// since "new Foo" will crash. We need to lower this static field to avoid
-				// crashing due to an uninitialized binding.
-				if result.avoidTDZ {
-					// Note that due to esbuild's single-pass design where private fields
-					// are lowered as they are resolved, we must decide whether to lower
-					// these private fields before we enter the class body. We can't wait
-					// until we've scanned the class body and know if the shadowing symbol
-					// is used or not before we decide, because if "#foo" does need to be
-					// lowered, references to "#foo" inside the class body weren't lowered.
-					// So we just unconditionally do this instead.
 					result.lowerAllStaticFields = true
 				}
 			} else {
@@ -2087,8 +2065,8 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 					// because "_Foo" won't be initialized in the initializer for "bar".
 					// So we currently lower all static fields in this case too. This
 					// isn't great and it would be good to find a way to avoid this.
-					// The shadowing symbol substitution mechanism should probably be
-					// rethought.
+					// The inner class name symbol substitution mechanism should probably
+					// be rethought.
 					result.lowerAllStaticFields = true
 				}
 			}
@@ -2147,26 +2125,7 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 			// setting for this is enabled. I don't think this matters for private
 			// fields because there's no way for this to call a setter in the base
 			// class, so this isn't done for private fields.
-			if p.options.ts.Parse && !result.useDefineForClassFields {
-				result.lowerAllStaticFields = true
-			}
-
-			// Be conservative and always lower static fields when we're doing TDZ-
-			// avoidance. We can't transform this:
-			//
-			//   class Foo {
-			//     static foo = new Foo();
-			//   }
-			//
-			// into this:
-			//
-			//   var Foo = class {
-			//     static foo = new Foo();
-			//   };
-			//
-			// since "new Foo" will crash. We need to lower this static field to avoid
-			// crashing due to an uninitialized binding.
-			if result.avoidTDZ {
+			if p.options.ts.Parse && !class.UseDefineForClassFields {
 				result.lowerAllStaticFields = true
 			}
 		} else {
@@ -2179,7 +2138,7 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 			// setting for this is enabled. I don't think this matters for private
 			// fields because there's no way for this to call a setter in the base
 			// class, so this isn't done for private fields.
-			if p.options.ts.Parse && !result.useDefineForClassFields {
+			if p.options.ts.Parse && !class.UseDefineForClassFields {
 				result.lowerAllInstanceFields = true
 			}
 		}
@@ -2193,16 +2152,6 @@ func (p *parser) computeClassLoweringInfo(class *js_ast.Class) (result classLowe
 	}
 
 	return
-}
-
-func propertyPreventsKeepNames(prop *js_ast.Property) bool {
-	// A static property called "name" shadows the automatically-generated name
-	if prop.Flags.Has(js_ast.PropertyIsStatic) {
-		if str, ok := prop.Key.Data.(*js_ast.EString); ok && helpers.UTF16EqualsString(str.Value, "name") {
-			return true
-		}
-	}
-	return false
 }
 
 // Lower class fields for environments that don't support them. This either
@@ -2221,23 +2170,21 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 	var class *js_ast.Class
 	var classLoc logger.Loc
 	var defaultName js_ast.LocRef
-	var nameToKeep string
 	if stmt.Data == nil {
 		e, _ := expr.Data.(*js_ast.EClass)
 		class = &e.Class
 		kind = classKindExpr
 		if class.Name != nil {
 			symbol := &p.symbols[class.Name.Ref.InnerIndex]
-			nameToKeep = symbol.OriginalName
 
-			// The shadowing name inside the class expression should be the same as
+			// The inner class name inside the class expression should be the same as
 			// the class expression name itself
-			if result.shadowRef != js_ast.InvalidRef {
-				p.mergeSymbols(result.shadowRef, class.Name.Ref)
+			if result.innerClassNameRef != js_ast.InvalidRef {
+				p.mergeSymbols(result.innerClassNameRef, class.Name.Ref)
 			}
 
 			// Remove unused class names when minifying. Check this after we merge in
-			// the shadowing name above since that will adjust the use count.
+			// the inner class name above since that will adjust the use count.
 			if p.options.minifySyntax && symbol.UseCountEstimate == 0 {
 				class.Name = nil
 			}
@@ -2249,18 +2196,12 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 		} else {
 			kind = classKindStmt
 		}
-		nameToKeep = p.symbols[class.Name.Ref.InnerIndex].OriginalName
 	} else {
 		s, _ := stmt.Data.(*js_ast.SExportDefault)
 		s2, _ := s.Value.Data.(*js_ast.SClass)
 		class = &s2.Class
 		defaultName = s.DefaultName
 		kind = classKindExportDefaultStmt
-		if class.Name != nil {
-			nameToKeep = p.symbols[class.Name.Ref.InnerIndex].OriginalName
-		} else {
-			nameToKeep = "default"
-		}
 	}
 	if stmt.Data == nil {
 		classLoc = expr.Loc
@@ -2330,6 +2271,15 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 
 			return name
 		} else {
+			// If anything referenced the inner class name, then we should use that
+			// name for any automatically-generated initialization code, since it
+			// will come before the outer class name is initialized.
+			if result.innerClassNameRef != js_ast.InvalidRef {
+				p.recordUsage(result.innerClassNameRef)
+				return js_ast.Expr{Loc: class.Name.Loc, Data: &js_ast.EIdentifier{Ref: result.innerClassNameRef}}
+			}
+
+			// Otherwise we should just use the outer class name
 			if class.Name == nil {
 				if kind == classKindExportDefaultStmt {
 					class.Name = &defaultName
@@ -2346,13 +2296,42 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 
 	for _, prop := range class.Properties {
 		if prop.Kind == js_ast.PropertyClassStaticBlock {
-			if p.options.unsupportedJSFeatures.Has(compat.ClassStaticBlocks) {
-				if block := *prop.ClassStaticBlock; len(block.Block.Stmts) > 0 {
+			// Drop empty class blocks when minifying
+			if p.options.minifySyntax && len(prop.ClassStaticBlock.Block.Stmts) == 0 {
+				continue
+			}
+
+			if classLoweringInfo.lowerAllStaticFields {
+				block := *prop.ClassStaticBlock
+				isAllExprs := []js_ast.Expr{}
+
+				// Are all statements in the block expression statements?
+			loop:
+				for _, stmt := range block.Block.Stmts {
+					switch s := stmt.Data.(type) {
+					case *js_ast.SEmpty:
+						// Omit stray semicolons completely
+					case *js_ast.SExpr:
+						isAllExprs = append(isAllExprs, s.Value)
+					default:
+						isAllExprs = nil
+						break loop
+					}
+				}
+
+				if isAllExprs != nil {
+					// I think it should be safe to inline the static block IIFE here
+					// since all uses of "this" should have already been replaced by now.
+					staticMembers = append(staticMembers, isAllExprs...)
+				} else {
+					// But if there is a non-expression statement, fall back to using an
+					// IIFE since we may be in an expression context and can't use a block.
 					staticMembers = append(staticMembers, js_ast.Expr{Loc: prop.Loc, Data: &js_ast.ECall{
 						Target: js_ast.Expr{Loc: prop.Loc, Data: &js_ast.EArrow{Body: js_ast.FnBody{
 							Loc:   block.Loc,
 							Block: block.Block,
 						}}},
+						CanBeUnwrappedIfUnused: js_ast.StmtsCanBeRemovedIfUnused(block.Block.Stmts, 0, p.isUnbound),
 					}})
 				}
 				continue
@@ -2362,10 +2341,6 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 			class.Properties[end] = prop
 			end++
 			continue
-		}
-
-		if p.options.keepNames && propertyPreventsKeepNames(&prop) {
-			nameToKeep = ""
 		}
 
 		// Merge parameter decorators with method decorators
@@ -2403,7 +2378,7 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 		private, _ := prop.Key.Data.(*js_ast.EPrivateIdentifier)
 		mustLowerPrivate := private != nil && p.privateSymbolNeedsToBeLowered(private)
 		shouldOmitFieldInitializer := p.options.ts.Parse && !prop.Flags.Has(js_ast.PropertyIsMethod) && prop.InitializerOrNil.Data == nil &&
-			!classLoweringInfo.useDefineForClassFields && !mustLowerPrivate
+			!class.UseDefineForClassFields && !mustLowerPrivate
 
 		// Class fields must be lowered if the environment doesn't support them
 		mustLowerField := false
@@ -2426,24 +2401,27 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 		// Make sure the order of computed property keys doesn't change. These
 		// expressions have side effects and must be evaluated in order.
 		keyExprNoSideEffects := prop.Key
-		if prop.Flags.Has(js_ast.PropertyIsComputed) && (len(prop.Decorators) > 0 ||
-			mustLowerField || computedPropertyCache.Data != nil) {
+		if prop.Flags.Has(js_ast.PropertyIsComputed) &&
+			(len(prop.Decorators) > 0 || mustLowerField || computedPropertyCache.Data != nil) {
 			needsKey := true
 			if len(prop.Decorators) == 0 && (prop.Flags.Has(js_ast.PropertyIsMethod) || shouldOmitFieldInitializer || !mustLowerField) {
 				needsKey = false
 			}
 
-			if !needsKey {
-				// Just evaluate the key for its side effects
-				computedPropertyCache = js_ast.JoinWithComma(computedPropertyCache, prop.Key)
-			} else if _, ok := prop.Key.Data.(*js_ast.EString); !ok {
-				// Store the key in a temporary so we can assign to it later
-				ref := p.generateTempRef(tempRefNeedsDeclare, "")
-				p.recordUsage(ref)
-				computedPropertyCache = js_ast.JoinWithComma(computedPropertyCache,
-					js_ast.Assign(js_ast.Expr{Loc: prop.Key.Loc, Data: &js_ast.EIdentifier{Ref: ref}}, prop.Key))
-				prop.Key = js_ast.Expr{Loc: prop.Key.Loc, Data: &js_ast.EIdentifier{Ref: ref}}
-				keyExprNoSideEffects = prop.Key
+			// Assume all non-string computed keys have important side effects
+			if _, ok := prop.Key.Data.(*js_ast.EString); !ok {
+				if !needsKey {
+					// Just evaluate the key for its side effects
+					computedPropertyCache = js_ast.JoinWithComma(computedPropertyCache, prop.Key)
+				} else {
+					// Store the key in a temporary so we can assign to it later
+					ref := p.generateTempRef(tempRefNeedsDeclare, "")
+					p.recordUsage(ref)
+					computedPropertyCache = js_ast.JoinWithComma(computedPropertyCache,
+						js_ast.Assign(js_ast.Expr{Loc: prop.Key.Loc, Data: &js_ast.EIdentifier{Ref: ref}}, prop.Key))
+					prop.Key = js_ast.Expr{Loc: prop.Key.Loc, Data: &js_ast.EIdentifier{Ref: ref}}
+					keyExprNoSideEffects = prop.Key
+				}
 			}
 
 			// If this is a computed method, the property value will be used
@@ -2556,7 +2534,7 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 						init,
 					})
 					p.recordUsage(ref)
-				} else if private == nil && classLoweringInfo.useDefineForClassFields {
+				} else if private == nil && class.UseDefineForClassFields {
 					var args []js_ast.Expr
 					if _, ok := init.Data.(*js_ast.EUndefined); ok {
 						args = []js_ast.Expr{target, prop.Key}
@@ -2566,7 +2544,6 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 					memberExpr = js_ast.Expr{Loc: loc, Data: &js_ast.ECall{
 						Target: p.importFromRuntime(loc, "__publicField"),
 						Args:   args,
-						Kind:   js_ast.InternalPublicFieldCall,
 					}}
 				} else {
 					if key, ok := prop.Key.Data.(*js_ast.EString); ok && !prop.Flags.Has(js_ast.PropertyIsComputed) && !prop.Flags.Has(js_ast.PropertyPreferQuotedKey) {
@@ -2765,11 +2742,6 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 			nameToJoin = nameFunc()
 		}
 
-		// Optionally preserve the name
-		if p.options.keepNames && nameToKeep != "" {
-			expr = p.keepExprSymbolName(expr, nameToKeep)
-		}
-
 		// Then join "expr" with any other expressions that apply
 		if computedPropertyCache.Data != nil {
 			expr = js_ast.JoinWithComma(expr, computedPropertyCache)
@@ -2794,11 +2766,58 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 		return nil, expr
 	}
 
+	// When bundling is enabled, we convert top-level class statements to
+	// expressions:
+	//
+	//   // Before
+	//   class Foo {
+	//     static foo = () => Foo
+	//   }
+	//   Foo = wrap(Foo)
+	//
+	//   // After
+	//   var _Foo = class _Foo {
+	//     static foo = () => _Foo;
+	//   };
+	//   var Foo = _Foo;
+	//   Foo = wrap(Foo);
+	//
+	// One reason to do this is that esbuild's bundler sometimes needs to lazily-
+	// evaluate a module. For example, a module may end up being both the target
+	// of a dynamic "import()" call and a static "import" statement. Lazy module
+	// evaluation is done by wrapping the top-level module code in a closure. To
+	// avoid a performance hit for static "import" statements, esbuild stores
+	// top-level exported symbols outside of the closure and references them
+	// directly instead of indirectly.
+	//
+	// Another reason to do this is that multiple JavaScript VMs have had and
+	// continue to have performance issues with TDZ (i.e. "temporal dead zone")
+	// checks. These checks validate that a let, or const, or class symbol isn't
+	// used before it's initialized. Here are two issues with well-known VMs:
+	//
+	//   * V8: https://bugs.chromium.org/p/v8/issues/detail?id=13723 (10% slowdown)
+	//   * JavaScriptCore: https://bugs.webkit.org/show_bug.cgi?id=199866 (1,000% slowdown!)
+	//
+	// JavaScriptCore had a severe performance issue as their TDZ implementation
+	// had time complexity that was quadratic in the number of variables needing
+	// TDZ checks in the same scope (with the top-level scope typically being the
+	// worst offender). V8 has ongoing issues with TDZ checks being present
+	// throughout the code their JIT generates even when they have already been
+	// checked earlier in the same function or when the function in question has
+	// already been run (so the checks have already happened).
+	//
+	// Due to esbuild's parallel architecture, we both a) need to transform class
+	// statements to variables during parsing and b) don't yet know whether this
+	// module will need to be lazily-evaluated or not in the parser. So we always
+	// do this just in case it's needed.
+	mustConvertStmtToExpr := p.options.mode == config.ModeBundle && p.currentScope.Parent == nil
+
 	// If this is true, we have removed some code from the class body that could
-	// potentially contain an expression that captures the shadowing class name.
-	// This could lead to incorrect behavior if the class is later re-assigned,
-	// since the removed code would no longer be in the shadowing scope.
-	hasPotentialShadowCaptureEscape := result.shadowRef != js_ast.InvalidRef &&
+	// potentially contain an expression that captures the inner class name.
+	// In this case we must explicitly store the class to a separate inner class
+	// name binding to avoid incorrect behavior if the class is later re-assigned,
+	// since the removed code will no longer be in the class body scope.
+	hasPotentialInnerClassNameEscape := result.innerClassNameRef != js_ast.InvalidRef &&
 		(computedPropertyCache.Data != nil ||
 			len(privateMembers) > 0 ||
 			len(staticPrivateMethods) > 0 ||
@@ -2807,94 +2826,105 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 			len(staticDecorators) > 0 ||
 			len(class.Decorators) > 0)
 
-	// Optionally preserve the name
-	var keepNameStmt js_ast.Stmt
-	if p.options.keepNames && nameToKeep != "" {
-		name := nameFunc()
-		keepNameStmt = p.keepStmtSymbolName(name.Loc, name.Data.(*js_ast.EIdentifier).Ref, nameToKeep)
-	}
-
 	// Pack the class back into a statement, with potentially some extra
 	// statements afterwards
 	var stmts []js_ast.Stmt
+	var outerClassNameDecl js_ast.Stmt
 	var nameForClassDecorators js_ast.LocRef
-	generatedLocalStmt := false
-	if len(class.Decorators) > 0 || hasPotentialShadowCaptureEscape || classLoweringInfo.avoidTDZ {
-		generatedLocalStmt = true
-		name := nameFunc()
-		nameRef := name.Data.(*js_ast.EIdentifier).Ref
-		nameForClassDecorators = js_ast.LocRef{Loc: name.Loc, Ref: nameRef}
+	didGenerateLocalStmt := false
+	if len(class.Decorators) > 0 || hasPotentialInnerClassNameEscape || mustConvertStmtToExpr {
+		didGenerateLocalStmt = true
+
+		// Determine the name to use for decorators
+		if kind == classKindExpr {
+			// For expressions, the inner and outer class names are the same
+			name := nameFunc()
+			nameForClassDecorators = js_ast.LocRef{Loc: name.Loc, Ref: name.Data.(*js_ast.EIdentifier).Ref}
+		} else {
+			// For statements we need to use the outer class name, not the inner one
+			if class.Name != nil {
+				nameForClassDecorators = *class.Name
+			} else if kind == classKindExportDefaultStmt {
+				nameForClassDecorators = defaultName
+			} else {
+				nameForClassDecorators = js_ast.LocRef{Loc: classLoc, Ref: p.generateTempRef(tempRefNoDeclare, "")}
+			}
+			p.recordUsage(nameForClassDecorators.Ref)
+		}
+
 		classExpr := js_ast.EClass{Class: *class}
 		class = &classExpr.Class
 		init := js_ast.Expr{Loc: classLoc, Data: &classExpr}
 
-		if hasPotentialShadowCaptureEscape && len(class.Decorators) == 0 {
-			// If something captures the shadowing name and escapes the class body,
-			// make a new constant to store the class and forward that value to a
-			// mutable alias. That way if the alias is mutated, everything bound to
-			// the original constant doesn't change.
-			//
-			//   class Foo {
-			//     static foo() { return this.#foo() }
-			//     static #foo() { return Foo }
-			//   }
-			//   Foo = class Bar {}
-			//
-			// becomes:
-			//
-			//   var _foo, foo_fn;
-			//   const Foo2 = class {
-			//     static foo() {
-			//       return __privateMethod(this, _foo, foo_fn).call(this);
-			//     }
-			//   };
-			//   let Foo = Foo2;
-			//   _foo = new WeakSet();
-			//   foo_fn = function() {
-			//     return Foo2;
-			//   };
-			//   _foo.add(Foo);
-			//   Foo = class Bar {
-			//   };
-			//
-			// Generate a new symbol instead of using the shadowing name directly
-			// because the shadowing name isn't a top-level symbol and we are now
-			// making a top-level symbol. This symbol must be minified along with
-			// other top-level symbols to avoid name collisions.
-			captureRef := p.newSymbol(js_ast.SymbolOther, p.symbols[result.shadowRef.InnerIndex].OriginalName)
-			p.currentScope.Generated = append(p.currentScope.Generated, captureRef)
-			p.recordDeclaredSymbol(captureRef)
-			p.mergeSymbols(result.shadowRef, captureRef)
-			stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
-				Kind: p.selectLocalKind(js_ast.LocalConst),
-				Decls: []js_ast.Decl{{
-					Binding:    js_ast.Binding{Loc: name.Loc, Data: &js_ast.BIdentifier{Ref: captureRef}},
-					ValueOrNil: init,
-				}},
-			}})
-			init = js_ast.Expr{Loc: classLoc, Data: &js_ast.EIdentifier{Ref: captureRef}}
-			p.recordUsage(captureRef)
+		// If the inner class name was referenced, then set the name of the class
+		// that we will end up printing to the inner class name. Otherwise if the
+		// inner class name was unused, we can just leave it blank.
+		if result.innerClassNameRef != js_ast.InvalidRef {
+			// "class Foo { x = Foo }" => "const Foo = class _Foo { x = _Foo }"
+			class.Name.Ref = result.innerClassNameRef
 		} else {
+			// "class Foo {}" => "const Foo = class {}"
+			class.Name = nil
+		}
+
+		// Generate the class initialization statement
+		if len(class.Decorators) > 0 {
 			// If there are class decorators, then we actually need to mutate the
 			// immutable "const" binding that shadows everything in the class body.
 			// The official TypeScript compiler does this by rewriting all class name
 			// references in the class body to another temporary variable. This is
 			// basically what we're doing here.
-			if result.shadowRef != js_ast.InvalidRef {
-				p.mergeSymbols(result.shadowRef, nameRef)
+			p.recordUsage(nameForClassDecorators.Ref)
+			stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
+				Kind:     p.selectLocalKind(js_ast.LocalLet),
+				IsExport: kind == classKindExportStmt,
+				Decls: []js_ast.Decl{{
+					Binding:    js_ast.Binding{Loc: nameForClassDecorators.Loc, Data: &js_ast.BIdentifier{Ref: nameForClassDecorators.Ref}},
+					ValueOrNil: init,
+				}},
+			}})
+			if class.Name != nil {
+				p.mergeSymbols(class.Name.Ref, nameForClassDecorators.Ref)
+				class.Name = nil
 			}
+		} else if hasPotentialInnerClassNameEscape {
+			// If the inner class name was used, then we explicitly generate a binding
+			// for it. That means the mutable outer class name is separate, and is
+			// initialized after all static member initializers have finished.
+			captureRef := p.newSymbol(js_ast.SymbolOther, p.symbols[result.innerClassNameRef.InnerIndex].OriginalName)
+			p.currentScope.Generated = append(p.currentScope.Generated, captureRef)
+			p.recordDeclaredSymbol(captureRef)
+			p.mergeSymbols(result.innerClassNameRef, captureRef)
+			stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
+				Kind: p.selectLocalKind(js_ast.LocalConst),
+				Decls: []js_ast.Decl{{
+					Binding:    js_ast.Binding{Loc: nameForClassDecorators.Loc, Data: &js_ast.BIdentifier{Ref: captureRef}},
+					ValueOrNil: init,
+				}},
+			}})
+			p.recordUsage(nameForClassDecorators.Ref)
+			p.recordUsage(captureRef)
+			outerClassNameDecl = js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
+				Kind:     p.selectLocalKind(js_ast.LocalLet),
+				IsExport: kind == classKindExportStmt,
+				Decls: []js_ast.Decl{{
+					Binding:    js_ast.Binding{Loc: nameForClassDecorators.Loc, Data: &js_ast.BIdentifier{Ref: nameForClassDecorators.Ref}},
+					ValueOrNil: js_ast.Expr{Loc: classLoc, Data: &js_ast.EIdentifier{Ref: captureRef}},
+				}},
+			}}
+		} else {
+			// Otherwise, the inner class name isn't needed and we can just
+			// use a single variable declaration for the outer class name.
+			p.recordUsage(nameForClassDecorators.Ref)
+			stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
+				Kind:     p.selectLocalKind(js_ast.LocalLet),
+				IsExport: kind == classKindExportStmt,
+				Decls: []js_ast.Decl{{
+					Binding:    js_ast.Binding{Loc: nameForClassDecorators.Loc, Data: &js_ast.BIdentifier{Ref: nameForClassDecorators.Ref}},
+					ValueOrNil: init,
+				}},
+			}})
 		}
-
-		// Generate the variable statement that will represent the class statement
-		stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SLocal{
-			Kind:     p.selectLocalKind(js_ast.LocalLet),
-			IsExport: kind == classKindExportStmt,
-			Decls: []js_ast.Decl{{
-				Binding:    js_ast.Binding{Loc: name.Loc, Data: &js_ast.BIdentifier{Ref: nameRef}},
-				ValueOrNil: init,
-			}},
-		}})
-		p.recordUsage(nameRef)
 	} else {
 		switch kind {
 		case classKindStmt:
@@ -2908,14 +2938,11 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 			}})
 		}
 
-		// The shadowing name inside the class statement should be the same as
+		// The inner class name inside the class statement should be the same as
 		// the class statement name itself
-		if class.Name != nil && result.shadowRef != js_ast.InvalidRef {
-			p.mergeSymbols(result.shadowRef, class.Name.Ref)
+		if class.Name != nil && result.innerClassNameRef != js_ast.InvalidRef {
+			p.mergeSymbols(result.innerClassNameRef, class.Name.Ref)
 		}
-	}
-	if keepNameStmt.Data != nil {
-		stmts = append(stmts, keepNameStmt)
 	}
 
 	// The official TypeScript compiler adds generated code after the class body
@@ -2938,6 +2965,10 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 	for _, expr := range staticDecorators {
 		stmts = append(stmts, js_ast.Stmt{Loc: expr.Loc, Data: &js_ast.SExpr{Value: expr}})
 	}
+	if outerClassNameDecl.Data != nil {
+		// This must come after the class body initializers have finished
+		stmts = append(stmts, outerClassNameDecl)
+	}
 	if len(class.Decorators) > 0 {
 		stmts = append(stmts, js_ast.AssignStmt(
 			js_ast.Expr{Loc: nameForClassDecorators.Loc, Data: &js_ast.EIdentifier{Ref: nameForClassDecorators.Ref}},
@@ -2950,19 +2981,11 @@ func (p *parser) lowerClass(stmt js_ast.Stmt, expr js_ast.Expr, result visitClas
 		p.recordUsage(nameForClassDecorators.Ref)
 		class.Decorators = nil
 	}
-	if generatedLocalStmt {
+	if didGenerateLocalStmt && kind == classKindExportDefaultStmt {
 		// "export default class x {}" => "class x {} export {x as default}"
-		if kind == classKindExportDefaultStmt {
-			stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SExportClause{
-				Items: []js_ast.ClauseItem{{Alias: "default", Name: defaultName}},
-			}})
-		}
-
-		// Calling "nameFunc" will set the class name, but we don't want it to have
-		// one. If the class name was necessary, we would have already split it off
-		// into a variable above. Reset it back to empty here now that we know we
-		// won't call "nameFunc" after this point.
-		class.Name = nil
+		stmts = append(stmts, js_ast.Stmt{Loc: classLoc, Data: &js_ast.SExportClause{
+			Items: []js_ast.ClauseItem{{Alias: "default", Name: defaultName}},
+		}})
 	}
 	return stmts, js_ast.Expr{}
 }
@@ -3241,13 +3264,13 @@ func (p *parser) shouldLowerSuperPropertyAccess(expr js_ast.Expr) bool {
 }
 
 func (p *parser) callSuperPropertyWrapper(loc logger.Loc, key js_ast.Expr) js_ast.Expr {
-	ref := *p.fnOnlyDataVisit.classNameRef
+	ref := *p.fnOnlyDataVisit.innerClassNameRef
 	p.recordUsage(ref)
 	class := js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: ref}}
 	this := js_ast.Expr{Loc: loc, Data: js_ast.EThisShared}
 
 	// Handle "this" in lowered static class field initializers
-	if p.fnOnlyDataVisit.shouldReplaceThisWithClassNameRef {
+	if p.fnOnlyDataVisit.shouldReplaceThisWithInnerClassNameRef {
 		p.recordUsage(ref)
 		this.Data = &js_ast.EIdentifier{Ref: ref}
 	}
@@ -3266,13 +3289,13 @@ func (p *parser) callSuperPropertyWrapper(loc logger.Loc, key js_ast.Expr) js_as
 }
 
 func (p *parser) lowerSuperPropertyGet(loc logger.Loc, key js_ast.Expr) js_ast.Expr {
-	ref := *p.fnOnlyDataVisit.classNameRef
+	ref := *p.fnOnlyDataVisit.innerClassNameRef
 	p.recordUsage(ref)
 	class := js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: ref}}
 	this := js_ast.Expr{Loc: loc, Data: js_ast.EThisShared}
 
 	// Handle "this" in lowered static class field initializers
-	if p.fnOnlyDataVisit.shouldReplaceThisWithClassNameRef {
+	if p.fnOnlyDataVisit.shouldReplaceThisWithInnerClassNameRef {
 		p.recordUsage(ref)
 		this.Data = &js_ast.EIdentifier{Ref: ref}
 	}
@@ -3293,13 +3316,13 @@ func (p *parser) lowerSuperPropertyGet(loc logger.Loc, key js_ast.Expr) js_ast.E
 func (p *parser) lowerSuperPropertySet(loc logger.Loc, key js_ast.Expr, value js_ast.Expr) js_ast.Expr {
 	// "super.foo = bar" => "__superSet(Class, this, 'foo', bar)"
 	// "super[foo] = bar" => "__superSet(Class, this, foo, bar)"
-	ref := *p.fnOnlyDataVisit.classNameRef
+	ref := *p.fnOnlyDataVisit.innerClassNameRef
 	p.recordUsage(ref)
 	class := js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: ref}}
 	this := js_ast.Expr{Loc: loc, Data: js_ast.EThisShared}
 
 	// Handle "this" in lowered static class field initializers
-	if p.fnOnlyDataVisit.shouldReplaceThisWithClassNameRef {
+	if p.fnOnlyDataVisit.shouldReplaceThisWithInnerClassNameRef {
 		p.recordUsage(ref)
 		this.Data = &js_ast.EIdentifier{Ref: ref}
 	}

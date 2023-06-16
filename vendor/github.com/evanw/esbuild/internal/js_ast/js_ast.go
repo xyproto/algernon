@@ -337,6 +337,9 @@ type Fn struct {
 	HasRestArg  bool
 	HasIfScope  bool
 
+	// See: https://github.com/rollup/rollup/pull/5024
+	HasNoSideEffectsComment bool
+
 	// This is true if the function is a method
 	IsUniqueFormalParameters bool
 }
@@ -354,6 +357,28 @@ type Class struct {
 	ClassKeyword  logger.Range
 	BodyLoc       logger.Loc
 	CloseBraceLoc logger.Loc
+
+	// If true, property field initializers cannot be assumed to have no side
+	// effects. For example:
+	//
+	//   class Foo {
+	//     static set foo(x) { importantSideEffect(x) }
+	//   }
+	//   class Bar extends Foo {
+	//     foo = 1
+	//   }
+	//
+	// This happens in TypeScript when "useDefineForClassFields" is disabled
+	// because TypeScript (and esbuild) transforms the above class into this:
+	//
+	//   class Foo {
+	//     static set foo(x) { importantSideEffect(x); }
+	//   }
+	//   class Bar extends Foo {
+	//   }
+	//   Bar.foo = 1;
+	//
+	UseDefineForClassFields bool
 }
 
 type ArrayBinding struct {
@@ -433,6 +458,7 @@ func (*EString) isExpr()               {}
 func (*ETemplate) isExpr()             {}
 func (*ERegExp) isExpr()               {}
 func (*EInlinedEnum) isExpr()          {}
+func (*EAnnotation) isExpr()           {}
 func (*EAwait) isExpr()                {}
 func (*EYield) isExpr()                {}
 func (*EIf) isExpr()                   {}
@@ -516,12 +542,13 @@ type EImportMeta struct {
 // These help reduce unnecessary memory allocations
 var BMissingShared = &BMissing{}
 var EMissingShared = &EMissing{}
-var ESuperShared = &ESuper{}
 var ENullShared = &ENull{}
-var EUndefinedShared = &EUndefined{}
+var ESuperShared = &ESuper{}
 var EThisShared = &EThis{}
-var SEmptyShared = &SEmpty{}
+var EUndefinedShared = &EUndefined{}
 var SDebuggerShared = &SDebugger{}
+var SEmptyShared = &SEmpty{}
+var STypeScriptShared = &STypeScript{}
 
 type ENew struct {
 	Target Expr
@@ -541,7 +568,6 @@ const (
 	NormalCall CallKind = iota
 	DirectEval
 	TargetWasOriginallyPropertyAccess
-	InternalPublicFieldCall
 )
 
 type OptionalChain uint8
@@ -634,6 +660,9 @@ type EArrow struct {
 	IsAsync    bool
 	HasRestArg bool
 	PreferExpr bool // Use shorthand if true and "Body" is a single return statement
+
+	// See: https://github.com/rollup/rollup/pull/5024
+	HasNoSideEffectsComment bool
 }
 
 type EFunction struct{ Fn Fn }
@@ -699,7 +728,8 @@ type EPrivateIdentifier struct {
 // This represents an internal property name that can be mangled. The symbol
 // referenced by this expression should be a "SymbolMangledProp" symbol.
 type EMangledProp struct {
-	Ref Ref
+	Ref                   Ref
+	HasPropertyKeyComment bool // If true, a preceding comment contains "@__KEY__"
 }
 
 type EJSXElement struct {
@@ -746,9 +776,10 @@ type ESpread struct{ Value Expr }
 // This is used for both strings and no-substitution template literals to reduce
 // the number of cases that need to be checked for string optimization code
 type EString struct {
-	Value          []uint16
-	LegacyOctalLoc logger.Loc
-	PreferTemplate bool
+	Value                 []uint16
+	LegacyOctalLoc        logger.Loc
+	PreferTemplate        bool
+	HasPropertyKeyComment bool // If true, a preceding comment contains "@__KEY__"
 }
 
 type TemplatePart struct {
@@ -780,6 +811,24 @@ type ERegExp struct{ Value string }
 type EInlinedEnum struct {
 	Value   Expr
 	Comment string
+}
+
+type AnnotationFlags uint8
+
+const (
+	// This is sort of like an IIFE with a "/* @__PURE__ */" comment except it's an
+	// inline annotation on an expression itself without the nested scope. Sometimes
+	// we can't easily introduce a new scope (e.g. if the expression uses "await").
+	CanBeRemovedIfUnusedFlag AnnotationFlags = 1 << iota
+)
+
+func (flags AnnotationFlags) Has(flag AnnotationFlags) bool {
+	return (flags & flag) != 0
+}
+
+type EAnnotation struct {
+	Value Expr
+	Flags AnnotationFlags
 }
 
 type EAwait struct {
@@ -929,10 +978,13 @@ type SLazyExport struct {
 type SExpr struct {
 	Value Expr
 
-	// This is set to true for automatically-generated expressions that should
-	// not affect tree shaking. For example, calling a function from the runtime
-	// that doesn't have externally-visible side effects.
-	DoesNotAffectTreeShaking bool
+	// This is set to true for automatically-generated expressions that are part
+	// of class syntax lowering. A single class declaration may end up with many
+	// generated expressions after it (e.g. class field initializations, a call
+	// to keep the original value of the "name" property). When this happens we
+	// can't tell that the class is side-effect free anymore because all of these
+	// methods mutate the class. We use this annotation for that instead.
+	IsFromClassOrFnThatCanBeRemovedIfUnused bool
 }
 
 type EnumValue struct {
@@ -1178,6 +1230,9 @@ const (
 	// Classes can merge with TypeScript namespaces.
 	SymbolClass
 
+	// Class names are not allowed to be referenced by computed property keys
+	SymbolClassInComputedPropertyKey
+
 	// A class-private identifier (i.e. "#foo").
 	SymbolPrivateField
 	SymbolPrivateMethod
@@ -1388,6 +1443,10 @@ const (
 	// This means the symbol is a normal function that takes a single argument
 	// and returns that argument.
 	IsIdentityFunction
+
+	// If true, calls to this symbol can be unwrapped (i.e. removed except for
+	// argument side effects) if the result is unused.
+	CallCanBeUnwrappedIfUnused
 )
 
 func (flags SymbolFlags) Has(flag SymbolFlags) bool {

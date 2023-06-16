@@ -270,7 +270,16 @@ type OnDemandConfig struct {
 	// request will be denied.
 	DecisionFunc func(name string) error
 
-	// List of whitelisted hostnames (SNI values) for
+	// Sources for getting new, unmanaged certificates.
+	// They will be invoked only during TLS handshakes
+	// before on-demand certificate management occurs,
+	// for certificates that are not already loaded into
+	// the in-memory cache.
+	//
+	// TODO: EXPERIMENTAL: subject to change and/or removal.
+	Managers []Manager
+
+	// List of allowed hostnames (SNI values) for
 	// deferred (on-demand) obtaining of certificates.
 	// Used only by higher-level functions in this
 	// package to persist the list of hostnames that
@@ -282,15 +291,15 @@ type OnDemandConfig struct {
 	// for higher-level convenience functions to be
 	// able to retain their convenience (alternative
 	// is: the user manually creates a DecisionFunc
-	// that whitelists the same names it already
-	// passed into Manage) and without letting clients
-	// have their run of any domain names they want.
+	// that allows the same names it already passed
+	// into Manage) and without letting clients have
+	// their run of any domain names they want.
 	// Only enforced if len > 0.
-	hostWhitelist []string
+	hostAllowlist []string
 }
 
-func (o *OnDemandConfig) whitelistContains(name string) bool {
-	for _, n := range o.hostWhitelist {
+func (o *OnDemandConfig) allowlistContains(name string) bool {
+	for _, n := range o.hostAllowlist {
 		if strings.EqualFold(n, name) {
 			return true
 		}
@@ -433,7 +442,7 @@ type CertificateResource struct {
 
 	// The unique string identifying the issuer of the
 	// certificate; internally useful for storage access.
-	issuerKey string `json:"-"`
+	issuerKey string
 }
 
 // NamesKey returns the list of SANs as a single string,

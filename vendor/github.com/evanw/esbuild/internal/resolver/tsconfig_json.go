@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/evanw/esbuild/internal/cache"
-	"github.com/evanw/esbuild/internal/compat"
 	"github.com/evanw/esbuild/internal/config"
 	"github.com/evanw/esbuild/internal/helpers"
 	"github.com/evanw/esbuild/internal/js_ast"
@@ -35,17 +34,32 @@ type TSConfigJSON struct {
 	// "baseUrl" value in the "tsconfig.json" file.
 	Paths *TSConfigPaths
 
-	TSTarget                       *config.TSTarget
-	TSStrict                       *config.TSAlwaysStrict
-	TSAlwaysStrict                 *config.TSAlwaysStrict
-	JSX                            config.TSJSX
-	JSXFactory                     []string
-	JSXFragmentFactory             []string
-	JSXImportSource                string
-	ModuleSuffixes                 []string
-	UseDefineForClassFields        config.MaybeBool
-	PreserveImportsNotUsedAsValues bool
-	PreserveValueImports           bool
+	tsTargetKey    tsTargetKey
+	TSStrict       *config.TSAlwaysStrict
+	TSAlwaysStrict *config.TSAlwaysStrict
+	JSXSettings    config.TSConfigJSX
+	Settings       config.TSConfig
+}
+
+func (derived *TSConfigJSON) applyExtendedConfig(base TSConfigJSON) {
+	if base.tsTargetKey.Range.Len > 0 {
+		derived.tsTargetKey = base.tsTargetKey
+	}
+	if base.TSStrict != nil {
+		derived.TSStrict = base.TSStrict
+	}
+	if base.TSAlwaysStrict != nil {
+		derived.TSAlwaysStrict = base.TSAlwaysStrict
+	}
+	if base.BaseURL != nil {
+		derived.BaseURL = base.BaseURL
+	}
+	if base.Paths != nil {
+		derived.Paths = base.Paths
+		derived.BaseURLForPaths = base.BaseURLForPaths
+	}
+	derived.JSXSettings.ApplyExtendedConfig(base.JSXSettings)
+	derived.Settings.ApplyExtendedConfig(base.Settings)
 }
 
 func (config *TSConfigJSON) TSAlwaysStrictOrStrict() *config.TSAlwaysStrict {
@@ -55,6 +69,13 @@ func (config *TSConfigJSON) TSAlwaysStrictOrStrict() *config.TSAlwaysStrict {
 
 	// If "alwaysStrict" is absent, it defaults to "strict" instead
 	return config.TSStrict
+}
+
+// This information is only used for error messages
+type tsTargetKey struct {
+	LowerValue string
+	Source     logger.Source
+	Range      logger.Range
 }
 
 type TSConfigPath struct {
@@ -98,7 +119,15 @@ func ParseTSConfigJSON(
 		if valueJSON, _, ok := getProperty(json, "extends"); ok {
 			if value, ok := getString(valueJSON); ok {
 				if base := extends(value, source.RangeOfString(valueJSON.Loc)); base != nil {
-					result = *base
+					result.applyExtendedConfig(*base)
+				}
+			} else if array, ok := valueJSON.Data.(*js_ast.EArray); ok {
+				for _, item := range array.Items {
+					if str, ok := getString(item); ok {
+						if base := extends(str, source.RangeOfString(item.Loc)); base != nil {
+							result.applyExtendedConfig(*base)
+						}
+					}
 				}
 			}
 		}
@@ -117,16 +146,16 @@ func ParseTSConfigJSON(
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "jsx"); ok {
 			if value, ok := getString(valueJSON); ok {
 				switch strings.ToLower(value) {
-				case "none":
-					result.JSX = config.TSJSXNone
-				case "preserve", "react-native":
-					result.JSX = config.TSJSXPreserve
+				case "preserve":
+					result.JSXSettings.JSX = config.TSJSXPreserve
+				case "react-native":
+					result.JSXSettings.JSX = config.TSJSXReactNative
 				case "react":
-					result.JSX = config.TSJSXReact
+					result.JSXSettings.JSX = config.TSJSXReact
 				case "react-jsx":
-					result.JSX = config.TSJSXReactJSX
+					result.JSXSettings.JSX = config.TSJSXReactJSX
 				case "react-jsxdev":
-					result.JSX = config.TSJSXReactJSXDev
+					result.JSXSettings.JSX = config.TSJSXReactJSXDev
 				}
 			}
 		}
@@ -134,36 +163,31 @@ func ParseTSConfigJSON(
 		// Parse "jsxFactory"
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "jsxFactory"); ok {
 			if value, ok := getString(valueJSON); ok {
-				result.JSXFactory = parseMemberExpressionForJSX(log, &source, &tracker, valueJSON.Loc, value)
+				result.JSXSettings.JSXFactory = parseMemberExpressionForJSX(log, &source, &tracker, valueJSON.Loc, value)
 			}
 		}
 
 		// Parse "jsxFragmentFactory"
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "jsxFragmentFactory"); ok {
 			if value, ok := getString(valueJSON); ok {
-				result.JSXFragmentFactory = parseMemberExpressionForJSX(log, &source, &tracker, valueJSON.Loc, value)
+				result.JSXSettings.JSXFragmentFactory = parseMemberExpressionForJSX(log, &source, &tracker, valueJSON.Loc, value)
 			}
 		}
 
 		// Parse "jsxImportSource"
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "jsxImportSource"); ok {
 			if value, ok := getString(valueJSON); ok {
-				result.JSXImportSource = value
+				result.JSXSettings.JSXImportSource = &value
 			}
 		}
 
-		// Parse "moduleSuffixes"
-		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "moduleSuffixes"); ok {
-			if value, ok := valueJSON.Data.(*js_ast.EArray); ok {
-				result.ModuleSuffixes = make([]string, 0, len(value.Items))
-				for _, item := range value.Items {
-					if str, ok := item.Data.(*js_ast.EString); ok {
-						result.ModuleSuffixes = append(result.ModuleSuffixes, helpers.UTF16ToString(str.Value))
-					} else {
-						log.AddID(logger.MsgID_TsconfigJSON_InvalidModuleSuffixes, logger.Warning, &tracker, logger.Range{Loc: item.Loc}, "Expected module suffix to be a string")
-						result.ModuleSuffixes = nil
-						break
-					}
+		// Parse "experimentalDecorators"
+		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "experimentalDecorators"); ok {
+			if value, ok := getBool(valueJSON); ok {
+				if value {
+					result.Settings.ExperimentalDecorators = config.True
+				} else {
+					result.Settings.ExperimentalDecorators = config.False
 				}
 			}
 		}
@@ -172,60 +196,38 @@ func ParseTSConfigJSON(
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "useDefineForClassFields"); ok {
 			if value, ok := getBool(valueJSON); ok {
 				if value {
-					result.UseDefineForClassFields = config.True
+					result.Settings.UseDefineForClassFields = config.True
 				} else {
-					result.UseDefineForClassFields = config.False
+					result.Settings.UseDefineForClassFields = config.False
 				}
 			}
 		}
 
 		// Parse "target"
-		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "target"); ok {
+		if valueJSON, keyLoc, ok := getProperty(compilerOptionsJSON, "target"); ok {
 			if value, ok := getString(valueJSON); ok {
-				constraints := make(map[compat.Engine][]int)
-				r := source.RangeOfString(valueJSON.Loc)
+				lowerValue := strings.ToLower(value)
 				ok := true
 
 				// See https://www.typescriptlang.org/tsconfig#target
-				targetIsAtLeastES2022 := false
-				switch strings.ToLower(value) {
-				case "es5":
-					constraints[compat.ES] = []int{5}
-				case "es6", "es2015":
-					constraints[compat.ES] = []int{2015}
-				case "es2016":
-					constraints[compat.ES] = []int{2016}
-				case "es2017":
-					constraints[compat.ES] = []int{2017}
-				case "es2018":
-					constraints[compat.ES] = []int{2018}
-				case "es2019":
-					constraints[compat.ES] = []int{2019}
-				case "es2020":
-					constraints[compat.ES] = []int{2020}
-				case "es2021":
-					constraints[compat.ES] = []int{2021}
-				case "es2022":
-					constraints[compat.ES] = []int{2022}
-					targetIsAtLeastES2022 = true
-				case "esnext":
-					targetIsAtLeastES2022 = true
+				switch lowerValue {
+				case "es3", "es5", "es6", "es2015", "es2016", "es2017", "es2018", "es2019", "es2020", "es2021":
+					result.Settings.Target = config.TSTargetBelowES2022
+				case "es2022", "esnext":
+					result.Settings.Target = config.TSTargetAtOrAboveES2022
 				default:
 					ok = false
 					if !helpers.IsInsideNodeModules(source.KeyPath.Text) {
-						log.AddID(logger.MsgID_TsconfigJSON_InvalidTarget, logger.Warning, &tracker, r,
+						log.AddID(logger.MsgID_TSConfigJSON_InvalidTarget, logger.Warning, &tracker, source.RangeOfString(valueJSON.Loc),
 							fmt.Sprintf("Unrecognized target environment %q", value))
 					}
 				}
 
-				// These feature restrictions are merged with esbuild's own restrictions
 				if ok {
-					result.TSTarget = &config.TSTarget{
-						Source:                source,
-						Range:                 r,
-						Target:                value,
-						UnsupportedJSFeatures: compat.UnsupportedJSFeatures(constraints),
-						TargetIsAtLeastES2022: targetIsAtLeastES2022,
+					result.tsTargetKey = tsTargetKey{
+						Source:     source,
+						Range:      source.RangeOfString(keyLoc),
+						LowerValue: lowerValue,
 					}
 				}
 			}
@@ -261,13 +263,14 @@ func ParseTSConfigJSON(
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "importsNotUsedAsValues"); ok {
 			if value, ok := getString(valueJSON); ok {
 				switch value {
-				case "preserve", "error":
-					result.PreserveImportsNotUsedAsValues = true
 				case "remove":
-					// Clear away any inherited values from the base config
-					result.PreserveImportsNotUsedAsValues = false
+					result.Settings.ImportsNotUsedAsValues = config.TSImportsNotUsedAsValues_Remove
+				case "preserve":
+					result.Settings.ImportsNotUsedAsValues = config.TSImportsNotUsedAsValues_Preserve
+				case "error":
+					result.Settings.ImportsNotUsedAsValues = config.TSImportsNotUsedAsValues_Error
 				default:
-					log.AddID(logger.MsgID_TsconfigJSON_InvalidImportsNotUsedAsValues, logger.Warning, &tracker, source.RangeOfString(valueJSON.Loc),
+					log.AddID(logger.MsgID_TSConfigJSON_InvalidImportsNotUsedAsValues, logger.Warning, &tracker, source.RangeOfString(valueJSON.Loc),
 						fmt.Sprintf("Invalid value %q for \"importsNotUsedAsValues\"", value))
 				}
 			}
@@ -276,7 +279,22 @@ func ParseTSConfigJSON(
 		// Parse "preserveValueImports"
 		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "preserveValueImports"); ok {
 			if value, ok := getBool(valueJSON); ok {
-				result.PreserveValueImports = value
+				if value {
+					result.Settings.PreserveValueImports = config.True
+				} else {
+					result.Settings.PreserveValueImports = config.False
+				}
+			}
+		}
+
+		// Parse "verbatimModuleSyntax"
+		if valueJSON, _, ok := getProperty(compilerOptionsJSON, "verbatimModuleSyntax"); ok {
+			if value, ok := getBool(valueJSON); ok {
+				if value {
+					result.Settings.VerbatimModuleSyntax = config.True
+				} else {
+					result.Settings.VerbatimModuleSyntax = config.False
+				}
 			}
 		}
 
@@ -326,7 +344,7 @@ func ParseTSConfigJSON(
 								}
 							}
 						} else {
-							log.AddID(logger.MsgID_TsconfigJSON_InvalidPaths, logger.Warning, &tracker, source.RangeOfString(prop.ValueOrNil.Loc), fmt.Sprintf(
+							log.AddID(logger.MsgID_TSConfigJSON_InvalidPaths, logger.Warning, &tracker, source.RangeOfString(prop.ValueOrNil.Loc), fmt.Sprintf(
 								"Substitutions for pattern %q should be an array", key))
 						}
 					}
@@ -346,7 +364,7 @@ func parseMemberExpressionForJSX(log logger.Log, source *logger.Source, tracker 
 	for _, part := range parts {
 		if !js_ast.IsIdentifier(part) {
 			warnRange := source.RangeOfString(loc)
-			log.AddID(logger.MsgID_TsconfigJSON_InvalidJSX, logger.Warning, tracker, warnRange, fmt.Sprintf("Invalid JSX member expression: %q", text))
+			log.AddID(logger.MsgID_TSConfigJSON_InvalidJSX, logger.Warning, tracker, warnRange, fmt.Sprintf("Invalid JSX member expression: %q", text))
 			return nil
 		}
 	}
@@ -359,7 +377,7 @@ func isValidTSConfigPathPattern(text string, log logger.Log, source *logger.Sour
 		if text[i] == '*' {
 			if foundAsterisk {
 				r := source.RangeOfString(loc)
-				log.AddID(logger.MsgID_TsconfigJSON_InvalidPaths, logger.Warning, tracker, r, fmt.Sprintf(
+				log.AddID(logger.MsgID_TSConfigJSON_InvalidPaths, logger.Warning, tracker, r, fmt.Sprintf(
 					"Invalid pattern %q, must have at most one \"*\" character", text))
 				return false
 			}
@@ -414,7 +432,7 @@ func isValidTSConfigPathNoBaseURLPattern(text string, log logger.Log, source *lo
 		t := logger.MakeLineColumnTracker(source)
 		*tracker = &t
 	}
-	log.AddID(logger.MsgID_TsconfigJSON_InvalidPaths, logger.Warning, *tracker, r, fmt.Sprintf(
+	log.AddID(logger.MsgID_TSConfigJSON_InvalidPaths, logger.Warning, *tracker, r, fmt.Sprintf(
 		"Non-relative path %q is not allowed when \"baseUrl\" is not set (did you forget a leading \"./\"?)", text))
 	return false
 }

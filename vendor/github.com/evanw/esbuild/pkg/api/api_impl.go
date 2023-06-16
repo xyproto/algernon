@@ -291,14 +291,13 @@ func validateEngine(value EngineName) compat.Engine {
 var versionRegex = regexp.MustCompile(`^([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?$`)
 var preReleaseVersionRegex = regexp.MustCompile(`^([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?-`)
 
-func validateFeatures(log logger.Log, target Target, engines []Engine) (config.TargetFromAPI, compat.JSFeature, compat.CSSFeature, string) {
+func validateFeatures(log logger.Log, target Target, engines []Engine) (compat.JSFeature, compat.CSSFeature, string) {
 	if target == DefaultTarget && len(engines) == 0 {
-		return config.TargetWasUnconfigured, 0, 0, ""
+		return 0, 0, ""
 	}
 
 	constraints := make(map[compat.Engine][]int)
 	targets := make([]string, 0, 1+len(engines))
-	targetFromAPI := config.TargetWasConfigured
 
 	switch target {
 	case ES5:
@@ -319,10 +318,7 @@ func validateFeatures(log logger.Log, target Target, engines []Engine) (config.T
 		constraints[compat.ES] = []int{2021}
 	case ES2022:
 		constraints[compat.ES] = []int{2022}
-		targetFromAPI = config.TargetWasConfiguredAndAtLeastES2022
-	case ESNext:
-		targetFromAPI = config.TargetWasConfiguredAndAtLeastES2022
-	case DefaultTarget:
+	case ESNext, DefaultTarget:
 	default:
 		panic("Invalid target")
 	}
@@ -366,11 +362,14 @@ func validateFeatures(log logger.Log, target Target, engines []Engine) (config.T
 		}
 		targets = append(targets, text)
 	}
+	if target == ESNext {
+		targets = append(targets, "esnext")
+	}
 
 	sort.Strings(targets)
 	targetEnv := helpers.StringArrayToQuotedCommaSeparatedString(targets)
 
-	return targetFromAPI, compat.UnsupportedJSFeatures(constraints), compat.UnsupportedCSSFeatures(constraints), targetEnv
+	return compat.UnsupportedJSFeatures(constraints), compat.UnsupportedCSSFeatures(constraints), targetEnv
 }
 
 func validateSupported(log logger.Log, supported map[string]bool) (
@@ -1244,7 +1243,7 @@ func validateBuildOptions(
 	options config.Options,
 	entryPoints []bundler.EntryPoint,
 ) {
-	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, buildOpts.Target, buildOpts.Engines)
+	jsFeatures, cssFeatures, targetEnv := validateFeatures(log, buildOpts.Target, buildOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, buildOpts.Supported)
 	outJS, outCSS := validateOutputExtensions(log, buildOpts.OutExtension)
 	bannerJS, bannerCSS := validateBannerOrFooter(log, "banner", buildOpts.Banner)
@@ -1253,7 +1252,6 @@ func validateBuildOptions(
 	platform := validatePlatform(buildOpts.Platform)
 	defines, injectedDefines := validateDefines(log, buildOpts.Define, buildOpts.Pure, platform, true /* isBuildAPI */, minify, buildOpts.Drop)
 	options = config.Options{
-		TargetFromAPI:                      targetFromAPI,
 		UnsupportedJSFeatures:              jsFeatures.ApplyOverrides(jsOverrides, jsMask),
 		UnsupportedCSSFeatures:             cssFeatures.ApplyOverrides(cssOverrides, cssMask),
 		UnsupportedJSFeatureOverrides:      jsOverrides,
@@ -1305,7 +1303,8 @@ func validateBuildOptions(
 		ExternalSettings:      validateExternals(log, realFS, buildOpts.External),
 		ExternalPackages:      buildOpts.Packages == PackagesExternal,
 		PackageAliases:        validateAlias(log, realFS, buildOpts.Alias),
-		TsConfigOverride:      validatePath(log, realFS, buildOpts.Tsconfig, "tsconfig path"),
+		TSConfigPath:          validatePath(log, realFS, buildOpts.Tsconfig, "tsconfig path"),
+		TSConfigRaw:           buildOpts.TsconfigRaw,
 		MainFields:            buildOpts.MainFields,
 		PublicPath:            buildOpts.PublicPath,
 		KeepNames:             buildOpts.KeepNames,
@@ -1418,6 +1417,11 @@ func validateBuildOptions(
 		log.AddError(nil, logger.Range{}, "Splitting currently only works with the \"esm\" format")
 	}
 
+	// Code splitting is experimental and currently only enabled for ES6 modules
+	if options.TSConfigPath != "" && options.TSConfigRaw != "" {
+		log.AddError(nil, logger.Range{}, "Cannot provide \"tsconfig\" as both a raw string and a path")
+	}
+
 	// If we aren't writing the output to the file system, then we can allow the
 	// output paths to be the same as the input paths. This helps when serving.
 	if !buildOpts.Write {
@@ -1480,7 +1484,7 @@ func rebuildImpl(args rebuildArgs, oldSummary buildSummary) rebuildState {
 	}
 
 	// Scan over the bundle
-	bundle := bundler.ScanBundle(log, realFS, args.caches, args.entryPoints, args.options, timer)
+	bundle := bundler.ScanBundle(config.BuildCall, log, realFS, args.caches, args.entryPoints, args.options, timer)
 	watchData = realFS.WatchData()
 
 	// The new build summary remains the same as the old one when there are
@@ -1670,54 +1674,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		LogLevel:      validateLogLevel(transformOpts.LogLevel),
 		Overrides:     validateLogOverrides(transformOpts.LogOverride),
 	})
-
-	// Settings from the user come first
-	var unusedImportFlagsTS config.UnusedImportFlagsTS
-	useDefineForClassFieldsTS := config.Unspecified
-	jsx := config.JSXOptions{
-		Preserve:         transformOpts.JSX == JSXPreserve,
-		AutomaticRuntime: transformOpts.JSX == JSXAutomatic,
-		Factory:          validateJSXExpr(log, transformOpts.JSXFactory, "factory"),
-		Fragment:         validateJSXExpr(log, transformOpts.JSXFragment, "fragment"),
-		Development:      transformOpts.JSXDev,
-		ImportSource:     transformOpts.JSXImportSource,
-		SideEffects:      transformOpts.JSXSideEffects,
-	}
-
-	// Settings from "tsconfig.json" override those
-	var tsTarget *config.TSTarget
-	var tsAlwaysStrict *config.TSAlwaysStrict
 	caches := cache.MakeCacheSet()
-	if transformOpts.TsconfigRaw != "" {
-		source := logger.Source{
-			KeyPath:    logger.Path{Text: "tsconfig.json"},
-			PrettyPath: "tsconfig.json",
-			Contents:   transformOpts.TsconfigRaw,
-		}
-		if result := resolver.ParseTSConfigJSON(log, source, &caches.JSONCache, nil); result != nil {
-			if result.JSX != config.TSJSXNone {
-				jsx.SetOptionsFromTSJSX(result.JSX)
-			}
-			if len(result.JSXFactory) > 0 {
-				jsx.Factory = config.DefineExpr{Parts: result.JSXFactory}
-			}
-			if len(result.JSXFragmentFactory) > 0 {
-				jsx.Fragment = config.DefineExpr{Parts: result.JSXFragmentFactory}
-			}
-			if len(result.JSXImportSource) > 0 {
-				jsx.ImportSource = result.JSXImportSource
-			}
-			if result.UseDefineForClassFields != config.Unspecified {
-				useDefineForClassFieldsTS = result.UseDefineForClassFields
-			}
-			unusedImportFlagsTS = config.UnusedImportFlagsFromTsconfigValues(
-				result.PreserveImportsNotUsedAsValues,
-				result.PreserveValueImports,
-			)
-			tsTarget = result.TSTarget
-			tsAlwaysStrict = result.TSAlwaysStrictOrStrict()
-		}
-	}
 
 	// Apply default values
 	if transformOpts.Sourcefile == "" {
@@ -1728,13 +1685,12 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 	}
 
 	// Convert and validate the transformOpts
-	targetFromAPI, jsFeatures, cssFeatures, targetEnv := validateFeatures(log, transformOpts.Target, transformOpts.Engines)
+	jsFeatures, cssFeatures, targetEnv := validateFeatures(log, transformOpts.Target, transformOpts.Engines)
 	jsOverrides, jsMask, cssOverrides, cssMask := validateSupported(log, transformOpts.Supported)
 	platform := validatePlatform(transformOpts.Platform)
 	defines, injectedDefines := validateDefines(log, transformOpts.Define, transformOpts.Pure, platform, false /* isBuildAPI */, false /* minify */, transformOpts.Drop)
 	mangleCache := cloneMangleCache(log, transformOpts.MangleCache)
 	options := config.Options{
-		TargetFromAPI:                      targetFromAPI,
 		UnsupportedJSFeatures:              jsFeatures.ApplyOverrides(jsOverrides, jsMask),
 		UnsupportedCSSFeatures:             cssFeatures.ApplyOverrides(cssOverrides, cssMask),
 		UnsupportedJSFeatureOverrides:      jsOverrides,
@@ -1742,32 +1698,37 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		UnsupportedCSSFeatureOverrides:     cssOverrides,
 		UnsupportedCSSFeatureOverridesMask: cssMask,
 		OriginalTargetEnv:                  targetEnv,
-		TSTarget:                           tsTarget,
-		TSAlwaysStrict:                     tsAlwaysStrict,
-		JSX:                                jsx,
-		Defines:                            defines,
-		InjectedDefines:                    injectedDefines,
-		Platform:                           platform,
-		SourceMap:                          validateSourceMap(transformOpts.Sourcemap),
-		LegalComments:                      validateLegalComments(transformOpts.LegalComments, false /* bundle */),
-		SourceRoot:                         transformOpts.SourceRoot,
-		ExcludeSourcesContent:              transformOpts.SourcesContent == SourcesContentExclude,
-		OutputFormat:                       validateFormat(transformOpts.Format),
-		GlobalName:                         validateGlobalName(log, transformOpts.GlobalName),
-		MinifySyntax:                       transformOpts.MinifySyntax,
-		MinifyWhitespace:                   transformOpts.MinifyWhitespace,
-		MinifyIdentifiers:                  transformOpts.MinifyIdentifiers,
-		MangleProps:                        validateRegex(log, "mangle props", transformOpts.MangleProps),
-		ReserveProps:                       validateRegex(log, "reserve props", transformOpts.ReserveProps),
-		MangleQuoted:                       transformOpts.MangleQuoted == MangleQuotedTrue,
-		DropDebugger:                       (transformOpts.Drop & DropDebugger) != 0,
-		ASCIIOnly:                          validateASCIIOnly(transformOpts.Charset),
-		IgnoreDCEAnnotations:               transformOpts.IgnoreAnnotations,
-		TreeShaking:                        validateTreeShaking(transformOpts.TreeShaking, false /* bundle */, transformOpts.Format),
-		AbsOutputFile:                      transformOpts.Sourcefile + "-out",
-		KeepNames:                          transformOpts.KeepNames,
-		UseDefineForClassFields:            useDefineForClassFieldsTS,
-		UnusedImportFlagsTS:                unusedImportFlagsTS,
+		TSConfigRaw:                        transformOpts.TsconfigRaw,
+		JSX: config.JSXOptions{
+			Preserve:         transformOpts.JSX == JSXPreserve,
+			AutomaticRuntime: transformOpts.JSX == JSXAutomatic,
+			Factory:          validateJSXExpr(log, transformOpts.JSXFactory, "factory"),
+			Fragment:         validateJSXExpr(log, transformOpts.JSXFragment, "fragment"),
+			Development:      transformOpts.JSXDev,
+			ImportSource:     transformOpts.JSXImportSource,
+			SideEffects:      transformOpts.JSXSideEffects,
+		},
+		Defines:               defines,
+		InjectedDefines:       injectedDefines,
+		Platform:              platform,
+		SourceMap:             validateSourceMap(transformOpts.Sourcemap),
+		LegalComments:         validateLegalComments(transformOpts.LegalComments, false /* bundle */),
+		SourceRoot:            transformOpts.SourceRoot,
+		ExcludeSourcesContent: transformOpts.SourcesContent == SourcesContentExclude,
+		OutputFormat:          validateFormat(transformOpts.Format),
+		GlobalName:            validateGlobalName(log, transformOpts.GlobalName),
+		MinifySyntax:          transformOpts.MinifySyntax,
+		MinifyWhitespace:      transformOpts.MinifyWhitespace,
+		MinifyIdentifiers:     transformOpts.MinifyIdentifiers,
+		MangleProps:           validateRegex(log, "mangle props", transformOpts.MangleProps),
+		ReserveProps:          validateRegex(log, "reserve props", transformOpts.ReserveProps),
+		MangleQuoted:          transformOpts.MangleQuoted == MangleQuotedTrue,
+		DropDebugger:          (transformOpts.Drop & DropDebugger) != 0,
+		ASCIIOnly:             validateASCIIOnly(transformOpts.Charset),
+		IgnoreDCEAnnotations:  transformOpts.IgnoreAnnotations,
+		TreeShaking:           validateTreeShaking(transformOpts.TreeShaking, false /* bundle */, transformOpts.Format),
+		AbsOutputFile:         transformOpts.Sourcefile + "-out",
+		KeepNames:             transformOpts.KeepNames,
 		Stdin: &config.StdinInfo{
 			Loader:     validateLoader(transformOpts.Loader),
 			Contents:   input,
@@ -1813,7 +1774,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 
 		// Scan over the bundle
 		mockFS := fs.MockFS(make(map[string]string), fs.MockUnix, "/")
-		bundle := bundler.ScanBundle(log, mockFS, caches, nil, options, timer)
+		bundle := bundler.ScanBundle(config.TransformCall, log, mockFS, caches, nil, options, timer)
 
 		// Stop now if there were errors
 		if !log.HasErrors() {
@@ -2079,7 +2040,8 @@ func loadPlugins(initialOptions *BuildOptions, fs fs.FS, log logger.Log, caches 
 
 			// Make a new resolver so it has its own log
 			log := logger.NewDeferLog(logger.DeferLogNoVerboseOrDebug, validateLogOverrides(initialOptions.LogOverride))
-			resolver := resolver.NewResolver(fs, log, caches, *optionsForResolve)
+			optionsClone := *optionsForResolve
+			resolver := resolver.NewResolver(config.BuildCall, fs, log, caches, &optionsClone)
 
 			// Make sure the resolve directory is an absolute path, which can fail
 			absResolveDir := validatePath(log, fs, options.ResolveDir, "resolve directory")

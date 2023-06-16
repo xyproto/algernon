@@ -4,13 +4,13 @@ go 1.19
 
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.17.2
+	github.com/caddyserver/certmagic v0.18.0
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.17.19
+	github.com/evanw/esbuild v0.18.4
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
@@ -46,7 +46,7 @@ require (
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.10.0
+	golang.org/x/net v0.11.0
 )
 
 require (
@@ -93,13 +93,13 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
+	golang.org/x/tools v0.10.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

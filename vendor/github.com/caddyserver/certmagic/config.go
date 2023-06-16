@@ -72,6 +72,13 @@ type Config struct {
 	// ClientHello's ServerName field is empty.
 	DefaultServerName string
 
+	// FallbackServerName specifies a server name
+	// to use when choosing a certificate if the
+	// ClientHello's ServerName field doesn't match
+	// any available certificate.
+	// EXPERIMENTAL: Subject to change or removal.
+	FallbackServerName string
+
 	// The state needed to operate on-demand TLS;
 	// if non-nil, on-demand TLS is enabled and
 	// certificate operations are deferred to
@@ -87,15 +94,6 @@ type Config struct {
 	// issuers are specified, they will be tried in
 	// turn until one succeeds.
 	Issuers []Issuer
-
-	// Sources for getting new, unmanaged certificates.
-	// They will be invoked only during TLS handshakes
-	// before on-demand certificate management occurs,
-	// for certificates that are not already loaded into
-	// the in-memory cache.
-	//
-	// TODO: EXPERIMENTAL: subject to change and/or removal.
-	Managers []Manager
 
 	// The source of new private keys for certificates;
 	// the default KeySource is StandardKeyGenerator.
@@ -118,6 +116,16 @@ type Config struct {
 	// The storage to access when storing or loading
 	// TLS assets. Default is the local file system.
 	Storage Storage
+
+	// CertMagic will verify the storage configuration
+	// is acceptable before obtaining a certificate
+	// to avoid information loss after an expensive
+	// operation. If you are absolutely 100% sure your
+	// storage is properly configured and has sufficient
+	// space, you can disable this check to reduce I/O
+	// if that is expensive for you.
+	// EXPERIMENTAL: Option subject to change or removal.
+	DisableStorageCheck bool
 
 	// Set a logger to enable logging. If not set,
 	// a default logger will be created.
@@ -162,6 +170,7 @@ func NewDefault() *Config {
 			GetConfigForCert: func(Certificate) (*Config, error) {
 				return NewDefault(), nil
 			},
+			Logger: Default.Logger,
 		})
 	}
 	certCache := defaultCache
@@ -209,10 +218,10 @@ func newWithCache(certCache *Cache, cfg Config) *Config {
 	if !cfg.MustStaple {
 		cfg.MustStaple = Default.MustStaple
 	}
-	if len(cfg.Issuers) == 0 {
+	if cfg.Issuers == nil {
 		cfg.Issuers = Default.Issuers
-		if len(cfg.Issuers) == 0 {
-			// at least one issuer is absolutely required
+		if cfg.Issuers == nil {
+			// at least one issuer is absolutely required if not nil
 			cfg.Issuers = []Issuer{NewACMEIssuer(&cfg, DefaultACME)}
 		}
 	}
@@ -227,6 +236,9 @@ func newWithCache(certCache *Cache, cfg Config) *Config {
 	}
 	if cfg.DefaultServerName == "" {
 		cfg.DefaultServerName = Default.DefaultServerName
+	}
+	if cfg.FallbackServerName == "" {
+		cfg.FallbackServerName = Default.FallbackServerName
 	}
 	if cfg.Storage == nil {
 		cfg.Storage = Default.Storage
@@ -329,12 +341,13 @@ func (cfg *Config) manageAll(ctx context.Context, domainNames []string, async bo
 	for _, domainName := range domainNames {
 		// if on-demand is configured, defer obtain and renew operations
 		if cfg.OnDemand != nil {
-			if !cfg.OnDemand.whitelistContains(domainName) {
-				cfg.OnDemand.hostWhitelist = append(cfg.OnDemand.hostWhitelist, domainName)
+			if !cfg.OnDemand.allowlistContains(domainName) {
+				cfg.OnDemand.hostAllowlist = append(cfg.OnDemand.hostAllowlist, domainName)
 			}
 			continue
 		}
 
+		// TODO: consider doing this in a goroutine if async, to utilize multiple cores while loading certs
 		// otherwise, begin management immediately
 		err := cfg.manageOne(ctx, domainName, async)
 		if err != nil {
@@ -587,6 +600,7 @@ func (cfg *Config) obtainCert(ctx context.Context, name string, interactive bool
 			CertificatePEM: issuedCert.Certificate,
 			PrivateKeyPEM:  privKeyPEM,
 			IssuerData:     issuedCert.Metadata,
+			issuerKey:      issuerUsed.IssuerKey(),
 		}
 		err = cfg.saveCertResource(ctx, issuerUsed, certRes)
 		if err != nil {
@@ -812,6 +826,7 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 			CertificatePEM: issuedCert.Certificate,
 			PrivateKeyPEM:  certRes.PrivateKeyPEM,
 			IssuerData:     issuedCert.Metadata,
+			issuerKey:      issuerUsed.IssuerKey(),
 		}
 		err = cfg.saveCertResource(ctx, issuerUsed, newCertRes)
 		if err != nil {
@@ -1000,6 +1015,9 @@ func (cfg *Config) getChallengeInfo(ctx context.Context, identifier string) (Cha
 // comparing the loaded value. If this fails, the provided
 // cfg.Storage mechanism should not be used.
 func (cfg *Config) checkStorage(ctx context.Context) error {
+	if cfg.DisableStorageCheck {
+		return nil
+	}
 	key := fmt.Sprintf("rw_test_%d", weakrand.Int())
 	contents := make([]byte, 1024*10) // size sufficient for one or two ACME resources
 	_, err := weakrand.Read(contents)

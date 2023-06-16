@@ -982,6 +982,34 @@ func (p *printer) printProperty(property js_ast.Property) {
 		return
 	}
 
+	// Handle key syntax compression for cross-module constant inlining of enums
+	if p.options.MinifySyntax && property.Flags.Has(js_ast.PropertyIsComputed) {
+		if dot, ok := property.Key.Data.(*js_ast.EDot); ok {
+			if id, ok := dot.Target.Data.(*js_ast.EImportIdentifier); ok {
+				ref := js_ast.FollowSymbols(p.symbols, id.Ref)
+				if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
+					if enum, ok := p.options.TSEnums[ref]; ok {
+						if value, ok := enum[dot.Name]; ok {
+							if value.String != nil {
+								property.Key.Data = &js_ast.EString{Value: value.String}
+
+								// Problematic key names must stay computed for correctness
+								if !helpers.UTF16EqualsString(value.String, "__proto__") &&
+									!helpers.UTF16EqualsString(value.String, "constructor") &&
+									!helpers.UTF16EqualsString(value.String, "prototype") {
+									property.Flags &= ^js_ast.PropertyIsComputed
+								}
+							} else {
+								property.Key.Data = &js_ast.ENumber{Value: value.Number}
+								property.Flags &= ^js_ast.PropertyIsComputed
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if property.Flags.Has(js_ast.PropertyIsStatic) {
 		p.addSourceMapping(property.Loc)
 		p.print("static")
@@ -1015,7 +1043,20 @@ func (p *printer) printProperty(property js_ast.Property) {
 		}
 	}
 
-	if property.Flags.Has(js_ast.PropertyIsComputed) {
+	isComputed := property.Flags.Has(js_ast.PropertyIsComputed)
+
+	// Automatically print numbers that would cause a syntax error as computed properties
+	if !isComputed {
+		if key, ok := property.Key.Data.(*js_ast.ENumber); ok {
+			if math.Signbit(key.Value) || (key.Value == positiveInfinity && p.options.MinifySyntax) {
+				// "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
+				// "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
+				isComputed = true
+			}
+		}
+	}
+
+	if isComputed {
 		p.addSourceMapping(property.Loc)
 		isMultiLine := p.willPrintExprCommentsAtLoc(property.Key.Loc) || p.willPrintExprCommentsAtLoc(property.CloseBracketLoc)
 		p.print("[")
@@ -1807,6 +1848,7 @@ const (
 	isInsideForAwait
 	isDeleteTarget
 	isCallTargetOrTemplateTag
+	isPropertyAccessTarget
 	parentWasUnaryOrBinary
 )
 
@@ -1833,6 +1875,9 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 	switch e := expr.Data.(type) {
 	case *js_ast.EMissing:
 		p.addSourceMapping(expr.Loc)
+
+	case *js_ast.EAnnotation:
+		p.printExpr(e.Value, level, flags)
 
 	case *js_ast.EUndefined:
 		p.printUndefined(expr.Loc, level)
@@ -1870,6 +1915,11 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 	case *js_ast.EMangledProp:
 		name := p.mangledPropName(e.Ref)
 		p.addSourceMappingForName(expr.Loc, name, e.Ref)
+
+		if !p.options.MinifyWhitespace && e.HasPropertyKeyComment {
+			p.print("/* @__KEY__ */ ")
+		}
+
 		p.printQuotedUTF8(name, true)
 
 	case *js_ast.EJSXElement:
@@ -2349,7 +2399,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			}
 			flags &= ^hasNonOptionalChainParent
 		}
-		p.printExpr(e.Target, js_ast.LPostfix, flags&(forbidCall|hasNonOptionalChainParent))
+		p.printExpr(e.Target, js_ast.LPostfix, (flags&(forbidCall|hasNonOptionalChainParent))|isPropertyAccessTarget)
 		if p.canPrintIdentifier(e.Name) {
 			if e.OptionalChain != js_ast.OptionalChainStart && p.needSpaceBeforeDot == len(p.js) {
 				// "1.toString" is a syntax error, so print "1 .toString" instead
@@ -2411,7 +2461,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			}
 			flags &= ^hasNonOptionalChainParent
 		}
-		p.printExpr(e.Target, js_ast.LPostfix, flags&(forbidCall|hasNonOptionalChainParent))
+		p.printExpr(e.Target, js_ast.LPostfix, (flags&(forbidCall|hasNonOptionalChainParent))|isPropertyAccessTarget)
 		if e.OptionalChain == js_ast.OptionalChainStart {
 			p.print("?.")
 		}
@@ -2505,6 +2555,9 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		if wrap {
 			p.print("(")
 		}
+		if !p.options.MinifyWhitespace && e.HasNoSideEffectsComment {
+			p.print("/* @__NO_SIDE_EFFECTS__ */ ")
+		}
 		if e.IsAsync {
 			p.addSourceMapping(expr.Loc)
 			p.printSpaceBeforeIdentifier()
@@ -2539,9 +2592,13 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 
 	case *js_ast.EFunction:
 		n := len(p.js)
-		wrap := p.stmtStart == n || p.exportDefaultStart == n
+		wrap := p.stmtStart == n || p.exportDefaultStart == n ||
+			((flags&isPropertyAccessTarget) != 0 && p.options.UnsupportedFeatures.Has(compat.FunctionOrClassPropertyAccess))
 		if wrap {
 			p.print("(")
+		}
+		if !p.options.MinifyWhitespace && e.Fn.HasNoSideEffectsComment {
+			p.print("/* @__NO_SIDE_EFFECTS__ */ ")
 		}
 		p.printSpaceBeforeIdentifier()
 		p.addSourceMapping(expr.Loc)
@@ -2566,7 +2623,8 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 
 	case *js_ast.EClass:
 		n := len(p.js)
-		wrap := p.stmtStart == n || p.exportDefaultStart == n
+		wrap := p.stmtStart == n || p.exportDefaultStart == n ||
+			((flags&isPropertyAccessTarget) != 0 && p.options.UnsupportedFeatures.Has(compat.FunctionOrClassPropertyAccess))
 		if wrap {
 			p.print("(")
 		}
@@ -2706,6 +2764,10 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 	case *js_ast.EString:
 		p.addSourceMapping(expr.Loc)
 
+		if !p.options.MinifyWhitespace && e.HasPropertyKeyComment {
+			p.print("/* @__KEY__ */ ")
+		}
+
 		// If this was originally a template literal, print it as one as long as we're not minifying
 		if e.PreferTemplate && !p.options.MinifySyntax && !p.options.UnsupportedFeatures.Has(compat.TemplateLiteral) {
 			p.print("`")
@@ -2717,11 +2779,38 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		p.printQuotedUTF16(e.Value, true /* allowBacktick */)
 
 	case *js_ast.ETemplate:
-		// Convert no-substitution template literals into strings if it's smaller
-		if p.options.MinifySyntax && e.TagOrNil.Data == nil && len(e.Parts) == 0 {
-			p.addSourceMapping(expr.Loc)
-			p.printQuotedUTF16(e.HeadCooked, true /* allowBacktick */)
-			return
+		if p.options.MinifySyntax && e.TagOrNil.Data == nil {
+			// Inline mangled properties when minifying
+			var replaced []js_ast.TemplatePart
+			for i, part := range e.Parts {
+				if mangled, ok := part.Value.Data.(*js_ast.EMangledProp); ok {
+					if replaced == nil {
+						replaced = make([]js_ast.TemplatePart, len(e.Parts))
+					}
+					part.Value.Data = &js_ast.EString{Value: helpers.StringToUTF16(p.mangledPropName(mangled.Ref))}
+					replaced[i] = part
+				} else if replaced != nil {
+					replaced[i] = part
+				}
+			}
+			if replaced != nil {
+				copy := *e
+				copy.Parts = replaced
+				switch e2 := js_ast.InlineStringsAndNumbersIntoTemplate(logger.Loc{}, &copy).Data.(type) {
+				case *js_ast.EString:
+					p.printQuotedUTF16(e2.Value, true /* allowBacktick */)
+					return
+				case *js_ast.ETemplate:
+					e = e2
+				}
+			}
+
+			// Convert no-substitution template literals into strings if it's smaller
+			if len(e.Parts) == 0 {
+				p.addSourceMapping(expr.Loc)
+				p.printQuotedUTF16(e.HeadCooked, true /* allowBacktick */)
+				return
+			}
 		}
 
 		if e.TagOrNil.Data != nil {
@@ -3779,6 +3868,10 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 		p.printIndentedComment(text)
 
 	case *js_ast.SFunction:
+		if !p.options.MinifyWhitespace && s.Fn.HasNoSideEffectsComment {
+			p.printIndent()
+			p.print("// @__NO_SIDE_EFFECTS__\n")
+		}
 		p.addSourceMapping(stmt.Loc)
 		p.printIndent()
 		p.printSpaceBeforeIdentifier()
@@ -3822,6 +3915,12 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 		p.printNewline()
 
 	case *js_ast.SExportDefault:
+		if !p.options.MinifyWhitespace {
+			if s2, ok := s.Value.Data.(*js_ast.SFunction); ok && s2.Fn.HasNoSideEffectsComment {
+				p.printIndent()
+				p.print("// @__NO_SIDE_EFFECTS__\n")
+			}
+		}
 		p.addSourceMapping(stmt.Loc)
 		p.printIndent()
 		if s2, ok := s.Value.Data.(*js_ast.SClass); ok {

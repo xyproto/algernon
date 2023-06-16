@@ -100,12 +100,6 @@ type ResolveResult struct {
 	// If this was resolved by a plugin, the plugin gets to store its data here
 	PluginData interface{}
 
-	// If not empty, these should override the default values
-	JSXFactory      []string // Default if empty: "React.createElement"
-	JSXFragment     []string // Default if empty: "React.Fragment"
-	JSXImportSource string   // Default if empty: "react"
-	JSX             config.TSJSX
-
 	DifferentCase *fs.DifferentCase
 
 	// If present, any ES6 imports to this file can be considered to have no side
@@ -113,19 +107,14 @@ type ResolveResult struct {
 	PrimarySideEffectsData *SideEffectsData
 
 	// These are from "tsconfig.json"
-	TSTarget       *config.TSTarget
+	TSConfigJSX    config.TSConfigJSX
+	TSConfig       *config.TSConfig
 	TSAlwaysStrict *config.TSAlwaysStrict
 
 	// This is the "type" field from "package.json"
 	ModuleTypeData js_ast.ModuleTypeData
 
 	IsExternal bool
-
-	// If true, the class field transform should use Object.defineProperty().
-	UseDefineForClassFieldsTS config.MaybeBool
-
-	// This is the "importsNotUsedAsValues" and "preserveValueImports" fields from "package.json"
-	UnusedImportFlagsTS config.UnusedImportFlagsTS
 }
 
 type suggestionRange uint8
@@ -174,6 +163,8 @@ type Resolver struct {
 	log    logger.Log
 	caches *cache.CacheSet
 
+	tsConfigOverride *TSConfigJSON
+
 	// These are sets that represent various conditions for the "exports" field
 	// in package.json.
 	esmConditionsDefault map[string]bool
@@ -204,6 +195,22 @@ type Resolver struct {
 	// picture but it's better than some alternatives and probably pretty good.
 	atImportExtensionOrder []string
 
+	// A special sorted import order for imports inside packages.
+	//
+	// The "resolve extensions" setting determines the order of implicit
+	// extensions to try when resolving imports with the extension omitted.
+	// Sometimes people author a package using TypeScript and publish both the
+	// compiled JavaScript and the original TypeScript. The compiled JavaScript
+	// depends on the "tsconfig.json" settings that were passed to "tsc" when
+	// it was compiled, and we don't know what they are (they may even be
+	// unknowable if the "tsconfig.json" file wasn't published).
+	//
+	// To work around this, we sort TypeScript file extensions after JavaScript
+	// file extensions (but only within packages) so that esbuild doesn't load
+	// the original source code in these scenarios. Instead we should load the
+	// compiled code, which is what will be loaded by node at run-time.
+	nodeModulesExtensionOrder []string
+
 	// This cache maps a directory path to information about that directory and
 	// all parent directories
 	dirCache map[string]*dirInfo
@@ -226,20 +233,32 @@ type Resolver struct {
 
 type resolverQuery struct {
 	*Resolver
-	moduleSuffixes []string
-	debugMeta      *DebugMeta
-	debugLogs      *debugLogs
-	kind           ast.ImportKind
+	debugMeta *DebugMeta
+	debugLogs *debugLogs
+	kind      ast.ImportKind
 }
 
-func NewResolver(fs fs.FS, log logger.Log, caches *cache.CacheSet, options config.Options) *Resolver {
+func NewResolver(call config.APICall, fs fs.FS, log logger.Log, caches *cache.CacheSet, options *config.Options) *Resolver {
 	// Filter out non-CSS extensions for CSS "@import" imports
 	atImportExtensionOrder := make([]string, 0, len(options.ExtensionOrder))
 	for _, ext := range options.ExtensionOrder {
-		if loader, ok := options.ExtensionToLoader[ext]; ok && loader != config.LoaderCSS {
-			continue
+		if loader, ok := options.ExtensionToLoader[ext]; !ok || loader == config.LoaderCSS {
+			atImportExtensionOrder = append(atImportExtensionOrder, ext)
 		}
-		atImportExtensionOrder = append(atImportExtensionOrder, ext)
+	}
+
+	// Sort all JavaScript file extensions after TypeScript file extensions
+	// for imports of files inside of "node_modules" directories
+	nodeModulesExtensionOrder := make([]string, 0, len(options.ExtensionOrder))
+	for _, ext := range options.ExtensionOrder {
+		if loader, ok := options.ExtensionToLoader[ext]; !ok || !loader.IsTypeScript() {
+			nodeModulesExtensionOrder = append(nodeModulesExtensionOrder, ext)
+		}
+	}
+	for _, ext := range options.ExtensionOrder {
+		if loader, ok := options.ExtensionToLoader[ext]; ok && loader.IsTypeScript() {
+			nodeModulesExtensionOrder = append(nodeModulesExtensionOrder, ext)
+		}
 	}
 
 	// Generate the condition sets for interpreting the "exports" field
@@ -262,17 +281,63 @@ func NewResolver(fs fs.FS, log logger.Log, caches *cache.CacheSet, options confi
 
 	fs.Cwd()
 
-	return &Resolver{
-		fs:                     fs,
-		log:                    log,
-		options:                options,
-		caches:                 caches,
-		dirCache:               make(map[string]*dirInfo),
-		atImportExtensionOrder: atImportExtensionOrder,
-		esmConditionsDefault:   esmConditionsDefault,
-		esmConditionsImport:    esmConditionsImport,
-		esmConditionsRequire:   esmConditionsRequire,
+	res := &Resolver{
+		fs:                        fs,
+		log:                       log,
+		options:                   *options,
+		caches:                    caches,
+		dirCache:                  make(map[string]*dirInfo),
+		atImportExtensionOrder:    atImportExtensionOrder,
+		nodeModulesExtensionOrder: nodeModulesExtensionOrder,
+		esmConditionsDefault:      esmConditionsDefault,
+		esmConditionsImport:       esmConditionsImport,
+		esmConditionsRequire:      esmConditionsRequire,
 	}
+
+	// Handle the "tsconfig.json" override when the resolver is created. This
+	// isn't done when we validate the build options both because the code for
+	// "tsconfig.json" handling is already in the resolver, and because we want
+	// watch mode to pick up changes to "tsconfig.json" and rebuild.
+	var debugMeta DebugMeta
+	if options.TSConfigPath != "" || options.TSConfigRaw != "" {
+		r := resolverQuery{
+			Resolver:  res,
+			debugMeta: &debugMeta,
+		}
+		var visited map[string]bool
+		var err error
+		if call == config.BuildCall {
+			visited = make(map[string]bool)
+		}
+		if options.TSConfigPath != "" {
+			res.tsConfigOverride, err = r.parseTSConfig(options.TSConfigPath, visited)
+		} else {
+			source := logger.Source{
+				KeyPath:    logger.Path{Text: fs.Join(fs.Cwd(), "<tsconfig.json>"), Namespace: "file"},
+				PrettyPath: "<tsconfig.json>",
+				Contents:   options.TSConfigRaw,
+			}
+			res.tsConfigOverride, err = r.parseTSConfigFromSource(source, visited)
+		}
+		if err != nil {
+			if err == syscall.ENOENT {
+				r.log.AddError(nil, logger.Range{}, fmt.Sprintf("Cannot find tsconfig file %q",
+					PrettyPath(r.fs, logger.Path{Text: options.TSConfigPath, Namespace: "file"})))
+			} else if err != errParseErrorAlreadyLogged {
+				r.log.AddError(nil, logger.Range{}, fmt.Sprintf("Cannot read file %q: %s",
+					PrettyPath(r.fs, logger.Path{Text: options.TSConfigPath, Namespace: "file"}), err.Error()))
+			}
+		}
+	}
+
+	// Mutate the provided options by settings from "tsconfig.json" if present
+	if res.tsConfigOverride != nil {
+		options.TS.Config = res.tsConfigOverride.Settings
+		res.tsConfigOverride.JSXSettings.ApplyTo(&options.JSX)
+		options.TSAlwaysStrict = res.tsConfigOverride.TSAlwaysStrictOrStrict()
+	}
+
+	return res
 }
 
 func (res *Resolver) Resolve(sourceDir string, importPath string, kind ast.ImportKind) (*ResolveResult, DebugMeta) {
@@ -480,7 +545,7 @@ func (res *Resolver) Resolve(sourceDir string, importPath string, kind ast.Impor
 
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	sourceDirInfo := r.loadModuleSuffixesForSourceDir(sourceDir)
+	sourceDirInfo := r.dirInfoCached(sourceDir)
 
 	// Check for the Yarn PnP manifest if it hasn't already been checked for
 	if !r.pnpManifestWasChecked {
@@ -538,28 +603,6 @@ func (res *Resolver) Resolve(sourceDir string, importPath string, kind ast.Impor
 	return result, debugMeta
 }
 
-func (r *resolverQuery) loadModuleSuffixesForSourceDir(sourceDir string) *dirInfo {
-	// Load TypeScript's "moduleSuffixes" setting from the "tsconfig.json" file
-	// enclosing the source directory if present. Otherwise default to a single
-	// empty string, which means "no suffix".
-	r.moduleSuffixes = defaultModuleSuffixes
-	sourceDirInfo := r.dirInfoCached(sourceDir)
-	if sourceDirInfo != nil {
-		if tsConfig := sourceDirInfo.enclosingTSConfigJSON; tsConfig != nil {
-			if moduleSuffixes := tsConfig.ModuleSuffixes; moduleSuffixes != nil {
-				if r.debugLogs != nil {
-					r.debugLogs.addNote(fmt.Sprintf("Using \"moduleSuffixes\" value of [%s] from %q",
-						helpers.StringArrayToQuotedCommaSeparatedString(moduleSuffixes), tsConfig.AbsPath))
-				}
-				r.moduleSuffixes = moduleSuffixes
-			}
-		}
-	}
-
-	// Return this so we don't have to look it up again later
-	return sourceDirInfo
-}
-
 func (r resolverQuery) isExternal(matchers config.ExternalMatchers, path string, kind ast.ImportKind) bool {
 	if kind == ast.ImportEntryPoint {
 		// Never mark an entry point as external. This is not useful.
@@ -594,7 +637,6 @@ func (res *Resolver) ProbeResolvePackageAsRelative(sourceDir string, importPath 
 
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	r.loadModuleSuffixesForSourceDir(sourceDir)
 
 	if pair, ok, diffCase := r.loadAsFileOrDirectory(absPath); ok {
 		result := &ResolveResult{PathPair: pair, DifferentCase: diffCase}
@@ -697,52 +739,24 @@ func (r resolverQuery) finalizeResolve(result *ResolveResult) {
 				}
 
 				// Copy various fields from the nearest enclosing "tsconfig.json" file if present
-				if path == &result.PathPair.Primary && dirInfo.enclosingTSConfigJSON != nil {
-					// Except don't do this if we're inside a "node_modules" directory. Package
-					// authors often publish their "tsconfig.json" files to npm because of
-					// npm's default-include publishing model and because these authors
-					// probably don't know about ".npmignore" files.
-					//
-					// People trying to use these packages with esbuild have historically
-					// complained that esbuild is respecting "tsconfig.json" in these cases.
-					// The assumption is that the package author published these files by
-					// accident.
-					//
-					// Ignoring "tsconfig.json" files inside "node_modules" directories breaks
-					// the use case of publishing TypeScript code and having it be transpiled
-					// for you, but that's the uncommon case and likely doesn't work with
-					// many other tools anyway. So now these files are ignored.
-					if helpers.IsInsideNodeModules(result.PathPair.Primary.Text) {
-						if r.debugLogs != nil {
-							r.debugLogs.addNote(fmt.Sprintf("Ignoring %q because %q is inside \"node_modules\"",
-								dirInfo.enclosingTSConfigJSON.AbsPath,
-								result.PathPair.Primary.Text))
-						}
-					} else {
-						result.JSXFactory = dirInfo.enclosingTSConfigJSON.JSXFactory
-						result.JSXFragment = dirInfo.enclosingTSConfigJSON.JSXFragmentFactory
-						result.JSX = dirInfo.enclosingTSConfigJSON.JSX
-						result.JSXImportSource = dirInfo.enclosingTSConfigJSON.JSXImportSource
-						result.UseDefineForClassFieldsTS = dirInfo.enclosingTSConfigJSON.UseDefineForClassFields
-						result.UnusedImportFlagsTS = config.UnusedImportFlagsFromTsconfigValues(
-							dirInfo.enclosingTSConfigJSON.PreserveImportsNotUsedAsValues,
-							dirInfo.enclosingTSConfigJSON.PreserveValueImports,
-						)
-						result.TSTarget = dirInfo.enclosingTSConfigJSON.TSTarget
-						result.TSAlwaysStrict = dirInfo.enclosingTSConfigJSON.TSAlwaysStrictOrStrict()
+				if path == &result.PathPair.Primary {
+					if tsConfigJSON := r.tsConfigForDir(dirInfo); tsConfigJSON != nil {
+						result.TSConfig = &tsConfigJSON.Settings
+						result.TSConfigJSX = tsConfigJSON.JSXSettings
+						result.TSAlwaysStrict = tsConfigJSON.TSAlwaysStrictOrStrict()
 
 						if r.debugLogs != nil {
 							r.debugLogs.addNote(fmt.Sprintf("This import is under the effect of %q",
-								dirInfo.enclosingTSConfigJSON.AbsPath))
-							if result.JSXFactory != nil {
+								tsConfigJSON.AbsPath))
+							if result.TSConfigJSX.JSXFactory != nil {
 								r.debugLogs.addNote(fmt.Sprintf("\"jsxFactory\" is %q due to %q",
-									strings.Join(result.JSXFactory, "."),
-									dirInfo.enclosingTSConfigJSON.AbsPath))
+									strings.Join(result.TSConfigJSX.JSXFactory, "."),
+									tsConfigJSON.AbsPath))
 							}
-							if result.JSXFragment != nil {
+							if result.TSConfigJSX.JSXFragmentFactory != nil {
 								r.debugLogs.addNote(fmt.Sprintf("\"jsxFragment\" is %q due to %q",
-									strings.Join(result.JSXFragment, "."),
-									dirInfo.enclosingTSConfigJSON.AbsPath))
+									strings.Join(result.TSConfigJSX.JSXFragmentFactory, "."),
+									tsConfigJSON.AbsPath))
 							}
 						}
 					}
@@ -798,8 +812,8 @@ func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *d
 		}
 
 		// First, check path overrides from the nearest enclosing TypeScript "tsconfig.json" file
-		if sourceDirInfo != nil && sourceDirInfo.enclosingTSConfigJSON != nil && sourceDirInfo.enclosingTSConfigJSON.Paths != nil {
-			if absolute, ok, diffCase := r.matchTSConfigPaths(sourceDirInfo.enclosingTSConfigJSON, importPath); ok {
+		if tsConfigJSON := r.tsConfigForDir(sourceDirInfo); tsConfigJSON != nil && tsConfigJSON.Paths != nil {
+			if absolute, ok, diffCase := r.matchTSConfigPaths(tsConfigJSON, importPath); ok {
 				return &ResolveResult{PathPair: absolute, DifferentCase: diffCase}
 			}
 		}
@@ -943,6 +957,20 @@ type dirInfo struct {
 	absRealPath           string        // If non-empty, this is the real absolute path resolving any symlinks
 	isNodeModules         bool          // Is the base name "node_modules"?
 	hasNodeModules        bool          // Is there a "node_modules" subdirectory?
+	isInsideNodeModules   bool          // Is this within a  "node_modules" subtree?
+}
+
+func (r resolverQuery) tsConfigForDir(dirInfo *dirInfo) *TSConfigJSON {
+	if dirInfo.isInsideNodeModules {
+		return nil
+	}
+	if r.tsConfigOverride != nil {
+		return r.tsConfigOverride
+	}
+	if dirInfo != nil {
+		return dirInfo.enclosingTSConfigJSON
+	}
+	return nil
 }
 
 func (r resolverQuery) dirInfoCached(path string) *dirInfo {
@@ -988,8 +1016,11 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 	if visited[file] {
 		return nil, errParseErrorImportCycle
 	}
-	isExtends := len(visited) != 0
-	visited[file] = true
+	if visited != nil {
+		// This is only non-nil for "build" API calls. This is nil for "transform"
+		// API calls, which tells us to not process "extends" fields.
+		visited[file] = true
+	}
 
 	contents, err, originalError := r.caches.FSCache.ReadFile(r.fs, file)
 	if r.debugLogs != nil && originalError != nil {
@@ -1008,10 +1039,22 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 		PrettyPath: PrettyPath(r.fs, keyPath),
 		Contents:   contents,
 	}
+	return r.parseTSConfigFromSource(source, visited)
+}
+
+func (r resolverQuery) parseTSConfigFromSource(source logger.Source, visited map[string]bool) (*TSConfigJSON, error) {
 	tracker := logger.MakeLineColumnTracker(&source)
-	fileDir := r.fs.Dir(file)
+	fileDir := r.fs.Dir(source.KeyPath.Text)
+	isExtends := len(visited) > 1
 
 	result := ParseTSConfigJSON(r.log, source, &r.caches.JSONCache, func(extends string, extendsRange logger.Range) *TSConfigJSON {
+		if visited == nil {
+			// If this is nil, then we're in a "transform" API call. In that case we
+			// deliberately skip processing "extends" fields. This is because the
+			// "transform" API is supposed to be without a file system.
+			return nil
+		}
+
 		// Note: This doesn't use the normal node module resolution algorithm
 		// both because it's different (e.g. we don't want to match a directory)
 		// and because it would deadlock since we're currently in the middle of
@@ -1028,7 +1071,7 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 			}
 
 			if err == errParseErrorImportCycle {
-				r.log.AddID(logger.MsgID_TsconfigJSON_Cycle, logger.Warning, &tracker, extendsRange,
+				r.log.AddID(logger.MsgID_TSConfigJSON_Cycle, logger.Warning, &tracker, extendsRange,
 					fmt.Sprintf("Base config file %q forms cycle", extends))
 			} else if err != errParseErrorAlreadyLogged {
 				r.log.AddError(&tracker, extendsRange,
@@ -1206,8 +1249,8 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 
 		// Suppress warnings about missing base config files inside "node_modules"
 	pnpError:
-		if !helpers.IsInsideNodeModules(file) {
-			r.log.AddID(logger.MsgID_TsconfigJSON_Missing, logger.Warning, &tracker, extendsRange,
+		if !helpers.IsInsideNodeModules(source.KeyPath.Text) {
+			r.log.AddID(logger.MsgID_TSConfigJSON_Missing, logger.Warning, &tracker, extendsRange,
 				fmt.Sprintf("Cannot find base config file %q", extends))
 		}
 
@@ -1216,6 +1259,25 @@ func (r resolverQuery) parseTSConfig(file string, visited map[string]bool) (*TSC
 
 	if result == nil {
 		return nil, errParseErrorAlreadyLogged
+	}
+
+	// Warn when people try to set esbuild's target via "tsconfig.json" and esbuild's target is unset
+	if result.Settings.Target != config.TSTargetUnspecified && r.options.OriginalTargetEnv == "" &&
+		// Don't warn if the target is "ESNext" since esbuild's target also defaults to "esnext" (so that case is harmless)
+		result.tsTargetKey.LowerValue != "esnext" && !helpers.IsInsideNodeModules(source.KeyPath.Text) {
+		var example string
+		switch logger.API {
+		case logger.CLIAPI:
+			example = fmt.Sprintf("--target=%s", result.tsTargetKey.LowerValue)
+		case logger.JSAPI:
+			example = fmt.Sprintf("target: '%s'", result.tsTargetKey.LowerValue)
+		case logger.GoAPI:
+			example = fmt.Sprintf("Target: api.%s", strings.ToUpper(result.tsTargetKey.LowerValue))
+		}
+		tracker := logger.MakeLineColumnTracker(&result.tsTargetKey.Source)
+		r.log.AddIDWithNotes(logger.MsgID_TSConfigJSON_TargetIgnored, logger.Warning, &tracker, result.tsTargetKey.Range, "\"tsconfig.json\" does not affect esbuild's own target setting",
+			[]logger.MsgData{{Text: fmt.Sprintf("This is because esbuild supports reading from multiple \"tsconfig.json\" files within a single build, and using different language targets "+
+				"for different files in the same build wouldn't be correct. If you want to set esbuild's language target, you should use esbuild's own global \"target\" setting such as with %q.", example)}})
 	}
 
 	if result.BaseURL != nil && !r.fs.IsAbs(*result.BaseURL) {
@@ -1301,6 +1363,7 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 	base := r.fs.Base(path)
 	if base == "node_modules" {
 		info.isNodeModules = true
+		info.isInsideNodeModules = true
 	} else if entry, _ := entries.Get("node_modules"); entry != nil {
 		info.hasNodeModules = entry.Kind(r.fs) == fs.DirEntry
 	}
@@ -1310,6 +1373,9 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 		info.enclosingPackageJSON = parentInfo.enclosingPackageJSON
 		info.enclosingBrowserScope = parentInfo.enclosingBrowserScope
 		info.enclosingTSConfigJSON = parentInfo.enclosingTSConfigJSON
+		if parentInfo.isInsideNodeModules {
+			info.isInsideNodeModules = true
+		}
 
 		// Make sure "absRealPath" is the real path of the directory (resolving any symlinks)
 		if !r.options.PreserveSymlinks {
@@ -1344,19 +1410,29 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 	}
 
 	// Record if this directory has a tsconfig.json or jsconfig.json file
-	{
+	if r.tsConfigOverride == nil {
 		var tsConfigPath string
-		if forceTsConfig := r.options.TsConfigOverride; forceTsConfig == "" {
-			if entry, _ := entries.Get("tsconfig.json"); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
-				tsConfigPath = r.fs.Join(path, "tsconfig.json")
-			} else if entry, _ := entries.Get("jsconfig.json"); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
-				tsConfigPath = r.fs.Join(path, "jsconfig.json")
-			}
-		} else if parentInfo == nil {
-			// If there is a tsconfig.json override, mount it at the root directory
-			tsConfigPath = forceTsConfig
+		if entry, _ := entries.Get("tsconfig.json"); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
+			tsConfigPath = r.fs.Join(path, "tsconfig.json")
+		} else if entry, _ := entries.Get("jsconfig.json"); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
+			tsConfigPath = r.fs.Join(path, "jsconfig.json")
 		}
-		if tsConfigPath != "" {
+
+		// Except don't do this if we're inside a "node_modules" directory. Package
+		// authors often publish their "tsconfig.json" files to npm because of
+		// npm's default-include publishing model and because these authors
+		// probably don't know about ".npmignore" files.
+		//
+		// People trying to use these packages with esbuild have historically
+		// complained that esbuild is respecting "tsconfig.json" in these cases.
+		// The assumption is that the package author published these files by
+		// accident.
+		//
+		// Ignoring "tsconfig.json" files inside "node_modules" directories breaks
+		// the use case of publishing TypeScript code and having it be transpiled
+		// for you, but that's the uncommon case and likely doesn't work with
+		// many other tools anyway. So now these files are ignored.
+		if tsConfigPath != "" && !info.isInsideNodeModules {
 			var err error
 			info.enclosingTSConfigJSON, err = r.parseTSConfig(tsConfigPath, make(map[string]bool))
 			if err != nil {
@@ -1364,7 +1440,7 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 					r.log.AddError(nil, logger.Range{}, fmt.Sprintf("Cannot find tsconfig file %q",
 						PrettyPath(r.fs, logger.Path{Text: tsConfigPath, Namespace: "file"})))
 				} else if err != errParseErrorAlreadyLogged {
-					r.log.AddID(logger.MsgID_TsconfigJSON_Missing, logger.Debug, nil, logger.Range{},
+					r.log.AddID(logger.MsgID_TSConfigJSON_Missing, logger.Debug, nil, logger.Range{},
 						fmt.Sprintf("Cannot read file %q: %s",
 							PrettyPath(r.fs, logger.Path{Text: tsConfigPath, Namespace: "file"}), err.Error()))
 				}
@@ -1410,11 +1486,6 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 	return info
 }
 
-// From: https://devblogs.microsoft.com/typescript/announcing-typescript-4-7-beta/#resolution-customization-with-modulesuffixes
-// Note that the empty string "" in moduleSuffixes is necessary for TypeScript to
-// also look-up ./foo.ts. In a sense, the default value for moduleSuffixes is [""].
-var defaultModuleSuffixes = []string{""}
-
 var rewrittenFileExtensions = map[string][]string{
 	// Note that the official compiler code always tries ".ts" before
 	// ".tsx" even if the original extension was ".jsx".
@@ -1422,18 +1493,6 @@ var rewrittenFileExtensions = map[string][]string{
 	".jsx": {".ts", ".tsx"},
 	".mjs": {".mts"},
 	".cjs": {".cts"},
-}
-
-var tsExtensionsToRemove = map[string]bool{
-	".mjs":  true,
-	".mts":  true,
-	".cjs":  true,
-	".cts":  true,
-	".ts":   true,
-	".js":   true,
-	".tsx":  true,
-	".jsx":  true,
-	".json": true,
 }
 
 func (r resolverQuery) loadAsFile(path string, extensionOrder []string) (string, bool, *fs.DifferentCase) {
@@ -1459,30 +1518,16 @@ func (r resolverQuery) loadAsFile(path string, extensionOrder []string) (string,
 	}
 
 	tryFile := func(base string) (string, bool, *fs.DifferentCase) {
-		// TypeScript lets you configure custom module suffixes
-		for _, suffix := range r.moduleSuffixes {
-			baseWithSuffix := base
-
-			// Splice in the suffix before the extension
-			if suffix != "" {
-				if lastDot := strings.LastIndexByte(base, '.'); lastDot != -1 && tsExtensionsToRemove[base[lastDot:]] {
-					baseWithSuffix = base[:lastDot]
-					suffix += base[lastDot:]
-				}
-				baseWithSuffix += suffix
-			}
-
-			if r.debugLogs != nil {
-				r.debugLogs.addNote(fmt.Sprintf("Checking for file %q", baseWithSuffix))
-			}
-			if entry, diffCase := entries.Get(baseWithSuffix); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
-				if r.debugLogs != nil {
-					r.debugLogs.addNote(fmt.Sprintf("Found file %q", baseWithSuffix))
-				}
-				return r.fs.Join(dirPath, baseWithSuffix), true, diffCase
-			}
+		baseWithSuffix := base
+		if r.debugLogs != nil {
+			r.debugLogs.addNote(fmt.Sprintf("Checking for file %q", baseWithSuffix))
 		}
-
+		if entry, diffCase := entries.Get(baseWithSuffix); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
+			if r.debugLogs != nil {
+				r.debugLogs.addNote(fmt.Sprintf("Found file %q", baseWithSuffix))
+			}
+			return r.fs.Join(dirPath, baseWithSuffix), true, diffCase
+		}
 		return "", false, nil
 	}
 
@@ -1498,38 +1543,22 @@ func (r resolverQuery) loadAsFile(path string, extensionOrder []string) (string,
 	//   ./x.js/index.json
 	//   ./x.js/index.node
 	//
-	// Given "./x.js" and a "moduleSuffixes" value of [".y", ""], TypeScript's
-	// algorithm tries things in the following order:
+	// Given "./x.js", TypeScript's algorithm tries things in the following order:
 	//
-	//   ./x.js.y.ts
 	//   ./x.js.ts
-	//   ./x.js.y.tsx
 	//   ./x.js.tsx
-	//   ./x.js.d.y.ts
 	//   ./x.js.d.ts
-	//   ./x.y.ts
 	//   ./x.ts
-	//   ./x.y.tsx
 	//   ./x.tsx
-	//   ./x.d.y.ts
 	//   ./x.d.ts
-	//   ./x.js/index.y.ts
 	//   ./x.js/index.ts
-	//   ./x.js/index.y.tsx
 	//   ./x.js/index.tsx
-	//   ./x.js/index.d.y.ts
 	//   ./x.js/index.d.ts
-	//   ./x.js.y.js
 	//   ./x.js.js
-	//   ./x.js.y.jsx
 	//   ./x.js.jsx
-	//   ./x.y.js
 	//   ./x.js
-	//   ./x.y.jsx
 	//   ./x.jsx
-	//   ./x.js/index.y.js
 	//   ./x.js/index.js
-	//   ./x.js/index.y.jsx
 	//   ./x.js/index.jsx
 	//
 	// Our order below is a blend of both. We try to follow node's algorithm but
@@ -1669,10 +1698,13 @@ func getBool(json js_ast.Expr) (bool, bool) {
 }
 
 func (r resolverQuery) loadAsFileOrDirectory(path string) (PathPair, bool, *fs.DifferentCase) {
-	// Use a special import order for CSS "@import" imports
 	extensionOrder := r.options.ExtensionOrder
 	if r.kind == ast.ImportAt || r.kind == ast.ImportAtConditional {
+		// Use a special import order for CSS "@import" imports
 		extensionOrder = r.atImportExtensionOrder
+	} else if helpers.IsInsideNodeModules(path) {
+		// Use a special import order for imports inside "node_modules"
+		extensionOrder = r.nodeModulesExtensionOrder
 	}
 
 	// Is this a file?
@@ -2085,17 +2117,17 @@ func (r resolverQuery) loadNodeModules(importPath string, dirInfo *dirInfo, forb
 	}
 
 	// First, check path overrides from the nearest enclosing TypeScript "tsconfig.json" file
-	if dirInfo.enclosingTSConfigJSON != nil {
+	if tsConfigJSON := r.tsConfigForDir(dirInfo); tsConfigJSON != nil {
 		// Try path substitutions first
-		if dirInfo.enclosingTSConfigJSON.Paths != nil {
-			if absolute, ok, diffCase := r.matchTSConfigPaths(dirInfo.enclosingTSConfigJSON, importPath); ok {
+		if tsConfigJSON.Paths != nil {
+			if absolute, ok, diffCase := r.matchTSConfigPaths(tsConfigJSON, importPath); ok {
 				return absolute, true, diffCase
 			}
 		}
 
 		// Try looking up the path relative to the base URL
-		if dirInfo.enclosingTSConfigJSON.BaseURL != nil {
-			basePath := r.fs.Join(*dirInfo.enclosingTSConfigJSON.BaseURL, importPath)
+		if tsConfigJSON.BaseURL != nil {
+			basePath := r.fs.Join(*tsConfigJSON.BaseURL, importPath)
 			if absolute, ok, diffCase := r.loadAsFileOrDirectory(basePath); ok {
 				return absolute, true, diffCase
 			}
