@@ -12,7 +12,7 @@ import (
 
 	// Using the PostgreSQL database engine
 	pq "github.com/lib/pq"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 const (

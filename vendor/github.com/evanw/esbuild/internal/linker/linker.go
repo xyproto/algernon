@@ -4117,6 +4117,7 @@ func (c *linkerContext) generateCodeForFileInChunkJS(
 		MinifyIdentifiers:            c.options.MinifyIdentifiers,
 		MinifyWhitespace:             c.options.MinifyWhitespace,
 		MinifySyntax:                 c.options.MinifySyntax,
+		LineLimit:                    c.options.LineLimit,
 		ASCIIOnly:                    c.options.ASCIIOnly,
 		ToCommonJSRef:                toCommonJSRef,
 		ToESMRef:                     toESMRef,
@@ -4459,6 +4460,7 @@ func (c *linkerContext) generateEntryPointTailJS(
 		MinifyIdentifiers:            c.options.MinifyIdentifiers,
 		MinifyWhitespace:             c.options.MinifyWhitespace,
 		MinifySyntax:                 c.options.MinifySyntax,
+		LineLimit:                    c.options.LineLimit,
 		ASCIIOnly:                    c.options.ASCIIOnly,
 		ToCommonJSRef:                toCommonJSRef,
 		ToESMRef:                     toESMRef,
@@ -4780,6 +4782,7 @@ func (c *linkerContext) generateChunkJS(chunkIndex int, chunkWaitGroup *sync.Wai
 			MinifyIdentifiers: c.options.MinifyIdentifiers,
 			MinifyWhitespace:  c.options.MinifyWhitespace,
 			MinifySyntax:      c.options.MinifySyntax,
+			LineLimit:         c.options.LineLimit,
 			NeedsMetafile:     c.options.NeedsMetafile,
 		}
 		crossChunkImportRecords := make([]ast.ImportRecord, len(chunk.crossChunkImports))
@@ -5290,6 +5293,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 
 			cssOptions := css_printer.Options{
 				MinifyWhitespace:    c.options.MinifyWhitespace,
+				LineLimit:           c.options.LineLimit,
 				ASCIIOnly:           c.options.ASCIIOnly,
 				LegalComments:       c.options.LegalComments,
 				SourceMap:           c.options.SourceMap,
@@ -5351,6 +5355,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 		if len(tree.Rules) > 0 {
 			result := css_printer.Print(tree, css_printer.Options{
 				MinifyWhitespace: c.options.MinifyWhitespace,
+				LineLimit:        c.options.LineLimit,
 				ASCIIOnly:        c.options.ASCIIOnly,
 				NeedsMetafile:    c.options.NeedsMetafile,
 			})
@@ -5866,28 +5871,6 @@ func hashWriteLengthPrefixed(hash hash.Hash, bytes []byte) {
 	hash.Write(bytes)
 }
 
-func preventBindingsFromBeingRenamed(binding js_ast.Binding, symbols js_ast.SymbolMap) {
-	switch b := binding.Data.(type) {
-	case *js_ast.BMissing:
-
-	case *js_ast.BIdentifier:
-		symbols.Get(b.Ref).Flags |= js_ast.MustNotBeRenamed
-
-	case *js_ast.BArray:
-		for _, i := range b.Items {
-			preventBindingsFromBeingRenamed(i.Binding, symbols)
-		}
-
-	case *js_ast.BObject:
-		for _, p := range b.Properties {
-			preventBindingsFromBeingRenamed(p.Value, symbols)
-		}
-
-	default:
-		panic(fmt.Sprintf("Unexpected binding of type %T", binding.Data))
-	}
-}
-
 // Marking a symbol as unbound prevents it from being renamed or minified.
 // This is only used when a module is compiled independently. We use a very
 // different way of handling exports and renaming/minifying when bundling.
@@ -5916,9 +5899,9 @@ func (c *linkerContext) preventExportsFromBeingRenamed(sourceIndex uint32) {
 
 			case *js_ast.SLocal:
 				if s.IsExport {
-					for _, decl := range s.Decls {
-						preventBindingsFromBeingRenamed(decl.Binding, c.graph.Symbols)
-					}
+					js_ast.ForEachIdentifierBindingInDecls(s.Decls, func(loc logger.Loc, b *js_ast.BIdentifier) {
+						c.graph.Symbols.Get(b.Ref).Flags |= js_ast.MustNotBeRenamed
+					})
 					hasImportOrExport = true
 				}
 

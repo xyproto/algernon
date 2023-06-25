@@ -67,7 +67,24 @@ func (p *printer) printUnquotedUTF16(text []uint16, quote rune) {
 	i := 0
 	n := len(text)
 
+	// Only compute the line length if necessary
+	var startLineLength int
+	wrapLongLines := false
+	if p.options.LineLimit > 0 {
+		startLineLength = p.currentLineLength()
+		if startLineLength > p.options.LineLimit {
+			startLineLength = p.options.LineLimit
+		}
+		wrapLongLines = true
+	}
+
 	for i < n {
+		// Wrap long lines that are over the limit using escaped newlines
+		if wrapLongLines && startLineLength+i >= p.options.LineLimit {
+			js = append(js, "\\\n"...)
+			startLineLength -= p.options.LineLimit
+		}
+
 		c := text[i]
 		i++
 
@@ -97,6 +114,7 @@ func (p *printer) printUnquotedUTF16(text []uint16, quote rune) {
 
 		case '\n':
 			if quote == '`' {
+				startLineLength = -i // Printing a real newline resets the line length
 				js = append(js, '\n')
 			} else {
 				js = append(js, "\\n"...)
@@ -353,6 +371,8 @@ type printer struct {
 	needSpaceBeforeDot   int
 	prevRegExpEnd        int
 	noLeadingNewlineHere int
+	oldLineStart         int
+	oldLineEnd           int
 	intToBytesBuffer     [64]byte
 	needsSemicolon       bool
 	prevOp               js_ast.OpCode
@@ -391,7 +411,11 @@ func (p *printer) addSourceMappingForName(loc logger.Loc, name string, ref js_as
 
 func (p *printer) printIndent() {
 	if !p.options.MinifyWhitespace {
-		for i := 0; i < p.options.Indent; i++ {
+		indent := p.options.Indent
+		if p.options.LineLimit > 0 && indent*2 >= p.options.LineLimit {
+			indent = p.options.LineLimit / 2
+		}
+		for i := 0; i < indent; i++ {
 			p.print("  ")
 		}
 	}
@@ -405,11 +429,13 @@ func (p *printer) mangledPropName(ref js_ast.Ref) string {
 	return p.renamer.NameForSymbol(ref)
 }
 
-func (p *printer) printClauseAlias(alias string) {
+func (p *printer) printClauseAlias(loc logger.Loc, alias string) {
 	if js_ast.IsIdentifier(alias) {
 		p.printSpaceBeforeIdentifier()
+		p.addSourceMapping(loc)
 		p.printIdentifier(alias)
 	} else {
+		p.addSourceMapping(loc)
 		p.printQuotedUTF8(alias, false /* allowBacktick */)
 	}
 }
@@ -575,13 +601,14 @@ func (p *printer) printBinding(binding js_ast.Binding) {
 			for i, item := range b.Items {
 				if i != 0 {
 					p.print(",")
-					if !isMultiLine {
+				}
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if isMultiLine {
+						p.printNewline()
+						p.printIndent()
+					} else if i != 0 {
 						p.printSpace()
 					}
-				}
-				if isMultiLine {
-					p.printNewline()
-					p.printIndent()
 				}
 				p.printExprCommentsAtLoc(item.Loc)
 				if b.HasSpread && i+1 == len(b.Items) {
@@ -635,11 +662,13 @@ func (p *printer) printBinding(binding js_ast.Binding) {
 				if i != 0 {
 					p.print(",")
 				}
-				if isMultiLine {
-					p.printNewline()
-					p.printIndent()
-				} else {
-					p.printSpace()
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if isMultiLine {
+						p.printNewline()
+						p.printIndent()
+					} else {
+						p.printSpace()
+					}
 				}
 
 				p.printExprCommentsAtLoc(property.Loc)
@@ -769,6 +798,32 @@ func (p *printer) printNewline() {
 	}
 }
 
+func (p *printer) currentLineLength() int {
+	js := p.js
+	n := len(js)
+	stop := p.oldLineEnd
+
+	// Update "oldLineStart" to the start of the current line
+	for i := n; i > stop; i-- {
+		if c := js[i-1]; c == '\r' || c == '\n' {
+			p.oldLineStart = i
+			break
+		}
+	}
+
+	p.oldLineEnd = n
+	return n - p.oldLineStart
+}
+
+func (p *printer) printNewlinePastLineLimit() bool {
+	if p.currentLineLength() < p.options.LineLimit {
+		return false
+	}
+	p.print("\n")
+	p.printIndent()
+	return true
+}
+
 func (p *printer) printSpaceBeforeOperator(next js_ast.OpCode) {
 	if p.prevOpEnd == len(p.js) {
 		prev := p.prevOp
@@ -871,10 +926,10 @@ const (
 	printDecoratorsAllOnOneLine
 )
 
-func (p *printer) printDecorators(decorators []js_ast.Expr, how printDecorators) {
+func (p *printer) printDecorators(decorators []js_ast.Decorator, how printDecorators) {
 	for _, decorator := range decorators {
 		wrap := false
-		expr := decorator
+		expr := decorator.Value
 
 	outer:
 		for {
@@ -885,31 +940,44 @@ func (p *printer) printDecorators(decorators []js_ast.Expr, how printDecorators)
 
 			case *js_ast.EDot:
 				// "@foo.bar"
-				expr = e.Target
-
-			case *js_ast.EIndex:
-				if _, ok := e.Index.Data.(*js_ast.EPrivateIdentifier); !ok {
-					// "@(foo[bar])"
-					wrap = true
-					break outer
+				if p.canPrintIdentifier(e.Name) {
+					expr = e.Target
+					continue
 				}
 
-				// "@foo.#bar"
-				expr = e.Target
+				// "@foo.\u30FF" => "@(foo['\u30FF'])"
+				break
+
+			case *js_ast.EIndex:
+				if _, ok := e.Index.Data.(*js_ast.EPrivateIdentifier); ok {
+					// "@foo.#bar"
+					expr = e.Target
+					continue
+				}
+
+				// "@(foo[bar])"
+				break
 
 			default:
 				// "@(foo + bar)"
 				// "@(() => {})"
-				wrap = true
-				break outer
+				break
 			}
+
+			wrap = true
+			break outer
+		}
+
+		p.addSourceMapping(decorator.AtLoc)
+		if how == printDecoratorsOnSeparateLines {
+			p.printIndent()
 		}
 
 		p.print("@")
 		if wrap {
 			p.print("(")
 		}
-		p.printExpr(decorator, js_ast.LLowest, 0)
+		p.printExpr(decorator.Value, js_ast.LLowest, 0)
 		if wrap {
 			p.print(")")
 		}
@@ -917,7 +985,6 @@ func (p *printer) printDecorators(decorators []js_ast.Expr, how printDecorators)
 		switch how {
 		case printDecoratorsOnSeparateLines:
 			p.printNewline()
-			p.printIndent()
 
 		case printDecoratorsAllOnOneLine:
 			p.printSpace()
@@ -940,8 +1007,8 @@ func (p *printer) printClass(class js_ast.Class) {
 
 	for _, item := range class.Properties {
 		p.printSemicolonIfNeeded()
-		p.printIndent()
 		p.printDecorators(item.Decorators, printDecoratorsOnSeparateLines)
+		p.printIndent()
 
 		if item.Kind == js_ast.PropertyClassStaticBlock {
 			p.addSourceMapping(item.Loc)
@@ -1011,6 +1078,7 @@ func (p *printer) printProperty(property js_ast.Property) {
 	}
 
 	if property.Flags.Has(js_ast.PropertyIsStatic) {
+		p.printSpaceBeforeIdentifier()
 		p.addSourceMapping(property.Loc)
 		p.print("static")
 		p.printSpace()
@@ -1027,6 +1095,12 @@ func (p *printer) printProperty(property js_ast.Property) {
 		p.printSpaceBeforeIdentifier()
 		p.addSourceMapping(property.Loc)
 		p.print("set")
+		p.printSpace()
+
+	case js_ast.PropertyAutoAccessor:
+		p.printSpaceBeforeIdentifier()
+		p.addSourceMapping(property.Loc)
+		p.print("accessor")
 		p.printSpace()
 	}
 
@@ -2136,17 +2210,18 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 				p.options.Indent++
 			}
 			for i, arg := range e.Args {
-				if isMultiLine {
-					if i != 0 {
-						p.print(",")
-					}
-					if needsNewline {
-						p.printNewline()
-					}
-					p.printIndent()
-				} else if i != 0 {
+				if i != 0 {
 					p.print(",")
-					p.printSpace()
+				}
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if isMultiLine {
+						if needsNewline {
+							p.printNewline()
+						}
+						p.printIndent()
+					} else if i != 0 {
+						p.printSpace()
+					}
 				}
 				p.printExpr(arg, js_ast.LComma, 0)
 				needsNewline = true
@@ -2257,15 +2332,16 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			p.options.Indent++
 		}
 		for i, arg := range e.Args {
-			if isMultiLine {
-				if i != 0 {
-					p.print(",")
-				}
-				p.printNewline()
-				p.printIndent()
-			} else if i != 0 {
+			if i != 0 {
 				p.print(",")
-				p.printSpace()
+			}
+			if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+				if isMultiLine {
+					p.printNewline()
+					p.printIndent()
+				} else if i != 0 {
+					p.printSpace()
+				}
 			}
 			p.printExpr(arg, js_ast.LComma, 0)
 		}
@@ -2410,6 +2486,9 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			} else {
 				p.print(".")
 			}
+			if p.options.LineLimit > 0 {
+				p.printNewlinePastLineLimit()
+			}
 			p.addSourceMapping(e.NameLoc)
 			p.printIdentifier(e.Name)
 		} else {
@@ -2539,11 +2618,15 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		p.printExpr(e.Test, js_ast.LConditional, flags&forbidIn)
 		p.printSpace()
 		p.print("?")
-		p.printSpace()
+		if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+			p.printSpace()
+		}
 		p.printExprWithoutLeadingNewline(e.Yes, js_ast.LYield, 0)
 		p.printSpace()
 		p.print(":")
-		p.printSpace()
+		if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+			p.printSpace()
+		}
 		p.printExprWithoutLeadingNewline(e.No, js_ast.LYield, flags&forbidIn)
 		if wrap {
 			p.print(")")
@@ -2655,13 +2738,14 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			for i, item := range e.Items {
 				if i != 0 {
 					p.print(",")
-					if !isMultiLine {
+				}
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if isMultiLine {
+						p.printNewline()
+						p.printIndent()
+					} else if i != 0 {
 						p.printSpace()
 					}
-				}
-				if isMultiLine {
-					p.printNewline()
-					p.printIndent()
 				}
 				p.printExpr(item, js_ast.LComma, 0)
 
@@ -2710,11 +2794,13 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 				if i != 0 {
 					p.print(",")
 				}
-				if isMultiLine {
-					p.printNewline()
-					p.printIndent()
-				} else {
-					p.printSpace()
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if isMultiLine {
+						p.printNewline()
+						p.printIndent()
+					} else {
+						p.printSpace()
+					}
 				}
 				p.printProperty(item)
 			}
@@ -2845,6 +2931,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		for _, part := range e.Parts {
 			p.print("${")
 			p.printExpr(part.Value, js_ast.LLowest, 0)
+			p.addSourceMapping(part.TailLoc)
 			p.print("}")
 			if e.TagOrNil.Data != nil {
 				p.print(part.TailRaw)
@@ -3234,7 +3321,9 @@ func (v *binaryExprVisitor) visitRightAndFinish(p *printer) {
 		p.prevOpEnd = len(p.js)
 	}
 
-	p.printSpace()
+	if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+		p.printSpace()
+	}
 
 	if e.Op == js_ast.BinOpComma {
 		// The result of the right operand of the comma operator is unused if the caller doesn't use it
@@ -3462,12 +3551,16 @@ func (p *printer) printForLoopInit(init js_ast.Stmt, flags printExprFlags) {
 		p.printExpr(s.Value, js_ast.LLowest, flags|exprResultIsUnused)
 	case *js_ast.SLocal:
 		switch s.Kind {
-		case js_ast.LocalVar:
-			p.printDecls("var", s.Decls, flags)
-		case js_ast.LocalLet:
-			p.printDecls("let", s.Decls, flags)
+		case js_ast.LocalAwaitUsing:
+			p.printDecls("await using", s.Decls, flags)
 		case js_ast.LocalConst:
 			p.printDecls("const", s.Decls, flags)
+		case js_ast.LocalLet:
+			p.printDecls("let", s.Decls, flags)
+		case js_ast.LocalUsing:
+			p.printDecls("using", s.Decls, flags)
+		case js_ast.LocalVar:
+			p.printDecls("var", s.Decls, flags)
 		}
 	default:
 		panic("Internal error")
@@ -3481,7 +3574,9 @@ func (p *printer) printDecls(keyword string, decls []js_ast.Decl, flags printExp
 	for i, decl := range decls {
 		if i != 0 {
 			p.print(",")
-			p.printSpace()
+			if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+				p.printSpace()
+			}
 		}
 		p.printBinding(decl.Binding)
 
@@ -3838,6 +3933,10 @@ const (
 )
 
 func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
+	if p.options.LineLimit > 0 {
+		p.printNewlinePastLineLimit()
+	}
+
 	switch s := stmt.Data.(type) {
 	case *js_ast.SComment:
 		text := s.Text
@@ -3895,9 +3994,9 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 
 	case *js_ast.SClass:
 		p.printDecorators(s.Class.Decorators, printDecoratorsOnSeparateLines)
-		p.addSourceMapping(stmt.Loc)
 		p.printIndent()
 		p.printSpaceBeforeIdentifier()
+		p.addSourceMapping(stmt.Loc)
 		if s.IsExport {
 			p.print("export ")
 		}
@@ -3921,11 +4020,11 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 				p.print("// @__NO_SIDE_EFFECTS__\n")
 			}
 		}
-		p.addSourceMapping(stmt.Loc)
-		p.printIndent()
 		if s2, ok := s.Value.Data.(*js_ast.SClass); ok {
 			p.printDecorators(s2.Class.Decorators, printDecoratorsOnSeparateLines)
 		}
+		p.addSourceMapping(stmt.Loc)
+		p.printIndent()
 		p.printSpaceBeforeIdentifier()
 		p.print("export default")
 		p.printSpace()
@@ -3985,7 +4084,7 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 		if s.Alias != nil {
 			p.print("as")
 			p.printSpace()
-			p.printClauseAlias(s.Alias.OriginalName)
+			p.printClauseAlias(s.Alias.Loc, s.Alias.OriginalName)
 			p.printSpace()
 			p.printSpaceBeforeIdentifier()
 		}
@@ -4011,11 +4110,13 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 				p.print(",")
 			}
 
-			if s.IsSingleLine {
-				p.printSpace()
-			} else {
-				p.printNewline()
-				p.printIndent()
+			if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+				if s.IsSingleLine {
+					p.printSpace()
+				} else {
+					p.printNewline()
+					p.printIndent()
+				}
 			}
 
 			name := p.renamer.NameForSymbol(item.Name.Ref)
@@ -4024,8 +4125,7 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 			if name != item.Alias {
 				p.print(" as")
 				p.printSpace()
-				p.addSourceMapping(item.AliasLoc)
-				p.printClauseAlias(item.Alias)
+				p.printClauseAlias(item.AliasLoc, item.Alias)
 			}
 		}
 
@@ -4057,20 +4157,22 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 				p.print(",")
 			}
 
-			if s.IsSingleLine {
-				p.printSpace()
-			} else {
-				p.printNewline()
-				p.printIndent()
+			if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+				if s.IsSingleLine {
+					p.printSpace()
+				} else {
+					p.printNewline()
+					p.printIndent()
+				}
 			}
 
-			p.printClauseAlias(item.OriginalName)
+			p.printClauseAlias(item.Name.Loc, item.OriginalName)
 			if item.OriginalName != item.Alias {
 				p.printSpace()
 				p.printSpaceBeforeIdentifier()
 				p.print("as")
 				p.printSpace()
-				p.printClauseAlias(item.Alias)
+				p.printClauseAlias(item.AliasLoc, item.Alias)
 			}
 		}
 
@@ -4092,10 +4194,14 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 	case *js_ast.SLocal:
 		p.addSourceMapping(stmt.Loc)
 		switch s.Kind {
+		case js_ast.LocalAwaitUsing:
+			p.printDeclStmt(s.IsExport, "await using", s.Decls)
 		case js_ast.LocalConst:
 			p.printDeclStmt(s.IsExport, "const", s.Decls)
 		case js_ast.LocalLet:
 			p.printDeclStmt(s.IsExport, "let", s.Decls)
+		case js_ast.LocalUsing:
+			p.printDeclStmt(s.IsExport, "using", s.Decls)
 		case js_ast.LocalVar:
 			p.printDeclStmt(s.IsExport, "var", s.Decls)
 		}
@@ -4460,15 +4566,16 @@ func (p *printer) printStmt(stmt js_ast.Stmt, flags printStmtFlags) {
 					p.print(",")
 				}
 
-				if s.IsSingleLine {
-					p.printSpace()
-				} else {
-					p.printNewline()
-					p.printIndent()
+				if p.options.LineLimit <= 0 || !p.printNewlinePastLineLimit() {
+					if s.IsSingleLine {
+						p.printSpace()
+					} else {
+						p.printNewline()
+						p.printIndent()
+					}
 				}
 
-				p.addSourceMapping(item.AliasLoc)
-				p.printClauseAlias(item.Alias)
+				p.printClauseAlias(item.AliasLoc, item.Alias)
 
 				name := p.renamer.NameForSymbol(item.Name.Ref)
 				if name != item.Alias {
@@ -4645,6 +4752,7 @@ type Options struct {
 	RuntimeRequireRef   js_ast.Ref
 	UnsupportedFeatures compat.JSFeature
 	Indent              int
+	LineLimit           int
 	OutputFormat        config.Format
 	MinifyWhitespace    bool
 	MinifyIdentifiers   bool

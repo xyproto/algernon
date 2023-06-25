@@ -50,10 +50,6 @@ import (
 	"golang.org/x/net/idna"
 )
 
-func init() {
-	weakrand.Seed(time.Now().UnixNano())
-}
-
 // Client is a high-level API for ACME operations. It wraps
 // a lower-level ACME client with useful functions to make
 // common flows easier, especially for the issuance of
@@ -65,33 +61,39 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
-// ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
-// must be completely and properly filled out (particularly its DNSNames and Raw fields - this
-// usually involves creating a template CSR, then calling x509.CreateCertificateRequest, then
-// x509.ParseCertificateRequest on the output). The Subject CommonName is NOT considered.
+// CSRSource is an interface that provides users of this
+// package the ability to provide a CSR as part of the
+// ACME flow. This allows the final CSR to be provided
+// just before the Order is finalized.
+type CSRSource interface {
+	CSR(context.Context) (*x509.CertificateRequest, error)
+}
+
+// ObtainCertificateUsingCSRSource obtains all resulting certificate chains using the given
+// ACME Identifiers and the CSRSource. The CSRSource can be used to create and sign a final
+// CSR to be submitted to the ACME server just before finalization. The CSR  must be completely
+// and properly filled out, because the provided ACME Identifiers will be validated against
+// the Identifiers that can be extracted from the CSR. This package currently supports the
+// DNS, IP address, Permanent Identifier and Hardware Module Name identifiers. The Subject
+// CommonName is NOT considered.
 //
-// It implements every single part of the ACME flow described in RFC 8555 §7.1 with the exception
-// of "Create account" because this method signature does not have a way to return the updated
-// account object. The account's status MUST be "valid" in order to succeed.
+// The CSR's Raw field containing the DER encoded signed certificate request must also be
+// set. This usually involves creating a template CSR, then calling x509.CreateCertificateRequest,
+// then x509.ParseCertificateRequest on the output.
 //
-// As far as SANs go, this method currently only supports DNSNames and IPAddresses on the csr.
-func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
+// The method implements every single part of the ACME flow described in RFC 8555 §7.1 with the
+// exception of "Create account" because this method signature does not have a way to return
+// the updated account object. The account's status MUST be "valid" in order to succeed.
+func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account acme.Account, identifiers []acme.Identifier, source CSRSource) ([]acme.Certificate, error) {
 	if account.Status != acme.StatusValid {
 		return nil, fmt.Errorf("account status is not valid: %s", account.Status)
 	}
-	if csr == nil {
-		return nil, fmt.Errorf("missing CSR")
+	if source == nil {
+		return nil, errors.New("missing CSR source")
 	}
 
-	ids, err := createIdentifiersUsingCSR(csr)
-	if err != nil {
-		return nil, err
-	}
-	if len(ids) == 0 {
-		return nil, fmt.Errorf("no identifiers found")
-	}
-
-	order := acme.Order{Identifiers: ids}
+	var err error
+	order := acme.Order{Identifiers: identifiers}
 
 	// remember which challenge types failed for which identifiers
 	// so we can retry with other challenge types
@@ -154,6 +156,20 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
 	}
 
+	// get the CSR from its source
+	csr, err := source.CSR(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting CSR from source: %w", err)
+	}
+	if csr == nil {
+		return nil, errors.New("source did not provide CSR")
+	}
+
+	// validate the order identifiers
+	if err := validateOrderIdentifiers(&order, csr); err != nil {
+		return nil, fmt.Errorf("validating order identifiers: %w", err)
+	}
+
 	// finalize the order, which requests the CA to issue us a certificate
 	order, err = c.Client.FinalizeOrder(ctx, account, order, csr.Raw)
 	if err != nil {
@@ -178,6 +194,80 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 	}
 
 	return certChains, nil
+}
+
+// validateOrderIdentifiers checks if the ACME identifiers provided for the
+// Order match the identifiers that are in the CSR. A mismatch between the two
+// should result the certificate not being issued by the ACME server, but
+// checking this on the client side is faster. Currently there's no way to
+// skip this validation.
+func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) error {
+	csrIdentifiers, err := createIdentifiersUsingCSR(csr)
+	if err != nil {
+		return fmt.Errorf("extracting identifiers from CSR: %w", err)
+	}
+	if len(csrIdentifiers) != len(order.Identifiers) {
+		return fmt.Errorf("number of identifiers in Order %v (%d) does not match the number of identifiers extracted from CSR %v (%d)", order.Identifiers, len(order.Identifiers), csrIdentifiers, len(csrIdentifiers))
+	}
+
+	identifiers := make([]acme.Identifier, 0, len(order.Identifiers))
+	for _, identifier := range order.Identifiers {
+		for _, csrIdentifier := range csrIdentifiers {
+			if csrIdentifier.Value == identifier.Value && csrIdentifier.Type == identifier.Type {
+				identifiers = append(identifiers, identifier)
+			}
+		}
+	}
+
+	if len(identifiers) != len(csrIdentifiers) {
+		return fmt.Errorf("identifiers in Order %v do not match the identifiers extracted from CSR %v", order.Identifiers, csrIdentifiers)
+	}
+
+	return nil
+}
+
+// csrSource implements the CSRSource interface and is used internally
+// to pass a CSR to ObtainCertificateUsingCSRSource from the existing
+// ObtainCertificateUsingCSR method.
+type csrSource struct {
+	csr *x509.CertificateRequest
+}
+
+func (i *csrSource) CSR(_ context.Context) (*x509.CertificateRequest, error) {
+	return i.csr, nil
+}
+
+var _ CSRSource = (*csrSource)(nil)
+
+// ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
+// must be completely and properly filled out (particularly its DNSNames and Raw fields - this
+// usually involves creating a template CSR, then calling x509.CreateCertificateRequest, then
+// x509.ParseCertificateRequest on the output). The Subject CommonName is NOT considered.
+//
+// It implements every single part of the ACME flow described in RFC 8555 §7.1 with the exception
+// of "Create account" because this method signature does not have a way to return the updated
+// account object. The account's status MUST be "valid" in order to succeed.
+//
+// As far as SANs go, this method currently only supports DNSNames, IPAddresses, Permanent
+// Identifiers and Hardware Module Names on the CSR.
+func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
+	if csr == nil {
+		return nil, errors.New("missing CSR")
+	}
+
+	ids, err := createIdentifiersUsingCSR(csr)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return nil, errors.New("no identifiers found")
+	}
+
+	csrSource := &csrSource{
+		csr: csr,
+	}
+
+	return c.ObtainCertificateUsingCSRSource(ctx, account, ids, csrSource)
 }
 
 // ObtainCertificate is the same as ObtainCertificateUsingCSR, except it is a slight wrapper
@@ -252,10 +342,12 @@ func (c *Client) getAuthzObjects(ctx context.Context, account acme.Account, orde
 			preferredChallenges.addUnique(chal.Type)
 		}
 		if preferredWasEmpty {
-			weakrand.Shuffle(len(preferredChallenges), func(i, j int) {
+			randomSourceMu.Lock()
+			randomSource.Shuffle(len(preferredChallenges), func(i, j int) {
 				preferredChallenges[i], preferredChallenges[j] =
 					preferredChallenges[j], preferredChallenges[i]
 			})
+			randomSourceMu.Unlock()
 		}
 		preferredChallengesMu.Unlock()
 
@@ -702,9 +794,15 @@ type retryableErr struct{ error }
 
 func (re retryableErr) Unwrap() error { return re.error }
 
-// Keep a list of challenges we've seen offered by servers,
-// and prefer keep an ordered list of
+// Keep a list of challenges we've seen offered by servers, ordered by success rate.
 var (
 	preferredChallenges   challengeTypes
 	preferredChallengesMu sync.Mutex
+)
+
+// Best practice is to avoid the default RNG source and seed our own;
+// custom sources are not safe for concurrent use, hence the mutex.
+var (
+	randomSource   = weakrand.New(weakrand.NewSource(time.Now().UnixNano()))
+	randomSourceMu sync.Mutex
 )

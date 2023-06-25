@@ -4,20 +4,20 @@ go 1.19
 
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.18.0
+	github.com/caddyserver/certmagic v0.18.2
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.18.4
+	github.com/evanw/esbuild v0.18.8
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
-	github.com/quic-go/quic-go v0.35.1
+	github.com/quic-go/quic-go v0.36.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -29,12 +29,12 @@ require (
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 	github.com/xyproto/onthefly v1.2.3
-	github.com/xyproto/permissionbolt v1.2.6
-	github.com/xyproto/permissions2/v2 v2.6.8
-	github.com/xyproto/permissionsql v0.0.0-20211125233837-22c0d59b31e0
+	github.com/xyproto/permissionbolt/v2 v2.6.3
+	github.com/xyproto/permissions2/v2 v2.6.9
+	github.com/xyproto/permissionsql/v2 v2.1.1
 	github.com/xyproto/pinterface v1.5.3
 	github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
-	github.com/xyproto/pstore v1.3.1
+	github.com/xyproto/pstore v1.3.2
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1
 	github.com/xyproto/simplebolt v1.5.2
@@ -69,10 +69,10 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/mholt/acmez v1.1.1 // indirect
-	github.com/miekg/dns v1.1.54 // indirect
+	github.com/mholt/acmez v1.2.0 // indirect
+	github.com/miekg/dns v1.1.55 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.10.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
@@ -81,11 +81,9 @@ require (
 	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/xyproto/cookie v0.0.0-20210319112338-2e0ffd4b75a9 // indirect
-	github.com/xyproto/cookie/v2 v2.2.3 // indirect
-	github.com/xyproto/env v1.9.1 // indirect
+	github.com/xyproto/cookie/v2 v2.2.4 // indirect
 	github.com/xyproto/randomstring v1.0.5 // indirect
-	github.com/xyproto/simplehstore v1.8.1 // indirect
+	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/xyproto/vt100 v1.11.5 // indirect

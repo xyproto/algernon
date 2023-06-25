@@ -75,6 +75,11 @@ func Source(unsupportedJSFeatures compat.JSFeature) logger.Source {
 		var __reflectGet = Reflect.get
 		var __reflectSet = Reflect.set
 
+		var __knownSymbol = (name, symbol) => {
+			if (symbol = Symbol[name]) return symbol
+			throw Error('Symbol.' + name + ' is not defined')
+		}
+
 		export var __pow = Math.pow
 
 		var __defNormalProp = (obj, key, value) => key in obj
@@ -125,7 +130,7 @@ func Source(unsupportedJSFeatures compat.JSFeature) logger.Source {
 				}) : x
 			)(function(x) {
 				if (typeof require !== 'undefined') return require.apply(this, arguments)
-				throw new Error('Dynamic require of "' + x + '" is not supported')
+				throw Error('Dynamic require of "' + x + '" is not supported')
 			})
 
 		// For object rest patterns
@@ -350,25 +355,84 @@ func Source(unsupportedJSFeatures compat.JSFeature) logger.Source {
 			})
 		}
 
-		// This helps for lowering for-await loops
-		export var __forAwait = (obj, it, method) => {
-			it = obj[Symbol.asyncIterator]
-			method = (key, fn) =>
-				(fn = obj[key]) && (it[key] = arg =>
-					new Promise((resolve, reject, done) => {
-						arg = fn.call(obj, arg)
-						done = arg.done
-						return Promise.resolve(arg.value)
-							.then((value) => resolve({ value, done }), reject)
-					}))
-			return it
-				? it.call(obj)
-				: (obj = obj[Symbol.iterator](),
-					it = {},
-					method("next"),
-					method("return"),
-					it)
+		// These help for lowering async generator functions
+		export var __await = function (promise, isYieldStar) {
+			this[0] = promise
+			this[1] = isYieldStar
 		}
+		export var __asyncGenerator = (__this, __arguments, generator) => {
+			var resume = (k, v, yes, no) => {
+				try {
+					var x = generator[k](v), isAwait = (v = x.value) instanceof __await, done = x.done
+					Promise.resolve(isAwait ? v[0] : v)
+						.then(y => isAwait
+							? resume(k === 'return' ? k : 'next', v[1] ? { done: y.done, value: y.value } : y, yes, no)
+							: yes({ value: y, done }))
+						.catch(e => resume('throw', e, yes, no))
+				} catch (e) {
+					no(e)
+				}
+			}
+			var method = k => it[k] = x => new Promise((yes, no) => resume(k, x, yes, no))
+			var it = {}
+			return generator = generator.apply(__this, __arguments),
+				it[Symbol.asyncIterator] = () => it,
+				method('next'),
+				method('throw'),
+				method('return'),
+				it
+		}
+		export var __yieldStar = value => {
+			var obj = value[__knownSymbol('asyncIterator')]
+			var isAwait = false
+			var method
+			var it = {}
+			if (obj == null) {
+				obj = value[__knownSymbol('iterator')]()
+				method = k => it[k] = x => obj[k](x)
+			} else {
+				obj = obj.call(value)
+				method = k => it[k] = v => {
+					if (isAwait) {
+						isAwait = false
+						if (k === 'throw') throw v
+						return v
+					}
+					isAwait = true
+					return {
+						done: false,
+						value: new __await(new Promise(resolve => {
+							var x = obj[k](v)
+							if (!(x instanceof Object)) throw TypeError('Object expected')
+							resolve(x)
+						}), 1),
+					}
+				}
+			}
+			return it[__knownSymbol('iterator')] = () => it,
+				method('next'),
+				'throw' in obj ? method('throw') : it.throw = x => { throw x },
+				'return' in obj && method('return'),
+				it
+		}
+
+		// This helps for lowering for-await loops
+		export var __forAwait = (obj, it, method) =>
+			(it = obj[__knownSymbol('asyncIterator')])
+				? it.call(obj)
+				: (obj = obj[__knownSymbol('iterator')](),
+					it = {},
+					method = (key, fn) =>
+						(fn = obj[key]) && (it[key] = arg =>
+							new Promise((yes, no, done) => (
+								arg = fn.call(obj, arg),
+								done = arg.done,
+								Promise.resolve(arg.value)
+									.then(value => yes({ value, done }), no)
+							))),
+					method('next'),
+					method('return'),
+					it)
 
 		// This is for the "binary" loader (custom code is ~2x faster than "atob")
 		export var __toBinaryNode = base64 => new Uint8Array(Buffer.from(base64, 'base64'))
@@ -387,6 +451,38 @@ func Source(unsupportedJSFeatures compat.JSFeature) logger.Source {
 				return bytes
 			}
 		})()
+
+		// These are for the "using" statement in TypeScript 5.2+
+		export var __using = (stack, value, async) => {
+			if (value != null) {
+				if (typeof value !== 'object') throw TypeError('Object expected')
+				var dispose
+				if (async) dispose = value[__knownSymbol('asyncDispose')]
+				if (dispose === void 0) dispose = value[__knownSymbol('dispose')]
+				if (typeof dispose !== 'function') throw TypeError('Object not disposable')
+				stack.push([async, dispose, value])
+			} else if (async) {
+				stack.push([async])
+			}
+			return value
+		}
+		export var __callDispose = (stack, error, hasError) => {
+			var E = typeof SuppressedError === 'function' ? SuppressedError :
+				function (e, s, m, _) { return _ = Error(m), _.name = 'SuppressedError', _.error = e, _.suppressed = s, _ }
+			var fail = e => error = hasError ? new E(e, error, 'An error was suppressed during disposal') : (hasError = true, e)
+			var next = (it) => {
+				while (it = stack.pop()) {
+					try {
+						var result = it[1] && it[1].call(it[2])
+						if (it[0]) return Promise.resolve(result).then(next, (e) => (fail(e), next()))
+					} catch (e) {
+						fail(e)
+					}
+				}
+				if (hasError) throw error
+			}
+			return next()
+		}
 	`
 
 	return logger.Source{

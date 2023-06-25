@@ -126,6 +126,10 @@ func (c *Client) provisionDirectory(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if c.dir.NewOrder == "" {
+		// catch faulty ACME servers that may not return proper HTTP status on errors
+		return fmt.Errorf("server did not return error headers, but required directory fields are missing: %+v", c.dir)
+	}
 	directories[c.Directory] = cachedDirectory{c.dir, time.Now()}
 	return nil
 }

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xyproto/cookie"          // Functions related to cookies
-	"github.com/xyproto/env"             // Fetch values from environment variables and support defaults
+	"github.com/xyproto/cookie/v2"          // Functions related to cookies
+	"github.com/xyproto/env/v2"             // Fetch values from environment variables and support defaults
 	"github.com/xyproto/pinterface"      // Database interfaces
 	db "github.com/xyproto/simplehstore" // PostgreSQL database wrapper
 )

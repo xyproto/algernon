@@ -1877,12 +1877,24 @@ func StmtsCanBeRemovedIfUnused(stmts []Stmt, flags StmtsCanBeRemovedIfUnusedFlag
 			}
 
 		case *SLocal:
+			// "await" is a side effect because it affects code timing
+			if s.Kind == LocalAwaitUsing {
+				return false
+			}
+
 			for _, decl := range s.Decls {
 				if _, ok := decl.Binding.Data.(*BIdentifier); !ok {
 					return false
 				}
-				if decl.ValueOrNil.Data != nil && !ExprCanBeRemovedIfUnused(decl.ValueOrNil, isUnbound) {
-					return false
+				if decl.ValueOrNil.Data != nil {
+					if !ExprCanBeRemovedIfUnused(decl.ValueOrNil, isUnbound) {
+						return false
+					} else if s.Kind.IsUsing() {
+						// "using" declarations are only side-effect free if they are initialized to null or undefined
+						if t := KnownPrimitiveType(decl.ValueOrNil.Data); t != PrimitiveNull && t != PrimitiveUndefined {
+							return false
+						}
+					}
 				}
 			}
 
@@ -1929,6 +1941,10 @@ func StmtsCanBeRemovedIfUnused(stmts []Stmt, flags StmtsCanBeRemovedIfUnusedFlag
 }
 
 func ClassCanBeRemovedIfUnused(class Class, isUnbound func(Ref) bool) bool {
+	if len(class.Decorators) > 0 {
+		return false
+	}
+
 	// Note: This check is incorrect. Extending a non-constructible object can
 	// throw an error, which is a side effect:
 	//
@@ -1951,8 +1967,22 @@ func ClassCanBeRemovedIfUnused(class Class, isUnbound func(Ref) bool) bool {
 			continue
 		}
 
+		if len(property.Decorators) > 0 {
+			return false
+		}
+
 		if property.Flags.Has(PropertyIsComputed) && !IsPrimitiveLiteral(property.Key.Data) {
 			return false
+		}
+
+		if property.Flags.Has(PropertyIsMethod) {
+			if fn, ok := property.ValueOrNil.Data.(*EFunction); ok {
+				for _, arg := range fn.Fn.Args {
+					if len(arg.Decorators) > 0 {
+						return false
+					}
+				}
+			}
 		}
 
 		if property.Flags.Has(PropertyIsStatic) {
@@ -2547,4 +2577,32 @@ func MangleIfExpr(loc logger.Loc, e *EIf, unsupportedFeatures compat.JSFeature, 
 	}
 
 	return Expr{Loc: loc, Data: e}
+}
+
+func ForEachIdentifierBindingInDecls(decls []Decl, callback func(loc logger.Loc, b *BIdentifier)) {
+	for _, decl := range decls {
+		ForEachIdentifierBinding(decl.Binding, callback)
+	}
+}
+
+func ForEachIdentifierBinding(binding Binding, callback func(loc logger.Loc, b *BIdentifier)) {
+	switch b := binding.Data.(type) {
+	case *BMissing:
+
+	case *BIdentifier:
+		callback(binding.Loc, b)
+
+	case *BArray:
+		for _, item := range b.Items {
+			ForEachIdentifierBinding(item.Binding, callback)
+		}
+
+	case *BObject:
+		for _, property := range b.Properties {
+			ForEachIdentifierBinding(property.Value, callback)
+		}
+
+	default:
+		panic("Internal error")
+	}
 }

@@ -75,10 +75,11 @@ CertMagic - Automatic HTTPS using Let's Encrypt
 ## Features
 
 - Fully automated certificate management including issuance and renewal
-- One-liner, fully managed HTTPS servers
+- One-line, fully managed HTTPS servers
 - Full control over almost every aspect of the system
 - HTTP->HTTPS redirects
-- Solves all 3 ACME challenges: HTTP, TLS-ALPN, and DNS
+- Multiple issuers supported: get certificates from multiple sources/CAs for redundancy and resiliency
+- Solves all 3 common ACME challenges: HTTP, TLS-ALPN, and DNS (and capable of others)
 - Most robust error handling of _any_ ACME client
 	- Challenges are randomized to avoid accidental dependence
 	- Challenges are rotated to overcome certain network blockages
@@ -88,7 +89,8 @@ CertMagic - Automatic HTTPS using Let's Encrypt
 - Written in Go, a language with memory-safety guarantees
 - Powered by [ACMEz](https://github.com/mholt/acmez), _the_ premier ACME client library for Go
 - All [libdns](https://github.com/libdns) DNS providers work out-of-the-box
-- Pluggable storage implementations (default: file system)
+- Pluggable storage backends (default: file system)
+- Pluggable key sources
 - Wildcard certificates
 - Automatic OCSP stapling ([done right](https://gist.github.com/sleevi/5efe9ef98961ecfb4da8#gistcomment-2336055)) [keeps your sites online!](https://twitter.com/caddyserver/status/1234874273724084226)
 	- Will [automatically attempt](https://twitter.com/mholt6/status/1235577699541762048) to replace [revoked certificates](https://community.letsencrypt.org/t/2020-02-29-caa-rechecking-bug/114591/3?u=mholt)!
@@ -101,7 +103,8 @@ CertMagic - Automatic HTTPS using Let's Encrypt
 	- Caddy / CertMagic pioneered this technology
 	- Custom decision functions to regulate and throttle on-demand behavior
 - Optional event hooks for observation
-- Works with any certificate authority (CA) compliant with the ACME specification
+- One-time private keys by default (new key for each cert) to discourage pinning and reduce scope of key compromise
+- Works with any certificate authority (CA) compliant with the ACME specification RFC 8555
 - Certificate revocation (please, only if private key is compromised)
 - Must-Staple (optional; not default)
 - Cross-platform support! Mac, Windows, Linux, BSD, Android...
@@ -478,13 +481,15 @@ CertMagic emits events when possible things of interest happen. Set the [`OnEven
 	- `identifier`: The name on the certificate
 	- `remaining`: Time left on the certificate (if renewal)
 	- `issuer`: The previous or current issuer
-	- `storage_key`: The path to the cert resources within storage
+	- `storage_path`: The path to the folder containing the cert resources within storage
+	- `private_key_path`: The path to the private key file in storage
+	- `certificate_path`: The path to the public key file in storage
+	- `metadata_path`: The path to the metadata file in storage
 - **`cert_failed`** An attempt to obtain a certificate failed
 	- `renewal`: Whether this is a renewal
 	- `identifier`: The name on the certificate
 	- `remaining`: Time left on the certificate (if renewal)
-	- `issuer`: The previous or current issuer
-	- `storage_key`: The path to the cert resources within storage
+	- `issuers`: The issuer(s) tried
 	- `error`: The (final) error message
 - **`tls_get_certificate`** The GetCertificate phase of a TLS handshake is under way
 	- `client_hello`: The tls.ClientHelloInfo struct

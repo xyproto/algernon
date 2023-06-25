@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xyproto/cookie"     // Functions related to cookies
+	"github.com/xyproto/cookie/v2"  // Functions related to cookies
 	"github.com/xyproto/pinterface" // Database interfaces
 	"github.com/xyproto/simplebolt" // Bolt database wrapper
 )
@@ -190,7 +190,7 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 	if ok && (username != "") {
 		return username, nil
 	}
-	return "", errors.New("Could not retrieve the username from browser cookie")
+	return "", errors.New("could not retrieve the username from browser cookie")
 }
 
 // Store the given username in a cookie in the browser, if possible.
@@ -200,10 +200,10 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 // - httponly is for only allowing cookies for the same server
 func (state *UserState) setUsernameCookieWithFlags(w http.ResponseWriter, username string, secure, httponly bool) error {
 	if username == "" {
-		return errors.New("Can't set cookie for empty username")
+		return errors.New("can't set cookie for empty username")
 	}
 	if !state.HasUser(username) {
-		return errors.New("Can't store cookie for non-existing user")
+		return errors.New("can't store cookie for non-existing user")
 	}
 	// Create a cookie that lasts for a while ("timeout" seconds),
 	// this is the equivalent of a session for a given username.
@@ -401,7 +401,7 @@ func (state *UserState) SetPasswordAlgo(algorithm string) error {
 	case "sha256", "bcrypt", "bcrypt+":
 		state.passwordAlgorithm = algorithm
 	default:
-		return errors.New("Permissions: " + algorithm + " is an unsupported encryption algorithm")
+		return errors.New("permissions: " + algorithm + " is an unsupported encryption algorithm")
 	}
 	return nil
 }

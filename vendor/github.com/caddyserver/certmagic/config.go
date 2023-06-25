@@ -95,6 +95,17 @@ type Config struct {
 	// turn until one succeeds.
 	Issuers []Issuer
 
+	// How to select which issuer to use.
+	// Default: UseFirstIssuer (subject to change).
+	IssuerPolicy IssuerPolicy
+
+	// If true, private keys already existing in storage
+	// will be reused. Otherwise, a new key will be
+	// created for every new certificate to mitigate
+	// pinning and reduce the scope of key compromise.
+	// Default: false (do not reuse keys).
+	ReusePrivateKeys bool
+
 	// The source of new private keys for certificates;
 	// the default KeySource is StandardKeyGenerator.
 	KeySource KeyGenerator
@@ -526,10 +537,25 @@ func (cfg *Config) obtainCert(ctx context.Context, name string, interactive bool
 			return fmt.Errorf("obtaining certificate aborted by event handler: %w", err)
 		}
 
-		// if storage has a private key already, use it; otherwise we'll generate our own
-		privKey, privKeyPEM, issuers, err := cfg.reusePrivateKey(ctx, name)
-		if err != nil {
-			return err
+		// If storage has a private key already, use it; otherwise we'll generate our own.
+		// Also create the slice of issuers we will try using according to any issuer
+		// selection policy (it must be a copy of the slice so we don't mutate original).
+		var privKey crypto.PrivateKey
+		var privKeyPEM []byte
+		var issuers []Issuer
+		if cfg.ReusePrivateKeys {
+			privKey, privKeyPEM, issuers, err = cfg.reusePrivateKey(ctx, name)
+			if err != nil {
+				return err
+			}
+		} else {
+			issuers = make([]Issuer, len(cfg.Issuers))
+			copy(issuers, cfg.Issuers)
+		}
+		if cfg.IssuerPolicy == UseFirstRandomIssuer {
+			weakrand.Shuffle(len(issuers), func(i, j int) {
+				issuers[i], issuers[j] = issuers[j], issuers[i]
+			})
 		}
 		if privKey == nil {
 			privKey, err = cfg.KeySource.GenerateKey()
@@ -593,6 +619,7 @@ func (cfg *Config) obtainCert(ctx context.Context, name string, interactive bool
 			// only the error from the last issuer will be returned, but we logged the others
 			return fmt.Errorf("[%s] Obtain: %w", name, err)
 		}
+		issuerKey := issuerUsed.IssuerKey()
 
 		// success - immediately save the certificate resource
 		certRes := CertificateResource{
@@ -609,11 +636,16 @@ func (cfg *Config) obtainCert(ctx context.Context, name string, interactive bool
 
 		log.Info("certificate obtained successfully", zap.String("identifier", name))
 
+		certKey := certRes.NamesKey()
+
 		cfg.emit(ctx, "cert_obtained", map[string]any{
-			"renewal":     false,
-			"identifier":  name,
-			"issuers":     issuerUsed.IssuerKey(),
-			"storage_key": certRes.NamesKey(),
+			"renewal":          false,
+			"identifier":       name,
+			"issuer":           issuerUsed.IssuerKey(),
+			"storage_path":     StorageKeys.CertsSitePrefix(issuerKey, certKey),
+			"private_key_path": StorageKeys.SitePrivateKey(issuerKey, certKey),
+			"certificate_path": StorageKeys.SiteCert(issuerKey, certKey),
+			"metadata_path":    StorageKeys.SiteMeta(issuerKey, certKey),
 		})
 
 		return nil
@@ -683,9 +715,6 @@ func (cfg *Config) storageHasCertResourcesAnyIssuer(ctx context.Context, name st
 // and its assets in storage if successful. It DOES NOT update the in-memory
 // cache with the new certificate. The certificate will not be renewed if it
 // is not close to expiring unless force is true.
-//
-// Renewing a certificate is the same as obtaining a certificate, except that
-// the existing private key already in storage is reused.
 func (cfg *Config) RenewCertSync(ctx context.Context, name string, force bool) error {
 	return cfg.renewCert(ctx, name, force, true)
 }
@@ -766,10 +795,25 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 			return fmt.Errorf("renewing certificate aborted by event handler: %w", err)
 		}
 
-		privateKey, err := PEMDecodePrivateKey(certRes.PrivateKeyPEM)
+		// reuse or generate new private key for CSR
+		var privateKey crypto.PrivateKey
+		if cfg.ReusePrivateKeys {
+			privateKey, err = PEMDecodePrivateKey(certRes.PrivateKeyPEM)
+		} else {
+			privateKey, err = cfg.KeySource.GenerateKey()
+		}
 		if err != nil {
 			return err
 		}
+
+		// if we generated a new key, make sure to replace its PEM encoding too!
+		if !cfg.ReusePrivateKeys {
+			certRes.PrivateKeyPEM, err = PEMEncodePrivateKey(privateKey)
+			if err != nil {
+				return err
+			}
+		}
+
 		csr, err := cfg.generateCSR(privateKey, []string{name})
 		if err != nil {
 			return err
@@ -808,17 +852,17 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 		}
 		if err != nil {
 			cfg.emit(ctx, "cert_failed", map[string]any{
-				"renewal":     true,
-				"identifier":  name,
-				"remaining":   timeLeft,
-				"issuers":     issuerKeys,
-				"storage_key": certRes.NamesKey(),
-				"error":       err,
+				"renewal":    true,
+				"identifier": name,
+				"remaining":  timeLeft,
+				"issuers":    issuerKeys,
+				"error":      err,
 			})
 
 			// only the error from the last issuer will be returned, but we logged the others
 			return fmt.Errorf("[%s] Renew: %w", name, err)
 		}
+		issuerKey := issuerUsed.IssuerKey()
 
 		// success - immediately save the renewed certificate resource
 		newCertRes := CertificateResource{
@@ -826,7 +870,7 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 			CertificatePEM: issuedCert.Certificate,
 			PrivateKeyPEM:  certRes.PrivateKeyPEM,
 			IssuerData:     issuedCert.Metadata,
-			issuerKey:      issuerUsed.IssuerKey(),
+			issuerKey:      issuerKey,
 		}
 		err = cfg.saveCertResource(ctx, issuerUsed, newCertRes)
 		if err != nil {
@@ -835,12 +879,17 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 
 		log.Info("certificate renewed successfully", zap.String("identifier", name))
 
+		certKey := newCertRes.NamesKey()
+
 		cfg.emit(ctx, "cert_obtained", map[string]any{
-			"renewal":     true,
-			"remaining":   timeLeft,
-			"identifier":  name,
-			"issuer":      issuerUsed.IssuerKey(),
-			"storage_key": certRes.NamesKey(),
+			"renewal":          true,
+			"remaining":        timeLeft,
+			"identifier":       name,
+			"issuer":           issuerKey,
+			"storage_path":     StorageKeys.CertsSitePrefix(issuerKey, certKey),
+			"private_key_path": StorageKeys.SitePrivateKey(issuerKey, certKey),
+			"certificate_path": StorageKeys.SiteCert(issuerKey, certKey),
+			"metadata_path":    StorageKeys.SiteMeta(issuerKey, certKey),
 		})
 
 		return nil
