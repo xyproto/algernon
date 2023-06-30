@@ -1,7 +1,7 @@
 # github.com/DataDog/gostackparse v0.6.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
-# github.com/alecthomas/chroma/v2 v2.7.1-0.20230409061740-3c219428245c
+# github.com/alecthomas/chroma/v2 v2.8.0
 ## explicit; go 1.19
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
@@ -40,7 +40,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.18.8
+# github.com/evanw/esbuild v0.18.10
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -183,7 +183,7 @@ github.com/quic-go/qpack
 # github.com/quic-go/qtls-go1-19 v0.3.2
 ## explicit; go 1.19
 github.com/quic-go/qtls-go1-19
-# github.com/quic-go/qtls-go1-20 v0.2.2
+# github.com/quic-go/qtls-go1-20 v0.3.0
 ## explicit; go 1.20
 github.com/quic-go/qtls-go1-20
 # github.com/quic-go/quic-go v0.36.0
@@ -301,7 +301,7 @@ github.com/xyproto/simplehstore
 # github.com/xyproto/simplejwt v1.2.0
 ## explicit; go 1.20
 github.com/xyproto/simplejwt
-# github.com/xyproto/simplemaria v0.0.0-20220902075651-6f3efad9ec98
+# github.com/xyproto/simplemaria v1.3.2
 ## explicit; go 1.19
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis/v2 v2.6.5
@@ -361,7 +361,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+# golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.11.0

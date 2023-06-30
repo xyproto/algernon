@@ -429,6 +429,33 @@ func (p *printer) mangledPropName(ref js_ast.Ref) string {
 	return p.renamer.NameForSymbol(ref)
 }
 
+func (p *printer) tryToGetImportedEnumValue(target js_ast.Expr, name string) (js_ast.TSEnumValue, bool) {
+	if id, ok := target.Data.(*js_ast.EImportIdentifier); ok {
+		ref := js_ast.FollowSymbols(p.symbols, id.Ref)
+		if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
+			if enum, ok := p.options.TSEnums[ref]; ok {
+				value, ok := enum[name]
+				return value, ok
+			}
+		}
+	}
+	return js_ast.TSEnumValue{}, false
+}
+
+func (p *printer) tryToGetImportedEnumValueUTF16(target js_ast.Expr, name []uint16) (js_ast.TSEnumValue, string, bool) {
+	if id, ok := target.Data.(*js_ast.EImportIdentifier); ok {
+		ref := js_ast.FollowSymbols(p.symbols, id.Ref)
+		if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
+			if enum, ok := p.options.TSEnums[ref]; ok {
+				name := helpers.UTF16ToString(name)
+				value, ok := enum[name]
+				return value, name, ok
+			}
+		}
+	}
+	return js_ast.TSEnumValue{}, "", false
+}
+
 func (p *printer) printClauseAlias(loc logger.Loc, alias string) {
 	if js_ast.IsIdentifier(alias) {
 		p.printSpaceBeforeIdentifier()
@@ -1052,26 +1079,19 @@ func (p *printer) printProperty(property js_ast.Property) {
 	// Handle key syntax compression for cross-module constant inlining of enums
 	if p.options.MinifySyntax && property.Flags.Has(js_ast.PropertyIsComputed) {
 		if dot, ok := property.Key.Data.(*js_ast.EDot); ok {
-			if id, ok := dot.Target.Data.(*js_ast.EImportIdentifier); ok {
-				ref := js_ast.FollowSymbols(p.symbols, id.Ref)
-				if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
-					if enum, ok := p.options.TSEnums[ref]; ok {
-						if value, ok := enum[dot.Name]; ok {
-							if value.String != nil {
-								property.Key.Data = &js_ast.EString{Value: value.String}
+			if value, ok := p.tryToGetImportedEnumValue(dot.Target, dot.Name); ok {
+				if value.String != nil {
+					property.Key.Data = &js_ast.EString{Value: value.String}
 
-								// Problematic key names must stay computed for correctness
-								if !helpers.UTF16EqualsString(value.String, "__proto__") &&
-									!helpers.UTF16EqualsString(value.String, "constructor") &&
-									!helpers.UTF16EqualsString(value.String, "prototype") {
-									property.Flags &= ^js_ast.PropertyIsComputed
-								}
-							} else {
-								property.Key.Data = &js_ast.ENumber{Value: value.Number}
-								property.Flags &= ^js_ast.PropertyIsComputed
-							}
-						}
+					// Problematic key names must stay computed for correctness
+					if !helpers.UTF16EqualsString(value.String, "__proto__") &&
+						!helpers.UTF16EqualsString(value.String, "constructor") &&
+						!helpers.UTF16EqualsString(value.String, "prototype") {
+						property.Flags &= ^js_ast.PropertyIsComputed
 					}
+				} else {
+					property.Key.Data = &js_ast.ENumber{Value: value.Number}
+					property.Flags &= ^js_ast.PropertyIsComputed
 				}
 			}
 		}
@@ -1710,26 +1730,19 @@ func (p *printer) lateConstantFoldUnaryOrBinaryExpr(expr js_ast.Expr) js_ast.Exp
 		}
 
 	case *js_ast.EDot:
-		if id, ok := e.Target.Data.(*js_ast.EImportIdentifier); ok {
-			ref := js_ast.FollowSymbols(p.symbols, id.Ref)
-			if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
-				if enum, ok := p.options.TSEnums[ref]; ok {
-					if value, ok := enum[e.Name]; ok && value.String == nil {
-						value := js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: value.Number}}
+		if value, ok := p.tryToGetImportedEnumValue(e.Target, e.Name); ok && value.String == nil {
+			value := js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: value.Number}}
 
-						if strings.Contains(e.Name, "*/") {
-							// Don't wrap with a comment
-							return value
-						}
-
-						// Wrap with a comment
-						return js_ast.Expr{Loc: value.Loc, Data: &js_ast.EInlinedEnum{
-							Value:   value,
-							Comment: e.Name,
-						}}
-					}
-				}
+			if strings.Contains(e.Name, "*/") {
+				// Don't wrap with a comment
+				return value
 			}
+
+			// Wrap with a comment
+			return js_ast.Expr{Loc: value.Loc, Data: &js_ast.EInlinedEnum{
+				Value:   value,
+				Comment: e.Name,
+			}}
 		}
 
 	case *js_ast.EUnary:
@@ -2448,25 +2461,18 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			flags |= hasNonOptionalChainParent
 
 			// Inline cross-module TypeScript enum references here
-			if id, ok := e.Target.Data.(*js_ast.EImportIdentifier); ok {
-				ref := js_ast.FollowSymbols(p.symbols, id.Ref)
-				if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
-					if enum, ok := p.options.TSEnums[ref]; ok {
-						if value, ok := enum[e.Name]; ok {
-							if value.String != nil {
-								p.printQuotedUTF16(value.String, true /* allowBacktick */)
-							} else {
-								p.printNumber(value.Number, level)
-							}
-							if !p.options.MinifyWhitespace && !p.options.MinifyIdentifiers && !strings.Contains(e.Name, "*/") {
-								p.print(" /* ")
-								p.print(e.Name)
-								p.print(" */")
-							}
-							break
-						}
-					}
+			if value, ok := p.tryToGetImportedEnumValue(e.Target, e.Name); ok {
+				if value.String != nil {
+					p.printQuotedUTF16(value.String, true /* allowBacktick */)
+				} else {
+					p.printNumber(value.Number, level)
 				}
+				if !p.options.MinifyWhitespace && !p.options.MinifyIdentifiers && !strings.Contains(e.Name, "*/") {
+					p.print(" /* ")
+					p.print(e.Name)
+					p.print(" */")
+				}
+				break
 			}
 		} else {
 			if (flags & hasNonOptionalChainParent) != 0 {
@@ -2505,38 +2511,29 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 		}
 
 	case *js_ast.EIndex:
-		wrap := false
 		if e.OptionalChain == js_ast.OptionalChainNone {
 			flags |= hasNonOptionalChainParent
 
 			// Inline cross-module TypeScript enum references here
 			if index, ok := e.Index.Data.(*js_ast.EString); ok {
-				if id, ok := e.Target.Data.(*js_ast.EImportIdentifier); ok {
-					ref := js_ast.FollowSymbols(p.symbols, id.Ref)
-					if symbol := p.symbols.Get(ref); symbol.Kind == js_ast.SymbolTSEnum {
-						if enum, ok := p.options.TSEnums[ref]; ok {
-							name := helpers.UTF16ToString(index.Value)
-							if value, ok := enum[name]; ok {
-								if value.String != nil {
-									p.printQuotedUTF16(value.String, true /* allowBacktick */)
-								} else {
-									p.printNumber(value.Number, level)
-								}
-								if !p.options.MinifyWhitespace && !p.options.MinifyIdentifiers && !strings.Contains(name, "*/") {
-									p.print(" /* ")
-									p.print(name)
-									p.print(" */")
-								}
-								break
-							}
-						}
+				if value, name, ok := p.tryToGetImportedEnumValueUTF16(e.Target, index.Value); ok && value.String == nil {
+					if value.String != nil {
+						p.printQuotedUTF16(value.String, true /* allowBacktick */)
+					} else {
+						p.printNumber(value.Number, level)
 					}
+					if !p.options.MinifyWhitespace && !p.options.MinifyIdentifiers && !strings.Contains(name, "*/") {
+						p.print(" /* ")
+						p.print(name)
+						p.print(" */")
+					}
+					break
 				}
 			}
 		} else {
 			if (flags & hasNonOptionalChainParent) != 0 {
-				wrap = true
 				p.print("(")
+				defer p.print(")")
 			}
 			flags &= ^hasNonOptionalChainParent
 		}
@@ -2553,6 +2550,7 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 			name := p.renamer.NameForSymbol(index.Ref)
 			p.addSourceMappingForName(e.Index.Loc, name, index.Ref)
 			p.printIdentifier(name)
+			return
 
 		case *js_ast.EMangledProp:
 			if name := p.mangledPropName(index.Ref); p.canPrintIdentifier(name) {
@@ -2561,53 +2559,52 @@ func (p *printer) printExpr(expr js_ast.Expr, level js_ast.L, flags printExprFla
 				}
 				p.addSourceMappingForName(e.Index.Loc, name, index.Ref)
 				p.printIdentifier(name)
-			} else {
-				isMultiLine := p.willPrintExprCommentsAtLoc(e.Index.Loc) || p.willPrintExprCommentsAtLoc(e.CloseBracketLoc)
-				p.print("[")
-				if isMultiLine {
-					p.printNewline()
-					p.options.Indent++
-					p.printIndent()
-				}
-				p.printExprCommentsAtLoc(e.Index.Loc)
-				p.addSourceMapping(e.Index.Loc)
-				p.printQuotedUTF8(name, true /* allowBacktick */)
-				if isMultiLine {
-					p.printNewline()
-					p.printExprCommentsAfterCloseTokenAtLoc(e.CloseBracketLoc)
-					p.options.Indent--
-					p.printIndent()
-				}
-				if e.CloseBracketLoc.Start > expr.Loc.Start {
-					p.addSourceMapping(e.CloseBracketLoc)
-				}
-				p.print("]")
+				return
 			}
 
-		default:
-			isMultiLine := p.willPrintExprCommentsAtLoc(e.Index.Loc) || p.willPrintExprCommentsAtLoc(e.CloseBracketLoc)
-			p.print("[")
-			if isMultiLine {
-				p.printNewline()
-				p.options.Indent++
-				p.printIndent()
+		case *js_ast.EInlinedEnum:
+			if p.options.MinifySyntax {
+				if str, ok := index.Value.Data.(*js_ast.EString); ok && p.canPrintIdentifierUTF16(str.Value) {
+					if e.OptionalChain != js_ast.OptionalChainStart {
+						p.print(".")
+					}
+					p.addSourceMapping(index.Value.Loc)
+					p.printIdentifierUTF16(str.Value)
+					return
+				}
 			}
-			p.printExpr(e.Index, js_ast.LLowest, 0)
-			if isMultiLine {
-				p.printNewline()
-				p.printExprCommentsAfterCloseTokenAtLoc(e.CloseBracketLoc)
-				p.options.Indent--
-				p.printIndent()
+
+		case *js_ast.EDot:
+			if p.options.MinifySyntax {
+				if value, ok := p.tryToGetImportedEnumValue(index.Target, index.Name); ok && value.String != nil && p.canPrintIdentifierUTF16(value.String) {
+					if e.OptionalChain != js_ast.OptionalChainStart {
+						p.print(".")
+					}
+					p.addSourceMapping(e.Index.Loc)
+					p.printIdentifierUTF16(value.String)
+					return
+				}
 			}
-			if e.CloseBracketLoc.Start > expr.Loc.Start {
-				p.addSourceMapping(e.CloseBracketLoc)
-			}
-			p.print("]")
 		}
 
-		if wrap {
-			p.print(")")
+		isMultiLine := p.willPrintExprCommentsAtLoc(e.Index.Loc) || p.willPrintExprCommentsAtLoc(e.CloseBracketLoc)
+		p.print("[")
+		if isMultiLine {
+			p.printNewline()
+			p.options.Indent++
+			p.printIndent()
 		}
+		p.printExpr(e.Index, js_ast.LLowest, 0)
+		if isMultiLine {
+			p.printNewline()
+			p.printExprCommentsAfterCloseTokenAtLoc(e.CloseBracketLoc)
+			p.options.Indent--
+			p.printIndent()
+		}
+		if e.CloseBracketLoc.Start > expr.Loc.Start {
+			p.addSourceMapping(e.CloseBracketLoc)
+		}
+		p.print("]")
 
 	case *js_ast.EIf:
 		wrap := level >= js_ast.LConditional
