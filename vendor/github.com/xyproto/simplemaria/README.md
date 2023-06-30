@@ -29,51 +29,51 @@ Sample usage
 package main
 
 import (
-	"log"
+    "log"
 
-	"github.com/xyproto/simplemaria"
+    "github.com/xyproto/simplemaria"
 )
 
 func main() {
-	// Check if the simplemaria service is up
-	if err := db.TestConnection(); err != nil {
-		log.Fatalln("Could not connect to local database. Is the service up and running?")
-	}
+    // Check if the simplemaria service is up
+    if err := db.TestConnection(); err != nil {
+        log.Fatalln("Could not connect to local database. Is the service up and running?")
+    }
 
-	// Create a Host, connect to the local db server
-	host := db.New()
+    // Create a Host, connect to the local db server
+    host := db.New()
 
-	// Connecting to a different host/port
-	//host := db.NewHost("server:3306/db")
+    // Connecting to a different host/port
+    //host := db.NewHost("server:3306/db")
 
-	// Connect to a different db host/port, with a username and password
-	// host := db.NewHost("username:password@server:port/db")
+    // Connect to a different db host/port, with a username and password
+    // host := db.NewHost("username:password@server:port/db")
 
-	// Close the connection when the function returns
-	defer host.Close()
+    // Close the connection when the function returns
+    defer host.Close()
 
-	// Create a list named "greetings"
-	list, err := db.NewList(host, "greetings")
-	if err != nil {
-		log.Fatalln("Could not create list!")
-	}
+    // Create a list named "greetings"
+    list, err := db.NewList(host, "greetings")
+    if err != nil {
+        log.Fatalln("Could not create list!")
+    }
 
-	// Add "hello" to the list, check if there are errors
-	if list.Add("hello") != nil {
-		log.Fatalln("Could not add an item to list!")
-	}
+    // Add "hello" to the list, check if there are errors
+    if list.Add("hello") != nil {
+        log.Fatalln("Could not add an item to list!")
+    }
 
-	// Get the last item of the list
-	if item, err := list.GetLast(); err != nil {
-		log.Fatalln("Could not fetch the last item from the list!")
-	} else {
-		log.Println("The value of the stored item is:", item)
-	}
+    // Get the last item of the list
+    if item, err := list.GetLast(); err != nil {
+        log.Fatalln("Could not fetch the last item from the list!")
+    } else {
+        log.Println("The value of the stored item is:", item)
+    }
 
-	// Remove the list
-	if list.Remove() != nil {
-		log.Fatalln("Could not remove the list!")
-	}
+    // Remove the list
+    if list.Remove() != nil {
+        log.Fatalln("Could not remove the list!")
+    }
 }
 ~~~
 
@@ -85,7 +85,6 @@ A MariaDB/MySQL Database must be up and running locally for `go test` to work.
 Version, license and author
 ---------------------------
 
-* Version: 3.2.0
-* License: MIT
+* Version: 1.3.2
+* License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-

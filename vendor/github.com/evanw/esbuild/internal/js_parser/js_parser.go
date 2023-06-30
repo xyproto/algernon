@@ -8469,6 +8469,7 @@ func (p *parser) visitStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt {
 
 				// Also write the function to the hoisted sibling symbol if applicable
 				if hoistedRef, ok := p.hoistedRefForSloppyModeBlockFn[s.Fn.Name.Ref]; ok {
+					p.recordDeclaredSymbol(hoistedRef)
 					p.recordUsage(s.Fn.Name.Ref)
 					varDecls = append(varDecls, js_ast.Decl{
 						Binding:    js_ast.Binding{Loc: s.Fn.Name.Loc, Data: &js_ast.BIdentifier{Ref: hoistedRef}},
@@ -8689,6 +8690,9 @@ func (p *parser) mangleStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt 
 			if len(result) > 0 {
 				prevStmt := result[len(result)-1]
 				if prevS, ok := prevStmt.Data.(*js_ast.SExpr); ok {
+					if !s.IsFromClassOrFnThatCanBeRemovedIfUnused {
+						prevS.IsFromClassOrFnThatCanBeRemovedIfUnused = false
+					}
 					prevS.Value = js_ast.JoinWithComma(prevS.Value, s.Value)
 					continue
 				}
@@ -10467,7 +10471,8 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 					if p.options.unsupportedJSFeatures.Has(compat.Using) {
 						p.lowerUsingDeclarationInForOf(s.Init.Loc, local, &s.Body)
 					}
-				} else if p.options.unsupportedJSFeatures.Has(compat.Using) || p.options.unsupportedJSFeatures.Has(compat.AsyncAwait) {
+				} else if p.options.unsupportedJSFeatures.Has(compat.Using) || p.options.unsupportedJSFeatures.Has(compat.AsyncAwait) ||
+					(p.options.unsupportedJSFeatures.Has(compat.AsyncGenerator) && p.fnOrArrowDataVisit.isGenerator) {
 					p.lowerUsingDeclarationInForOf(s.Init.Loc, local, &s.Body)
 				}
 			}
@@ -13703,7 +13708,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			e.ValueOrNil = p.visitExpr(e.ValueOrNil)
 		}
 
-		// "yield* x" turns into "yield *__yieldStar(x)" when lowering async generator functions
+		// "yield* x" turns into "yield* __yieldStar(x)" when lowering async generator functions
 		if e.IsStar && p.options.unsupportedJSFeatures.Has(compat.AsyncGenerator) && p.fnOrArrowDataVisit.isGenerator {
 			e.ValueOrNil = p.callRuntime(expr.Loc, "__yieldStar", []js_ast.Expr{e.ValueOrNil})
 		}
