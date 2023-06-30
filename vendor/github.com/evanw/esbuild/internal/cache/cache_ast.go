@@ -47,7 +47,7 @@ func (c *CSSCache) Parse(log logger.Log, source logger.Source, options css_parse
 	}()
 
 	// Cache hit
-	if entry != nil && entry.source == source && entry.options.Equal(&options) {
+	if entry != nil && entry.source == source && entry.options == options {
 		for _, msg := range entry.msgs {
 			log.AddMsg(msg)
 		}

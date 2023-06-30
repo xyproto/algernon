@@ -9,7 +9,6 @@ import (
 
 	"github.com/evanw/esbuild/internal/ast"
 	"github.com/evanw/esbuild/internal/compat"
-	"github.com/evanw/esbuild/internal/css_ast"
 	"github.com/evanw/esbuild/internal/js_ast"
 	"github.com/evanw/esbuild/internal/logger"
 )
@@ -232,7 +231,7 @@ func (loader Loader) IsTypeScript() bool {
 
 func (loader Loader) CanHaveSourceMap() bool {
 	switch loader {
-	case LoaderJS, LoaderJSX, LoaderTS, LoaderTSNoAmbiguousLessThan, LoaderTSX, LoaderCSS, LoaderJSON, LoaderText:
+	case LoaderJS, LoaderJSX, LoaderTS, LoaderTSNoAmbiguousLessThan, LoaderTSX, LoaderCSS, LoaderJSON:
 		return true
 	default:
 		return false
@@ -421,7 +420,6 @@ type Options struct {
 	JSX        JSXOptions
 	LineLimit  int
 
-	CSSPrefixData          map[css_ast.D]compat.CSSPrefix
 	UnsupportedJSFeatures  compat.JSFeature
 	UnsupportedCSSFeatures compat.CSSFeature
 

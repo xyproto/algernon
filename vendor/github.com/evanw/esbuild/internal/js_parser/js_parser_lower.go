@@ -1893,11 +1893,8 @@ func (p *parser) maybeLowerSetBinOp(left js_ast.Expr, op js_ast.OpCode, right js
 
 func (p *parser) shouldLowerUsingDeclarations(stmts []js_ast.Stmt) bool {
 	for _, stmt := range stmts {
-		if local, ok := stmt.Data.(*js_ast.SLocal); ok &&
-			((local.Kind == js_ast.LocalUsing && p.options.unsupportedJSFeatures.Has(compat.Using)) ||
-				(local.Kind == js_ast.LocalAwaitUsing && (p.options.unsupportedJSFeatures.Has(compat.Using) ||
-					p.options.unsupportedJSFeatures.Has(compat.AsyncAwait) ||
-					(p.options.unsupportedJSFeatures.Has(compat.AsyncGenerator) && p.fnOrArrowDataVisit.isGenerator)))) {
+		if local, ok := stmt.Data.(*js_ast.SLocal); ok && ((local.Kind == js_ast.LocalUsing && p.options.unsupportedJSFeatures.Has(compat.Using)) ||
+			(local.Kind == js_ast.LocalAwaitUsing && (p.options.unsupportedJSFeatures.Has(compat.Using) || p.options.unsupportedJSFeatures.Has(compat.AsyncAwait)))) {
 			return true
 		}
 	}
@@ -2047,7 +2044,12 @@ func (ctx *lowerUsingDeclarationContext) finalize(p *parser, stmts []js_ast.Stmt
 
 		// "await" expressions turn into "yield" expressions when lowering
 		p.recordUsage(promiseRef)
-		awaitExpr := p.maybeLowerAwait(loc, &js_ast.EAwait{Value: js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: promiseRef}}})
+		awaitExpr := js_ast.Expr{Loc: loc, Data: &js_ast.EIdentifier{Ref: promiseRef}}
+		if p.options.unsupportedJSFeatures.Has(compat.AsyncAwait) {
+			awaitExpr.Data = &js_ast.EYield{ValueOrNil: awaitExpr}
+		} else {
+			awaitExpr.Data = &js_ast.EAwait{Value: awaitExpr}
+		}
 
 		p.recordUsage(promiseRef)
 		finallyStmts = []js_ast.Stmt{

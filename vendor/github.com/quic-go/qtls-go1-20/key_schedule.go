@@ -21,7 +21,6 @@ import (
 
 const (
 	resumptionBinderLabel         = "res binder"
-	clientEarlyTrafficLabel       = "c e traffic"
 	clientHandshakeTrafficLabel   = "c hs traffic"
 	serverHandshakeTrafficLabel   = "s hs traffic"
 	clientApplicationTrafficLabel = "c ap traffic"

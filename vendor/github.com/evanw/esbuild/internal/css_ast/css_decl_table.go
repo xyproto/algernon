@@ -25,8 +25,6 @@ const (
 	DAnimationName
 	DAnimationPlayState
 	DAnimationTimingFunction
-	DAppearance
-	DBackdropFilter
 	DBackfaceVisibility
 	DBackground
 	DBackgroundAttachment
@@ -91,7 +89,6 @@ const (
 	DBorderTopWidth
 	DBorderWidth
 	DBottom
-	DBoxDecorationBreak
 	DBoxShadow
 	DBoxSizing
 	DBreakAfter
@@ -180,7 +177,6 @@ const (
 	DHyphens
 	DImageOrientation
 	DImageRendering
-	DInitialLetter
 	DInlineSize
 	DInset
 	DJustifyContent
@@ -211,7 +207,6 @@ const (
 	DMask
 	DMaskComposite
 	DMaskImage
-	DMaskOrigin
 	DMaskPosition
 	DMaskRepeat
 	DMaskSize
@@ -264,7 +259,6 @@ const (
 	DPlaceSelf
 	DPointerEvents
 	DPosition
-	DPrintColorAdjust
 	DQuotes
 	DResize
 	DRight
@@ -294,7 +288,6 @@ const (
 	DTextDecoration
 	DTextDecorationColor
 	DTextDecorationLine
-	DTextDecorationSkip
 	DTextDecorationStyle
 	DTextEmphasis
 	DTextEmphasisColor
@@ -306,7 +299,6 @@ const (
 	DTextOverflow
 	DTextRendering
 	DTextShadow
-	DTextSizeAdjust
 	DTextTransform
 	DTextUnderlinePosition
 	DTop
@@ -352,8 +344,6 @@ var KnownDeclarations = map[string]D{
 	"animation-name":              DAnimationName,
 	"animation-play-state":        DAnimationPlayState,
 	"animation-timing-function":   DAnimationTimingFunction,
-	"appearance":                  DAppearance,
-	"backdrop-filter":             DBackdropFilter,
 	"backface-visibility":         DBackfaceVisibility,
 	"background":                  DBackground,
 	"background-attachment":       DBackgroundAttachment,
@@ -418,7 +408,6 @@ var KnownDeclarations = map[string]D{
 	"border-top-width":            DBorderTopWidth,
 	"border-width":                DBorderWidth,
 	"bottom":                      DBottom,
-	"box-decoration-break":        DBoxDecorationBreak,
 	"box-shadow":                  DBoxShadow,
 	"box-sizing":                  DBoxSizing,
 	"break-after":                 DBreakAfter,
@@ -507,7 +496,6 @@ var KnownDeclarations = map[string]D{
 	"hyphens":                     DHyphens,
 	"image-orientation":           DImageOrientation,
 	"image-rendering":             DImageRendering,
-	"initial-letter":              DInitialLetter,
 	"inline-size":                 DInlineSize,
 	"inset":                       DInset,
 	"justify-content":             DJustifyContent,
@@ -538,7 +526,6 @@ var KnownDeclarations = map[string]D{
 	"mask":                        DMask,
 	"mask-composite":              DMaskComposite,
 	"mask-image":                  DMaskImage,
-	"mask-origin":                 DMaskOrigin,
 	"mask-position":               DMaskPosition,
 	"mask-repeat":                 DMaskRepeat,
 	"mask-size":                   DMaskSize,
@@ -591,7 +578,6 @@ var KnownDeclarations = map[string]D{
 	"place-self":                  DPlaceSelf,
 	"pointer-events":              DPointerEvents,
 	"position":                    DPosition,
-	"print-color-adjust":          DPrintColorAdjust,
 	"quotes":                      DQuotes,
 	"resize":                      DResize,
 	"right":                       DRight,
@@ -621,7 +607,6 @@ var KnownDeclarations = map[string]D{
 	"text-decoration":             DTextDecoration,
 	"text-decoration-color":       DTextDecorationColor,
 	"text-decoration-line":        DTextDecorationLine,
-	"text-decoration-skip":        DTextDecorationSkip,
 	"text-decoration-style":       DTextDecorationStyle,
 	"text-emphasis":               DTextEmphasis,
 	"text-emphasis-color":         DTextEmphasisColor,
@@ -633,7 +618,6 @@ var KnownDeclarations = map[string]D{
 	"text-overflow":               DTextOverflow,
 	"text-rendering":              DTextRendering,
 	"text-shadow":                 DTextShadow,
-	"text-size-adjust":            DTextSizeAdjust,
 	"text-transform":              DTextTransform,
 	"text-underline-position":     DTextUnderlinePosition,
 	"top":                         DTop,
