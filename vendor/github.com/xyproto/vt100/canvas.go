@@ -474,12 +474,25 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 }
 
 // WriteRuneB will write a colored rune to the canvas
-// This is the same as WriteRuneB, but bg.Background() has already been called on
-// the background attribute.
 // The x and y must be within range (x < c.w and y < c.h)
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	c.mut.Lock()
 	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
+	c.mut.Unlock()
+}
+
+// WriteRuneBNoLock will write a colored rune to the canvas
+// The x and y must be within range (x < c.w and y < c.h)
+// The canvas mutex is not locked
+func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
+	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
+}
+
+func (c *Canvas) Lock() {
+	c.mut.Lock()
+}
+
+func (c *Canvas) Unlock() {
 	c.mut.Unlock()
 }
 
