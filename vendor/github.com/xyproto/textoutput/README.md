@@ -4,6 +4,10 @@
 
 Package for controlling text output, with or without colors, using VT100 terminal codes.
 
+## Requirements
+
+* Go 1.17 or later
+
 ## Example use
 
 ```go
@@ -25,6 +29,6 @@ func main() {
 
 ## General info
 
-* Version: 1.14.2
+* Version: 1.15.4
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -251,12 +251,16 @@ func validateLoader(value Loader) config.Loader {
 		return config.LoaderEmpty
 	case LoaderFile:
 		return config.LoaderFile
+	case LoaderGlobalCSS:
+		return config.LoaderGlobalCSS
 	case LoaderJS:
 		return config.LoaderJS
 	case LoaderJSON:
 		return config.LoaderJSON
 	case LoaderJSX:
 		return config.LoaderJSX
+	case LoaderLocalCSS:
+		return config.LoaderLocalCSS
 	case LoaderNone:
 		return config.LoaderNone
 	case LoaderText:
@@ -1284,6 +1288,7 @@ func validateBuildOptions(
 		MangleProps:           validateRegex(log, "mangle props", buildOpts.MangleProps),
 		ReserveProps:          validateRegex(log, "reserve props", buildOpts.ReserveProps),
 		MangleQuoted:          buildOpts.MangleQuoted == MangleQuotedTrue,
+		DropLabels:            append([]string{}, buildOpts.DropLabels...),
 		DropDebugger:          (buildOpts.Drop & DropDebugger) != 0,
 		AllowOverwrite:        buildOpts.AllowOverwrite,
 		ASCIIOnly:             validateASCIIOnly(buildOpts.Charset),
@@ -1728,6 +1733,7 @@ func transformImpl(input string, transformOpts TransformOptions) TransformResult
 		MangleProps:           validateRegex(log, "mangle props", transformOpts.MangleProps),
 		ReserveProps:          validateRegex(log, "reserve props", transformOpts.ReserveProps),
 		MangleQuoted:          transformOpts.MangleQuoted == MangleQuotedTrue,
+		DropLabels:            append([]string{}, transformOpts.DropLabels...),
 		DropDebugger:          (transformOpts.Drop & DropDebugger) != 0,
 		ASCIIOnly:             validateASCIIOnly(transformOpts.Charset),
 		IgnoreDCEAnnotations:  transformOpts.IgnoreAnnotations,

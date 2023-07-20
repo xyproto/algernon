@@ -417,54 +417,47 @@ func (o *TextOutput) initializeTagReplacers() {
 	o.darkReplacer = strings.NewReplacer(rs...)
 }
 
-// Pair takes a string with ANSI codes and returns
-// a slice with two elements.
+// Extract iterates over an ANSI encoded string, parsing out color codes and creating a slice
+// of CharAttribute structures. Each CharAttribute in the slice represents a character in the
+// input string and its corresponding color attributes. This function handles escaping sequences
+// and converts ANSI color codes to vt100.AttributeColor structs.
 func (o *TextOutput) Extract(s string) []CharAttribute {
 	var (
 		escaped      bool
 		colorcode    strings.Builder
-		word         strings.Builder
 		cc           = make([]CharAttribute, 0, len(s))
 		currentColor vt100.AttributeColor
 	)
+
 	for _, r := range s {
-		if r == '\033' {
-			escaped = true
-			if len(word.String()) > 0 {
-				//fmt.Println("cc", cc)
-				word.Reset()
-			}
-			continue
-		}
-		if escaped {
-			if r != 'm' {
-				colorcode.WriteRune(r)
-			} else if r == 'm' {
-				s2 := strings.TrimPrefix(colorcode.String(), "[")
-				attributeStrings := strings.Split(s2, ";")
-				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
-					currentColor = []byte{}
-				}
-				for _, attributeString := range attributeStrings {
-					attributeNumber, err := strconv.Atoi(attributeString)
-					if err != nil {
+		switch {
+		case escaped && r == 'm':
+			colorAttributes := strings.Split(strings.TrimPrefix(colorcode.String(), "["), ";")
+			if len(colorAttributes) != 1 || colorAttributes[0] != "0" {
+				for _, attribute := range colorAttributes {
+					if attributeNumber, err := strconv.Atoi(attribute); err == nil { // success
+						currentColor.Data = append(currentColor.Data, byte(attributeNumber))
+					} else {
 						continue
 					}
-					currentColor = append(currentColor, byte(attributeNumber))
 				}
 				// Strip away leading 0 color attribute, if there are more than 1
-				if len(currentColor) > 1 && currentColor[0] == 0 {
-					currentColor = currentColor[1:]
+				if len(currentColor.Data) > 1 && currentColor.Data[0] == 0 {
+					currentColor.Data = currentColor.Data[1:]
 				}
-				// currentColor now contains the last found color attributes,
-				// but as a vt100.AttributeColor.
-				colorcode.Reset()
-				escaped = false
+			} else {
+				currentColor = vt100.NewAttributeColor()
 			}
-		} else {
+			colorcode.Reset()
+			escaped = false
+		case r == '\033':
+			escaped = true
+		case escaped && r != 'm':
+			colorcode.WriteRune(r)
+		default:
 			cc = append(cc, CharAttribute{currentColor, r})
 		}
 	}
-	// if escaped is true here, there is something wrong
+
 	return cc
 }

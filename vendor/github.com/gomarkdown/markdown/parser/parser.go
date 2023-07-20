@@ -42,7 +42,7 @@ const (
 	SuperSubscript                                // Super- and subscript support: 2^10^, H~2~O.
 	EmptyLinesBreakList                           // 2 empty lines break out of list
 	Includes                                      // Support including other files.
-	Mmark                                         // Support Mmark syntax, see https://mmark.nl/syntax
+	Mmark                                         // Support Mmark syntax, see https://mmark.miek.nl/post/syntax/
 
 	CommonExtensions Extensions = NoIntraEmphasis | Tables | FencedCode |
 		Autolink | Strikethrough | SpaceHeadings | HeadingIDs |

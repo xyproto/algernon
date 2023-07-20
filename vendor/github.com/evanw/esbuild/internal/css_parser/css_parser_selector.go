@@ -3,13 +3,17 @@ package css_parser
 import (
 	"fmt"
 
+	"github.com/evanw/esbuild/internal/ast"
 	"github.com/evanw/esbuild/internal/css_ast"
 	"github.com/evanw/esbuild/internal/css_lexer"
 	"github.com/evanw/esbuild/internal/logger"
 )
 
 type parseSelectorOpts struct {
-	isDeclarationContext bool
+	pseudoClassKind        css_ast.PseudoClassKind
+	isDeclarationContext   bool
+	stopOnCloseParen       bool
+	onlyOneComplexSelector bool
 }
 
 func (p *parser) parseSelectorList(opts parseSelectorOpts) (list []css_ast.ComplexSelector, ok bool) {
@@ -21,33 +25,44 @@ func (p *parser) parseSelectorList(opts parseSelectorOpts) (list []css_ast.Compl
 	if !good {
 		return
 	}
-	list = append(list, sel)
+	list = p.flattenLocalAndGlobalSelectors(list, sel)
 
 	// Parse the remaining selectors
-skip:
-	for {
-		p.eat(css_lexer.TWhitespace)
-		if !p.eat(css_lexer.TComma) {
-			break
+	if opts.onlyOneComplexSelector {
+		if t := p.current(); t.Kind == css_lexer.TComma {
+			p.prevError = t.Range.Loc
+			kind := fmt.Sprintf(":%s(...)", opts.pseudoClassKind.String())
+			p.log.AddIDWithNotes(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &p.tracker, t.Range,
+				fmt.Sprintf("Unexpected \",\" inside %q", kind),
+				[]logger.MsgData{{Text: fmt.Sprintf("Different CSS tools behave differently in this case, so esbuild doesn't allow it. "+
+					"Either remove this comma or split this selector up into multiple comma-separated %q selectors instead.", kind)}})
 		}
-		p.eat(css_lexer.TWhitespace)
-		sel, good := p.parseComplexSelector(parseComplexSelectorOpts{
-			parseSelectorOpts: opts,
-		})
-		if !good {
-			return
-		}
+	} else {
+	skip:
+		for {
+			p.eat(css_lexer.TWhitespace)
+			if !p.eat(css_lexer.TComma) {
+				break
+			}
+			p.eat(css_lexer.TWhitespace)
+			sel, good := p.parseComplexSelector(parseComplexSelectorOpts{
+				parseSelectorOpts: opts,
+			})
+			if !good {
+				return
+			}
 
-		// Omit duplicate selectors
-		if p.options.minifySyntax {
-			for _, existing := range list {
-				if sel.Equal(existing, nil) {
-					continue skip
+			// Omit duplicate selectors
+			if p.options.minifySyntax {
+				for _, existing := range list {
+					if sel.Equal(existing, nil) {
+						continue skip
+					}
 				}
 			}
-		}
 
-		list = append(list, sel)
+			list = p.flattenLocalAndGlobalSelectors(list, sel)
+		}
 	}
 
 	if p.options.minifySyntax {
@@ -63,7 +78,7 @@ skip:
 
 		case canRemoveLeadingAmpersandIfNotFirst:
 			for i := 1; i < len(list); i++ {
-				if sel := list[i].Selectors[0]; !sel.HasNestingSelector && (sel.Combinator != 0 || sel.TypeSelector == nil) {
+				if sel := list[i].Selectors[0]; !sel.HasNestingSelector() && (sel.Combinator.Byte != 0 || sel.TypeSelector == nil) {
 					list[0].Selectors = list[0].Selectors[1:]
 					list[0], list[i] = list[i], list[0]
 					break
@@ -74,6 +89,134 @@ skip:
 
 	ok = true
 	return
+}
+
+func mergeCompoundSelectors(target *css_ast.CompoundSelector, source css_ast.CompoundSelector) {
+	// ".foo:local(&)" => "&.foo"
+	if source.HasNestingSelector() && !target.HasNestingSelector() {
+		target.NestingSelectorLoc = source.NestingSelectorLoc
+	}
+
+	if source.TypeSelector != nil {
+		if target.TypeSelector == nil {
+			// ".foo:local(div)" => "div.foo"
+			target.TypeSelector = source.TypeSelector
+		} else {
+			// "div:local(span)" => "div:is(span)"
+			//
+			// Note: All other implementations of this (Lightning CSS, PostCSS, and
+			// Webpack) do something really weird here. They do this instead:
+			//
+			// "div:local(span)" => "divspan"
+			//
+			// But that just seems so obviously wrong that I'm not going to do that.
+			target.SubclassSelectors = append(target.SubclassSelectors, css_ast.SubclassSelector{
+				Loc: source.TypeSelector.FirstLoc(),
+				Data: &css_ast.SSPseudoClassWithSelectorList{
+					Kind:      css_ast.PseudoClassIs,
+					Selectors: []css_ast.ComplexSelector{{Selectors: []css_ast.CompoundSelector{{TypeSelector: source.TypeSelector}}}},
+				},
+			})
+		}
+	}
+
+	// ".foo:local(.bar)" => ".foo.bar"
+	target.SubclassSelectors = append(target.SubclassSelectors, source.SubclassSelectors...)
+}
+
+func containsLocalOrGlobalSelector(sel css_ast.ComplexSelector) bool {
+	for _, s := range sel.Selectors {
+		for _, ss := range s.SubclassSelectors {
+			switch pseudo := ss.Data.(type) {
+			case *css_ast.SSPseudoClass:
+				if pseudo.Name == "global" || pseudo.Name == "local" {
+					return true
+				}
+
+			case *css_ast.SSPseudoClassWithSelectorList:
+				if pseudo.Kind == css_ast.PseudoClassGlobal || pseudo.Kind == css_ast.PseudoClassLocal {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// This handles the ":local()" and ":global()" annotations from CSS modules
+func (p *parser) flattenLocalAndGlobalSelectors(list []css_ast.ComplexSelector, sel css_ast.ComplexSelector) []css_ast.ComplexSelector {
+	// Only do the work to flatten the whole list if there's a ":local" or a ":global"
+	if p.options.symbolMode != symbolModeDisabled && containsLocalOrGlobalSelector(sel) {
+		var selectors []css_ast.CompoundSelector
+
+		for _, s := range sel.Selectors {
+			oldSubclassSelectors := s.SubclassSelectors
+			s.SubclassSelectors = make([]css_ast.SubclassSelector, 0, len(oldSubclassSelectors))
+
+			for _, ss := range oldSubclassSelectors {
+				switch pseudo := ss.Data.(type) {
+				case *css_ast.SSPseudoClass:
+					if pseudo.Name == "global" || pseudo.Name == "local" {
+						// Remove bare ":global" and ":local" pseudo-classes
+						continue
+					}
+
+				case *css_ast.SSPseudoClassWithSelectorList:
+					if pseudo.Kind == css_ast.PseudoClassGlobal || pseudo.Kind == css_ast.PseudoClassLocal {
+						inner := pseudo.Selectors[0].Selectors
+
+						// Replace this pseudo-class with all inner compound selectors.
+						// The first inner compound selector is merged with the compound
+						// selector before it and the last inner compound selector is
+						// merged with the compound selector after it:
+						//
+						// "div:local(.a .b):hover" => "div.a b:hover"
+						//
+						// This behavior is really strange since this is not how anything
+						// involving pseudo-classes in real CSS works at all. However, all
+						// other implementations (Lightning CSS, PostCSS, and Webpack) are
+						// consistent with this strange behavior, so we do it too.
+						if inner[0].Combinator.Byte == 0 {
+							mergeCompoundSelectors(&s, inner[0])
+							inner = inner[1:]
+						} else {
+							// "div:local(+ .foo):hover" => "div + .foo:hover"
+						}
+						if n := len(inner); n > 0 {
+							if !s.IsInvalidBecauseEmpty() {
+								// Don't add this selector if it consisted only of a bare ":global" or ":local"
+								selectors = append(selectors, s)
+							}
+							selectors = append(selectors, inner[:n-1]...)
+							s = inner[n-1]
+						}
+						continue
+					}
+				}
+
+				s.SubclassSelectors = append(s.SubclassSelectors, ss)
+			}
+
+			if !s.IsInvalidBecauseEmpty() {
+				// Don't add this selector if it consisted only of a bare ":global" or ":local"
+				selectors = append(selectors, s)
+			}
+		}
+
+		if len(selectors) == 0 {
+			// Treat a bare ":global" or ":local" as a bare "&" nesting selector
+			selectors = append(selectors, css_ast.CompoundSelector{
+				NestingSelectorLoc: ast.MakeIndex32(uint32(sel.Selectors[0].FirstLoc().Start)),
+			})
+
+			// Make sure we report that nesting is present so that it can be lowered
+			p.shouldLowerNesting = true
+		}
+
+		sel.Selectors = selectors
+	}
+
+	return append(list, sel)
 }
 
 type leadingAmpersand uint8
@@ -87,9 +230,9 @@ const (
 func analyzeLeadingAmpersand(sel css_ast.ComplexSelector, isDeclarationContext bool) leadingAmpersand {
 	if len(sel.Selectors) > 1 {
 		if first := sel.Selectors[0]; first.IsSingleAmpersand() {
-			if second := sel.Selectors[1]; second.Combinator == 0 && second.HasNestingSelector {
+			if second := sel.Selectors[1]; second.Combinator.Byte == 0 && second.HasNestingSelector() {
 				// ".foo { & &.bar {} }" => ".foo { & &.bar {} }"
-			} else if second.Combinator != 0 || second.TypeSelector == nil || !isDeclarationContext {
+			} else if second.Combinator.Byte != 0 || second.TypeSelector == nil || !isDeclarationContext {
 				// "& + div {}" => "+ div {}"
 				// "& div {}" => "div {}"
 				// ".foo { & + div {} }" => ".foo { + div {} }"
@@ -115,10 +258,9 @@ type parseComplexSelectorOpts struct {
 
 func (p *parser) parseComplexSelector(opts parseComplexSelectorOpts) (result css_ast.ComplexSelector, ok bool) {
 	// This is an extension: https://drafts.csswg.org/css-nesting-1/
-	r := p.current().Range
 	combinator := p.parseCombinator()
-	if combinator != 0 {
-		p.reportUseOfNesting(r, opts.isDeclarationContext)
+	if combinator.Byte != 0 {
+		p.shouldLowerNesting = true
 		p.eat(css_lexer.TWhitespace)
 	}
 
@@ -133,15 +275,19 @@ func (p *parser) parseComplexSelector(opts parseComplexSelectorOpts) (result css
 	sel.Combinator = combinator
 	result.Selectors = append(result.Selectors, sel)
 
+	stop := css_lexer.TOpenBrace
+	if opts.stopOnCloseParen {
+		stop = css_lexer.TCloseParen
+	}
 	for {
 		p.eat(css_lexer.TWhitespace)
-		if p.peek(css_lexer.TEndOfFile) || p.peek(css_lexer.TComma) || p.peek(css_lexer.TOpenBrace) {
+		if p.peek(css_lexer.TEndOfFile) || p.peek(css_lexer.TComma) || p.peek(stop) {
 			break
 		}
 
 		// Optional combinator
 		combinator := p.parseCombinator()
-		if combinator != 0 {
+		if combinator.Byte != 0 {
 			p.eat(css_lexer.TWhitespace)
 		}
 
@@ -161,8 +307,10 @@ func (p *parser) parseComplexSelector(opts parseComplexSelectorOpts) (result css
 }
 
 func (p *parser) nameToken() css_ast.NameToken {
+	t := p.current()
 	return css_ast.NameToken{
-		Kind: p.current().Kind,
+		Kind: t.Kind,
+		Loc:  t.Range.Loc,
 		Text: p.decoded(),
 	}
 }
@@ -173,8 +321,8 @@ func (p *parser) parseCompoundSelector(opts parseComplexSelectorOpts) (sel css_a
 	// This is an extension: https://drafts.csswg.org/css-nesting-1/
 	hasLeadingNestingSelector := p.peek(css_lexer.TDelimAmpersand)
 	if hasLeadingNestingSelector {
-		p.reportUseOfNesting(p.current().Range, opts.isDeclarationContext)
-		sel.HasNestingSelector = true
+		p.shouldLowerNesting = true
+		sel.NestingSelectorLoc = ast.MakeIndex32(uint32(startLoc.Start))
 		p.advance()
 	}
 
@@ -206,62 +354,89 @@ func (p *parser) parseCompoundSelector(opts parseComplexSelectorOpts) (sel css_a
 	// Parse the subclass selectors
 subclassSelectors:
 	for {
-		switch p.current().Kind {
+		subclassToken := p.current()
+
+		switch subclassToken.Kind {
 		case css_lexer.THash:
-			if (p.current().Flags & css_lexer.IsID) == 0 {
+			if (subclassToken.Flags & css_lexer.IsID) == 0 {
 				break subclassSelectors
 			}
+			nameLoc := logger.Loc{Start: subclassToken.Range.Loc.Start + 1}
 			name := p.decoded()
-			sel.SubclassSelectors = append(sel.SubclassSelectors, &css_ast.SSHash{Name: name})
+			sel.SubclassSelectors = append(sel.SubclassSelectors, css_ast.SubclassSelector{
+				Loc: subclassToken.Range.Loc,
+				Data: &css_ast.SSHash{
+					Name: ast.LocRef{Loc: nameLoc, Ref: p.symbolForName(name)},
+				},
+			})
 			p.advance()
 
 		case css_lexer.TDelimDot:
 			p.advance()
+			nameLoc := p.current().Range.Loc
 			name := p.decoded()
-			sel.SubclassSelectors = append(sel.SubclassSelectors, &css_ast.SSClass{Name: name})
-			p.expect(css_lexer.TIdent)
+			sel.SubclassSelectors = append(sel.SubclassSelectors, css_ast.SubclassSelector{
+				Loc: subclassToken.Range.Loc,
+				Data: &css_ast.SSClass{
+					Name: ast.LocRef{Loc: nameLoc, Ref: p.symbolForName(name)},
+				},
+			})
+			if !p.expect(css_lexer.TIdent) {
+				return
+			}
 
 		case css_lexer.TOpenBracket:
 			attr, good := p.parseAttributeSelector()
 			if !good {
 				return
 			}
-			sel.SubclassSelectors = append(sel.SubclassSelectors, &attr)
+			sel.SubclassSelectors = append(sel.SubclassSelectors, css_ast.SubclassSelector{
+				Loc:  subclassToken.Range.Loc,
+				Data: &attr,
+			})
 
 		case css_lexer.TColon:
 			if p.next().Kind == css_lexer.TColon {
 				// Special-case the start of the pseudo-element selector section
 				for p.current().Kind == css_lexer.TColon {
+					firstColonLoc := p.current().Range.Loc
 					isElement := p.next().Kind == css_lexer.TColon
 					if isElement {
 						p.advance()
 					}
-					pseudo := p.parsePseudoClassSelector()
+					pseudo := p.parsePseudoClassSelector(isElement)
 
 					// https://www.w3.org/TR/selectors-4/#single-colon-pseudos
 					// The four Level 2 pseudo-elements (::before, ::after, ::first-line,
 					// and ::first-letter) may, for legacy reasons, be represented using
 					// the <pseudo-class-selector> grammar, with only a single ":"
 					// character at their start.
-					if p.options.minifySyntax && isElement && len(pseudo.Args) == 0 {
-						switch pseudo.Name {
-						case "before", "after", "first-line", "first-letter":
-							isElement = false
+					if p.options.minifySyntax && isElement {
+						if pseudo, ok := pseudo.(*css_ast.SSPseudoClass); ok && len(pseudo.Args) == 0 {
+							switch pseudo.Name {
+							case "before", "after", "first-line", "first-letter":
+								pseudo.IsElement = false
+							}
 						}
 					}
 
-					pseudo.IsElement = isElement
-					sel.SubclassSelectors = append(sel.SubclassSelectors, &pseudo)
+					sel.SubclassSelectors = append(sel.SubclassSelectors, css_ast.SubclassSelector{
+						Loc:  firstColonLoc,
+						Data: pseudo,
+					})
 				}
 				break subclassSelectors
 			}
-			pseudo := p.parsePseudoClassSelector()
-			sel.SubclassSelectors = append(sel.SubclassSelectors, &pseudo)
+
+			sel.SubclassSelectors = append(sel.SubclassSelectors, css_ast.SubclassSelector{
+				Loc:  subclassToken.Range.Loc,
+				Data: p.parsePseudoClassSelector(false),
+			})
 
 		case css_lexer.TDelimAmpersand:
 			// This is an extension: https://drafts.csswg.org/css-nesting-1/
-			p.reportUseOfNesting(p.current().Range, sel.HasNestingSelector)
-			sel.HasNestingSelector = true
+			p.shouldLowerNesting = true
+			sel.NestingSelectorLoc = ast.MakeIndex32(uint32(subclassToken.Range.Loc.Start))
 			p.advance()
 
 		default:
@@ -270,7 +445,7 @@ subclassSelectors:
 	}
 
 	// The compound selector must be non-empty
-	if !sel.HasNestingSelector && sel.TypeSelector == nil && len(sel.SubclassSelectors) == 0 {
+	if sel.IsInvalidBecauseEmpty() {
 		p.unexpected()
 		return
 	}
@@ -289,7 +464,7 @@ subclassSelectors:
 		suggestion := p.source.TextForRange(r)
 		if opts.isFirst {
 			suggestion = fmt.Sprintf(":is(%s)", suggestion)
-			howToFix = "You can wrap this selector in \":is()\" as a workaround. "
+			howToFix = "You can wrap this selector in \":is(...)\" as a workaround. "
 		} else {
 			r = logger.Range{Loc: startLoc, Len: r.End() - startLoc.Start}
 			suggestion += "&"
@@ -383,7 +558,9 @@ func (p *parser) parseAttributeSelector() (attr css_ast.SSAttribute, ok bool) {
 		}
 		if attr.MatcherOp != "" {
 			p.advance()
-			p.expect(css_lexer.TDelimEquals)
+			if !p.expect(css_lexer.TDelimEquals) {
+				return
+			}
 		}
 	}
 
@@ -411,24 +588,83 @@ func (p *parser) parseAttributeSelector() (attr css_ast.SSAttribute, ok bool) {
 	return
 }
 
-func (p *parser) parsePseudoClassSelector() css_ast.SSPseudoClass {
+func (p *parser) parsePseudoClassSelector(isElement bool) css_ast.SS {
 	p.advance()
 
 	if p.peek(css_lexer.TFunction) {
 		text := p.decoded()
 		matchingLoc := logger.Loc{Start: p.current().Range.End() - 1}
 		p.advance()
+
+		// Potentially parse a pseudo-class with a selector list
+		if !isElement {
+			var kind css_ast.PseudoClassKind
+			local := p.makeLocalSymbols
+			ok := true
+			switch text {
+			case "global":
+				kind = css_ast.PseudoClassGlobal
+				if p.options.symbolMode != symbolModeDisabled {
+					local = false
+				}
+			case "has":
+				kind = css_ast.PseudoClassHas
+			case "is":
+				kind = css_ast.PseudoClassIs
+			case "local":
+				kind = css_ast.PseudoClassLocal
+				if p.options.symbolMode != symbolModeDisabled {
+					local = true
+				}
+			case "not":
+				kind = css_ast.PseudoClassNot
+			case "where":
+				kind = css_ast.PseudoClassWhere
+			default:
+				ok = false
+			}
+			if ok {
+				old := p.index
+
+				// ":local" forces local names and ":global" forces global names
+				oldLocal := p.makeLocalSymbols
+				p.makeLocalSymbols = local
+				selectors, ok := p.parseSelectorList(parseSelectorOpts{
+					pseudoClassKind:        kind,
+					stopOnCloseParen:       true,
+					onlyOneComplexSelector: kind == css_ast.PseudoClassGlobal || kind == css_ast.PseudoClassLocal,
+				})
+				p.makeLocalSymbols = oldLocal
+
+				if ok && p.expectWithMatchingLoc(css_lexer.TCloseParen, matchingLoc) {
+					return &css_ast.SSPseudoClassWithSelectorList{Kind: kind, Selectors: selectors}
+				}
+
+				p.index = old
+			}
+		}
 		args := p.convertTokens(p.parseAnyValue())
 		p.expectWithMatchingLoc(css_lexer.TCloseParen, matchingLoc)
-		return css_ast.SSPseudoClass{Name: text, Args: args}
+		return &css_ast.SSPseudoClass{IsElement: isElement, Name: text, Args: args}
 	}
 
 	name := p.decoded()
-	sel := css_ast.SSPseudoClass{}
+	sel := css_ast.SSPseudoClass{IsElement: isElement}
 	if p.expect(css_lexer.TIdent) {
 		sel.Name = name
+
+		// ":local .local_name :global .global_name {}"
+		// ":local { .local_name { :global { .global_name {} } }"
+		if p.options.symbolMode != symbolModeDisabled {
+			switch name {
+			case "local":
+				p.makeLocalSymbols = true
+			case "global":
+				p.makeLocalSymbols = false
+			}
+		}
 	}
-	return sel
+	return &sel
 }
 
 func (p *parser) parseAnyValue() []css_lexer.Token {
@@ -475,21 +711,23 @@ loop:
 	return tokens
 }
 
-func (p *parser) parseCombinator() uint8 {
-	switch p.current().Kind {
+func (p *parser) parseCombinator() css_ast.Combinator {
+	t := p.current()
+
+	switch t.Kind {
 	case css_lexer.TDelimGreaterThan:
 		p.advance()
-		return '>'
+		return css_ast.Combinator{Loc: t.Range.Loc, Byte: '>'}
 
 	case css_lexer.TDelimPlus:
 		p.advance()
-		return '+'
+		return css_ast.Combinator{Loc: t.Range.Loc, Byte: '+'}
 
 	case css_lexer.TDelimTilde:
 		p.advance()
-		return '~'
+		return css_ast.Combinator{Loc: t.Range.Loc, Byte: '~'}
 
 	default:
-		return 0
+		return css_ast.Combinator{}
 	}
 }

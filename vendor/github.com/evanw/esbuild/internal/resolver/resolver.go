@@ -1142,30 +1142,44 @@ func (r resolverQuery) parseTSConfigFromSource(source logger.Source, visited map
 			for {
 				// Skip "node_modules" folders
 				if r.fs.Base(current) != "node_modules" {
-					// if "package.json" exists, try checking the "exports" map. The
-					// ability to use "extends" like this was added in TypeScript 5.0.
+					join := r.fs.Join(current, "node_modules", extends)
+
+					// Check to see if "package.json" exists
 					pkgDir := r.fs.Join(current, "node_modules", esmPackageName)
 					pjFile := r.fs.Join(pkgDir, "package.json")
 					if _, err, originalError := r.fs.ReadFile(pjFile); err == nil {
-						if packageJSON := r.parsePackageJSON(pkgDir); packageJSON != nil && packageJSON.exportsMap != nil {
-							if r.debugLogs != nil {
-								r.debugLogs.addNote(fmt.Sprintf("Looking for %q in \"exports\" map in %q", esmPackageSubpath, packageJSON.source.KeyPath.Text))
-								r.debugLogs.increaseIndent()
-								defer r.debugLogs.decreaseIndent()
+						if packageJSON := r.parsePackageJSON(pkgDir); packageJSON != nil {
+							// Try checking the "tsconfig" field of "package.json". The ability to use "extends" like this was added in TypeScript 3.2:
+							// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-2.html#tsconfigjson-inheritance-via-nodejs-packages
+							if packageJSON.tsconfig != "" {
+								join = packageJSON.tsconfig
+								if !r.fs.IsAbs(join) {
+									join = r.fs.Join(pkgDir, join)
+								}
 							}
 
-							// Note: TypeScript appears to always treat this as a "require" import
-							conditions := r.esmConditionsRequire
-							resolvedPath, status, debug := r.esmPackageExportsResolve("/", esmPackageSubpath, packageJSON.exportsMap.root, conditions)
-							resolvedPath, status, debug = r.esmHandlePostConditions(resolvedPath, status, debug)
+							// Try checking the "exports" map. The ability to use "extends" like this was added in TypeScript 5.0:
+							// https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/
+							if packageJSON.exportsMap != nil {
+								if r.debugLogs != nil {
+									r.debugLogs.addNote(fmt.Sprintf("Looking for %q in \"exports\" map in %q", esmPackageSubpath, packageJSON.source.KeyPath.Text))
+									r.debugLogs.increaseIndent()
+									defer r.debugLogs.decreaseIndent()
+								}
 
-							// This is a very abbreviated version of our ESM resolution
-							if status == pjStatusExact || status == pjStatusExactEndsWithStar {
-								fileToCheck := r.fs.Join(pkgDir, resolvedPath)
-								base, err := r.parseTSConfig(fileToCheck, visited)
+								// Note: TypeScript appears to always treat this as a "require" import
+								conditions := r.esmConditionsRequire
+								resolvedPath, status, debug := r.esmPackageExportsResolve("/", esmPackageSubpath, packageJSON.exportsMap.root, conditions)
+								resolvedPath, status, debug = r.esmHandlePostConditions(resolvedPath, status, debug)
 
-								if result, shouldReturn := maybeFinishOurSearch(base, err, fileToCheck); shouldReturn {
-									return result
+								// This is a very abbreviated version of our ESM resolution
+								if status == pjStatusExact || status == pjStatusExactEndsWithStar {
+									fileToCheck := r.fs.Join(pkgDir, resolvedPath)
+									base, err := r.parseTSConfig(fileToCheck, visited)
+
+									if result, shouldReturn := maybeFinishOurSearch(base, err, fileToCheck); shouldReturn {
+										return result
+									}
 								}
 							}
 						}
@@ -1173,7 +1187,6 @@ func (r resolverQuery) parseTSConfigFromSource(source logger.Source, visited map
 						r.debugLogs.addNote(fmt.Sprintf("Failed to read file %q: %s", pjFile, originalError.Error()))
 					}
 
-					join := r.fs.Join(current, "node_modules", extends)
 					filesToCheck := []string{r.fs.Join(join, "tsconfig.json"), join, join + ".json"}
 					for _, fileToCheck := range filesToCheck {
 						base, err := r.parseTSConfig(fileToCheck, visited)
@@ -1467,6 +1480,21 @@ func (r resolverQuery) dirInfoUncached(path string) *dirInfo {
 	return info
 }
 
+// TypeScript-specific behavior: if the extension is ".js" or ".jsx", try
+// replacing it with ".ts" or ".tsx". At the time of writing this specific
+// behavior comes from the function "loadModuleFromFile()" in the file
+// "moduleNameResolver.ts" in the TypeScript compiler source code. It
+// contains this comment:
+//
+//	If that didn't work, try stripping a ".js" or ".jsx" extension and
+//	replacing it with a TypeScript one; e.g. "./foo.js" can be matched
+//	by "./foo.ts" or "./foo.d.ts"
+//
+// We don't care about ".d.ts" files because we can't do anything with
+// those, so we ignore that part of the behavior.
+//
+// See the discussion here for more historical context:
+// https://github.com/microsoft/TypeScript/issues/4595
 var rewrittenFileExtensions = map[string][]string{
 	// Note that the official compiler code always tries ".ts" before
 	// ".tsx" even if the original extension was ".jsx".
@@ -1572,21 +1600,7 @@ func (r resolverQuery) loadAsFile(path string, extensionOrder []string) (string,
 		}
 	}
 
-	// TypeScript-specific behavior: if the extension is ".js" or ".jsx", try
-	// replacing it with ".ts" or ".tsx". At the time of writing this specific
-	// behavior comes from the function "loadModuleFromFile()" in the file
-	// "moduleNameResolver.ts" in the TypeScript compiler source code. It
-	// contains this comment:
-	//
-	//   If that didn't work, try stripping a ".js" or ".jsx" extension and
-	//   replacing it with a TypeScript one; e.g. "./foo.js" can be matched
-	//   by "./foo.ts" or "./foo.d.ts"
-	//
-	// We don't care about ".d.ts" files because we can't do anything with
-	// those, so we ignore that part of the behavior.
-	//
-	// See the discussion here for more historical context:
-	// https://github.com/microsoft/TypeScript/issues/4595
+	// TypeScript-specific behavior: try rewriting ".js" to ".ts"
 	for old, exts := range rewrittenFileExtensions {
 		if !strings.HasSuffix(base, old) {
 			continue
@@ -2297,53 +2311,76 @@ func (r resolverQuery) finalizeImportsExportsResult(
 
 			if resolvedDirInfo == nil {
 				status = pjStatusModuleNotFound
-			} else if entry, diffCase := resolvedDirInfo.entries.Get(base); entry == nil {
-				endsWithStar := status == pjStatusExactEndsWithStar
-				status = pjStatusModuleNotFound
+			} else {
+				entry, diffCase := resolvedDirInfo.entries.Get(base)
 
-				// Try to have a friendly error message if people forget the extension
-				if endsWithStar {
-					for _, ext := range extensionOrder {
-						if entry, _ := resolvedDirInfo.entries.Get(base + ext); entry != nil {
-							if r.debugLogs != nil {
-								r.debugLogs.addNote(fmt.Sprintf("The import %q is missing the extension %q", path.Join(esmPackageName, esmPackageSubpath), ext))
-							}
-							status = pjStatusModuleNotFoundMissingExtension
-							missingSuffix = ext
-							break
+				// TypeScript-specific behavior: try rewriting ".js" to ".ts"
+				if entry == nil {
+					for old, exts := range rewrittenFileExtensions {
+						if !strings.HasSuffix(base, old) {
+							continue
 						}
+						lastDot := strings.LastIndexByte(base, '.')
+						for _, ext := range exts {
+							baseWithExt := base[:lastDot] + ext
+							entry, diffCase = resolvedDirInfo.entries.Get(baseWithExt)
+							if entry != nil {
+								absResolvedPath = r.fs.Join(resolvedDirInfo.absPath, baseWithExt)
+								break
+							}
+						}
+						break
 					}
 				}
-			} else if kind := entry.Kind(r.fs); kind == fs.DirEntry {
-				if r.debugLogs != nil {
-					r.debugLogs.addNote(fmt.Sprintf("The path %q is a directory, which is not allowed", absResolvedPath))
-				}
-				endsWithStar := status == pjStatusExactEndsWithStar
-				status = pjStatusUnsupportedDirectoryImport
 
-				// Try to have a friendly error message if people forget the "/index.js" suffix
-				if endsWithStar {
-					if resolvedDirInfo := r.dirInfoCached(absResolvedPath); resolvedDirInfo != nil {
+				if entry == nil {
+					endsWithStar := status == pjStatusExactEndsWithStar
+					status = pjStatusModuleNotFound
+
+					// Try to have a friendly error message if people forget the extension
+					if endsWithStar {
 						for _, ext := range extensionOrder {
-							base := "index" + ext
-							if entry, _ := resolvedDirInfo.entries.Get(base); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
-								status = pjStatusUnsupportedDirectoryImportMissingIndex
-								missingSuffix = "/" + base
+							if entry, _ := resolvedDirInfo.entries.Get(base + ext); entry != nil {
 								if r.debugLogs != nil {
-									r.debugLogs.addNote(fmt.Sprintf("The import %q is missing the suffix %q", path.Join(esmPackageName, esmPackageSubpath), missingSuffix))
+									r.debugLogs.addNote(fmt.Sprintf("The import %q is missing the extension %q", path.Join(esmPackageName, esmPackageSubpath), ext))
 								}
+								status = pjStatusModuleNotFoundMissingExtension
+								missingSuffix = ext
 								break
 							}
 						}
 					}
+				} else if kind := entry.Kind(r.fs); kind == fs.DirEntry {
+					if r.debugLogs != nil {
+						r.debugLogs.addNote(fmt.Sprintf("The path %q is a directory, which is not allowed", absResolvedPath))
+					}
+					endsWithStar := status == pjStatusExactEndsWithStar
+					status = pjStatusUnsupportedDirectoryImport
+
+					// Try to have a friendly error message if people forget the "/index.js" suffix
+					if endsWithStar {
+						if resolvedDirInfo := r.dirInfoCached(absResolvedPath); resolvedDirInfo != nil {
+							for _, ext := range extensionOrder {
+								base := "index" + ext
+								if entry, _ := resolvedDirInfo.entries.Get(base); entry != nil && entry.Kind(r.fs) == fs.FileEntry {
+									status = pjStatusUnsupportedDirectoryImportMissingIndex
+									missingSuffix = "/" + base
+									if r.debugLogs != nil {
+										r.debugLogs.addNote(fmt.Sprintf("The import %q is missing the suffix %q", path.Join(esmPackageName, esmPackageSubpath), missingSuffix))
+									}
+									break
+								}
+							}
+						}
+					}
+				} else if kind != fs.FileEntry {
+					status = pjStatusModuleNotFound
+				} else {
+					if r.debugLogs != nil {
+						r.debugLogs.addNote(fmt.Sprintf("Resolved to %q", absResolvedPath))
+					}
+					return PathPair{Primary: logger.Path{Text: absResolvedPath, Namespace: "file"}}, true, diffCase
 				}
-			} else if kind != fs.FileEntry {
-				status = pjStatusModuleNotFound
-			} else {
-				if r.debugLogs != nil {
-					r.debugLogs.addNote(fmt.Sprintf("Resolved to %q", absResolvedPath))
-				}
-				return PathPair{Primary: logger.Path{Text: absResolvedPath, Namespace: "file"}}, true, diffCase
 			}
 
 		case pjStatusInexact:

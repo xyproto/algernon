@@ -193,9 +193,11 @@ const (
 	LoaderDefault
 	LoaderEmpty
 	LoaderFile
+	LoaderGlobalCSS
 	LoaderJS
 	LoaderJSON
 	LoaderJSX
+	LoaderLocalCSS
 	LoaderText
 	LoaderTS
 	LoaderTSNoAmbiguousLessThan // Used with ".mts" and ".cts"
@@ -212,9 +214,11 @@ var LoaderToString = []string{
 	"default",
 	"empty",
 	"file",
+	"global-css",
 	"js",
 	"json",
 	"jsx",
+	"local-css",
 	"text",
 	"ts",
 	"ts",
@@ -232,7 +236,11 @@ func (loader Loader) IsTypeScript() bool {
 
 func (loader Loader) CanHaveSourceMap() bool {
 	switch loader {
-	case LoaderJS, LoaderJSX, LoaderTS, LoaderTSNoAmbiguousLessThan, LoaderTSX, LoaderCSS, LoaderJSON, LoaderText:
+	case
+		LoaderJS, LoaderJSX,
+		LoaderTS, LoaderTSNoAmbiguousLessThan, LoaderTSX,
+		LoaderCSS, LoaderGlobalCSS, LoaderLocalCSS,
+		LoaderJSON, LoaderText:
 		return true
 	default:
 		return false
@@ -383,6 +391,7 @@ type Options struct {
 	// unsupported feature sets above. It's used for error messages.
 	OriginalTargetEnv string
 
+	DropLabels       []string
 	ExtensionOrder   []string
 	MainFields       []string
 	Conditions       []string

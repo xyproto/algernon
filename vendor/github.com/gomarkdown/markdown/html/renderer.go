@@ -88,7 +88,7 @@ type RendererOptions struct {
 	// FootnoteReturnLinks flag is enabled. If blank, the string
 	// <sup>[return]</sup> is used.
 	FootnoteReturnLinkContents string
-	// CitationFormatString defines how a citation is rendered. If blnck, the string
+	// CitationFormatString defines how a citation is rendered. If blank, the string
 	// <sup>[%s]</sup> is used. Where %s will be substituted with the citation target.
 	CitationFormatString string
 	// If set, add this text to the front of each Heading ID, to ensure uniqueness.

@@ -209,7 +209,10 @@ func New(certCache *Cache, cfg Config) *Config {
 	if certCache == nil {
 		panic("a certificate cache is required")
 	}
-	if certCache.options.GetConfigForCert == nil {
+	certCache.optionsMu.RLock()
+	getConfigForCert := certCache.options.GetConfigForCert
+	defer certCache.optionsMu.RUnlock()
+	if getConfigForCert == nil {
 		panic("cache must have GetConfigForCert set in its options")
 	}
 	return newWithCache(certCache, cfg)
@@ -278,17 +281,20 @@ func newWithCache(certCache *Cache, cfg Config) *Config {
 
 // ManageSync causes the certificates for domainNames to be managed
 // according to cfg. If cfg.OnDemand is not nil, then this simply
-// whitelists the domain names and defers the certificate operations
+// allowlists the domain names and defers the certificate operations
 // to when they are needed. Otherwise, the certificates for each
-// name are loaded from storage or obtained from the CA. If loaded
-// from storage, they are renewed if they are expiring or expired.
-// It then caches the certificate in memory and is prepared to serve
-// them up during TLS handshakes.
+// name are loaded from storage or obtained from the CA if not already
+// in the cache associated with the Config. If loaded from storage,
+// they are renewed if they are expiring or expired. It then caches
+// the certificate in memory and is prepared to serve them up during
+// TLS handshakes. To change how an already-loaded certificate is
+// managed, update the cache options relating to getting a config for
+// a cert.
 //
-// Note that name whitelisting for on-demand management only takes
+// Note that name allowlisting for on-demand management only takes
 // effect if cfg.OnDemand.DecisionFunc is not set (is nil); it will
 // not overwrite an existing DecisionFunc, nor will it overwrite
-// its decision; i.e. the implicit whitelist is only used if no
+// its decision; i.e. the implicit allowlist is only used if no
 // DecisionFunc is set.
 //
 // This method is synchronous, meaning that certificates for all
@@ -348,13 +354,14 @@ func (cfg *Config) manageAll(ctx context.Context, domainNames []string, async bo
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	if cfg.OnDemand != nil && cfg.OnDemand.hostAllowlist == nil {
+		cfg.OnDemand.hostAllowlist = make(map[string]struct{})
+	}
 
 	for _, domainName := range domainNames {
 		// if on-demand is configured, defer obtain and renew operations
 		if cfg.OnDemand != nil {
-			if !cfg.OnDemand.allowlistContains(domainName) {
-				cfg.OnDemand.hostAllowlist = append(cfg.OnDemand.hostAllowlist, domainName)
-			}
+			cfg.OnDemand.hostAllowlist[normalizedName(domainName)] = struct{}{}
 			continue
 		}
 
@@ -370,6 +377,14 @@ func (cfg *Config) manageAll(ctx context.Context, domainNames []string, async bo
 }
 
 func (cfg *Config) manageOne(ctx context.Context, domainName string, async bool) error {
+	// if certificate is already being managed, nothing to do; maintenance will continue
+	certs := cfg.certCache.getAllMatchingCerts(domainName)
+	for _, cert := range certs {
+		if cert.managed {
+			return nil
+		}
+	}
+
 	// first try loading existing certificate from storage
 	cert, err := cfg.CacheManagedCertificate(ctx, domainName)
 	if err != nil {
@@ -447,28 +462,6 @@ func (cfg *Config) manageOne(ctx context.Context, domainName string, async bool)
 		return nil
 	}
 	return renew()
-}
-
-// Unmanage causes the certificates for domainNames to stop being managed.
-// If there are certificates for the supplied domain names in the cache, they
-// are evicted from the cache.
-func (cfg *Config) Unmanage(domainNames []string) {
-	var deleteQueue []Certificate
-	for _, domainName := range domainNames {
-		certs := cfg.certCache.AllMatchingCertificates(domainName)
-		for _, cert := range certs {
-			if !cert.managed {
-				continue
-			}
-			deleteQueue = append(deleteQueue, cert)
-		}
-	}
-
-	cfg.certCache.mu.Lock()
-	for _, cert := range deleteQueue {
-		cfg.certCache.removeCertificate(cert)
-	}
-	cfg.certCache.mu.Unlock()
 }
 
 // ObtainCertSync generates a new private key and obtains a certificate for

@@ -341,7 +341,9 @@ func (cfg *Config) getCertDuringHandshake(ctx context.Context, hello *tls.Client
 	// perfectly full while still being able to load needed certs from storage.
 	// See https://caddy.community/t/error-tls-alert-internal-error-592-again/13272
 	// and caddyserver/caddy#4320.
+	cfg.certCache.optionsMu.RLock()
 	cacheCapacity := float64(cfg.certCache.options.Capacity)
+	cfg.certCache.optionsMu.RUnlock()
 	cacheAlmostFull := cacheCapacity > 0 && float64(cacheSize) >= cacheCapacity*.9
 	loadDynamically := cfg.OnDemand != nil || cacheAlmostFull
 
@@ -448,8 +450,10 @@ func (cfg *Config) checkIfCertShouldBeObtained(name string, requireOnDemand bool
 			}
 			return nil
 		}
-		if len(cfg.OnDemand.hostAllowlist) > 0 && !cfg.OnDemand.allowlistContains(name) {
-			return fmt.Errorf("certificate for '%s' is not managed", name)
+		if len(cfg.OnDemand.hostAllowlist) > 0 {
+			if _, ok := cfg.OnDemand.hostAllowlist[name]; !ok {
+				return fmt.Errorf("certificate for '%s' is not managed", name)
+			}
 		}
 	}
 	return nil

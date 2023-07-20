@@ -229,8 +229,8 @@ func parseFile(args parseArgs) {
 		result.file.inputFile.Repr = &graph.JSRepr{AST: ast}
 		result.ok = ok
 
-	case config.LoaderCSS:
-		ast := args.caches.CSSCache.Parse(args.log, source, css_parser.OptionsFromConfig(&args.options))
+	case config.LoaderCSS, config.LoaderGlobalCSS, config.LoaderLocalCSS:
+		ast := args.caches.CSSCache.Parse(args.log, source, css_parser.OptionsFromConfig(loader, &args.options))
 		result.file.inputFile.Repr = &graph.CSSRepr{AST: ast}
 		result.ok = true
 
@@ -357,7 +357,13 @@ func parseFile(args parseArgs) {
 			result.resolveResults = make([]*resolver.ResolveResult, len(records))
 
 			if len(records) > 0 {
-				resolverCache := make(map[ast.ImportKind]map[string]*resolver.ResolveResult)
+				type cacheEntry struct {
+					resolveResult *resolver.ResolveResult
+					debug         resolver.DebugMeta
+					didLogError   bool
+				}
+
+				resolverCache := make(map[ast.ImportKind]map[string]cacheEntry)
 				tracker := logger.MakeLineColumnTracker(&source)
 
 				for importRecordIndex := range records {
@@ -376,54 +382,70 @@ func parseFile(args parseArgs) {
 					// Cache the path in case it's imported multiple times in this file
 					cache, ok := resolverCache[record.Kind]
 					if !ok {
-						cache = make(map[string]*resolver.ResolveResult)
+						cache = make(map[string]cacheEntry)
 						resolverCache[record.Kind] = cache
 					}
-					if resolveResult, ok := cache[record.Path.Text]; ok {
-						result.resolveResults[importRecordIndex] = resolveResult
-						continue
-					}
 
-					// Run the resolver and log an error if the path couldn't be resolved
-					resolveResult, didLogError, debug := RunOnResolvePlugins(
-						args.options.Plugins,
-						args.res,
-						args.log,
-						args.fs,
-						&args.caches.FSCache,
-						&source,
-						record.Range,
-						source.KeyPath,
-						record.Path.Text,
-						record.Kind,
-						absResolveDir,
-						pluginData,
-					)
-					cache[record.Path.Text] = resolveResult
-
-					// All "require.resolve()" imports should be external because we don't
-					// want to waste effort traversing into them
-					if record.Kind == ast.ImportRequireResolve {
-						if resolveResult != nil && resolveResult.IsExternal {
-							// Allow path substitution as long as the result is external
-							result.resolveResults[importRecordIndex] = resolveResult
-						} else if !record.Flags.Has(ast.HandlesImportErrors) {
-							args.log.AddID(logger.MsgID_Bundler_RequireResolveNotExternal, logger.Warning, &tracker, record.Range,
-								fmt.Sprintf("%q should be marked as external for use with \"require.resolve\"", record.Path.Text))
+					entry, ok := cache[record.Path.Text]
+					if ok {
+						result.resolveResults[importRecordIndex] = entry.resolveResult
+					} else {
+						// Run the resolver and log an error if the path couldn't be resolved
+						resolveResult, didLogError, debug := RunOnResolvePlugins(
+							args.options.Plugins,
+							args.res,
+							args.log,
+							args.fs,
+							&args.caches.FSCache,
+							&source,
+							record.Range,
+							source.KeyPath,
+							record.Path.Text,
+							record.Kind,
+							absResolveDir,
+							pluginData,
+						)
+						entry = cacheEntry{
+							resolveResult: resolveResult,
+							debug:         debug,
+							didLogError:   didLogError,
 						}
-						continue
+						cache[record.Path.Text] = entry
+
+						// All "require.resolve()" imports should be external because we don't
+						// want to waste effort traversing into them
+						if record.Kind == ast.ImportRequireResolve {
+							if resolveResult != nil && resolveResult.IsExternal {
+								// Allow path substitution as long as the result is external
+								result.resolveResults[importRecordIndex] = resolveResult
+							} else if !record.Flags.Has(ast.HandlesImportErrors) {
+								args.log.AddID(logger.MsgID_Bundler_RequireResolveNotExternal, logger.Warning, &tracker, record.Range,
+									fmt.Sprintf("%q should be marked as external for use with \"require.resolve\"", record.Path.Text))
+							}
+							continue
+						}
 					}
 
-					if resolveResult == nil {
+					// Check whether we should log an error every time the result is nil,
+					// even if it's from the cache. Do this because the error may not
+					// have been logged for nil entries if the previous instances had
+					// the "HandlesImportErrors" flag.
+					if entry.resolveResult == nil {
 						// Failed imports inside a try/catch are silently turned into
 						// external imports instead of causing errors. This matches a common
 						// code pattern for conditionally importing a module with a graceful
 						// fallback.
-						if !didLogError && !record.Flags.Has(ast.HandlesImportErrors) {
+						if !entry.didLogError && !record.Flags.Has(ast.HandlesImportErrors) {
+							// Report an error
 							text, suggestion, notes := ResolveFailureErrorTextSuggestionNotes(args.res, record.Path.Text, record.Kind,
-								pluginName, args.fs, absResolveDir, args.options.Platform, source.PrettyPath, debug.ModifiedImportPath)
-							debug.LogErrorMsg(args.log, &source, record.Range, text, suggestion, notes)
-						} else if !didLogError && record.Flags.Has(ast.HandlesImportErrors) {
+								pluginName, args.fs, absResolveDir, args.options.Platform, source.PrettyPath, entry.debug.ModifiedImportPath)
+							entry.debug.LogErrorMsg(args.log, &source, record.Range, text, suggestion, notes)
+
+							// Only report this error once per unique import path in the file
+							entry.didLogError = true
+							cache[record.Path.Text] = entry
+						} else if !entry.didLogError && record.Flags.Has(ast.HandlesImportErrors) {
+							// Report a debug message about why there was no error
 							args.log.AddIDWithNotes(logger.MsgID_Bundler_IgnoredDynamicImport, logger.Debug, &tracker, record.Range,
 								fmt.Sprintf("Importing %q was allowed even though it could not be resolved because dynamic import failures appear to be handled here:",
 									record.Path.Text), []logger.MsgData{tracker.MsgData(js_lexer.RangeOfIdentifier(source, record.ErrorHandlerLoc),
@@ -432,7 +454,7 @@ func parseFile(args parseArgs) {
 						continue
 					}
 
-					result.resolveResults[importRecordIndex] = resolveResult
+					result.resolveResults[importRecordIndex] = entry.resolveResult
 				}
 			}
 		}
@@ -2041,16 +2063,31 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 							}
 							sourceIndex := s.allocateSourceIndex(stubKey, cache.SourceIndexJSStubForCSS)
 							source := logger.Source{
-								Index:      sourceIndex,
-								PrettyPath: otherFile.inputFile.Source.PrettyPath,
+								Index:          sourceIndex,
+								PrettyPath:     otherFile.inputFile.Source.PrettyPath,
+								IdentifierName: otherFile.inputFile.Source.IdentifierName,
 							}
+
+							// Export all local CSS names for JavaScript to use
+							exports := js_ast.EObject{}
+							cssSourceIndex := record.SourceIndex.GetIndex()
+							for innerIndex, symbol := range css.AST.Symbols {
+								if symbol.Kind == ast.SymbolLocalCSS {
+									ref := ast.Ref{SourceIndex: cssSourceIndex, InnerIndex: uint32(innerIndex)}
+									exports.Properties = append(exports.Properties, js_ast.Property{
+										Key:        js_ast.Expr{Data: &js_ast.EString{Value: helpers.StringToUTF16(symbol.OriginalName)}},
+										ValueOrNil: js_ast.Expr{Data: &js_ast.ENameOfSymbol{Ref: ref}},
+									})
+								}
+							}
+
 							s.results[sourceIndex] = parseResult{
 								file: scannerFile{
 									inputFile: graph.InputFile{
 										Source: source,
 										Repr: &graph.JSRepr{
 											AST: js_parser.LazyExportAST(s.log, source,
-												js_parser.OptionsFromConfig(&s.options), js_ast.Expr{Data: &js_ast.EObject{}}, ""),
+												js_parser.OptionsFromConfig(&s.options), js_ast.Expr{Data: &exports}, ""),
 											CSSSourceIndex: ast.MakeIndex32(record.SourceIndex.GetIndex()),
 										},
 									},
@@ -2452,22 +2489,17 @@ func (b *Bundle) Compile(log logger.Log, timer *helpers.Timer, mangleCache map[s
 			go func(i int, entryPoint graph.EntryPoint) {
 				entryPoints := []graph.EntryPoint{entryPoint}
 				forked := timer.Fork()
-				var optionsPtr *config.Options
-				if mangleCache != nil {
-					// Each goroutine needs a separate options object
-					optionsClone := options
-					optionsClone.ExclusiveMangleCacheUpdate = func(cb func(mangleCache map[string]interface{})) {
-						// Serialize all accesses to the mangle cache in entry point order for determinism
-						serializer.Enter(i)
-						defer serializer.Leave(i)
-						cb(mangleCache)
-					}
-					optionsPtr = &optionsClone
-				} else {
-					// Each goroutine can share an options object
-					optionsPtr = &options
+
+				// Each goroutine needs a separate options object
+				optionsClone := options
+				optionsClone.ExclusiveMangleCacheUpdate = func(cb func(mangleCache map[string]interface{})) {
+					// Serialize all accesses to the mangle cache in entry point order for determinism
+					serializer.Enter(i)
+					defer serializer.Leave(i)
+					cb(mangleCache)
 				}
-				resultGroups[i] = link(optionsPtr, forked, log, b.fs, b.res, files, entryPoints,
+
+				resultGroups[i] = link(&optionsClone, forked, log, b.fs, b.res, files, entryPoints,
 					b.uniqueKeyPrefix, findReachableFiles(files, entryPoints), dataForSourceMaps)
 				timer.Join(forked)
 				waitGroup.Done()

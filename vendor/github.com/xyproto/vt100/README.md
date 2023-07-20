@@ -34,7 +34,7 @@ A physical VT100 terminal. Photo by [Jason Scott](https://www.flickr.com/photos/
 
 ### Requirements
 
-* Go 1.10 or later.
+* Go 1.17 or later.
 
 ### Features and limitations
 
@@ -78,6 +78,6 @@ Quick installation:
 
 ### General info
 
-* Version: 1.11.5
+* Version: 1.12.2
 * Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
