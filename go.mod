@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-	github.com/caddyserver/certmagic v0.19.0
+	github.com/caddyserver/certmagic v0.19.1
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
