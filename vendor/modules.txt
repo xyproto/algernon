@@ -183,14 +183,11 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.4.0
 ## explicit; go 1.18
 github.com/quic-go/qpack
-# github.com/quic-go/qtls-go1-19 v0.3.2
-## explicit; go 1.19
-github.com/quic-go/qtls-go1-19
-# github.com/quic-go/qtls-go1-20 v0.2.2
+# github.com/quic-go/qtls-go1-20 v0.3.0
 ## explicit; go 1.20
 github.com/quic-go/qtls-go1-20
-# github.com/quic-go/quic-go v0.36.2
-## explicit; go 1.19
+# github.com/quic-go/quic-go v0.37.0
+## explicit; go 1.20
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
 github.com/quic-go/quic-go/internal/ackhandler
@@ -369,8 +366,6 @@ golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
-golang.org/x/crypto/curve25519
-golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
