@@ -55,6 +55,11 @@ const (
 	TString
 	TURL
 	TWhitespace
+
+	// This is never something that the lexer generates directly. Instead this is
+	// an esbuild-specific token for global/local names that "TIdent" tokens may
+	// be changed into.
+	TSymbol
 )
 
 var tokenToString = []string{
@@ -96,6 +101,8 @@ var tokenToString = []string{
 	"string token",
 	"URL token",
 	"whitespace",
+
+	"identifier",
 }
 
 func (t T) String() string {
@@ -141,7 +148,12 @@ func (token Token) DecodedText(contents string) string {
 
 	case TURL:
 		start := 4
-		end := len(raw) - 1
+		end := len(raw)
+
+		// Note: URL tokens with syntax errors may not have a trailing ")"
+		if raw[end-1] == ')' {
+			end--
+		}
 
 		// Trim leading and trailing whitespace
 		for start < end && isWhitespace(rune(raw[start])) {
@@ -598,6 +610,54 @@ func WouldStartIdentifierWithoutEscapes(text string) bool {
 	return false
 }
 
+func RangeOfIdentifier(source logger.Source, loc logger.Loc) logger.Range {
+	text := source.Contents[loc.Start:]
+	if len(text) == 0 {
+		return logger.Range{Loc: loc, Len: 0}
+	}
+
+	i := 0
+	n := len(text)
+
+	for {
+		c, width := utf8.DecodeRuneInString(text[i:])
+		if IsNameContinue(c) {
+			i += width
+			continue
+		}
+
+		// Handle an escape
+		if c == '\\' && i+1 < n && !isNewline(rune(text[i+1])) {
+			i += width // Skip the backslash
+			c, width = utf8.DecodeRuneInString(text[i:])
+			if _, ok := isHex(c); ok {
+				i += width
+				c, width = utf8.DecodeRuneInString(text[i:])
+				for j := 0; j < 5; j++ {
+					if _, ok := isHex(c); !ok {
+						break
+					}
+					i += width
+					c, width = utf8.DecodeRuneInString(text[i:])
+				}
+				if isWhitespace(c) {
+					i += width
+				}
+			}
+			continue
+		}
+
+		break
+	}
+
+	// Don't end with a whitespace
+	if i > 0 && isWhitespace(rune(text[i-1])) {
+		i--
+	}
+
+	return logger.Range{Loc: loc, Len: int32(i)}
+}
+
 func (lexer *lexer) wouldStartNumber() bool {
 	if lexer.codePoint >= '0' && lexer.codePoint <= '9' {
 		return true
@@ -698,6 +758,7 @@ func (lexer *lexer) consumeIdentLike() T {
 	name := lexer.consumeName()
 
 	if lexer.codePoint == '(' {
+		matchingLoc := logger.Loc{Start: lexer.Token.Range.End()}
 		lexer.step()
 		if len(name) == 3 {
 			u, r, l := name[0], name[1], name[2]
@@ -706,7 +767,7 @@ func (lexer *lexer) consumeIdentLike() T {
 					lexer.step()
 				}
 				if lexer.codePoint != '"' && lexer.codePoint != '\'' {
-					return lexer.consumeURL()
+					return lexer.consumeURL(matchingLoc)
 				}
 			}
 		}
@@ -716,7 +777,7 @@ func (lexer *lexer) consumeIdentLike() T {
 	return TIdent
 }
 
-func (lexer *lexer) consumeURL() T {
+func (lexer *lexer) consumeURL(matchingLoc logger.Loc) T {
 validURL:
 	for {
 		switch lexer.codePoint {
@@ -726,8 +787,9 @@ validURL:
 
 		case eof:
 			loc := logger.Loc{Start: lexer.Token.Range.End()}
-			lexer.log.AddError(&lexer.tracker, logger.Range{Loc: loc}, "Expected \")\" to end URL token")
-			return TBadURL
+			lexer.log.AddIDWithNotes(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &lexer.tracker, logger.Range{Loc: loc}, "Expected \")\" to end URL token",
+				[]logger.MsgData{lexer.tracker.MsgData(logger.Range{Loc: matchingLoc, Len: 1}, "The unbalanced \"(\" is here:")})
+			return TURL
 
 		case ' ', '\t', '\n', '\r', '\f':
 			lexer.step()
@@ -736,7 +798,11 @@ validURL:
 			}
 			if lexer.codePoint != ')' {
 				loc := logger.Loc{Start: lexer.Token.Range.End()}
-				lexer.log.AddError(&lexer.tracker, logger.Range{Loc: loc}, "Expected \")\" to end URL token")
+				lexer.log.AddIDWithNotes(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &lexer.tracker, logger.Range{Loc: loc}, "Expected \")\" to end URL token",
+					[]logger.MsgData{lexer.tracker.MsgData(logger.Range{Loc: matchingLoc, Len: 1}, "The unbalanced \"(\" is here:")})
+				if lexer.codePoint == eof {
+					return TURL
+				}
 				break validURL
 			}
 			lexer.step()
@@ -744,13 +810,14 @@ validURL:
 
 		case '"', '\'', '(':
 			r := logger.Range{Loc: logger.Loc{Start: lexer.Token.Range.End()}, Len: 1}
-			lexer.log.AddError(&lexer.tracker, r, "Expected \")\" to end URL token")
+			lexer.log.AddIDWithNotes(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &lexer.tracker, r, "Expected \")\" to end URL token",
+				[]logger.MsgData{lexer.tracker.MsgData(logger.Range{Loc: matchingLoc, Len: 1}, "The unbalanced \"(\" is here:")})
 			break validURL
 
 		case '\\':
 			if !lexer.isValidEscape() {
 				r := logger.Range{Loc: logger.Loc{Start: lexer.Token.Range.End()}, Len: 1}
-				lexer.log.AddError(&lexer.tracker, r, "Invalid escape")
+				lexer.log.AddID(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &lexer.tracker, r, "Invalid escape")
 				break validURL
 			}
 			lexer.consumeEscape()
@@ -758,7 +825,8 @@ validURL:
 		default:
 			if isNonPrintable(lexer.codePoint) {
 				r := logger.Range{Loc: logger.Loc{Start: lexer.Token.Range.End()}, Len: 1}
-				lexer.log.AddError(&lexer.tracker, r, "Unexpected non-printable character in URL token")
+				lexer.log.AddID(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &lexer.tracker, r, "Unexpected non-printable character in URL token")
+				break validURL
 			}
 			lexer.step()
 		}

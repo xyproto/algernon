@@ -436,14 +436,14 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 			if len(colorAttributes) != 1 || colorAttributes[0] != "0" {
 				for _, attribute := range colorAttributes {
 					if attributeNumber, err := strconv.Atoi(attribute); err == nil { // success
-						currentColor.Data = append(currentColor.Data, byte(attributeNumber))
+						currentColor = append(currentColor, byte(attributeNumber))
 					} else {
 						continue
 					}
 				}
 				// Strip away leading 0 color attribute, if there are more than 1
-				if len(currentColor.Data) > 1 && currentColor.Data[0] == 0 {
-					currentColor.Data = currentColor.Data[1:]
+				if len(currentColor) > 1 && currentColor[0] == 0 {
+					currentColor = currentColor[1:]
 				}
 			} else {
 				currentColor = vt100.NewAttributeColor()

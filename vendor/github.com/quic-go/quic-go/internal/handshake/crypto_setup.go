@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -104,6 +105,7 @@ func NewCryptoSetupClient(
 // NewCryptoSetupServer creates a new crypto setup for the server
 func NewCryptoSetupServer(
 	connID protocol.ConnectionID,
+	localAddr, remoteAddr net.Addr,
 	tp *wire.TransportParameters,
 	tlsConf *tls.Config,
 	allow0RTT bool,
@@ -125,11 +127,37 @@ func NewCryptoSetupServer(
 
 	quicConf := &qtls.QUICConfig{TLSConfig: tlsConf}
 	qtls.SetupConfigForServer(quicConf, cs.allow0RTT, cs.getDataForSessionTicket, cs.accept0RTT)
+	addConnToClientHelloInfo(quicConf.TLSConfig, localAddr, remoteAddr)
 
 	cs.tlsConf = quicConf.TLSConfig
 	cs.conn = qtls.QUICServer(quicConf)
 
 	return cs
+}
+
+// The tls.Config contains two callbacks that pass in a tls.ClientHelloInfo.
+// Since crypto/tls doesn't do it, we need to make sure to set the Conn field with a fake net.Conn
+// that allows the caller to get the local and the remote address.
+func addConnToClientHelloInfo(conf *tls.Config, localAddr, remoteAddr net.Addr) {
+	if conf.GetConfigForClient != nil {
+		gcfc := conf.GetConfigForClient
+		conf.GetConfigForClient = func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+			info.Conn = &conn{localAddr: localAddr, remoteAddr: remoteAddr}
+			c, err := gcfc(info)
+			if c != nil {
+				// We're returning a tls.Config here, so we need to apply this recursively.
+				addConnToClientHelloInfo(c, localAddr, remoteAddr)
+			}
+			return c, err
+		}
+	}
+	if conf.GetCertificate != nil {
+		gc := conf.GetCertificate
+		conf.GetCertificate = func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			info.Conn = &conn{localAddr: localAddr, remoteAddr: remoteAddr}
+			return gc(info)
+		}
+	}
 }
 
 func newCryptoSetup(

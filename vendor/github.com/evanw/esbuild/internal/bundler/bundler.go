@@ -310,7 +310,10 @@ func parseFile(args parseArgs) {
 	case config.LoaderFile:
 		uniqueKey := fmt.Sprintf("%sA%08d", args.uniqueKeyPrefix, args.sourceIndex)
 		uniqueKeyPath := uniqueKey + source.KeyPath.IgnoredSuffix
-		expr := js_ast.Expr{Data: &js_ast.EString{Value: helpers.StringToUTF16(uniqueKeyPath)}}
+		expr := js_ast.Expr{Data: &js_ast.EString{
+			Value:             helpers.StringToUTF16(uniqueKeyPath),
+			ContainsUniqueKey: true,
+		}}
 		ast := js_parser.LazyExportAST(args.log, source, js_parser.OptionsFromConfig(&args.options), expr, "")
 		ast.URLForCSS = uniqueKeyPath
 		if pluginName != "" {
@@ -2062,11 +2065,8 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 								stubKey.Text = canonicalFileSystemPathForWindows(stubKey.Text)
 							}
 							sourceIndex := s.allocateSourceIndex(stubKey, cache.SourceIndexJSStubForCSS)
-							source := logger.Source{
-								Index:          sourceIndex,
-								PrettyPath:     otherFile.inputFile.Source.PrettyPath,
-								IdentifierName: otherFile.inputFile.Source.IdentifierName,
-							}
+							source := otherFile.inputFile.Source
+							source.Index = sourceIndex
 
 							// Export all local CSS names for JavaScript to use
 							exports := js_ast.EObject{}
@@ -2074,9 +2074,10 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 							for innerIndex, symbol := range css.AST.Symbols {
 								if symbol.Kind == ast.SymbolLocalCSS {
 									ref := ast.Ref{SourceIndex: cssSourceIndex, InnerIndex: uint32(innerIndex)}
+									loc := css.AST.DefineLocs[ref]
 									exports.Properties = append(exports.Properties, js_ast.Property{
-										Key:        js_ast.Expr{Data: &js_ast.EString{Value: helpers.StringToUTF16(symbol.OriginalName)}},
-										ValueOrNil: js_ast.Expr{Data: &js_ast.ENameOfSymbol{Ref: ref}},
+										Key:        js_ast.Expr{Loc: loc, Data: &js_ast.EString{Value: helpers.StringToUTF16(symbol.OriginalName)}},
+										ValueOrNil: js_ast.Expr{Loc: loc, Data: &js_ast.ENameOfSymbol{Ref: ref}},
 									})
 								}
 							}
@@ -2085,6 +2086,7 @@ func (s *scanner) processScannedFiles(entryPointMeta []graph.EntryPoint) []scann
 								file: scannerFile{
 									inputFile: graph.InputFile{
 										Source: source,
+										Loader: otherFile.inputFile.Loader,
 										Repr: &graph.JSRepr{
 											AST: js_parser.LazyExportAST(s.log, source,
 												js_parser.OptionsFromConfig(&s.options), js_ast.Expr{Data: &exports}, ""),

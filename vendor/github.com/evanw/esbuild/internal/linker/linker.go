@@ -24,6 +24,7 @@ import (
 	"github.com/evanw/esbuild/internal/compat"
 	"github.com/evanw/esbuild/internal/config"
 	"github.com/evanw/esbuild/internal/css_ast"
+	"github.com/evanw/esbuild/internal/css_lexer"
 	"github.com/evanw/esbuild/internal/css_parser"
 	"github.com/evanw/esbuild/internal/css_printer"
 	"github.com/evanw/esbuild/internal/fs"
@@ -941,7 +942,7 @@ func (c *linkerContext) computeCrossChunkDependencies() {
 								otherChunkIndex := c.graph.Files[record.SourceIndex.GetIndex()].EntryPointChunkIndex
 								record.Path.Text = c.chunks[otherChunkIndex].uniqueKey
 								record.SourceIndex = ast.Index32{}
-								record.Flags |= ast.ShouldNotBeExternalInMetafile
+								record.Flags |= ast.ShouldNotBeExternalInMetafile | ast.ContainsUniqueKey
 
 								// Track this cross-chunk dynamic import so we make sure to
 								// include its hash when we're calculating the hashes of all
@@ -1301,6 +1302,9 @@ func (c *linkerContext) scanImportsAndExports() {
 						} else {
 							record.Flags |= ast.ShouldNotBeExternalInMetafile
 						}
+						if strings.Contains(otherRepr.AST.URLForCSS, c.uniqueKeyPrefix) {
+							record.Flags |= ast.ContainsUniqueKey
+						}
 
 						// Copy the additional files to the output directory
 						additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
@@ -1311,7 +1315,7 @@ func (c *linkerContext) scanImportsAndExports() {
 						record.Path.Text = otherRepr.URLForCode
 						record.Path.Namespace = ""
 						record.CopySourceIndex = ast.Index32{}
-						record.Flags |= ast.ShouldNotBeExternalInMetafile
+						record.Flags |= ast.ShouldNotBeExternalInMetafile | ast.ContainsUniqueKey
 
 						// Copy the additional files to the output directory
 						additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
@@ -1329,7 +1333,7 @@ func (c *linkerContext) scanImportsAndExports() {
 							record.Path.Text = otherRepr.URLForCode
 							record.Path.Namespace = ""
 							record.CopySourceIndex = ast.Index32{}
-							record.Flags |= ast.ShouldNotBeExternalInMetafile
+							record.Flags |= ast.ShouldNotBeExternalInMetafile | ast.ContainsUniqueKey
 
 							// Copy the additional files to the output directory
 							additionalFiles = append(additionalFiles, otherFile.InputFile.AdditionalFiles...)
@@ -1999,7 +2003,7 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 	part.Stmts = nil
 
 	// Generate a new symbol and link the export into the graph for tree shaking
-	generateExport := func(name string, alias string) (ast.Ref, uint32) {
+	generateExport := func(loc logger.Loc, name string, alias string) (ast.Ref, uint32) {
 		ref := c.graph.GenerateNewSymbol(sourceIndex, ast.SymbolOther, name)
 		partIndex := c.graph.AddPartToFile(sourceIndex, js_ast.Part{
 			DeclaredSymbols:      []js_ast.DeclaredSymbol{{Ref: ref, IsTopLevel: true}},
@@ -2007,7 +2011,11 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 		})
 		c.graph.GenerateSymbolImportAndUse(sourceIndex, partIndex, repr.AST.ModuleRef, 1, sourceIndex)
 		repr.Meta.TopLevelSymbolToPartsOverlay[ref] = []uint32{partIndex}
-		repr.Meta.ResolvedExports[alias] = graph.ExportData{Ref: ref, SourceIndex: sourceIndex}
+		repr.Meta.ResolvedExports[alias] = graph.ExportData{
+			Ref:         ref,
+			NameLoc:     loc,
+			SourceIndex: sourceIndex,
+		}
 		return ref, partIndex
 	}
 
@@ -2019,7 +2027,7 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 				(!file.IsEntryPoint() || js_ast.IsIdentifierUTF16(str.Value) ||
 					!c.options.UnsupportedJSFeatures.Has(compat.ArbitraryModuleNamespaceNames)) {
 				if name := helpers.UTF16ToString(str.Value); name != "default" {
-					ref, partIndex := generateExport(name, name)
+					ref, partIndex := generateExport(property.Key.Loc, name, name)
 
 					// This initializes the generated variable with a copy of the property
 					// value, which is INCORRECT for values that are objects/arrays because
@@ -2045,7 +2053,7 @@ func (c *linkerContext) generateCodeForLazyExport(sourceIndex uint32) {
 	}
 
 	// Generate the default export
-	ref, partIndex := generateExport(file.InputFile.Source.IdentifierName+"_default", "default")
+	ref, partIndex := generateExport(jsonValue.Loc, file.InputFile.Source.IdentifierName+"_default", "default")
 	repr.AST.Parts[partIndex].Stmts = []js_ast.Stmt{{Loc: jsonValue.Loc, Data: &js_ast.SExportDefault{
 		DefaultName: ast.LocRef{Loc: jsonValue.Loc, Ref: ref},
 		Value:       js_ast.Stmt{Loc: jsonValue.Loc, Data: &js_ast.SExpr{Value: jsonValue}},
@@ -2506,24 +2514,57 @@ loop:
 
 			// Report mismatched imports and exports
 			if symbol.ImportItemStatus == ast.ImportItemGenerated {
-				// This is a debug message instead of an error because although it
-				// appears to be a named import, it's actually an automatically-
-				// generated named import that was originally a property access on an
-				// import star namespace object. Normally this property access would
-				// just resolve to undefined at run-time instead of failing at binding-
-				// time, so we emit a debug message and rewrite the value to the literal
-				// "undefined" instead of emitting an error.
+				// This is not an error because although it appears to be a named
+				// import, it's actually an automatically-generated named import
+				// that was originally a property access on an import star
+				// namespace object:
+				//
+				//   import * as ns from 'foo'
+				//   const undefinedValue = ns.notAnExport
+				//
+				// If this code wasn't bundled, this property access would just resolve
+				// to undefined at run-time instead of failing at binding-time, so we
+				// emit rewrite the value to the literal "undefined" instead of
+				// emitting an error.
 				symbol.ImportItemStatus = ast.ImportItemMissing
-				kind := logger.Warning
-				if helpers.IsInsideNodeModules(trackerFile.InputFile.Source.KeyPath.Text) {
-					kind = logger.Debug
+
+				// Don't emit a log message if this symbol isn't used, since then the
+				// log message isn't helpful. This can happen with "import" assignment
+				// statements in TypeScript code since they are ambiguously either a
+				// type or a value. We consider them to be a type if they aren't used.
+				//
+				//   import * as ns from 'foo'
+				//
+				//   // There's no warning here because this is dead code
+				//   if (false) ns.notAnExport
+				//
+				//   // There's no warning here because this is never used
+				//   import unused = ns.notAnExport
+				//
+				if symbol.UseCountEstimate > 0 {
+					nextFile := &c.graph.Files[nextTracker.sourceIndex].InputFile
+					msg := logger.Msg{
+						Kind: logger.Warning,
+						Data: trackerFile.LineColumnTracker().MsgData(r, fmt.Sprintf(
+							"Import %q will always be undefined because there is no matching export in %q",
+							namedImport.Alias, nextFile.Source.PrettyPath)),
+					}
+					if helpers.IsInsideNodeModules(trackerFile.InputFile.Source.KeyPath.Text) {
+						msg.Kind = logger.Debug
+					}
+					c.maybeCorrectObviousTypo(nextFile.Repr.(*graph.JSRepr), namedImport.Alias, &msg)
+					c.log.AddMsgID(logger.MsgID_Bundler_ImportIsUndefined, msg)
 				}
-				c.log.AddID(logger.MsgID_Bundler_ImportIsUndefined, kind, trackerFile.LineColumnTracker(), r, fmt.Sprintf(
-					"Import %q will always be undefined because there is no matching export in %q",
-					namedImport.Alias, c.graph.Files[nextTracker.sourceIndex].InputFile.Source.PrettyPath))
 			} else {
-				c.log.AddError(trackerFile.LineColumnTracker(), r, fmt.Sprintf("No matching export in %q for import %q",
-					c.graph.Files[nextTracker.sourceIndex].InputFile.Source.PrettyPath, namedImport.Alias))
+				nextFile := &c.graph.Files[nextTracker.sourceIndex].InputFile
+				msg := logger.Msg{
+					Kind: logger.Error,
+					Data: trackerFile.LineColumnTracker().MsgData(r, fmt.Sprintf(
+						"No matching export in %q for import %q",
+						nextFile.Source.PrettyPath, namedImport.Alias)),
+				}
+				c.maybeCorrectObviousTypo(nextFile.Repr.(*graph.JSRepr), namedImport.Alias, &msg)
+				c.log.AddMsg(msg)
 			}
 
 		case importProbablyTypeScriptType:
@@ -2610,6 +2651,41 @@ loop:
 	}
 
 	return
+}
+
+// Attempt to correct an import name with a typo
+func (c *linkerContext) maybeCorrectObviousTypo(repr *graph.JSRepr, name string, msg *logger.Msg) {
+	if repr.Meta.ResolvedExportTypos == nil {
+		valid := make([]string, 0, len(repr.Meta.ResolvedExports))
+		for alias := range repr.Meta.ResolvedExports {
+			valid = append(valid, alias)
+		}
+		sort.Strings(valid)
+		typos := helpers.MakeTypoDetector(valid)
+		repr.Meta.ResolvedExportTypos = &typos
+	}
+
+	if corrected, ok := repr.Meta.ResolvedExportTypos.MaybeCorrectTypo(name); ok {
+		msg.Data.Location.Suggestion = corrected
+		export := repr.Meta.ResolvedExports[corrected]
+		importedFile := &c.graph.Files[export.SourceIndex]
+		text := fmt.Sprintf("Did you mean to import %q instead?", corrected)
+		var note logger.MsgData
+		if export.NameLoc.Start == 0 {
+			// Don't report a source location for definitions without one. This can
+			// happen with automatically-generated exports from non-JavaScript files.
+			note.Text = text
+		} else {
+			var r logger.Range
+			if importedFile.InputFile.Loader.IsCSS() {
+				r = css_lexer.RangeOfIdentifier(importedFile.InputFile.Source, export.NameLoc)
+			} else {
+				r = js_lexer.RangeOfIdentifier(importedFile.InputFile.Source, export.NameLoc)
+			}
+			note = importedFile.LineColumnTracker().MsgData(r, text)
+		}
+		msg.Notes = append(msg.Notes, note)
+	}
 }
 
 func (c *linkerContext) recursivelyWrapDependencies(sourceIndex uint32) {
@@ -4900,7 +4976,7 @@ func (c *linkerContext) generateChunkJS(chunkIndex int, chunkWaitGroup *sync.Wai
 			crossChunkImportRecords[i] = ast.ImportRecord{
 				Kind:  chunkImport.importKind,
 				Path:  logger.Path{Text: c.chunks[chunkImport.chunkIndex].uniqueKey},
-				Flags: ast.ShouldNotBeExternalInMetafile,
+				Flags: ast.ShouldNotBeExternalInMetafile | ast.ContainsUniqueKey,
 			}
 		}
 		crossChunkResult := js_printer.Print(js_ast.AST{
@@ -5350,7 +5426,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 	asts := make([]css_ast.AST, len(chunkRepr.filesInChunkInOrder))
 	var remover css_parser.DuplicateRuleRemover
 	if c.options.MinifySyntax {
-		remover = css_parser.MakeDuplicateRuleMangler()
+		remover = css_parser.MakeDuplicateRuleMangler(c.graph.Symbols)
 	}
 	for i := len(chunkRepr.filesInChunkInOrder) - 1; i >= 0; i-- {
 		sourceIndex := chunkRepr.filesInChunkInOrder[i]
@@ -5372,7 +5448,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 
 		// Remove top-level duplicate rules across files
 		if c.options.MinifySyntax {
-			rules = remover.RemoveDuplicateRulesInPlace(rules, ast.ImportRecords)
+			rules = remover.RemoveDuplicateRulesInPlace(sourceIndex, rules, ast.ImportRecords)
 		}
 
 		ast.Rules = rules
@@ -5410,6 +5486,7 @@ func (c *linkerContext) generateChunkCSS(chunkIndex int, chunkWaitGroup *sync.Wa
 				UnsupportedFeatures: c.options.UnsupportedCSSFeatures,
 				AddSourceMappings:   addSourceMappings,
 				InputSourceMap:      inputSourceMap,
+				InputSourceIndex:    sourceIndex,
 				LineOffsetTables:    lineOffsetTables,
 				NeedsMetafile:       c.options.NeedsMetafile,
 				LocalNames:          c.mangledProps,
