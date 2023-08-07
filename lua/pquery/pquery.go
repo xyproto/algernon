@@ -7,8 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	lua "github.com/xyproto/gopher-lua"
 
 	// Using the PostgreSQL database engine
 	_ "github.com/lib/pq"
@@ -26,7 +25,7 @@ var (
 )
 
 // Load makes functions related to building a library of Lua code available
-func Load(L *lua.LState, perm pinterface.IPermissions) {
+func Load(L *lua.LState) {
 	// Register the PQ function
 	L.SetGlobal("PQ", L.NewFunction(func(L *lua.LState) int {
 		// Check if the optional argument is given
@@ -43,7 +42,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		}
 
 		// Check if there is a connection that can be reused
-		var db *sql.DB = nil
+		var db *sql.DB
 		reuseMut.RLock()
 		conn, ok := reuseDB[connectionString]
 		reuseMut.RUnlock()

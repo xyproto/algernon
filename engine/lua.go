@@ -69,7 +69,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		codelib.Load(L, creator)
 
 		// For executing PostgreSQL queries
-		pquery.Load(L, ac.perm)
+		pquery.Load(L)
 
 		// For executing MSSQL queries
 		mssql.Load(L)
@@ -219,7 +219,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 		codelib.Load(L, creator)
 
 		// For executing PostgreSQL queries
-		pquery.Load(L, ac.perm)
+		pquery.Load(L)
 
 		// For executing MSSQL queries
 		mssql.Load(L)
