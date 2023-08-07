@@ -8,15 +8,14 @@ import (
 	"github.com/bmizerany/assert"
 	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt/v2"
-	"github.com/xyproto/permissions2/v2"
-	//"github.com/xyproto/permissionsql"
+	permissions "github.com/xyproto/permissions2/v2"
 	"github.com/xyproto/pinterface"
-	//"github.com/xyproto/pstore"
 	"github.com/xyproto/simplebolt"
+	"github.com/xyproto/simpleredis/v2"
+	//"github.com/xyproto/permissionsql"
+	//"github.com/xyproto/pstore"
 	//"github.com/xyproto/simplehstore"
 	//"github.com/xyproto/simplemaria"
-
-	"github.com/xyproto/simpleredis/v2"
 )
 
 // VersionInfo helps to keep track of package names and versions
