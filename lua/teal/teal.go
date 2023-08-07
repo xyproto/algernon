@@ -6,10 +6,13 @@ import (
 	"embed"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 )
+
+const tealLoadScript = "require('compat52'); tl = require('tl'); tl.cache = {}"
 
 var (
 	//go:embed *.lua
@@ -19,7 +22,38 @@ var (
 	preloadTealFilenames = []string{"bit.lua", "bit32.lua", "compat52.lua", "tl.lua"}
 )
 
-const tealLoadScript = "require('compat52'); tl = require('tl'); tl.cache = {}"
+// preloadModuleFromFS loads the given Lua filename from the embedded filesystem
+func preloadModuleFromFS(L *lua.LState, fname string) error {
+	// Derive package name by removing file extension
+	pkgname := strings.TrimSuffix(fname, filepath.Ext(fname))
+
+	// Read the file content
+	b, err := fs.ReadFile(fname)
+	if err != nil {
+		return fmt.Errorf("unable to read %s: %w", fname, err)
+	}
+
+	// Load the Lua module
+	mod, err := L.LoadString(string(b))
+	if err != nil {
+		return fmt.Errorf("could not load %s: %w", fname, err)
+	}
+
+	// Get the "package" table
+	pkg := L.GetField(L.Get(lua.EnvironIndex), "package")
+	if pkg == lua.LNil {
+		return fmt.Errorf("unable to get 'package' table")
+	}
+
+	// Get the "preload" table inside "package"
+	preload := L.GetField(pkg, "preload")
+	if preload == lua.LNil {
+		return fmt.Errorf("unable to get 'preload' table")
+	}
+
+	L.SetField(preload, pkgname, mod)
+	return nil
+}
 
 // Load makes Teal available in the Lua VM
 func Load(L *lua.LState) {
@@ -32,21 +66,4 @@ func Load(L *lua.LState) {
 	if err := L.DoString(tealLoadScript); err != nil {
 		log.Errorf("Failed to set `tl` global variable: %v", err)
 	}
-}
-
-// preloadModuleFromFS loads the given Lua filename from the embedded filesystem
-func preloadModuleFromFS(L *lua.LState, fname string) error {
-	pkgname := fname[:len(fname)-len(filepath.Ext(fname))]
-	b, err := fs.ReadFile(fname)
-	if err != nil {
-		return fmt.Errorf("Unable to read %s: %w", fname, err)
-	}
-	mod, err := L.LoadString(string(b))
-	if err != nil {
-		return fmt.Errorf("Could not load %s: %w", fname, err)
-	}
-	pkg := L.GetField(L.Get(lua.EnvironIndex), "package")
-	preload := L.GetField(pkg, "preload")
-	L.SetField(preload, pkgname, mod)
-	return nil
 }
