@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
 
 	// Using the MSSQL database engine
 	_ "github.com/denisenkom/go-mssqldb"
@@ -89,7 +88,7 @@ func (w LValueWrappers) Interfaces() (s []any) {
 }
 
 // Load makes functions related to building a library of Lua code available
-func Load(L *lua.LState, perm pinterface.IPermissions) {
+func Load(L *lua.LState) {
 	// Register the MSSQL function
 	L.SetGlobal("MSSQL", L.NewFunction(func(L *lua.LState) int {
 		// Check if the optional argument is given
@@ -120,7 +119,7 @@ func Load(L *lua.LState, perm pinterface.IPermissions) {
 		}
 
 		// Check if there is a connection that can be reused
-		var db *sql.DB = nil
+		var db *sql.DB
 		reuseMut.RLock()
 		conn, ok := reuseDB[connectionString]
 		reuseMut.RUnlock()

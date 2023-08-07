@@ -72,7 +72,7 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 		pquery.Load(L, ac.perm)
 
 		// For executing MSSQL queries
-		mssql.Load(L, ac.perm)
+		mssql.Load(L)
 
 	}
 
@@ -222,7 +222,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 		pquery.Load(L, ac.perm)
 
 		// For executing MSSQL queries
-		mssql.Load(L, ac.perm)
+		mssql.Load(L)
 	}
 
 	// For handling JSON data
