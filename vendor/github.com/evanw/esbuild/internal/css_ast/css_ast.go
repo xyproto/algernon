@@ -30,7 +30,44 @@ type AST struct {
 	Rules                []Rule
 	SourceMapComment     logger.Span
 	ApproximateLineCount int32
-	DefineLocs           map[ast.Ref]logger.Loc
+	LocalSymbols         []ast.LocRef
+	LocalScope           map[string]ast.LocRef
+	GlobalScope          map[string]ast.LocRef
+	Composes             map[ast.Ref]*Composes
+}
+
+type Composes struct {
+	// Note that each of these can be either local or global. Local examples:
+	//
+	//   .foo { composes: bar }
+	//   .bar { color: red }
+	//
+	// Global examples:
+	//
+	//   .foo { composes: bar from global }
+	//   .foo :global { composes: bar }
+	//   .foo { :global { composes: bar } }
+	//   :global .bar { color: red }
+	//
+	Names []ast.LocRef
+
+	// Each of these is local in another file. For example:
+	//
+	//   .foo { composes: bar from "bar.css" }
+	//   .foo { composes: bar from url(bar.css) }
+	//
+	ImportedNames []ImportedComposesName
+
+	// This tracks what CSS properties each class uses so that we can warn when
+	// "composes" is used incorrectly to compose two classes from separate files
+	// that declare the same CSS properties.
+	Properties map[string]logger.Loc
+}
+
+type ImportedComposesName struct {
+	Alias             string
+	AliasLoc          logger.Loc
+	ImportRecordIndex uint32
 }
 
 // We create a lot of tokens, so make sure this layout is memory-efficient.
@@ -794,17 +831,22 @@ func (sel CompoundSelector) IsInvalidBecauseEmpty() bool {
 	return !sel.HasNestingSelector() && sel.TypeSelector == nil && len(sel.SubclassSelectors) == 0
 }
 
-func (sel CompoundSelector) FirstLoc() logger.Loc {
-	var firstLoc ast.Index32
+func (sel CompoundSelector) Range() (r logger.Range) {
+	if sel.Combinator.Byte != 0 {
+		r = logger.Range{Loc: sel.Combinator.Loc, Len: 1}
+	}
 	if sel.TypeSelector != nil {
-		firstLoc = ast.MakeIndex32(uint32(sel.TypeSelector.FirstLoc().Start))
-	} else if len(sel.SubclassSelectors) > 0 {
-		firstLoc = ast.MakeIndex32(uint32(sel.SubclassSelectors[0].Loc.Start))
+		r.ExpandBy(sel.TypeSelector.Range())
 	}
-	if firstLoc.IsValid() && (!sel.NestingSelectorLoc.IsValid() || firstLoc.GetIndex() < sel.NestingSelectorLoc.GetIndex()) {
-		return logger.Loc{Start: int32(firstLoc.GetIndex())}
+	if sel.NestingSelectorLoc.IsValid() {
+		r.ExpandBy(logger.Range{Loc: logger.Loc{Start: int32(sel.NestingSelectorLoc.GetIndex())}, Len: 1})
 	}
-	return logger.Loc{Start: int32(sel.NestingSelectorLoc.GetIndex())}
+	if len(sel.SubclassSelectors) > 0 {
+		for _, ss := range sel.SubclassSelectors {
+			r.ExpandBy(ss.Range)
+		}
+	}
+	return
 }
 
 func (sel CompoundSelector) Clone() CompoundSelector {
@@ -828,9 +870,9 @@ func (sel CompoundSelector) Clone() CompoundSelector {
 }
 
 type NameToken struct {
-	Text string
-	Loc  logger.Loc
-	Kind css_lexer.T
+	Text  string
+	Range logger.Range
+	Kind  css_lexer.T
 }
 
 func (a NameToken) Equal(b NameToken) bool {
@@ -845,11 +887,12 @@ type NamespacedName struct {
 	Name NameToken
 }
 
-func (n NamespacedName) FirstLoc() logger.Loc {
+func (n NamespacedName) Range() logger.Range {
 	if n.NamespacePrefix != nil {
-		return n.NamespacePrefix.Loc
+		loc := n.NamespacePrefix.Range.Loc
+		return logger.Range{Loc: loc, Len: n.Name.Range.End() - loc.Start}
 	}
-	return n.Name.Loc
+	return n.Name.Range
 }
 
 func (n NamespacedName) Clone() NamespacedName {
@@ -867,8 +910,8 @@ func (a NamespacedName) Equal(b NamespacedName) bool {
 }
 
 type SubclassSelector struct {
-	Data SS
-	Loc  logger.Loc
+	Data  SS
+	Range logger.Range
 }
 
 type SS interface {

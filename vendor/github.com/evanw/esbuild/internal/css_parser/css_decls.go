@@ -79,17 +79,41 @@ func compactTokenQuad(a css_ast.Token, b css_ast.Token, c css_ast.Token, d css_a
 	return tokens
 }
 
-func (p *parser) processDeclarations(rules []css_ast.Rule) (rewrittenRules []css_ast.Rule) {
+func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *composesContext) (rewrittenRules []css_ast.Rule) {
 	margin := boxTracker{key: css_ast.DMargin, keyText: "margin", allowAuto: true}
 	padding := boxTracker{key: css_ast.DPadding, keyText: "padding", allowAuto: false}
 	inset := boxTracker{key: css_ast.DInset, keyText: "inset", allowAuto: true}
 	borderRadius := borderRadiusTracker{}
 	rewrittenRules = make([]css_ast.Rule, 0, len(rules))
+	didWarnAboutComposes := false
+	var declarationKeys map[string]struct{}
 
 	// Don't automatically generate the "inset" property if it's not supported
 	if p.options.unsupportedCSSFeatures.Has(compat.InsetProperty) {
 		inset.key = css_ast.DUnknown
 		inset.keyText = ""
+	}
+
+	// If this is a local class selector, track which CSS properties it declares.
+	// This is used to warn when CSS "composes" is used incorrectly.
+	if composesContext != nil {
+		for _, ref := range composesContext.parentRefs {
+			composes, ok := p.composes[ref]
+			if !ok {
+				composes = &css_ast.Composes{}
+				p.composes[ref] = composes
+			}
+			properties := composes.Properties
+			if properties == nil {
+				properties = make(map[string]logger.Loc)
+				composes.Properties = properties
+			}
+			for _, rule := range rules {
+				if decl, ok := rule.Data.(*css_ast.RDeclaration); ok && decl.Key != css_ast.DComposes {
+					properties[decl.KeyText] = decl.KeyRange.Loc
+				}
+			}
+		}
 	}
 
 	for _, rule := range rules {
@@ -100,6 +124,30 @@ func (p *parser) processDeclarations(rules []css_ast.Rule) (rewrittenRules []css
 		}
 
 		switch decl.Key {
+		case css_ast.DComposes:
+			// Only process "composes" directives if we're in "local-css" or
+			// "global-css" mode. In these cases, "composes" directives will always
+			// be removed (because they are being processed) even if they contain
+			// errors. Otherwise we leave "composes" directives there untouched and
+			// don't check them for errors.
+			if p.options.symbolMode != symbolModeDisabled {
+				if composesContext == nil {
+					if !didWarnAboutComposes {
+						didWarnAboutComposes = true
+						p.log.AddID(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &p.tracker, decl.KeyRange, "\"composes\" is not valid here")
+					}
+				} else if composesContext.problemRange.Len > 0 {
+					if !didWarnAboutComposes {
+						didWarnAboutComposes = true
+						p.log.AddIDWithNotes(logger.MsgID_CSS_CSSSyntaxError, logger.Warning, &p.tracker, decl.KeyRange, "\"composes\" only works inside single class selectors",
+							[]logger.MsgData{p.tracker.MsgData(composesContext.problemRange, "The parent selector is not a single class selector because of the syntax here:")})
+					}
+				} else {
+					p.handleComposesPragma(*composesContext, decl.Value)
+				}
+				rewrittenRules = rewrittenRules[:len(rewrittenRules)-1]
+			}
+
 		case css_ast.DBackgroundColor,
 			css_ast.DBorderBlockEndColor,
 			css_ast.DBorderBlockStartColor,
@@ -281,20 +329,29 @@ func (p *parser) processDeclarations(rules []css_ast.Rule) (rewrittenRules []css
 		}
 
 		if prefixes, ok := p.options.cssPrefixData[decl.Key]; ok {
+			if declarationKeys == nil {
+				// Only generate this map if it's needed
+				declarationKeys = make(map[string]struct{})
+				for _, rule := range rules {
+					if decl, ok := rule.Data.(*css_ast.RDeclaration); ok {
+						declarationKeys[decl.KeyText] = struct{}{}
+					}
+				}
+			}
 			if (prefixes & compat.WebkitPrefix) != 0 {
-				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-webkit-", rule.Loc, decl)
+				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-webkit-", rule.Loc, decl, declarationKeys)
 			}
 			if (prefixes & compat.KhtmlPrefix) != 0 {
-				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-khtml-", rule.Loc, decl)
+				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-khtml-", rule.Loc, decl, declarationKeys)
 			}
 			if (prefixes & compat.MozPrefix) != 0 {
-				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-moz-", rule.Loc, decl)
+				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-moz-", rule.Loc, decl, declarationKeys)
 			}
 			if (prefixes & compat.MsPrefix) != 0 {
-				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-ms-", rule.Loc, decl)
+				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-ms-", rule.Loc, decl, declarationKeys)
 			}
 			if (prefixes & compat.OPrefix) != 0 {
-				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-o-", rule.Loc, decl)
+				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-o-", rule.Loc, decl, declarationKeys)
 			}
 		}
 	}
@@ -314,23 +371,14 @@ func (p *parser) processDeclarations(rules []css_ast.Rule) (rewrittenRules []css
 	return
 }
 
-func (p *parser) insertPrefixedDeclaration(rules []css_ast.Rule, prefix string, loc logger.Loc, decl *css_ast.RDeclaration) []css_ast.Rule {
+func (p *parser) insertPrefixedDeclaration(rules []css_ast.Rule, prefix string, loc logger.Loc, decl *css_ast.RDeclaration, declarationKeys map[string]struct{}) []css_ast.Rule {
 	keyText := prefix + decl.KeyText
 
 	// Don't insert a prefixed declaration if there already is one
-	for i := len(rules) - 2; i >= 0; i-- {
-		if prev, ok := rules[i].Data.(*css_ast.RDeclaration); ok && prev.Key == css_ast.DUnknown {
-			if prev.KeyText == keyText {
-				// We found a previous declaration with a matching prefixed property.
-				// The value is ignored, which matches the behavior of "autoprefixer".
-				return rules
-			}
-			if p, d := len(prev.KeyText), len(decl.KeyText); p > d && prev.KeyText[p-d-1] == '-' && prev.KeyText[p-d:] == decl.KeyText {
-				// Continue through a run of prefixed properties with the same name
-				continue
-			}
-		}
-		break
+	if _, ok := declarationKeys[keyText]; ok {
+		// We found a previous declaration with a matching prefixed property.
+		// The value is ignored, which matches the behavior of "autoprefixer".
+		return rules
 	}
 
 	// Additional special cases for when the prefix applies

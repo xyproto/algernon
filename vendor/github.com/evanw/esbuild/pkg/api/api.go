@@ -369,6 +369,7 @@ type BuildResult struct {
 type OutputFile struct {
 	Path     string
 	Contents []byte
+	Hash     string
 }
 
 // Documentation: https://esbuild.github.io/api/#build
@@ -673,6 +674,7 @@ const (
 	ResolveJSDynamicImport
 	ResolveJSRequireResolve
 	ResolveCSSImportRule
+	ResolveCSSComposesFrom
 	ResolveCSSURLToken
 )
 
