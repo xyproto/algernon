@@ -1,71 +1,35 @@
-*.swp
 *.bak
+*.bak
+*.cpu
+*.log
+*.mem
+*.orig
+*.out
+*.prof
+*.rej
+*.swp
 *.tmp
-
-# Executables
-algernon
-examples/a
-
-# Logs
-algernon.log
-http2.log
-
-# Leftovers
 .DS_Store
-dump.rdb
-bolt.db
-comments.json
-samples/getip/ip.md
-
-# Plugin executables
-plugins/go/go
-plugins/cpp/main
-
-# Extracted zip files
+.vscode
+_vendor-*/
+alg2docker/Dockerfile
+algernon
+algernon.1.gz
+algernon.debug
+algernon.log
 apps/first
 apps/withplugins
-
-# Debugging
-algernon.debug
-
-# Profiling
-*.prof
-
-# Testing
-test.json
-
-# Generated files
-alg2docker/Dockerfile
-
-# Vendor backup
-_vendor-*/
-
-# Tracing
-trace.out
-
-# base64 encoded temporary output
-output.b64
-
-# logs
-*.log
-
-# profiling
-*.cpu
-*.mem
-
-# regression tests
-regtest/issue13/large-file
-
-# Visual Studio Code
-.vscode
-
-# gzip man page
-algernon.1.gz
-
-*.out
-
-release/
-
-*.bak
-
+bolt.db
+comments.json
+dump.rdb
+examples/a
+http2.log
 include.txt
+output.b64
+plugins/cpp/main
+plugins/go/go
+regtest/issue13/large-file
+release/
+samples/getip/ip.md
+test.json
+trace.out
