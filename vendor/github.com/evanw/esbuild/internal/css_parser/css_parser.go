@@ -1141,6 +1141,7 @@ abortRuleParser:
 			kind = atRuleEmpty
 			p.eat(css_lexer.TWhitespace)
 			if path, r, ok := p.expectURLOrString(); ok {
+				var conditions css_ast.ImportConditions
 				importConditionsStart := p.index
 				for {
 					if kind := p.current().Kind; kind == css_lexer.TSemicolon || kind == css_lexer.TOpenBrace ||
@@ -1152,23 +1153,44 @@ abortRuleParser:
 				if p.current().Kind == css_lexer.TOpenBrace {
 					break // Avoid parsing an invalid "@import" rule
 				}
-				importConditions := p.convertTokens(p.tokens[importConditionsStart:p.index])
-				kind := ast.ImportAt
+				conditions.Media = p.convertTokens(p.tokens[importConditionsStart:p.index])
 
 				// Insert or remove whitespace before the first token
-				if len(importConditions) > 0 {
-					kind = ast.ImportAtConditional
-					if p.options.minifyWhitespace {
-						importConditions[0].Whitespace &= ^css_ast.WhitespaceBefore
-					} else {
-						importConditions[0].Whitespace |= css_ast.WhitespaceBefore
+				var importConditions *css_ast.ImportConditions
+				if len(conditions.Media) > 0 {
+					importConditions = &conditions
+
+					// Handle "layer()"
+					if t := conditions.Media[0]; (t.Kind == css_lexer.TIdent || t.Kind == css_lexer.TFunction) && t.Text == "layer" {
+						conditions.Layers = conditions.Media[:1]
+						conditions.Media = conditions.Media[1:]
+					}
+
+					// Handle "supports()"
+					if len(conditions.Media) > 0 {
+						if t := conditions.Media[0]; t.Kind == css_lexer.TFunction && t.Text == "supports" {
+							conditions.Supports = conditions.Media[:1]
+							conditions.Media = conditions.Media[1:]
+						}
+					}
+
+					// Remove leading and trailing whitespace
+					if len(conditions.Layers) > 0 {
+						conditions.Layers[0].Whitespace &= ^(css_ast.WhitespaceBefore | css_ast.WhitespaceAfter)
+					}
+					if len(conditions.Supports) > 0 {
+						conditions.Supports[0].Whitespace &= ^(css_ast.WhitespaceBefore | css_ast.WhitespaceAfter)
+					}
+					if n := len(conditions.Media); n > 0 {
+						conditions.Media[0].Whitespace &= ^css_ast.WhitespaceBefore
+						conditions.Media[n-1].Whitespace &= ^css_ast.WhitespaceAfter
 					}
 				}
 
 				p.expect(css_lexer.TSemicolon)
 				importRecordIndex := uint32(len(p.importRecords))
 				p.importRecords = append(p.importRecords, ast.ImportRecord{
-					Kind:  kind,
+					Kind:  ast.ImportAt,
 					Path:  logger.Path{Text: path},
 					Range: r,
 				})

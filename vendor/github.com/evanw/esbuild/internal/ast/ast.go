@@ -32,9 +32,6 @@ const (
 	// A CSS "@import" rule
 	ImportAt
 
-	// A CSS "@import" rule with import conditions
-	ImportAtConditional
-
 	// A CSS "composes" declaration
 	ImportComposesFrom
 
@@ -52,7 +49,7 @@ func (kind ImportKind) StringForMetafile() string {
 		return "dynamic-import"
 	case ImportRequireResolve:
 		return "require-resolve"
-	case ImportAt, ImportAtConditional:
+	case ImportAt:
 		return "import-rule"
 	case ImportComposesFrom:
 		return "composes-from"
@@ -67,7 +64,7 @@ func (kind ImportKind) StringForMetafile() string {
 
 func (kind ImportKind) IsFromCSS() bool {
 	switch kind {
-	case ImportAt, ImportAtConditional, ImportComposesFrom, ImportURL:
+	case ImportAt, ImportComposesFrom, ImportURL:
 		return true
 	}
 	return false
@@ -75,7 +72,7 @@ func (kind ImportKind) IsFromCSS() bool {
 
 func (kind ImportKind) MustResolveToCSS() bool {
 	switch kind {
-	case ImportAt, ImportAtConditional, ImportComposesFrom:
+	case ImportAt, ImportComposesFrom:
 		return true
 	}
 	return false
@@ -152,9 +149,10 @@ func (flags ImportRecordFlags) Has(flag ImportRecordFlags) bool {
 }
 
 type ImportRecord struct {
-	Assertions *ImportAssertions
-	Path       logger.Path
-	Range      logger.Range
+	Assertions  *ImportAssertions
+	GlobPattern *GlobPattern
+	Path        logger.Path
+	Range       logger.Range
 
 	// If the "HandlesImportErrors" flag is present, then this is the location
 	// of the error handler. This is used for error reporting.
@@ -196,6 +194,12 @@ func FindAssertion(assertions []AssertEntry, name string) *AssertEntry {
 		}
 	}
 	return nil
+}
+
+type GlobPattern struct {
+	Parts       []helpers.GlobPart
+	ExportAlias string
+	Kind        ImportKind
 }
 
 // This stores a 32-bit index where the zero value is an invalid index. This is
