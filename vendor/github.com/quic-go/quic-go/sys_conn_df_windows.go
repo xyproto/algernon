@@ -43,12 +43,7 @@ func setDF(rawConn syscall.RawConn) (bool, error) {
 	return true, nil
 }
 
-func isSendMsgSizeErr(err error) bool {
-	// https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-	return errors.Is(err, windows.WSAEMSGSIZE)
-}
-
-func isRecvMsgSizeErr(err error) bool {
+func isMsgSizeErr(err error) bool {
 	// https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 	return errors.Is(err, windows.WSAEMSGSIZE)
 }

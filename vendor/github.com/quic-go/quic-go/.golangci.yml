@@ -1,6 +1,4 @@
 run:
-  skip-files:
-    - internal/handshake/cipher_suite.go
 linters-settings:
   depguard:
     type: blacklist

@@ -71,9 +71,17 @@ func (s *cryptoStreamImpl) HandleCryptoFrame(f *wire.CryptoFrame) error {
 
 // GetCryptoData retrieves data that was received in CRYPTO frames
 func (s *cryptoStreamImpl) GetCryptoData() []byte {
-	b := s.msgBuf
-	s.msgBuf = nil
-	return b
+	if len(s.msgBuf) < 4 {
+		return nil
+	}
+	msgLen := 4 + int(s.msgBuf[1])<<16 + int(s.msgBuf[2])<<8 + int(s.msgBuf[3])
+	if len(s.msgBuf) < msgLen {
+		return nil
+	}
+	msg := make([]byte, msgLen)
+	copy(msg, s.msgBuf[:msgLen])
+	s.msgBuf = s.msgBuf[msgLen:]
+	return msg
 }
 
 func (s *cryptoStreamImpl) Finish() error {

@@ -62,6 +62,8 @@ func versionToALPN(v protocol.VersionNumber) string {
 	switch v {
 	case protocol.Version1, protocol.Version2:
 		return NextProtoH3
+	case protocol.VersionDraft29:
+		return NextProtoH3Draft29
 	default:
 		return ""
 	}
@@ -573,22 +575,14 @@ func (s *Server) handleRequest(conn quic.Connection, str quic.Stream, decoder *q
 	}
 	req, err := requestFromHeaders(hfs)
 	if err != nil {
-		return newStreamError(ErrCodeMessageError, err)
+		// TODO: use the right error code
+		return newStreamError(ErrCodeGeneralProtocolError, err)
 	}
 
-	connState := conn.ConnectionState().TLS
+	connState := conn.ConnectionState().TLS.ConnectionState
 	req.TLS = &connState
 	req.RemoteAddr = conn.RemoteAddr().String()
-
-	// Check that the client doesn't send more data in DATA frames than indicated by the Content-Length header (if set).
-	// See section 4.1.2 of RFC 9114.
-	var httpStr Stream
-	if _, ok := req.Header["Content-Length"]; ok && req.ContentLength >= 0 {
-		httpStr = newLengthLimitedStream(newStream(str, onFrameError), req.ContentLength)
-	} else {
-		httpStr = newStream(str, onFrameError)
-	}
-	body := newRequestBody(httpStr)
+	body := newRequestBody(newStream(str, onFrameError))
 	req.Body = body
 
 	if s.logger.Debug() {
@@ -602,6 +596,7 @@ func (s *Server) handleRequest(conn quic.Connection, str quic.Stream, decoder *q
 	ctx = context.WithValue(ctx, http.LocalAddrContextKey, conn.LocalAddr())
 	req = req.WithContext(ctx)
 	r := newResponseWriter(str, conn, s.logger)
+	defer r.Flush()
 	handler := s.Handler
 	if handler == nil {
 		handler = http.DefaultServeMux
@@ -629,10 +624,10 @@ func (s *Server) handleRequest(conn quic.Connection, str quic.Stream, decoder *q
 		return requestError{err: errHijacked}
 	}
 
-	// only write response when there is no panic
-	if !panicked {
+	if panicked {
+		r.WriteHeader(http.StatusInternalServerError)
+	} else {
 		r.WriteHeader(http.StatusOK)
-		r.Flush()
 	}
 	// If the EOF was read by the handler, CancelRead() is a no-op.
 	str.CancelRead(quic.StreamErrorCode(ErrCodeNoError))

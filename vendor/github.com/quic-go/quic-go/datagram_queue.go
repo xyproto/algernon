@@ -1,7 +1,6 @@
 package quic
 
 import (
-	"context"
 	"sync"
 
 	"github.com/quic-go/quic-go/internal/protocol"
@@ -99,7 +98,7 @@ func (h *datagramQueue) HandleDatagramFrame(f *wire.DatagramFrame) {
 }
 
 // Receive gets a received DATAGRAM frame.
-func (h *datagramQueue) Receive(ctx context.Context) ([]byte, error) {
+func (h *datagramQueue) Receive() ([]byte, error) {
 	for {
 		h.rcvMx.Lock()
 		if len(h.rcvQueue) > 0 {
@@ -114,8 +113,6 @@ func (h *datagramQueue) Receive(ctx context.Context) ([]byte, error) {
 			continue
 		case <-h.closed:
 			return nil, h.closeErr
-		case <-ctx.Done():
-			return nil, ctx.Err()
 		}
 	}
 }
