@@ -17,7 +17,7 @@ else
   MAKE ?= make
 endif
 
-MANDIR ?= "$(PREFIX)/share/man/man1"
+MANDIR ?= $(PREFIX)/share/man/man1
 
 UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
