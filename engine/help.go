@@ -509,24 +509,30 @@ func generateUsageFunction(ac *Config) func() {
 	return func() {
 		fmt.Println("\n" + ac.versionString + "\n\n" + ac.description)
 
-		// Prepare a message, depending on if QUIC support is enabled or not
-		quicUsageOrMessage := "  -u                           Serve over QUIC / HTTP3."
-		if !quicEnabled {
-			quicUsageOrMessage = "\nThis Algernon executable was built without QUIC support.\n"
+		var quicExample string
+		var quicUsageOrMessage string
+		var quicFinalMessage string
+
+		// Prepare and/or output a message, depending on if QUIC support is compiled in or not
+		if quicEnabled {
+			quicUsageOrMessage = "  -u                           Serve over QUIC / HTTP3."
+			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -s -u -n . :7000\n"
+		} else {
+			quicFinalMessage = "\n\nThis Algernon executable was built without QUIC support."
 		}
 
 		// Possible arguments are also, for backward compatibility:
 		// server dir, server addr, certificate file, key file, redis addr and redis db index
 		// They are not mentioned here, but are possible to use, in that strict order.
 		fmt.Println(`
-
 Syntax:
   algernon [flags] [file or directory to serve] [host][:port]
 
 Available flags:
   -a, --autorefresh            Enable event server and auto-refresh feature.
                                Sets cache mode to "images".
-  -b, --bolt                   Use "` + ac.defaultBoltFilename + `" for the Bolt database.
+  -b, --bolt                   Use "` + ac.defaultBoltFilename + `"
+                               for the Bolt database.
   -c, --statcache              Speed up responses by caching os.Stat.
                                Only use if served files will not be removed.
   -d, --debug                  Enable debug mode (show errors in the browser).
@@ -538,8 +544,8 @@ Available flags:
                                Quits after the file has been served once.
                                ("-m" is equivalent to "-q -o -z").
   -n, --nobanner               Don't display a colorful banner at start.
-  -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `, or with the
-                               given application.
+  -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `,
+                               or with the given application.
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
@@ -547,8 +553,7 @@ Available flags:
   -q, --quiet                  Don't output anything to stdout or stderr.
   -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
   -s, --server                 Server mode (disable debug + interactive mode).
-  -t, --httponly               Serve regular HTTP.
-` + quicUsageOrMessage + `
+  -t, --httponly               Serve regular HTTP.` + quicUsageOrMessage + `
   -v, --version                Application name and version
   -V, --verbose                Slightly more verbose logging.
   -z, --quit                   Quit after the first request has been served.
@@ -615,13 +620,9 @@ Example usage:
 
   Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
     algernon -c --domain --server --cachesize 67108864 --prod /srv
-
-  Serve the current dir over QUIC, port 7000, no banner:
-    algernon -s -u -n . :7000
-
+` + quicExample + `
   Serve the current directory over HTTP, port 3000. No limits, cache,
   permissions or database connections:
-    algernon -x
-`)
+    algernon -x` + quicFinalMessage)
 	}
 }
