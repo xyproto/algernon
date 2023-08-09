@@ -4,17 +4,18 @@ package engine
 
 import (
 	"flag"
-	"log"
 	"os"
 	"runtime/pprof"
 	"runtime/trace"
 
 	"github.com/felixge/fgtrace"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	cpuProfileFilename *string
 	memProfileFilename *string
+	traceFilename      *string
 	fgtraceFilename    *string
 )
 
@@ -48,7 +49,7 @@ func traceStart() {
 			f, errProfile := os.Create(*memProfileFilename)
 			if errProfile != nil {
 				// Fatal is okay here, since it's inside the anonymous shutdown function
-				log.Fatal("could not create memory profile: ", err)
+				log.Fatal("could not create memory profile: ", errProfile)
 			}
 			defer f.Close()
 			log.Info("Saving heap profile to ", *memProfileFilename)
@@ -60,11 +61,11 @@ func traceStart() {
 	if *traceFilename != "" {
 		f, errTrace := os.Create(*traceFilename)
 		if errTrace != nil {
-			return errTrace
+			panic(errTrace)
 		}
 		go func() {
 			log.Info("Tracing")
-			if err = trace.Start(f); err != nil {
+			if err := trace.Start(f); err != nil {
 				panic(err)
 			}
 		}()
