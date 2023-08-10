@@ -5,13 +5,6 @@
 # Convert an Algernon application (.alg or .zip) to a Dockerfile
 #
 
-# default settings
-filename=hello.alg
-newfile=Dockerfile
-name="$(whoami)"
-email="$EMAIL"
-force="false"
-
 if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
   echo 'alg2docker 0.4.0'
   echo
@@ -25,6 +18,12 @@ if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
   echo
   exit 1
 fi
+
+filename=hello.alg
+newfile=Dockerfile
+name="$(whoami)"
+email="$EMAIL"
+force="false"
 
 if [[ $1 == "-f" ]]; then
   force="true"
@@ -55,20 +54,17 @@ echo "Using this Algernon application: $filename"
 echo "Creating this Dockerfile: $newfile"
 
 cat <<EOF > "$newfile"
-FROM golang:1.18 as builder
+FROM golang as builder
 LABEL MAINTAINER="%EMAIL%"
 
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-
 # Install Algernon
-RUN go install -trimpath -ldflags "-s" -a -v github.com/xyproto/algernon@a54d9ef87e1b161fe447ad04edc3b9172bcea625
+RUN CGO_ENABLED=0 GOOS=linux go install -trimpath -ldflags "-s" -a -v github.com/xyproto/algernon@latest
 
 # Copy in in the .alg file
 COPY %FILENAME% %FILENAME%
 
 # Start a new Dockerfile based on Alpine
-FROM alpine:3.15.2
+FROM alpine
 LABEL MAINTAINER="%EMAIL%"
 RUN apk add --no-cache ca-certificates
 
@@ -89,8 +85,17 @@ CMD ["/usr/bin/algernon", "-c", "--cachesize", "67108864", "--cert", "/etc/alger
 
 EOF
 
-# Configure the Dockerfile
-sed "s|%NAME%|$name|g" -i "$newfile"
-sed "s|%EMAIL%|$email|g" -i "$newfile"
-sed "s|%FILENAME%|$filename|g" -i "$newfile"
-sed "s|%BASEFILENAME%|$basefilename|g" -i "$newfile"
+# Check the OS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    sed -i '' "s|%NAME%|$name|g" "$newfile"
+    sed -i '' "s|%EMAIL%|$email|g" "$newfile"
+    sed -i '' "s|%FILENAME%|$filename|g" "$newfile"
+    sed -i '' "s|%BASEFILENAME%|$basefilename|g" "$newfile"
+else
+    # Linux
+    sed "s|%NAME%|$name|g" -i "$newfile"
+    sed "s|%EMAIL%|$email|g" -i "$newfile"
+    sed "s|%FILENAME%|$filename|g" -i "$newfile"
+    sed "s|%BASEFILENAME%|$basefilename|g" -i "$newfile"
+fi
