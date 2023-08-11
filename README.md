@@ -145,9 +145,9 @@ Installation
 
 ##### Arch Linux
 
-* Install `algernon` from AUR, using your favorite AUR helper.
+* `pacman -S algernon`
 
-##### Any system where go is available
+##### Any system where Go is available
 
 This method is using the latest commit from the main branch:
 
