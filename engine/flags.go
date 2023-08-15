@@ -12,9 +12,9 @@ import (
 
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/themes"
-	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 )
 
 // Parse the flags, return the default hostname
@@ -237,7 +237,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	if ac.onlyLuaMode {
 		// Use a random database, so that several lua REPLs can be started without colliding,
 		// but only if the current default bolt database file can not be opened.
-		if ac.boltFilename != os.DevNull && !utils.CanRead(ac.boltFilename) {
+		if ac.boltFilename != os.DevNull && !files.CanRead(ac.boltFilename) {
 			tempFile, err := os.CreateTemp("", "algernon_repl*.db")
 			if err == nil { // no issue
 				ac.boltFilename = tempFile.Name()
