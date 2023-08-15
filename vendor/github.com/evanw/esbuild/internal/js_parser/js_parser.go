@@ -774,8 +774,18 @@ func (dc *duplicateCaseChecker) check(p *parser, expr js_ast.Expr) {
 			for _, c := range dc.cases {
 				if c.hash == hash {
 					if equals, couldBeIncorrect := duplicateCaseEquals(c.value, expr); equals {
-						r := p.source.RangeOfOperatorBefore(expr.Loc, "case")
-						earlierRange := p.source.RangeOfOperatorBefore(c.value.Loc, "case")
+						var laterRange logger.Range
+						var earlierRange logger.Range
+						if _, ok := expr.Data.(*js_ast.EString); ok {
+							laterRange = p.source.RangeOfString(expr.Loc)
+						} else {
+							laterRange = p.source.RangeOfOperatorBefore(expr.Loc, "case")
+						}
+						if _, ok := c.value.Data.(*js_ast.EString); ok {
+							earlierRange = p.source.RangeOfString(c.value.Loc)
+						} else {
+							earlierRange = p.source.RangeOfOperatorBefore(c.value.Loc, "case")
+						}
 						text := "This case clause will never be evaluated because it duplicates an earlier case clause"
 						if couldBeIncorrect {
 							text = "This case clause may never be evaluated because it likely duplicates an earlier case clause"
@@ -784,7 +794,7 @@ func (dc *duplicateCaseChecker) check(p *parser, expr js_ast.Expr) {
 						if p.suppressWarningsAboutWeirdCode {
 							kind = logger.Debug
 						}
-						p.log.AddIDWithNotes(logger.MsgID_JS_DuplicateCase, kind, &p.tracker, r, text,
+						p.log.AddIDWithNotes(logger.MsgID_JS_DuplicateCase, kind, &p.tracker, laterRange, text,
 							[]logger.MsgData{p.tracker.MsgData(earlierRange, "The earlier case clause is here:")})
 					}
 					return
@@ -6616,8 +6626,14 @@ func (p *parser) parseDecorator() js_ast.Expr {
 
 	memberExpr := js_ast.Expr{Loc: nameRange.Loc, Data: &js_ast.EIdentifier{Ref: p.storeNameInRef(name)}}
 
+	// "@x<y>() class{}"
+	if p.options.ts.Parse {
+		p.skipTypeScriptTypeArguments(skipTypeScriptTypeArgumentsOpts{})
+	}
+
 	for p.lexer.Token == js_lexer.TDot {
 		p.lexer.Next()
+
 		if p.lexer.Token == js_lexer.TPrivateIdentifier {
 			memberExpr.Data = &js_ast.EIndex{
 				Target: memberExpr,
@@ -6631,6 +6647,11 @@ func (p *parser) parseDecorator() js_ast.Expr {
 				NameLoc: p.lexer.Loc(),
 			}
 			p.lexer.Expect(js_lexer.TIdentifier)
+		}
+
+		// "@x.y<z>() class{}"
+		if p.options.ts.Parse {
+			p.skipTypeScriptTypeArguments(skipTypeScriptTypeArgumentsOpts{})
 		}
 	}
 
@@ -10068,17 +10089,21 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 			p.currentScope.LabelStmtIsLoop = true
 		}
 
-		// Drop this entire statement if requested
-		if _, ok := p.dropLabelsMap[name]; ok {
-			old := p.isControlFlowDead
+		// If we're dropping this statement, consider control flow to be dead
+		_, shouldDropLabel := p.dropLabelsMap[name]
+		old := p.isControlFlowDead
+		if shouldDropLabel {
 			p.isControlFlowDead = true
-			s.Stmt = p.visitSingleStmt(s.Stmt, stmtsNormal)
-			p.isControlFlowDead = old
-			return stmts
 		}
 
 		s.Stmt = p.visitSingleStmt(s.Stmt, stmtsNormal)
 		p.popScope()
+
+		// Drop this entire statement if requested
+		if shouldDropLabel {
+			p.isControlFlowDead = old
+			return stmts
+		}
 
 		if p.options.minifySyntax {
 			// Optimize "x: break x" which some people apparently write by hand

@@ -694,12 +694,13 @@ func (res *Resolver) ResolveGlob(sourceDir string, importPathPattern []helpers.G
 			prefix = prefix[1:] // Move over the "/" after a globstar
 		}
 		sb.WriteString(regexp.QuoteMeta(prefix))
-		if part.Wildcard == helpers.GlobAllIncludingSlash {
+		switch part.Wildcard {
+		case helpers.GlobAllIncludingSlash:
 			// It's a globstar, so match zero or more path segments
 			sb.WriteString("(?:[^/]*(?:/|$))*")
 			canMatchOnSlash = true
 			wasGlobStar = true
-		} else {
+		case helpers.GlobAllExceptSlash:
 			// It's not a globstar, so only match one path segment
 			sb.WriteString("[^/]*")
 			wasGlobStar = false
@@ -999,20 +1000,9 @@ func (r resolverQuery) resolveWithoutSymlinks(sourceDir string, sourceDirInfo *d
 
 	// First, check path overrides from the nearest enclosing TypeScript "tsconfig.json" file
 	if sourceDirInfo != nil {
-		if tsConfigJSON := r.tsConfigForDir(sourceDirInfo); tsConfigJSON != nil {
-			// Try path substitutions first
-			if tsConfigJSON.Paths != nil {
-				if absolute, ok, diffCase := r.matchTSConfigPaths(tsConfigJSON, importPath); ok {
-					return &ResolveResult{PathPair: absolute, DifferentCase: diffCase}
-				}
-			}
-
-			// Try looking up the path relative to the base URL
-			if tsConfigJSON.BaseURL != nil {
-				basePath := r.fs.Join(*tsConfigJSON.BaseURL, importPath)
-				if absolute, ok, diffCase := r.loadAsFileOrDirectory(basePath); ok {
-					return &ResolveResult{PathPair: absolute, DifferentCase: diffCase}
-				}
+		if tsConfigJSON := r.tsConfigForDir(sourceDirInfo); tsConfigJSON != nil && tsConfigJSON.Paths != nil {
+			if absolute, ok, diffCase := r.matchTSConfigPaths(tsConfigJSON, importPath); ok {
+				return &ResolveResult{PathPair: absolute, DifferentCase: diffCase}
 			}
 		}
 	}
@@ -1876,8 +1866,7 @@ func (r resolverQuery) loadAsIndexWithBrowserRemapping(dirInfo *dirInfo, path st
 func getProperty(json js_ast.Expr, name string) (js_ast.Expr, logger.Loc, bool) {
 	if obj, ok := json.Data.(*js_ast.EObject); ok {
 		for _, prop := range obj.Properties {
-			if key, ok := prop.Key.Data.(*js_ast.EString); ok && key.Value != nil &&
-				len(key.Value) == len(name) && helpers.UTF16ToString(key.Value) == name {
+			if key, ok := prop.Key.Data.(*js_ast.EString); ok && key.Value != nil && helpers.UTF16EqualsString(key.Value, name) {
 				return prop.ValueOrNil, prop.Key.Loc, true
 			}
 		}
@@ -2316,6 +2305,14 @@ func (r resolverQuery) loadNodeModules(importPath string, dirInfo *dirInfo, forb
 		r.debugLogs.addNote(fmt.Sprintf("Searching for %q in \"node_modules\" directories starting from %q", importPath, dirInfo.absPath))
 		r.debugLogs.increaseIndent()
 		defer r.debugLogs.decreaseIndent()
+	}
+
+	// Try looking up the path relative to the base URL from "tsconfig.json"
+	if tsConfigJSON := r.tsConfigForDir(dirInfo); tsConfigJSON != nil && tsConfigJSON.BaseURL != nil {
+		basePath := r.fs.Join(*tsConfigJSON.BaseURL, importPath)
+		if absolute, ok, diffCase := r.loadAsFileOrDirectory(basePath); ok {
+			return absolute, true, diffCase
+		}
 	}
 
 	// Find the parent directory with the "package.json" file

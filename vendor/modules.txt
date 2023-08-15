@@ -40,7 +40,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.19.0
+# github.com/evanw/esbuild v0.19.2
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -102,7 +102,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20230808223545-4887780b67fb
+# github.com/google/pprof v0.0.0-20230811205829-9131a7e9cc17
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.5
@@ -233,15 +233,21 @@ github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.2
 ## explicit; go 1.17
 github.com/xyproto/ask
+# github.com/xyproto/binary v1.3.0
+## explicit; go 1.18
+github.com/xyproto/binary
 # github.com/xyproto/cookie/v2 v2.2.4
 ## explicit; go 1.17
 github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 ## explicit; go 1.12
 github.com/xyproto/datablock
-# github.com/xyproto/env/v2 v2.0.0
+# github.com/xyproto/env/v2 v2.1.0
 ## explicit; go 1.15
 github.com/xyproto/env/v2
+# github.com/xyproto/files v1.1.1
+## explicit; go 1.21.0
+github.com/xyproto/files
 # github.com/xyproto/gluamapper v1.2.1
 ## explicit; go 1.16
 github.com/xyproto/gluamapper
@@ -367,7 +373,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230810033253-352e893a4cad
+# golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.12.0

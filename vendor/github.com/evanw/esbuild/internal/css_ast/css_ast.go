@@ -34,6 +34,13 @@ type AST struct {
 	LocalScope           map[string]ast.LocRef
 	GlobalScope          map[string]ast.LocRef
 	Composes             map[ast.Ref]*Composes
+
+	// These contain all layer names in the file. It can be used to replace the
+	// layer-related side effects of importing this file. They are split into two
+	// groups (those before and after "@import" rules) so that the linker can put
+	// them in the right places.
+	LayersPreImport  [][]string
+	LayersPostImport [][]string
 }
 
 type Composes struct {

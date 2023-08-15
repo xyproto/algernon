@@ -1,0 +1,4 @@
+cmd/binary/binary
+cmd/simple/simple
+include.txt
+*.pdf
