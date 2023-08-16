@@ -3,7 +3,6 @@ module github.com/xyproto/algernon
 go 1.21.0
 
 require (
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/caddyserver/certmagic v0.19.1
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
@@ -23,8 +22,8 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.2
 	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
-	github.com/xyproto/env/v2 v2.1.0
-	github.com/xyproto/files v1.1.1
+	github.com/xyproto/env/v2 v2.2.0
+	github.com/xyproto/files v1.3.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
@@ -63,8 +62,6 @@ require (
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/pprof v0.0.0-20230816055901-76846d4d6a3b // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -79,7 +76,6 @@ require (
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-20 v0.3.2 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/xyproto/binary v1.3.0 // indirect
 	github.com/xyproto/cookie/v2 v2.2.4 // indirect

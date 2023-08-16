@@ -220,16 +220,27 @@ func Contains(envName string, value string) bool {
 	return strings.Contains(Str(envName), value)
 }
 
-// AsBool can be used to interpret a string value as either true or false. Examples of true values are "yes" and "1".
-func AsBool(s string) bool {
+// True checks if the given string is likely to be interpreted as a "true" value
+func True(s string) bool {
 	switch s {
 	case "1", "ABSOLUTELY", "AFFIRMATIVE", "Absolutely", "Affirmative", "ENABLE", "ENABLED", "Enable", "Enabled", "POSITIVE", "Positive", "T", "TRUE", "True", "Y", "YES", "Yes", "absolutely", "affirmative", "enable", "enabled", "positive", "t", "true", "y", "yes":
 		return true
-	case "", "0", "BLANK", "Blank", "DENIED", "DISABLE", "DISABLED", "Denied", "Disable", "Disabled", "F", "FALSE", "False", "N", "NEGATIVE", "NIL", "NO", "NOPE", "NULL", "Negative", "Nil", "No", "Nope", "Null", "blank", "denied", "disable", "disabled", "f", "false", "n", "negative", "nil", "no", "nope", "null":
-		fallthrough
-	default:
-		return false
 	}
+	return false
+}
+
+// False checks if the given string is likely to be interpreted as a "false" value
+func False(s string) bool {
+	switch s {
+	case "", "0", "BLANK", "Blank", "DENIED", "DISABLE", "DISABLED", "Denied", "Disable", "Disabled", "F", "FALSE", "False", "N", "NEGATIVE", "NIL", "NO", "NOPE", "NULL", "Negative", "Nil", "No", "Nope", "Null", "blank", "denied", "disable", "disabled", "f", "false", "n", "negative", "nil", "no", "nope", "null":
+		return true
+	}
+	return false
+}
+
+// AsBool can be used to interpret a string value as either true or false. Examples of true values are "yes" and "1".
+func AsBool(s string) bool {
+	return True(s)
 }
 
 // AsBoolSimple can be used to interpret a string value as either true or false. Only "1" is true, anything else is false.

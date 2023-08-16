@@ -26,10 +26,10 @@ func IsFile(path string) bool {
 	return err == nil && fi.Mode().IsRegular()
 }
 
-// IsDir checks if the given path exists and is a directory
-func IsDir(path string) bool {
-	fi, err := os.Stat(path)
-	return err == nil && fi.Mode().IsDir()
+// IsSymlink checks if the given path exists and is a symbolic link
+func IsSymlink(path string) bool {
+	fi, err := os.Lstat(path)
+	return err == nil && fi.Mode()&os.ModeSymlink != 0
 }
 
 // IsFileOrSymlink checks if the given path exists and is a regular file or a symbolic link
@@ -37,6 +37,12 @@ func IsFileOrSymlink(path string) bool {
 	// use Lstat instead of Stat to avoid following the symlink
 	fi, err := os.Lstat(path)
 	return err == nil && (fi.Mode().IsRegular() || (fi.Mode()&os.ModeSymlink != 0))
+}
+
+// IsDir checks if the given path exists and is a directory
+func IsDir(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsDir()
 }
 
 // Which tries to find the given executable name in the $PATH
@@ -95,9 +101,11 @@ func TimestampedFilename(filename string) string {
 	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d-%s", year, int(month), day, hour, minute, second, filename)
 }
 
-// ShortPath replaces the home directory with ~ in a given path
+// ShortPath replaces the home directory with ~ in a given path.
+// The given path is expected to contain the home directory path either 0 or 1 times,
+// and if it contains the path to the home directory, it is expected to be at the start of the given string.
 func ShortPath(path string) string {
-	homeDir, _ := os.UserHomeDir()
+	homeDir := env.HomeDir()
 	if strings.HasPrefix(path, homeDir) {
 		return strings.Replace(path, homeDir, "~", 1)
 	}
@@ -114,7 +122,7 @@ func FileHas(path, what string) bool {
 }
 
 // ReadString returns the contents of the given filename as a string.
-// Does not use the cache.  Returns an empty string if there were errors.
+// Returns an empty string if there were errors.
 func ReadString(filename string) string {
 	if data, err := os.ReadFile(filename); err == nil { // success
 		return string(data)
