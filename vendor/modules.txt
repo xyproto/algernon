@@ -102,7 +102,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20230811205829-9131a7e9cc17
+# github.com/google/pprof v0.0.0-20230816055901-76846d4d6a3b
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.5
