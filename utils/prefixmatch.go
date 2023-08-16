@@ -61,10 +61,9 @@ func (pm *PrefixMatch) match(str string, start *Node, path string, found *[]stri
 		return
 	}
 	for char, child := range start.Children {
-		if string(str[0]) != string(char) {
-			return
+		if string(str[0]) == string(char) {
+			pm.match(str[1:], child, path+string(char), found)
 		}
-		pm.match(str[1:], child, path+string(char), found)
 	}
 }
 
