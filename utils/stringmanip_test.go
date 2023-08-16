@@ -1,9 +1,8 @@
 package utils
 
 import (
+	"bytes"
 	"testing"
-
-	"github.com/bmizerany/assert"
 )
 
 func TestExtractKW1(t *testing.T) {
@@ -14,11 +13,22 @@ theme: fest
 # Headline
 text
 `), []string{"title", "theme", "beard"})
-	assert.Equal(t, string(kwMap["title"]), "test")
-	assert.Equal(t, string(kwMap["theme"]), "fest")
-	_, ok := kwMap["beard"]
-	assert.Equal(t, ok, false)
-	assert.Equal(t, string(kwMap["beard"]), "")
+
+	if !bytes.Equal(kwMap["title"], []byte("test")) {
+		t.Errorf("Expected 'test', got '%s'", kwMap["title"])
+	}
+
+	if !bytes.Equal(kwMap["theme"], []byte("fest")) {
+		t.Errorf("Expected 'fest', got '%s'", kwMap["theme"])
+	}
+
+	if _, ok := kwMap["beard"]; ok {
+		t.Errorf("Expected 'beard' key to be absent, but it exists.")
+	}
+
+	if kwMap["beard"] != nil && len(kwMap["beard"]) != 0 {
+		t.Errorf("Expected empty byte slice, got '%s'", kwMap["beard"])
+	}
 }
 
 func TestExtractKW2(t *testing.T) {
@@ -40,10 +50,24 @@ func TestExtractKW2(t *testing.T) {
 	All done.
 	`
 	_, kwMap := ExtractKeywords([]byte(data), []string{"title", "weather", "boat"})
-	assert.Equal(t, string(kwMap["title"]), "Best Title")
-	assert.Equal(t, string(kwMap["weather"]), "nice")
-	assert.Equal(t, string(kwMap["boat"]), "missing")
-	_, ok := kwMap["horse"]
-	assert.Equal(t, ok, false)
-	assert.Equal(t, string(kwMap["horse"]), "")
+
+	if !bytes.Equal(kwMap["title"], []byte("Best Title")) {
+		t.Errorf("Expected 'Best Title', got '%s'", kwMap["title"])
+	}
+
+	if !bytes.Equal(kwMap["weather"], []byte("nice")) {
+		t.Errorf("Expected 'nice', got '%s'", kwMap["weather"])
+	}
+
+	if !bytes.Equal(kwMap["boat"], []byte("missing")) {
+		t.Errorf("Expected 'missing', got '%s'", kwMap["boat"])
+	}
+
+	if _, ok := kwMap["horse"]; ok {
+		t.Errorf("Expected 'horse' key to be absent, but it exists.")
+	}
+
+	if kwMap["horse"] != nil && len(kwMap["horse"]) != 0 {
+		t.Errorf("Expected empty byte slice, got '%s'", kwMap["horse"])
+	}
 }

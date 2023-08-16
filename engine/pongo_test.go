@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
 	"github.com/xyproto/algernon/lua/pool"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
@@ -20,10 +19,14 @@ func pongoPageTest(n int, t *testing.T) {
 	filename := "testdata/index.po2"
 	luafilename := "testdata/data.lua"
 	pongodata, err := os.ReadFile(filename)
-	assert.Equal(t, err, nil)
+	if err != nil {
+		t.Fatalf("Failed reading file: %s", err)
+	}
 
 	ac, err := New("Algernon 123", "Just a test")
-	assert.Equal(t, err, nil)
+	if err != nil {
+		t.Fatalf("Failed creating new Algernon instance: %s", err)
+	}
 
 	// Use a FileStat cache with different settings
 	ac.SetFileStatCache(datablock.NewFileStat(true, time.Minute*1))
@@ -31,10 +34,14 @@ func pongoPageTest(n int, t *testing.T) {
 	ac.cache = datablock.NewFileCache(20000000, true, 64*utils.KiB, true, 0)
 
 	luablock, err := ac.cache.Read(luafilename, ac.shouldCache(".po2"))
-	assert.Equal(t, err, nil)
+	if err != nil {
+		t.Fatalf("Failed reading Lua file from cache: %s", err)
+	}
 
 	// luablock can be empty if there was an error or if the file was empty
-	assert.Equal(t, luablock.HasData(), true)
+	if !luablock.HasData() {
+		t.Fatal("Lua block does not have data")
+	}
 
 	// Lua LState pool
 	ac.luapool = pool.New()
@@ -46,7 +53,9 @@ func pongoPageTest(n int, t *testing.T) {
 	go ac.Lua2funcMap(w, req, filename, luafilename, ".lua", errChan, funcMapChan)
 	funcs := <-funcMapChan
 	err = <-errChan
-	assert.Equal(t, err, nil)
+	if err != nil {
+		t.Fatalf("Error with Lua2funcMap: %s", err)
+	}
 
 	// Trigger the error (now resolved)
 	for i := 0; i < n; i++ {

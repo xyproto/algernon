@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bmizerany/assert"
 	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt/v2"
 	permissions "github.com/xyproto/permissions2/v2"
@@ -39,16 +38,36 @@ func (v *VersionInfo) Check() error {
 }
 
 func TestAPI(t *testing.T) {
-	assert.Equal(t, New("simplebolt", simplebolt.Version, 5.1).Check(), nil)
-	assert.Equal(t, New("permissionbolt", permissionbolt.Version, 2.6).Check(), nil)
-	assert.Equal(t, New("simpleredis", simpleredis.Version, 2.6).Check(), nil)
-	assert.Equal(t, New("permissions2", permissions.Version, 2.6).Check(), nil)
-	assert.Equal(t, New("pinterface", pinterface.Version, 5.3).Check(), nil)
-	assert.Equal(t, New("engine", engine.Version, 2.0).Check(), nil)
+	if err := New("simplebolt", simplebolt.Version, 5.1).Check(); err != nil {
+		t.Error(err)
+	}
+	if err := New("permissionbolt", permissionbolt.Version, 2.6).Check(); err != nil {
+		t.Error(err)
+	}
+	if err := New("simpleredis", simpleredis.Version, 2.6).Check(); err != nil {
+		t.Error(err)
+	}
+	if err := New("permissions2", permissions.Version, 2.6).Check(); err != nil {
+		t.Error(err)
+	}
+	if err := New("pinterface", pinterface.Version, 5.3).Check(); err != nil {
+		t.Error(err)
+	}
+	if err := New("engine", engine.Version, 2.0).Check(); err != nil {
+		t.Error(err)
+	}
 
 	// These adds many dependencies when testing
-	// assert.Equal(t, New("simplemaria", simplemaria.Version, 3.0).Check(), nil)
-	// assert.Equal(t, New("permissionsql", permissionsql.Version, 2.0).Check(), nil)
-	// assert.Equal(t, New("simplehstore", simplehstore.Version, 2.3).Check(), nil)
-	// assert.Equal(t, New("pstore", pstore.Version, 3.1).Check(), nil)
+	// if err := New("simplemaria", simplemaria.Version, 3.0).Check(); err != nil {
+	// 	t.Error(err)
+	// }
+	// if err := New("permissionsql", permissionsql.Version, 2.0).Check(); err != nil {
+	// 	t.Error(err)
+	// }
+	// if err := New("simplehstore", simplehstore.Version, 2.3).Check(); err != nil {
+	// 	t.Error(err)
+	// }
+	// if err := New("pstore", pstore.Version, 3.1).Check(); err != nil {
+	// 	t.Error(err)
+	// }
 }
