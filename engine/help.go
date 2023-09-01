@@ -515,7 +515,7 @@ func generateUsageFunction(ac *Config) func() {
 
 		// Prepare and/or output a message, depending on if QUIC support is compiled in or not
 		if quicEnabled {
-			quicUsageOrMessage = "  -u                           Serve over QUIC / HTTP3."
+			quicUsageOrMessage = "\n  -u                           Serve over QUIC / HTTP3."
 			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -s -u -n . :7000\n"
 		} else {
 			quicFinalMessage = "\n\nThis Algernon executable was built without QUIC support."
