@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.20
+go 1.19
 
 require (
 	github.com/caddyserver/certmagic v0.19.2
