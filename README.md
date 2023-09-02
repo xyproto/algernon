@@ -130,11 +130,6 @@ A:
 >
 > For a more specific description of a potential benefit, a more specific use case would be needed.
 
-Utilities
----------
-* Comes with the `alg2docker` utility, for creating Docker images from Algernon web applications (`.alg` files).
-* [http2check](https://github.com/xyproto/http2check) can be used for checking if a web server is offering [HTTP/2](https://tools.ietf.org/html/rfc7540).
-
 Installation
 ------------------
 
@@ -158,6 +153,11 @@ If needed, first:
 * Set the GOPATH. For example: `export GOPATH=~/go`
 * Add $GOPATH/bin to the path. For example: `export PATH=$PATH:$GOPATH/bin`
 
+Utilities
+---------
+* Comes with the `alg2docker` utility, for creating Docker images from Algernon web applications (`.alg` files).
+* [http2check](https://github.com/xyproto/http2check) can be used for checking if a web server is offering [HTTP/2](https://tools.ietf.org/html/rfc7540).
+
 Overview
 --------
 
@@ -171,11 +171,11 @@ Screenshot of an earlier version:
 
 ---
 
-The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React), depending on the need, and styled with CSS, Sass(SCSS) or GCSS, while data can be provided by a Lua script that talks to Redis, BoltDB, PostgreSQL or MariaDB/MySQL.
+The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React or HyperApp), depending on the need, and styled with CSS, Sass(SCSS) or GCSS, while data can be provided by a Lua or Teal script that talks to Redis, BoltDB, PostgreSQL, MSQL or MariaDB/MySQL.
 
 Amber and GCSS is a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
-Pongo2, Sass and Lua also combines well. Pongo2 is more flexible than Amber.
+Pongo2, Sass and Lua or Teal also combines well. Pongo2 is more flexible than Amber.
 
 The auto-refresh feature is supported when using Markdown, Pongo2 or Amber, and is useful to get an instant preview when developing.
 
