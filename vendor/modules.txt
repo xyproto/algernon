@@ -7,7 +7,7 @@ github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
 github.com/alecthomas/chroma/v2/lexers
 github.com/alecthomas/chroma/v2/styles
-# github.com/caddyserver/certmagic v0.19.1
+# github.com/caddyserver/certmagic v0.19.2
 ## explicit; go 1.19
 github.com/caddyserver/certmagic
 # github.com/chzyer/readline v1.5.1
@@ -99,7 +99,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20230816055901-76846d4d6a3b
+# github.com/google/pprof v0.0.0-20230901174712-0191c66da455
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.5
@@ -144,7 +144,7 @@ github.com/natefinch/pie
 # github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
 ## explicit
 github.com/nathan-fiscaletti/consolesize-go
-# github.com/onsi/ginkgo/v2 v2.11.0
+# github.com/onsi/ginkgo/v2 v2.12.0
 ## explicit; go 1.18
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
@@ -172,10 +172,10 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.4.0
 ## explicit; go 1.18
 github.com/quic-go/qpack
-# github.com/quic-go/qtls-go1-20 v0.3.2
+# github.com/quic-go/qtls-go1-20 v0.3.3
 ## explicit; go 1.20
 github.com/quic-go/qtls-go1-20
-# github.com/quic-go/quic-go v0.37.4
+# github.com/quic-go/quic-go v0.38.1
 ## explicit; go 1.20
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -230,11 +230,11 @@ github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
 ## explicit; go 1.12
 github.com/xyproto/datablock
-# github.com/xyproto/env/v2 v2.2.0
-## explicit; go 1.15
+# github.com/xyproto/env/v2 v2.2.1
+## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.3.0
-## explicit; go 1.21.0
+# github.com/xyproto/files v1.4.1
+## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/gluamapper v1.2.1
 ## explicit; go 1.16
@@ -361,7 +361,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb
+# golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/mod v0.12.0
@@ -397,7 +397,7 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.12.0
+# golang.org/x/tools v0.12.1-0.20230815132531-74c255bcf846
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/inspector
