@@ -1,0 +1,18 @@
+# https://taskfile.dev
+version: "3"
+
+tasks:
+  test:
+    desc: Run go tests with coverage and timeout and without cache
+    cmds:
+      - go test -count 1 -cover -timeout 1s ./...
+
+  release:
+    desc: Tag and upload release
+    cmds:
+      - which gh
+      - test v{{.CLI_ARGS}}
+      - git tag v{{.CLI_ARGS}}
+      - git push
+      - git push --tags
+      - gh release create --generate-notes v{{.CLI_ARGS}}
