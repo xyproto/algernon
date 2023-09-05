@@ -16,6 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
+	github.com/orsinium-labs/enum v1.3.0
 	github.com/quic-go/quic-go v0.38.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
