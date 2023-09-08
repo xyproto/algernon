@@ -76,7 +76,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.3.4 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/xyproto/binary v1.3.0 // indirect
 	github.com/xyproto/cookie/v2 v2.2.4 // indirect
