@@ -3,7 +3,7 @@ package pure
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // Extra Lua functions

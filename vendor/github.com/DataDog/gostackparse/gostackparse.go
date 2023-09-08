@@ -214,6 +214,17 @@ func parseGoroutineHeader(line []byte) *Goroutine {
 func parseFunc(line []byte, state parserState) *Frame {
 	// createdBy func calls don't have trailing parens, just return them as-is.
 	if state == stateCreatedByFunc {
+		// go 1.21 changes the "created by" line to include the
+		// goroutine which created the one whose stack is being printed,
+		// e.g.
+		//	created by main.main in goroutine 1
+		// We are at the beginning of the function name, so we should
+		// just show up to the first space which follows the end of the
+		// function name.
+		i := bytes.Index(line, []byte(" "))
+		if i > 0 {
+			return &Frame{Func: string(line[:i])}
+		}
 		return &Frame{Func: string(line)}
 	}
 

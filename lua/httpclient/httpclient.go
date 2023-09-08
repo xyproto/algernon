@@ -10,7 +10,7 @@ import (
 	"github.com/ddliu/go-httpclient"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // HTTPClient represents a HTTP client
