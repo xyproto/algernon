@@ -8,7 +8,7 @@ import (
 	"github.com/didip/tollbooth"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
-	"github.com/xyproto/gopher-lua"
+	lua "github.com/xyproto/gopher-lua"
 )
 
 // LoadLuaHandlerFunctions makes functions related to handling HTTP requests
@@ -58,10 +58,12 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 	L.SetGlobal("servedir", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1) // serve as (ie. "/")
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
+		if handlePath == "" || rootdir == "" {
+			log.Errorf("servedir needs an URL path to serve, ie. %q and a directory releative to %q, ie. %q", "/", filepath.Dir(filename), "./public")
+			return 0
+		}
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
-
 		ac.RegisterHandlers(mux, handlePath, rootdir, addDomain)
-
 		return 0 // number of results
 	}))
 }
