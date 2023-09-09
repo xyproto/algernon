@@ -1,6 +1,6 @@
 <lexer>
   <config>
-    <name>BashSession</name>
+    <name>Bash Session</name>
     <alias>bash-session</alias>
     <alias>console</alias>
     <alias>shell-session</alias>
@@ -10,7 +10,7 @@
   </config>
   <rules>
     <state name="root">
-      <rule pattern="^((?:\[[^]]+@[^]]+\]\s?)?[#$%>])(\s*)(.*\n?)">
+      <rule pattern="^((?:\[[^]]+@[^]]+\]\s?)?[#$%&gt;])(\s*)(.*\n?)">
         <bygroups>
           <token type="GenericPrompt"/>
           <token type="Text"/>
