@@ -2,7 +2,7 @@
 
 PROJECT ?= orbiton
 
-GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
+GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo go build -v)
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
@@ -22,6 +22,7 @@ MANDIR ?= $(PREFIX)/share/man/man1
 UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
+LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
 BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 else
 # Default settings
