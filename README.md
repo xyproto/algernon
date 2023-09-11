@@ -22,7 +22,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.21 or later.
+Requires Go 1.20 or later.
 
     go install github.com/xyproto/algernon@latest
 
