@@ -808,6 +808,9 @@ type pjDebug struct {
 
 	// This is the range of the token to use for error messages
 	token logger.Range
+
+	// If true, the token is a "null" literal
+	isBecauseOfNullLiteral bool
 }
 
 func (r resolverQuery) esmHandlePostConditions(
@@ -892,6 +895,7 @@ func (r resolverQuery) esmPackageExportsResolve(
 		return "", pjStatusInvalidPackageConfiguration, pjDebug{token: exports.firstToken}
 	}
 
+	debugToReturn := pjDebug{token: exports.firstToken}
 	if subpath == "." {
 		mainExport := pjEntry{kind: pjNull}
 		if exports.kind == pjString || exports.kind == pjArray || (exports.kind == pjObject && !exports.keysStartWithDot()) {
@@ -908,19 +912,23 @@ func (r resolverQuery) esmPackageExportsResolve(
 			resolved, status, debug := r.esmPackageTargetResolve(packageURL, mainExport, "", false, false, conditions)
 			if status != pjStatusNull && status != pjStatusUndefined {
 				return resolved, status, debug
+			} else {
+				debugToReturn = debug
 			}
 		}
 	} else if exports.kind == pjObject && exports.keysStartWithDot() {
 		resolved, status, debug := r.esmPackageImportsExportsResolve(subpath, exports, packageURL, false, conditions)
 		if status != pjStatusNull && status != pjStatusUndefined {
 			return resolved, status, debug
+		} else {
+			debugToReturn = debug
 		}
 	}
 
 	if r.debugLogs != nil {
 		r.debugLogs.addNote(fmt.Sprintf("The path %q is not exported", subpath))
 	}
-	return "", pjStatusPackagePathNotExported, pjDebug{token: exports.firstToken}
+	return "", pjStatusPackagePathNotExported, debugToReturn
 }
 
 func (r resolverQuery) esmPackageImportsExportsResolve(
@@ -1175,14 +1183,14 @@ func (r resolverQuery) esmPackageTargetResolve(
 				//
 				// We want the warning to say this:
 				//
-				//   note: None of the conditions provided ("require") match any of the
+				//   note: None of the conditions in the package definition ("require") match any of the
 				//         currently active conditions ("default", "import", "node")
 				//   14 |       "node": {
 				//      |               ^
 				//
 				// We don't want the warning to say this:
 				//
-				//   note: None of the conditions provided ("browser", "electron", "node")
+				//   note: None of the conditions in the package definition ("browser", "electron", "node")
 				//         match any of the currently active conditions ("default", "import", "node")
 				//   7 |   "exports": {
 				//     |              ^
@@ -1237,7 +1245,7 @@ func (r resolverQuery) esmPackageTargetResolve(
 		if r.debugLogs != nil {
 			r.debugLogs.addNote(fmt.Sprintf("The path %q is set to null", subpath))
 		}
-		return "", pjStatusNull, pjDebug{token: target.firstToken}
+		return "", pjStatusNull, pjDebug{token: target.firstToken, isBecauseOfNullLiteral: true}
 	}
 
 	if r.debugLogs != nil {
