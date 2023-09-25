@@ -45,10 +45,10 @@ var (
 	splashImages = enum.New(GopherEyes, WhiteGrid, AlgernonPoet)
 
 	// Select a random splash/banner image every time
-	splashImage *SplashImage = splashImages.Choice(0)
+	//splashImage *SplashImage = splashImages.Choice(0)
 
 	// Select the gopher eyes every time
-	//splashImage = splashImages.GopherEyes
+	splashImage = GopherEyes
 )
 
 // Decompress text that has first been gzipped and then base64 encoded
