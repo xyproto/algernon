@@ -12,12 +12,12 @@ require (
 	github.com/evanw/esbuild v0.19.3
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomarkdown/markdown v0.0.0-20230916125811-7478c230c7cd
+	github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.3.0
-	github.com/quic-go/quic-go v0.38.1
+	github.com/quic-go/quic-go v0.39.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -59,7 +59,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/pprof v0.0.0-20230912144702-c363fe2c2ed8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
@@ -87,6 +86,7 @@ require (
 	github.com/xyproto/vt100 v1.12.7 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
+	go.uber.org/mock v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
