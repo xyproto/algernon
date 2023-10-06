@@ -2,6 +2,7 @@
 package env
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -284,4 +285,18 @@ func ExpandUser(path string) string {
 		path = strings.Replace(path, "$HOME", HomeDir(), 1)
 	}
 	return path
+}
+
+// Environ returns either the cached environment, or os.Environ()
+func Environ() []string {
+	if useCaching {
+		var xs []string
+		mut.RLock()
+		defer mut.RUnlock()
+		for k, v := range environment {
+			xs = append(xs, k+"="+v)
+		}
+		return xs
+	}
+	return os.Environ()
 }
