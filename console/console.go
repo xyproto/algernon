@@ -7,8 +7,8 @@ import (
 
 // Output is for enabling or disabling output to stdout
 type Output struct {
-	enabled bool
 	stdout  *os.File
+	enabled bool
 }
 
 // Disable output to stdout. Will close stdout and stderr.
