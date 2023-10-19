@@ -1073,12 +1073,21 @@ An overview of available syntax highlighting styles can be found at the [Chroma 
 HTTPS certificates with Let's Encrypt and Algernon
 --------------------------------------------------
 
+#### Method 1
+
 Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of the above" web server, then start `algernon` with `--cert=/etc/letsencrypt/live/mydomain.space/cert.pem --key=/etc/letsencrypt/live/mydomain.space/privkey.pem` where `mydomain.space` is replaced with your own domain name.
 
 First make Algernon serve a directory for the domain, like `/srv/mydomain.space`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
 
 Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates. A way to refresh the certificates without restarting Algernon will be implemented in the future.
 
+#### Method 2
+
+Use the `--letsencrypt` flag together with the `--domain` flag to automatically fetch and use certificates from Let's Encrypt.
+
+For instance, if `/srv/myhappydomain.com` exists, then `algernon --letsencrypt --domain /srv` can be used to serve `myhappydomain.com` if it points to this server, and fetch certificates from Let's Encrypt.
+
+When `--letsencrypt` is used, it will try to serve on port 443 and 80 (which redirects to 443).
 
 Releases
 --------
