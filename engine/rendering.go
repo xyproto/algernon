@@ -367,7 +367,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
-			gcssdata := gcssblock.MustData()
+			gcssdata := gcssblock.Bytes()
 
 			// Try compiling the GCSS file first
 			errChan := make(chan error)
@@ -399,7 +399,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
-			cssdata := cssblock.MustData()
+			cssdata := cssblock.Bytes()
 			head.WriteString("<style>" + string(cssdata) + "</style>")
 		} else {
 			head.WriteString(`<link href="`)
@@ -480,7 +480,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
-			gcssdata := gcssblock.MustData()
+			gcssdata := gcssblock.Bytes()
 
 			// Try compiling the GCSS file before the Pongo2 file
 			errChan := make(chan error)
@@ -658,7 +658,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
-			gcssdata := gcssblock.MustData()
+			gcssdata := gcssblock.Bytes()
 
 			// Try compiling the GCSS file before the Amber file
 			errChan := make(chan error)
@@ -816,7 +816,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 				fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 				return
 			}
-			gcssdata := gcssblock.MustData()
+			gcssdata := gcssblock.Bytes()
 
 			// Try compiling the GCSS file first
 			errChan := make(chan error)

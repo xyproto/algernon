@@ -29,7 +29,7 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 	if luablock.HasData() {
 		// There was Lua code available. Now make the functions and
 		// variables available for the template.
-		funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename)
+		funcs, err = ac.LuaFunctionMap(w, req, luablock.Bytes(), luafilename)
 		if err != nil {
 			funcMapChan <- funcs
 			errChan <- err

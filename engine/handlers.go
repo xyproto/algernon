@@ -80,7 +80,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 					luablock = datablock.EmptyDataBlock
 				}
 				// Use the Lua filename as the title
-				ac.PrettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+				ac.PrettyError(w, req, luafilename, luablock.Bytes(), err.Error(), "lua")
 			} else {
 				log.Error(err)
 			}
@@ -89,7 +89,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 
 		// Render the Pongo2 page, using functions from luaDataFilename, if available
 		ac.pongomutex.Lock()
-		ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs)
+		ac.PongoPage(w, req, filename, pongoblock.Bytes(), funcs)
 		ac.pongomutex.Unlock()
 
 		return
@@ -103,7 +103,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	// Use the Pongo2 template without any Lua functions
 	ac.pongomutex.Lock()
 	funcs := make(template.FuncMap)
-	ac.PongoPage(w, req, filename, pongoblock.MustData(), funcs)
+	ac.PongoPage(w, req, filename, pongoblock.Bytes(), funcs)
 	ac.pongomutex.Unlock()
 }
 
@@ -153,7 +153,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		// If the auto-refresh feature has been enabled
 		if ac.autoRefresh {
 			// Get the bytes from the datablock
-			htmldata := htmlblock.MustData()
+			htmldata := htmlblock.Bytes()
 			// Insert JavaScript for refreshing the page, into the HTML
 			htmldata = ac.InsertAutoRefresh(req, htmldata)
 			// Write the data to the client
@@ -169,7 +169,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		w.Header().Add("Content-Type", "text/html;charset=utf-8")
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the markdown page
-			ac.MarkdownPage(w, req, markdownblock.MustData(), filename)
+			ac.MarkdownPage(w, req, markdownblock.Bytes(), filename)
 		}
 		return
 
@@ -208,11 +208,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		if luablock.HasData() {
 			// There was Lua code available. Now make the functions and
 			// variables available for the template.
-			funcs, err = ac.LuaFunctionMap(w, req, luablock.MustData(), luafilename)
+			funcs, err = ac.LuaFunctionMap(w, req, luablock.Bytes(), luafilename)
 			if err != nil {
 				if ac.debugMode {
 					// Use the Lua filename as the title
-					ac.PrettyError(w, req, luafilename, luablock.MustData(), err.Error(), "lua")
+					ac.PrettyError(w, req, luafilename, luablock.Bytes(), err.Error(), "lua")
 				} else {
 					log.Error(err)
 				}
@@ -233,7 +233,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		}
 
 		// Render the Amber page, using functions from luaDataFilename, if available
-		ac.AmberPage(w, req, filename, amberblock.MustData(), funcs)
+		ac.AmberPage(w, req, filename, amberblock.Bytes(), funcs)
 
 		return
 
@@ -289,7 +289,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 					fileblock = datablock.NewDataBlock([]byte(err.Error()), true)
 				}
 				// If there were errors, display an error page
-				ac.PrettyError(w, req, filename, fileblock.MustData(), errortext, "lua")
+				ac.PrettyError(w, req, filename, fileblock.Bytes(), errortext, "lua")
 			} else {
 				// If things went well, check if there is a status code we should write first
 				// (especially for the case of a redirect)
@@ -320,7 +320,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			w.Header().Add("Content-Type", "text/css;charset=utf-8")
 			// Render the GCSS page as CSS
-			ac.GCSSPage(w, req, filename, gcssblock.MustData())
+			ac.GCSSPage(w, req, filename, gcssblock.Bytes())
 		}
 		return
 
@@ -328,7 +328,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the SASS page (with .scss extension) as CSS
 			w.Header().Add("Content-Type", "text/css;charset=utf-8")
-			ac.SCSSPage(w, req, filename, scssblock.MustData())
+			ac.SCSSPage(w, req, filename, scssblock.Bytes())
 		}
 		return
 
@@ -336,7 +336,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as HTML with embedded JavaScript
 			w.Header().Add("Content-Type", "text/html;charset=utf-8")
-			ac.HyperAppPage(w, req, filename, jsxblock.MustData())
+			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
 		} else {
 			log.Error("Error when serving " + filename + ":" + err.Error())
 		}
@@ -347,7 +347,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
 			// Render the JSX page as JavaScript
 			w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
-			ac.JSXPage(w, req, filename, jsxblock.MustData())
+			ac.JSXPage(w, req, filename, jsxblock.Bytes())
 		}
 		return
 
