@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
@@ -63,6 +65,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 
 // ServeStaticFile is a convenience function for serving only a single file.
 // It can be used as a quick and easy way to view a README.md file.
+// Will also serve local images if the resulting HTML contains them.
 func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 	log.Info("Single file mode. Not using the regular parameters.")
 
@@ -71,15 +74,42 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 	ac.shortInfoAndOpen(filename, colonPort, cancelChannel)
 
 	mux := http.NewServeMux()
+
 	// 64 MiB cache, use cache compression, no per-file size limit, use best gzip compression, compress for size not for speed
 	ac.cache = datablock.NewFileCache(defaultStaticCacheSize, true, 0, false, 0)
+
+	if ac.markdownMode {
+		// Discover all local images mentioned in the Markdown document
+		var localImages []string
+		if markdownData, err := ac.cache.Read(filename, true); err == nil { // success
+			// Create a Markdown parser with the desired extensions
+			extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+			mdParser := parser.NewWithExtensions(extensions)
+			// Convert from Markdown to HTML
+			htmlbody := markdown.ToHTML(markdownData.MustData(), mdParser, nil)
+			localImages = utils.ExtractLocalImagePaths(string(htmlbody))
+		}
+
+		// Serve all local images mentioned in the Markdown document.
+		// If a file is not found, then the FilePage function will handle it.
+		for _, localImage := range localImages {
+			mux.HandleFunc("/"+localImage, func(w http.ResponseWriter, req *http.Request) {
+				w.Header().Set("Server", ac.versionString)
+				ac.FilePage(w, req, localImage, ac.defaultLuaDataFilename)
+			})
+		}
+	}
+
+	// Prepare to serve the given filename
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", ac.versionString)
 		ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
 	})
+
 	HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+colonPort)
 
-	// Attempt to serve just the single file
+	// Attempt to serve the handler functions above
 	if errServe := HTTPserver.ListenAndServe(); errServe != nil {
 		// If it fails, try several times, increasing the port by 1 each time
 		for i := 0; i < maxAttemptsAtIncreasingPortNumber; i++ {
@@ -106,5 +136,6 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 		// Several attempts failed
 		return errServe
 	}
+
 	return nil
 }

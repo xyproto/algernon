@@ -163,8 +163,8 @@ func WriteStatus(sb *strings.Builder, title string, flags map[string]bool) {
 
 // ExtractLocalImagePaths can be used to find local image filenames that are included in the given HTML
 func ExtractLocalImagePaths(html string) []string {
-	// Regular expression to match image paths in <img ref="...">
-	r := regexp.MustCompile(`<img ref="([^"]+)"`)
+	// Regular expression to match image paths in <img src="...">
+	r := regexp.MustCompile(`<img src="([^"]+)"`)
 	matches := r.FindAllStringSubmatch(html, -1)
 	paths := make([]string, 0, len(matches))
 	for _, match := range matches {
