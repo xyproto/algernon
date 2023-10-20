@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -69,5 +70,35 @@ func TestExtractKW2(t *testing.T) {
 
 	if kwMap["horse"] != nil && len(kwMap["horse"]) != 0 {
 		t.Errorf("Expected empty byte slice, got '%s'", kwMap["horse"])
+	}
+}
+
+func TestExtractLocalImagePaths(t *testing.T) {
+	tests := []struct {
+		html     string
+		expected []string
+	}{
+		{
+			html:     `<img ref="local1.jpg"> <img ref="http://remote.com/remote1.jpg"> <img ref="local2.png"> <img ref="https://remote.com/remote2.png">`,
+			expected: []string{"local1.jpg", "local2.png"},
+		},
+		{
+			html:     `<img ref="/path/to/image.jpg"> <img ref="anotherLocalImage.png">`,
+			expected: []string{"/path/to/image.jpg", "anotherLocalImage.png"},
+		},
+		{
+			html:     `<img ref="https://remote.com/image.jpg">`,
+			expected: []string{},
+		},
+		{
+			html:     `<img ref="localWithoutExtension">`,
+			expected: []string{"localWithoutExtension"},
+		},
+	}
+	for _, test := range tests {
+		result := ExtractLocalImagePaths(test.html)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("For HTML %q, expected %#v but got %#v", test.html, test.expected, result)
+		}
 	}
 }
