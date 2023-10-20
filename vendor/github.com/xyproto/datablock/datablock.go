@@ -59,6 +59,11 @@ func (b *DataBlock) MustData() []byte {
 	return b.data
 }
 
+// Bytes returns the uncompressed data or an empty byte slice
+func (b *DataBlock) Bytes() []byte {
+	return b.MustData()
+}
+
 // String returns the uncompressed data as a string or as an empty string.
 // Same as MustData, but converted to a string.
 func (b *DataBlock) String() string {

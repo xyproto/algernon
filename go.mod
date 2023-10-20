@@ -22,7 +22,7 @@ require (
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.0.2
-	github.com/xyproto/datablock v0.0.0-20190619140322-71fb859bdac7
+	github.com/xyproto/datablock v1.2.0
 	github.com/xyproto/env/v2 v2.2.4
 	github.com/xyproto/files v1.4.1
 	github.com/xyproto/gluamapper v1.2.1
