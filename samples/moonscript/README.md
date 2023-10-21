@@ -1,6 +1,6 @@
 # Moonscript
 
-Moonscript is a langauge that can be compiled into Lua.
+Moonscript is a language that can be compiled into Lua.
 
 This sample requires Make (`make`) and Moonscript (`moonc`) to be installed and working.
 
