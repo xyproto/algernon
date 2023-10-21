@@ -79,19 +79,19 @@ func TestExtractLocalImagePaths(t *testing.T) {
 		expected []string
 	}{
 		{
-			html:     `<img ref="local1.jpg"> <img ref="http://remote.com/remote1.jpg"> <img ref="local2.png"> <img ref="https://remote.com/remote2.png">`,
+			html:     `<img src="local1.jpg"> <img src="http://remote.com/remote1.jpg"> <img src="local2.png"> <img src="https://remote.com/remote2.png">`,
 			expected: []string{"local1.jpg", "local2.png"},
 		},
 		{
-			html:     `<img ref="/path/to/image.jpg"> <img ref="anotherLocalImage.png">`,
+			html:     `<img src="/path/to/image.jpg"> <img src="anotherLocalImage.png">`,
 			expected: []string{"/path/to/image.jpg", "anotherLocalImage.png"},
 		},
 		{
-			html:     `<img ref="https://remote.com/image.jpg">`,
+			html:     `<img src="https://remote.com/image.jpg">`,
 			expected: []string{},
 		},
 		{
-			html:     `<img ref="localWithoutExtension">`,
+			html:     `<img src="localWithoutExtension">`,
 			expected: []string{"localWithoutExtension"},
 		},
 	}
