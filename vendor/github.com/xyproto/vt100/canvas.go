@@ -463,22 +463,22 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 		return
 	}
 	index := y*c.w + x
-
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	chars := (*c).chars
 	chars[index].r = r
 	chars[index].fg = fg
 	chars[index].bg = bg.Background()
 	chars[index].drawn = false
-	c.mut.Unlock()
 }
 
 // WriteRuneB will write a colored rune to the canvas
 // The x and y must be within range (x < c.w and y < c.h)
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
+	index := y*c.w + x
 	c.mut.Lock()
-	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
-	c.mut.Unlock()
+	defer c.mut.Unlock()
+	(*c).chars[index] = ColorRune{fg, bgb, r, false}
 }
 
 // WriteRuneBNoLock will write a colored rune to the canvas
@@ -486,6 +486,38 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 // The canvas mutex is not locked
 func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
+}
+
+// WriteBackground will write a background color to the canvas
+// The x and y must be within range (x < c.w and y < c.h)
+func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
+	index := y*c.w + x
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	(*c).chars[index].bg = bg
+	(*c).chars[index].drawn = false
+}
+
+// WriteBackgroundAddRuneIfEmpty will write a background color to the canvas
+// The x and y must be within range (x < c.w and y < c.h)
+func (c *Canvas) WriteBackgroundAddRuneIfEmpty(x, y uint, bg AttributeColor, r rune) {
+	index := y*c.w + x
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	(*c).chars[index].bg = bg
+	if (*c).chars[index].r == 0 {
+		(*c).chars[index].r = r
+	}
+	(*c).chars[index].drawn = false
+}
+
+// WriteBackgroundNoLock will write a background color to the canvas
+// The x and y must be within range (x < c.w and y < c.h)
+// The canvas mutex is not locked
+func (c *Canvas) WriteBackgroundNoLock(x, y uint, bg AttributeColor) {
+	index := y*c.w + x
+	(*c).chars[index].bg = bg
+	(*c).chars[index].drawn = false
 }
 
 func (c *Canvas) Lock() {

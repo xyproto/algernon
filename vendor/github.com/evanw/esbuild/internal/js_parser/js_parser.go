@@ -95,6 +95,7 @@ type parser struct {
 	tsEnums                    map[ast.Ref]map[string]js_ast.TSEnumValue
 	constValues                map[ast.Ref]js_ast.ConstValue
 	propMethodValue            js_ast.E
+	propDerivedCtorValue       js_ast.E
 	propMethodDecoratorScope   *js_ast.Scope
 
 	// This is the reference to the generated function argument for the namespace,
@@ -155,13 +156,14 @@ type parser struct {
 	// The visit pass binds identifiers to declared symbols, does constant
 	// folding, substitutes compile-time variable definitions, and lowers certain
 	// syntactic constructs as appropriate.
-	stmtExprValue    js_ast.E
-	callTarget       js_ast.E
-	dotOrIndexTarget js_ast.E
-	templateTag      js_ast.E
-	deleteTarget     js_ast.E
-	loopBody         js_ast.S
-	moduleScope      *js_ast.Scope
+	stmtExprValue                        js_ast.E
+	callTarget                           js_ast.E
+	dotOrIndexTarget                     js_ast.E
+	templateTag                          js_ast.E
+	deleteTarget                         js_ast.E
+	loopBody                             js_ast.S
+	suspiciousLogicalOperatorInsideArrow js_ast.E
+	moduleScope                          *js_ast.Scope
 
 	// This is internal-only data used for the implementation of Yarn PnP
 	manifestForYarnPnP     js_ast.Expr
@@ -670,6 +672,7 @@ type fnOrArrowDataVisit struct {
 	isGenerator                    bool
 	isInsideLoop                   bool
 	isInsideSwitch                 bool
+	isDerivedClassCtor             bool
 	isOutsideFnOrArrow             bool
 	shouldLowerSuperPropertyAccess bool
 }
@@ -891,8 +894,10 @@ func duplicateCaseEquals(left js_ast.Expr, right js_ast.Expr) (equals bool, coul
 		return ok && helpers.UTF16EqualsUTF16(a.Value, b.Value), false
 
 	case *js_ast.EBigInt:
-		b, ok := right.Data.(*js_ast.EBigInt)
-		return ok && a.Value == b.Value, false
+		if b, ok := right.Data.(*js_ast.EBigInt); ok {
+			equal, ok := js_ast.CheckEqualityBigInt(a.Value, b.Value)
+			return ok && equal, false
+		}
 
 	case *js_ast.EIdentifier:
 		b, ok := right.Data.(*js_ast.EIdentifier)
@@ -4815,7 +4820,7 @@ func (p *parser) parseExprOrLetOrUsingStmt(opts parseStmtOpts) (js_ast.Expr, js_
 			usingLoc := p.saveExprCommentsHere()
 			usingRange := p.lexer.Range()
 			p.lexer.Next()
-			if p.lexer.Token == js_lexer.TIdentifier && !p.lexer.HasNewlineBefore && (!opts.isForLoopInit || p.lexer.Raw() != "of") {
+			if p.lexer.Token == js_lexer.TIdentifier && !p.lexer.HasNewlineBefore {
 				// It's an "await using" declaration if we get here
 				if opts.lexicalDecl != lexicalDeclAllowAll {
 					p.forbidLexicalDecl(usingRange.Loc)
@@ -7445,6 +7450,8 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 			return js_ast.Stmt{Loc: loc, Data: &js_ast.SForIn{Init: initOrNil, Value: value, Body: body}}
 		}
 
+		p.lexer.Expect(js_lexer.TSemicolon)
+
 		// "await using" declarations are only allowed in for-of loops
 		if local, ok := initOrNil.Data.(*js_ast.SLocal); ok && local.Kind == js_ast.LocalAwaitUsing {
 			p.log.AddError(&p.tracker, js_lexer.RangeOfIdentifier(p.source, initOrNil.Loc), "\"await using\" declarations are not allowed here")
@@ -7454,8 +7461,6 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 		if local, ok := initOrNil.Data.(*js_ast.SLocal); ok && (local.Kind == js_ast.LocalConst || local.Kind == js_ast.LocalUsing) {
 			p.requireInitializers(local.Kind, decls)
 		}
-
-		p.lexer.Expect(js_lexer.TSemicolon)
 
 		if p.lexer.Token != js_lexer.TSemicolon {
 			testOrNil = p.parseExpr(js_ast.LLowest)
@@ -7489,6 +7494,7 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 			p.lexer.Expected(js_lexer.TIdentifier)
 		}
 
+	syntaxBeforePath:
 		switch p.lexer.Token {
 		case js_lexer.TOpenParen, js_lexer.TDot:
 			// "import('path')"
@@ -7551,22 +7557,23 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 				if defaultName.String == "type" {
 					switch p.lexer.Token {
 					case js_lexer.TIdentifier:
-						if p.lexer.Identifier.String != "from" {
-							defaultName = p.lexer.Identifier
-							stmt.DefaultName.Loc = p.lexer.Loc()
-							p.lexer.Next()
-							if p.lexer.Token == js_lexer.TEquals {
-								// "import type foo = require('bar');"
-								// "import type foo = bar.baz;"
-								opts.isTypeScriptDeclare = true
-								return p.parseTypeScriptImportEqualsStmt(loc, opts, stmt.DefaultName.Loc, defaultName.String)
-							} else {
-								// "import type foo from 'bar';"
-								p.lexer.ExpectContextualKeyword("from")
-								p.parsePath()
-								p.lexer.ExpectOrInsertSemicolon()
-								return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptShared}
-							}
+						nameSubstring := p.lexer.Identifier
+						nameLoc := p.lexer.Loc()
+						p.lexer.Next()
+						if p.lexer.Token == js_lexer.TEquals {
+							// "import type foo = require('bar');"
+							// "import type foo = bar.baz;"
+							opts.isTypeScriptDeclare = true
+							return p.parseTypeScriptImportEqualsStmt(loc, opts, nameLoc, nameSubstring.String)
+						} else if p.lexer.Token == js_lexer.TStringLiteral && nameSubstring.String == "from" {
+							// "import type from 'bar';"
+							break syntaxBeforePath
+						} else {
+							// "import type foo from 'bar';"
+							p.lexer.ExpectContextualKeyword("from")
+							p.parsePath()
+							p.lexer.ExpectOrInsertSemicolon()
+							return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptShared}
 						}
 
 					case js_lexer.TAsterisk:
@@ -8850,7 +8857,7 @@ func (p *parser) mangleStmts(stmts []js_ast.Stmt, kind stmtsKind) []js_ast.Stmt 
 							bodyLoc = body[0].Loc
 						}
 						return p.mangleIf(result, stmt.Loc, &js_ast.SIf{
-							Test: js_ast.SimplifyBooleanExpr(js_ast.Not(s.Test)),
+							Test: js_ast.SimplifyBooleanExpr(js_ast.Not(s.Test), p.isUnbound),
 							Yes:  stmtsToSingleStmt(bodyLoc, body, logger.Loc{}),
 						})
 					}
@@ -9702,7 +9709,6 @@ func (p *parser) mangleIf(stmts []js_ast.Stmt, loc logger.Loc, s *js_ast.SIf) []
 				}
 				return appendIfOrLabelBodyPreservingScope(stmts, s.Yes)
 			} else {
-				// We have to keep the "no" branch
 			}
 		} else {
 			// The test is falsy
@@ -9720,6 +9726,15 @@ func (p *parser) mangleIf(stmts []js_ast.Stmt, loc logger.Loc, s *js_ast.SIf) []
 				return appendIfOrLabelBodyPreservingScope(stmts, s.NoOrNil)
 			} else {
 				// We have to keep the "yes" branch
+			}
+		}
+
+		// Use "1" and "0" instead of "true" and "false" to be shorter
+		if sideEffects == js_ast.NoSideEffects {
+			if boolean {
+				s.Test.Data = &js_ast.ENumber{Value: 1}
+			} else {
+				s.Test.Data = &js_ast.ENumber{Value: 0}
 			}
 		}
 	}
@@ -10372,7 +10387,7 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 		s.Body = p.visitLoopBody(s.Body)
 
 		if p.options.minifySyntax {
-			s.Test = js_ast.SimplifyBooleanExpr(s.Test)
+			s.Test = js_ast.SimplifyBooleanExpr(s.Test, p.isUnbound)
 
 			// A true value is implied
 			testOrNil := s.Test
@@ -10391,14 +10406,14 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 		s.Test = p.visitExpr(s.Test)
 
 		if p.options.minifySyntax {
-			s.Test = js_ast.SimplifyBooleanExpr(s.Test)
+			s.Test = js_ast.SimplifyBooleanExpr(s.Test, p.isUnbound)
 		}
 
 	case *js_ast.SIf:
 		s.Test = p.visitExpr(s.Test)
 
 		if p.options.minifySyntax {
-			s.Test = js_ast.SimplifyBooleanExpr(s.Test)
+			s.Test = js_ast.SimplifyBooleanExpr(s.Test, p.isUnbound)
 		}
 
 		// Fold constants
@@ -10448,7 +10463,7 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 			s.TestOrNil = p.visitExpr(s.TestOrNil)
 
 			if p.options.minifySyntax {
-				s.TestOrNil = js_ast.SimplifyBooleanExpr(s.TestOrNil)
+				s.TestOrNil = js_ast.SimplifyBooleanExpr(s.TestOrNil, p.isUnbound)
 
 				// A true value is implied
 				if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(s.TestOrNil.Data); ok && boolean && sideEffects == js_ast.NoSideEffects {
@@ -11074,8 +11089,11 @@ func (p *parser) iifeCanBeRemovedIfUnused(args []js_ast.Arg, body js_ast.FnBody)
 		}
 	}
 
-	// Check whether any statements have side effects or not
-	return js_ast.StmtsCanBeRemovedIfUnused(body.Block.Stmts, 0, p.isUnbound)
+	// Check whether any statements have side effects or not. Consider return
+	// statements as not having side effects because if the IIFE can be removed
+	// then we know the return value is unused, so we know that returning the
+	// value has no side effects.
+	return js_ast.StmtsCanBeRemovedIfUnused(body.Block.Stmts, js_ast.ReturnCanBeRemovedIfUnused, p.isUnbound)
 }
 
 type captureValueMode uint8
@@ -11511,6 +11529,13 @@ func (p *parser) visitClass(nameScopeLoc logger.Loc, class *js_ast.Class, defaul
 			if p.options.keepNames && nameToKeep != "" {
 				p.nameToKeep = nameToKeep
 				p.nameToKeepIsFor = property.ValueOrNil.Data
+			}
+
+			// Propagate whether we're in a derived class constructor
+			if class.ExtendsOrNil.Data != nil && !property.Flags.Has(js_ast.PropertyIsComputed) {
+				if str, ok := property.Key.Data.(*js_ast.EString); ok && helpers.UTF16EqualsString(str.Value, "constructor") {
+					p.propDerivedCtorValue = property.ValueOrNil.Data
+				}
 			}
 
 			property.ValueOrNil = p.visitExpr(property.ValueOrNil)
@@ -13118,10 +13143,23 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 					}})
 
 					// "__self"
-					if p.fnOrArrowDataParse.isThisDisallowed {
-						args = append(args, js_ast.Expr{Loc: expr.Loc, Data: js_ast.EUndefinedShared})
-					} else {
-						args = append(args, js_ast.Expr{Loc: expr.Loc, Data: js_ast.EThisShared})
+					__self := js_ast.Expr{Loc: expr.Loc, Data: js_ast.EThisShared}
+					{
+						if p.fnOnlyDataVisit.shouldReplaceThisWithInnerClassNameRef {
+							// Substitute "this" if we're inside a static class context
+							p.recordUsage(*p.fnOnlyDataVisit.innerClassNameRef)
+							__self.Data = &js_ast.EIdentifier{Ref: *p.fnOnlyDataVisit.innerClassNameRef}
+						} else if !p.fnOnlyDataVisit.isThisNested && p.options.mode != config.ModePassThrough {
+							// Replace top-level "this" with "undefined" if there's an output format
+							__self.Data = js_ast.EUndefinedShared
+						} else if p.fnOrArrowDataVisit.isDerivedClassCtor {
+							// We can't use "this" here in case it comes before "super()"
+							__self.Data = js_ast.EUndefinedShared
+						}
+					}
+					if _, ok := __self.Data.(*js_ast.EUndefined); !ok {
+						// Omit "__self" entirely if it's undefined
+						args = append(args, __self)
 					}
 				}
 
@@ -13593,11 +13631,32 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			}
 		}
 
-		// "a['123']" => "a[123]" (this is done late to allow "'123'" to be mangled)
 		if p.options.minifySyntax {
-			if str, ok := e.Index.Data.(*js_ast.EString); ok {
-				if numberValue, ok := js_ast.StringToEquivalentNumberValue(str.Value); ok {
+			switch index := e.Index.Data.(type) {
+			case *js_ast.EString:
+				// "a['x' + 'y']" => "a.xy" (this is done late to allow for constant folding)
+				if js_ast.IsIdentifierUTF16(index.Value) {
+					return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EDot{
+						Target:                     e.Target,
+						Name:                       helpers.UTF16ToString(index.Value),
+						NameLoc:                    e.Index.Loc,
+						OptionalChain:              e.OptionalChain,
+						CanBeRemovedIfUnused:       e.CanBeRemovedIfUnused,
+						CallCanBeUnwrappedIfUnused: e.CallCanBeUnwrappedIfUnused,
+					}}, out
+				}
+
+				// "a['123']" => "a[123]" (this is done late to allow "'123'" to be mangled)
+				if numberValue, ok := js_ast.StringToEquivalentNumberValue(index.Value); ok {
 					e.Index.Data = &js_ast.ENumber{Value: numberValue}
+				}
+
+			case *js_ast.ENumber:
+				// "'abc'[1]" => "'b'"
+				if target, ok := e.Target.Data.(*js_ast.EString); ok {
+					if intValue := math.Floor(index.Value); index.Value == intValue && intValue >= 0 && intValue < float64(len(target.Value)) {
+						return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: []uint16{target.Value[int(intValue)]}}}, out
+					}
 				}
 			}
 		}
@@ -13656,7 +13715,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			switch e.Op {
 			case js_ast.UnOpNot:
 				if p.options.minifySyntax {
-					e.Value = js_ast.SimplifyBooleanExpr(e.Value)
+					e.Value = js_ast.SimplifyBooleanExpr(e.Value, p.isUnbound)
 				}
 
 				if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Value.Data); ok && sideEffects == js_ast.NoSideEffects {
@@ -13722,7 +13781,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		e.Test = p.visitExpr(e.Test)
 
 		if p.options.minifySyntax {
-			e.Test = js_ast.SimplifyBooleanExpr(e.Test)
+			e.Test = js_ast.SimplifyBooleanExpr(e.Test, p.isUnbound)
 		}
 
 		// Propagate these flags into the branches
@@ -14276,11 +14335,11 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		if !e.CanBeUnwrappedIfUnused {
 			switch target := e.Target.Data.(type) {
 			case *js_ast.EArrow:
-				if p.iifeCanBeRemovedIfUnused(target.Args, target.Body) {
+				if !target.IsAsync && p.iifeCanBeRemovedIfUnused(target.Args, target.Body) {
 					e.CanBeUnwrappedIfUnused = true
 				}
 			case *js_ast.EFunction:
-				if p.iifeCanBeRemovedIfUnused(target.Fn.Args, target.Fn.Body) {
+				if !target.Fn.IsAsync && !target.Fn.IsGenerator && p.iifeCanBeRemovedIfUnused(target.Fn.Args, target.Fn.Body) {
 					e.CanBeUnwrappedIfUnused = true
 				}
 			}
@@ -14405,7 +14464,7 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 						if len(e.Args) == 0 {
 							return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EBoolean{Value: false}}, exprOut{}
 						} else {
-							expr.Data = &js_ast.EUnary{Value: js_ast.SimplifyBooleanExpr(e.Args[0]), Op: js_ast.UnOpNot}
+							expr.Data = &js_ast.EUnary{Value: js_ast.SimplifyBooleanExpr(e.Args[0], p.isUnbound), Op: js_ast.UnOpNot}
 							return js_ast.Not(expr), exprOut{}
 						}
 
@@ -14520,6 +14579,85 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 						case *js_ast.ENull, *js_ast.EObject:
 							// Mark "Object.create(null)" and "Object.create({})" as pure
 							e.CanBeUnwrappedIfUnused = true
+						}
+					}
+				}
+			}
+
+			if p.options.minifySyntax {
+				switch t.Name {
+				case "charCodeAt":
+					// Recognize "charCodeAt()" calls
+					if str, ok := t.Target.Data.(*js_ast.EString); ok && len(e.Args) <= 1 {
+						index := 0
+						hasIndex := false
+						if len(e.Args) == 0 {
+							hasIndex = true
+						} else if num, ok := e.Args[0].Data.(*js_ast.ENumber); ok && num.Value == math.Trunc(num.Value) && math.Abs(num.Value) <= 0x7FFF_FFFF {
+							index = int(num.Value)
+							hasIndex = true
+						}
+						if hasIndex {
+							if index >= 0 && index < len(str.Value) {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: float64(str.Value[index])}}, exprOut{}
+							} else {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ENumber{Value: math.NaN()}}, exprOut{}
+							}
+						}
+					}
+
+				case "fromCharCode":
+					// Recognize "fromCharCode()" calls
+					if id, ok := t.Target.Data.(*js_ast.EIdentifier); ok {
+						if symbol := &p.symbols[id.Ref.InnerIndex]; symbol.Kind == ast.SymbolUnbound && symbol.OriginalName == "String" {
+							charCodes := make([]uint16, 0, len(e.Args))
+							for _, arg := range e.Args {
+								arg, ok := js_ast.ToNumberWithoutSideEffects(arg.Data)
+								if !ok {
+									break
+								}
+								charCodes = append(charCodes, uint16(js_ast.ToInt32(arg)))
+							}
+							if len(charCodes) == len(e.Args) {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: charCodes}}, exprOut{}
+							}
+						}
+					}
+
+				case "toString":
+					switch target := t.Target.Data.(type) {
+					case *js_ast.ENumber:
+						radix := 0
+						if len(e.Args) == 0 {
+							radix = 10
+						} else if len(e.Args) == 1 {
+							if num, ok := e.Args[0].Data.(*js_ast.ENumber); ok && num.Value == math.Trunc(num.Value) && num.Value >= 2 && num.Value <= 36 {
+								radix = int(num.Value)
+							}
+						}
+						if radix != 0 {
+							if str, ok := js_ast.TryToStringOnNumberSafely(target.Value, radix); ok {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: helpers.StringToUTF16(str)}}, exprOut{}
+							}
+						}
+
+					case *js_ast.ERegExp:
+						if len(e.Args) == 0 {
+							return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: helpers.StringToUTF16(target.Value)}}, exprOut{}
+						}
+
+					case *js_ast.EBoolean:
+						if len(e.Args) == 0 {
+							if target.Value {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: helpers.StringToUTF16("true")}}, exprOut{}
+							} else {
+								return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EString{Value: helpers.StringToUTF16("false")}}, exprOut{}
+							}
+						}
+
+					case *js_ast.EString:
+						if len(e.Args) == 0 {
+							return t.Target, exprOut{}
 						}
 					}
 				}
@@ -14692,6 +14830,17 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			nameToKeep = p.nameToKeep
 		}
 
+		// Prepare for suspicious logical operator checking
+		if e.PreferExpr && len(e.Args) == 1 && e.Args[0].DefaultOrNil.Data == nil && len(e.Body.Block.Stmts) == 1 {
+			if _, ok := e.Args[0].Binding.Data.(*js_ast.BIdentifier); ok {
+				if stmt, ok := e.Body.Block.Stmts[0].Data.(*js_ast.SReturn); ok {
+					if binary, ok := stmt.ValueOrNil.Data.(*js_ast.EBinary); ok && (binary.Op == js_ast.BinOpLogicalAnd || binary.Op == js_ast.BinOpLogicalOr) {
+						p.suspiciousLogicalOperatorInsideArrow = binary
+					}
+				}
+			}
+		}
+
 		asyncArrowNeedsToBeLowered := e.IsAsync && p.options.unsupportedJSFeatures.Has(compat.AsyncAwait)
 		oldFnOrArrowData := p.fnOrArrowDataVisit
 		p.fnOrArrowDataVisit = fnOrArrowDataVisit{
@@ -14759,7 +14908,10 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			nameToKeep = p.nameToKeep
 		}
 
-		p.visitFn(&e.Fn, expr.Loc, visitFnOpts{isClassMethod: e == p.propMethodValue})
+		p.visitFn(&e.Fn, expr.Loc, visitFnOpts{
+			isClassMethod:      e == p.propMethodValue,
+			isDerivedClassCtor: e == p.propDerivedCtorValue,
+		})
 		name := e.Fn.Name
 
 		// Remove unused function names when minifying
@@ -15085,6 +15237,34 @@ func (v *binaryExprVisitor) visitRightAndFinish(p *parser) js_ast.Expr {
 
 	case js_ast.BinOpNullishCoalescing:
 		if isNullOrUndefined, sideEffects, ok := js_ast.ToNullOrUndefinedWithSideEffects(e.Left.Data); ok {
+			// Warn about potential bugs
+			if !js_ast.IsPrimitiveLiteral(e.Left.Data) {
+				// "return props.flag === flag ?? true" is "return (props.flag === flag) ?? true" not "return props.flag === (flag ?? true)"
+				var which string
+				var leftIsNullOrUndefined string
+				var leftIsReturned string
+				if !isNullOrUndefined {
+					which = "left"
+					leftIsNullOrUndefined = "never"
+					leftIsReturned = "always"
+				} else {
+					which = "right"
+					leftIsNullOrUndefined = "always"
+					leftIsReturned = "never"
+				}
+				kind := logger.Warning
+				if p.suppressWarningsAboutWeirdCode {
+					kind = logger.Debug
+				}
+				rOp := p.source.RangeOfOperatorBefore(e.Right.Loc, "??")
+				rLeft := logger.Range{Loc: e.Left.Loc, Len: p.source.LocBeforeWhitespace(rOp.Loc).Start - e.Left.Loc.Start}
+				p.log.AddIDWithNotes(logger.MsgID_JS_SuspiciousNullishCoalescing, kind, &p.tracker, rOp,
+					fmt.Sprintf("The \"??\" operator here will always return the %s operand", which), []logger.MsgData{
+						p.tracker.MsgData(rLeft, fmt.Sprintf(
+							"The left operand of the \"??\" operator here will %s be null or undefined, so it will %s be returned. This usually indicates a bug in your code:",
+							leftIsNullOrUndefined, leftIsReturned))})
+			}
+
 			if !isNullOrUndefined {
 				return e.Left
 			} else if sideEffects == js_ast.NoSideEffects {
@@ -15106,6 +15286,29 @@ func (v *binaryExprVisitor) visitRightAndFinish(p *parser) js_ast.Expr {
 
 	case js_ast.BinOpLogicalOr:
 		if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
+			// Warn about potential bugs
+			if e == p.suspiciousLogicalOperatorInsideArrow {
+				if arrowLoc := p.source.RangeOfOperatorBefore(v.loc, "=>"); arrowLoc.Loc.Start+2 == p.source.LocBeforeWhitespace(v.loc).Start {
+					// "return foo => 1 || foo <= 0"
+					var which string
+					if boolean {
+						which = "left"
+					} else {
+						which = "right"
+					}
+					kind := logger.Warning
+					if p.suppressWarningsAboutWeirdCode {
+						kind = logger.Debug
+					}
+					note := p.tracker.MsgData(arrowLoc,
+						"The \"=>\" symbol creates an arrow function expression in JavaScript. Did you mean to use the greater-than-or-equal-to operator \">=\" here instead?")
+					note.Location.Suggestion = ">="
+					rOp := p.source.RangeOfOperatorBefore(e.Right.Loc, "||")
+					p.log.AddIDWithNotes(logger.MsgID_JS_SuspiciousLogicalOperator, kind, &p.tracker, rOp,
+						fmt.Sprintf("The \"||\" operator here will always return the %s operand", which), []logger.MsgData{note})
+				}
+			}
+
 			if boolean {
 				return e.Left
 			} else if sideEffects == js_ast.NoSideEffects {
@@ -15130,6 +15333,29 @@ func (v *binaryExprVisitor) visitRightAndFinish(p *parser) js_ast.Expr {
 
 	case js_ast.BinOpLogicalAnd:
 		if boolean, sideEffects, ok := js_ast.ToBooleanWithSideEffects(e.Left.Data); ok {
+			// Warn about potential bugs
+			if e == p.suspiciousLogicalOperatorInsideArrow {
+				if arrowLoc := p.source.RangeOfOperatorBefore(v.loc, "=>"); arrowLoc.Loc.Start+2 == p.source.LocBeforeWhitespace(v.loc).Start {
+					// "return foo => 0 && foo <= 1"
+					var which string
+					if !boolean {
+						which = "left"
+					} else {
+						which = "right"
+					}
+					kind := logger.Warning
+					if p.suppressWarningsAboutWeirdCode {
+						kind = logger.Debug
+					}
+					note := p.tracker.MsgData(arrowLoc,
+						"The \"=>\" symbol creates an arrow function expression in JavaScript. Did you mean to use the greater-than-or-equal-to operator \">=\" here instead?")
+					note.Location.Suggestion = ">="
+					rOp := p.source.RangeOfOperatorBefore(e.Right.Loc, "&&")
+					p.log.AddIDWithNotes(logger.MsgID_JS_SuspiciousLogicalOperator, kind, &p.tracker, rOp,
+						fmt.Sprintf("The \"&&\" operator here will always return the %s operand", which), []logger.MsgData{note})
+				}
+			}
+
 			if !boolean {
 				return e.Left
 			} else if sideEffects == js_ast.NoSideEffects {
@@ -15954,7 +16180,8 @@ func (p *parser) handleIdentifier(loc logger.Loc, e *js_ast.EIdentifier, opts id
 }
 
 type visitFnOpts struct {
-	isClassMethod bool
+	isClassMethod      bool
+	isDerivedClassCtor bool
 }
 
 func (p *parser) visitFn(fn *js_ast.Fn, scopeLoc logger.Loc, opts visitFnOpts) {
@@ -15964,6 +16191,7 @@ func (p *parser) visitFn(fn *js_ast.Fn, scopeLoc logger.Loc, opts visitFnOpts) {
 	p.fnOrArrowDataVisit = fnOrArrowDataVisit{
 		isAsync:                        fn.IsAsync,
 		isGenerator:                    fn.IsGenerator,
+		isDerivedClassCtor:             opts.isDerivedClassCtor,
 		shouldLowerSuperPropertyAccess: fn.IsAsync && p.options.unsupportedJSFeatures.Has(compat.AsyncAwait),
 	}
 	p.fnOnlyDataVisit = fnOnlyDataVisit{

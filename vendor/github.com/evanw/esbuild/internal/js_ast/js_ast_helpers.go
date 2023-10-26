@@ -3,6 +3,7 @@ package js_ast
 import (
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/evanw/esbuild/internal/ast"
 	"github.com/evanw/esbuild/internal/compat"
@@ -79,7 +80,9 @@ func MaybeSimplifyNot(expr Expr) (Expr, bool) {
 		return Expr{Loc: expr.Loc, Data: &EBoolean{Value: e.Value == 0 || math.IsNaN(e.Value)}}, true
 
 	case *EBigInt:
-		return Expr{Loc: expr.Loc, Data: &EBoolean{Value: e.Value == "0"}}, true
+		if equal, ok := CheckEqualityBigInt(e.Value, "0"); ok {
+			return Expr{Loc: expr.Loc, Data: &EBoolean{Value: equal}}, true
+		}
 
 	case *EString:
 		return Expr{Loc: expr.Loc, Data: &EBoolean{Value: len(e.Value) == 0}}, true
@@ -706,7 +709,7 @@ func SimplifyUnusedExpr(expr Expr, unsupportedFeatures compat.JSFeature, isUnbou
 			// we know the left operand will only be used for its boolean value and
 			// can be simplified under that assumption
 			if e.Op != BinOpNullishCoalescing {
-				left = SimplifyBooleanExpr(left)
+				left = SimplifyBooleanExpr(left, isUnbound)
 			}
 
 			// Preserve short-circuit behavior: the left expression is only unused if
@@ -938,8 +941,20 @@ func ToNumberWithoutSideEffects(data E) (float64, bool) {
 	case *ENull:
 		return 0, true
 
-	case *EUndefined:
+	case *EUndefined, *ERegExp:
 		return math.NaN(), true
+
+	case *EArray:
+		if len(e.Items) == 0 {
+			// "+[]" => "0"
+			return 0, true
+		}
+
+	case *EObject:
+		if len(e.Properties) == 0 {
+			// "+{}" => "NaN"
+			return math.NaN(), true
+		}
 
 	case *EBoolean:
 		if e.Value {
@@ -950,9 +965,65 @@ func ToNumberWithoutSideEffects(data E) (float64, bool) {
 
 	case *ENumber:
 		return e.Value, true
+
+	case *EString:
+		// "+''" => "0"
+		if len(e.Value) == 0 {
+			return 0, true
+		}
+
+		// "+'1'" => "1"
+		if num, ok := StringToEquivalentNumberValue(e.Value); ok {
+			return num, true
+		}
 	}
 
 	return 0, false
+}
+
+func ToStringWithoutSideEffects(data E) (string, bool) {
+	switch e := data.(type) {
+	case *ENull:
+		return "null", true
+
+	case *EUndefined:
+		return "undefined", true
+
+	case *EBoolean:
+		if e.Value {
+			return "true", true
+		} else {
+			return "false", true
+		}
+
+	case *EBigInt:
+		// Only do this if there is no radix
+		if len(e.Value) < 2 || e.Value[0] != '0' {
+			return e.Value, true
+		}
+
+	case *ENumber:
+		if str, ok := TryToStringOnNumberSafely(e.Value, 10); ok {
+			return str, true
+		}
+
+	case *ERegExp:
+		return e.Value, true
+
+	case *EDot:
+		// This is dumb but some JavaScript obfuscators use this to generate string literals
+		if e.Name == "constructor" {
+			switch e.Target.Data.(type) {
+			case *EString:
+				return "function String() { [native code] }", true
+
+			case *ERegExp:
+				return "function RegExp() { [native code] }", true
+			}
+		}
+	}
+
+	return "", false
 }
 
 func extractNumericValue(data E) (float64, bool) {
@@ -1001,6 +1072,32 @@ func ShouldFoldBinaryArithmeticWhenMinifying(binary *EBinary) bool {
 		BinOpBitwiseOr,
 		BinOpBitwiseXor:
 		return true
+
+	case BinOpAdd:
+		// Addition of small-ish integers can definitely be folded without issues
+		// "1 + 2" => "3"
+		if left, right, ok := extractNumericValues(binary.Left, binary.Right); ok &&
+			left == math.Trunc(left) && math.Abs(left) <= 0xFFFF_FFFF &&
+			right == math.Trunc(right) && math.Abs(right) <= 0xFFFF_FFFF {
+			return true
+		}
+
+	case BinOpSub:
+		// Subtraction of small-ish integers can definitely be folded without issues
+		// "3 - 1" => "2"
+		if left, right, ok := extractNumericValues(binary.Left, binary.Right); ok &&
+			left == math.Trunc(left) && math.Abs(left) <= 0xFFFF_FFFF &&
+			right == math.Trunc(right) && math.Abs(right) <= 0xFFFF_FFFF {
+			return true
+		}
+
+	case BinOpDiv:
+		// "0/0" => "NaN"
+		// "1/0" => "Infinity"
+		// "1/-0" => "-Infinity"
+		if _, right, ok := extractNumericValues(binary.Left, binary.Right); ok && right == 0 {
+			return true
+		}
 
 	case BinOpShl:
 		// "1 << 3" => "8"
@@ -1130,6 +1227,22 @@ func IsBinaryNullAndUndefined(left Expr, right Expr, op OpCode) (Expr, Expr, boo
 	return Expr{}, Expr{}, false
 }
 
+func CheckEqualityBigInt(a string, b string) (equal bool, ok bool) {
+	// Equal literals are always equal
+	if a == b {
+		return true, true
+	}
+
+	// Unequal literals are unequal if neither has a radix. Leading zeros are
+	// disallowed in bigint literals without a radix, so in this case we know
+	// each value is in canonical form.
+	if (len(a) < 2 || a[0] != '0') && (len(b) < 2 || b[0] != '0') {
+		return false, true
+	}
+
+	return false, false
+}
+
 type EqualityKind uint8
 
 const (
@@ -1244,7 +1357,7 @@ func CheckEqualityIfNoSideEffects(left E, right E, kind EqualityKind) (equal boo
 		case *EBigInt:
 			// "0n === 0n" is true
 			// "0n === 1n" is false
-			return l.Value == r.Value, true
+			return CheckEqualityBigInt(l.Value, r.Value)
 
 		case *ENull, *EUndefined:
 			// "(not null or undefined) == undefined" is false
@@ -1389,9 +1502,9 @@ func joinStrings(a []uint16, b []uint16) []uint16 {
 // correctness bugs by accidentally stringifying a number differently than how
 // a real JavaScript VM would do it. So we are conservative and we only do this
 // when we know it'll be the same result.
-func tryToStringOnNumberSafely(n float64) (string, bool) {
+func TryToStringOnNumberSafely(n float64, radix int) (string, bool) {
 	if i := int32(n); float64(i) == n {
-		return strconv.Itoa(int(i)), true
+		return strconv.FormatInt(int64(i), radix), true
 	}
 	if math.IsNaN(n) {
 		return "NaN", true
@@ -1405,6 +1518,45 @@ func tryToStringOnNumberSafely(n float64) (string, bool) {
 	return "", false
 }
 
+// Note: We don't know if this is string addition yet at this point
+func foldAdditionPreProcess(expr Expr) Expr {
+	switch e := expr.Data.(type) {
+	case *EInlinedEnum:
+		// "See through" inline enum constants
+		expr = e.Value
+
+	case *EArray:
+		// "[] + x" => "'' + x"
+		// "[1,2] + x" => "'1,2' + x"
+		items := make([]string, 0, len(e.Items))
+		for _, item := range e.Items {
+			switch item.Data.(type) {
+			case *EUndefined, *ENull:
+				items = append(items, "")
+				continue
+			}
+			if str, ok := ToStringWithoutSideEffects(item.Data); ok {
+				item.Data = &EString{Value: helpers.StringToUTF16(str)}
+			}
+			str, ok := item.Data.(*EString)
+			if !ok {
+				break
+			}
+			items = append(items, helpers.UTF16ToString(str.Value))
+		}
+		if len(items) == len(e.Items) {
+			expr.Data = &EString{Value: helpers.StringToUTF16(strings.Join(items, ","))}
+		}
+
+	case *EObject:
+		// "{} + x" => "'[object Object]' + x"
+		if len(e.Properties) == 0 {
+			expr.Data = &EString{Value: helpers.StringToUTF16("[object Object]")}
+		}
+	}
+	return expr
+}
+
 type StringAdditionKind uint8
 
 const (
@@ -1415,13 +1567,8 @@ const (
 // This function intentionally avoids mutating the input AST so it can be
 // called after the AST has been frozen (i.e. after parsing ends).
 func FoldStringAddition(left Expr, right Expr, kind StringAdditionKind) Expr {
-	// "See through" inline enum constants
-	if l, ok := left.Data.(*EInlinedEnum); ok {
-		left = l.Value
-	}
-	if r, ok := right.Data.(*EInlinedEnum); ok {
-		right = r.Value
-	}
+	left = foldAdditionPreProcess(left)
+	right = foldAdditionPreProcess(right)
 
 	// Transforming the left operand into a string is not safe if it comes from
 	// a nested AST node. The following transforms are invalid:
@@ -1430,14 +1577,10 @@ func FoldStringAddition(left Expr, right Expr, kind StringAdditionKind) Expr {
 	//   "0 + 1 + `${x}`" => "0 + `1${x}`"
 	//
 	if kind != StringAdditionWithNestedLeft {
-		if l, ok := left.Data.(*ENumber); ok {
-			switch right.Data.(type) {
-			case *EString, *ETemplate:
-				// "0 + 'x'" => "0 + 'x'"
-				// "0 + `${x}`" => "0 + `${x}`"
-				if str, ok := tryToStringOnNumberSafely(l.Value); ok {
-					left.Data = &EString{Value: helpers.StringToUTF16(str)}
-				}
+		switch right.Data.(type) {
+		case *EString, *ETemplate:
+			if str, ok := ToStringWithoutSideEffects(left.Data); ok {
+				left.Data = &EString{Value: helpers.StringToUTF16(str)}
 			}
 		}
 	}
@@ -1445,10 +1588,8 @@ func FoldStringAddition(left Expr, right Expr, kind StringAdditionKind) Expr {
 	switch l := left.Data.(type) {
 	case *EString:
 		// "'x' + 0" => "'x' + '0'"
-		if r, ok := right.Data.(*ENumber); ok {
-			if str, ok := tryToStringOnNumberSafely(r.Value); ok {
-				right.Data = &EString{Value: helpers.StringToUTF16(str)}
-			}
+		if str, ok := ToStringWithoutSideEffects(right.Data); ok {
+			right.Data = &EString{Value: helpers.StringToUTF16(str)}
 		}
 
 		switch r := right.Data.(type) {
@@ -1478,10 +1619,8 @@ func FoldStringAddition(left Expr, right Expr, kind StringAdditionKind) Expr {
 	case *ETemplate:
 		if l.TagOrNil.Data == nil {
 			// "`${x}` + 0" => "`${x}` + '0'"
-			if r, ok := right.Data.(*ENumber); ok {
-				if str, ok := tryToStringOnNumberSafely(r.Value); ok {
-					right.Data = &EString{Value: helpers.StringToUTF16(str)}
-				}
+			if str, ok := ToStringWithoutSideEffects(right.Data); ok {
+				right.Data = &EString{Value: helpers.StringToUTF16(str)}
 			}
 
 			switch r := right.Data.(type) {
@@ -1551,7 +1690,7 @@ func InlineStringsAndNumbersIntoTemplate(loc logger.Loc, e *ETemplate) Expr {
 			part.Value = value.Value
 		}
 		if value, ok := part.Value.Data.(*ENumber); ok {
-			if str, ok := tryToStringOnNumberSafely(value.Value); ok {
+			if str, ok := TryToStringOnNumberSafely(value.Value, 10); ok {
 				part.Value.Data = &EString{Value: helpers.StringToUTF16(str)}
 			}
 		}
@@ -1686,7 +1825,8 @@ func ToBooleanWithSideEffects(data E) (boolean bool, sideEffects SideEffects, ok
 		return e.Value != 0 && !math.IsNaN(e.Value), NoSideEffects, true
 
 	case *EBigInt:
-		return e.Value != "0", NoSideEffects, true
+		equal, ok := CheckEqualityBigInt(e.Value, "0")
+		return !equal, NoSideEffects, ok
 
 	case *EString:
 		return len(e.Value) > 0, NoSideEffects, true
@@ -1745,17 +1885,17 @@ func ToBooleanWithSideEffects(data E) (boolean bool, sideEffects SideEffects, ok
 //
 // This function intentionally avoids mutating the input AST so it can be
 // called after the AST has been frozen (i.e. after parsing ends).
-func SimplifyBooleanExpr(expr Expr) Expr {
+func SimplifyBooleanExpr(expr Expr, isUnbound func(ast.Ref) bool) Expr {
 	switch e := expr.Data.(type) {
 	case *EUnary:
 		if e.Op == UnOpNot {
 			// "!!a" => "a"
 			if e2, ok2 := e.Value.Data.(*EUnary); ok2 && e2.Op == UnOpNot {
-				return SimplifyBooleanExpr(e2.Value)
+				return SimplifyBooleanExpr(e2.Value, isUnbound)
 			}
 
 			// "!!!a" => "!a"
-			return Expr{Loc: expr.Loc, Data: &EUnary{Op: UnOpNot, Value: SimplifyBooleanExpr(e.Value)}}
+			return Expr{Loc: expr.Loc, Data: &EUnary{Op: UnOpNot, Value: SimplifyBooleanExpr(e.Value, isUnbound)}}
 		}
 
 	case *EBinary:
@@ -1780,8 +1920,8 @@ func SimplifyBooleanExpr(expr Expr) Expr {
 
 		case BinOpLogicalAnd:
 			// "if (!!a && !!b)" => "if (a && b)"
-			left = SimplifyBooleanExpr(left)
-			right = SimplifyBooleanExpr(right)
+			left = SimplifyBooleanExpr(left, isUnbound)
+			right = SimplifyBooleanExpr(right, isUnbound)
 
 			if boolean, SideEffects, ok := ToBooleanWithSideEffects(right.Data); ok && boolean && SideEffects == NoSideEffects {
 				// "if (anything && truthyNoSideEffects)" => "if (anything)"
@@ -1790,8 +1930,8 @@ func SimplifyBooleanExpr(expr Expr) Expr {
 
 		case BinOpLogicalOr:
 			// "if (!!a || !!b)" => "if (a || b)"
-			left = SimplifyBooleanExpr(left)
-			right = SimplifyBooleanExpr(right)
+			left = SimplifyBooleanExpr(left, isUnbound)
+			right = SimplifyBooleanExpr(right, isUnbound)
 
 			if boolean, SideEffects, ok := ToBooleanWithSideEffects(right.Data); ok && !boolean && SideEffects == NoSideEffects {
 				// "if (anything || falsyNoSideEffects)" => "if (anything)"
@@ -1805,8 +1945,8 @@ func SimplifyBooleanExpr(expr Expr) Expr {
 
 	case *EIf:
 		// "if (a ? !!b : !!c)" => "if (a ? b : c)"
-		yes := SimplifyBooleanExpr(e.Yes)
-		no := SimplifyBooleanExpr(e.No)
+		yes := SimplifyBooleanExpr(e.Yes, isUnbound)
+		no := SimplifyBooleanExpr(e.No, isUnbound)
 
 		if boolean, SideEffects, ok := ToBooleanWithSideEffects(yes.Data); ok && SideEffects == NoSideEffects {
 			if boolean {
@@ -1831,6 +1971,12 @@ func SimplifyBooleanExpr(expr Expr) Expr {
 		if yes != e.Yes || no != e.No {
 			return Expr{Loc: expr.Loc, Data: &EIf{Test: e.Test, Yes: yes, No: no}}
 		}
+
+	default:
+		// "!![]" => "true"
+		if boolean, sideEffects, ok := ToBooleanWithSideEffects(expr.Data); ok && (sideEffects == NoSideEffects || ExprCanBeRemovedIfUnused(expr, isUnbound)) {
+			return Expr{Loc: expr.Loc, Data: &EBoolean{Value: boolean}}
+		}
 	}
 
 	return expr
@@ -1840,6 +1986,7 @@ type StmtsCanBeRemovedIfUnusedFlags uint8
 
 const (
 	KeepExportClauses StmtsCanBeRemovedIfUnusedFlags = 1 << iota
+	ReturnCanBeRemovedIfUnused
 )
 
 func StmtsCanBeRemovedIfUnused(stmts []Stmt, flags StmtsCanBeRemovedIfUnusedFlags, isUnbound func(ast.Ref) bool) bool {
@@ -1856,6 +2003,11 @@ func StmtsCanBeRemovedIfUnused(stmts []Stmt, flags StmtsCanBeRemovedIfUnusedFlag
 
 		case *SClass:
 			if !ClassCanBeRemovedIfUnused(s.Class, isUnbound) {
+				return false
+			}
+
+		case *SReturn:
+			if (flags&ReturnCanBeRemovedIfUnused) == 0 || (s.ValueOrNil.Data != nil && !ExprCanBeRemovedIfUnused(s.ValueOrNil, isUnbound)) {
 				return false
 			}
 

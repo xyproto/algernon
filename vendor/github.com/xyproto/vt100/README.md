@@ -78,6 +78,6 @@ Quick installation:
 
 ### General info
 
-* Version: 1.12.6
+* Version: 1.12.9
 * Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
