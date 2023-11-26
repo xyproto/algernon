@@ -37,7 +37,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.19.6
+# github.com/evanw/esbuild v0.19.7
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast

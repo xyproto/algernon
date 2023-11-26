@@ -41,8 +41,8 @@ github.com/dlclark/regexp2 v1.10.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cn
 github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
-github.com/evanw/esbuild v0.19.6 h1:su+dPmJnMuUgItyE75m94MllToOqNVfEoXmu8m0ypF4=
-github.com/evanw/esbuild v0.19.6/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
+github.com/evanw/esbuild v0.19.7 h1:bAzcG5A0ctW6VhqzkWYIY0PuZuUmvYJCualhBsXWIYU=
+github.com/evanw/esbuild v0.19.7/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
 github.com/felixge/fgtrace v0.2.0 h1:lq7RO6ELjR+S74+eD+ai/vhYvsjno7Vb84yzU6RPSeU=
 github.com/felixge/fgtrace v0.2.0/go.mod h1:q9vMuItthu3CRfNhirTCTwzBcJ8atUFkrJUhgQbjg8c=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
