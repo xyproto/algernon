@@ -1,8 +1,8 @@
 .PHONY: clean install install-doc
 
-PROJECT ?= orbiton
+PROJECT ?= algernon
 
-GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo GOEXPERIMENT=loopvar go build -mod=vendor -v)
+GOBUILD := GOEXPERIMENT=loopvar go build -mod=vendor -v
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
