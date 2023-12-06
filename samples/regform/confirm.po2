@@ -37,6 +37,7 @@
             <input type="text" name="confirmation" id="confirmation" class="input">
           </div>
           <button id="confirmButton" name="confirmButton" type="button" class="btn is-primary">Confirm</button>
+          The form/registration example ends here, but this can be built upon to create a new application.
           <script>
           var confirmationField = document.getElementById("confirmation");
           confirmationField.onfocus = function() {
@@ -51,4 +52,3 @@
     </form>
   </body>
 </html>
-
