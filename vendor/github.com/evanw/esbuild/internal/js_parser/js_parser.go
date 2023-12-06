@@ -2181,10 +2181,11 @@ func (p *parser) parseProperty(startLoc logger.Loc, kind js_ast.PropertyKind, op
 						scopeIndex := len(p.scopesInOrder)
 
 						if prop, ok := p.parseProperty(startLoc, kind, opts, nil); ok &&
-							prop.Kind == js_ast.PropertyNormal && prop.ValueOrNil.Data == nil && len(opts.decorators) > 0 {
+							prop.Kind == js_ast.PropertyNormal && prop.ValueOrNil.Data == nil &&
+							(p.options.ts.Config.ExperimentalDecorators == config.True && len(opts.decorators) > 0) {
 							// If this is a well-formed class field with the "declare" keyword,
 							// only keep the declaration to preserve its side-effects when
-							// there are TypeScript decorators present:
+							// there are TypeScript experimental decorators present:
 							//
 							//   class Foo {
 							//     // Remove this
@@ -2193,6 +2194,15 @@ func (p *parser) parseProperty(startLoc logger.Loc, kind js_ast.PropertyKind, op
 							//     // Keep this
 							//     @decorator(console.log('side effect 2')) declare bar
 							//   }
+							//
+							// This behavior is surprisingly somehow valid with TypeScript
+							// experimental decorators, which was possibly by accident.
+							// TypeScript does not allow this with JavaScript decorators.
+							//
+							// References:
+							//
+							//   https://github.com/evanw/esbuild/issues/1675
+							//   https://github.com/microsoft/TypeScript/issues/46345
 							//
 							prop.Kind = js_ast.PropertyDeclare
 							return prop, true
@@ -3588,16 +3598,8 @@ func (p *parser) parsePrefix(level js_ast.L, errors *deferredErrors, flags exprF
 		return p.parseClassExpr(nil)
 
 	case js_lexer.TAt:
-		// Parse decorators before class statements, which are potentially exported
-		scopeIndex := len(p.scopesInOrder)
+		// Parse decorators before class expressions
 		decorators := p.parseDecorators(p.currentScope, logger.Range{}, decoratorBeforeClassExpr)
-
-		// "@decorator class {}"
-		// "@decorator class Foo {}"
-		if p.lexer.Token != js_lexer.TClass && p.lexer.Token != js_lexer.TExport {
-			p.logDecoratorWithoutFollowingClassError(loc, scopeIndex)
-		}
-
 		return p.parseClassExpr(decorators)
 
 	case js_lexer.TNew:
@@ -6139,7 +6141,8 @@ func (p *parser) parseClassStmt(loc logger.Loc, opts parseStmtOpts) js_ast.Stmt 
 			p.hasNonLocalExportDeclareInsideNamespace = true
 		}
 
-		return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptShared}
+		// Remember that this was a "declare class" so we can allow decorators on it
+		return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptSharedWasDeclareClass}
 	}
 
 	p.popScope()
@@ -6149,7 +6152,7 @@ func (p *parser) parseClassStmt(loc logger.Loc, opts parseStmtOpts) js_ast.Stmt 
 func (p *parser) parseClassExpr(decorators []js_ast.Decorator) js_ast.Expr {
 	classKeyword := p.lexer.Range()
 	p.markSyntaxFeature(compat.Class, classKeyword)
-	p.lexer.Next()
+	p.lexer.Expect(js_lexer.TClass)
 	var name *ast.LocRef
 
 	opts := parseClassOpts{
@@ -6248,6 +6251,7 @@ func (p *parser) parseClass(classKeyword logger.Range, name *ast.LocRef, classOp
 
 		// Parse decorators for this property
 		firstDecoratorLoc := p.lexer.Loc()
+		scopeIndex := len(p.scopesInOrder)
 		opts.decorators = p.parseDecorators(p.currentScope, classKeyword, opts.decoratorContext)
 
 		// This property may turn out to be a type in TypeScript, which should be ignored
@@ -6268,6 +6272,9 @@ func (p *parser) parseClass(classKeyword logger.Range, name *ast.LocRef, classOp
 					hasConstructor = true
 				}
 			}
+		} else if !classOpts.isTypeScriptDeclare && len(opts.decorators) > 0 {
+			p.log.AddError(&p.tracker, logger.Range{Loc: firstDecoratorLoc, Len: 1}, "Decorators are not valid here")
+			p.discardScopesUpTo(scopeIndex)
 		}
 	}
 
@@ -6545,12 +6552,6 @@ func (p *parser) parseFnStmt(loc logger.Loc, opts parseStmtOpts, isAsync bool, a
 
 type deferredDecorators struct {
 	decorators []js_ast.Decorator
-
-	// If this turns out to be a "declare class" statement, we need to undo the
-	// scopes that were potentially pushed while parsing the decorator arguments.
-	scopeIndex int
-
-	firstAtLoc logger.Loc
 }
 
 type decoratorContextFlags uint8
@@ -6566,10 +6567,10 @@ func (p *parser) parseDecorators(decoratorScope *js_ast.Scope, classKeyword logg
 		if p.options.ts.Parse {
 			if p.options.ts.Config.ExperimentalDecorators == config.True {
 				if (context & decoratorInClassExpr) != 0 {
-					p.lexer.AddRangeErrorWithNotes(p.lexer.Range(), "Experimental decorators can only be used with class declarations in TypeScript",
+					p.lexer.AddRangeErrorWithNotes(p.lexer.Range(), "TypeScript experimental decorators can only be used with class declarations",
 						[]logger.MsgData{p.tracker.MsgData(classKeyword, "This is a class expression, not a class declaration:")})
 				} else if (context & decoratorBeforeClassExpr) != 0 {
-					p.log.AddError(&p.tracker, p.lexer.Range(), "Experimental decorators cannot be used in expression position in TypeScript")
+					p.log.AddError(&p.tracker, p.lexer.Range(), "TypeScript experimental decorators cannot be used in expression position")
 				}
 			} else {
 				if (context&decoratorInFnArgs) != 0 && p.options.ts.Config.ExperimentalDecorators != config.True {
@@ -6619,7 +6620,11 @@ func (p *parser) parseDecorators(decoratorScope *js_ast.Scope, classKeyword logg
 			// special parser that doesn't allow normal expressions (e.g. "?.").
 			value = p.parseDecorator()
 		}
-		decorators = append(decorators, js_ast.Decorator{Value: value, AtLoc: atLoc})
+		decorators = append(decorators, js_ast.Decorator{
+			Value:            value,
+			AtLoc:            atLoc,
+			OmitNewlineAfter: !p.lexer.HasNewlineBefore,
+		})
 	}
 
 	// Avoid "popScope" because this decorator scope is not hierarchical
@@ -6697,20 +6702,6 @@ func (p *parser) parseDecorator() js_ast.Expr {
 	return memberExpr
 }
 
-func (p *parser) logDecoratorWithoutFollowingClassError(firstAtLoc logger.Loc, scopeIndex int) {
-	found := fmt.Sprintf("%q", p.lexer.Raw())
-	if p.lexer.Token == js_lexer.TEndOfFile {
-		found = "end of file"
-	}
-
-	// Try to be helpful by pointing out the decorator
-	p.lexer.AddRangeErrorWithNotes(p.lexer.Range(), fmt.Sprintf("Expected \"class\" after decorator but found %s", found), []logger.MsgData{
-		p.tracker.MsgData(logger.Range{Loc: firstAtLoc, Len: 1}, "The preceding decorator is here:"),
-		{Text: "Decorators can only be used with class declarations."},
-	})
-	p.discardScopesUpTo(scopeIndex)
-}
-
 type lexicalDecl uint8
 
 const (
@@ -6726,6 +6717,7 @@ type parseStmtOpts struct {
 	isModuleScope           bool
 	isNamespaceScope        bool
 	isExport                bool
+	isExportDefault         bool
 	isNameOptional          bool // For "export default" pseudo-statements
 	isTypeScriptDeclare     bool
 	isForLoopInit           bool
@@ -6759,20 +6751,8 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 		}
 		p.lexer.Next()
 
-		// TypeScript decorators only work on class declarations
-		// "@decorator export class Foo {}"
-		// "@decorator export abstract class Foo {}"
-		// "@decorator export default class Foo {}"
-		// "@decorator export default abstract class Foo {}"
-		// "@decorator export declare class Foo {}"
-		// "@decorator export declare abstract class Foo {}"
-		if opts.deferredDecorators != nil && p.lexer.Token != js_lexer.TClass && p.lexer.Token != js_lexer.TDefault &&
-			!p.lexer.IsContextualKeyword("abstract") && !p.lexer.IsContextualKeyword("declare") {
-			p.logDecoratorWithoutFollowingClassError(opts.deferredDecorators.firstAtLoc, opts.deferredDecorators.scopeIndex)
-		}
-
 		switch p.lexer.Token {
-		case js_lexer.TClass, js_lexer.TConst, js_lexer.TFunction, js_lexer.TVar:
+		case js_lexer.TClass, js_lexer.TConst, js_lexer.TFunction, js_lexer.TVar, js_lexer.TAt:
 			opts.isExport = true
 			return p.parseStmt(opts)
 
@@ -6877,13 +6857,8 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 				return defaultName
 			}
 
-			// TypeScript decorators only work on class declarations
-			// "@decorator export default class Foo {}"
-			// "@decorator export default abstract class Foo {}"
-			if opts.deferredDecorators != nil && p.lexer.Token != js_lexer.TClass && !p.lexer.IsContextualKeyword("abstract") {
-				p.logDecoratorWithoutFollowingClassError(opts.deferredDecorators.firstAtLoc, opts.deferredDecorators.scopeIndex)
-			}
-
+			// "export default async function() {}"
+			// "export default async function foo() {}"
 			if p.lexer.IsContextualKeyword("async") {
 				asyncRange := p.lexer.Range()
 				p.lexer.Next()
@@ -6917,20 +6892,29 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 					DefaultName: defaultName, Value: js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}}}}
 			}
 
-			if p.lexer.Token == js_lexer.TFunction || p.lexer.Token == js_lexer.TClass || p.lexer.IsContextualKeyword("interface") {
+			// "export default class {}"
+			// "export default class Foo {}"
+			// "export default @x class {}"
+			// "export default @x class Foo {}"
+			// "export default function() {}"
+			// "export default function foo() {}"
+			// "export default interface Foo {}"
+			// "export default interface + 1"
+			if p.lexer.Token == js_lexer.TFunction || p.lexer.Token == js_lexer.TClass || p.lexer.Token == js_lexer.TAt ||
+				(p.options.ts.Parse && p.lexer.IsContextualKeyword("interface")) {
 				stmt := p.parseStmt(parseStmtOpts{
 					deferredDecorators:      opts.deferredDecorators,
 					isNameOptional:          true,
+					isExportDefault:         true,
 					lexicalDecl:             lexicalDeclAllowAll,
 					hasNoSideEffectsComment: opts.hasNoSideEffectsComment,
 				})
-				if _, ok := stmt.Data.(*js_ast.STypeScript); ok {
-					return stmt // This was just a type annotation
-				}
 
 				// Use the statement name if present, since it's a better name
 				var defaultName ast.LocRef
 				switch s := stmt.Data.(type) {
+				case *js_ast.STypeScript, *js_ast.SExpr:
+					return stmt // Handle the "interface" case above
 				case *js_ast.SFunction:
 					if s.Fn.Name != nil {
 						defaultName = ast.LocRef{Loc: defaultLoc, Ref: s.Fn.Name.Ref}
@@ -6946,7 +6930,6 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 				default:
 					panic("Internal error")
 				}
-
 				return js_ast.Stmt{Loc: loc, Data: &js_ast.SExportDefault{DefaultName: defaultName, Value: stmt}}
 			}
 
@@ -6954,9 +6937,10 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 			name := p.lexer.Identifier.String
 			expr := p.parseExpr(js_ast.LComma)
 
-			// Handle the default export of an abstract class in TypeScript
-			if p.options.ts.Parse && isIdentifier && name == "abstract" {
-				if _, ok := expr.Data.(*js_ast.EIdentifier); ok && (p.lexer.Token == js_lexer.TClass || opts.deferredDecorators != nil) {
+			// "export default abstract class {}"
+			// "export default abstract class Foo {}"
+			if p.options.ts.Parse && isIdentifier && name == "abstract" && !p.lexer.HasNewlineBefore {
+				if _, ok := expr.Data.(*js_ast.EIdentifier); ok && p.lexer.Token == js_lexer.TClass {
 					stmt := p.parseClassStmt(loc, parseStmtOpts{
 						deferredDecorators: opts.deferredDecorators,
 						isNameOptional:     true,
@@ -7083,6 +7067,13 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 		scopeIndex := len(p.scopesInOrder)
 		decorators := p.parseDecorators(p.currentScope, logger.Range{}, 0)
 
+		// "@x export @y class Foo {}"
+		if opts.deferredDecorators != nil {
+			p.log.AddError(&p.tracker, logger.Range{Loc: loc, Len: 1}, "Decorators are not valid here")
+			p.discardScopesUpTo(scopeIndex)
+			return p.parseStmt(opts)
+		}
+
 		// If this turns out to be a "declare class" statement, we need to undo the
 		// scopes that were potentially pushed while parsing the decorator arguments.
 		// That can look like any one of the following:
@@ -7093,27 +7084,38 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 		//   "@decorator export declare abstract class Foo {}"
 		//
 		opts.deferredDecorators = &deferredDecorators{
-			firstAtLoc: loc,
 			decorators: decorators,
-			scopeIndex: scopeIndex,
 		}
 
-		// "@decorator class Foo {}"
-		// "@decorator abstract class Foo {}"
-		// "@decorator declare class Foo {}"
-		// "@decorator declare abstract class Foo {}"
-		// "@decorator export class Foo {}"
-		// "@decorator export abstract class Foo {}"
-		// "@decorator export declare class Foo {}"
-		// "@decorator export declare abstract class Foo {}"
-		// "@decorator export default class Foo {}"
-		// "@decorator export default abstract class Foo {}"
-		if p.lexer.Token != js_lexer.TClass && p.lexer.Token != js_lexer.TExport &&
-			(!p.options.ts.Parse || (!p.lexer.IsContextualKeyword("abstract") && !p.lexer.IsContextualKeyword("declare"))) {
-			p.logDecoratorWithoutFollowingClassError(opts.deferredDecorators.firstAtLoc, opts.deferredDecorators.scopeIndex)
+		stmt := p.parseStmt(opts)
+
+		// Check for valid decorator targets
+		switch s := stmt.Data.(type) {
+		case *js_ast.SClass:
+			return stmt
+
+		case *js_ast.SExportDefault:
+			switch s.Value.Data.(type) {
+			case *js_ast.SClass:
+				return stmt
+			}
+
+		case *js_ast.STypeScript:
+			if s.WasDeclareClass {
+				// If this is a type declaration, discard any scopes that were pushed
+				// while parsing decorators. Unlike with the class statements above,
+				// these scopes won't end up being visited during the upcoming visit
+				// pass because type declarations aren't visited at all.
+				p.discardScopesUpTo(scopeIndex)
+				return stmt
+			}
 		}
 
-		return p.parseStmt(opts)
+		// Forbid decorators on anything other than a class statement
+		p.log.AddError(&p.tracker, logger.Range{Loc: loc, Len: 1}, "Decorators are not valid here")
+		stmt.Data = js_ast.STypeScriptShared
+		p.discardScopesUpTo(scopeIndex)
+		return stmt
 
 	case js_lexer.TClass:
 		if opts.lexicalDecl != lexicalDeclAllowAll {
@@ -7774,18 +7776,18 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 
 	default:
 		isIdentifier := p.lexer.Token == js_lexer.TIdentifier
+		nameRange := p.lexer.Range()
 		name := p.lexer.Identifier.String
 
 		// Parse either an async function, an async expression, or a normal expression
 		var expr js_ast.Expr
 		if isIdentifier && p.lexer.Raw() == "async" {
-			asyncRange := p.lexer.Range()
 			p.lexer.Next()
 			if p.lexer.Token == js_lexer.TFunction && !p.lexer.HasNewlineBefore {
 				p.lexer.Next()
-				return p.parseFnStmt(asyncRange.Loc, opts, true /* isAsync */, asyncRange)
+				return p.parseFnStmt(nameRange.Loc, opts, true /* isAsync */, nameRange)
 			}
-			expr = p.parseSuffix(p.parseAsyncPrefixExpr(asyncRange, js_ast.LLowest, 0), js_ast.LLowest, nil, 0)
+			expr = p.parseSuffix(p.parseAsyncPrefixExpr(nameRange, js_ast.LLowest, 0), js_ast.LLowest, nil, 0)
 		} else {
 			var stmt js_ast.Stmt
 			expr, stmt, _ = p.parseExprOrLetOrUsingStmt(opts)
@@ -7833,13 +7835,22 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 
 					case "interface":
 						// "interface Foo {}"
-						if !p.lexer.HasNewlineBefore {
+						// "export default interface Foo {}"
+						// "export default interface \n Foo {}"
+						if !p.lexer.HasNewlineBefore || opts.isExportDefault {
 							p.skipTypeScriptInterfaceStmt(parseStmtOpts{isModuleScope: opts.isModuleScope})
 							return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptShared}
 						}
 
+						// "interface \n Foo {}"
+						// "export interface \n Foo {}"
+						if opts.isExport {
+							p.log.AddError(&p.tracker, nameRange, "Unexpected \"interface\"")
+							panic(js_lexer.LexerPanic{})
+						}
+
 					case "abstract":
-						if !p.lexer.HasNewlineBefore && (p.lexer.Token == js_lexer.TClass || opts.deferredDecorators != nil) {
+						if !p.lexer.HasNewlineBefore && p.lexer.Token == js_lexer.TClass {
 							return p.parseClassStmt(loc, opts)
 						}
 
@@ -7857,12 +7868,6 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 							opts.lexicalDecl = lexicalDeclAllowAll
 							opts.isTypeScriptDeclare = true
 
-							// "@decorator declare class Foo {}"
-							// "@decorator declare abstract class Foo {}"
-							if opts.deferredDecorators != nil && p.lexer.Token != js_lexer.TClass && !p.lexer.IsContextualKeyword("abstract") {
-								p.logDecoratorWithoutFollowingClassError(opts.deferredDecorators.firstAtLoc, opts.deferredDecorators.scopeIndex)
-							}
-
 							// "declare global { ... }"
 							if p.lexer.IsContextualKeyword("global") {
 								p.lexer.Next()
@@ -7876,12 +7881,16 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 							scopeIndex := len(p.scopesInOrder)
 							oldLexer := p.lexer
 							stmt := p.parseStmt(opts)
-							switch stmt.Data.(type) {
+							typeDeclarationData := js_ast.STypeScriptShared
+							switch s := stmt.Data.(type) {
 							case *js_ast.SEmpty:
 								return js_ast.Stmt{Loc: loc, Data: &js_ast.SExpr{Value: expr}}
 
 							case *js_ast.STypeScript:
-								// Type declarations are expected
+								// Type declarations are expected. Propagate the "declare class"
+								// status in case our caller is a decorator that needs to know
+								// this was a "declare class" statement.
+								typeDeclarationData = s
 
 							case *js_ast.SLocal:
 								// This is also a type declaration (but doesn't use "STypeScript"
@@ -7900,11 +7909,7 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 								p.lexer = oldLexer
 								p.lexer.Unexpected()
 							}
-							if opts.deferredDecorators != nil {
-								p.discardScopesUpTo(opts.deferredDecorators.scopeIndex)
-							} else {
-								p.discardScopesUpTo(scopeIndex)
-							}
+							p.discardScopesUpTo(scopeIndex)
 
 							// Unlike almost all uses of "declare", statements that use
 							// "export declare" with "var/let/const" inside a namespace affect
@@ -7942,7 +7947,7 @@ func (p *parser) parseStmt(opts parseStmtOpts) js_ast.Stmt {
 								}
 							}
 
-							return js_ast.Stmt{Loc: loc, Data: js_ast.STypeScriptShared}
+							return js_ast.Stmt{Loc: loc, Data: typeDeclarationData}
 						}
 					}
 				}
@@ -11250,7 +11255,8 @@ func (p *parser) visitDecorators(decorators []js_ast.Decorator, decoratorScope *
 	if decorators != nil {
 		// Decorators cause us to temporarily revert to the scope that encloses the
 		// class declaration, since that's where the generated code for decorators
-		// will be inserted.
+		// will be inserted. I believe this currently only matters for parameter
+		// decorators, where the scope should not be within the argument list.
 		oldScope := p.currentScope
 		p.currentScope = decoratorScope
 

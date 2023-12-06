@@ -9,7 +9,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.19.7
+	github.com/evanw/esbuild v0.19.8
 	github.com/felixge/fgtrace v0.2.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd
@@ -47,12 +47,12 @@ require (
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.18.0
+	golang.org/x/net v0.19.0
 )
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.11.1 // indirect
+	github.com/alecthomas/chroma/v2 v2.12.0 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/pprof v0.0.0-20231101202521-4ca4178f5c7a // indirect
+	github.com/google/pprof v0.0.0-20231205033806-a5a03c77bf08 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -71,7 +71,7 @@ require (
 	github.com/miekg/dns v1.1.57 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
-	github.com/onsi/ginkgo/v2 v2.13.1 // indirect
+	github.com/onsi/ginkgo/v2 v2.13.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
@@ -89,13 +89,13 @@ require (
 	go.uber.org/mock v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.15.0 // indirect
-	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
+	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/time v0.4.0 // indirect
-	golang.org/x/tools v0.15.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/tools v0.16.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
