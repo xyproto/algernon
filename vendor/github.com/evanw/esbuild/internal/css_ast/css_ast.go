@@ -281,7 +281,37 @@ func TokensAreCommaSeparated(tokens []Token) bool {
 	return false
 }
 
-func (t Token) FractionForPercentage() (float64, bool) {
+type PercentageFlags uint8
+
+const (
+	AllowPercentageBelow0 PercentageFlags = 1 << iota
+	AllowPercentageAbove100
+	AllowAnyPercentage = AllowPercentageBelow0 | AllowPercentageAbove100
+)
+
+func (t Token) NumberOrFractionForPercentage(percentReferenceRange float64, flags PercentageFlags) (float64, bool) {
+	switch t.Kind {
+	case css_lexer.TNumber:
+		if f, err := strconv.ParseFloat(t.Text, 64); err == nil {
+			return f, true
+		}
+
+	case css_lexer.TPercentage:
+		if f, err := strconv.ParseFloat(t.PercentageValue(), 64); err == nil {
+			if (flags&AllowPercentageBelow0) == 0 && f < 0 {
+				return 0, true
+			}
+			if (flags&AllowPercentageAbove100) == 0 && f > 100 {
+				return percentReferenceRange, true
+			}
+			return f / 100 * percentReferenceRange, true
+		}
+	}
+
+	return 0, false
+}
+
+func (t Token) ClampedFractionForPercentage() (float64, bool) {
 	if t.Kind == css_lexer.TPercentage {
 		if f, err := strconv.ParseFloat(t.PercentageValue(), 64); err == nil {
 			if f < 0 {
@@ -290,9 +320,10 @@ func (t Token) FractionForPercentage() (float64, bool) {
 			if f > 100 {
 				return 1, true
 			}
-			return f / 100.0, true
+			return f / 100, true
 		}
 	}
+
 	return 0, false
 }
 

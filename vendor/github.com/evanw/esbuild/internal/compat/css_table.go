@@ -6,10 +6,15 @@ import (
 	"github.com/evanw/esbuild/internal/css_ast"
 )
 
-type CSSFeature uint8
+type CSSFeature uint16
 
 const (
-	HexRGBA CSSFeature = 1 << iota
+	ColorFunctions CSSFeature = 1 << iota
+	GradientDoublePosition
+	GradientInterpolation
+	GradientMidpoints
+	HWB
+	HexRGBA
 	InlineStyle
 	InsetProperty
 	IsPseudoClass
@@ -19,13 +24,18 @@ const (
 )
 
 var StringToCSSFeature = map[string]CSSFeature{
-	"hex-rgba":        HexRGBA,
-	"inline-style":    InlineStyle,
-	"inset-property":  InsetProperty,
-	"is-pseudo-class": IsPseudoClass,
-	"modern-rgb-hsl":  Modern_RGB_HSL,
-	"nesting":         Nesting,
-	"rebecca-purple":  RebeccaPurple,
+	"color-functions":          ColorFunctions,
+	"gradient-double-position": GradientDoublePosition,
+	"gradient-interpolation":   GradientInterpolation,
+	"gradient-midpoints":       GradientMidpoints,
+	"hwb":                      HWB,
+	"hex-rgba":                 HexRGBA,
+	"inline-style":             InlineStyle,
+	"inset-property":           InsetProperty,
+	"is-pseudo-class":          IsPseudoClass,
+	"modern-rgb-hsl":           Modern_RGB_HSL,
+	"nesting":                  Nesting,
+	"rebecca-purple":           RebeccaPurple,
 }
 
 func (features CSSFeature) Has(feature CSSFeature) bool {
@@ -37,6 +47,45 @@ func (features CSSFeature) ApplyOverrides(overrides CSSFeature, mask CSSFeature)
 }
 
 var cssTable = map[CSSFeature]map[Engine][]versionRange{
+	ColorFunctions: {
+		Chrome:  {{start: v{111, 0, 0}}},
+		Edge:    {{start: v{111, 0, 0}}},
+		Firefox: {{start: v{113, 0, 0}}},
+		IOS:     {{start: v{15, 4, 0}}},
+		Opera:   {{start: v{97, 0, 0}}},
+		Safari:  {{start: v{15, 4, 0}}},
+	},
+	GradientDoublePosition: {
+		Chrome:  {{start: v{72, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		Firefox: {{start: v{83, 0, 0}}},
+		IOS:     {{start: v{12, 2, 0}}},
+		Opera:   {{start: v{60, 0, 0}}},
+		Safari:  {{start: v{12, 1, 0}}},
+	},
+	GradientInterpolation: {
+		Chrome: {{start: v{111, 0, 0}}},
+		Edge:   {{start: v{111, 0, 0}}},
+		IOS:    {{start: v{16, 2, 0}}},
+		Opera:  {{start: v{97, 0, 0}}},
+		Safari: {{start: v{16, 2, 0}}},
+	},
+	GradientMidpoints: {
+		Chrome:  {{start: v{40, 0, 0}}},
+		Edge:    {{start: v{79, 0, 0}}},
+		Firefox: {{start: v{36, 0, 0}}},
+		IOS:     {{start: v{7, 0, 0}}},
+		Opera:   {{start: v{27, 0, 0}}},
+		Safari:  {{start: v{7, 0, 0}}},
+	},
+	HWB: {
+		Chrome:  {{start: v{101, 0, 0}}},
+		Edge:    {{start: v{101, 0, 0}}},
+		Firefox: {{start: v{96, 0, 0}}},
+		IOS:     {{start: v{15, 0, 0}}},
+		Opera:   {{start: v{87, 0, 0}}},
+		Safari:  {{start: v{15, 0, 0}}},
+	},
 	HexRGBA: {
 		Chrome:  {{start: v{62, 0, 0}}},
 		Edge:    {{start: v{79, 0, 0}}},
@@ -141,7 +190,7 @@ var cssPrefixTable = map[css_ast.D][]prefixData{
 		{engine: Safari, prefix: WebkitPrefix},
 	},
 	css_ast.DBackgroundClip: {
-		{engine: Chrome, prefix: WebkitPrefix},
+		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: MsPrefix, withoutPrefix: v{15, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{14, 0, 0}},
@@ -182,7 +231,7 @@ var cssPrefixTable = map[css_ast.D][]prefixData{
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
-		{engine: Opera, prefix: WebkitPrefix},
+		{engine: Opera, prefix: WebkitPrefix, withoutPrefix: v{106, 0, 0}},
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DMaskImage: {
@@ -196,28 +245,28 @@ var cssPrefixTable = map[css_ast.D][]prefixData{
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
-		{engine: Opera, prefix: WebkitPrefix},
+		{engine: Opera, prefix: WebkitPrefix, withoutPrefix: v{106, 0, 0}},
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DMaskPosition: {
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
-		{engine: Opera, prefix: WebkitPrefix},
+		{engine: Opera, prefix: WebkitPrefix, withoutPrefix: v{106, 0, 0}},
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DMaskRepeat: {
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
-		{engine: Opera, prefix: WebkitPrefix},
+		{engine: Opera, prefix: WebkitPrefix, withoutPrefix: v{106, 0, 0}},
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DMaskSize: {
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},
 		{engine: Edge, prefix: WebkitPrefix},
 		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
-		{engine: Opera, prefix: WebkitPrefix},
+		{engine: Opera, prefix: WebkitPrefix, withoutPrefix: v{106, 0, 0}},
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DPosition: {

@@ -50,13 +50,19 @@ func (cfg *Config) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certif
 }
 
 func (cfg *Config) GetCertificateWithContext(ctx context.Context, clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if err := cfg.emit(ctx, "tls_get_certificate", map[string]any{"client_hello": clientHello}); err != nil {
+	if err := cfg.emit(ctx, "tls_get_certificate", map[string]any{"client_hello": clientHelloWithoutConn(clientHello)}); err != nil {
 		cfg.Logger.Error("TLS handshake aborted by event handler",
 			zap.String("server_name", clientHello.ServerName),
 			zap.String("remote", clientHello.Conn.RemoteAddr().String()),
 			zap.Error(err))
 		return nil, fmt.Errorf("handshake aborted by event handler: %w", err)
 	}
+
+	if ctx == nil {
+		// tests can't set context on a tls.ClientHelloInfo because it's unexported :(
+		ctx = context.Background()
+	}
+	ctx = context.WithValue(ctx, ClientHelloInfoCtxKey, clientHello)
 
 	// special case: serve up the certificate for a TLS-ALPN ACME challenge
 	// (https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05)
@@ -313,8 +319,8 @@ func (cfg *Config) getCertDuringHandshake(ctx context.Context, hello *tls.Client
 	// Make sure a certificate is allowed for the given name. If not, it doesn't
 	// make sense to try loading one from storage (issue #185), getting it from a
 	// certificate manager, or obtaining one from an issuer.
-	if err := cfg.checkIfCertShouldBeObtained(name, false); err != nil {
-		return Certificate{}, fmt.Errorf("certificate is not allowed for server name %s: %v", name, err)
+	if err := cfg.checkIfCertShouldBeObtained(ctx, name, false); err != nil {
+		return Certificate{}, fmt.Errorf("certificate is not allowed for server name %s: %w", name, err)
 	}
 
 	// If an external Manager is configured, try to get it from them.
@@ -438,7 +444,7 @@ func (cfg *Config) optionalMaintenance(ctx context.Context, log *zap.Logger, cer
 // checkIfCertShouldBeObtained checks to see if an on-demand TLS certificate
 // should be obtained for a given domain based upon the config settings. If
 // a non-nil error is returned, do not issue a new certificate for name.
-func (cfg *Config) checkIfCertShouldBeObtained(name string, requireOnDemand bool) error {
+func (cfg *Config) checkIfCertShouldBeObtained(ctx context.Context, name string, requireOnDemand bool) error {
 	if requireOnDemand && cfg.OnDemand == nil {
 		return fmt.Errorf("not configured for on-demand certificate issuance")
 	}
@@ -447,7 +453,7 @@ func (cfg *Config) checkIfCertShouldBeObtained(name string, requireOnDemand bool
 	}
 	if cfg.OnDemand != nil {
 		if cfg.OnDemand.DecisionFunc != nil {
-			if err := cfg.OnDemand.DecisionFunc(name); err != nil {
+			if err := cfg.OnDemand.DecisionFunc(ctx, name); err != nil {
 				return fmt.Errorf("decision func: %w", err)
 			}
 			return nil
@@ -685,7 +691,7 @@ func (cfg *Config) renewDynamicCertificate(ctx context.Context, hello *tls.Clien
 		defer cancel()
 
 		// Make sure a certificate for this name should be renewed on-demand
-		err := cfg.checkIfCertShouldBeObtained(name, true)
+		err := cfg.checkIfCertShouldBeObtained(ctx, name, true)
 		if err != nil {
 			// if not, remove from cache (it will be deleted from storage later)
 			cfg.certCache.mu.Lock()
@@ -875,3 +881,52 @@ var (
 	certLoadWaitChans   = make(map[string]chan struct{})
 	certLoadWaitChansMu sync.Mutex
 )
+
+type serializableClientHello struct {
+	CipherSuites      []uint16
+	ServerName        string
+	SupportedCurves   []tls.CurveID
+	SupportedPoints   []uint8
+	SignatureSchemes  []tls.SignatureScheme
+	SupportedProtos   []string
+	SupportedVersions []uint16
+
+	RemoteAddr, LocalAddr net.Addr // values copied from the Conn as they are still useful/needed
+	conn                  net.Conn // unexported so it's not serialized
+}
+
+// clientHelloWithoutConn returns the data from the ClientHelloInfo without the
+// pesky exported Conn field, which often causes an error when serializing because
+// the underlying type may be unserializable.
+func clientHelloWithoutConn(hello *tls.ClientHelloInfo) serializableClientHello {
+	if hello == nil {
+		return serializableClientHello{}
+	}
+	var remote, local net.Addr
+	if hello.Conn != nil {
+		remote = hello.Conn.RemoteAddr()
+		local = hello.Conn.LocalAddr()
+	}
+	return serializableClientHello{
+		CipherSuites:      hello.CipherSuites,
+		ServerName:        hello.ServerName,
+		SupportedCurves:   hello.SupportedCurves,
+		SupportedPoints:   hello.SupportedPoints,
+		SignatureSchemes:  hello.SignatureSchemes,
+		SupportedProtos:   hello.SupportedProtos,
+		SupportedVersions: hello.SupportedVersions,
+		RemoteAddr:        remote,
+		LocalAddr:         local,
+		conn:              hello.Conn,
+	}
+}
+
+type helloInfoCtxKey string
+
+// ClientHelloInfoCtxKey is the key by which the ClientHelloInfo can be extracted from
+// a context.Context within a DecisionFunc. However, be advised that it is best practice
+// that the decision whether to obtain a certificate is be based solely on the name,
+// not other properties of the specific connection/client requesting the connection.
+// For example, it is not adviseable to use a client's IP address to decide whether to
+// allow a certificate. Instead, the ClientHello can be useful for logging, etc.
+const ClientHelloInfoCtxKey helloInfoCtxKey = "certmagic:ClientHelloInfo"

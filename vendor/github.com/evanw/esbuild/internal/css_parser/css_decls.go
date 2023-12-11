@@ -88,6 +88,7 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 	borderRadius := borderRadiusTracker{}
 	rewrittenRules = make([]css_ast.Rule, 0, len(rules))
 	didWarnAboutComposes := false
+	wouldClipColorFlag := false
 	var declarationKeys map[string]struct{}
 
 	// Don't automatically generate the "inset" property if it's not supported
@@ -118,11 +119,27 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 		}
 	}
 
-	for _, rule := range rules {
+	for i := 0; i < len(rules); i++ {
+		rule := rules[i]
 		rewrittenRules = append(rewrittenRules, rule)
 		decl, ok := rule.Data.(*css_ast.RDeclaration)
 		if !ok {
 			continue
+		}
+
+		// If the previous loop iteration would have clipped a color, we will
+		// duplicate it and insert the clipped copy before the unclipped copy
+		var wouldClipColor *bool
+		if wouldClipColorFlag {
+			wouldClipColorFlag = false
+			clone := *decl
+			clone.Value = css_ast.CloneTokensWithoutImportRecords(clone.Value)
+			decl = &clone
+			rule.Data = decl
+			n := len(rewrittenRules) - 2
+			rewrittenRules = append(rewrittenRules[:n], rule, rewrittenRules[n])
+		} else {
+			wouldClipColor = &wouldClipColorFlag
 		}
 
 		switch decl.Key {
@@ -150,6 +167,22 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 				rewrittenRules = rewrittenRules[:len(rewrittenRules)-1]
 			}
 
+		case css_ast.DBackground:
+			for i, t := range decl.Value {
+				t = p.lowerAndMinifyColor(t, wouldClipColor)
+				t = p.lowerAndMinifyGradient(t, wouldClipColor)
+				decl.Value[i] = t
+			}
+
+		case css_ast.DBackgroundImage,
+			css_ast.DBorderImage,
+			css_ast.DMaskImage:
+
+			for i, t := range decl.Value {
+				t = p.lowerAndMinifyGradient(t, wouldClipColor)
+				decl.Value[i] = t
+			}
+
 		case css_ast.DBackgroundColor,
 			css_ast.DBorderBlockEndColor,
 			css_ast.DBorderBlockStartColor,
@@ -173,14 +206,7 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 			css_ast.DTextEmphasisColor:
 
 			if len(decl.Value) == 1 {
-				decl.Value[0] = p.lowerColor(decl.Value[0])
-
-				if p.options.minifySyntax {
-					t := decl.Value[0]
-					if hex, ok := parseColor(t); ok {
-						decl.Value[0] = p.mangleColor(t, hex)
-					}
-				}
+				decl.Value[0] = p.lowerAndMinifyColor(decl.Value[0], wouldClipColor)
 			}
 
 		case css_ast.DTransform:
@@ -189,9 +215,7 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 			}
 
 		case css_ast.DBoxShadow:
-			if p.options.minifySyntax {
-				decl.Value = p.mangleBoxShadows(decl.Value)
-			}
+			decl.Value = p.lowerAndMangleBoxShadows(decl.Value, wouldClipColor)
 
 		// Container name
 		case css_ast.DContainer:
@@ -355,6 +379,30 @@ func (p *parser) processDeclarations(rules []css_ast.Rule, composesContext *comp
 			if (prefixes & compat.OPrefix) != 0 {
 				rewrittenRules = p.insertPrefixedDeclaration(rewrittenRules, "-o-", rule.Loc, decl, declarationKeys)
 			}
+		}
+
+		// If this loop iteration would have clipped a color, the out-of-gamut
+		// colors will not be clipped and this flag will be set. We then set up the
+		// next iteration of the loop to duplicate this rule and process it again
+		// with color clipping enabled.
+		if wouldClipColorFlag {
+			if p.options.unsupportedCSSFeatures.Has(compat.ColorFunctions) {
+				// Only do this if there was no previous instance of that property so
+				// we avoid overwriting any manually-specified fallback values
+				for j := len(rewrittenRules) - 2; j >= 0; j-- {
+					if prev, ok := rewrittenRules[j].Data.(*css_ast.RDeclaration); ok && prev.Key == decl.Key {
+						wouldClipColorFlag = false
+						break
+					}
+				}
+				if wouldClipColorFlag {
+					// If the code above would have clipped a color outside of the sRGB gamut,
+					// process this rule again so we can generate the clipped version next time
+					i -= 1
+					continue
+				}
+			}
+			wouldClipColorFlag = false
 		}
 	}
 
