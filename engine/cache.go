@@ -12,11 +12,6 @@ func (ac *Config) DataToClient(w http.ResponseWriter, req *http.Request, filenam
 	datablock.NewDataBlock(data, true).ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 }
 
-// DataToClientModernBrowsers is a helper function for sending file data (that might be cached) to a HTTP client
-func DataToClientModernBrowsers(w http.ResponseWriter, req *http.Request, filename string, data []byte) {
-	datablock.NewDataBlock(data, true).ToClient(w, req, filename, true, gzipThreshold)
-}
-
 // LoadCacheFunctions loads functions related to caching into the given Lua state
 func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 	const disabledMessage = "Caching is disabled"

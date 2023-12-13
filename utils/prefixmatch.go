@@ -4,22 +4,9 @@
 
 package utils
 
-import (
-	"fmt"
-)
-
 type Node struct {
 	Children   map[rune]*Node
 	IsTerminal bool
-}
-
-func (node *Node) GetChild(c rune) *Node {
-	ret, found := node.Children[c]
-	if found {
-		return ret
-	} else {
-		return nil
-	}
 }
 
 type PrefixMatch struct {
@@ -64,22 +51,5 @@ func (pm *PrefixMatch) match(str string, start *Node, path string, found *[]stri
 		if string(str[0]) == string(char) {
 			pm.match(str[1:], child, path+string(char), found)
 		}
-	}
-}
-
-func (pm *PrefixMatch) PPrint(args ...*Node) {
-	var start *Node
-	if len(args) == 0 {
-		start = &pm.root
-	} else {
-		start = args[0]
-	}
-	fmt.Printf("%p:\n", start)
-	for char, node := range start.Children {
-		fmt.Printf("|-- %c: %p\n", char, node)
-	}
-	fmt.Printf("\n")
-	for _, node := range start.Children {
-		pm.PPrint(node)
 	}
 }
