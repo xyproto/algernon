@@ -10,6 +10,7 @@ import (
 
 	"github.com/eknkc/amber"
 	"github.com/evanw/esbuild/pkg/api"
+	"github.com/flosch/pongo2/v6"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +20,6 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pongo2"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
 )
