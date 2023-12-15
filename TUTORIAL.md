@@ -67,7 +67,7 @@ algernon .
 
 Visit `http://localhost:3000` in a browser and see `"the light"`.
 
-## 3. "Eyes"
+## "Eyes"
 
 ### Goal
 
@@ -130,7 +130,7 @@ Note that the `-e` flag is for "development mode", where error messages may appe
 #### View the result
 
 * Visit `http://localhost:3000/eye.lua` in a browser and observe the result of serving an SVG image.
-* Visit `http://loclhost:3000/` in a browser and observe the result of serving the HTML document (which uses `eye.lua`, twice).
+* Visit `http://localhost:3000/` in a browser and observe the result of serving the HTML document (which uses `eye.lua`, twice).
 
 #### Examine the network traffic
 
