@@ -117,7 +117,7 @@ print [[
 
 This is the main/default handler for this directory, and outputs a simple `HTML` page that displays two images.
 
-The browser does not care if the images end with an unusual file extension such as `.lua`, because the content-type / MIME type regulates this anyways.
+The browser does not care if the images end with an unusual file extension such as `.lua`, because the content-type / MIME type regulates this.
 
 #### Serve the current directory
 
@@ -143,7 +143,7 @@ Note that the `-e` flag is for "development mode", where error messages may appe
 
 ### Goal
 
-Style the `HTML` page from the previous steps.
+Style a `HTML` page with `CSS` and try out the auto-refresh feature.
 
 ### Steps
 
