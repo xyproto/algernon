@@ -68,6 +68,9 @@ github.com/evanw/esbuild/pkg/api
 ## explicit; go 1.18
 github.com/felixge/fgtrace
 github.com/felixge/fgtrace/internal
+# github.com/flosch/pongo2/v6 v6.0.0
+## explicit; go 1.18
+github.com/flosch/pongo2/v6
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
@@ -265,9 +268,6 @@ github.com/xyproto/permissionsql/v2
 # github.com/xyproto/pinterface v1.5.3
 ## explicit; go 1.8
 github.com/xyproto/pinterface
-# github.com/xyproto/pongo2 v0.0.0-20191214182037-d75cc3537773
-## explicit; go 1.11
-github.com/xyproto/pongo2
 # github.com/xyproto/pstore v1.3.2
 ## explicit; go 1.12
 github.com/xyproto/pstore
@@ -365,7 +365,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
+# golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/rand

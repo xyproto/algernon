@@ -10,6 +10,8 @@ import (
 const (
 	varTypeInt = iota
 	varTypeIdent
+	varTypeSubscript
+	varTypeNil
 )
 
 var (
@@ -18,9 +20,11 @@ var (
 )
 
 type variablePart struct {
-	typ int
-	s   string
-	i   int
+	typ       int
+	s         string
+	i         int
+	subscript IEvaluator
+	isNil     bool
 
 	isFunctionCall bool
 	callingArgs    []functionCallArgument // needed for a function call, represents all argument nodes (INode supports nested function calls)
@@ -279,7 +283,7 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 							return AsValue(nil), nil
 						}
 					default:
-						return nil, fmt.Errorf("Can't access an index on type %s (variable %s)",
+						return nil, fmt.Errorf("can't access an index on type %s (variable %s)",
 							current.Kind().String(), vr.String())
 					}
 				case varTypeIdent:
@@ -293,7 +297,44 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 					case reflect.Map:
 						current = current.MapIndex(reflect.ValueOf(part.s))
 					default:
-						return nil, fmt.Errorf("Can't access a field by name on type %s (variable %s)",
+						return nil, fmt.Errorf("can't access a field by name on type %s (variable %s)",
+							current.Kind().String(), vr.String())
+					}
+				case varTypeSubscript:
+					// Calling an index is only possible for:
+					// * slices/arrays/strings
+					switch current.Kind() {
+					case reflect.String, reflect.Array, reflect.Slice:
+						sv, err := part.subscript.Evaluate(ctx)
+						if err != nil {
+							return nil, err
+						}
+						si := sv.Integer()
+						if si >= 0 && current.Len() > si {
+							current = current.Index(si)
+						} else {
+							// In Django, exceeding the length of a list is just empty.
+							return AsValue(nil), nil
+						}
+					// Calling a field or key
+					case reflect.Struct:
+						sv, err := part.subscript.Evaluate(ctx)
+						if err != nil {
+							return nil, err
+						}
+						current = current.FieldByName(sv.String())
+					case reflect.Map:
+						sv, err := part.subscript.Evaluate(ctx)
+						if err != nil {
+							return nil, err
+						}
+						if sv.val.Type().AssignableTo(current.Type().Key()) {
+							current = current.MapIndex(sv.val)
+						} else {
+							return AsValue(nil), nil
+						}
+					default:
+						return nil, fmt.Errorf("can't access an index on type %s (variable %s)",
 							current.Kind().String(), vr.String())
 					}
 				default:
@@ -341,7 +382,7 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 			// Input arguments
 			if len(currArgs) != t.NumIn() && !(len(currArgs) >= t.NumIn()-1 && t.IsVariadic()) {
 				return nil,
-					fmt.Errorf("Function input argument count (%d) of '%s' must be equal to the calling argument count (%d).",
+					fmt.Errorf("function input argument count (%d) of '%s' must be equal to the calling argument count (%d)",
 						t.NumIn(), vr.String(), len(currArgs))
 			}
 
@@ -377,17 +418,21 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 					// Function's argument is not a *pongo2.Value, then we have to check whether input argument is of the same type as the function's argument
 					if !isVariadic {
 						if fnArg != reflect.TypeOf(pv.Interface()) && fnArg.Kind() != reflect.Interface {
-							return nil, fmt.Errorf("Function input argument %d of '%s' must be of type %s or *pongo2.Value (not %T).",
+							return nil, fmt.Errorf("function input argument %d of '%s' must be of type %s or *pongo2.Value (not %T)",
 								idx, vr.String(), fnArg.String(), pv.Interface())
 						}
-						// Function's argument has another type, using the interface-value
-						parameters = append(parameters, reflect.ValueOf(pv.Interface()))
 					} else {
 						if fnArg != reflect.TypeOf(pv.Interface()) && fnArg.Kind() != reflect.Interface {
-							return nil, fmt.Errorf("Function variadic input argument of '%s' must be of type %s or *pongo2.Value (not %T).",
+							return nil, fmt.Errorf("function variadic input argument of '%s' must be of type %s or *pongo2.Value (not %T)",
 								vr.String(), fnArg.String(), pv.Interface())
 						}
-						// Function's argument has another type, using the interface-value
+					}
+
+					if pv.IsNil() {
+						// Workaround to present an interface nil as reflect.Value
+						var empty any = nil
+						parameters = append(parameters, reflect.ValueOf(&empty).Elem())
+					} else {
 						parameters = append(parameters, reflect.ValueOf(pv.Interface()))
 					}
 				} else {
@@ -399,7 +444,7 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 			// Check if any of the values are invalid
 			for _, p := range parameters {
 				if p.Kind() == reflect.Invalid {
-					return nil, fmt.Errorf("Calling a function using an invalid parameter")
+					return nil, fmt.Errorf("calling a function using an invalid parameter")
 				}
 			}
 
@@ -411,7 +456,7 @@ func (vr *variableResolver) resolve(ctx *ExecutionContext) (*Value, error) {
 				if e != nil {
 					err, ok := e.(error)
 					if !ok {
-						return nil, fmt.Errorf("The second return value is not an error")
+						return nil, fmt.Errorf("the second return value is not an error")
 					}
 					if err != nil {
 						return nil, err
@@ -470,7 +515,7 @@ func (v *nodeFilteredVariable) Evaluate(ctx *ExecutionContext) (*Value, *Error) 
 	return value, nil
 }
 
-// IDENT | IDENT.(IDENT|NUMBER)...
+// IDENT | IDENT.(IDENT|NUMBER)... | IDENT[expr]...
 func (p *Parser) parseVariableOrLiteral() (IEvaluator, *Error) {
 	t := p.Current()
 
@@ -584,6 +629,13 @@ variableLoop:
 					})
 					p.Consume() // consume: NUMBER
 					continue variableLoop
+				case TokenNil:
+					resolver.parts = append(resolver.parts, &variablePart{
+						typ:   varTypeNil,
+						isNil: true,
+					})
+					p.Consume() // consume: NIL
+					continue variableLoop
 				default:
 					return nil, p.Error("This token is not allowed within a variable name.", t2)
 				}
@@ -591,6 +643,22 @@ variableLoop:
 				// EOF
 				return nil, p.Error("Unexpected EOF, expected either IDENTIFIER or NUMBER after DOT.",
 					p.lastToken)
+			}
+		} else if p.Match(TokenSymbol, "[") != nil {
+			// Variable subscript
+			if p.Remaining() == 0 {
+				return nil, p.Error("Unexpected EOF, expected subscript subscript.", p.lastToken)
+			}
+			exprSubscript, err := p.ParseExpression()
+			if err != nil {
+				return nil, err
+			}
+			resolver.parts = append(resolver.parts, &variablePart{
+				typ:       varTypeSubscript,
+				subscript: exprSubscript,
+			})
+			if p.Match(TokenSymbol, "]") == nil {
+				return nil, p.Error("Missing closing bracket after subscript argument.", nil)
 			}
 		} else if p.Match(TokenSymbol, "(") != nil {
 			// Function call
@@ -631,7 +699,7 @@ variableLoop:
 			continue variableLoop
 		}
 
-		// No dot or function call? Then we're done with the variable parsing
+		// No dot, subscript or function call? Then we're done with the variable parsing
 		break
 	}
 

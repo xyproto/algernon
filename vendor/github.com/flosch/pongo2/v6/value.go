@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Value struct {
@@ -19,14 +20,14 @@ type Value struct {
 //
 // Example:
 //     AsValue("my string")
-func AsValue(i interface{}) *Value {
+func AsValue(i any) *Value {
 	return &Value{
 		val: reflect.ValueOf(i),
 	}
 }
 
 // AsSafeValue works like AsValue, but does not apply the 'escape' filter.
-func AsSafeValue(i interface{}) *Value {
+func AsSafeValue(i any) *Value {
 	return &Value{
 		val:  reflect.ValueOf(i),
 		safe: true,
@@ -76,9 +77,15 @@ func (v *Value) IsNumber() bool {
 	return v.IsInteger() || v.IsFloat()
 }
 
+// IsTime checks whether the underlying value is a time.Time.
+func (v *Value) IsTime() bool {
+	_, ok := v.Interface().(time.Time)
+	return ok
+}
+
 // IsNil checks whether the underlying value is NIL
 func (v *Value) IsNil() bool {
-	//fmt.Printf("%+v\n", v.getResolvedValue().Type().String())
+	// fmt.Printf("%+v\n", v.getResolvedValue().Type().String())
 	return !v.getResolvedValue().IsValid()
 }
 
@@ -100,6 +107,10 @@ func (v *Value) String() string {
 		return ""
 	}
 
+	if t, ok := v.Interface().(fmt.Stringer); ok {
+		return t.String()
+	}
+
 	switch v.getResolvedValue().Kind() {
 	case reflect.String:
 		return v.getResolvedValue().String()
@@ -114,10 +125,6 @@ func (v *Value) String() string {
 			return "True"
 		}
 		return "False"
-	case reflect.Struct:
-		if t, ok := v.Interface().(fmt.Stringer); ok {
-			return t.String()
-		}
 	}
 
 	logf("Value.String() not implemented for type: %s\n", v.getResolvedValue().Kind().String())
@@ -183,6 +190,16 @@ func (v *Value) Bool() bool {
 		logf("Value.Bool() not available for type: %s\n", v.getResolvedValue().Kind().String())
 		return false
 	}
+}
+
+// Time returns the underlying value as time.Time.
+// If the underlying value is not a time.Time, it returns the zero value of time.Time.
+func (v *Value) Time() time.Time {
+	tm, ok := v.Interface().(time.Time)
+	if ok {
+		return tm
+	}
+	return time.Time{}
 }
 
 // IsTrue tries to evaluate the underlying value the Pythonic-way:
@@ -288,7 +305,7 @@ func (v *Value) Index(i int) *Value {
 		}
 		return AsValue(v.getResolvedValue().Index(i).Interface())
 	case reflect.String:
-		//return AsValue(v.getResolvedValue().Slice(i, i+1).Interface())
+		// return AsValue(v.getResolvedValue().Slice(i, i+1).Interface())
 		s := v.getResolvedValue().String()
 		runes := []rune(s)
 		if i < len(runes) {
@@ -331,7 +348,7 @@ func (v *Value) Contains(other *Value) bool {
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < v.getResolvedValue().Len(); i++ {
 			item := v.getResolvedValue().Index(i)
-			if other.Interface() == item.Interface() {
+			if other.EqualValueTo(AsValue(item.Interface())) {
 				return true
 			}
 		}
@@ -457,7 +474,7 @@ func (v *Value) IterateOrder(fn func(idx, count int, key, value *Value) bool, em
 }
 
 // Interface gives you access to the underlying value.
-func (v *Value) Interface() interface{} {
+func (v *Value) Interface() any {
 	if v.val.IsValid() {
 		return v.val.Interface()
 	}
@@ -469,6 +486,9 @@ func (v *Value) EqualValueTo(other *Value) bool {
 	// comparison of uint with int fails using .Interface()-comparison (see issue #64)
 	if v.IsInteger() && other.IsInteger() {
 		return v.Integer() == other.Integer()
+	}
+	if v.IsTime() && other.IsTime() {
+		return v.Time().Equal(other.Time())
 	}
 	return v.Interface() == other.Interface()
 }

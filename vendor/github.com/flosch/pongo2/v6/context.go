@@ -25,7 +25,7 @@ func SetAutoescape(newValue bool) {
 //     {{ myfunc("test", 42) }}
 //     {{ user.name }}
 //     {{ pongo2.version }}
-type Context map[string]interface{}
+type Context map[string]any
 
 func (c Context) checkForValidIdentifiers() *Error {
 	for k, v := range c {
@@ -131,6 +131,6 @@ func (ctx *ExecutionContext) OrigError(err error, token *Token) *Error {
 	}
 }
 
-func (ctx *ExecutionContext) Logf(format string, args ...interface{}) {
+func (ctx *ExecutionContext) Logf(format string, args ...any) {
 	ctx.template.set.logf(format, args...)
 }

@@ -18,6 +18,7 @@ const (
 	TokenString
 	TokenNumber
 	TokenSymbol
+	TokenNil
 )
 
 var (
@@ -35,45 +36,49 @@ var (
 		"==", ">=", "<=", "&&", "||", "{{", "}}", "{%", "%}", "!=", "<>",
 
 		// 1-Char symbol
-		"(", ")", "+", "-", "*", "<", ">", "/", "^", ",", ".", "!", "|", ":", "=", "%",
+		"(", ")", "+", "-", "*", "<", ">", "/", "^", ",", ".", "!", "|", ":", "=", "%", "[", "]",
 	}
 
 	// Available keywords in pongo2
 	TokenKeywords = []string{"in", "and", "or", "not", "true", "false", "as", "export"}
 )
 
-type TokenType int
-type Token struct {
-	Filename        string
-	Typ             TokenType
-	Val             string
-	Line            int
-	Col             int
-	TrimWhitespaces bool
-}
+type (
+	TokenType int
+	Token     struct {
+		Filename        string
+		Typ             TokenType
+		Val             string
+		Line            int
+		Col             int
+		TrimWhitespaces bool
+	}
+)
 
-type lexerStateFn func() lexerStateFn
-type lexer struct {
-	name      string
-	input     string
-	start     int // start pos of the item
-	pos       int // current pos
-	width     int // width of last rune
-	tokens    []*Token
-	errored   bool
-	startline int
-	startcol  int
-	line      int
-	col       int
+type (
+	lexerStateFn func() lexerStateFn
+	lexer        struct {
+		name      string
+		input     string
+		start     int // start pos of the item
+		pos       int // current pos
+		width     int // width of last rune
+		tokens    []*Token
+		errored   bool
+		startline int
+		startcol  int
+		line      int
+		col       int
 
-	inVerbatim   bool
-	verbatimName string
-}
+		inVerbatim   bool
+		verbatimName string
+	}
+)
 
 func (t *Token) String() string {
 	val := t.Val
 	if len(val) > 1000 {
-		val = fmt.Sprintf("%s...%s", val[:10], val[len(val)-5:len(val)])
+		val = fmt.Sprintf("%s...%s", val[:10], val[len(val)-5:])
 	}
 
 	typ := ""
@@ -92,6 +97,8 @@ func (t *Token) String() string {
 		typ = "String"
 	case TokenSymbol:
 		typ = "Symbol"
+	case TokenNil:
+		typ = "Nil"
 	default:
 		typ = "Unknown"
 	}
@@ -188,7 +195,7 @@ func (l *lexer) ignore() {
 }
 
 func (l *lexer) accept(what string) bool {
-	if strings.IndexRune(what, l.next()) >= 0 {
+	if strings.ContainsRune(what, l.next()) {
 		return true
 	}
 	l.backup()
@@ -196,12 +203,12 @@ func (l *lexer) accept(what string) bool {
 }
 
 func (l *lexer) acceptRun(what string) {
-	for strings.IndexRune(what, l.next()) >= 0 {
+	for strings.ContainsRune(what, l.next()) {
 	}
 	l.backup()
 }
 
-func (l *lexer) errorf(format string, args ...interface{}) lexerStateFn {
+func (l *lexer) errorf(format string, args ...any) lexerStateFn {
 	t := &Token{
 		Filename: l.name,
 		Typ:      TokenError,
@@ -214,10 +221,6 @@ func (l *lexer) errorf(format string, args ...interface{}) lexerStateFn {
 	l.startline = l.line
 	l.startcol = l.col
 	return nil
-}
-
-func (l *lexer) eof() bool {
-	return l.start >= len(l.input)-1
 }
 
 func (l *lexer) run() {
@@ -369,6 +372,10 @@ func (l *lexer) stateIdentifier() lexerStateFn {
 	for _, kw := range TokenKeywords {
 		if kw == l.value() {
 			l.emit(TokenKeyword)
+			return l.stateCode
+		}
+		if kw == "nil" {
+			l.emit(TokenNil)
 			return l.stateCode
 		}
 	}

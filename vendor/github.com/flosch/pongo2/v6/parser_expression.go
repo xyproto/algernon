@@ -180,10 +180,18 @@ func (expr *relationalExpression) Evaluate(ctx *ExecutionContext) (*Value, *Erro
 			if v1.IsFloat() || v2.IsFloat() {
 				return AsValue(v1.Float() <= v2.Float()), nil
 			}
+			if v1.IsTime() && v2.IsTime() {
+				tm1, tm2 := v1.Time(), v2.Time()
+				return AsValue(tm1.Before(tm2) || tm1.Equal(tm2)), nil
+			}
 			return AsValue(v1.Integer() <= v2.Integer()), nil
 		case ">=":
 			if v1.IsFloat() || v2.IsFloat() {
 				return AsValue(v1.Float() >= v2.Float()), nil
+			}
+			if v1.IsTime() && v2.IsTime() {
+				tm1, tm2 := v1.Time(), v2.Time()
+				return AsValue(tm1.After(tm2) || tm1.Equal(tm2)), nil
 			}
 			return AsValue(v1.Integer() >= v2.Integer()), nil
 		case "==":
@@ -192,10 +200,16 @@ func (expr *relationalExpression) Evaluate(ctx *ExecutionContext) (*Value, *Erro
 			if v1.IsFloat() || v2.IsFloat() {
 				return AsValue(v1.Float() > v2.Float()), nil
 			}
+			if v1.IsTime() && v2.IsTime() {
+				return AsValue(v1.Time().After(v2.Time())), nil
+			}
 			return AsValue(v1.Integer() > v2.Integer()), nil
 		case "<":
 			if v1.IsFloat() || v2.IsFloat() {
 				return AsValue(v1.Float() < v2.Float()), nil
+			}
+			if v1.IsTime() && v2.IsTime() {
+				return AsValue(v1.Time().Before(v2.Time())), nil
 			}
 			return AsValue(v1.Integer() < v2.Integer()), nil
 		case "!=", "<>":
@@ -243,6 +257,10 @@ func (expr *simpleExpression) Evaluate(ctx *ExecutionContext) (*Value, *Error) {
 		}
 		switch expr.opToken.Val {
 		case "+":
+			if result.IsString() || t2.IsString() {
+				// Result will be a string
+				return AsValue(result.String() + t2.String()), nil
+			}
 			if result.IsFloat() || t2.IsFloat() {
 				// Result will be a float
 				return AsValue(result.Float() + t2.Float()), nil
@@ -431,7 +449,7 @@ func (p *Parser) parseSimpleExpression() (IEvaluator, *Error) {
 		expr.opToken = op
 	}
 
-	if expr.negate == false && expr.negativeSign == false && expr.term2 == nil {
+	if !expr.negate && !expr.negativeSign && expr.term2 == nil {
 		// Shortcut for faster evaluation
 		return expr.term1, nil
 	}
