@@ -71,7 +71,7 @@ Visit `http://localhost:3000` in a browser and see `"the light"`.
 
 ### Goal
 
-Serve an image and then use it within a web page.
+Serve an image by printing it from Lua, and then use it within an HTML page.
 
 ### Steps
 
