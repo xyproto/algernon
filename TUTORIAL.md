@@ -139,7 +139,7 @@ Note that the `-e` flag is for "development mode", where error messages may appe
 * On the right hand side, observe that `Content-Type` is `image/svg+xml` and that the `Server` is `Algernon` and a version number.
 * There are also various security-related headers that have been set (that can be turned off with the `--no-headers` flag).
 
-## "Style"
+## "Auto-Refresh"
 
 ### Goal
 
@@ -258,13 +258,13 @@ algernon -a -e --no-headers .
 
 #### View the result
 
-Visit `http://localhost:3000` to see an image of an unusual looking eye.
+Visit `http://localhost:3000` to see an animated page.
 
 #### Auto-refresh
 
 Algernon comes with an auto-refresh feature that inserts a tiny bit of JavaScript into a page, watches files for changes and also serves file changed events as SSE (server sent events).
 
-Here's one way to try it out:
+Here's one way to try it out (requires the `-a` flag):
 
 * While still serving the page, and displaying it in the browser, change the numbers in `style.css`, save the file and observe that the page in the browser instantly changes.
 * Also try changing numbers in `eye.svg` and `mouth.svg`, save the file and watch the page instantly being updated.
