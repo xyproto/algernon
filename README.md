@@ -38,10 +38,10 @@ Releases and pre-built images
 
 See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for a variety of platforms and architectures.
 
-The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB.
+The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB and can be tried out with `docker run -it xyproto/algernon`.
 
-Tutorial / Getting Started
---------------------------
+Getting Started
+---------------
 
 [TUTORIAL.md](TUTORIAL.md)
 
