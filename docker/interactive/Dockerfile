@@ -1,6 +1,6 @@
 # Dockerfile for making Algernon serve HTTP on port 4000, in development mode
 FROM golang:alpine as gobuilder
-MAINTAINER Alexander F. Rødseth <xyproto@archlinux.org>
+LABEL maintainer="Alexander F. Rødseth <xyproto@archlinux.org>"
 
 # Prepare the needed files
 COPY . /algernon
