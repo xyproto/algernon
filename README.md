@@ -28,22 +28,36 @@ Requires Go 1.20 or later.
 
 Or manually:
 
-    git clone https://github.com/xyproto/algernon
-    cd algernon
-    go build -mod=vendor
-    ./welcome.sh
+```
+git clone https://github.com/xyproto/algernon
+cd algernon
+go build -mod=vendor
+./welcome.sh
+```
 
 Releases and pre-built images
 -----------------------------
 
 See the [release](https://github.com/xyproto/algernon/releases/latest) page for releases for a variety of platforms and architectures.
 
-The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB and can be tried out with `docker run -it xyproto/algernon`.
 
 Getting Started
 ---------------
 
-[TUTORIAL.md](TUTORIAL.md)
+See [TUTORIAL.md](TUTORIAL.md).
+
+Docker
+------
+
+The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB and can be tried out with:
+
+```
+mkdir localhost
+echo 'It works!' > localhost/index.md
+docker run -it -p4000:4000 -v .:/srv/algernon xyproto/algernon
+```
+
+And then visiting `http://localhost:4000` in a browser.
 
 Technologies
 ------------
