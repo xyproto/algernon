@@ -43,7 +43,7 @@ require (
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.6.5
 	github.com/xyproto/splash v1.1.7-0.20230420131850-c892c94b4a02
-	github.com/xyproto/textoutput v1.16.0
+	github.com/xyproto/textoutput v1.16.1
 	github.com/xyproto/tinysvg v1.1.0
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
@@ -84,7 +84,7 @@ require (
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.2 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.13.0 // indirect
+	github.com/xyproto/vt100 v1.14.0 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
 	go.uber.org/mock v0.3.0 // indirect
