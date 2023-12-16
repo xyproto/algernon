@@ -528,7 +528,7 @@ func (c *Canvas) Unlock() {
 	c.mut.Unlock()
 }
 
-// WriteRunesB will write several colored runes to the canvas
+// WriteRunesB will write repeated colored runes to the canvas.
 // This is the same as WriteRuneB, but bg.Background() has already been called on
 // the background attribute.
 // The x and y must be within range (x < c.w and y < c.h). x + count must be within range too.

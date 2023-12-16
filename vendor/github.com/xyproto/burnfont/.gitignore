@@ -1,0 +1,15 @@
+*
+!*.*
+!*/
+*.o
+*.swp
+*.tmp
+*.bak
+*.pro.user
+*CMakeFiles*
+*.dblite
+*.so
+.vscode
+*.svg
+!img/*
+cmd/*/*.png
