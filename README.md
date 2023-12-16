@@ -40,6 +40,11 @@ See the [release](https://github.com/xyproto/algernon/releases/latest) page for 
 
 The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of 9MB.
 
+Tutorial
+--------
+
+[Quick Tutorial](TUTORIAL.md)
+
 Technologies
 ------------
 
