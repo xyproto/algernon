@@ -53,7 +53,7 @@ The [docker image](https://hub.docker.com/r/xyproto/algernon/tags) is a total of
 
 ```
 mkdir localhost
-echo 'It works!' > localhost/index.md
+echo 'hi!' > localhost/index.md
 docker run -it -p4000:4000 -v .:/srv/algernon xyproto/algernon
 ```
 
