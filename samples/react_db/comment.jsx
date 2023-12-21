@@ -104,7 +104,7 @@ class CommentList extends React.Component {
 
 class Comment extends React.Component {
   render() {
-    var rawMarkup = marked(this.props.children.toString(), { sanitize: true });
+    var rawMarkup = marked.parse(this.props.children.toString());
     return (
       <div className="comment">
         <h2 className="commentAuthor">
