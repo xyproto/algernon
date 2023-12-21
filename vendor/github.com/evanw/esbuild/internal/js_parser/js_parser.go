@@ -13237,6 +13237,11 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 			tagThisFunc = tagOut.thisArgFunc
 			tagWrapFunc = tagOut.thisArgWrapFunc
 
+			// Copy the call side effect flag over if this is a known target
+			if id, ok := tag.Data.(*js_ast.EIdentifier); ok && p.symbols[id.Ref.InnerIndex].Flags.Has(ast.CallCanBeUnwrappedIfUnused) {
+				e.CanBeUnwrappedIfUnused = true
+			}
+
 			// The value of "this" must be manually preserved for private member
 			// accesses inside template tag expressions such as "this.#foo``".
 			// The private member "this.#foo" must see the value of "this".
@@ -13462,7 +13467,8 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		}
 
 		// Lower optional chaining if we're the top of the chain
-		containsOptionalChain := e.OptionalChain != js_ast.OptionalChainNone
+		containsOptionalChain := e.OptionalChain == js_ast.OptionalChainStart ||
+			(e.OptionalChain == js_ast.OptionalChainContinue && out.childContainsOptionalChain)
 		if containsOptionalChain && !in.hasChainParent {
 			return p.lowerOptionalChain(expr, in, out)
 		}
@@ -13620,7 +13626,8 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		}
 
 		// Lower optional chaining if we're the top of the chain
-		containsOptionalChain := e.OptionalChain != js_ast.OptionalChainNone
+		containsOptionalChain := e.OptionalChain == js_ast.OptionalChainStart ||
+			(e.OptionalChain == js_ast.OptionalChainContinue && out.childContainsOptionalChain)
 		if containsOptionalChain && !in.hasChainParent {
 			return p.lowerOptionalChain(expr, in, out)
 		}
@@ -14718,7 +14725,8 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 		}
 
 		// Lower optional chaining if we're the top of the chain
-		containsOptionalChain := e.OptionalChain != js_ast.OptionalChainNone
+		containsOptionalChain := e.OptionalChain == js_ast.OptionalChainStart ||
+			(e.OptionalChain == js_ast.OptionalChainContinue && out.childContainsOptionalChain)
 		if containsOptionalChain && !in.hasChainParent {
 			return p.lowerOptionalChain(expr, in, out)
 		}
@@ -14787,8 +14795,10 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 							}
 
 							// Handle glob patterns
-							if value := p.handleGlobPattern(arg, ast.ImportRequire, "globRequire", nil); value.Data != nil {
-								return value
+							if p.options.mode == config.ModeBundle {
+								if value := p.handleGlobPattern(arg, ast.ImportRequire, "globRequire", nil); value.Data != nil {
+									return value
+								}
 							}
 
 							// Use a debug log so people can see this if they want to
@@ -15759,6 +15769,7 @@ outer:
 		})
 	}
 
+	p.recordUsage(ref)
 	return js_ast.Expr{Loc: expr.Loc, Data: &js_ast.ECall{
 		Target: js_ast.Expr{Loc: expr.Loc, Data: &js_ast.EIdentifier{Ref: ref}},
 		Args:   []js_ast.Expr{expr},
@@ -17407,7 +17418,7 @@ func (p *parser) prepareForVisitPass() {
 		if jsxImportSource := p.lexer.JSXImportSourcePragmaComment; jsxImportSource.Text != "" {
 			if !p.options.jsx.AutomaticRuntime {
 				p.log.AddIDWithNotes(logger.MsgID_JS_UnsupportedJSXComment, logger.Warning, &p.tracker, jsxImportSource.Range,
-					fmt.Sprintf("The JSX import source cannot be set without also enabling React's \"automatic\" JSX transform"),
+					"The JSX import source cannot be set without also enabling React's \"automatic\" JSX transform",
 					[]logger.MsgData{{Text: "You can enable React's \"automatic\" JSX transform for this file by using a \"@jsxRuntime automatic\" comment."}})
 			} else {
 				p.options.jsx.ImportSource = jsxImportSource.Text

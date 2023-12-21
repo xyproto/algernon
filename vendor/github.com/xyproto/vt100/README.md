@@ -56,7 +56,7 @@ Erase the current line:
 vt100.Do("Erase Line")
 ```
 
-Move the cursor 3 steps up (it's a bit verbose, but it's generated directly from the reference document, is memoized for speed and is easy to wrap in a custom function):
+Move the cursor 3 steps up (it's a bit verbose, but it is memoized for better performance):
 
 ```go
 vt100.Set("Cursor Up", map[string]string{"{COUNT}": "3"})
@@ -70,7 +70,7 @@ See `cmd/move` for a more advanced example, where a character can be moved aroun
 
 ### A small editor using `vt100`
 
-The [`o` editor](https://github.com/xyproto/o) that uses `vt100` can be used for editing Go, Bash or for example C++ code.
+The [Orbiton editor](https://github.com/xyproto/orbiton) that uses `vt100` can be used for editing Go, Bash or for example C++ code.
 
 Quick installation:
 
@@ -78,6 +78,6 @@ Quick installation:
 
 ### General info
 
-* Version: 1.14.0
+* Version: 1.14.2
 * Licence: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
