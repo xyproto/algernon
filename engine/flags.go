@@ -34,9 +34,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		noDatabase bool
 	)
 
-	// The usage function that provides more help (for --help or -h)
-	flag.Usage = generateUsageFunction(ac)
-
 	// The default for running the redis server on Windows is to listen
 	// to "localhost:port", but not just ":port".
 	host := ""
@@ -48,8 +45,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.defaultLogFile = filepath.Join(serverTempDir, "algernon.log")
 	}
 
-	// Commandline flag configuration
+	// The usage function that provides more help (for --help or -h)
+	flag.Usage = generateUsageFunction(ac)
 
+	// Commandline flag configuration
 	flag.StringVar(&ac.serverDirOrFilename, "dir", ".", "Server directory")
 	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\")")
 	flag.StringVar(&ac.serverCert, "cert", "cert.pem", "Server certificate")
@@ -109,7 +108,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
 	flag.BoolVar(&ac.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
 	flag.StringVar(&ac.dirBaseURL, "dirbaseurl", "", "Base URL for the directory listing (optional)")
-
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
@@ -132,9 +130,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	flag.BoolVar(&onlyLuaModeShort, "l", false, "Only present the Lua REPL")
 	flag.BoolVar(&redirectShort, "r", false, "Redirect HTTP traffic to HTTPS, if both are enabled")
-
 	flag.Parse()
-
 	// Accept both long and short versions of some flags
 	ac.serveJustHTTP = ac.serveJustHTTP || serveJustHTTPShort
 	ac.autoRefresh = ac.autoRefresh || autoRefreshShort
@@ -292,12 +288,14 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.cacheMaxEntitySize = ac.defaultCacheMaxEntitySize
 	}
 
+	serverAddrChanged := false
+
 	// For backward compatibility with previous versions of Algernon
 	// TODO: Remove, in favor of a better config/flag system
-	serverAddrChanged := false
-	if len(flag.Args()) >= 1 {
+	args := flag.Args()
+	if len(args) > 0 {
 		// Only override the default server directory if Algernon can find it
-		firstArg := flag.Args()[0]
+		firstArg := args[0]
 		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
 		// Interpret as a file or directory
 		if fs.IsDir(firstArg) || fs.Exists(firstArg) {
@@ -316,7 +314,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			serverAddrChanged = true
 		}
 	}
-
 	// Clean up path in ac.serverDirOrFilename
 	// .Rel calls .Clean on the result.
 	if pwd, err := os.Getwd(); err == nil { // no error
@@ -324,33 +321,32 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			ac.serverDirOrFilename = cleanPath
 		}
 	}
-
 	// TODO: Replace the code below with a good config/flag package.
 	shift := 0
 	if serverAddrChanged {
 		shift = 1
 	}
-	if len(flag.Args()) >= 2 {
-		secondArg := flag.Args()[1]
+	if len(args) > 1 {
+		secondArg := args[1]
 		if strings.Contains(secondArg, ":") {
 			ac.serverAddr = secondArg
 		} else if _, err := strconv.Atoi(secondArg); err == nil { // no error
 			// Is a number. Interpret as the server address.
 			ac.serverAddr = ":" + secondArg
-		} else if len(flag.Args()) >= 3-shift {
-			ac.serverCert = flag.Args()[2-shift]
+		} else if len(args) >= 3-shift {
+			ac.serverCert = args[2-shift]
 		}
 	}
-	if len(flag.Args()) >= 4-shift {
-		ac.serverKey = flag.Args()[3-shift]
+	if len(args) >= 4-shift {
+		ac.serverKey = args[3-shift]
 	}
-	if len(flag.Args()) >= 5-shift {
-		ac.redisAddr = flag.Args()[4-shift]
+	if len(args) >= 5-shift {
+		ac.redisAddr = args[4-shift]
 		ac.redisAddrSpecified = true
 	}
-	if len(flag.Args()) >= 6-shift {
+	if len(args) >= 6-shift {
 		// Convert the dbindex from string to int
-		DBindex, err := strconv.Atoi(flag.Args()[5-shift])
+		DBindex, err := strconv.Atoi(args[5-shift])
 		if err != nil {
 			ac.redisDBindex = DBindex
 		}
