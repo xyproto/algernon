@@ -17,6 +17,53 @@ import (
 	"github.com/xyproto/files"
 )
 
+func (ac *Config) handleArguments() {
+	serverAddrChanged := false
+
+	args := flag.Args()
+	for _, arg := range args {
+		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
+
+		// Check if the argument is a directory or file
+		if fs.IsDir(arg) || fs.Exists(arg) {
+			if strings.HasSuffix(arg, string(os.PathSeparator)) {
+				ac.serverDirOrFilename = arg[:len(arg)-1]
+			} else {
+				ac.serverDirOrFilename = arg
+			}
+			continue
+		}
+
+		// Check if the argument is a server address
+		if strings.Contains(arg, ":") {
+			if !serverAddrChanged {
+				ac.serverAddr = strings.TrimPrefix(arg, ":")
+				serverAddrChanged = true
+			} else if ac.redisAddr == "" {
+				ac.redisAddr = arg
+				ac.redisAddrSpecified = true
+			} else if ac.serverCert == "" {
+				ac.serverCert = arg
+			} else if ac.serverKey == "" {
+				ac.serverKey = arg
+			}
+			continue
+		}
+
+		// Check if the argument is a Redis DB index
+		if DBindex, err := strconv.Atoi(arg); err == nil {
+			ac.redisDBindex = DBindex
+		}
+	}
+
+	// Clean up path in ac.serverDirOrFilename
+	if pwd, err := os.Getwd(); err == nil {
+		if cleanPath, err := filepath.Rel(pwd, ac.serverDirOrFilename); err == nil {
+			ac.serverDirOrFilename = cleanPath
+		}
+	}
+}
+
 // Parse the flags, return the default hostname
 func (ac *Config) handleFlags(serverTempDir string) {
 	var (
@@ -288,69 +335,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.cacheMaxEntitySize = ac.defaultCacheMaxEntitySize
 	}
 
-	serverAddrChanged := false
-
-	// For backward compatibility with previous versions of Algernon
-	// TODO: Remove, in favor of a better config/flag system
-	args := flag.Args()
-	if len(args) > 0 {
-		// Only override the default server directory if Algernon can find it
-		firstArg := args[0]
-		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
-		// Interpret as a file or directory
-		if fs.IsDir(firstArg) || fs.Exists(firstArg) {
-			if strings.HasSuffix(firstArg, string(os.PathSeparator)) {
-				ac.serverDirOrFilename = firstArg[:len(firstArg)-1]
-			} else {
-				ac.serverDirOrFilename = firstArg
-			}
-		} else if strings.Contains(firstArg, ":") {
-			// Interpret as the server address
-			ac.serverAddr = firstArg
-			serverAddrChanged = true
-		} else if _, err := strconv.Atoi(firstArg); err == nil { // no error
-			// Is a number. Interpret as the server address
-			ac.serverAddr = ":" + firstArg
-			serverAddrChanged = true
-		}
-	}
-	// Clean up path in ac.serverDirOrFilename
-	// .Rel calls .Clean on the result.
-	if pwd, err := os.Getwd(); err == nil { // no error
-		if cleanPath, err := filepath.Rel(pwd, ac.serverDirOrFilename); err == nil { // no error
-			ac.serverDirOrFilename = cleanPath
-		}
-	}
-	// TODO: Replace the code below with a good config/flag package.
-	shift := 0
-	if serverAddrChanged {
-		shift = 1
-	}
-	if len(args) > 1 {
-		secondArg := args[1]
-		if strings.Contains(secondArg, ":") {
-			ac.serverAddr = secondArg
-		} else if _, err := strconv.Atoi(secondArg); err == nil { // no error
-			// Is a number. Interpret as the server address.
-			ac.serverAddr = ":" + secondArg
-		} else if len(args) >= 3-shift {
-			ac.serverCert = args[2-shift]
-		}
-	}
-	if len(args) >= 4-shift {
-		ac.serverKey = args[3-shift]
-	}
-	if len(args) >= 5-shift {
-		ac.redisAddr = args[4-shift]
-		ac.redisAddrSpecified = true
-	}
-	if len(args) >= 6-shift {
-		// Convert the dbindex from string to int
-		DBindex, err := strconv.Atoi(args[5-shift])
-		if err != nil {
-			ac.redisDBindex = DBindex
-		}
-	}
+	ac.handleArguments()
 
 	// Use the default openExecutable if none is set
 	if ac.openURLAfterServing && ac.openExecutable == "" {
