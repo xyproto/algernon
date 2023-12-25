@@ -473,7 +473,7 @@ JNode() -> userdata
 // Add JSON data to a node. The first argument is an optional JSON path.
 // The second argument is a JSON data string. Returns true on success.
 // "x" is the default JSON path.
-jnode:add([string, ]string) ->
+jnode:add([string, ]string) -> bool
 
 // Given a JSON path, retrieves a JSON node.
 jnode:get(string) -> userdata
