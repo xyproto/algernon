@@ -35,9 +35,18 @@ func (ac *Config) handleArguments() {
 		}
 
 		// Check if the argument is a server address
+		afterColonString := ""
+		afterColonNumber := -1
 		if strings.Contains(arg, ":") {
+			fields := strings.SplitN(arg, ":", 2)
+			afterColonString = strings.TrimSpace(fields[1])
+			if n, err := strconv.Atoi(afterColonString); err == nil { // success
+				afterColonNumber = n
+			}
+		}
+		if strings.Contains(arg, ":") || afterColonNumber != -1 {
 			if !serverAddrChanged {
-				ac.serverAddr = strings.TrimPrefix(arg, ":")
+				ac.serverAddr = arg
 				serverAddrChanged = true
 			} else if ac.redisAddr == "" {
 				ac.redisAddr = arg
