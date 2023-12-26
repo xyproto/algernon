@@ -2,7 +2,8 @@ doctype 5
 html
   head
     title TODO
-    script[src="react.min.js"]
+    script[src="js/react.production.min.js"]
+    script[src="js/react-dom.production.min.js"]
   body
     div[id="content"]
     script[src="todo.jsx"]

@@ -1,27 +1,28 @@
-// The TODO example from http://facebook.github.io/react/
-
-var TodoList = React.createClass({
-  render: function() {
-    var createItem = function(itemText, index) {
-      return <li key={index + itemText}>{itemText}</li>;
-    };
+class TodoList extends React.Component {
+  render() {
+    const createItem = (itemText, index) => <li key={index + itemText}>{itemText}</li>;
     return <ul>{this.props.items.map(createItem)}</ul>;
   }
-});
-var TodoApp = React.createClass({
-  getInitialState: function() {
-    return {items: [], text: ''};
-  },
-  onChange: function(e) {
-    this.setState({text: e.target.value});
-  },
-  handleSubmit: function(e) {
+}
+
+class TodoApp extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { items: [], text: '' };
+  }
+
+  onChange = (e) => {
+    this.setState({ text: e.target.value });
+  }
+
+  handleSubmit = (e) => {
     e.preventDefault();
-    var nextItems = this.state.items.concat([this.state.text]);
-    var nextText = '';
-    this.setState({items: nextItems, text: nextText});
-  },
-  render: function() {
+    const nextItems = this.state.items.concat([this.state.text]);
+    const nextText = '';
+    this.setState({ items: nextItems, text: nextText });
+  }
+
+  render() {
     return (
       <div>
         <h3>TODO</h3>
@@ -33,6 +34,6 @@ var TodoApp = React.createClass({
       </div>
     );
   }
-});
+}
 
-React.render(<TodoApp />, document.getElementById('content'));
+ReactDOM.render(<TodoApp />, document.getElementById('content'));
