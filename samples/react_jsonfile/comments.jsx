@@ -1,45 +1,53 @@
-// tutorial20.jsx
+class CommentBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { data: [] };
+    this.loadCommentsFromServer = this.loadCommentsFromServer.bind(this);
+    this.handleCommentSubmit = this.handleCommentSubmit.bind(this);
+  }
 
-// From tutorial20.js
-var CommentBox = React.createClass({
-  loadCommentsFromServer: function() {
+  loadCommentsFromServer() {
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       cache: false,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
+      success: (data) => {
+        this.setState({ data: data });
+      },
+      error: (xhr, status, err) => {
         console.error(this.props.url, status, err.toString());
-      }.bind(this)
+      }
     });
-  },
-  handleCommentSubmit: function(comment) {
-    var comments = this.state.data;
-    var newComments = comments.concat([comment]);
-    this.setState({data: newComments});
+  }
+
+  handleCommentSubmit(comment) {
+    const comments = this.state.data;
+    const newComments = comments.concat([comment]);
+    this.setState({ data: newComments });
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       type: 'POST',
       data: comment,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
+      success: (data) => {
+        this.setState({ data: data });
+      },
+      error: (xhr, status, err) => {
         console.error(this.props.url, status, err.toString());
-      }.bind(this)
+      }
     });
-  },
-  getInitialState: function() {
-    return {data: []};
-  },
-  componentDidMount: function() {
+  }
+
+  componentDidMount() {
     this.loadCommentsFromServer();
-    setInterval(this.loadCommentsFromServer, this.props.pollInterval);
-  },
-  render: function() {
+    this.interval = setInterval(this.loadCommentsFromServer, this.props.pollInterval);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
+  render() {
     return (
       <div className="commentBox">
         <h1>Comments</h1>
@@ -48,68 +56,70 @@ var CommentBox = React.createClass({
       </div>
     );
   }
-});
+}
 
-// From tutorial18.js
-var CommentForm = React.createClass({
-  handleSubmit: function(e) {
+class CommentForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.authorRef = React.createRef();
+    this.textRef = React.createRef();
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleSubmit(e) {
     e.preventDefault();
-    var author = React.findDOMNode(this.refs.author).value.trim();
-    var text = React.findDOMNode(this.refs.text).value.trim();
+    const author = this.authorRef.current.value.trim();
+    const text = this.textRef.current.value.trim();
     if (!text || !author) {
       return;
     }
-    this.props.onCommentSubmit({author: author, text: text});
-    React.findDOMNode(this.refs.author).value = '';
-    React.findDOMNode(this.refs.text).value = '';
-    return;
-  },
-  render: function() {
+    this.props.onCommentSubmit({ author, text });
+    this.authorRef.current.value = '';
+    this.textRef.current.value = '';
+    this.authorRef.current.focus();
+  }
+
+  render() {
     return (
       <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input type="text" placeholder="Your name" ref="author" />
-        <input type="text" placeholder="Say something..." ref="text" />
+        <input type="text" placeholder="Your name" ref={this.authorRef} />
+        <input type="text" placeholder="Say something..." ref={this.textRef} />
         <input type="submit" value="Post" />
       </form>
     );
   }
-});
+}
 
-// From tutorial10.js
-var CommentList = React.createClass({
-  render: function() {
-    var commentNodes = this.props.data.map(function (comment) {
-      return (
-        <Comment author={comment.author}>
-          {comment.text}
-        </Comment>
-      );
-    });
+class CommentList extends React.Component {
+  render() {
+    const commentNodes = this.props.data.map((comment, index) => (
+      <Comment key={index} author={comment.author}>
+        {comment.text}
+      </Comment>
+    ));
     return (
       <div className="commentList">
         {commentNodes}
       </div>
     );
   }
-});
+}
 
-// From tutorial7.js
-var Comment = React.createClass({
-  render: function() {
-    var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+class Comment extends React.Component {
+  render() {
+    const rawMarkup = marked.parse(this.props.children.toString());
     return (
       <div className="comment">
         <h2 className="commentAuthor">
           {this.props.author}
         </h2>
-        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+        <span dangerouslySetInnerHTML={{ __html: rawMarkup }} />
       </div>
     );
   }
-});
+}
 
-// Render the CommentBox element
-React.render(
+ReactDOM.render(
   <CommentBox url="comments.lua" pollInterval={2000} />,
   document.getElementById('content')
 );
