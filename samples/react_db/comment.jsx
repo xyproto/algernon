@@ -73,7 +73,7 @@ class CommentForm extends React.Component {
     this.props.onCommentSubmit({ author: author, text: text });
     this.authorRef.current.value = '';
     this.textRef.current.value = '';
-    this.authorRef.current.focus(); // Set focus back to the author input
+    this.authorRef.current.focus();
   }
 
   render() {
@@ -104,7 +104,7 @@ class CommentList extends React.Component {
 
 class Comment extends React.Component {
   render() {
-    var rawMarkup = marked.parse(this.props.children.toString());
+    const rawMarkup = marked.parse(this.props.children.toString());
     return (
       <div className="comment">
         <h2 className="commentAuthor">
@@ -116,7 +116,6 @@ class Comment extends React.Component {
   }
 }
 
-// Render the CommentBox element
 ReactDOM.render(
   <CommentBox url="jsondb.lua" pollInterval={2000} />,
   document.getElementById('content')
