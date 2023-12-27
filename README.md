@@ -165,12 +165,9 @@ Installation
 
 This method is using the latest commit from the main branch:
 
-`go get -u github.com/xyproto/algernon@main`
-
-If needed, first:
-
-* Set the GOPATH. For example: `export GOPATH=~/go`
-* Add $GOPATH/bin to the path. For example: `export PATH=$PATH:$GOPATH/bin`
+    go install github.com/xyproto/algernon@main
+    
+If neeed, add `~/go/bin` to the path. For example: `export PATH=$PATH:$HOME/go/bin`.
 
 Utilities
 ---------
