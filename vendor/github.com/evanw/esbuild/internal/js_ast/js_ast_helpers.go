@@ -184,6 +184,17 @@ func MaybeSimplifyEqualityComparison(loc logger.Loc, e *EBinary, unsupportedFeat
 	return Expr{}, false
 }
 
+func IsSymbolInstance(data E) bool {
+	switch e := data.(type) {
+	case *EDot:
+		return e.IsSymbolInstance
+
+	case *EIndex:
+		return e.IsSymbolInstance
+	}
+	return false
+}
+
 func IsPrimitiveLiteral(data E) bool {
 	switch e := data.(type) {
 	case *EAnnotation:
@@ -1696,7 +1707,7 @@ func FoldStringAddition(left Expr, right Expr, kind StringAdditionKind) Expr {
 //
 // This function intentionally avoids mutating the input AST so it can be
 // called after the AST has been frozen (i.e. after parsing ends).
-func InlineStringsAndNumbersIntoTemplate(loc logger.Loc, e *ETemplate) Expr {
+func InlinePrimitivesIntoTemplate(loc logger.Loc, e *ETemplate) Expr {
 	// Can't inline strings if there's a custom template tag
 	if e.TagOrNil.Data != nil {
 		return Expr{Loc: loc, Data: e}
@@ -1709,10 +1720,8 @@ func InlineStringsAndNumbersIntoTemplate(loc logger.Loc, e *ETemplate) Expr {
 		if value, ok := part.Value.Data.(*EInlinedEnum); ok {
 			part.Value = value.Value
 		}
-		if value, ok := part.Value.Data.(*ENumber); ok {
-			if str, ok := TryToStringOnNumberSafely(value.Value, 10); ok {
-				part.Value.Data = &EString{Value: helpers.StringToUTF16(str)}
-			}
+		if str, ok := ToStringWithoutSideEffects(part.Value.Data); ok {
+			part.Value.Data = &EString{Value: helpers.StringToUTF16(str)}
 		}
 		if str, ok := part.Value.Data.(*EString); ok {
 			if len(parts) == 0 {
@@ -2175,7 +2184,7 @@ func (ctx HelperContext) ClassCanBeRemovedIfUnused(class Class) bool {
 			return false
 		}
 
-		if property.Flags.Has(PropertyIsComputed) && !IsPrimitiveLiteral(property.Key.Data) {
+		if property.Flags.Has(PropertyIsComputed) && !IsPrimitiveLiteral(property.Key.Data) && !IsSymbolInstance(property.Key.Data) {
 			return false
 		}
 
@@ -2329,7 +2338,10 @@ func (ctx HelperContext) ExprCanBeRemovedIfUnused(expr Expr) bool {
 	case *EObject:
 		for _, property := range e.Properties {
 			// The key must still be evaluated if it's computed or a spread
-			if property.Kind == PropertySpread || (property.Flags.Has(PropertyIsComputed) && !IsPrimitiveLiteral(property.Key.Data)) {
+			if property.Kind == PropertySpread {
+				return false
+			}
+			if property.Flags.Has(PropertyIsComputed) && !IsPrimitiveLiteral(property.Key.Data) && !IsSymbolInstance(property.Key.Data) {
 				return false
 			}
 			if property.ValueOrNil.Data != nil && !ctx.ExprCanBeRemovedIfUnused(property.ValueOrNil) {
