@@ -58,7 +58,7 @@ FROM golang as builder
 LABEL MAINTAINER="%EMAIL%"
 
 # Install Algernon
-RUN CGO_ENABLED=0 GOOS=linux go install -trimpath -ldflags "-s" -a -v github.com/xyproto/algernon@latest
+RUN CGO_ENABLED=0 go install -trimpath -ldflags "-s" -a -v github.com/xyproto/algernon@latest
 
 # Copy in in the .alg file
 COPY %FILENAME% %FILENAME%
@@ -85,7 +85,8 @@ CMD ["/usr/bin/algernon", "-c", "--cachesize", "67108864", "--cert", "/etc/alger
 
 EOF
 
-# Check the OS
+# Use sed differently on macOS and on Linux
+# TODO: Add a check for *BSD
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     sed -i '' "s|%NAME%|$name|g" "$newfile"
