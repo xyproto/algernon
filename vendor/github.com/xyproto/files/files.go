@@ -145,3 +145,17 @@ func CanRead(filename string) bool {
 	// could exactly 1 byte be read?
 	return err == nil && n == 1
 }
+
+// Relative takes an absolute or relative path and attempts to return it relative to the current directory.
+// If there are errors, it simply returns the given path.
+func Relative(path string) string {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return path
+	}
+	relativePath, err := filepath.Rel(currentDir, path)
+	if err != nil {
+		return path
+	}
+	return relativePath
+}
