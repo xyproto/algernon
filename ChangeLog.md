@@ -1,5 +1,51 @@
 # Changelog
 
+Changes from 1.15.5 to 1.15.6
+=============================
+
+* Update the year in the license file.
+* Minor changes to the `alg2docker` script.
+* Update the react jsonfile example.
+* Update the TODO list example to the latest version of React.
+* Update the React + JSX + database example.
+* Add the loopvar feature to the dockerfiles.
+* Use LABEL maintainer in the Dockerfiles.
+* Combine several build and run scripts related to docker.
+* Add a simple tutorial.
+* Remove some unused code.
+* Update documentation.
+* Update dependencies.
+
+Changes from 1.15.4 to 1.15.5
+=============================
+
+* Make the Makefile clearer.
+* Update the form/registration example.
+* Update dependencies.
+
+Changes from 1.15.3 to 1.15.4
+=============================
+
+* Improve field alignment using `dkorunic/betteralign`.
+* Update dependencies.
+
+Changes from 1.15.2 to 1.15.3
+=============================
+
+* Set `GOEXPERIMENT=loopvar` and adjust the build flags.
+* Enable profile-guided optimization.
+* Update the benchmark script.
+* Check the arguments for the `servedir` Lua function.
+* Update the GH action for Homebrew.
+* Make the prefixmatch tests pass.
+* Remove the `github.com/bmizerany/assert` dependency.
+* Update the CI configuration.
+* Move two functions to `github.com/xyproto/files`.
+* Minor changes to the welcome script.
+* Minor changes to a test.
+* Minor changes to the Teal example.
+* Update dependencies.
+
 Changes from 1.15.1 to 1.15.2
 =============================
 
