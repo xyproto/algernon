@@ -1,6 +1,8 @@
 module github.com/xyproto/algernon
 
-go 1.20
+go 1.21
+
+toolchain go1.21.6
 
 require (
 	github.com/caddyserver/certmagic v0.20.0
@@ -9,7 +11,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.19.11
+	github.com/evanw/esbuild v0.19.12
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
@@ -18,7 +20,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.3.0
-	github.com/quic-go/quic-go v0.40.1
+	github.com/quic-go/quic-go v0.41.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -60,7 +62,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/pprof v0.0.0-20231229205709-960ae82b1e42 // indirect
+	github.com/google/pprof v0.0.0-20240117000934-35fc243c5815 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -68,14 +70,13 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/acmez v1.2.0 // indirect
-	github.com/miekg/dns v1.1.57 // indirect
+	github.com/miekg/dns v1.1.58 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
-	github.com/onsi/ginkgo/v2 v2.14.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.15.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/xyproto/binary v1.3.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
@@ -91,7 +92,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
