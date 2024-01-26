@@ -98,7 +98,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.8.9
 ## explicit; go 1.16
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20240117000934-35fc243c5815
+# github.com/google/pprof v0.0.0-20240125082051-42cd04596328
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.6
@@ -220,7 +220,7 @@ github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.2
 ## explicit; go 1.17
 github.com/xyproto/ask
-# github.com/xyproto/binary v1.3.0
+# github.com/xyproto/binary v1.3.3
 ## explicit; go 1.18
 github.com/xyproto/binary
 # github.com/xyproto/burnfont v1.2.3
