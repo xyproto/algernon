@@ -3,6 +3,7 @@
 General
 -------
 
+- [ ] Let USR1 or USR2 signals clear the cache.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
 - [ ] Add a flag for redirecting all `http://` traffic to `https://`.
 - [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
