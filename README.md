@@ -22,7 +22,7 @@ Distro Packages
 Quick installation (development version)
 ----------------------------------------
 
-Requires Go 1.20 or later.
+Requires Go 1.21 or later.
 
     go install github.com/xyproto/algernon@latest
 
@@ -166,7 +166,7 @@ Installation
 This method is using the latest commit from the main branch:
 
     go install github.com/xyproto/algernon@main
-    
+
 If neeed, add `~/go/bin` to the path. For example: `export PATH=$PATH:$HOME/go/bin`.
 
 Utilities
