@@ -1,0 +1,10 @@
+*.bak
+*.o
+*.swp
+*.tmp
+cmd/simple/main
+cmd/simple/simple
+cmd/summarize/main
+cmd/summarize/summarize
+include.txt
+ollamaclient

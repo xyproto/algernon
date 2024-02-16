@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.21
+go 1.21.3
 
 require (
 	github.com/caddyserver/certmagic v0.20.0
@@ -30,6 +30,7 @@ require (
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
+	github.com/xyproto/ollamaclient v1.5.0
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
 	github.com/xyproto/permissions2/v2 v2.6.9
@@ -90,7 +91,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3 // indirect
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
