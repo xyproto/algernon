@@ -250,6 +250,17 @@ codelib:import(string) -> bool
 // Completely clear the code library. Returns true if successful.
 codelib:clear() -> bool
 
+AI
+
+// Connect to the local Ollama server. Takes an optional model:tag string.
+OllamaClient([string]) -> userdata
+// Download the required model, if needed. This can take a while if the model is large.
+oc:pull()
+// Pass a prompt to Ollama and return the model output.
+oc:say([string]) -> string
+// Convenience function for passing a prompt to Ollama using "tinyllama".
+ollama([string]) -> string
+
 Various
 
 // Return a string with various server information

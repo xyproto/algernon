@@ -15,6 +15,7 @@ import (
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/mssql"
 	"github.com/xyproto/algernon/lua/onthefly"
+	"github.com/xyproto/algernon/lua/ollama"
 	"github.com/xyproto/algernon/lua/pquery"
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/algernon/lua/upload"
@@ -95,6 +96,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 	// Pages and Tags
 	onthefly.Load(L)
+
+	// Ollama / LLM support
+	ollama.Load(L)
 
 	// File uploads
 	upload.Load(L, w, req, filepath.Dir(filename))
@@ -241,6 +245,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	// Pages and Tags
 	onthefly.Load(L)
+
+	// Ollama / LLM support
+	ollama.Load(L)
 
 	// HTTP Client
 	httpclient.Load(L, ac.serverHeaderName)

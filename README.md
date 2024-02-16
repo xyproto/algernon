@@ -300,6 +300,55 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 * If you have not imported the certificates into the browser, nor used certificates that are signed by trusted certificate authorities, perform the necessary clicks to confirm that you wish to visit this page.
 * Edit `index.lua` and refresh the browser to see the result (or a Lua error message, if the script had a problem).
 
+There is also a small [tutorial](TUTORIAL.md).
+
+Using AI / LLMs / Ollama
+------------------------
+
+* The `ollama` server must be running locally.
+
+Example use, using the default `tinyllama` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
+
+```
+lua> ollama()
+ Autumn leaves, crisp air, poetry flowing - this is what comes to mind when I think of Algernon.
+
+lua> ollama("Write a haiku about software developers")
+ The software developer,
+In silence, tapping at keys,
+Creating digital worlds.
+```
+
+Using `OllamaClient` and the `mixtral` model (will be downloaded at first use, the size is 26 GiB and it might require quite a bit of RAM and also a fast CPU and/or GPU).
+
+```
+lua> oc = OllamaClient("mixtral")
+lua> oc:say("Write a quicksort function in OCaml")
+ Sure! Here's an implementation of the quicksort algorithm in OCaml:
+
+let rec qsort = function
+  | [] -> []
+  | pivot :: rest ->
+      let smaller, greater = List.partition (fun x -> x < pivot) rest in
+      qsort smaller @ [pivot] @ qsort greater
+
+This function takes a list as input and returns a new list with the same elements but sorted in ascending order using the quicksort algorithm. The `qsort` funct.
+
+Here are some examples of using the `qsort` function:
+
+# qsort [5; 2; 9; 1; 3];;
+- : int list = [1; 2; 3; 5; 9]
+
+# qsort ["apple"; "banana"; "cherry"];;
+- : string list = ["apple"; "banana"; "cherry"]
+
+# qsort [3.14; 2.718; 1.618];;
+- : float list = [1.618; 2.718; 3.14]
+
+I hope this helps! Let me know if you have any questions or need further clarification.
+```
+
+Available Ollama models are available here: [Ollama Library](https://ollama.com/library)
 
 Basic Lua functions
 -------------------
@@ -555,6 +604,23 @@ POST(string, [table], [table], [string]) -> string
 DO(string, string, [table], [table]) -> string
 ~~~
 
+
+Lua functions for AI
+--------------------
+
+~~~c
+// Connect to the local Ollama server and use either the `tinyllama` model, or the supplied model string (like ie. mixtral:latest).
+OllamaClient([string]) -> userdata
+
+// Download the required model, if needed. This may take a while if the model is large.
+oc:pull()
+
+// Pass a prompt to Ollama and return the model output. If no prompt is given, it will request a poem about Algernon.
+oc:say([string]) -> string
+
+// Convenience function to ask the local Ollama server to use the `tinyllama` model and use the given string as the prompt.
+ollama([string]) -> string
+~~~
 
 
 Lua functions for plugins
