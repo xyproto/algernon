@@ -16,7 +16,7 @@ const (
 	Class = "OllamaClient"
 
 	defaultModel  = "tinyllama"
-	defaultPrompt = "Write a haiku about the poet Algernon"
+	defaultPrompt = "Generate a haiku about the poet Algernon"
 )
 
 // Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
