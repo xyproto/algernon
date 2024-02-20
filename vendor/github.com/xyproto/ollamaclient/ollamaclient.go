@@ -13,19 +13,39 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-const defaultModel = "nous-hermes:7b-llama2-q2_K"
+const (
+	defaultModel            = "nous-hermes:7b-llama2-q2_K" // tinyllama would also be a good default
+	defaultHTTPTimeout      = 10 * time.Minute             // per HTTP request to Ollama
+	defaultReproducibleSeed = 1337                         // for when generated output should not be random, but have temperature 0 and a specific seed
+)
+
+var (
+	// HTTPClient is the HTTP client that will be used to communicate with the Ollama server
+	HTTPClient = &http.Client{
+		Timeout: defaultHTTPTimeout,
+	}
+)
 
 // Config represents configuration details for communicating with the Ollama API
 type Config struct {
-	API     string
-	Model   string
-	Verbose bool
+	API              string
+	Model            string
+	Verbose          bool
+	PullTimeout      time.Duration
+	ReproducibleSeed int
+}
+
+// RequestOptions holds the seed and temperature
+type RequestOptions struct {
+	Seed        int     `json:"seed"`
+	Temperature float64 `json:"temperature"`
 }
 
 // GenerateRequest represents the request payload for generating output
 type GenerateRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
+	Model   string         `json:"model"`
+	Prompt  string         `json:"prompt"`
+	Options RequestOptions `json:"options"`
 }
 
 // GenerateResponse represents the response data from the generate API call
@@ -56,20 +76,6 @@ type EmbeddingsResponse struct {
 	Embeddings []float64 `json:"embedding"`
 }
 
-// PullRequest represents the request payload for pulling a model
-type PullRequest struct {
-	Name     string `json:"name"`
-	Insecure bool   `json:"insecure,omitempty"`
-	Stream   bool   `json:"stream,omitempty"`
-}
-
-// PullResponse represents the response data from the pull API call
-type PullResponse struct {
-	Status string `json:"status"`
-	Digest string `json:"digest"`
-	Total  int64  `json:"total"`
-}
-
 // Model represents a downloaded model
 type Model struct {
 	Name     string    `json:"name"`
@@ -86,62 +92,96 @@ type ListResponse struct {
 // New initializes a new Config using environment variables
 func New() *Config {
 	return &Config{
-		env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		env.Str("OLLAMA_MODEL", defaultModel),
-		env.Bool("OLLAMA_VERBOSE"),
+		API:              env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:            env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
 // NewWithModel initializes a new Config using a specified model and environment variables
 func NewWithModel(model string) *Config {
 	return &Config{
-		env.Str("OLLAMA_HOST", "http://localhost:11434"),
-		model,
-		env.Bool("OLLAMA_VERBOSE"),
+		API:              env.Str("OLLAMA_HOST", "http://localhost:11434"),
+		Model:            model,
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
-// NewWithAddr initializes a new Config using a specified address (like https://localhost:11434) and environment variables
+// NewWithAddr initializes a new Config using a specified address (like http://localhost:11434) and environment variables
 func NewWithAddr(addr string) *Config {
 	return &Config{
-		addr,
-		env.Str("OLLAMA_MODEL", defaultModel),
-		env.Bool("OLLAMA_VERBOSE"),
+		API:              addr,
+		Model:            env.Str("OLLAMA_MODEL", defaultModel),
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
-// NewWithModelAndAddr initializes a new Config using a specified model, address (like https://localhost:11434) and environment variables
+// NewWithModelAndAddr initializes a new Config using a specified model, address (like http://localhost:11434) and environment variables
 func NewWithModelAndAddr(model, addr string) *Config {
 	return &Config{
-		addr,
-		model,
-		env.Bool("OLLAMA_VERBOSE"),
+		API:              addr,
+		Model:            model,
+		Verbose:          env.Bool("OLLAMA_VERBOSE"),
+		PullTimeout:      defaultPullTimeout,
+		ReproducibleSeed: defaultReproducibleSeed,
 	}
 }
 
-// NewCustom initializes a new Config using a specified model, address (like https://localhost:11434) and a verbose bool
-func NewCustom(model, addr string, verbose bool) *Config {
+// NewCustom initializes a new Config using a specified model, address (like http://localhost:11434) and a verbose bool
+func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration, reproducibleSeed int) *Config {
 	return &Config{
 		addr,
 		model,
 		verbose,
+		pullTimeout,
+		reproducibleSeed,
 	}
 }
 
+// SetReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed
+func (oc *Config) SetReproducibleOutput() {
+	oc.ReproducibleSeed = defaultReproducibleSeed
+}
+
+// SetRandomOutput configures the generated output to not be reproducible
+func (oc *Config) SetRandomOutput() {
+	oc.ReproducibleSeed = 0
+}
+
 // GetOutput sends a request to the Ollama API and returns the generated output
-func (c *Config) GetOutput(prompt string) (string, error) {
+func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, error) {
 	reqBody := GenerateRequest{
-		Model:  c.Model,
+		Model:  oc.Model,
 		Prompt: prompt,
 	}
+
+	// Reproducible output
+	if oc.ReproducibleSeed > 0 {
+		reqBody.Options = RequestOptions{
+			Seed:        oc.ReproducibleSeed,
+			Temperature: 0,
+		}
+	} else {
+		reqBody.Options = RequestOptions{
+			Seed:        -1,
+			Temperature: 0.7,
+		}
+	}
+
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
 	}
-	if c.Verbose {
-		fmt.Printf("Sending request to /api/generate: %s\n", string(reqBytes))
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.API, string(reqBytes))
 	}
-	resp, err := http.Post(c.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.API+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -159,14 +199,25 @@ func (c *Config) GetOutput(prompt string) (string, error) {
 			break
 		}
 	}
-	return sb.String(), nil
+	if len(optionalTrimSpace) > 0 && optionalTrimSpace[0] {
+		return strings.TrimSpace(sb.String()), nil
+	}
+	return strings.TrimPrefix(sb.String(), "\n"), nil
+}
 
+// MustOutput returns the output from Ollama, or the error as a string if not
+func (oc *Config) MustOutput(prompt string) string {
+	output, err := oc.GetOutput(prompt, true)
+	if err != nil {
+		return err.Error()
+	}
+	return output
 }
 
 // AddEmbedding sends a request to get embeddings for a given prompt
-func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
+func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
 	reqBody := EmbeddingsRequest{
-		Model:  c.Model,
+		Model:  oc.Model,
 		Prompt: prompt,
 	}
 	reqBytes, err := json.Marshal(reqBody)
@@ -174,11 +225,11 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 		return []float64{}, err
 	}
 
-	if c.Verbose {
-		fmt.Printf("Sending request to /api/embeddings: %s\n", string(reqBytes))
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/embeddings: %s\n", oc.API, string(reqBytes))
 	}
 
-	resp, err := http.Post(c.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return []float64{}, err
 	}
@@ -192,62 +243,12 @@ func (c *Config) AddEmbedding(prompt string) ([]float64, error) {
 	return embResp.Embeddings, nil
 }
 
-// Pull sends a request to pull a specified model from the Ollama API
-func (c *Config) Pull() (string, error) {
-	reqBody := PullRequest{
-		Name:   c.Model,
-		Stream: true,
-	}
-	reqBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
-	}
-	if c.Verbose {
-		fmt.Printf("Sending request to /api/pull: %s\n", string(reqBytes))
-	}
-
-	resp, err := http.Post(c.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var sb strings.Builder
-	decoder := json.NewDecoder(resp.Body)
-
-	if c.Verbose {
-		fmt.Printf("Downloading and/or updating %s...", c.Model)
-	}
-	for {
-		var pullResp PullResponse
-		if err := decoder.Decode(&pullResp); err != nil {
-			break
-		}
-		sb.WriteString(pullResp.Status)
-		if !strings.HasPrefix(pullResp.Status, "downloading ") && !strings.HasPrefix(pullResp.Status, "pulling ") {
-			if strings.HasPrefix(pullResp.Status, "verifying ") { // done downloading
-				break
-			}
-			return "", fmt.Errorf("recevied status when downloading: %s", pullResp.Status)
-		}
-		if c.Verbose {
-			fmt.Print(".")
-		}
-		// Update the progress status every second
-		time.Sleep(1 * time.Second)
-	}
-	if c.Verbose {
-		fmt.Println(" OK")
-	}
-	return sb.String(), nil
-}
-
 // List collects info about the currently downloaded models
-func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
-	if c.Verbose {
-		fmt.Println("Sending request to /api/tags")
+func (oc *Config) List() ([]string, map[string]time.Time, map[string]int64, error) {
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/tags\n", oc.API)
 	}
-	resp, err := http.Get(c.API + "/api/tags")
+	resp, err := http.Get(oc.API + "/api/tags")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -269,8 +270,12 @@ func (c *Config) List() ([]string, map[string]time.Time, map[string]int64, error
 }
 
 // SizeOf returns the current size of the given model, or returns (-1, err) if it can't be found
-func (c *Config) SizeOf(model string) (int64, error) {
-	names, _, sizeMap, err := c.List()
+func (oc *Config) SizeOf(model string) (int64, error) {
+	model = strings.TrimSpace(model)
+	if !strings.Contains(model, ":") {
+		model += ":latest"
+	}
+	names, _, sizeMap, err := oc.List()
 	if err != nil {
 		return 0, err
 	}
@@ -283,8 +288,12 @@ func (c *Config) SizeOf(model string) (int64, error) {
 }
 
 // Has returns true if the given model exists locally
-func (c *Config) Has(model string) bool {
-	if names, _, _, err := c.List(); err == nil { // success
+func (oc *Config) Has(model string) bool {
+	model = strings.TrimSpace(model)
+	if !strings.Contains(model, ":") {
+		model += ":latest"
+	}
+	if names, _, _, err := oc.List(); err == nil { // success
 		for _, name := range names {
 			if name == model {
 				return true
@@ -297,15 +306,15 @@ func (c *Config) Has(model string) bool {
 }
 
 // HasModel returns true if the configured model exists locally
-func (c *Config) HasModel() bool {
-	return c.Has(c.Model)
+func (oc *Config) HasModel() bool {
+	return oc.Has(oc.Model)
 }
 
 // PullIfNeeded pulls a model, but only if it's not already there.
 // While Pull downloads/updates the model regardless.
-func (c *Config) PullIfNeeded() error {
-	if !c.HasModel() {
-		if _, err := c.Pull(); err != nil {
+func (oc *Config) PullIfNeeded(optionalVerbose ...bool) error {
+	if !oc.HasModel() {
+		if _, err := oc.Pull(optionalVerbose...); err != nil {
 			return err
 		}
 	}

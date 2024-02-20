@@ -33,6 +33,9 @@ github.com/didip/tollbooth/limiter
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
+github.com/dustin/go-humanize
 # github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 ## explicit
 github.com/eknkc/amber
@@ -253,7 +256,7 @@ github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 ## explicit; go 1.10
 github.com/xyproto/mime
-# github.com/xyproto/ollamaclient v1.6.0
+# github.com/xyproto/ollamaclient v1.9.0
 ## explicit; go 1.21.3
 github.com/xyproto/ollamaclient
 # github.com/xyproto/onthefly v1.2.3
