@@ -2,6 +2,8 @@ package ollamaclient
 
 import "strings"
 
+// Massage will try to extract a shorter message from a longer LLM output
+// using pretty "hacky" string manipulation techniques.
 func Massage(generatedOutput string) string {
 	s := generatedOutput
 	// Keep the part after ":", if applicable

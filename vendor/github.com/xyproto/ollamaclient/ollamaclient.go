@@ -4,7 +4,6 @@ package ollamaclient
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -53,7 +52,6 @@ type GenerateResponse struct {
 	Model              string `json:"model"`
 	CreatedAt          string `json:"created_at"`
 	Response           string `json:"response"`
-	Done               bool   `json:"done"`
 	Context            []int  `json:"context,omitempty"`
 	TotalDuration      int64  `json:"total_duration,omitempty"`
 	LoadDuration       int64  `json:"load_duration,omitempty"`
@@ -63,6 +61,7 @@ type GenerateResponse struct {
 	PromptEvalDuration int64  `json:"prompt_eval_duration,omitempty"`
 	EvalCount          int    `json:"eval_count,omitempty"`
 	EvalDuration       int64  `json:"eval_duration,omitempty"`
+	Done               bool   `json:"done"`
 }
 
 // EmbeddingsRequest represents the request payload for getting embeddings
@@ -78,10 +77,10 @@ type EmbeddingsResponse struct {
 
 // Model represents a downloaded model
 type Model struct {
-	Name     string    `json:"name"`
 	Modified time.Time `json:"modified_at"`
-	Size     int64     `json:"size"`
+	Name     string    `json:"name"`
 	Digest   string    `json:"digest"`
+	Size     int64     `json:"size"`
 }
 
 // ListResponse represents the response data from the tag API call
@@ -287,10 +286,10 @@ func (oc *Config) SizeOf(model string) (int64, error) {
 			return sizeMap[name], nil
 		}
 	}
-	return -1, errors.New("could not find model: " + model)
+	return -1, fmt.Errorf("could not find model: %s", model)
 }
 
-// Has returns true if the given model exists locally
+// Has returns true if the given model exists
 func (oc *Config) Has(model string) bool {
 	model = strings.TrimSpace(model)
 	if !strings.Contains(model, ":") {
@@ -308,16 +307,43 @@ func (oc *Config) Has(model string) bool {
 	return false
 }
 
-// HasModel returns true if the configured model exists locally
+// Has2 returns true if the given model exists
+func (oc *Config) Has2(model string) (bool, error) {
+	model = strings.TrimSpace(model)
+	if !strings.Contains(model, ":") {
+		model += ":latest"
+	}
+	if names, _, _, err := oc.List(); err == nil { // success
+		for _, name := range names {
+			if name == model {
+				return true, nil
+			}
+		}
+	} else {
+		return false, err
+	}
+	return false, nil // could list models, but could not find the given model name
+}
+
+// HasModel returns true if the configured model exists
 func (oc *Config) HasModel() bool {
 	return oc.Has(oc.Model)
+}
+
+// HasModel2 returns true if the configured model exists
+func (oc *Config) HasModel2() (bool, error) {
+	return oc.Has2(oc.Model)
 }
 
 // PullIfNeeded pulls a model, but only if it's not already there.
 // While Pull downloads/updates the model regardless.
 // Also takes an optional bool for if progress bars should be used when models are being downloaded.
 func (oc *Config) PullIfNeeded(optionalVerbose ...bool) error {
-	if !oc.HasModel() {
+	found, err := oc.HasModel2()
+	if err != nil {
+		return err
+	}
+	if !found {
 		if _, err := oc.Pull(optionalVerbose...); err != nil {
 			return err
 		}

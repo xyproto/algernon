@@ -14,16 +14,19 @@ import (
 
 const defaultPullTimeout = 48 * time.Hour // pretty generous, in case someone has a poor connection
 
+// PullRequest represents the request payload for pulling a model
 type PullRequest struct {
-	Name   string
-	Stream bool
+	Name     string `json:"name"`
+	Insecure bool   `json:"insecure,omitempty"`
+	Stream   bool   `json:"stream,omitempty"`
 }
 
+// PullResponse represents the response data from the pull API call
 type PullResponse struct {
-	Digest    string
-	Completed int64
-	Total     int64
-	Status    string
+	Status    string `json:"status"`
+	Digest    string `json:"digest"`
+	Total     int64  `json:"total"`
+	Completed int64  `json:"completed"`
 }
 
 var (
@@ -59,6 +62,7 @@ func generateColorizedProgressBar(progress float64, width int) string {
 	return bar
 }
 
+// Pull takes an optional verbose bool and tries to pull the current oc.Model
 func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 	if env.Bool("NO_COLOR") {
 		// Skip colors

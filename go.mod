@@ -31,7 +31,7 @@ require (
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
-	github.com/xyproto/ollamaclient v1.9.1
+	github.com/xyproto/ollamaclient v1.9.2
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
 	github.com/xyproto/permissions2/v2 v2.6.9
