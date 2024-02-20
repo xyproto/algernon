@@ -191,7 +191,7 @@ func constructOllamaClient(L *lua.LState) (*lua.LUserData, error) {
 var ollamaMethods = map[string]lua.LGFunction{
 	"ask":      ollamaGetOutput, // does the same as "say"
 	"creative": ollamaGetOutputCreative,
-	"byteSize": ollamaSizeInBytes,
+	"bytesize": ollamaSizeInBytes,
 	"has":      ollamaHas,
 	"list":     ollamaList,
 	"pull":     ollamaPullIfNeeded,
