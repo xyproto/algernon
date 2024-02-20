@@ -48,7 +48,12 @@ func ollamaHas(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	// Check if the given model name has already been downloaded
 	modelName := L.ToString(2) // arg 2
-	found := oc.Has(modelName)
+	found, err := oc.Has2(modelName)
+	if err != nil {
+		log.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
 	L.Push(lua.LBool(found))
 	return 1 // number of results
 }
