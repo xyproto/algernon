@@ -170,9 +170,9 @@ func constructOllamaClient(L *lua.LState) (*lua.LUserData, error) {
 	var oc *ollamaclient.Config
 
 	top := L.GetTop()
-	if top > 1 { // given two strings, the addr and the model
-		addr := L.ToString(1)
-		modelAndOptionalTag := L.ToString(2)
+	if top > 1 { // given two strings, the model and host address
+		modelAndOptionalTag := L.ToString(1)
+		addr := L.ToString(2)
 		oc = ollamaclient.NewWithModelAndAddr(modelAndOptionalTag, addr)
 	} else if top > 0 { // given one string, the model
 		modelAndOptionalTag := L.ToString(1)
@@ -189,30 +189,33 @@ func constructOllamaClient(L *lua.LState) (*lua.LUserData, error) {
 
 // The hash map methods that are to be registered
 var ollamaMethods = map[string]lua.LGFunction{
-	"ask":      ollamaGetOutput, // does the same as "say"
+	"ask":      ollamaGetOutput,
 	"creative": ollamaGetOutputCreative,
 	"bytesize": ollamaSizeInBytes,
 	"has":      ollamaHas,
 	"list":     ollamaList,
 	"pull":     ollamaPullIfNeeded,
-	"say":      ollamaGetOutput,   // does the same as "ask"
 	"select":   ollamaSelectModel, // select a model, but does not pull anything
 	"size":     ollamaSize,
 }
 
 func askOllama(L *lua.LState) int {
-	oc := ollamaclient.NewWithModel(defaultModel)
+	prompt := defaultPrompt
+	model := defaultModel
+	top := L.GetTop()
+	if top > 1 {
+		prompt = L.ToString(1)
+		model = L.ToString(2)
+	} else if top > 0 {
+		prompt = L.ToString(1)
+	}
+	oc := ollamaclient.NewWithModel(model)
 	// Pull the model, in a verbose way
 	err := oc.PullIfNeeded(true)
 	if err != nil {
 		log.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
-	}
-	prompt := defaultPrompt
-	top := L.GetTop()
-	if top == 1 {
-		prompt = L.ToString(1)
 	}
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
