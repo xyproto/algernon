@@ -2,6 +2,8 @@
 *.o
 *.swp
 *.tmp
+cmd/fortune/main
+cmd/fortune/fortune
 cmd/simple/main
 cmd/simple/simple
 cmd/summarize/main

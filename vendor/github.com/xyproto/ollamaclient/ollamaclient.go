@@ -144,9 +144,14 @@ func NewCustom(model, addr string, verbose bool, pullTimeout time.Duration, repr
 	}
 }
 
-// SetReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed
-func (oc *Config) SetReproducibleOutput() {
-	oc.ReproducibleSeed = defaultReproducibleSeed
+// SetReproducibleOutput configures the generated output to be reproducible, with temperature 0 and a specific seed.
+// It takes an optional random seed.
+func (oc *Config) SetReproducibleOutput(optionalSeed ...int) {
+	if len(optionalSeed) == 0 {
+		oc.ReproducibleSeed = defaultReproducibleSeed
+		return
+	}
+	oc.ReproducibleSeed = optionalSeed[0]
 }
 
 // SetRandomOutput configures the generated output to not be reproducible
@@ -154,7 +159,8 @@ func (oc *Config) SetRandomOutput() {
 	oc.ReproducibleSeed = 0
 }
 
-// GetOutput sends a request to the Ollama API and returns the generated output
+// GetOutput sends a request to the Ollama API and returns the generated output.
+// It also takes an optional bool for if spaces should be trimmed before and after the output.
 func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, error) {
 	reqBody := GenerateRequest{
 		Model:  oc.Model,
@@ -214,8 +220,8 @@ func (oc *Config) MustOutput(prompt string) string {
 	return output
 }
 
-// AddEmbedding sends a request to get embeddings for a given prompt
-func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
+// Embeddings sends a request to get embeddings for a given prompt
+func (oc *Config) Embeddings(prompt string) ([]float64, error) {
 	reqBody := EmbeddingsRequest{
 		Model:  oc.Model,
 		Prompt: prompt,
@@ -224,17 +230,14 @@ func (oc *Config) AddEmbedding(prompt string) ([]float64, error) {
 	if err != nil {
 		return []float64{}, err
 	}
-
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/embeddings: %s\n", oc.API, string(reqBytes))
 	}
-
 	resp, err := HTTPClient.Post(oc.API+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return []float64{}, err
 	}
 	defer resp.Body.Close()
-
 	decoder := json.NewDecoder(resp.Body)
 	var embResp EmbeddingsResponse
 	if err := decoder.Decode(&embResp); err != nil {
@@ -312,6 +315,7 @@ func (oc *Config) HasModel() bool {
 
 // PullIfNeeded pulls a model, but only if it's not already there.
 // While Pull downloads/updates the model regardless.
+// Also takes an optional bool for if progress bars should be used when models are being downloaded.
 func (oc *Config) PullIfNeeded(optionalVerbose ...bool) error {
 	if !oc.HasModel() {
 		if _, err := oc.Pull(optionalVerbose...); err != nil {
