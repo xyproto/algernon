@@ -311,10 +311,10 @@ Example use, using the default `tinyllama` model (will be downloaded at first us
 
 ```
 lua> ollama()
- Autumn leaves, crisp air, poetry flowing - this is what comes to mind when I think of Algernon.
+Autumn leaves, crisp air, poetry flowing - this is what comes to mind when I think of Algernon.
 
 lua> ollama("Write a haiku about software developers")
- The software developer,
+The software developer,
 In silence, tapping at keys,
 Creating digital worlds.
 ```
@@ -323,8 +323,8 @@ Using `OllamaClient` and the `mixtral` model (will be downloaded at first use, t
 
 ```
 lua> oc = OllamaClient("mixtral")
-lua> oc:say("Write a quicksort function in OCaml")
- Sure! Here's an implementation of the quicksort algorithm in OCaml:
+lua> oc:ask("Write a quicksort function in OCaml")
+Sure! Here's an implementation of the quicksort algorithm in OCaml:
 
 let rec qsort = function
   | [] -> []
@@ -610,16 +610,36 @@ Lua functions for AI
 
 ~~~c
 // Connect to the local Ollama server and use either the `tinyllama` model, or the supplied model string (like ie. mixtral:latest).
-OllamaClient([string]) -> userdata
+// Also takes an optional host address.
+OllamaClient([string], [string]) -> userdata
 
 // Download the required model, if needed. This may take a while if the model is large.
 oc:pull()
 
-// Pass a prompt to Ollama and return the model output. If no prompt is given, it will request a poem about Algernon.
-oc:say([string]) -> string
+// Pass a prompt to Ollama and return the reproducible generated output. If no prompt is given, it will request a poem about Algernon.
+oc:ask([string]) -> string
 
-// Convenience function to ask the local Ollama server to use the `tinyllama` model and use the given string as the prompt.
-ollama([string]) -> string
+// Pass a prompt to Ollama and return the generated output that will differ every time.
+oc:creative([string]) -> string
+
+// Check if the given model name is downloaded and ready
+oc:has(string)
+
+// List all models that are downloaded and ready
+oc:list()
+
+// Set the active model name
+oc:select(string)
+
+// Get the size of the given model name as a human-friendly string
+oc:size(string) -> string
+
+// Get the size of the given model name, in bytes
+oc:bytesize(string) -> number
+
+// Convenience function for the local Ollama server that takes an optional prompt and an optional model name.
+// Generates a poem with the `tinyllama` model by default.
+ollama([string], [string]) -> string
 ~~~
 
 
