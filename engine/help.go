@@ -254,21 +254,21 @@ AI
 
 // Connect to an Ollama server. Takes an optional model:tag string and an optional host address.
 OllamaClient([string], [string]) -> userdata
-// List all models that are downloaded and ready
+// List all models that are downloaded and ready.
 oc:list()
-// Check if the given model name is downloaded and ready
+// Check if the given model name is downloaded and ready.
 oc:has(string)
-// Set the active model name
-oc:select(string)
+// Get or set the current model, but don't pull anything.
+oc:model([string])
 // Download the required model, if needed. This can take a while the first time if the model is large.
 oc:pull()
-// Pass a prompt to Ollama and return the reproducible generated output.
-oc:ask([string]) -> string
-// Pass a prompt to Ollama and return a generated output that will be differ every time.
-oc:creative([string]) -> string
-// Get the size of the given model name as a human-friendly string
+// Pass a prompt to Ollama and return the reproducible generated output. Can also take a model name.
+oc:ask([string], [string]) -> string
+// Pass a prompt to Ollama and generate output that will differ every time. Can also take a model name.
+oc:creative([string], [string]) -> string
+// Get the size of the given model name as a human-friendly string.
 oc:size(string) -> string
-// Get the size of the given model name, in bytes
+// Get the size of the given model name, in bytes.
 oc:bytesize(string) -> number
 // Convenience function for passing a prompt and optional model name to the local Ollama server.
 // The default prompt generates a poem and the default model is "tinyllama".

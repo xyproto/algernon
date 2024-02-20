@@ -617,10 +617,12 @@ OllamaClient([string], [string]) -> userdata
 oc:pull()
 
 // Pass a prompt to Ollama and return the reproducible generated output. If no prompt is given, it will request a poem about Algernon.
-oc:ask([string]) -> string
+// Can also take an optional model name, which will trigger a download if the model is missing.
+oc:ask([string], [string]) -> string
 
 // Pass a prompt to Ollama and return the generated output that will differ every time.
-oc:creative([string]) -> string
+// Can also take an optional model name, which will trigger a download if the model is missing.
+oc:creative([string], [string]) -> string
 
 // Check if the given model name is downloaded and ready
 oc:has(string)
@@ -628,8 +630,8 @@ oc:has(string)
 // List all models that are downloaded and ready
 oc:list()
 
-// Set the active model name
-oc:select(string)
+// Get or set the currently active model name, but does not pull anything
+oc:model([string])
 
 // Get the size of the given model name as a human-friendly string
 oc:size(string) -> string

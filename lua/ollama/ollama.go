@@ -75,11 +75,10 @@ func ollamaList(L *lua.LState) int {
 func ollamaSizeInBytes(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	top := L.GetTop()
-	if top < 2 {
-		L.Push(lua.LString("Please supply a model name as the first argument"))
-		return 1 // number of results
+	modelName := oc.Model
+	if top > 1 {
+		modelName = L.ToString(2)
 	}
-	modelName := L.ToString(2)
 	size, err := oc.SizeOf(modelName) // get the size of the given model name
 	if err != nil {
 		log.Error(err)
@@ -95,11 +94,10 @@ func ollamaSizeInBytes(L *lua.LState) int {
 func ollamaSize(L *lua.LState) int {
 	oc := checkOllamaClient(L) // Assume this is a function that checks for an Ollama client instance
 	top := L.GetTop()
-	if top < 2 {
-		L.Push(lua.LString("Please supply a model name as the first argument"))
-		return 1 // number of results
+	modelName := oc.Model
+	if top > 1 {
+		modelName = L.ToString(2)
 	}
-	modelName := L.ToString(2)
 	size, err := oc.SizeOf(modelName) // Assume this gets the size of the given model name in bytes
 	if err != nil {
 		log.Println(err)
@@ -113,24 +111,35 @@ func ollamaSize(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// ollamaSelectModel sets the given model name, but does not pull anything
-func ollamaSelectModel(L *lua.LState) int {
+// ollamaModel sets or gets the given model name, but does not pull anything
+func ollamaModel(L *lua.LState) int {
 	oc := checkOllamaClient(L) // Assume this is a function that checks for an Ollama client instance
 	top := L.GetTop()
 	if top < 2 {
-		L.Push(lua.LString("Please supply a model name as the first argument"))
+		// Return the current model name if no model is passed in
+		L.Push(lua.LString(oc.Model))
 		return 1 // number of results
 	}
-	modelName := L.ToString(2)
+	modelName := strings.TrimSpace(L.ToString(2))
 	oc.Model = modelName
-	return 0 // no results
+	L.Push(lua.LString(oc.Model))
+	return 1 // number of results
 }
 
-func ollamaGetOutput(L *lua.LState) int {
+func ollamaGenerateOutput(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	prompt := defaultPrompt
 	top := L.GetTop()
-	if top > 1 {
+	if top > 2 {
+		prompt = L.ToString(2)   // arg 2
+		oc.Model = L.ToString(3) // arg 3
+		err := oc.PullIfNeeded(true)
+		if err != nil {
+			log.Error(err)
+			L.Push(lua.LString(err.Error()))
+			return 1 // number of results
+		}
+	} else if top > 1 {
 		prompt = L.ToString(2) // arg 2
 	}
 
@@ -144,15 +153,24 @@ func ollamaGetOutput(L *lua.LState) int {
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
-	L.Push(lua.LString(output))
+	L.Push(lua.LString(strings.TrimPrefix(output, " ")))
 	return 1 // number of results
 }
 
-func ollamaGetOutputCreative(L *lua.LState) int {
+func ollamaGenerateOutputCreative(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	prompt := defaultPrompt
 	top := L.GetTop()
-	if top > 1 {
+	if top > 2 {
+		prompt = L.ToString(2)   // arg 2
+		oc.Model = L.ToString(3) // arg 3
+		err := oc.PullIfNeeded(true)
+		if err != nil {
+			log.Error(err)
+			L.Push(lua.LString(err.Error()))
+			return 1 // number of results
+		}
+	} else if top > 1 {
 		prompt = L.ToString(2) // arg 2
 	}
 
@@ -194,13 +212,13 @@ func constructOllamaClient(L *lua.LState) (*lua.LUserData, error) {
 
 // The hash map methods that are to be registered
 var ollamaMethods = map[string]lua.LGFunction{
-	"ask":      ollamaGetOutput,
-	"creative": ollamaGetOutputCreative,
+	"ask":      ollamaGenerateOutput,
 	"bytesize": ollamaSizeInBytes,
+	"creative": ollamaGenerateOutputCreative,
 	"has":      ollamaHas,
 	"list":     ollamaList,
+	"model":    ollamaModel, // set or get the current model, but don't pull anything
 	"pull":     ollamaPullIfNeeded,
-	"select":   ollamaSelectModel, // select a model, but does not pull anything
 	"size":     ollamaSize,
 }
 
