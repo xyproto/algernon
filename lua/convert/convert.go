@@ -195,13 +195,16 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 		if lss > 0 {
 			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
-		} else if lsi > 0 {
+		}
+		if lsi > 0 {
 			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
-		} else if lis > 0 {
+		}
+		if lis > 0 {
 			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
-		} else if lii > 0 {
+		}
+		if lii > 0 {
 			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
 		}
@@ -209,13 +212,16 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 		if lii > 0 {
 			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
-		} else if lis > 0 {
+		}
+		if lis > 0 {
 			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
-		} else if lsi > 0 {
+		}
+		if lsi > 0 {
 			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
-		} else if lss > 0 {
+		}
+		if lss > 0 {
 			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
 		}
