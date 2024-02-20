@@ -101,6 +101,33 @@ func NewWithModel(model string) *Config {
 	}
 }
 
+// NewWithAddr initializes a new Config using a specified address (like https://localhost:11434) and environment variables
+func NewWithAddr(addr string) *Config {
+	return &Config{
+		addr,
+		env.Str("OLLAMA_MODEL", defaultModel),
+		env.Bool("OLLAMA_VERBOSE"),
+	}
+}
+
+// NewWithModelAndAddr initializes a new Config using a specified model, address (like https://localhost:11434) and environment variables
+func NewWithModelAndAddr(model, addr string) *Config {
+	return &Config{
+		addr,
+		model,
+		env.Bool("OLLAMA_VERBOSE"),
+	}
+}
+
+// NewCustom initializes a new Config using a specified model, address (like https://localhost:11434) and a verbose bool
+func NewCustom(model, addr string, verbose bool) *Config {
+	return &Config{
+		addr,
+		model,
+		verbose,
+	}
+}
+
 // GetOutput sends a request to the Ollama API and returns the generated output
 func (c *Config) GetOutput(prompt string) (string, error) {
 	reqBody := GenerateRequest{

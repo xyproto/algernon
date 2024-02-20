@@ -37,7 +37,7 @@ github.com/dlclark/regexp2/syntax
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.20.0
+# github.com/evanw/esbuild v0.20.1
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -253,7 +253,7 @@ github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 ## explicit; go 1.10
 github.com/xyproto/mime
-# github.com/xyproto/ollamaclient v1.5.0
+# github.com/xyproto/ollamaclient v1.6.0
 ## explicit; go 1.21.3
 github.com/xyproto/ollamaclient
 # github.com/xyproto/onthefly v1.2.3
