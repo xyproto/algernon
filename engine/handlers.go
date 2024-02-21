@@ -356,8 +356,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 
 	// .prompt files contains a content type and a prompt that is converted to data in a reproducible way, with a newline between them
 	case ".prompt":
-		if data, err := os.ReadFile(filename); err == nil { // success
-			lines := strings.Split(string(data), "\n")
+		if promptblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
+			lines := strings.Split(promptblock.String(), "\n")
 			if len(lines) < 3 {
 				log.Error(filename + " must contain a content type, a blank line and then a prompt to be usable")
 			} else if strings.TrimSpace(lines[1]) != "" {
@@ -365,8 +365,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 			} else {
 				contentType := strings.TrimSpace(lines[0])
 				prompt := strings.TrimSpace(strings.Join(lines[2:], "\n"))
-				w.Header().Add("Conent-Type", contentType)
+				w.Header().Add("Content-Type", contentType)
 				oc := ollamaclient.NewWithModel("tinyllama")
+				ollamaclient.HTTPClient = &http.Client{
+					Timeout: time.Duration(ac.writeTimeout) * time.Second,
+				}
 				if err := oc.PullIfNeeded(true); err == nil { // success
 					if output, err := oc.GetOutput(prompt, true); err == nil { // success
 						if strings.Contains(output, "<") && strings.Contains(output, ">") {
