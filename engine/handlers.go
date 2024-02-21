@@ -32,6 +32,8 @@ const (
 	defaultSoonDuration = time.Second * 3
 )
 
+var oc *ollamaclient.Config
+
 // ClientCanGzip checks if the client supports gzip compressed responses
 func (ac *Config) ClientCanGzip(req *http.Request) bool {
 	// Curl does not use --compressed by default. This causes problems when
@@ -358,18 +360,21 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 	case ".prompt":
 		if promptblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			lines := strings.Split(promptblock.String(), "\n")
-			if len(lines) < 3 {
-				log.Error(filename + " must contain a content type, a blank line and then a prompt to be usable")
-			} else if strings.TrimSpace(lines[1]) != "" {
-				log.Error(filename + " must contain a content type, a blank line and then a prompt to be usable")
+			if len(lines) < 4 {
+				log.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
+			} else if strings.TrimSpace(lines[2]) != "" {
+				log.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
 			} else {
 				contentType := strings.TrimSpace(lines[0])
-				prompt := strings.TrimSpace(strings.Join(lines[2:], "\n"))
+				model := strings.TrimSpace(lines[1])
+				prompt := strings.TrimSpace(strings.Join(lines[3:], "\n"))
 				w.Header().Add("Content-Type", contentType)
-				oc := ollamaclient.NewWithModel("tinyllama")
-				ollamaclient.HTTPClient = &http.Client{
-					Timeout: time.Duration(ac.writeTimeout) * time.Second,
+				if oc == nil {
+					oc = ollamaclient.NewWithModel(model)
+				} else if oc.Model != model {
+					oc.Model = model
 				}
+				ollamaclient.HTTPClient.Timeout = time.Duration(ac.writeTimeout) * time.Second
 				if err := oc.PullIfNeeded(true); err == nil { // success
 					if output, err := oc.GetOutput(prompt, true); err == nil { // success
 						if strings.Contains(output, "<") && strings.Contains(output, ">") {
