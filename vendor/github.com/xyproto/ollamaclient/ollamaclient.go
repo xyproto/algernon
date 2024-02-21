@@ -158,27 +158,16 @@ func (oc *Config) SetRandomOutput() {
 	oc.ReproducibleSeed = 0
 }
 
-// GetOutput sends a request to the Ollama API and returns the generated output.
-// It also takes an optional bool for if spaces should be trimmed before and after the output.
-func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, error) {
+// GetOutputWithSeedAndTemp sends a request to the Ollama API and returns the generated output.
+func (oc *Config) GetOutputWithSeedAndTemp(prompt string, trimSpace bool, seed int, temperature float64) (string, error) {
 	reqBody := GenerateRequest{
 		Model:  oc.Model,
 		Prompt: prompt,
+		Options: RequestOptions{
+			Seed:        seed,        // set to -1 to make it random
+			Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
+		},
 	}
-
-	// Reproducible output
-	if oc.ReproducibleSeed > 0 {
-		reqBody.Options = RequestOptions{
-			Seed:        oc.ReproducibleSeed,
-			Temperature: 0,
-		}
-	} else {
-		reqBody.Options = RequestOptions{
-			Seed:        -1,
-			Temperature: 0.7,
-		}
-	}
-
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
@@ -191,7 +180,6 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 		return "", err
 	}
 	defer resp.Body.Close()
-
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -204,10 +192,21 @@ func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, e
 			break
 		}
 	}
-	if len(optionalTrimSpace) > 0 && optionalTrimSpace[0] {
+	if trimSpace {
 		return strings.TrimSpace(sb.String()), nil
 	}
 	return strings.TrimPrefix(sb.String(), "\n"), nil
+}
+
+// GetOutput sends a request to the Ollama API and returns the generated output.
+// It also takes an optional bool for if spaces should be trimmed before and after the output.
+func (oc *Config) GetOutput(prompt string, optionalTrimSpace ...bool) (string, error) {
+	trimSpace := len(optionalTrimSpace) > 0 && optionalTrimSpace[0]
+	// Reproducible output
+	if oc.ReproducibleSeed > 0 {
+		return oc.GetOutputWithSeedAndTemp(prompt, trimSpace, oc.ReproducibleSeed, 0)
+	}
+	return oc.GetOutputWithSeedAndTemp(prompt, trimSpace, -1, 0.7)
 }
 
 // MustOutput returns the output from Ollama, or the error as a string if not

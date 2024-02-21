@@ -31,7 +31,7 @@ require (
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
-	github.com/xyproto/ollamaclient v1.9.2
+	github.com/xyproto/ollamaclient v1.9.3
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
 	github.com/xyproto/permissions2/v2 v2.6.9
@@ -61,9 +61,9 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/gomodule/redigo v1.9.0 // indirect
+	github.com/gomodule/redigo v1.9.1 // indirect
 	github.com/google/pprof v0.0.0-20240207164012-fb44976bdcd5 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
