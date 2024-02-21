@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
+	"github.com/xyproto/ollamaclient"
 	"github.com/xyproto/recwatch"
 	"github.com/xyproto/sheepcounter"
 	"github.com/xyproto/simpleform"
@@ -167,7 +168,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 
 	case ".md", ".markdown":
 		w.Header().Add("Content-Type", "text/html;charset=utf-8")
-		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the markdown page
 			ac.MarkdownPage(w, req, markdownblock.Bytes(), filename)
 		}
@@ -317,7 +318,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		return
 
 	case ".gcss":
-		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			w.Header().Add("Content-Type", "text/css;charset=utf-8")
 			// Render the GCSS page as CSS
 			ac.GCSSPage(w, req, filename, gcssblock.Bytes())
@@ -325,7 +326,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		return
 
 	case ".scss":
-		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the SASS page (with .scss extension) as CSS
 			w.Header().Add("Content-Type", "text/css;charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.Bytes())
@@ -333,7 +334,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		return
 
 	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the JSX page as HTML with embedded JavaScript
 			w.Header().Add("Content-Type", "text/html;charset=utf-8")
 			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
@@ -344,10 +345,43 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 
 	// This case must come after the .hyper.jsx case
 	case ".jsx":
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the JSX page as JavaScript
 			w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.Bytes())
+		} else {
+			log.Error("Error when serving " + filename + ":" + err.Error())
+		}
+		return
+
+	// .prompt files contains a content type and a prompt that is converted to data in a reproducible way, with a newline between them
+	case ".prompt":
+		if data, err := os.ReadFile(filename); err == nil { // success
+			lines := strings.Split(string(data), "\n")
+			if len(lines) < 3 {
+				log.Error(filename + " must contain a content type, a blank line and then a prompt to be usable")
+			} else if strings.TrimSpace(lines[1]) != "" {
+				log.Error(filename + " must contain a content type, a blank line and then a prompt to be usable")
+			} else {
+				contentType := strings.TrimSpace(lines[0])
+				prompt := strings.TrimSpace(strings.Join(lines[2:], "\n"))
+				w.Header().Add("Conent-Type", contentType)
+				oc := ollamaclient.NewWithModel("tinyllama")
+				if err := oc.PullIfNeeded(true); err == nil { // success
+					if output, err := oc.GetOutput(prompt, true); err == nil { // success
+						if strings.Contains(output, "<") && strings.Contains(output, ">") {
+							output = betweenInclusive(output, "<", ">")
+						}
+						w.Write([]byte(output))
+					} else {
+						log.Error("could not convert " + filename + " to content: " + err.Error())
+					}
+				} else {
+					log.Error("could not convert " + filename + " to content: " + err.Error())
+				}
+			}
+		} else {
+			log.Error("Error when serving " + filename + ":" + err.Error())
 		}
 		return
 
@@ -424,7 +458,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 	}
 
 	// Read the file (possibly in compressed format, straight from the cache)
-	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // if no error
+	if dataBlock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 		// Serve the file
 		dataBlock.ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 	} else {

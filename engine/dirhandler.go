@@ -15,7 +15,7 @@ import (
 )
 
 // List of filenames that should be displayed instead of a directory listing
-var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl"}
+var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
 
 const (
 	dotSlash        = "." + utils.Pathsep           /* ./ */
