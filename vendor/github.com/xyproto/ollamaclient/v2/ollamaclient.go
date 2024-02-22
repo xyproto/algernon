@@ -250,3 +250,17 @@ func (oc *Config) PullIfNeeded(optionalVerbose ...bool) error {
 	}
 	return nil
 }
+
+// CloseCache signals the shutdown of the cache
+func CloseCache() {
+	if Cache != nil {
+		Cache.Close()
+	}
+}
+
+// ClearCache removes the current cache entries
+func ClearCache() {
+	if Cache != nil {
+		Cache.Reset()
+	}
+}

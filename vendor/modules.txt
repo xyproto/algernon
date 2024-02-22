@@ -260,7 +260,7 @@ github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 ## explicit; go 1.10
 github.com/xyproto/mime
-# github.com/xyproto/ollamaclient/v2 v2.0.2
+# github.com/xyproto/ollamaclient/v2 v2.0.3
 ## explicit; go 1.21.3
 github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/onthefly v1.2.3
