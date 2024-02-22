@@ -80,6 +80,7 @@ Design decisions
     * index.amber is Amber code that is rendered as HTML.
     * index.hyper.js or index.hyper.jsx is JSX+HyperApp code that is rendered as HTML
     * index.tl is Teal code that is interpreted as a handler function for the current directory.
+    * index.prompt is a content-type, an Ollama model, a blank line and a prompt, for generating content with LLMs.
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
     * If a single Lua script is given as a command line argument, it will be used as a standalone server. It can be used for setting up handlers or serving files and directories for specific URL prefixes.
     * style.gcss is GCSS code that is used as the style for all Pongo2, Amber and Markdown pages in the same directory.
@@ -348,7 +349,33 @@ Here are some examples of using the `qsort` function:
 I hope this helps! Let me know if you have any questions or need further clarification.
 ```
 
-Available Ollama models are available here: [Ollama Library](https://ollama.com/library)
+Available Ollama models are available here: [Ollama Library](https://ollama.com/library).
+
+There is also support for `.prompt` files that can generate contents, such as HTML pages, in a reproducible way. The results will be cached for as long as Algernon is running.
+
+Example `index.prompt` file:
+
+```
+text/html
+gemma
+
+Generate a fun and over the top web page that demonstrates the use of CSS animations and JavaScript.
+Everything should be inline in one HTML document. Only output the full and complete HTML document.
+```
+
+The experimental `prompt` format is very simple:
+
+* The first line is the `content-type`.
+* The second line is the Ollama model, such as `tinyllama:latest` or just `tinyllama`.
+* The third line is blank.
+* The rest of the lines is the prompt that will be passed to the large language model.
+
+Note that the Ollama server must be fast enough to reply within 10 seconds for this to work!
+`tinyllama` or `gemma` should be more than fast enough with a good GPU or on an M1/M2/M3 processor.
+
+For more fine-grained control, try using the Ollama-related Lua functions instead, and please create a PR or issue if something central is missing.
+
+The `ClearCache()` function can be used at the Algernon Lua prompt to also clear the AI cache.
 
 Basic Lua functions
 -------------------

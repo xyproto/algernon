@@ -1,8 +1,14 @@
 # Changelog
 
-Changes from 1.15.5 to 1.15.6
+Changes from 1.15.5 to 1.16.0
 =============================
 
+* Make it possible to clear the AI cache with `ClearCache()`.
+* Add support for using AI/LLMs (Ollama) from Lua.
+* Add support for `.prompt` files that contains a content-type, a model name, a blank line and a prompt.
+* Make small changes to the built-in themes.
+* Update CI configuration.
+* Require Go 1.21 or later, mostly because of the QUIC dependency.
 * Update the year in the license file.
 * Minor changes to the `alg2docker` script.
 * Update the react jsonfile example.
