@@ -6,7 +6,7 @@
 #
 
 # The current version goes here, as the default value
-VERSION=${1:-'1.15.5'}
+VERSION=${1:-'1.16.0'}
 
 if [ -z "$1" ]; then
   echo "The current version is $VERSION, pass the new version as the first argument if you wish to change it"
@@ -21,8 +21,13 @@ setconf main.go versionString "\"Algernon "$VERSION"\""
 
 # Update the date and version in the man page
 d=$(LC_ALL=C date +'%d %b %Y')
-sed -i "s/\"[0-9]* [A-Z][a-z]* [0-9]*\"/\"$d\"/g" algernon.1
-sed -i "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" algernon.1
 
-# Update the version in this script
-sed -i "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" "$0"
+if [ "$(uname)" = "Darwin" ]; then
+    sed -i '' "s/\"[0-9]* [A-Z][a-z]* [0-9]*\"/\"$d\"/g" algernon.1
+    sed -i '' "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" algernon.1
+    sed -i '' "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" "$0"
+else
+    sed -i "s/\"[0-9]* [A-Z][a-z]* [0-9]*\"/\"$d\"/g" algernon.1
+    sed -i "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" algernon.1
+    sed -i "s/[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*/$VERSION/g" "$0"
+fi
