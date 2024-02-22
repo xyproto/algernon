@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xyproto/bigcache"
+	"github.com/allegro/bigcache/v3"
 	"github.com/xyproto/env/v2"
 )
 
