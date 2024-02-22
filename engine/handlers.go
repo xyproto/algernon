@@ -17,7 +17,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
-	"github.com/xyproto/ollamaclient"
+	"github.com/xyproto/ollamaclient/v2"
 	"github.com/xyproto/recwatch"
 	"github.com/xyproto/sheepcounter"
 	"github.com/xyproto/simpleform"
@@ -370,13 +370,14 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 				prompt := strings.TrimSpace(strings.Join(lines[3:], "\n"))
 				w.Header().Add("Content-Type", contentType)
 				if oc == nil {
-					oc = ollamaclient.NewWithModel(model)
-				} else if oc.Model != model {
-					oc.Model = model
+					oc = ollamaclient.New()
 				}
-				ollamaclient.HTTPClient.Timeout = time.Duration(ac.writeTimeout) * time.Second
+				if oc.ModelName != model {
+					oc.ModelName = model
+				}
+				oc.HTTPTimeout = time.Duration(ac.writeTimeout) * time.Second
 				if err := oc.PullIfNeeded(true); err == nil { // success
-					if output, err := oc.GetOutput(prompt, true); err == nil { // success
+					if output, err := oc.GetOutput(prompt); err == nil { // success
 						if strings.Contains(output, "<") && strings.Contains(output, ">") {
 							output = betweenInclusive(output, "<", ">")
 						}

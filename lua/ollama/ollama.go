@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/ollamaclient"
+	"github.com/xyproto/ollamaclient/v2"
 
 	"sync"
 )
@@ -52,7 +52,7 @@ func ollamaHas(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	// Check if the given model name has already been downloaded
 	modelName := L.ToString(2) // arg 2
-	found, err := oc.Has2(modelName)
+	found, err := oc.Has(modelName)
 	if err != nil {
 		log.Error(err)
 		L.Push(lua.LString(err.Error()))
@@ -80,7 +80,7 @@ func ollamaSizeInBytes(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	top := L.GetTop()
 	mut.RLock()
-	modelName := oc.Model
+	modelName := oc.ModelName
 	mut.RUnlock()
 	if top > 1 {
 		modelName = L.ToString(2)
@@ -101,7 +101,7 @@ func ollamaSize(L *lua.LState) int {
 	oc := checkOllamaClient(L) // Assume this is a function that checks for an Ollama client instance
 	top := L.GetTop()
 	mut.RLock()
-	modelName := oc.Model
+	modelName := oc.ModelName
 	mut.RUnlock()
 	if top > 1 {
 		modelName = L.ToString(2)
@@ -126,7 +126,7 @@ func ollamaModel(L *lua.LState) int {
 	if top < 2 {
 		// Return the current model name if no model is passed in
 		mut.RLock()
-		model := oc.Model
+		model := oc.ModelName
 		mut.RUnlock()
 		L.Push(lua.LString(model))
 		return 1 // number of results
@@ -134,20 +134,20 @@ func ollamaModel(L *lua.LState) int {
 	modelName := strings.TrimSpace(L.ToString(2))
 	L.Push(lua.LString(modelName))
 	mut.Lock()
-	oc.Model = modelName
+	oc.ModelName = modelName
 	mut.Unlock()
 	return 1 // number of results
 }
 
 func ollamaGenerateOutput(L *lua.LState) int {
+	mut.Lock()
+	defer mut.Unlock()
 	oc := checkOllamaClient(L) // arg 1
 	prompt := defaultPrompt
 	top := L.GetTop()
 	if top > 2 {
-		prompt = L.ToString(2) // arg 2
-		mut.Lock()
-		oc.Model = L.ToString(3) // arg 3
-		mut.Unlock()
+		prompt = L.ToString(2)       // arg 2
+		oc.ModelName = L.ToString(3) // arg 3
 		err := oc.PullIfNeeded(true)
 		if err != nil {
 			log.Error(err)
@@ -157,12 +157,8 @@ func ollamaGenerateOutput(L *lua.LState) int {
 	} else if top > 1 {
 		prompt = L.ToString(2) // arg 2
 	}
-	const trimSpaces = true
-	const temperature = 0
-	mut.RLock()
-	seed := oc.ReproducibleSeed
-	mut.RUnlock()
-	output, err := oc.GetOutputWithSeedAndTemp(prompt, trimSpaces, seed, temperature)
+	oc.SetReproducible()
+	output, err := oc.GetOutput(prompt)
 	if err != nil {
 		log.Error(err)
 		L.Push(lua.LString(err.Error()))
@@ -173,14 +169,14 @@ func ollamaGenerateOutput(L *lua.LState) int {
 }
 
 func ollamaGenerateOutputCreative(L *lua.LState) int {
+	mut.Lock()
+	defer mut.Unlock()
 	oc := checkOllamaClient(L) // arg 1
 	prompt := defaultPrompt
 	top := L.GetTop()
 	if top > 2 {
-		prompt = L.ToString(2) // arg 2
-		mut.Lock()
-		oc.Model = L.ToString(3) // arg 3
-		mut.Unlock()
+		prompt = L.ToString(2)       // arg 2
+		oc.ModelName = L.ToString(3) // arg 3
 		err := oc.PullIfNeeded(true)
 		if err != nil {
 			log.Error(err)
@@ -190,10 +186,8 @@ func ollamaGenerateOutputCreative(L *lua.LState) int {
 	} else if top > 1 {
 		prompt = L.ToString(2) // arg 2
 	}
-	const trimSpaces = true
-	const seed = -1
-	const temperature = 0.8
-	output, err := oc.GetOutputWithSeedAndTemp(prompt, trimSpaces, seed, temperature)
+	oc.SetRandom()
+	output, err := oc.GetOutput(prompt)
 	if err != nil {
 		log.Error(err)
 		L.Push(lua.LString(err.Error()))
@@ -204,19 +198,15 @@ func ollamaGenerateOutputCreative(L *lua.LState) int {
 }
 
 func constructOllamaClient(L *lua.LState) (*lua.LUserData, error) {
-	// Create a new OllamaClient
-	var oc *ollamaclient.Config
-
+	oc := ollamaclient.New()
 	top := L.GetTop()
 	if top > 1 { // given two strings, the model and host address
-		modelAndOptionalTag := L.ToString(1)
-		addr := L.ToString(2)
-		oc = ollamaclient.NewWithModelAndAddr(modelAndOptionalTag, addr)
+		oc.ModelName = L.ToString(1)
+		oc.ServerAddr = L.ToString(2)
 	} else if top > 0 { // given one string, the model
-		modelAndOptionalTag := L.ToString(1)
-		oc = ollamaclient.NewWithModel(modelAndOptionalTag)
+		oc.ModelName = L.ToString(1)
 	} else {
-		oc = ollamaclient.NewWithModel(defaultModel)
+		oc.ModelName = defaultModel
 	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
@@ -247,7 +237,8 @@ func askOllama(L *lua.LState) int {
 	} else if top > 0 {
 		prompt = L.ToString(1)
 	}
-	oc := ollamaclient.NewWithModel(model)
+	oc := ollamaclient.New()
+	oc.ModelName = model
 	// Pull the model, in a verbose way
 	err := oc.PullIfNeeded(true)
 	if err != nil {
@@ -261,7 +252,7 @@ func askOllama(L *lua.LState) int {
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
-	L.Push(lua.LString(strings.TrimPrefix(output, " ")))
+	L.Push(lua.LString(output))
 	return 1 // number of results
 }
 
