@@ -5,6 +5,7 @@ import (
 
 	"github.com/xyproto/datablock"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/ollamaclient/v2"
 )
 
 // DataToClient is a helper function for sending file data (that might be cached) to a HTTP client
@@ -34,6 +35,7 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 
 	// Clear the cache
 	L.SetGlobal("ClearCache", L.NewFunction(func(L *lua.LState) int {
+		ollamaclient.ClearCache()
 		if ac.cache == nil {
 			L.Push(lua.LString(disabledMessage))
 			return 1 // number of results
