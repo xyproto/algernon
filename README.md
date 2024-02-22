@@ -1282,7 +1282,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.15.5
+* Version: 1.16.0
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
