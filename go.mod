@@ -31,7 +31,7 @@ require (
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
-	github.com/xyproto/ollamaclient v1.9.3
+	github.com/xyproto/ollamaclient/v2 v2.0.1
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
 	github.com/xyproto/permissions2/v2 v2.6.9
@@ -78,6 +78,7 @@ require (
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/xyproto/bigcache v0.0.0-20240222125046-e9c431906989 // indirect
 	github.com/xyproto/binary v1.3.3 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/cookie/v2 v2.2.4 // indirect

@@ -223,6 +223,10 @@ github.com/wellington/sass/token
 # github.com/xyproto/ask v1.0.2
 ## explicit; go 1.17
 github.com/xyproto/ask
+# github.com/xyproto/bigcache v0.0.0-20240222125046-e9c431906989
+## explicit; go 1.16
+github.com/xyproto/bigcache
+github.com/xyproto/bigcache/queue
 # github.com/xyproto/binary v1.3.3
 ## explicit; go 1.18
 github.com/xyproto/binary
@@ -256,9 +260,9 @@ github.com/xyproto/jpath
 # github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4
 ## explicit; go 1.10
 github.com/xyproto/mime
-# github.com/xyproto/ollamaclient v1.9.3
+# github.com/xyproto/ollamaclient/v2 v2.0.1
 ## explicit; go 1.21.3
-github.com/xyproto/ollamaclient
+github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/onthefly v1.2.3
 ## explicit; go 1.9
 github.com/xyproto/onthefly

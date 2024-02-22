@@ -12,8 +12,6 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-const defaultPullTimeout = 48 * time.Hour // pretty generous, in case someone has a poor connection
-
 // PullRequest represents the request payload for pulling a model
 type PullRequest struct {
 	Name     string `json:"name"`
@@ -76,7 +74,7 @@ func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 	}
 
 	reqBody := PullRequest{
-		Name:   oc.Model,
+		Name:   oc.ModelName,
 		Stream: true,
 	}
 	reqBytes, err := json.Marshal(reqBody)
@@ -84,10 +82,10 @@ func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 		return "", err
 	}
 	if verbose {
-		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.API, string(reqBytes))
+		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.ServerAddr, string(reqBytes))
 	}
 
-	resp, err := http.Post(oc.API+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
@@ -127,24 +125,24 @@ OUT:
 			}
 		} else {
 			progress := float64(resp.Completed) / float64(resp.Total) * 100
-			progressBar := generateColorizedProgressBar(progress, 30) // Fixed width bar
+			progressBar := generateColorizedProgressBar(progress, 30)
 			displaySizeCompleted := humanize.Bytes(uint64(resp.Completed))
 			displaySizeTotal := humanize.Bytes(uint64(resp.Total))
 
 			if verbose {
-				fmt.Printf("\r%s%s - %s [%s] %.2f%% - %s/%s %s", colors["white"], oc.Model, shortDigest, progressBar, progress, displaySizeCompleted, displaySizeTotal, colors["reset"])
+				fmt.Printf("\r%s%s - %s [%s] %.2f%% - %s/%s %s", colors["white"], oc.ServerAddr, shortDigest, progressBar, progress, displaySizeCompleted, displaySizeTotal, colors["reset"])
 			}
 		}
 
 		if resp.Status == "success" {
 			if verbose {
-				fmt.Printf("\r%s - Download complete!\033[K\n", oc.Model)
+				fmt.Printf("\r%s - Download complete!\033[K\n", oc.ModelName)
 			}
 			break OUT
 		}
 
 		if time.Since(downloadStarted) > defaultPullTimeout {
-			return sb.String(), fmt.Errorf("downloading %s timed out after %v", oc.Model, defaultPullTimeout)
+			return sb.String(), fmt.Errorf("downloading %s timed out after %v", oc.ModelName, defaultPullTimeout)
 		}
 	}
 
