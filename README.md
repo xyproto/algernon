@@ -1206,11 +1206,11 @@ HTTPS certificates with Let's Encrypt and Algernon
 
 #### Method 1
 
-Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of the above" web server, then start `algernon` with `--cert=/etc/letsencrypt/live/mydomain.space/cert.pem --key=/etc/letsencrypt/live/mydomain.space/privkey.pem` where `mydomain.space` is replaced with your own domain name.
+Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of the above" web server, then start `algernon` with `--cert=/etc/letsencrypt/live/myhappydomain.com/cert.pem --key=/etc/letsencrypt/live/myhappydomain.com/privkey.pem` where `myhappydomain.com` is replaced with your own domain name.
 
-First make Algernon serve a directory for the domain, like `/srv/mydomain.space`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
+First make Algernon serve a directory for the domain, like `/srv/myhappydomain.com`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
 
-Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates. A way to refresh the certificates without restarting Algernon will be implemented in the future.
+Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates.
 
 #### Method 2
 
