@@ -41,14 +41,18 @@ recs, err := provider.GetRecords(ctx, zone)
 
 // create records (AppendRecords is similar)
 newRecs, err := provider.SetRecords(ctx, zone, []libdns.Record{
-	Type:  "A",
-	Name:  "sub",
-	Value: "1.2.3.4",
+	{
+		Type:  "A",
+		Name:  "sub",
+		Value: "1.2.3.4",
+	},
 })
 
 // delete records (this example uses provider-assigned ID)
 deletedRecs, err := provider.DeleteRecords(ctx, zone, []libdns.Record{
-	ID: "foobar",
+	{
+		ID: "foobar",
+	},
 })
 
 // no matter which provider you use, the code stays the same!
@@ -56,11 +60,11 @@ deletedRecs, err := provider.DeleteRecords(ctx, zone, []libdns.Record{
 ```
 
 
-## Implementing new providers
+## Implementing new provider packages
 
-Providers are 100% written and maintained by the community! We all maintain just the packages for providers we use.
+Provider packages are 100% written and maintained by the community! Collectively, we all maintain the packages for providers we individually use.
 
-**[Instructions for adding new providers](https://github.com/libdns/libdns/wiki/Implementing-providers)** are on this repo's wiki. Please feel free to contribute.
+**[Instructions for adding new libdns packages](https://github.com/libdns/libdns/wiki/Implementing-a-libdns-package)** are on this repo's wiki. Please feel free to contribute yours!
 
 
 ## Similar projects

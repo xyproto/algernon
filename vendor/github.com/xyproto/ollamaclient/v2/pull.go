@@ -129,6 +129,11 @@ OUT:
 			displaySizeCompleted := humanize.Bytes(uint64(resp.Completed))
 			displaySizeTotal := humanize.Bytes(uint64(resp.Total))
 
+			// Strip the unit from the number right before "/"
+			if spacePos := strings.Index(displaySizeCompleted, " "); spacePos != -1 {
+				displaySizeCompleted = displaySizeCompleted[:spacePos]
+			}
+
 			if verbose {
 				fmt.Printf("\r%s%s - %s [%s] %.2f%% - %s/%s %s", colors["white"], oc.ServerAddr, shortDigest, progressBar, progress, displaySizeCompleted, displaySizeTotal, colors["reset"])
 			}

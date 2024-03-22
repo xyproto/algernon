@@ -10,15 +10,18 @@
 // that input records conform to this standard, while also ensuring that
 // output records do; adjustments to record names may need to be made before
 // or after provider API calls, for example, to maintain consistency with
-// all other libdns provider implementations. Helper functions are available
-// in this package to convert between relative and absolute names.
+// all other libdns packages. Helper functions are available in this package
+// to convert between relative and absolute names.
 //
 // Although zone names are a required input, libdns does not coerce any
 // particular representation of DNS zones; only records. Since zone name and
 // records are separate inputs in libdns interfaces, it is up to the caller
 // to pair a zone's name with its records in a way that works for them.
 //
-// All interface implementations must be safe for concurrent/parallel use.
+// All interface implementations must be safe for concurrent/parallel use,
+// meaning 1) no data races, and 2) simultaneous method calls must result
+// in either both their expected outcomes or an error.
+//
 // For example, if AppendRecords() is called at the same time and two API
 // requests are made to the provider at the same time, the result of both
 // requests must be visible after they both complete; if the provider does
@@ -32,6 +35,8 @@ package libdns
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -89,7 +94,23 @@ type RecordDeleter interface {
 	DeleteRecords(ctx context.Context, zone string, recs []Record) ([]Record, error)
 }
 
+// ZoneLister can list available DNS zones.
+type ZoneLister interface {
+	// ListZones returns the list of available DNS zones for use by
+	// other libdns methods.
+	//
+	// Implementations must honor context cancellation and be safe for
+	// concurrent use.
+	ListZones(ctx context.Context) ([]Zone, error)
+}
+
 // Record is a generalized representation of a DNS record.
+//
+// The values of this struct should be free of zone-file-specific syntax,
+// except if this struct's fields do not sufficiently represent all the
+// fields of a certain record type; in that case, the remaining data for
+// which there are not specific fields should be stored in the Value as
+// it appears in the zone file.
 type Record struct {
 	// provider-specific metadata
 	ID string
@@ -101,7 +122,76 @@ type Record struct {
 	TTL   time.Duration
 
 	// type-dependent record fields
-	Priority int // used by MX, SRV, and URI records
+	Priority uint // HTTPS, MX, SRV, and URI records
+	Weight   uint // SRV and URI records
+}
+
+// Zone is a generalized representation of a DNS zone.
+type Zone struct {
+	Name string
+}
+
+// ToSRV parses the record into a SRV struct with fully-parsed, literal values.
+//
+// EXPERIMENTAL; subject to change or removal.
+func (r Record) ToSRV() (SRV, error) {
+	if r.Type != "SRV" {
+		return SRV{}, fmt.Errorf("record type not SRV: %s", r.Type)
+	}
+
+	fields := strings.Fields(r.Value)
+	if len(fields) != 2 {
+		return SRV{}, fmt.Errorf("malformed SRV value; expected: '<port> <target>'")
+	}
+
+	port, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return SRV{}, fmt.Errorf("invalid port %s: %v", fields[0], err)
+	}
+	if port < 0 {
+		return SRV{}, fmt.Errorf("port cannot be < 0: %d", port)
+	}
+
+	parts := strings.SplitN(r.Name, ".", 3)
+	if len(parts) < 3 {
+		return SRV{}, fmt.Errorf("name %v does not contain enough fields; expected format: '_service._proto.name'", r.Name)
+	}
+
+	return SRV{
+		Service:  strings.TrimPrefix(parts[0], "_"),
+		Proto:    strings.TrimPrefix(parts[1], "_"),
+		Name:     parts[2],
+		Priority: r.Priority,
+		Weight:   r.Weight,
+		Port:     uint(port),
+		Target:   fields[1],
+	}, nil
+}
+
+// SRV contains all the parsed data of an SRV record.
+//
+// EXPERIMENTAL; subject to change or removal.
+type SRV struct {
+	Service  string // no leading "_"
+	Proto    string // no leading "_"
+	Name     string
+	Priority uint
+	Weight   uint
+	Port     uint
+	Target   string
+}
+
+// ToRecord converts the parsed SRV data to a Record struct.
+//
+// EXPERIMENTAL; subject to change or removal.
+func (s SRV) ToRecord() Record {
+	return Record{
+		Type:     "SRV",
+		Name:     fmt.Sprintf("_%s._%s.%s", s.Service, s.Proto, s.Name),
+		Priority: s.Priority,
+		Weight:   s.Weight,
+		Value:    fmt.Sprintf("%d %s", s.Port, s.Target),
+	}
 }
 
 // RelativeName makes fqdn relative to zone. For example, for a FQDN of
@@ -109,7 +199,13 @@ type Record struct {
 //
 // If fqdn cannot be expressed relative to zone, the input fqdn is returned.
 func RelativeName(fqdn, zone string) string {
-	return strings.TrimSuffix(strings.TrimSuffix(fqdn, zone), ".")
+	// liberally ignore trailing dots on both fqdn and zone, because
+	// the relative name won't have a trailing dot anyway; I assume
+	// this won't be problematic...?
+	// (initially implemented because Cloudflare returns "fully-
+	// qualified" domains in their records without a trailing dot,
+	// but the input zone typically has a trailing dot)
+	return strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(fqdn, "."), strings.TrimSuffix(zone, ".")), ".")
 }
 
 // AbsoluteName makes name into a fully-qualified domain name (FQDN) by
