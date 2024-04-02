@@ -3,9 +3,7 @@
 General
 -------
 
-- [ ] Cache the Ollama output when it is set to temperature 0 and a fixed seed. Use a configurable cache size.
 - [ ] Add a built-in SSH3 server that can be configured with a flag.
-- [ ] Add support for `ollama`, so that a file containing just a prompt can be served as ie. HTML.
 - [ ] Let USR1 or USR2 signals clear the cache.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
 - [ ] Add a flag for redirecting all `http://` traffic to `https://`.
