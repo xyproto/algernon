@@ -109,7 +109,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20240327155427-868f304927ed
+# github.com/google/pprof v0.0.0-20240402174815-29b9bb013b0f
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/klauspost/cpuid/v2 v2.2.7
@@ -388,7 +388,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.22.0
+# golang.org/x/net v0.23.0
 ## explicit; go 1.18
 golang.org/x/net/bpf
 golang.org/x/net/http/httpguts
