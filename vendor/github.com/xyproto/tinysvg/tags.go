@@ -21,6 +21,16 @@ type Tag struct {
 	firstChild  *Tag // first child
 }
 
+var (
+	gt                = []byte{'>'}
+	lt                = []byte{'<'}
+	ltSlash           = []byte("</")
+	spaceSlashGt      = []byte(" />")
+	equalEscapedQuote = []byte("=\"")
+	escapedQuoteSpace = []byte("\" ")
+	space             = []byte{' '}
+)
+
 // NewTag creates a new tag based on the given name.
 // "name" is what will appear right after "<" when rendering as XML/HTML/SVG.
 func NewTag(name []byte) *Tag {
@@ -71,9 +81,9 @@ func (tag *Tag) GetAttrString() []byte {
 			ret = append(ret, ' ')
 		} else {
 			ret = append(ret, key...)
-			ret = append(ret, []byte("=\"")...)
+			ret = append(ret, equalEscapedQuote...) // =\"
 			ret = append(ret, value...)
-			ret = append(ret, []byte("\" ")...)
+			ret = append(ret, escapedQuoteSpace...) // \"
 		}
 	}
 	if len(ret) > 0 {
@@ -100,39 +110,39 @@ func (tag *Tag) getFlatXML() []byte {
 	attrs := tag.GetAttrString()
 	ret := make([]byte, 0)
 	ret = append(ret, spacing...)
-	ret = append(ret, []byte("<")...)
+	ret = append(ret, '<')
 	ret = append(ret, tag.name...)
 	if len(attrs) > 0 {
-		ret = append(ret, []byte(" ")...)
+		ret = append(ret, ' ')
 		ret = append(ret, attrs...)
 	}
 	if (len(tag.content) == 0) && (len(tag.xmlContent) == 0) && (len(tag.lastContent) == 0) {
-		ret = append(ret, []byte(" />")...)
+		ret = append(ret, []byte(spaceSlashGt)...) //  />
 	} else {
 		if len(tag.xmlContent) > 0 {
 			if tag.xmlContent[0] != ' ' {
-				ret = append(ret, []byte(">")...)
+				ret = append(ret, '>')
 				ret = append(ret, spacing...)
 				ret = append(ret, tag.xmlContent...)
 				ret = append(ret, spacing...)
-				ret = append(ret, []byte("</")...)
+				ret = append(ret, ltSlash...) // </
 				ret = append(ret, tag.name...)
-				ret = append(ret, []byte(">")...)
+				ret = append(ret, '>')
 			} else {
-				ret = append(ret, []byte(">")...)
+				ret = append(ret, '>')
 				ret = append(ret, tag.xmlContent...)
 				ret = append(ret, spacing...)
-				ret = append(ret, []byte("</")...)
+				ret = append(ret, ltSlash...) // </
 				ret = append(ret, tag.name...)
-				ret = append(ret, []byte(">")...)
+				ret = append(ret, '>')
 			}
 		} else {
-			ret = append(ret, []byte(">")...)
+			ret = append(ret, '>')
 			ret = append(ret, tag.content...)
 			ret = append(ret, tag.lastContent...)
-			ret = append(ret, []byte("</")...)
+			ret = append(ret, ltSlash...) // </
 			ret = append(ret, tag.name...)
-			ret = append(ret, []byte(">")...)
+			ret = append(ret, '>')
 		}
 	}
 	return ret
@@ -179,7 +189,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 		return n, err
 	}
 
-	x, err = w.Write([]byte("<"))
+	x, err = w.Write(lt) // <
 	n += int64(x)
 	if err != nil {
 		return n, err
@@ -192,32 +202,32 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 	}
 
 	if len(attrs) > 0 {
-		x, err = w.Write([]byte(" "))
+		x, err = w.Write(space)
 		n += int64(x)
 		if err != nil {
 			return n, err
 		}
-
 		x, err = w.Write(attrs)
 		n += int64(x)
 		if err != nil {
 			return n, err
 		}
-
 	}
+
 	if (len(tag.content) == 0) && (len(tag.xmlContent) == 0) && (len(tag.lastContent) == 0) {
 
-		x, err = w.Write([]byte(" />"))
+		x, err = w.Write(spaceSlashGt) //  />
 		n += int64(x)
 		if err != nil {
 			return n, err
 		}
 
 	} else {
+
 		if len(tag.xmlContent) > 0 {
 			if tag.xmlContent[0] != ' ' {
 
-				x, err = w.Write([]byte(">"))
+				x, err = w.Write(gt) // >
 				n += int64(x)
 				if err != nil {
 					return n, err
@@ -241,7 +251,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 					return n, err
 				}
 
-				x, err = w.Write([]byte("</"))
+				x, err = w.Write(ltSlash) // </
 				n += int64(x)
 				if err != nil {
 					return n, err
@@ -253,14 +263,14 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 					return n, err
 				}
 
-				x, err = w.Write([]byte(">"))
+				x, err = w.Write(gt) // >
 				n += int64(x)
 				if err != nil {
 					return n, err
 				}
 
 			} else {
-				x, err = w.Write([]byte(">"))
+				x, err = w.Write(gt) // >
 				n += int64(x)
 				if err != nil {
 					return n, err
@@ -278,7 +288,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 					return n, err
 				}
 
-				x, err = w.Write([]byte("</"))
+				x, err = w.Write(ltSlash) // </
 				n += int64(x)
 				if err != nil {
 					return n, err
@@ -290,7 +300,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 					return n, err
 				}
 
-				x, err = w.Write([]byte(">"))
+				x, err = w.Write(gt) // >
 				n += int64(x)
 				if err != nil {
 					return n, err
@@ -298,7 +308,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 
 			}
 		} else {
-			x, err = w.Write([]byte(">"))
+			x, err = w.Write(gt) // >
 			n += int64(x)
 			if err != nil {
 				return n, err
@@ -316,7 +326,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 				return n, err
 			}
 
-			x, err = w.Write([]byte("</"))
+			x, err = w.Write(ltSlash) // </
 			n += int64(x)
 			if err != nil {
 				return n, err
@@ -328,7 +338,7 @@ func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
 				return n, err
 			}
 
-			x, err = w.Write([]byte(">"))
+			x, err = w.Write(gt) // >
 			n += int64(x)
 			if err != nil {
 				return n, err
@@ -434,7 +444,7 @@ func (tag *Tag) GetTag(name []byte) (*Tag, error) {
 	}
 	couldNotFindError := fmt.Errorf("could not find tag: %s", name)
 	if tag.CountChildren() == 0 {
-		// No children. Not found so far
+		// No children. Not found so far.
 		return nil, couldNotFindError
 	}
 

@@ -12,6 +12,12 @@ type Member[T comparable] struct {
 	Value T
 }
 
+// Equaler check if the two values of the same type are equal.
+type Equaler[V comparable] interface {
+	Equal(other V) bool
+	comparable
+}
+
 // iMember is the type constraint for Member used by Enum.
 //
 // We can't use Member directly in type constraints
@@ -148,6 +154,16 @@ func (e Enum[M, V]) GoString() string {
 	}
 	joined := strings.Join(values, ", ")
 	return fmt.Sprintf("enum.New(%s)", joined)
+}
+
+// Parse is like [Enum.Parse] but finds the member for the value using [Equaler] comparator.
+func Parse[M iMember[V], V Equaler[V]](e Enum[M, V], value V) *M {
+	for v, m := range e.v2m {
+		if v.Equal(value) {
+			return m
+		}
+	}
+	return nil
 }
 
 // Builder is a constructor for an [Enum].

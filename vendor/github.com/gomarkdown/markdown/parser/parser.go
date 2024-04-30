@@ -56,7 +56,7 @@ const (
 )
 
 // for each character that triggers a response when parsing inline data.
-type inlineParser func(p *Parser, data []byte, offset int) (int, ast.Node)
+type InlineParser func(p *Parser, data []byte, offset int) (int, ast.Node)
 
 // ReferenceOverrideFunc is expected to be called with a reference string and
 // return either a valid Reference type that the reference string maps to or
@@ -98,7 +98,7 @@ type Parser struct {
 
 	refs           map[string]*reference
 	refsRecord     map[string]struct{}
-	inlineCallback [256]inlineParser
+	inlineCallback [256]InlineParser
 	nesting        int
 	maxNesting     int
 	insideLink     bool
@@ -181,7 +181,7 @@ func NewWithExtensions(extension Extensions) *Parser {
 	return &p
 }
 
-func (p *Parser) RegisterInline(n byte, fn inlineParser) inlineParser {
+func (p *Parser) RegisterInline(n byte, fn InlineParser) InlineParser {
 	prev := p.inlineCallback[n]
 	p.inlineCallback[n] = fn
 	return prev
