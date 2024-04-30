@@ -2,7 +2,7 @@
 
 PROJECT ?= algernon
 
-GOBUILD := GOEXPERIMENT=loopvar go build -mod=vendor -v
+GOBUILD := go build -mod=vendor -v
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)

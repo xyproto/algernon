@@ -10,7 +10,6 @@ WORKDIR /algernon
 RUN GOOS=linux \
     GOARCH=amd64 \
     CGO_ENABLED=0 \
-    GOEXPERIMENT=loopvar \
     go build \
       -mod=vendor \
       -a \

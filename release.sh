@@ -8,7 +8,6 @@ echo "Version $version"
 
 export GOBUILD=( go build -mod=vendor -trimpath -ldflags "-w -s" -a -o )
 export CGO_ENABLED=0
-export GOEXPERIMENT=loopvar
 
 echo 'Compiling...'
 echo '* Linux x86_64'
