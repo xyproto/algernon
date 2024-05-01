@@ -70,7 +70,15 @@ func Massage(generatedOutput string) string {
 	}
 	// Let the first letter be uppercase
 	s = strings.ToUpper(string([]rune(s)[0])) + string([]rune(s)[1:])
+
 	// Trim spaces
 	s = strings.TrimSpace(s)
+
+	// Remove trailing </s>
+	s = strings.TrimSuffix(s, "</s>")
+
+	// Trim spaces
+	s = strings.TrimSpace(s)
+
 	return s
 }

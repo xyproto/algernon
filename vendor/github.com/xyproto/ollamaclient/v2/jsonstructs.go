@@ -4,15 +4,17 @@ import "time"
 
 // RequestOptions holds the seed and temperature
 type RequestOptions struct {
-	Seed        int     `json:"seed"`
-	Temperature float64 `json:"temperature"`
+	Seed          int     `json:"seed"`
+	Temperature   float64 `json:"temperature"`
+	ContextLength int64   `json:"num_ctx,omitempty"`
 }
 
 // GenerateRequest represents the request payload for generating output
 type GenerateRequest struct {
 	Model   string         `json:"model"`
-	Prompt  string         `json:"prompt"`
-	Options RequestOptions `json:"options"`
+	Prompt  string         `json:"prompt,omitempty"`
+	Images  []string       `json:"images,omitempty"` // base64 encoded images
+	Options RequestOptions `json:"options,omitempty"`
 }
 
 // GenerateResponse represents the response data from the generate API call
