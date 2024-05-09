@@ -1,7 +1,7 @@
 SimpleMaria
 ===========
 
-[![Build Status](https://travis-ci.org/xyproto/simplemaria.svg?branch=master)](https://travis-ci.org/xyproto/simplemaria) [![GoDoc](https://godoc.org/github.com/xyproto/simplemaria?status.svg)](http://godoc.org/github.com/xyproto/simplemaria)
+[![GoDoc](https://godoc.org/github.com/xyproto/simplemaria?status.svg)](http://godoc.org/github.com/xyproto/simplemaria)
 
 An easy way to use a MariaDB/MySQL database from Go.
 
@@ -85,6 +85,6 @@ A MariaDB/MySQL Database must be up and running locally for `go test` to work.
 Version, license and author
 ---------------------------
 
-* Version: 1.3.2
+* Version: 1.3.4
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

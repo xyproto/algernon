@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/hex"
-	"io/ioutil"
+	"io"
 )
 
 // MariaDB/MySQL does not handle some characters well.
@@ -38,7 +38,7 @@ func Decode(code *string) error {
 	}
 	buf := bytes.NewBuffer(unhexedBytes)
 	decompressorReader := flate.NewReader(buf)
-	decompressedBytes, err := ioutil.ReadAll(decompressorReader)
+	decompressedBytes, err := io.ReadAll(decompressorReader)
 	decompressorReader.Close()
 	if err != nil {
 		return err

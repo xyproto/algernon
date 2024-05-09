@@ -9,7 +9,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,7 +55,7 @@ func SecureCookie(req *http.Request, name, cookieSecret string) (string, bool) {
 		buf := bytes.NewBufferString(val)
 		encoder := base64.NewDecoder(base64.StdEncoding, buf)
 
-		res, _ := ioutil.ReadAll(encoder)
+		res, _ := io.ReadAll(encoder)
 		return string(res), true
 	}
 	return "", false
@@ -89,7 +89,7 @@ func SetCookiePath(w http.ResponseWriter, name, value string, age int64, path st
 // The cookie is cleared by setting the expiration date to 1970-01-01.
 // Note that browsers *may* be configured to not delete the cookie.
 func ClearCookie(w http.ResponseWriter, cookieName, cookiePath string) {
-	ignoredContent := "SNUSNU" // random string
+	const ignoredContent = "SNUSNU" // random string
 	cookie := fmt.Sprintf("%s=%s; path=%s; expires=Thu, 01 Jan 1970 00:00:00 GMT", cookieName, ignoredContent, cookiePath)
 	SetHeader(w, "Set-Cookie", cookie, true)
 }

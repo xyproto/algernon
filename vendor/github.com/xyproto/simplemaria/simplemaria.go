@@ -4,14 +4,16 @@
 package simplemaria
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	// Use the mysql database driver
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"strconv"
-	"strings"
+
+	"github.com/xyproto/env/v2"
+
+	"database/sql"
+
+	_ "github.com/go-mysql-org/go-mysql/driver"
 )
 
 const (
@@ -40,12 +42,12 @@ type (
 )
 
 const (
-
 	// The default "username:password@host:port/database" that the database is running at
-	defaultDatabaseServer = ""     // "username:password@server:port/"
-	defaultDatabaseName   = "test" // "main"
-	defaultStringType     = "TEXT" // "VARCHAR(65535)"
+	defaultDatabaseServer = "localhost" // "username:password@server:port/"
+	defaultDatabaseName   = "test"      // "main"
+	defaultStringType     = "TEXT"      // "VARCHAR(65535)"
 	defaultPort           = 3306
+	defaultUser           = "user"
 
 	// Requires MySQL >= 5.53 and MariaDB >= ? for utf8mb4
 	charset = "utf8mb4" // "utf8"
@@ -108,9 +110,19 @@ func TestConnectionHostWithDSN(connectionString string) (err error) {
 // Create a new database connection.
 // connectionString may be on the form "username:password@host:port/database".
 func NewHost(connectionString string) *Host {
-
-	newConnectionString, dbname := rebuildConnectionString(connectionString)
-
+	// Use env.Str to fetch environment variables with defaults
+	hostname := env.Str("MARIADB_HOST", defaultDatabaseServer)
+	port := env.Str("MARIADB_PORT", strconv.Itoa(defaultPort))
+	user := env.Str("MARIADB_USER", defaultUser)
+	password := env.Str("MARIADB_PASSWORD")
+	dbname := env.Str("MARIADB_DBNAME", defaultDatabaseName)
+	// Rebuild the connection string with potential new values from environment
+	var newConnectionString string
+	if password != "" {
+		newConnectionString = fmt.Sprintf("%s:%s@%s:%s/%s", user, password, hostname, port, dbname)
+	} else {
+		newConnectionString = fmt.Sprintf("%s@%s:%s/%s", user, hostname, port, dbname)
+	}
 	db, err := sql.Open("mysql", newConnectionString)
 	if err != nil {
 		log.Fatalln("Could not connect to " + newConnectionString + "!")
@@ -150,10 +162,20 @@ func NewHostWithDSN(connectionString string, dbname string) *Host {
 
 // The default database connection
 func New() *Host {
-	connectionString := defaultDatabaseServer + defaultDatabaseName
-	if !strings.HasSuffix(defaultDatabaseServer, "/") {
-		connectionString = defaultDatabaseServer + "/" + defaultDatabaseName
+	user := env.Str("MARIADB_USER", defaultUser)
+	password := env.Str("MARIADB_PASSWORD")
+	host := env.Str("MARIADB_HOST", defaultDatabaseServer)
+	port := env.Str("MARIADB_PORT", strconv.Itoa(defaultPort))
+	dbname := env.Str("MARIADB_DBNAME", defaultDatabaseName)
+
+	// Build the connection string based on whether a password is provided
+	var connectionString string
+	if password == "" {
+		connectionString = fmt.Sprintf("%s@%s:%s/%s", user, host, port, dbname)
+	} else {
+		connectionString = fmt.Sprintf("%s:%s@%s:%s/%s", user, password, host, port, dbname)
 	}
+
 	return NewHost(connectionString)
 }
 

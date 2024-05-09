@@ -108,28 +108,31 @@ func splitConnectionString(connectionString string) (string, string, bool, strin
 	return username, password, hasPassword, host, port, dbname
 }
 
-// Build a DSN
 func buildConnectionString(username, password string, hasPassword bool, host, port, dbname string) string {
+	// Build the new connection string without "tcp()"
+	var newConnectionString string
 
-	// Build the new connection string
+	if username != "" {
+		if hasPassword {
+			newConnectionString = username + ":" + password
+		} else {
+			newConnectionString = username
+		}
+		newConnectionString += "@" // Include '@' only if there's a username
+	}
 
-	newConnectionString := ""
-	if (host != "") && (port != "") {
-		newConnectionString += "tcp(" + host + ":" + port + ")"
+	if host != "" && port != "" {
+		newConnectionString += host + ":" + port
 	} else if host != "" {
-		newConnectionString += "tcp(" + host + ")"
+		newConnectionString += host
 	} else if port != "" {
-		newConnectionString += "tcp(" + ":" + port + ")"
-		log.Fatalln("There is only a port. This should not happen.")
+		// Only having a port is unusual and generally not recommended
+		log.Fatalln("Only a port is specified without a host, which is invalid.")
 	}
-	if (username != "") && hasPassword {
-		newConnectionString = username + ":" + password + "@" + newConnectionString
-	} else if username != "" {
-		newConnectionString = username + "@" + newConnectionString
-	} else if hasPassword {
-		newConnectionString = ":" + password + "@" + newConnectionString
+
+	if dbname != "" {
+		newConnectionString += "/" + dbname
 	}
-	newConnectionString += "/"
 
 	if Verbose {
 		log.Println("DSN:", newConnectionString)
