@@ -306,7 +306,7 @@ There is also a small [tutorial](TUTORIAL.md).
 Using AI / LLMs / Ollama
 ------------------------
 
-* The `ollama` server must be running locally.
+* The `ollama` server must be running locally, or a `host:port` must be set in the `OLLAMA_HOST` environment variable.
 
 Example use, using the default `tinyllama` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
 
