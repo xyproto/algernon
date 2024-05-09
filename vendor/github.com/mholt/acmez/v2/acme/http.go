@@ -207,6 +207,11 @@ func (c *Client) httpReq(ctx context.Context, method, endpoint string, joseJSONP
 					err = problem
 					continue
 				}
+				if problem.Status == 0 {
+					// for some reason, some servers omit the status, for example:
+					// https://caddy.community/t/acme-account-is-not-regenerated-when-acme-server-gets-reinstalled/22627
+					problem.Status = resp.StatusCode
+				}
 				return resp, problem
 			}
 			return resp, fmt.Errorf("HTTP %d: %s", resp.StatusCode, buf.String())

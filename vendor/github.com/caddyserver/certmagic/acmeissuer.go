@@ -1,3 +1,17 @@
+// Copyright 2015 Matthew Holt
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package certmagic
 
 import (
@@ -14,8 +28,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mholt/acmez"
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v2"
+	"github.com/mholt/acmez/v2/acme"
 	"go.uber.org/zap"
 )
 
@@ -54,6 +68,13 @@ type ACMEIssuer struct {
 	// An optional external account to associate
 	// with this ACME account
 	ExternalAccount *acme.EAB
+
+	// Optionally specify the validity period of
+	// the certificate(s) here as offsets from the
+	// approximate time of certificate issuance,
+	// but note that not all CAs support this
+	// (EXPERIMENTAL: Subject to change)
+	NotBefore, NotAfter time.Duration
 
 	// Disable all HTTP challenges
 	DisableHTTPChallenge bool
@@ -168,6 +189,12 @@ func NewACMEIssuer(cfg *Config, template ACMEIssuer) *ACMEIssuer {
 	}
 	if template.ExternalAccount == nil {
 		template.ExternalAccount = DefaultACME.ExternalAccount
+	}
+	if template.NotBefore == 0 {
+		template.NotBefore = DefaultACME.NotBefore
+	}
+	if template.NotAfter == 0 {
+		template.NotAfter = DefaultACME.NotAfter
 	}
 	if !template.DisableHTTPChallenge {
 		template.DisableHTTPChallenge = DefaultACME.DisableHTTPChallenge
@@ -296,14 +323,32 @@ func (iss *ACMEIssuer) isAgreed() bool {
 
 // PreCheck performs a few simple checks before obtaining or
 // renewing a certificate with ACME, and returns whether this
-// batch is eligible for certificates if using Let's Encrypt.
-// It also ensures that an email address is available.
+// batch is eligible for certificates. It also ensures that an
+// email address is available if possible.
+//
+// IP certificates via ACME are defined in RFC 8738.
 func (am *ACMEIssuer) PreCheck(ctx context.Context, names []string, interactive bool) error {
-	publicCA := strings.Contains(am.CA, "api.letsencrypt.org") || strings.Contains(am.CA, "acme.zerossl.com") || strings.Contains(am.CA, "api.pki.goog")
+	publicCAsAndIPCerts := map[string]bool{ // map of public CAs to whether they support IP certificates (last updated: Q1 2024)
+		"api.letsencrypt.org": false, // https://community.letsencrypt.org/t/certificate-for-static-ip/84/2?u=mholt
+		"acme.zerossl.com":    false, // only supported via their API, not ACME endpoint
+		"api.pki.goog":        true,  // https://pki.goog/faq/#faq-IPCerts
+		"api.buypass.com":     false, // https://community.buypass.com/t/h7hm76w/buypass-support-for-rfc-8738
+		"acme.ssl.com":        false,
+	}
+	var publicCA, ipCertAllowed bool
+	for caSubstr, ipCert := range publicCAsAndIPCerts {
+		if strings.Contains(am.CA, caSubstr) {
+			publicCA, ipCertAllowed = true, ipCert
+			break
+		}
+	}
 	if publicCA {
 		for _, name := range names {
 			if !SubjectQualifiesForPublicCert(name) {
-				return fmt.Errorf("subject does not qualify for a public certificate: %s", name)
+				return fmt.Errorf("subject '%s' does not qualify for a public certificate", name)
+			}
+			if !ipCertAllowed && SubjectIsIP(name) {
+				return fmt.Errorf("subject '%s' cannot have public IP certificate from %s (if CA's policy has changed, please notify the developers in an issue)", name, am.CA)
 			}
 		}
 	}
@@ -317,12 +362,13 @@ func (am *ACMEIssuer) Issue(ctx context.Context, csr *x509.CertificateRequest) (
 		panic("missing config pointer (must use NewACMEIssuer)")
 	}
 
-	var isRetry bool
-	if attempts, ok := ctx.Value(AttemptsCtxKey).(*int); ok {
-		isRetry = *attempts > 0
+	var attempts int
+	if attemptsPtr, ok := ctx.Value(AttemptsCtxKey).(*int); ok {
+		attempts = *attemptsPtr
 	}
+	isRetry := attempts > 0
 
-	cert, usedTestCA, err := am.doIssue(ctx, csr, isRetry)
+	cert, usedTestCA, err := am.doIssue(ctx, csr, attempts)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +396,7 @@ func (am *ACMEIssuer) Issue(ctx context.Context, csr *x509.CertificateRequest) (
 		// other endpoint. This is more likely to happen if a user is testing with
 		// the staging CA as the main CA, then changes their configuration once they
 		// think they are ready for the production endpoint.
-		cert, _, err = am.doIssue(ctx, csr, false)
+		cert, _, err = am.doIssue(ctx, csr, 0)
 		if err != nil {
 			// succeeded with test CA but failed just now with the production CA;
 			// either we are observing differing internal states of each CA that will
@@ -378,7 +424,8 @@ func (am *ACMEIssuer) Issue(ctx context.Context, csr *x509.CertificateRequest) (
 	return cert, err
 }
 
-func (am *ACMEIssuer) doIssue(ctx context.Context, csr *x509.CertificateRequest, useTestCA bool) (*IssuedCertificate, bool, error) {
+func (am *ACMEIssuer) doIssue(ctx context.Context, csr *x509.CertificateRequest, attempts int) (*IssuedCertificate, bool, error) {
+	useTestCA := attempts > 0
 	client, err := am.newACMEClientWithAccount(ctx, useTestCA, false)
 	if err != nil {
 		return nil, false, err
@@ -393,12 +440,72 @@ func (am *ACMEIssuer) doIssue(ctx context.Context, csr *x509.CertificateRequest,
 		}
 	}
 
-	certChains, err := client.acmeClient.ObtainCertificateUsingCSR(ctx, client.account, csr)
+	params, err := acmez.OrderParametersFromCSR(client.account, csr)
 	if err != nil {
-		return nil, usingTestCA, fmt.Errorf("%v %w (ca=%s)", nameSet, err, client.acmeClient.Directory)
+		return nil, false, fmt.Errorf("generating order parameters from CSR: %v", err)
 	}
-	if len(certChains) == 0 {
-		return nil, usingTestCA, fmt.Errorf("no certificate chains")
+	if am.NotBefore != 0 {
+		params.NotBefore = time.Now().Add(am.NotBefore)
+	}
+	if am.NotAfter != 0 {
+		params.NotAfter = time.Now().Add(am.NotAfter)
+	}
+
+	// Notify the ACME server we are replacing a certificate (if the caller says we are),
+	// only if the following conditions are met:
+	// - The caller has set a Replaces value in the context, indicating this is a renewal.
+	// - Not using test CA. This should be obvious, but a test CA should be in a separate
+	// environment from production, and thus not have knowledge of the cert being replaced.
+	// - Not a certain attempt number. We skip setting Replaces once early on in the retries
+	// in case the reason the order is failing is only because there is a state inconsistency
+	// between client and server or some sort of bookkeeping error with regards to the certID
+	// and the server is rejecting the ARI certID. In any case, an invalid certID may cause
+	// orders to fail. So try once without setting it.
+	if !usingTestCA && attempts != 2 {
+		if replacing, ok := ctx.Value(ctxKeyARIReplaces).(*x509.Certificate); ok {
+			params.Replaces = replacing
+		}
+	}
+
+	// do this in a loop because there's an error case that may necessitate a retry, but not more than once
+	var certChains []acme.Certificate
+	for i := 0; i < 2; i++ {
+		am.Logger.Info("using ACME account",
+			zap.String("account_id", params.Account.Location),
+			zap.Strings("account_contact", params.Account.Contact))
+
+		certChains, err = client.acmeClient.ObtainCertificate(ctx, params)
+		if err != nil {
+			var prob acme.Problem
+			if errors.As(err, &prob) && prob.Type == acme.ProblemTypeAccountDoesNotExist {
+				am.Logger.Warn("ACME account does not exist on server; attempting to recreate",
+					zap.String("account_id", client.account.Location),
+					zap.Strings("account_contact", client.account.Contact),
+					zap.String("key_location", am.storageKeyUserPrivateKey(client.acmeClient.Directory, am.getEmail())),
+					zap.Object("problem", prob))
+
+				// the account we have no longer exists on the CA, so we need to create a new one;
+				// we could use the same key pair, but this is a good opportunity to rotate keys
+				// (see https://caddy.community/t/acme-account-is-not-regenerated-when-acme-server-gets-reinstalled/22627)
+				// (basically this happens if the CA gets reset or reinstalled; usually just internal PKI)
+				err := am.deleteAccountLocally(ctx, client.iss.CA, client.account)
+				if err != nil {
+					return nil, usingTestCA, fmt.Errorf("%v ACME account no longer exists on CA, but resetting our local copy of the account info failed: %v", nameSet, err)
+				}
+
+				// recreate account and try again
+				client, err = am.newACMEClientWithAccount(ctx, useTestCA, false)
+				if err != nil {
+					return nil, false, err
+				}
+				continue
+			}
+			return nil, usingTestCA, fmt.Errorf("%v %w (ca=%s)", nameSet, err, client.acmeClient.Directory)
+		}
+		if len(certChains) == 0 {
+			return nil, usingTestCA, fmt.Errorf("no certificate chains")
+		}
+		break
 	}
 
 	preferredChain := am.selectPreferredChain(certChains)
@@ -407,6 +514,8 @@ func (am *ACMEIssuer) doIssue(ctx context.Context, csr *x509.CertificateRequest,
 		Certificate: preferredChain.ChainPEM,
 		Metadata:    preferredChain,
 	}
+
+	am.Logger.Debug("selected certificate chain", zap.String("url", preferredChain.URL))
 
 	return ic, usingTestCA, nil
 }
@@ -523,15 +632,26 @@ var DefaultACME = ACMEIssuer{
 	HTTPProxy: http.ProxyFromEnvironment,
 }
 
-// Some well-known CA endpoints available to use.
+// Some well-known CA endpoints available to use. See
+// the documentation for each service; some may require
+// External Account Binding (EAB) and possibly payment.
+// COMPATIBILITY NOTICE: These constants refer to external
+// resources and are thus subject to change or removal
+// without a major version bump.
 const (
-	LetsEncryptStagingCA    = "https://acme-staging-v02.api.letsencrypt.org/directory"
-	LetsEncryptProductionCA = "https://acme-v02.api.letsencrypt.org/directory"
-	ZeroSSLProductionCA     = "https://acme.zerossl.com/v2/DV90"
+	LetsEncryptStagingCA    = "https://acme-staging-v02.api.letsencrypt.org/directory" // https://letsencrypt.org/docs/staging-environment/
+	LetsEncryptProductionCA = "https://acme-v02.api.letsencrypt.org/directory"         // https://letsencrypt.org/getting-started/
+	ZeroSSLProductionCA     = "https://acme.zerossl.com/v2/DV90"                       // https://zerossl.com/documentation/acme/
+	GoogleTrustStagingCA    = "https://dv.acme-v02.test-api.pki.goog/directory"        // https://cloud.google.com/certificate-manager/docs/public-ca-tutorial
+	GoogleTrustProductionCA = "https://dv.acme-v02.api.pki.goog/directory"             // https://cloud.google.com/certificate-manager/docs/public-ca-tutorial
 )
 
 // prefixACME is the storage key prefix used for ACME-specific assets.
 const prefixACME = "acme"
+
+type ctxKey string
+
+const ctxKeyARIReplaces = ctxKey("ari_replaces")
 
 // Interface guards
 var (

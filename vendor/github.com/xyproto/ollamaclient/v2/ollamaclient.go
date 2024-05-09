@@ -129,7 +129,6 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	if len(promptAndOptionalImages) > 1 {
 		images = promptAndOptionalImages[1:]
 	}
-
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	} else {
@@ -165,11 +164,9 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 			},
 		}
 	}
-
 	if oc.ContextLength != 0 {
 		reqBody.Options.ContextLength = oc.ContextLength
 	}
-
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err

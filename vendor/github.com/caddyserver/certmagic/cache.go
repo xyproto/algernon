@@ -16,7 +16,7 @@ package certmagic
 
 import (
 	"fmt"
-	weakrand "math/rand" // seeded elsewhere
+	weakrand "math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -394,17 +394,26 @@ func (certCache *Cache) AllMatchingCertificates(name string) []Certificate {
 	return certs
 }
 
+// SubjectIssuer pairs a subject name with an issuer ID/key.
+type SubjectIssuer struct {
+	Subject, IssuerKey string
+}
+
 // RemoveManaged removes managed certificates for the given subjects from the cache.
-// This effectively stops maintenance of those certificates.
-func (certCache *Cache) RemoveManaged(subjects []string) {
+// This effectively stops maintenance of those certificates. If an IssuerKey is
+// specified alongside the subject, only certificates for that subject from the
+// specified issuer will be removed.
+func (certCache *Cache) RemoveManaged(subjects []SubjectIssuer) {
 	deleteQueue := make([]string, 0, len(subjects))
-	for _, subject := range subjects {
-		certs := certCache.getAllMatchingCerts(subject) // does NOT expand wildcards; exact matches only
+	for _, subj := range subjects {
+		certs := certCache.getAllMatchingCerts(subj.Subject) // does NOT expand wildcards; exact matches only
 		for _, cert := range certs {
 			if !cert.managed {
 				continue
 			}
-			deleteQueue = append(deleteQueue, cert.hash)
+			if subj.IssuerKey == "" || cert.issuerKey == subj.IssuerKey {
+				deleteQueue = append(deleteQueue, cert.hash)
+			}
 		}
 	}
 	certCache.Remove(deleteQueue)

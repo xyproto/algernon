@@ -46,16 +46,10 @@ type keyID string
 // See jwsEncodeJSON for details.
 const noKeyID = keyID("")
 
-// // noPayload indicates jwsEncodeJSON will encode zero-length octet string
-// // in a JWS request. This is called POST-as-GET in RFC 8555 and is used to make
-// // authenticated GET requests via POSTing with an empty payload.
-// // See https://tools.ietf.org/html/rfc8555#section-6.3 for more details.
-// const noPayload = ""
-
 // jwsEncodeEAB creates a JWS payload for External Account Binding according to RFC 8555 §7.3.4.
 func jwsEncodeEAB(accountKey crypto.PublicKey, hmacKey []byte, kid keyID, url string) ([]byte, error) {
 	// §7.3.4: "The 'alg' field MUST indicate a MAC-based algorithm"
-	alg, sha := "HS256", crypto.SHA256
+	const alg = "HS256"
 
 	// §7.3.4: "The 'nonce' field MUST NOT be present"
 	phead, err := jwsHead(alg, "", url, kid, nil)
@@ -75,7 +69,7 @@ func jwsEncodeEAB(accountKey crypto.PublicKey, hmacKey []byte, kid keyID, url st
 	h.Write(payloadToSign)
 	sig := h.Sum(nil)
 
-	return jwsFinal(sha, sig, phead, payload)
+	return jwsFinal(sig, phead, payload)
 }
 
 // jwsEncodeJSON signs claimset using provided key and a nonce.
@@ -119,7 +113,7 @@ func jwsEncodeJSON(claimset any, key crypto.Signer, kid keyID, nonce, url string
 		return nil, err
 	}
 
-	return jwsFinal(sha, sig, phead, payload)
+	return jwsFinal(sig, phead, payload)
 }
 
 // jwkEncode encodes public part of an RSA or ECDSA key into a JWK.
@@ -186,7 +180,7 @@ func jwsHead(alg, nonce, url string, kid keyID, key crypto.Signer) (string, erro
 }
 
 // jwsFinal constructs the final JWS object.
-func jwsFinal(sha crypto.Hash, sig []byte, phead, payload string) ([]byte, error) {
+func jwsFinal(sig []byte, phead, payload string) ([]byte, error) {
 	enc := struct {
 		Protected string `json:"protected"`
 		Payload   string `json:"payload"`

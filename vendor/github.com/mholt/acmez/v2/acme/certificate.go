@@ -20,8 +20,11 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 // Certificate represents a certificate chain, which we usually refer
@@ -47,6 +50,10 @@ type Certificate struct {
 	// ACME spec, but it can be useful to save this along with
 	// the certificate for restoring a lost ACME client config.
 	CA string `json:"ca,omitempty"`
+
+	// When to renew the certificate, and related info, as
+	// prescribed by ARI.
+	RenewalInfo *RenewalInfo `json:"renewal_info,omitempty"`
 }
 
 // GetCertificateChain downloads all available certificate chains originating from
@@ -79,16 +86,38 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 		}
 		contentType := parseMediaType(resp)
 
+		// extract the chain depending on Content-Type
+		var chainPEM []byte
 		switch contentType {
 		case "application/pem-certificate-chain":
-			chains = append(chains, Certificate{
-				URL:      certURL,
-				ChainPEM: buf.Bytes(),
-				CA:       c.Directory,
-			})
+			chainPEM = buf.Bytes()
 		default:
 			return resp, fmt.Errorf("unrecognized Content-Type from server: %s", contentType)
 		}
+
+		certChain := Certificate{
+			URL:      certURL,
+			ChainPEM: chainPEM,
+			CA:       c.Directory,
+		}
+
+		// attach renewal information, if applicable (draft-ietf-acme-ari-03)
+		if c.dir.RenewalInfo != "" {
+			certDERBlock, _ := pem.Decode(chainPEM)
+			if certDERBlock != nil && certDERBlock.Type == "CERTIFICATE" {
+				leafCert, err := x509.ParseCertificate(certDERBlock.Bytes)
+				if err != nil {
+					return resp, fmt.Errorf("invalid first PEM block of chain: %v", err)
+				}
+				ari, err := c.GetRenewalInfo(ctx, leafCert)
+				if err != nil && c.Logger != nil {
+					c.Logger.Error("failed getting renewal information", zap.Error(err))
+				}
+				certChain.RenewalInfo = &ari
+			}
+		}
+
+		chains = append(chains, certChain)
 
 		// "For formats that can only express a single certificate, the server SHOULD
 		// provide one or more "Link: rel="up"" header fields pointing to an

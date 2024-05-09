@@ -14,6 +14,7 @@ type GenerateRequest struct {
 	Model   string         `json:"model"`
 	Prompt  string         `json:"prompt,omitempty"`
 	Images  []string       `json:"images,omitempty"` // base64 encoded images
+	Stream  bool           `json:"stream,omitempty"`
 	Options RequestOptions `json:"options,omitempty"`
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"go.uber.org/zap"
 )
 
 // Code in this file adapted from go-acme/lego, July 2020:
@@ -19,19 +20,21 @@ import (
 
 // findZoneByFQDN determines the zone apex for the given fqdn by recursing
 // up the domain labels until the nameserver returns a SOA record in the
-// answer section.
-func findZoneByFQDN(fqdn string, nameservers []string) (string, error) {
+// answer section. The logger must be non-nil.
+func findZoneByFQDN(logger *zap.Logger, fqdn string, nameservers []string) (string, error) {
 	if !strings.HasSuffix(fqdn, ".") {
 		fqdn += "."
 	}
-	soa, err := lookupSoaByFqdn(fqdn, nameservers)
+	soa, err := lookupSoaByFqdn(logger, fqdn, nameservers)
 	if err != nil {
 		return "", err
 	}
 	return soa.zone, nil
 }
 
-func lookupSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) {
+func lookupSoaByFqdn(logger *zap.Logger, fqdn string, nameservers []string) (*soaCacheEntry, error) {
+	logger = logger.Named("soa_lookup")
+
 	if !strings.HasSuffix(fqdn, ".") {
 		fqdn += "."
 	}
@@ -41,10 +44,11 @@ func lookupSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) 
 
 	// prefer cached version if fresh
 	if ent := fqdnSOACache[fqdn]; ent != nil && !ent.isExpired() {
+		logger.Debug("using cached SOA result", zap.String("entry", ent.zone))
 		return ent, nil
 	}
 
-	ent, err := fetchSoaByFqdn(fqdn, nameservers)
+	ent, err := fetchSoaByFqdn(logger, fqdn, nameservers)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +66,7 @@ func lookupSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) 
 	return ent, nil
 }
 
-func fetchSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) {
+func fetchSoaByFqdn(logger *zap.Logger, fqdn string, nameservers []string) (*soaCacheEntry, error) {
 	var err error
 	var in *dns.Msg
 
@@ -77,6 +81,7 @@ func fetchSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) {
 		if in == nil {
 			continue
 		}
+		logger.Debug("fetched SOA", zap.String("msg", in.String()))
 
 		switch in.Rcode {
 		case dns.RcodeSuccess:
@@ -210,36 +215,46 @@ func populateNameserverPorts(servers []string) {
 	}
 }
 
-// checkDNSPropagation checks if the expected TXT record has been propagated to all authoritative nameservers.
-func checkDNSPropagation(fqdn, value string, resolvers []string) (bool, error) {
+// checkDNSPropagation checks if the expected record has been propagated to all authoritative nameservers.
+func checkDNSPropagation(logger *zap.Logger, fqdn string, recType uint16, expectedValue string, checkAuthoritativeServers bool, resolvers []string) (bool, error) {
+	logger = logger.Named("propagation")
+
 	if !strings.HasSuffix(fqdn, ".") {
 		fqdn += "."
 	}
 
-	// Initial attempt to resolve at the recursive NS
-	r, err := dnsQuery(fqdn, dns.TypeTXT, resolvers, true)
-	if err != nil {
-		return false, err
+	// Initial attempt to resolve at the recursive NS - but do not actually
+	// dereference (follow) a CNAME record if we are targeting a CNAME record
+	// itself
+	if recType != dns.TypeCNAME {
+		r, err := dnsQuery(fqdn, recType, resolvers, true)
+		if err != nil {
+			return false, fmt.Errorf("CNAME dns query: %v", err)
+		}
+		if r.Rcode == dns.RcodeSuccess {
+			fqdn = updateDomainWithCName(r, fqdn)
+		}
 	}
 
-	if r.Rcode == dns.RcodeSuccess {
-		fqdn = updateDomainWithCName(r, fqdn)
+	if checkAuthoritativeServers {
+		authoritativeServers, err := lookupNameservers(logger, fqdn, resolvers)
+		if err != nil {
+			return false, fmt.Errorf("looking up authoritative nameservers: %v", err)
+		}
+		populateNameserverPorts(authoritativeServers)
+		resolvers = authoritativeServers
 	}
+	logger.Debug("checking authoritative nameservers", zap.Strings("resolvers", resolvers))
 
-	authoritativeNss, err := lookupNameservers(fqdn, resolvers)
-	if err != nil {
-		return false, err
-	}
-
-	return checkAuthoritativeNss(fqdn, value, authoritativeNss)
+	return checkAuthoritativeNss(fqdn, recType, expectedValue, resolvers)
 }
 
-// checkAuthoritativeNss queries each of the given nameservers for the expected TXT record.
-func checkAuthoritativeNss(fqdn, value string, nameservers []string) (bool, error) {
+// checkAuthoritativeNss queries each of the given nameservers for the expected record.
+func checkAuthoritativeNss(fqdn string, recType uint16, expectedValue string, nameservers []string) (bool, error) {
 	for _, ns := range nameservers {
-		r, err := dnsQuery(fqdn, dns.TypeTXT, []string{net.JoinHostPort(ns, "53")}, true)
+		r, err := dnsQuery(fqdn, recType, []string{ns}, true)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("querying authoritative nameservers: %v", err)
 		}
 
 		if r.Rcode != dns.RcodeSuccess {
@@ -252,37 +267,43 @@ func checkAuthoritativeNss(fqdn, value string, nameservers []string) (bool, erro
 			return false, fmt.Errorf("NS %s returned %s for %s", ns, dns.RcodeToString[r.Rcode], fqdn)
 		}
 
-		var found bool
 		for _, rr := range r.Answer {
-			if txt, ok := rr.(*dns.TXT); ok {
-				record := strings.Join(txt.Txt, "")
-				if record == value {
-					found = true
-					break
+			switch recType {
+			case dns.TypeTXT:
+				if txt, ok := rr.(*dns.TXT); ok {
+					record := strings.Join(txt.Txt, "")
+					if record == expectedValue {
+						return true, nil
+					}
 				}
+			case dns.TypeCNAME:
+				if cname, ok := rr.(*dns.CNAME); ok {
+					// TODO: whether a DNS provider assumes a trailing dot or not varies, and we may have to standardize this in libdns packages
+					if strings.TrimSuffix(cname.Target, ".") == strings.TrimSuffix(expectedValue, ".") {
+						return true, nil
+					}
+				}
+			default:
+				return false, fmt.Errorf("unsupported record type: %d", recType)
 			}
-		}
-
-		if !found {
-			return false, nil
 		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
 // lookupNameservers returns the authoritative nameservers for the given fqdn.
-func lookupNameservers(fqdn string, resolvers []string) ([]string, error) {
+func lookupNameservers(logger *zap.Logger, fqdn string, resolvers []string) ([]string, error) {
 	var authoritativeNss []string
 
-	zone, err := findZoneByFQDN(fqdn, resolvers)
+	zone, err := findZoneByFQDN(logger, fqdn, resolvers)
 	if err != nil {
-		return nil, fmt.Errorf("could not determine the zone: %w", err)
+		return nil, fmt.Errorf("could not determine the zone for '%s': %w", fqdn, err)
 	}
 
 	r, err := dnsQuery(zone, dns.TypeNS, resolvers, true)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("querying NS resolver for zone '%s' recursively: %v", zone, err)
 	}
 
 	for _, rr := range r.Answer {

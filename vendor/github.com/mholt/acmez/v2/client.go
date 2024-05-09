@@ -33,21 +33,16 @@ package acmez
 import (
 	"context"
 	"crypto"
-	"crypto/rand"
 	"crypto/x509"
 	"errors"
 	"fmt"
 	weakrand "math/rand"
-	"net"
-	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v2/acme"
 	"go.uber.org/zap"
-	"golang.org/x/net/idna"
 )
 
 // Client is a high-level API for ACME operations. It wraps
@@ -61,39 +56,61 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
-// CSRSource is an interface that provides users of this
-// package the ability to provide a CSR as part of the
-// ACME flow. This allows the final CSR to be provided
-// just before the Order is finalized.
-type CSRSource interface {
-	CSR(context.Context) (*x509.CertificateRequest, error)
+// ObtainCertificateForSANs is a light wrapper over ObtainCertificate that generates a simple CSR
+// for the identifiers given in the list of SANs using the given private key; then it obtains a
+// certificate right away. If you require customizing the parameters of the order, use ObtainCertificate
+// instead.
+func (c *Client) ObtainCertificateForSANs(ctx context.Context, account acme.Account, certPrivateKey crypto.Signer, sans []string) ([]acme.Certificate, error) {
+	csr, err := NewCSR(certPrivateKey, sans)
+	if err != nil {
+		return nil, fmt.Errorf("generating CSR: %v", err)
+	}
+	params, err := OrderParametersFromCSR(account, csr)
+	if err != nil {
+		return nil, fmt.Errorf("forming order parameters: %v", err)
+	}
+	return c.ObtainCertificate(ctx, params)
 }
 
-// ObtainCertificateUsingCSRSource obtains all resulting certificate chains using the given
-// ACME Identifiers and the CSRSource. The CSRSource can be used to create and sign a final
-// CSR to be submitted to the ACME server just before finalization. The CSR  must be completely
-// and properly filled out, because the provided ACME Identifiers will be validated against
-// the Identifiers that can be extracted from the CSR. This package currently supports the
-// DNS, IP address, Permanent Identifier and Hardware Module Name identifiers. The Subject
-// CommonName is NOT considered.
+// ObtainCertificate obtains all certificate chains from the ACME server resulting from the
+// given order parameters. The private key passed in must be the one that was (or will
+// be) used to sign the CSR. The order parameters must be fully populated with an account,
+// a list of subject identifiers, and a CSR source; and the list of subject identifiers
+// must exactly match those in the CSR.
 //
-// The CSR's Raw field containing the DER encoded signed certificate request must also be
-// set. This usually involves creating a template CSR, then calling x509.CreateCertificateRequest,
-// then x509.ParseCertificateRequest on the output.
-//
-// The method implements every single part of the ACME flow described in RFC 8555 §7.1 with the
-// exception of "Create account" because this method signature does not have a way to return
-// the updated account object. The account's status MUST be "valid" in order to succeed.
-func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account acme.Account, identifiers []acme.Identifier, source CSRSource) ([]acme.Certificate, error) {
-	if account.Status != acme.StatusValid {
-		return nil, fmt.Errorf("account status is not valid: %s", account.Status)
+// The method implements every single part of the ACME flow described in RFC 8555 §7.1 with
+// the exception of "Create account" because account management is outside the scope of
+// certificate issuance. The account's status MUST be "valid" in order to succeed.
+func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) ([]acme.Certificate, error) {
+	if params.Account.Status != acme.StatusValid {
+		return nil, fmt.Errorf("account status is not valid: %s", params.Account.Status)
 	}
-	if source == nil {
+	if params.CSR == nil {
 		return nil, errors.New("missing CSR source")
 	}
+	if len(params.Identifiers) == 0 {
+		return nil, errors.New("order does not list any identifiers")
+	}
 
+	// create the ACME order
+	order := acme.Order{Identifiers: params.Identifiers}
+	if !params.NotBefore.IsZero() {
+		order.NotBefore = &params.NotBefore
+	}
+	if !params.NotAfter.IsZero() {
+		order.NotAfter = &params.NotAfter
+	}
+	if params.Replaces != nil {
+		certID, err := acme.ARIUniqueIdentifier(params.Replaces)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Replaces cert value: %v", err)
+		}
+		order.Replaces = certID
+	}
+
+	// prepare to retry the transaction multiple times if necessary
+	// until it succeeds
 	var err error
-	order := acme.Order{Identifiers: identifiers}
 
 	// remember which challenge types failed for which identifiers
 	// so we can retry with other challenge types
@@ -110,13 +127,13 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 		}
 
 		// create order for a new certificate
-		order, err = c.Client.NewOrder(ctx, account, order)
+		order, err = c.Client.NewOrder(ctx, params.Account, order)
 		if err != nil {
 			return nil, fmt.Errorf("creating new order: %w", err)
 		}
 
 		// solve one challenge for each authz on the order
-		err = c.solveChallenges(ctx, account, order, failedChallengeTypes)
+		err = c.solveChallenges(ctx, params.Account, order, failedChallengeTypes)
 
 		// yay, we win!
 		if err == nil {
@@ -156,8 +173,8 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
 	}
 
-	// get the CSR from its source
-	csr, err := source.CSR(ctx)
+	// get the CSR
+	csr, err := params.CSR.CSR(ctx, params.Identifiers)
 	if err != nil {
 		return nil, fmt.Errorf("getting CSR from source: %w", err)
 	}
@@ -165,19 +182,19 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 		return nil, errors.New("source did not provide CSR")
 	}
 
-	// validate the order identifiers
+	// ensure the order identifiers match the CSR
 	if err := validateOrderIdentifiers(&order, csr); err != nil {
 		return nil, fmt.Errorf("validating order identifiers: %w", err)
 	}
 
 	// finalize the order, which requests the CA to issue us a certificate
-	order, err = c.Client.FinalizeOrder(ctx, account, order, csr.Raw)
+	order, err = c.Client.FinalizeOrder(ctx, params.Account, order, csr.Raw)
 	if err != nil {
 		return nil, fmt.Errorf("finalizing order %s: %w", order.Location, err)
 	}
 
 	// finally, download the certificate
-	certChains, err := c.Client.GetCertificateChain(ctx, account, order.Certificate)
+	certChains, err := c.Client.GetCertificateChain(ctx, params.Account, order.Certificate)
 	if err != nil {
 		return nil, fmt.Errorf("downloading certificate chain from %s: %w (order=%s)",
 			order.Certificate, err, order.Location)
@@ -226,95 +243,6 @@ func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) e
 	return nil
 }
 
-// csrSource implements the CSRSource interface and is used internally
-// to pass a CSR to ObtainCertificateUsingCSRSource from the existing
-// ObtainCertificateUsingCSR method.
-type csrSource struct {
-	csr *x509.CertificateRequest
-}
-
-func (i *csrSource) CSR(_ context.Context) (*x509.CertificateRequest, error) {
-	return i.csr, nil
-}
-
-var _ CSRSource = (*csrSource)(nil)
-
-// ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
-// must be completely and properly filled out (particularly its DNSNames and Raw fields - this
-// usually involves creating a template CSR, then calling x509.CreateCertificateRequest, then
-// x509.ParseCertificateRequest on the output). The Subject CommonName is NOT considered.
-//
-// It implements every single part of the ACME flow described in RFC 8555 §7.1 with the exception
-// of "Create account" because this method signature does not have a way to return the updated
-// account object. The account's status MUST be "valid" in order to succeed.
-//
-// As far as SANs go, this method currently only supports DNSNames, IPAddresses, Permanent
-// Identifiers and Hardware Module Names on the CSR.
-func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
-	if csr == nil {
-		return nil, errors.New("missing CSR")
-	}
-
-	ids, err := createIdentifiersUsingCSR(csr)
-	if err != nil {
-		return nil, err
-	}
-	if len(ids) == 0 {
-		return nil, errors.New("no identifiers found")
-	}
-
-	csrSource := &csrSource{
-		csr: csr,
-	}
-
-	return c.ObtainCertificateUsingCSRSource(ctx, account, ids, csrSource)
-}
-
-// ObtainCertificate is the same as ObtainCertificateUsingCSR, except it is a slight wrapper
-// that generates the CSR for you. Doing so requires the private key you will be using for
-// the certificate (different from the account private key). It obtains a certificate for
-// the given SANs (domain names) using the provided account.
-func (c *Client) ObtainCertificate(ctx context.Context, account acme.Account, certPrivateKey crypto.Signer, sans []string) ([]acme.Certificate, error) {
-	if len(sans) == 0 {
-		return nil, fmt.Errorf("no DNS names provided: %v", sans)
-	}
-	if certPrivateKey == nil {
-		return nil, fmt.Errorf("missing certificate private key")
-	}
-
-	csrTemplate := new(x509.CertificateRequest)
-	for _, name := range sans {
-		if ip := net.ParseIP(name); ip != nil {
-			csrTemplate.IPAddresses = append(csrTemplate.IPAddresses, ip)
-		} else if strings.Contains(name, "@") {
-			csrTemplate.EmailAddresses = append(csrTemplate.EmailAddresses, name)
-		} else if u, err := url.Parse(name); err == nil && strings.Contains(name, "/") {
-			csrTemplate.URIs = append(csrTemplate.URIs, u)
-		} else {
-			// "The domain name MUST be encoded in the form in which it would appear
-			// in a certificate.  That is, it MUST be encoded according to the rules
-			// in Section 7 of [RFC5280]." §7.1.4
-			normalizedName, err := idna.ToASCII(name)
-			if err != nil {
-				return nil, fmt.Errorf("converting identifier '%s' to ASCII: %v", name, err)
-			}
-			csrTemplate.DNSNames = append(csrTemplate.DNSNames, normalizedName)
-		}
-	}
-
-	// to properly fill out the CSR, we need to create it, then parse it
-	csrDER, err := x509.CreateCertificateRequest(rand.Reader, csrTemplate, certPrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("generating CSR: %v", err)
-	}
-	csr, err := x509.ParseCertificateRequest(csrDER)
-	if err != nil {
-		return nil, fmt.Errorf("parsing generated CSR: %v", err)
-	}
-
-	return c.ObtainCertificateUsingCSR(ctx, account, csr)
-}
-
 // getAuthzObjects constructs stateful authorization objects for each authz on the order.
 // It includes all authorizations regardless of their status so that they can be
 // deactivated at the end if necessary. Be sure to check authz status before operating
@@ -333,7 +261,7 @@ func (c *Client) getAuthzObjects(ctx context.Context, account acme.Account, orde
 		}
 
 		// add all offered challenge types to our memory if they
-		// arent't there already; we use this for statistics to
+		// aren't there already; we use this for statistics to
 		// choose the most successful challenge type over time;
 		// if initial fill, randomize challenge order
 		preferredChallengesMu.Lock()

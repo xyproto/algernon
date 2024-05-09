@@ -38,3 +38,8 @@ func YesNo(question string, noIsDefault bool) bool {
 	// Anything that isn't no is "yes" (true)
 	return !(s == "N" || s == "n")
 }
+
+// YN is a quick version of the YesNo function, where no is the default
+func YN(question string) bool {
+	return YesNo(question, true)
+}

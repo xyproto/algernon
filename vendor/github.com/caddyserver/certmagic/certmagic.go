@@ -39,6 +39,7 @@ import (
 	"crypto"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -302,52 +303,6 @@ type OnDemandConfig struct {
 	hostAllowlist map[string]struct{}
 }
 
-// isLoopback returns true if the hostname of addr looks
-// explicitly like a common local hostname. addr must only
-// be a host or a host:port combination.
-func isLoopback(addr string) bool {
-	host := hostOnly(addr)
-	return host == "localhost" ||
-		strings.Trim(host, "[]") == "::1" ||
-		strings.HasPrefix(host, "127.")
-}
-
-// isInternal returns true if the IP of addr
-// belongs to a private network IP range. addr
-// must only be an IP or an IP:port combination.
-// Loopback addresses are considered false.
-func isInternal(addr string) bool {
-	privateNetworks := []string{
-		"10.0.0.0/8",
-		"172.16.0.0/12",
-		"192.168.0.0/16",
-		"fc00::/7",
-	}
-	host := hostOnly(addr)
-	ip := net.ParseIP(host)
-	if ip == nil {
-		return false
-	}
-	for _, privateNetwork := range privateNetworks {
-		_, ipnet, _ := net.ParseCIDR(privateNetwork)
-		if ipnet.Contains(ip) {
-			return true
-		}
-	}
-	return false
-}
-
-// hostOnly returns only the host portion of hostport.
-// If there is no port or if there is an error splitting
-// the port off, the whole input string is returned.
-func hostOnly(hostport string) string {
-	host, _, err := net.SplitHostPort(hostport)
-	if err != nil {
-		return hostport // OK; probably had no port to begin with
-	}
-	return host
-}
-
 // PreChecker is an interface that can be optionally implemented by
 // Issuers. Pre-checks are performed before each call (or batch of
 // identical calls) to Issue(), giving the issuer the option to ensure
@@ -394,7 +349,12 @@ type Revoker interface {
 type Manager interface {
 	// GetCertificate returns the certificate to use to complete the handshake.
 	// Since this is called during every TLS handshake, it must be very fast and not block.
-	// Returning (nil, nil) is valid and is simply treated as a no-op.
+	// Returning any non-nil value indicates that this Manager manages a certificate
+	// for the described handshake. Returning (nil, nil) is valid and is simply treated as
+	// a no-op Return (nil, nil) when the Manager has no certificate for this handshake.
+	// Return an error or a certificate only if the Manager is supposed to get a certificate
+	// for this handshake. Returning (nil, nil) other Managers or Issuers to try to get
+	// a certificate for the handshake.
 	GetCertificate(context.Context, *tls.ClientHelloInfo) (*tls.Certificate, error)
 }
 
@@ -429,7 +389,8 @@ type IssuedCertificate struct {
 	Certificate []byte
 
 	// Any extra information to serialize alongside the
-	// certificate in storage.
+	// certificate in storage. It MUST be serializable
+	// as JSON in order to be preserved.
 	Metadata any
 }
 
@@ -450,7 +411,7 @@ type CertificateResource struct {
 
 	// Any extra information associated with the certificate,
 	// usually provided by the issuer implementation.
-	IssuerData any `json:"issuer_data,omitempty"`
+	IssuerData json.RawMessage `json:"issuer_data,omitempty"`
 
 	// The unique string identifying the issuer of the
 	// certificate; internally useful for storage access.
