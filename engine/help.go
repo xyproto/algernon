@@ -568,8 +568,8 @@ Available flags:
                                Quits after the file has been served once.
                                ("-m" is equivalent to "-q -o -z").
   -n, --nobanner               Don't display a colorful banner at start.
-  -o, --open=EXECUTABLE        Open the served URL with ` + ac.defaultOpenExecutable + `,
-                               or with the given application.
+  -o, --open=EXECUTABLE        Open the served URL in a browser or with the given
+                               executable (uses "` + ac.defaultOpenExecutable + `" by default).
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
