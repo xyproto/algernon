@@ -65,24 +65,27 @@ func (cfg *Config) GetCertificateWithContext(ctx context.Context, clientHello *t
 	ctx = context.WithValue(ctx, ClientHelloInfoCtxKey, clientHello)
 
 	// special case: serve up the certificate for a TLS-ALPN ACME challenge
-	// (https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05)
-	for _, proto := range clientHello.SupportedProtos {
-		if proto == acmez.ACMETLS1Protocol {
-			challengeCert, distributed, err := cfg.getTLSALPNChallengeCert(clientHello)
-			if err != nil {
-				cfg.Logger.Error("tls-alpn challenge",
-					zap.String("remote_addr", clientHello.Conn.RemoteAddr().String()),
-					zap.String("server_name", clientHello.ServerName),
-					zap.Error(err))
-				return nil, err
-			}
-			cfg.Logger.Info("served key authentication certificate",
+	// (https://www.rfc-editor.org/rfc/rfc8737.html)
+	// "The ACME server MUST provide an ALPN extension with the single protocol
+	// name "acme-tls/1" and an SNI extension containing only the domain name
+	// being validated during the TLS handshake."
+	if clientHello.ServerName != "" &&
+		len(clientHello.SupportedProtos) == 1 &&
+		clientHello.SupportedProtos[0] == acmez.ACMETLS1Protocol {
+		challengeCert, distributed, err := cfg.getTLSALPNChallengeCert(clientHello)
+		if err != nil {
+			cfg.Logger.Error("tls-alpn challenge",
+				zap.String("remote_addr", clientHello.Conn.RemoteAddr().String()),
 				zap.String("server_name", clientHello.ServerName),
-				zap.String("challenge", "tls-alpn-01"),
-				zap.String("remote", clientHello.Conn.RemoteAddr().String()),
-				zap.Bool("distributed", distributed))
-			return challengeCert, nil
+				zap.Error(err))
+			return nil, err
 		}
+		cfg.Logger.Info("served key authentication certificate",
+			zap.String("server_name", clientHello.ServerName),
+			zap.String("challenge", "tls-alpn-01"),
+			zap.String("remote", clientHello.Conn.RemoteAddr().String()),
+			zap.Bool("distributed", distributed))
+		return challengeCert, nil
 	}
 
 	// get the certificate and serve it up
@@ -120,7 +123,7 @@ func (cfg *Config) getCertificateFromCache(hello *tls.ClientHelloInfo) (cert Cer
 			}
 		}
 
-		// fall back to a "default" certificate, if specified
+		// use a "default" certificate by name, if specified
 		if cfg.DefaultServerName != "" {
 			normDefault := normalizedName(cfg.DefaultServerName)
 			cert, defaulted = cfg.selectCert(hello, normDefault)
@@ -832,9 +835,12 @@ func (cfg *Config) getTLSALPNChallengeCert(clientHello *tls.ClientHelloInfo) (*t
 // getNameFromClientHello returns a normalized form of hello.ServerName.
 // If hello.ServerName is empty (i.e. client did not use SNI), then the
 // associated connection's local address is used to extract an IP address.
-func (*Config) getNameFromClientHello(hello *tls.ClientHelloInfo) string {
+func (cfg *Config) getNameFromClientHello(hello *tls.ClientHelloInfo) string {
 	if name := normalizedName(hello.ServerName); name != "" {
 		return name
+	}
+	if cfg.DefaultServerName != "" {
+		return normalizedName(cfg.DefaultServerName)
 	}
 	return localIPFromConn(hello.Conn)
 }
