@@ -8,6 +8,7 @@ cmd/box/box
 cmd/canvas/canvas
 cmd/color/color
 cmd/icegame/icegame
+cmd/image/image
 cmd/info/info
 cmd/key/key
 cmd/menu/menu

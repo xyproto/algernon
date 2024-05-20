@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.1
 
 require (
-	github.com/caddyserver/certmagic v0.21.1
+	github.com/caddyserver/certmagic v0.21.2
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -21,7 +21,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.4.0
-	github.com/quic-go/quic-go v0.43.1
+	github.com/quic-go/quic-go v0.44.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -47,7 +47,7 @@ require (
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.6.5
 	github.com/xyproto/splash v1.1.7-0.20230420131850-c892c94b4a02
-	github.com/xyproto/textoutput v1.16.3
+	github.com/xyproto/textoutput v1.16.4
 	github.com/xyproto/tinysvg v1.1.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20240516093114-0875abde2546 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20240520150715-b3d740f7bb92 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
@@ -97,7 +97,7 @@ require (
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.14.3 // indirect
+	github.com/xyproto/vt100 v1.14.4 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

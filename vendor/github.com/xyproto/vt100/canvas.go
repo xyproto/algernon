@@ -30,6 +30,17 @@ type Canvas struct {
 	runewise      bool
 }
 
+// canvasCopy is a Canvas without the mutex
+type canvasCopy struct {
+	chars         []ColorRune
+	oldchars      []ColorRune
+	w             uint
+	h             uint
+	cursorVisible bool
+	lineWrap      bool
+	runewise      bool
+}
+
 func NewCanvas() *Canvas {
 	var err error
 	c := &Canvas{}
@@ -54,42 +65,33 @@ func NewCanvas() *Canvas {
 }
 
 // Copy creates a new Canvas struct that is a copy of this one.
-// The mutex is kept as a pointer to the original.
+// The mutex is initialized as a new mutex.
 func (c *Canvas) Copy() Canvas {
-	var c2 Canvas
 	c.mut.RLock()
-	c2.w = c.w
-	c2.h = c.h
-	l := len(c.chars)
-	chars2 := make([]ColorRune, l)
-	for i, cr := range c.chars {
-		cr2 := ColorRune{
-			fg:    cr.fg,
-			bg:    cr.bg,
-			r:     cr.r,
-			drawn: cr.drawn,
-		}
-		chars2[i] = cr2
+	defer c.mut.RUnlock()
+
+	cc := canvasCopy{
+		chars:         make([]ColorRune, len(c.chars)),
+		oldchars:      make([]ColorRune, len(c.oldchars)),
+		w:             c.w,
+		h:             c.h,
+		cursorVisible: c.cursorVisible,
+		lineWrap:      c.lineWrap,
+		runewise:      c.runewise,
 	}
-	c.mut.RUnlock()
-	c2.chars = chars2
-	oldchars2 := make([]ColorRune, l)
-	c.mut.RLock()
-	for i, cr := range c.oldchars {
-		cr2 := ColorRune{
-			fg:    cr.fg,
-			bg:    cr.bg,
-			r:     cr.r,
-			drawn: cr.drawn,
-		}
-		oldchars2[i] = cr2
+	copy(cc.chars, c.chars)
+	copy(cc.oldchars, c.oldchars)
+
+	return Canvas{
+		chars:         cc.chars,
+		oldchars:      cc.oldchars,
+		w:             cc.w,
+		h:             cc.h,
+		cursorVisible: cc.cursorVisible,
+		lineWrap:      cc.lineWrap,
+		runewise:      cc.runewise,
+		mut:           &sync.RWMutex{},
 	}
-	c2.cursorVisible = c.cursorVisible
-	c2.lineWrap = c.lineWrap
-	c.mut.RUnlock()
-	c2.oldchars = oldchars2
-	c2.mut = c.mut
-	return c2
 }
 
 // Change the background color for each character
