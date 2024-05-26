@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"net/http"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/go-gcfg/gcfg"
@@ -14,13 +15,22 @@ import (
 	"github.com/xyproto/algernon/utils"
 )
 
-// List of filenames that should be displayed instead of a directory listing
-var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
-
 const (
-	dotSlash        = "." + utils.Pathsep           /* ./ */
-	doubleP         = utils.Pathsep + utils.Pathsep /* // */
-	dirconfFilename = ".algernon"
+	dotSlash = "." + utils.Pathsep           /* ./ */
+	doubleP  = utils.Pathsep + utils.Pathsep /* // */
+)
+
+// List of filenames that should be displayed instead of a directory listing
+var (
+	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
+
+	// TODO: Use build tags instead of checking runtime.GOOS!
+	dirConfFilename, ignoreFilename = func() (string, string) {
+		if runtime.GOOS == "windows" {
+			return "algernon.txt", "ignore.txt"
+		}
+		return ".algernon", ".ignore"
+	}()
 )
 
 // DirConfig keeps a directory listing configuration
@@ -43,11 +53,28 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	// Remove a trailing slash after the root directory, if present
 	rootdir = strings.TrimSuffix(rootdir, "/")
 
+	// Read ignore patterns if ignore.txt is present
+	var ignorePatterns []string
+	ignoreFilePath := filepath.Join(dirname, ignoreFilename)
+	if ac.fs.Exists(ignoreFilePath) {
+		patterns, err := ReadIgnoreFile(ignoreFilePath)
+		if err != nil {
+			log.Warn("Could not read ignore.txt: ", err)
+		} else {
+			ignorePatterns = patterns
+		}
+	}
+
 	// Fill the coming HTML body with a list of all the filenames in `dirname`
 	for _, filename := range utils.GetFilenames(dirname) {
 
-		if filename == dirconfFilename {
+		if filename == dirConfFilename || filename == ignoreFilename {
 			// Skip
+			continue
+		}
+
+		// Check if the filename matches any of the ignore patterns
+		if ShouldIgnore(filename, ignorePatterns) {
 			continue
 		}
 
@@ -70,8 +97,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	}
 
 	// Read directory configuration, if present
-	fullDirConfFilename := filepath.Join(dirname, dirconfFilename)
-	if ac.fs.Exists(fullDirConfFilename) {
+	if fullDirConfFilename := filepath.Join(dirname, dirConfFilename); ac.fs.Exists(fullDirConfFilename) {
 		var dirConf DirConfig
 		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil { // if no error
 			if dirConf.Main.Title != "" {
