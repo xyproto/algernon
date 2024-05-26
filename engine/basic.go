@@ -189,7 +189,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Flush the ResponseWriter.
 	// Needed in debug mode, where ResponseWriter is buffered.
-	L.SetGlobal("flush", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("flush", L.NewFunction(func(_ *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
 				log.Error("call to \"flush\" after closing the connection")
@@ -205,7 +205,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 	// Close the communication with the client by setting a "Connection: close" header,
 	// flushing and setting req.Close to true.
-	L.SetGlobal("close", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("close", L.NewFunction(func(_ *lua.LState) int {
 		// Close the connection.
 		// Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
 		w.Header().Add("Connection", "close")

@@ -22,7 +22,7 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, mut *sync.Mutex, justServ
 	// TODO: As far as I can tell, this was never implemented. Look into implementing this for github.com/xyproto/quic
 	//
 	// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
-	if err := http3.ListenAndServe(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
+	if err := http3.ListenAndServeTLS(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
 		log.Error("Not serving QUIC after all. Error: ", err)
 		log.Info("Use the -t flag for serving regular HTTP instead")
 		// If QUIC failed (perhaps the key + cert are missing),

@@ -123,7 +123,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 	}))
 
 	// Clear the default path prefixes. This makes everything public.
-	L.SetGlobal("ClearPermissions", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("ClearPermissions", L.NewFunction(func(_ *lua.LState) int {
 		ac.perm.Clear()
 		return 0 // number of results
 	}))
