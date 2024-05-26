@@ -5484,8 +5484,6 @@ func (p *parser) parseClauseAlias(kind string) js_lexer.MaybeSubstring {
 		if !ok {
 			p.log.AddError(&p.tracker, r,
 				fmt.Sprintf("This %s alias is invalid because it contains the unpaired Unicode surrogate U+%X", kind, problem))
-		} else {
-			p.markSyntaxFeature(compat.ArbitraryModuleNamespaceNames, r)
 		}
 		return js_lexer.MaybeSubstring{String: alias}
 	}
@@ -6480,6 +6478,9 @@ func (p *parser) parsePath() (logger.Range, string, *ast.ImportAssertOrWith, ast
 
 		closeBraceLoc := p.saveExprCommentsHere()
 		p.lexer.Expect(js_lexer.TCloseBrace)
+		if keyword == ast.AssertKeyword {
+			p.maybeWarnAboutAssertKeyword(keywordLoc)
+		}
 		assertOrWith = &ast.ImportAssertOrWith{
 			Entries:            entries,
 			Keyword:            keyword,
@@ -6490,6 +6491,20 @@ func (p *parser) parsePath() (logger.Range, string, *ast.ImportAssertOrWith, ast
 	}
 
 	return pathRange, pathText, assertOrWith, flags
+}
+
+// Let people know if they probably should be using "with" instead of "assert"
+func (p *parser) maybeWarnAboutAssertKeyword(loc logger.Loc) {
+	if p.options.unsupportedJSFeatures.Has(compat.ImportAssertions) && !p.options.unsupportedJSFeatures.Has(compat.ImportAttributes) {
+		where := config.PrettyPrintTargetEnvironment(p.options.originalTargetEnv, p.options.unsupportedJSFeatureOverridesMask)
+		msg := logger.Msg{
+			Kind:  logger.Warning,
+			Data:  p.tracker.MsgData(js_lexer.RangeOfIdentifier(p.source, loc), "The \"assert\" keyword is not supported in "+where),
+			Notes: []logger.MsgData{{Text: "Did you mean to use \"with\" instead of \"assert\"?"}},
+		}
+		msg.Data.Location.Suggestion = "with"
+		p.log.AddMsgID(logger.MsgID_JS_AssertToWith, msg)
+	}
 }
 
 // This assumes the "function" token has already been parsed
@@ -10281,6 +10296,18 @@ func (p *parser) visitAndAppendStmt(stmts []js_ast.Stmt, stmt js_ast.Stmt) []js_
 			// Remove the label if it's not necessary
 			if p.symbols[ref.InnerIndex].UseCountEstimate == 0 {
 				return appendIfOrLabelBodyPreservingScope(stmts, s.Stmt)
+			}
+		}
+
+		// Handle "for await" that has been lowered by moving this label inside the "try"
+		if try, ok := s.Stmt.Data.(*js_ast.STry); ok && len(try.Block.Stmts) > 0 {
+			if _, ok := try.Block.Stmts[0].Data.(*js_ast.SFor); ok {
+				try.Block.Stmts[0] = js_ast.Stmt{Loc: stmt.Loc, Data: &js_ast.SLabel{
+					Stmt:             try.Block.Stmts[0],
+					Name:             s.Name,
+					IsSingleLineStmt: s.IsSingleLineStmt,
+				}}
+				return append(stmts, s.Stmt)
 			}
 		}
 
@@ -14265,6 +14292,9 @@ func (p *parser) visitExprInOut(expr js_ast.Expr, in exprIn) (js_ast.Expr, exprO
 									break
 								}
 								if entries != nil {
+									if keyword == ast.AssertKeyword {
+										p.maybeWarnAboutAssertKeyword(prop.Key.Loc)
+									}
 									assertOrWith = &ast.ImportAssertOrWith{
 										Entries:            entries,
 										Keyword:            keyword,
@@ -15287,8 +15317,8 @@ func (v *binaryExprVisitor) visitRightAndFinish(p *parser) js_ast.Expr {
 		}
 	}
 
-	if p.shouldFoldTypeScriptConstantExpressions || (p.options.minifySyntax && js_ast.ShouldFoldBinaryArithmeticWhenMinifying(e)) {
-		if result := js_ast.FoldBinaryArithmetic(v.loc, e); result.Data != nil {
+	if p.shouldFoldTypeScriptConstantExpressions || (p.options.minifySyntax && js_ast.ShouldFoldBinaryOperatorWhenMinifying(e)) {
+		if result := js_ast.FoldBinaryOperator(v.loc, e); result.Data != nil {
 			return result
 		}
 	}

@@ -12,7 +12,7 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.21.3
+	github.com/evanw/esbuild v0.21.4
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
@@ -57,7 +57,7 @@ require (
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.13.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.9.2 // indirect
-	github.com/google/pprof v0.0.0-20240509144519-723abb6459b7 // indirect
+	github.com/google/pprof v0.0.0-20240525223248-4bfdf5a9a2af // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
@@ -80,11 +80,11 @@ require (
 	github.com/miekg/dns v1.1.59 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
-	github.com/onsi/ginkgo/v2 v2.17.3 // indirect
+	github.com/onsi/ginkgo/v2 v2.19.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20240520150715-b3d740f7bb92 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20240525050548-45318da24d8e // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
@@ -105,7 +105,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect

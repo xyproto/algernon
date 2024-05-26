@@ -4,7 +4,7 @@ github.com/DataDog/gostackparse
 # github.com/Masterminds/semver v1.5.0
 ## explicit
 github.com/Masterminds/semver
-# github.com/alecthomas/chroma/v2 v2.13.0
+# github.com/alecthomas/chroma/v2 v2.14.0
 ## explicit; go 1.19
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
@@ -50,7 +50,7 @@ github.com/dustin/go-humanize
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.21.3
+# github.com/evanw/esbuild v0.21.4
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -115,7 +115,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20240509144519-723abb6459b7
+# github.com/google/pprof v0.0.0-20240525223248-4bfdf5a9a2af
 ## explicit; go 1.19
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -172,7 +172,7 @@ github.com/natefinch/pie
 # github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
 ## explicit
 github.com/nathan-fiscaletti/consolesize-go
-# github.com/onsi/ginkgo/v2 v2.17.3
+# github.com/onsi/ginkgo/v2 v2.19.0
 ## explicit; go 1.20
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
@@ -202,7 +202,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20240520150715-b3d740f7bb92
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20240525050548-45318da24d8e
 ## explicit; go 1.19
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -421,7 +421,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+# golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/rand
