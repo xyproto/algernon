@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/eknkc/amber"
@@ -22,7 +23,21 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
+
+	_ "embed"
 )
+
+var (
+	//go:embed embedded/tex-mml-chtml.js
+	mathJaxScript string
+
+	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
+)
+
+// containsFormula checks if the given Markdown content contains at least one mathematical formula (LaTeX style)
+func containsFormula(mdContent []byte) bool {
+	return formulaPattern.Match(mdContent)
+}
 
 // ValidGCSS checks if the given data is valid GCSS.
 // The error value is returned on the channel.
@@ -44,8 +59,16 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 		// Create a Markdown parser with the desired extensions
 		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 		mdParser := parser.NewWithExtensions(extensions)
+		mdContent := buf.Bytes()
 		// Convert the buffer from Markdown to HTML
-		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
+		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
+
+		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+		if containsFormula(mdContent) {
+			htmlData = append(htmlData, []byte(`<script id="MathJax-script" async>`)...)
+			htmlData = append(htmlData, []byte(mathJaxScript)...)
+			htmlData = append(htmlData, []byte(`</script>`)...)
+		}
 
 		// Apply syntax highlighting
 		codeStyle := "base16-snazzy"
@@ -248,7 +271,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 }
 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
-func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []byte, filename string) {
+func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdContent []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
 	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css", "favicon"}
 
@@ -259,13 +282,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	// but only the first time that keyword occurs.
 	var kwmap map[string][]byte
 
-	data, kwmap = utils.ExtractKeywords(data, searchKeywords)
+	mdContent, kwmap = utils.ExtractKeywords(mdContent, searchKeywords)
 
 	// Create a Markdown parser with the desired extensions
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 	mdParser := parser.NewWithExtensions(extensions)
 	// Convert from Markdown to HTML
-	htmlbody := markdown.ToHTML(data, mdParser, nil)
+	htmlbody := markdown.ToHTML(mdContent, mdParser, nil)
 
 	// TODO: Check if handling "# title <tags" on the first line is valid
 	// Markdown or not. Submit a patch to gomarkdown/markdown if it is.
@@ -424,6 +447,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 			head.Write(kwmap[keyword])
 			head.WriteString(`" />`)
 		}
+	}
+
+	// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+	if containsFormula(mdContent) {
+		head.WriteString(`<script id="MathJax-script" async>`)
+		head.WriteString(mathJaxScript)
+		head.WriteString(`</script>`)
 	}
 
 	// Embed the style and rendered markdown into a simple HTML 5 page

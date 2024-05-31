@@ -83,12 +83,23 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		// Create a Markdown parser with the desired extensions
 		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 		mdParser := parser.NewWithExtensions(extensions)
+		mdContent := buf.Bytes()
 		// Convert the buffer to markdown
-		htmlData := markdown.ToHTML(buf.Bytes(), mdParser, nil)
+		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
+
+		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+		if containsFormula(mdContent) {
+			htmlData = append(htmlData, []byte(`<script id="MathJax-script" async>`)...)
+			htmlData = append(htmlData, []byte(mathJaxScript)...)
+			htmlData = append(htmlData, []byte(`</script>`)...)
+		}
+
+		// Apply syntax highlighting
 		codeStyle := "base16-snazzy"
 		if highlightedHTML, err := splash.Splash(htmlData, codeStyle); err == nil { // success
 			htmlData = highlightedHTML
 		}
+
 		htmlString := strings.TrimSpace(string(htmlData))
 		L.Push(lua.LString(htmlString))
 		return 1 // number of results
