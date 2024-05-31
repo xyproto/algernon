@@ -333,19 +333,23 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, data []
 	favicon := kwmap["favicon"]
 	if len(favicon) > 0 {
 		head.WriteString(`<link rel="shortcut icon" type="image/`)
-		// Only support the most common mime formats for favicons
-		switch {
-		case bytes.HasSuffix(favicon, []byte(".ico")):
+
+		// Switch on the lowercase file extension of the favicon
+		switch strings.ToLower(filepath.Ext(string(favicon))) {
+		case ".ico":
 			head.WriteString("x-icon")
-		case bytes.HasSuffix(favicon, []byte(".bmp")):
+		case ".bmp":
 			head.WriteString("bmp")
-		case bytes.HasSuffix(favicon, []byte(".gif")):
+		case ".gif":
 			head.WriteString("gif")
-		case bytes.HasSuffix(favicon, []byte(".jpg")):
+		case ".jpg", ".jpeg":
 			head.WriteString("jpeg")
+		case ".svg":
+			head.WriteString("svg+xml")
 		default:
 			head.WriteString("png")
 		}
+
 		head.WriteString(`" href="`)
 		head.Write(favicon)
 		head.WriteString(`"/>`)
