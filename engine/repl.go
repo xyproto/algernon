@@ -63,6 +63,43 @@ func exportREPLSpecific(L *lua.LState) {
 		L.Push(lua.LString(scriptpath))
 		return 1 // number of results
 	}))
+
+	// Given a glob, like "md/*.md", read the files with the scriptdir() as the starting point.
+	// Then return all the contents of the files as a table.
+	L.SetGlobal("readglob", L.NewFunction(func(L *lua.LState) int {
+		var (
+			pattern  = L.ToString(1)
+			basepath string
+			err      error
+		)
+		if L.GetTop() == 2 {
+			basepath = L.ToString(2)
+		} else {
+			basepath, err = os.Getwd()
+			if err != nil {
+				log.Error(err)
+				L.Push(lua.LNil)
+				return 1
+			}
+		}
+		matches, err := filepath.Glob(filepath.Join(basepath, pattern))
+		if err != nil {
+			L.Push(lua.LNil)
+			return 1
+		}
+		results := L.NewTable()
+		for _, match := range matches {
+			content, err := os.ReadFile(match)
+			if err != nil {
+				log.Error(err)
+				L.Push(lua.LNil)
+				return 1
+			}
+			results.Append(lua.LString(content))
+		}
+		L.Push(results)
+		return 1
+	}))
 }
 
 // Split the given line in three parts, and color the parts

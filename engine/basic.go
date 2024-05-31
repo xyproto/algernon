@@ -360,6 +360,38 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		return 1 // number of results
 	}))
 
+	// Given a glob, like "md/*.md", read the files with the scriptdir() as the starting point.
+	// Then return all the contents of the files as a table.
+	L.SetGlobal("readglob", L.NewFunction(func(L *lua.LState) int {
+		pattern := L.ToString(1)
+		var basepath string
+		if L.GetTop() == 2 {
+			basepath = L.ToString(2)
+		} else {
+			scriptpath, err := filepath.Abs(filename)
+			if err != nil {
+				scriptpath = filename
+			}
+			basepath = filepath.Dir(scriptpath)
+		}
+		matches, err := filepath.Glob(filepath.Join(basepath, pattern))
+		if err != nil {
+			L.Push(lua.LNil)
+			return 1
+		}
+		results := L.NewTable()
+		for _, match := range matches {
+			content, err := os.ReadFile(match)
+			if err != nil {
+				L.Push(lua.LNil)
+				return 1
+			}
+			results.Append(lua.LString(content))
+		}
+		L.Push(results)
+		return 1
+	}))
+
 	// Given a filename, return the URL path
 	L.SetGlobal("file2url", L.NewFunction(func(L *lua.LState) int {
 		fn := L.ToString(1)

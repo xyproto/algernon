@@ -478,6 +478,9 @@ error(number[, string])
 // is given, then the path to where the script is running, joined with a path
 // separator and the given filename, is returned.
 scriptdir([string]) -> string
+// Read a glob, ie. "*.md" in the current script directory, or the given dir.
+// The contents of all found files are reeturned as a table.
+readglob(string[, string]) -> table
 // Return the directory where the server is running. If a filename (optional)
 // is given, then the path to where the server is running, joined with a path
 // separator and the given filename, is returned.
