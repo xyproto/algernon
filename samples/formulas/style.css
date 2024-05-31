@@ -1,0 +1,49 @@
+body {
+    background: #202020;
+    color: white;
+    font-family: 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin: 4em;
+}
+
+h1, h2 {
+    color: #ffcc00;
+    text-shadow: 1px 1px 2px black;
+}
+
+.section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    margin-bottom: 2em;
+}
+
+.section p, .section div {
+    margin: 0.5em 0;
+}
+
+.formula-box {
+    background: #333;
+    border-radius: 10px;
+    padding: 1em;
+    width: calc(33% - 2em);
+    box-sizing: border-box;
+    transition: transform 0.2s;
+}
+
+.formula-box:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.section {
+    animation: fadeIn 2s ease-in-out;
+}

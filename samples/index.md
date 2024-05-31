@@ -25,6 +25,7 @@ Samples
 * [Iterate](iterate)
 * [Bootstrap](bootstrap)
 * [Permissions](permissions)
+* [Mathematical Formulas](formulas)
 
 There are more samples in the `samples/` directory.
 
@@ -38,5 +39,5 @@ Resources
 * [Algernon project page](https://github.com/xyproto/algernon/)
 * [Learn Markdown in Y minutes](https://learnxinyminutes.com/docs/markdown/)
 * [Markdown tutorial](http://markdowntutorial.com/)
-* [Lua at Rosetta Code](https://rosettacode.org/wiki/Category:Lua)
 * [Learn Lua in Y minutes](https://learnxinyminutes.com/docs/lua/)
+* [Lua at Rosetta Code](https://rosettacode.org/wiki/Category:Lua)
