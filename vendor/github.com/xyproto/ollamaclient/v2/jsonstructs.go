@@ -58,3 +58,8 @@ type Model struct {
 type ListResponse struct {
 	Models []Model `json:"models"`
 }
+
+// VersionResponse represents the response data containing the Ollama version
+type VersionResponse struct {
+	Version string `json:"version"`
+}
