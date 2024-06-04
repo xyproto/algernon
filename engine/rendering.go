@@ -27,6 +27,8 @@ import (
 	_ "embed"
 )
 
+const markdownCodeStyle = "base16-snazzy" // using xyproto/splash
+
 var (
 	//go:embed embedded/tex-mml-chtml.js
 	mathJaxScript string
@@ -66,17 +68,15 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 		// Convert the buffer from Markdown to HTML
 		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
 
-		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
-		if containsFormula(mdContent) {
-			htmlData = append(htmlData, []byte(`<script id="MathJax-script" async>`)...)
-			htmlData = append(htmlData, []byte(mathJaxScript)...)
-			htmlData = append(htmlData, []byte(`</script>`)...)
+		// Apply syntax highlighting
+		if highlightedHTML, err := splash.Splash(htmlData, markdownCodeStyle); err == nil { // success
+			htmlData = highlightedHTML
 		}
 
-		// Apply syntax highlighting
-		codeStyle := "base16-snazzy"
-		if highlightedHTML, err := splash.Splash(htmlData, codeStyle); err == nil { // success
-			htmlData = highlightedHTML
+		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+		if containsFormula(mdContent) {
+			js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
+			htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
 		}
 
 		w.Write(htmlData)
@@ -451,18 +451,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 		}
 	}
 
-	// Add a script for rendering MathJax, but only if at least one mathematical formula is present
-	if containsFormula(mdContent) {
-		head.WriteString(`<script id="MathJax-script" async>`)
-		head.WriteString(mathJaxScript)
-		head.WriteString(`</script>`)
-	}
-
 	// Embed the style and rendered markdown into a simple HTML 5 page
 	htmldata := themes.SimpleHTMLPage(title, h1title, []byte(head.String()), htmlbody)
 
-	// Add syntax highlighting to the header, but only if "<pre" is present
-	if bytes.Contains(htmlbody, []byte("<pre")) {
+	// TODO: Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time
+
+	// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+	if containsFormula(mdContent) {
+		js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
+		htmldata = InsertScriptTag(htmldata, js) // also adds the closing </script> tag
+	} else if bytes.Contains(htmlbody, []byte("<pre><code ")) { // Add syntax highlighting to the header, but only if '<pre><code ' is present
 		// If codeStyle is not "none", highlight the current htmldata
 		if codeStyle == "" {
 			// Use the highlight style from the current theme
@@ -471,6 +469,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 				log.Error(err)
 			} else {
 				// Only use the new and highlighted HTML if there were no errors
+				//htmldata = highlighted
 				htmldata = highlighted
 			}
 		} else if codeStyle != "none" {
