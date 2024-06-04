@@ -1283,7 +1283,7 @@ For Linux:
 Other resources
 ---------------
 
-* [Algernon on docker hub](https://hub.docker.com/r/xyproto/algernon/)
+* [Algernon on Docker Hub](https://hub.docker.com/r/xyproto/algernon/)
 
 General information
 -------------------
