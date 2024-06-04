@@ -3,6 +3,7 @@
 General
 -------
 
+- [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
 - [ ] When the -m flag is used, if the file is not found, exit with an error.
 - [ ] Add a built-in SSH3 server that can be configured with a flag.
 - [ ] Let USR1 or USR2 signals clear the cache.
