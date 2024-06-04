@@ -14,6 +14,7 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
@@ -99,6 +100,18 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 
 		htmlString := strings.TrimSpace(string(htmlData))
 		L.Push(lua.LString(htmlString))
+		return 1 // number of results
+	}))
+
+	// Sanitize HTML
+	L.SetGlobal("sanhtml", L.NewFunction(func(L *lua.LState) int {
+		// Retrieve the HTML content to be sanitized
+		htmlContent := L.ToString(1)
+		// Sanitize the HTML content
+		policy := bluemonday.UGCPolicy()
+		sanitizedHTML := policy.Sanitize(htmlContent)
+		// Return the sanitized HTML
+		L.Push(lua.LString(sanitizedHTML))
 		return 1 // number of results
 	}))
 
