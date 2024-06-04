@@ -30,7 +30,7 @@ import (
 const markdownCodeStyle = "base16-snazzy" // using xyproto/splash
 
 var (
-	//go:embed embedded/tex-mml-chtml.js
+	//go:embed embedded/tex-svg.js
 	mathJaxScript string
 
 	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
