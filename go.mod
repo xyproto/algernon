@@ -18,6 +18,7 @@ require (
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/gomarkdown/markdown v0.0.0-20240419095408-642f0ee99ae2
 	github.com/lib/pq v1.10.9
+	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.4.0
@@ -59,6 +60,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
+	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -70,6 +72,7 @@ require (
 	github.com/gomodule/redigo v1.9.2 // indirect
 	github.com/google/pprof v0.0.0-20240528025155-186aa0362fba // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/libdns/libdns v0.2.2 // indirect
