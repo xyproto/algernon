@@ -46,7 +46,7 @@ require (
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.6.5
-	github.com/xyproto/splash v1.1.7-0.20230420131850-c892c94b4a02
+	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
 	github.com/xyproto/textoutput v1.16.4
 	github.com/xyproto/tinysvg v1.1.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20240604095233-3941867b8a08 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20240604110127-9c1a45ab46b0 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect

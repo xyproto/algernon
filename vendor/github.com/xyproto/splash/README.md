@@ -1,6 +1,6 @@
 # Splash
 
-Highlight code embedded in HTML using the [chroma](https://github.com/alecthomas/chroma) package.
+Syntax highlight code embedded in HTML with a splash of color by using the [chroma](https://github.com/alecthomas/chroma) package.
 
 The generated output is tested by visual inspection in Chromium, Midori and Netsurf.
 
