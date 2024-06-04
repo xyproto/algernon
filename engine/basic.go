@@ -81,8 +81,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		// Retrieve all the function arguments as a bytes.Buffer
 		buf := convert.Arguments2buffer(L, true)
 		// Create a Markdown parser with the desired extensions
-		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
-		mdParser := parser.NewWithExtensions(extensions)
+		mdParser := parser.NewWithExtensions(enabledMarkdownExtensions)
 		mdContent := buf.Bytes()
 		// Convert the buffer to markdown
 		htmlData := markdown.ToHTML(mdContent, mdParser, nil)

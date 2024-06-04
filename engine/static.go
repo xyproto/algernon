@@ -83,8 +83,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 		var localImages []string
 		if markdownData, err := ac.cache.Read(filename, true); err == nil { // success
 			// Create a Markdown parser with the desired extensions
-			extensions := parser.CommonExtensions | parser.AutoHeadingIDs
-			mdParser := parser.NewWithExtensions(extensions)
+			mdParser := parser.NewWithExtensions(enabledMarkdownExtensions)
 			// Convert from Markdown to HTML
 			mdContent := markdownData.Bytes()
 			htmlData := markdown.ToHTML(mdContent, mdParser, nil)

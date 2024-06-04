@@ -32,6 +32,9 @@ var (
 	mathJaxScript string
 
 	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
+
+	// Available Markdown extensions: https://github.com/gomarkdown/markdown/blob/master/parser/parser.go#L20
+	enabledMarkdownExtensions = parser.NoIntraEmphasis | parser.Tables | parser.FencedCode | parser.Autolink | parser.Strikethrough | parser.SpaceHeadings | parser.HeadingIDs | parser.BackslashLineBreak | parser.DefinitionLists | parser.AutoHeadingIDs | parser.Mmark | parser.BackslashLineBreak | parser.MathJax
 )
 
 // containsFormula checks if the given Markdown content contains at least one mathematical formula (LaTeX style)
@@ -285,8 +288,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 	mdContent, kwmap = utils.ExtractKeywords(mdContent, searchKeywords)
 
 	// Create a Markdown parser with the desired extensions
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
-	mdParser := parser.NewWithExtensions(extensions)
+	mdParser := parser.NewWithExtensions(enabledMarkdownExtensions)
 	// Convert from Markdown to HTML
 	htmlbody := markdown.ToHTML(mdContent, mdParser, nil)
 
