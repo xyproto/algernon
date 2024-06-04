@@ -86,17 +86,15 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		// Convert the buffer to markdown
 		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
 
-		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
-		if containsFormula(mdContent) {
-			htmlData = append(htmlData, []byte(`<script id="MathJax-script" async>`)...)
-			htmlData = append(htmlData, []byte(mathJaxScript)...)
-			htmlData = append(htmlData, []byte(`</script>`)...)
+		// Apply syntax highlighting
+		if highlightedHTML, err := splash.Splash(htmlData, markdownCodeStyle); err == nil { // success
+			htmlData = highlightedHTML
 		}
 
-		// Apply syntax highlighting
-		codeStyle := "base16-snazzy"
-		if highlightedHTML, err := splash.Splash(htmlData, codeStyle); err == nil { // success
-			htmlData = highlightedHTML
+		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+		if containsFormula(mdContent) {
+			js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
+			htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
 		}
 
 		htmlString := strings.TrimSpace(string(htmlData))
