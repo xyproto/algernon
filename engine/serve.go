@@ -2,6 +2,8 @@ package engine
 
 import (
 	"errors"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -9,8 +11,10 @@ import (
 	"time"
 
 	"github.com/caddyserver/certmagic"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
 )
@@ -35,12 +39,10 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 	s := &http.Server{
 		Addr:    addr,
 		Handler: mux,
-
 		// The timeout values is also the maximum time it can take
 		// for a complete page of Server-Sent Events (SSE).
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
-
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   time.Duration(ac.writeTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	if http2support {
@@ -56,8 +58,30 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 	return gracefulServer
 }
 
+// NewFastHTTPServer creates a new fasthttp server configuration
+func (ac *Config) NewFastHTTPServer(mux *http.ServeMux, addr string) *fasthttp.Server {
+	fastHTTPHandler := fasthttpadaptor.NewFastHTTPHandler(mux)
+	return &fasthttp.Server{
+		Handler: fastHTTPHandler,
+		Name:    ac.serverHeaderName,
+
+		// The timeout values is also the maximum time it can take
+		// for a complete page of Server-Sent Events (SSE).
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
+
+		ErrorHandler: func(ctx *fasthttp.RequestCtx, err error) {
+			if strings.Contains(err.Error(), "error when reading request headers: ") {
+				return // Suppress the error message
+			}
+			logrus.Errorf("error when serving connection %q<->%q: %v", ctx.RemoteAddr(), ctx.LocalAddr(), err)
+		},
+		Logger: log.New(io.Discard, "", 0), // use a discarding logger to avoid duplicate logging
+	}
+}
+
 // GenerateShutdownFunction generates a function that will run the postponed
-// shutdown functions.  Note that gracefulServer can be nil. It's only used for
+// shutdown functions. Note that gracefulServer can be nil. It's only used for
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
 func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
@@ -70,7 +94,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 		}
 
 		if ac.verboseMode {
-			log.Info("Initiating shutdown")
+			logrus.Info("Initiating shutdown")
 		}
 
 		// Call the shutdown functions in chronological order (FIFO)
@@ -81,7 +105,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 		completed = true
 
 		if ac.verboseMode {
-			log.Info("Shutdown complete")
+			logrus.Info("Shutdown complete")
 		}
 
 		// Forced shutdown
@@ -123,23 +147,23 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	go func() {
 		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
 		if strings.HasPrefix(ac.serverAddr, ":") {
-			log.Info("Serving HTTP on http://localhost" + ac.serverAddr + "/")
+			logrus.Info("Serving HTTP on http://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Info("Serving HTTP on http://" + ac.serverAddr + "/")
+			logrus.Info("Serving HTTP on http://" + ac.serverAddr + "/")
 		}
 		mut.Lock()
 		servingHTTP = true
 		mut.Unlock()
-		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
+		HTTPserver := ac.NewFastHTTPServer(mux, ac.serverAddr)
 		// Open the URL before the serving has started, in a short delay
-		if ac.openURLAfterServing && ac.luaServerFilename != "" {
+		if ac.openURLAfterServing {
 			go func() {
 				time.Sleep(delayBeforeLaunchingBrowser)
 				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
 			}()
 		}
 		// Start serving. Shut down gracefully at exit.
-		if err := HTTPserver.ListenAndServe(); err != nil {
+		if err := HTTPserver.ListenAndServe(ac.serverAddr); err != nil {
 			mut.Lock()
 			servingHTTP = false
 			mut.Unlock()
@@ -152,11 +176,11 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	switch {
 	case ac.useCertMagic:
 		if len(ac.certMagicDomains) == 0 {
-			log.Warnln("Found no directories looking like domains in the given directory.")
+			logrus.Warnln("Found no directories looking like domains in the given directory.")
 		} else if len(ac.certMagicDomains) == 1 {
-			log.Infof("Serving one domain with CertMagic: %s", ac.certMagicDomains[0])
+			logrus.Infof("Serving one domain with CertMagic: %s", ac.certMagicDomains[0])
 		} else {
-			log.Infof("Serving %d domains with CertMagic: %s", len(ac.certMagicDomains), strings.Join(ac.certMagicDomains, ", "))
+			logrus.Infof("Serving %d domains with CertMagic: %s", len(ac.certMagicDomains), strings.Join(ac.certMagicDomains, ", "))
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -182,16 +206,16 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				mut.Lock()
 				servingHTTPS = false
 				mut.Unlock()
-				log.Error(err)
+				logrus.Error(err)
 				// Don't serve HTTP if CertMagic fails, just quit
 				// justServeRegularHTTP <- true
 			}
 		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
 		if strings.HasPrefix(ac.serverAddr, ":") {
-			log.Info("Serving QUIC on https://localhost" + ac.serverAddr + "/")
+			logrus.Info("Serving QUIC on https://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Info("Serving QUIC on https://" + ac.serverAddr + "/")
+			logrus.Info("Serving QUIC on https://" + ac.serverAddr + "/")
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -201,9 +225,9 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
 		if len(ac.serverHost) == 0 {
-			log.Info("Serving HTTP/2 on https://localhost/")
+			logrus.Info("Serving HTTP/2 on https://localhost/")
 		} else {
-			log.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
+			logrus.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -217,13 +241,13 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				mut.Lock()
 				servingHTTPS = false
 				mut.Unlock()
-				log.Error(err)
+				logrus.Error(err)
 			}
 		}()
 		if len(ac.serverHost) == 0 {
-			log.Info("Serving HTTP on http://localhost/")
+			logrus.Info("Serving HTTP on http://localhost/")
 		} else {
-			log.Info("Serving HTTP on http://" + ac.serverHost + "/")
+			logrus.Info("Serving HTTP on http://" + ac.serverHost + "/")
 		}
 		mut.Lock()
 		servingHTTP = true
@@ -255,9 +279,9 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		}()
 	case ac.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
 		if strings.HasPrefix(ac.serverAddr, ":") {
-			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + ac.serverAddr + "/")
+			logrus.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + ac.serverAddr + "/")
+			logrus.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + ac.serverAddr + "/")
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -271,14 +295,14 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				servingHTTPS = false
 				mut.Unlock()
 				justServeRegularHTTP <- true
-				log.Error(err)
+				logrus.Error(err)
 			}
 		}()
 	case !ac.serveJustHTTP2 && !ac.serveJustHTTP:
 		if strings.HasPrefix(ac.serverAddr, ":") {
-			log.Info("Serving HTTP/2 on https://localhost" + ac.serverAddr + "/")
+			logrus.Info("Serving HTTP/2 on https://localhost" + ac.serverAddr + "/")
 		} else {
-			log.Info("Serving HTTP/2 on https://" + ac.serverAddr + "/")
+			logrus.Info("Serving HTTP/2 on https://" + ac.serverAddr + "/")
 		}
 		mut.Lock()
 		servingHTTPS = true
@@ -288,8 +312,8 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
-				log.Errorf("%s. Not serving HTTP/2.", err)
-				log.Info("Use the -t flag for serving regular HTTP.")
+				logrus.Errorf("%s. Not serving HTTP/2.", err)
+				logrus.Info("Use the -t flag for serving regular HTTP.")
 				mut.Lock()
 				servingHTTPS = false
 				mut.Unlock()
@@ -312,13 +336,13 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 
 	// Open the URL, if specified
 	if ac.openURLAfterServing {
-		// Open the https:// URL if both http:// and https:// are being served
 		mut.Lock()
-		if (!servingHTTP) && (!servingHTTPS) {
-			ac.fatalExit(errors.New("serving neither over https:// nor over https://"))
+		if !servingHTTP && !servingHTTPS {
+			ac.fatalExit(errors.New("serving neither over http:// nor over https://"))
 		}
 		httpsProtocol := servingHTTPS
 		mut.Unlock()
+		// Open the https:// URL if both http:// and https:// are being served
 		ac.OpenURL(ac.serverHost, ac.serverAddr, httpsProtocol)
 	}
 
