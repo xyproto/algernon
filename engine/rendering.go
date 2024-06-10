@@ -24,6 +24,7 @@ import (
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
 
+	// For embedding the MathJax JavaScript
 	_ "embed"
 )
 
