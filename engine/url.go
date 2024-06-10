@@ -2,6 +2,7 @@ package engine
 
 import (
 	"os/exec"
+	"runtime"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -23,6 +24,10 @@ func (ac *Config) OpenURL(host, cPort string, httpsPrefix bool) {
 	}
 	sb.WriteString(cPort)
 	url := sb.String()
+
+	if ac.openExecutable == "" && runtime.GOOS == "darwin" {
+		ac.openExecutable = "open"
+	}
 
 	// Open the URL
 	log.Info("Running: " + ac.openExecutable + " " + url)
