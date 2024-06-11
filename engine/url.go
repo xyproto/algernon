@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -25,12 +26,22 @@ func (ac *Config) OpenURL(host, cPort string, httpsPrefix bool) {
 	sb.WriteString(cPort)
 	url := sb.String()
 
-	if ac.openExecutable == "" && runtime.GOOS == "darwin" {
-		ac.openExecutable = "open"
+	cmd := exec.Command(ac.openExecutable, url)
+	if ac.openExecutable == "" {
+		switch runtime.GOOS {
+		case "darwin":
+			ac.openExecutable = "open"
+			cmd = exec.Command("open", url)
+		case "linux":
+			ac.openExecutable = "xdg-open"
+			cmd = exec.Command("xdg-open", url)
+		case "windows":
+			ac.openExecutable = ""
+			cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+		}
 	}
 
 	// Open the URL
-	log.Info("Running: " + ac.openExecutable + " " + url)
-	cmd := exec.Command(ac.openExecutable, url)
+	log.Info(fmt.Sprintf("Running: %s", cmd.String()))
 	cmd.Run()
 }
