@@ -19,7 +19,7 @@ local function main()
     <!doctype html>
     <html>
     <head>
-        <title>Math Formulas</title>
+        <title>Mathematical Formulas</title>
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
