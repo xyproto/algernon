@@ -1,6 +1,8 @@
 *.bak
 *.bak
 *.cpu
+*.exe
+*.exe~
 *.log
 *.mem
 *.orig
