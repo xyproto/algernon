@@ -31,8 +31,8 @@ import (
 const markdownCodeStyle = "base16-snazzy" // using xyproto/splash
 
 var (
-	//go:embed embedded/tex-svg.js
-	mathJaxScript string
+	//go:embed static/tex-svg.js
+	mathJaxScript []byte
 
 	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
 
@@ -76,7 +76,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 
 		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
 		if containsFormula(mdContent) {
-			js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
+			js := append([]byte(`<script id="MathJax-script">`), mathJaxScript...)
 			htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
 		}
 

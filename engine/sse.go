@@ -46,11 +46,12 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 // InsertScriptTag takes HTML and JS and tries to insert the JS in a good spot, then returns modified HTML.
 // If the JS does not start with "<script>" and ends with "</script>" then those tags are added.
 func InsertScriptTag(htmldata, js []byte) []byte {
+
 	// Reduce the size slightly
-	js = bytes.TrimSpace(bytes.ReplaceAll(js, []byte("\n"), []byte("")))
+	js = bytes.TrimSpace(bytes.ReplaceAll(js, []byte{'\n'}, []byte{}))
 
 	// Remove all whitespace that is more than one space
-	js = bytes.ReplaceAll(js, []byte("  "), []byte(" "))
+	js = bytes.ReplaceAll(js, []byte{' ', ' '}, []byte{' '})
 
 	// Add tags, if needed (only check for <script and not <script> in case it is there and async)
 	if !bytes.HasPrefix(js, []byte("<script")) {
