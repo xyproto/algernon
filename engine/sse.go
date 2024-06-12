@@ -61,6 +61,11 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 		js = append(js, []byte("</script>")...)
 	}
 
+	// If there is no htmldata, then just return the script tag with JS
+	if len(htmldata) == 0 {
+		return js
+	}
+
 	// Place the script at the end of the body, if there is a body
 	switch {
 	case bytes.Contains(htmldata, []byte("</body>")):
@@ -73,6 +78,6 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 		return bytes.Replace(htmldata, []byte("<html>"), append(append([]byte("<html><head>"), js...), []byte("</head>")...), 1)
 	}
 
-	// In the unlikely event that no place to insert the JavaScript was found
-	return htmldata
+	// In the unlikely event that no place to insert the JavaScript was found, just add the script tag to the end
+	return append(htmldata, js...)
 }
