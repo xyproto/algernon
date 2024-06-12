@@ -29,15 +29,12 @@ func (ac *Config) OpenURL(host, cPort string, httpsPrefix bool) {
 	cmd := exec.Command(ac.openExecutable, url)
 	if ac.openExecutable == "" {
 		switch runtime.GOOS {
-		case "darwin":
-			ac.openExecutable = "open"
-			cmd = exec.Command("open", url)
-		case "linux":
-			ac.openExecutable = "xdg-open"
+		case "linux", "solaris":
 			cmd = exec.Command("xdg-open", url)
 		case "windows":
-			ac.openExecutable = ""
 			cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+		default: // darwin, bsd etc
+			cmd = exec.Command("open", url)
 		}
 	}
 

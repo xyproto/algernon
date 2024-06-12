@@ -199,8 +199,8 @@ func New(versionString, description string) (*Config, error) {
 		// Mutex for rendering Pongo2 pages
 		pongomutex: &sync.RWMutex{},
 
-		// Program for opening URLs
-		defaultOpenExecutable: platformdep.DefaultOpenExecutable,
+		// Program for opening URLs, keep empty for using the default in url.go
+		defaultOpenExecutable: "",
 
 		// General information about Algernon
 		versionString: versionString,

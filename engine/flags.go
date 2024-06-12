@@ -352,11 +352,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		}
 	}
 
-	// Use the default openExecutable if none is set
-	if ac.openURLAfterServing && ac.openExecutable == "" {
-		ac.openExecutable = ac.defaultOpenExecutable
-	}
-
 	// Add the serverConfScript to the list of configuration scripts to be read and executed
 	if ac.serverConfScript != "" && ac.serverConfScript != os.DevNull {
 		ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, ac.serverConfScript, filepath.Join(ac.serverDirOrFilename, ac.serverConfScript))
