@@ -90,9 +90,8 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 
 			// Add a script for rendering MathJax, but only if at least one mathematical formula is present
 			if containsFormula(mdContent) {
-				htmlData = append(htmlData, []byte(`<script id="MathJax-script" async>`)...)
-				htmlData = append(htmlData, []byte(mathJaxScript)...)
-				htmlData = append(htmlData, []byte(`</script>`)...)
+				js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
+				htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
 			}
 
 			localImages = utils.ExtractLocalImagePaths(string(htmlData))
