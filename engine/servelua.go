@@ -22,7 +22,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 	L.SetGlobal("serve", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 		serveFilename := filepath.Join(scriptdir, L.ToString(1))
-		dataFilename := filepath.Join(scriptdir, ac.defaultLuaDataFilename)
+		dataFilename := filepath.Join(scriptdir, defaultLuaDataFilename)
 		if L.GetTop() >= 2 {
 			// Optional argument for using a different file than "data.lua"
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))
@@ -115,7 +115,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 	L.SetGlobal("render", L.NewFunction(func(L *lua.LState) int {
 		scriptdir := filepath.Dir(filename)
 		serveFilename := filepath.Join(scriptdir, L.ToString(1))
-		dataFilename := filepath.Join(scriptdir, ac.defaultLuaDataFilename)
+		dataFilename := filepath.Join(scriptdir, defaultLuaDataFilename)
 		if L.GetTop() >= 2 {
 			// Optional argument for using a different file than "data.lua"
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))

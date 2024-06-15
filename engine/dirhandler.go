@@ -137,7 +137,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 // The directory must exist.
 // rootdir is the base directory (can be ".")
 // dirname is the specific directory that is to be served (should never be ".")
-func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme string) {
+func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dirname, theme, luaDataFilename string) {
 	// Check if we are instructed to quit after serving the first file
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
@@ -158,18 +158,18 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 	for _, indexfile := range indexFilenames {
 		filename = filepath.Join(dirname, indexfile)
 		if ac.fs.Exists(filename) {
-			ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
+			ac.FilePage(w, req, filename, luaDataFilename)
 			return
 		}
 	}
 
-	// Serve handler.lua, if found in ancestors
+	// Serve handler.lua, if found in parent directories
 	var ancestor string
 	ancestor = filepath.Dir(dirname)
 	for x := 0; x < 100; x++ { // a maximum of 100 directories deep
 		filename = filepath.Join(ancestor, "handler.lua")
 		if ac.fs.Exists(filename) {
-			ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
+			ac.FilePage(w, req, filename, luaDataFilename)
 			return
 		}
 		if ancestor == "." {

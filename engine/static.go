@@ -102,7 +102,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 		for _, localImage := range localImages {
 			mux.HandleFunc("/"+localImage, func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Server", ac.versionString)
-				ac.FilePage(w, req, localImage, ac.defaultLuaDataFilename)
+				ac.FilePage(w, req, localImage, defaultLuaDataFilename)
 			})
 		}
 	}
@@ -111,7 +111,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Server", ac.versionString)
-		ac.FilePage(w, req, filename, ac.defaultLuaDataFilename)
+		ac.FilePage(w, req, filename, defaultLuaDataFilename)
 	})
 
 	HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+colonPort)

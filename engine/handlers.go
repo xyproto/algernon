@@ -61,10 +61,11 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 
 	// Make the functions in luaDataFilename available for the Pongo2 template
 
-	luafilename := filepath.Join(filepath.Dir(filename), ac.defaultLuaDataFilename)
-	if ac.fs.Exists(ac.defaultLuaDataFilename) {
-		luafilename = ac.defaultLuaDataFilename
+	luafilename := defaultLuaDataFilename
+	if !ac.fs.Exists(luafilename) {
+		luafilename = filepath.Join(filepath.Dir(filename), defaultLuaDataFilename)
 	}
+
 	if ac.fs.Exists(luafilename) {
 		// Extract the function map from luaDataFilenname in a goroutine
 		errChan := make(chan error)
@@ -99,7 +100,8 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	}
 
 	// Output a warning if something different from default has been given
-	if !strings.HasSuffix(luafilename, ac.defaultLuaDataFilename) {
+	// TODO: Do not only check for a suffix, check for the filename
+	if !strings.HasSuffix(luafilename, defaultLuaDataFilename) {
 		log.Warn("Could not read ", luafilename)
 	}
 
@@ -124,7 +126,7 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 }
 
 // FilePage tries to serve a single file. The file must exist. Must be given a full filename.
-func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _ string) {
+func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string) {
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
@@ -199,7 +201,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 		}
 
 		// Try reading luaDataFilename as well, if possible
-		luafilename := filepath.Join(filepath.Dir(filename), ac.defaultLuaDataFilename)
+		luafilename := filepath.Join(filepath.Dir(filename), luaDataFilename)
 		luablock, err := ac.cache.Read(luafilename, ac.shouldCache(ext))
 		if err != nil {
 			// Could not find and/or read luaDataFilename
@@ -262,7 +264,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, _
 			}
 			serveDir := path.Join(webApplicationExtractionDir, firstname)
 			log.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
-			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme)
+			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme, luaDataFilename)
 		}
 		return
 
@@ -575,7 +577,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 			// Prepare to count bytes written
 			sc := sheepcounter.New(w)
 			// Get the directory page
-			ac.DirPage(sc, req, servedir, dirname, theme)
+			ac.DirPage(sc, req, servedir, dirname, theme, defaultLuaDataFilename)
 			// Log the access
 			ac.LogAccess(req, http.StatusOK, sc.Counter())
 			return
@@ -583,7 +585,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 			// Prepare to count bytes written
 			sc := sheepcounter.New(w)
 			// Share a single file instead of a directory
-			ac.FilePage(sc, req, noslash, ac.defaultLuaDataFilename)
+			ac.FilePage(sc, req, noslash, defaultLuaDataFilename)
 			// Log the access
 			ac.LogAccess(req, http.StatusOK, sc.Counter())
 			return

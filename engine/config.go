@@ -34,6 +34,9 @@ import (
 const (
 	// Version number. Stable API within major version numbers.
 	Version = 2.0
+
+	// The default supporting filename for a Lua script that provides data to a template
+	defaultLuaDataFilename = "data.lua"
 )
 
 // Config is the main structure for the Algernon server.
@@ -60,7 +63,6 @@ type Config struct {
 	limitRequestsString          string // store the request limit as a string for faster HTTP header creation later on
 	defaultBoltFilename          string // default bolt database file, for some operating systems
 	defaultLogFile               string // default log file, for some operating systems
-	defaultLuaDataFilename       string // default filename for a Lua script that provides data to a template
 	defaultRedisColonPort        string
 	serverDirOrFilename          string // exposed to the server configuration scripts(s)
 	serverAddr                   string // exposed to the server configuration scripts(s)
@@ -182,9 +184,6 @@ func New(versionString, description string) (*Config, error) {
 
 		// Default log file, for some operating systems
 		defaultLogFile: filepath.Join(tmpdir, "algernon.log"),
-
-		// Default filename for a Lua script that provides data to a template
-		defaultLuaDataFilename: "data.lua",
 
 		// List of configuration filenames to check
 		serverConfigurationFilenames: []string{"/etc/algernon/serverconf.lua", "/etc/algernon/server.lua"},
