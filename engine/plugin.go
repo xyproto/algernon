@@ -6,10 +6,10 @@ import (
 	"net/rpc/jsonrpc"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/natefinch/pie"
+	"github.com/xyproto/algernon/platformdep"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
@@ -32,14 +32,12 @@ func (lp *luaPlugin) LuaHelp() (luahelp string, err error) {
 // (the TextOutput struct should be nil if not in a REPL)
 func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 	// Expose the functionality of a given plugin (executable file).
-	// If on Windows, ".exe" is added to the path.
+	// If on Windows, ".exe" (platformdep.ExeExt) is added to the path.
 	// Returns true of successful.
 	L.SetGlobal("Plugin", L.NewFunction(func(L *lua.LState) int {
 		path := L.ToString(1)
 		givenPath := path
-		if runtime.GOOS == "windows" {
-			path = path + ".exe"
-		}
+		path += platformdep.ExeExt
 		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
@@ -116,9 +114,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 	L.SetGlobal("PluginCode", L.NewFunction(func(L *lua.LState) int {
 		path := L.ToString(1)
 		givenPath := path
-		if runtime.GOOS == "windows" {
-			path = path + ".exe"
-		}
+		path += platformdep.ExeExt
 		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
@@ -173,9 +169,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *textoutput.TextOutput) {
 		}
 
 		path := L.ToString(1)
-		if runtime.GOOS == "windows" {
-			path = path + ".exe"
-		}
+		path += platformdep.ExeExt
 		if !ac.fs.Exists(path) {
 			path = filepath.Join(ac.serverDirOrFilename, path)
 		}
