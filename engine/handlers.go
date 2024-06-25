@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/didip/tollbooth"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
@@ -54,7 +54,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 		if ac.debugMode {
 			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 		} else {
-			log.Errorf("Unable to read %s: %s", filename, err)
+			logrus.Errorf("Unable to read %s: %s", filename, err)
 		}
 		return
 	}
@@ -86,7 +86,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 				// Use the Lua filename as the title
 				ac.PrettyError(w, req, luafilename, luablock.Bytes(), err.Error(), "lua")
 			} else {
-				log.Error(err)
+				logrus.Error(err)
 			}
 			return
 		}
@@ -102,7 +102,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	// Output a warning if something different from default has been given
 	// TODO: Do not only check for a suffix, check for the filename
 	if !strings.HasSuffix(luafilename, defaultLuaDataFilename) {
-		log.Warn("Could not read ", luafilename)
+		logrus.Warn("Could not read ", luafilename)
 	}
 
 	// Use the Pongo2 template without any Lua functions
@@ -119,7 +119,7 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 		if ac.debugMode {
 			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
 		} else {
-			log.Errorf("Unable to read %s: %s", filename, err)
+			logrus.Errorf("Unable to read %s: %s", filename, err)
 		}
 	}
 	return byteblock, err
@@ -219,7 +219,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					// Use the Lua filename as the title
 					ac.PrettyError(w, req, luafilename, luablock.Bytes(), err.Error(), "lua")
 				} else {
-					log.Error(err)
+					logrus.Error(err)
 				}
 				return
 			}
@@ -233,7 +233,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				// Remove the final comma
 				s = strings.TrimSuffix(s, ", ")
 				// Output the message
-				log.Info(s)
+				logrus.Info(s)
 			}
 		}
 
@@ -263,7 +263,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				firstname = path.Base(filename[:len(filename)-4])
 			}
 			serveDir := path.Join(webApplicationExtractionDir, firstname)
-			log.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
+			logrus.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
 			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme, luaDataFilename)
 		}
 		return
@@ -313,9 +313,9 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			if err := ac.RunLua(w, req, filename, flushFunc, nil); err != nil {
 				// Output the non-fatal error message to the log
 				if strings.HasPrefix(err.Error(), filename) {
-					log.Error("Error at " + err.Error())
+					logrus.Error("Error at " + err.Error())
 				} else {
-					log.Error("Error in " + filename + ": " + err.Error())
+					logrus.Error("Error in " + filename + ": " + err.Error())
 				}
 			}
 		}
@@ -343,7 +343,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			w.Header().Add("Content-Type", "text/html;charset=utf-8")
 			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
 		} else {
-			log.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error("Error when serving " + filename + ":" + err.Error())
 		}
 		return
 
@@ -354,7 +354,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.Bytes())
 		} else {
-			log.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error("Error when serving " + filename + ":" + err.Error())
 		}
 		return
 
@@ -363,9 +363,9 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		if promptblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			lines := strings.Split(promptblock.String(), "\n")
 			if len(lines) < 4 {
-				log.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
+				logrus.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
 			} else if strings.TrimSpace(lines[2]) != "" {
-				log.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
+				logrus.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
 			} else {
 				contentType := strings.TrimSpace(lines[0])
 				model := strings.TrimSpace(lines[1])
@@ -385,14 +385,14 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 						}
 						w.Write([]byte(output))
 					} else {
-						log.Error("could not convert " + filename + " to content: " + err.Error())
+						logrus.Error("could not convert " + filename + " to content: " + err.Error())
 					}
 				} else {
-					log.Error("could not convert " + filename + " to content: " + err.Error())
+					logrus.Error("could not convert " + filename + " to content: " + err.Error())
 				}
 			}
 		} else {
-			log.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error("Error when serving " + filename + ":" + err.Error())
 		}
 		return
 
@@ -430,7 +430,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			if ac.mimereader != nil {
 				ac.mimereader.SetHeader(w, ext)
 			} else {
-				log.Error("Uninitialized mimereader!")
+				logrus.Error("Uninitialized mimereader!")
 			}
 		}
 	}
@@ -444,13 +444,13 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	// Check the size of the file
 	f, err := os.Open(filename)
 	if err != nil {
-		log.Error("Could not open " + filename + "! " + err.Error())
+		logrus.Error("Could not open " + filename + "! " + err.Error())
 		return
 	}
 	defer f.Close()
 	fInfo, err := f.Stat()
 	if err != nil {
-		log.Error("Could not stat " + filename + "! " + err.Error())
+		logrus.Error("Could not stat " + filename + "! " + err.Error())
 		return
 	}
 
@@ -458,7 +458,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	fileSize := uint64(fInfo.Size())
 	// Cache size can be set to a low number to trigger this behavior
 	if fileSize > ac.largeFileSize {
-		// log.Info("Streaming " + filename + " directly...")
+		// logrus.Info("Streaming " + filename + " directly...")
 
 		// http.ServeContent will first seek to the end of the file, then
 		// serve the file. The alternative here is to use io.Copy(w, f),
@@ -473,7 +473,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		// Serve the file
 		dataBlock.ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 	} else {
-		log.Error("Could not serve " + filename + " with datablock.ToClient: " + err.Error())
+		logrus.Error("Could not serve " + filename + " with datablock.ToClient: " + err.Error())
 		return
 	}
 }
@@ -530,10 +530,10 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		urlpath := req.URL.Path
 
-		//log.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
+		//logrus.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
 		if ac.reverseProxyConfig != nil {
 			if rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath); rproxy != nil {
-				//log.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
+				//logrus.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
 				res, err := rproxy.DoProxyPass(*req)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
