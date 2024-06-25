@@ -32,7 +32,7 @@ func (ac *Config) CommonLogFormat(req *http.Request, statusCode int, byteSize in
 	}
 	byteSizeString := "0"
 	if byteSize > 0 {
-		byteSizeString = fmt.Sprintf("%d", byteSize)
+		byteSizeString = strconv.FormatInt(byteSize, 10)
 	}
 	timestamp := strings.Replace(time.Now().Format("02/Jan/2006 15:04:05 -0700"), " ", ":", 1)
 	return fmt.Sprintf("%s - %s [%s] \"%s %s %s\" %s %s", ip, username, timestamp, req.Method, req.RequestURI, req.Proto, statusCodeString, byteSizeString)
