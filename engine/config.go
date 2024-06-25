@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	internallog "log"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/evanw/esbuild/pkg/api"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/pool"
 	"github.com/xyproto/algernon/platformdep"
@@ -286,15 +286,15 @@ func (ac *Config) setupLogging() {
 	if ac.serverLogFile != "" {
 		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if errJSONLog != nil {
-			log.Warnf("Could not log to %s: %s", ac.serverLogFile, errJSONLog)
+			logrus.Warnf("Could not log to %s: %s", ac.serverLogFile, errJSONLog)
 		} else {
 			// Log to the given log filename
-			log.SetFormatter(&log.JSONFormatter{})
-			log.SetOutput(f)
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+			logrus.SetOutput(f)
 		}
 	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
-		log.SetOutput(io.Discard)
+		logrus.SetOutput(io.Discard)
 	}
 	// Close stdout and stderr if quite mode has been enabled
 	if ac.quietMode {
@@ -312,28 +312,28 @@ func (ac *Config) Close() {
 func (ac *Config) fatalExit(err error) {
 	// Log to file, if a log file is used
 	if ac.serverLogFile != "" {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	// Then switch to stderr and log the message there as well
-	log.SetOutput(os.Stderr)
+	logrus.SetOutput(os.Stderr)
 	// Use the standard formatter
-	log.SetFormatter(&log.TextFormatter{})
+	logrus.SetFormatter(&logrus.TextFormatter{})
 	// Log and exit
-	log.Fatalln(err.Error())
+	logrus.Fatalln(err.Error())
 }
 
 // Abrupt exit
 func (ac *Config) abruptExit(msg string) {
 	// Log to file, if a log file is used
 	if ac.serverLogFile != "" {
-		log.Info(msg)
+		logrus.Info(msg)
 	}
 	// Then switch to stderr and log the message there as well
-	log.SetOutput(os.Stderr)
+	logrus.SetOutput(os.Stderr)
 	// Use the standard formatter
-	log.SetFormatter(&log.TextFormatter{})
+	logrus.SetFormatter(&logrus.TextFormatter{})
 	// Log and exit
-	log.Info(msg)
+	logrus.Info(msg)
 	os.Exit(0)
 }
 
@@ -420,81 +420,83 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Output what we are attempting to access and serve
 	if ac.verboseMode {
-		log.Info("Accessing " + ac.serverDirOrFilename)
+		logrus.Info("Accessing " + ac.serverDirOrFilename)
 	}
 
 	// Check if the given directory really is a directory
 	if !ac.fs.IsDir(ac.serverDirOrFilename) {
 		// It is not a directory
 		serverFile := ac.serverDirOrFilename
-		// Check if the file exists
-		if ac.fs.Exists(serverFile) {
-			if ac.markdownMode {
-				// Serve the given Markdown file as a static HTTP server
-				if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
-					// Must serve
-					ac.fatalExit(serveErr)
-				}
-				return nil
-			}
-			// Switch based on the lowercase filename extension
-			switch strings.ToLower(filepath.Ext(serverFile)) {
-			case ".md", ".markdown":
-				// Serve the given Markdown file as a static HTTP server
-				if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
-					// Must serve
-					ac.fatalExit(serveErr)
-				}
-				return nil
-			case ".zip", ".alg":
 
-				// Assume this to be a compressed Algernon application
-				webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
-				testfile := filepath.Join(webApplicationExtractionDir, "canary")
-				if _, err := os.Create(testfile); err == nil { // success
-					os.Remove(testfile)
-				} else {
-					// Could not create the test file
-					// Use the server temp dir (typically /tmp) instead of /dev/shm
-					webApplicationExtractionDir = ac.serverTempDir
-				}
-				// Extract the web application
-				if extractErr := unzip.Extract(serverFile, webApplicationExtractionDir); extractErr != nil {
-					return extractErr
-				}
-				// Use the directory where the file was extracted as the server directory
-				ac.serverDirOrFilename = webApplicationExtractionDir
-				// If there is only one directory there, assume it's the
-				// directory of the newly extracted ZIP file.
-				if filenames := utils.GetFilenames(ac.serverDirOrFilename); len(filenames) == 1 {
-					fullPath := filepath.Join(ac.serverDirOrFilename, filenames[0])
-					if ac.fs.IsDir(fullPath) {
-						// Use this as the server directory instead
-						ac.serverDirOrFilename = fullPath
-					}
-				}
-				// If there are server configuration files in the extracted
-				// directory, register them.
-				for _, filename := range ac.serverConfigurationFilenames {
-					configFilename := filepath.Join(ac.serverDirOrFilename, filename)
-					ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
-				}
-				// Disregard all configuration files from the current directory
-				// (filenames without a path separator), since we are serving a
-				// ZIP file.
-				for i, filename := range ac.serverConfigurationFilenames {
-					if strings.Count(filepath.ToSlash(filename), "/") == 0 {
-						// Remove the filename from the slice
-						ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames[:i], ac.serverConfigurationFilenames[i+1:]...)
-					}
-				}
-
-			default:
-				ac.singleFileMode = true
-			}
-		} else {
-			return errors.New("File does not exist: " + serverFile)
+		// Return with an error if the file to serve does not exist
+		if !ac.fs.Exists(serverFile) {
+			return fmt.Errorf("file does not exist: %s", serverFile)
 		}
+
+		if ac.markdownMode {
+			// Serve the given Markdown file as a static HTTP server
+			if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
+				// Must serve
+				ac.fatalExit(serveErr)
+			}
+			return nil
+		}
+		// Switch based on the lowercase filename extension
+		switch strings.ToLower(filepath.Ext(serverFile)) {
+		case ".md", ".markdown":
+			// Serve the given Markdown file as a static HTTP server
+			if serveErr := ac.ServeStaticFile(serverFile, ac.defaultWebColonPort); serveErr != nil {
+				// Must serve
+				ac.fatalExit(serveErr)
+			}
+			return nil
+		case ".zip", ".alg":
+
+			// Assume this to be a compressed Algernon application
+			webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
+			testfile := filepath.Join(webApplicationExtractionDir, "canary")
+			if _, err := os.Create(testfile); err == nil { // success
+				os.Remove(testfile)
+			} else {
+				// Could not create the test file
+				// Use the server temp dir (typically /tmp) instead of /dev/shm
+				webApplicationExtractionDir = ac.serverTempDir
+			}
+			// Extract the web application
+			if extractErr := unzip.Extract(serverFile, webApplicationExtractionDir); extractErr != nil {
+				return extractErr
+			}
+			// Use the directory where the file was extracted as the server directory
+			ac.serverDirOrFilename = webApplicationExtractionDir
+			// If there is only one directory there, assume it's the
+			// directory of the newly extracted ZIP file.
+			if filenames := utils.GetFilenames(ac.serverDirOrFilename); len(filenames) == 1 {
+				fullPath := filepath.Join(ac.serverDirOrFilename, filenames[0])
+				if ac.fs.IsDir(fullPath) {
+					// Use this as the server directory instead
+					ac.serverDirOrFilename = fullPath
+				}
+			}
+			// If there are server configuration files in the extracted
+			// directory, register them.
+			for _, filename := range ac.serverConfigurationFilenames {
+				configFilename := filepath.Join(ac.serverDirOrFilename, filename)
+				ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames, configFilename)
+			}
+			// Disregard all configuration files from the current directory
+			// (filenames without a path separator), since we are serving a
+			// ZIP file.
+			for i, filename := range ac.serverConfigurationFilenames {
+				if strings.Count(filepath.ToSlash(filename), "/") == 0 {
+					// Remove the filename from the slice
+					ac.serverConfigurationFilenames = append(ac.serverConfigurationFilenames[:i], ac.serverConfigurationFilenames[i+1:]...)
+				}
+			}
+
+		default:
+			ac.singleFileMode = true
+		}
+
 	}
 
 	// Make a few changes to the defaults if we are serving a single file
@@ -542,8 +544,8 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		if ac.luaServerFilename == "index.lua" || ac.luaServerFilename == "data.lua" {
 			// Friendly message to new users
 			if !hasHandlers(ac.luaServerFilename) {
-				log.Warnf("Found no handlers in %s", ac.luaServerFilename)
-				log.Info("How to implement \"Hello, World!\" in " + ac.luaServerFilename + " file:\n\nhandle(\"/\", function()\n  print(\"Hello, World!\")\nend)\n")
+				logrus.Warnf("Found no handlers in %s", ac.luaServerFilename)
+				logrus.Info("How to implement \"Hello, World!\" in " + ac.luaServerFilename + " file:\n\nhandle(\"/\", function()\n  print(\"Hello, World!\")\nend)\n")
 			}
 		}
 		ac.serverDirOrFilename = filepath.Dir(ac.serverDirOrFilename)
@@ -578,23 +580,23 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 				to.Println(arrowColor + "-> " + filenameColor + filename + "<off>")
 				fmt.Print(to.Tags(luaOutputColor))
 			} else if ac.verboseMode {
-				log.Info("Running Lua configuration file: " + filename)
+				logrus.Info("Running Lua configuration file: " + filename)
 			}
 			withHandlerFunctions := true
 			errConf := ac.RunConfiguration(filename, mux, withHandlerFunctions)
 			if errConf != nil {
 				if ac.perm != nil {
-					log.Error("Could not use configuration script: " + filename)
+					logrus.Error("Could not use configuration script: " + filename)
 					return errConf
 				}
 				if ac.verboseMode {
-					log.Info("Skipping " + filename + " because the database backend is not in use.")
+					logrus.Info("Skipping " + filename + " because the database backend is not in use.")
 				}
 			}
 			ranConfigurationFilenames = append(ranConfigurationFilenames, filename)
 		} else {
 			if ac.verboseMode {
-				log.Info("Looking for: " + filename)
+				logrus.Info("Looking for: " + filename)
 			}
 		}
 	}
@@ -614,7 +616,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		withHandlerFunctions := true
 		errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions)
 		if errLua != nil {
-			log.Errorf("Error in %s (interpreted as a server script):\n%s\n", ac.luaServerFilename, errLua)
+			logrus.Errorf("Error in %s (interpreted as a server script):\n%s\n", ac.luaServerFilename, errLua)
 			return errLua
 		}
 	} else {
@@ -661,7 +663,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		}
 	}
 	defer internalLogFile.Close()
-	internallog.SetOutput(internalLogFile)
+	log.SetOutput(internalLogFile)
 
 	// Serve filesystem events in the background.
 	// Used for reloading pages when the sources change.
@@ -669,13 +671,13 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if ac.autoRefresh {
 		ac.refreshDuration, err = time.ParseDuration(ac.eventRefresh)
 		if err != nil {
-			log.Warnf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh)
+			logrus.Warnf("%s is an invalid duration. Using %s instead.", ac.eventRefresh, ac.defaultEventRefresh)
 			// Ignore the error, since defaultEventRefresh is a constant and must be parseable
 			ac.refreshDuration, _ = time.ParseDuration(ac.defaultEventRefresh)
 		}
 		recwatch.SetVerbose(ac.verboseMode)
 		recwatch.LogError = func(err error) {
-			log.Error(err)
+			logrus.Error(err)
 		}
 		recwatch.FatalExit = ac.fatalExit
 		recwatch.Exists = ac.fs.Exists
