@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/datablock"
 )
 
@@ -36,16 +36,24 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 			return
 		}
 		if ac.debugMode && ac.verboseMode {
-			s := "These functions from " + luafilename
-			s += " are useable for " + filename + ": "
+			var sb strings.Builder
+			sb.WriteString("These functions from ")
+			sb.WriteString(luafilename)
+			sb.WriteString(" are useable for ")
+			sb.WriteString(filename)
+			sb.WriteString(": ")
 			// Create a comma separated list of the available functions
+			first := true
 			for key := range funcs {
-				s += key + ", "
+				if first {
+					first = false
+				} else {
+					sb.WriteString(", ")
+				}
+				sb.WriteString(key)
 			}
-			// Remove the final comma
-			s = strings.TrimSuffix(s, ", ")
 			// Output the message
-			log.Info(s)
+			logrus.Info(sb.String())
 		}
 	}
 	funcMapChan <- funcs
