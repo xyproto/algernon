@@ -6,11 +6,11 @@ import (
 	"bytes"
 	"net/http"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/go-gcfg/gcfg"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 )
@@ -21,17 +21,7 @@ const (
 )
 
 // List of filenames that should be displayed instead of a directory listing
-var (
-	indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
-
-	// TODO: Use build tags instead of checking runtime.GOOS!
-	dirConfFilename, ignoreFilename = func() (string, string) {
-		if runtime.GOOS == "windows" {
-			return "algernon.txt", "ignore.txt"
-		}
-		return ".algernon", ".ignore"
-	}()
-)
+var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
 
 // DirConfig keeps a directory listing configuration
 type DirConfig struct {
@@ -55,11 +45,11 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 
 	// Read ignore patterns if ignore.txt is present
 	var ignorePatterns []string
-	ignoreFilePath := filepath.Join(dirname, ignoreFilename)
+	ignoreFilePath := filepath.Join(dirname, platformdep.IgnoreFilename)
 	if ac.fs.Exists(ignoreFilePath) {
 		patterns, err := ReadIgnoreFile(ignoreFilePath)
 		if err != nil {
-			log.Warn("Could not read ignore.txt: ", err)
+			logrus.Warn("Could not read ignore.txt: ", err)
 		} else {
 			ignorePatterns = patterns
 		}
@@ -68,7 +58,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	// Fill the coming HTML body with a list of all the filenames in `dirname`
 	for _, filename := range utils.GetFilenames(dirname) {
 
-		if filename == dirConfFilename || filename == ignoreFilename {
+		if filename == platformdep.DirConfFilename || filename == platformdep.IgnoreFilename {
 			// Skip
 			continue
 		}
@@ -97,7 +87,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	}
 
 	// Read directory configuration, if present
-	if fullDirConfFilename := filepath.Join(dirname, dirConfFilename); ac.fs.Exists(fullDirConfFilename) {
+	if fullDirConfFilename := filepath.Join(dirname, platformdep.DirConfFilename); ac.fs.Exists(fullDirConfFilename) {
 		var dirConf DirConfig
 		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil { // if no error
 			if dirConf.Main.Title != "" {
@@ -146,8 +136,8 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 	// If the URL does not end with a slash, redirect to an URL that does
 	if !strings.HasSuffix(req.URL.Path, "/") {
 		if req.Method == "POST" {
-			log.Warn("Redirecting a POST request: " + req.URL.Path + " -> " + req.URL.Path + "/.")
-			log.Warn("Header data may be lost! Please add the missing slash.")
+			logrus.Warn("Redirecting a POST request: " + req.URL.Path + " -> " + req.URL.Path + "/.")
+			logrus.Warn("Header data may be lost! Please add the missing slash.")
 		}
 		http.Redirect(w, req, req.URL.Path+"/", http.StatusMovedPermanently)
 		return
