@@ -538,9 +538,7 @@ func generateUsageFunction(ac *Config) func() {
 	return func() {
 		fmt.Println("\n" + ac.versionString + "\n\n" + ac.description)
 
-		var quicExample string
-		var quicUsageOrMessage string
-		var quicFinalMessage string
+		var quicExample, quicUsageOrMessage, quicFinalMessage string
 
 		// Prepare and/or output a message, depending on if QUIC support is compiled in or not
 		if quicEnabled {

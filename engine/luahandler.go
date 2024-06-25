@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/didip/tollbooth"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/themes"
 	lua "github.com/xyproto/gopher-lua"
 )
@@ -33,7 +33,7 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 			L.Push(handleFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
-				log.Error("Handler for "+handlePath+" failed:", err)
+				logrus.Error("Handler for "+handlePath+" failed:", err)
 			}
 
 			// Then exit after the first request, if specified
@@ -59,7 +59,7 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 		handlePath := L.ToString(1) // serve as (ie. "/")
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		if handlePath == "" || rootdir == "" {
-			log.Errorf("servedir needs an URL path to serve, ie. %q and a directory releative to %q, ie. %q", "/", filepath.Dir(filename), "./public")
+			logrus.Errorf("servedir needs an URL path to serve, ie. %q and a directory releative to %q, ie. %q", "/", filepath.Dir(filename), "./public")
 			return 0
 		}
 		rootdir = filepath.Join(filepath.Dir(filename), rootdir)
