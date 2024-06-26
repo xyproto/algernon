@@ -1,5 +1,31 @@
 # Changelog
 
+Changes from 1.16.0 to 1.17.0
+=============================
+
+* Add three Ollama-related functions: `base64EncodeFile`, `describeImage` and `embeddedDistance`.
+* Add an example for uploading and describing images with Ollama and the `llava-llama3` model.
+* Add a `base64` method to `UploadedFile` objects.
+* Update the Teal example.
+* Improve the "pretty error page" that appears if there is an error in a Lua script.
+* Let some variables be constants instead.
+* Avoid using `runtime.GOOS` and detect most features at compile time instead.
+* Use two `atomic.Bool` variables instead of a mutex for keeping track of how data is being served.
+* Import `logrus` as "logrus" instead of as "log".
+* Use `strconf.FormatInt` instead of `fmt.Sprintf` whenever possible.
+* Use `github.com/pkg/browser` for opening URLs in a browser.
+* Fix an issue with inserting JS into HTML.
+* Serve HTTP with `fasthttp´ (ref #4)
+* Improve how favicons are handled.
+* Make it possible to ignore files in a directory listing (ref #149).
+* Add a `sanhtml` function for sanitizing HTML.
+* Add experimental support for mathematical formulas in Markdown using MathJax (ref #150).
+* Add an example that renders mathematical formulas.
+* Remove `GOEXPERIMENT=loopvar` since it is no longer needed.
+* Follow the advice of `golint`.
+* Update documentation.
+* Update dependencies.
+
 Changes from 1.15.5 to 1.16.0
 =============================
 
