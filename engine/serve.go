@@ -86,9 +86,6 @@ func (ac *Config) NewFastHTTPServer(mux *http.ServeMux, addr string) *fasthttp.S
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
 func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
-		serverServingMutex.Lock()
-		defer serverServingMutex.Unlock()
-
 		if completed {
 			// The shutdown functions have already been called
 			return
@@ -100,7 +97,9 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 
 		// Call the shutdown functions in chronological order (FIFO)
 		for _, shutdownFunction := range shutdownFunctions {
+			serverServingMutex.Lock()
 			shutdownFunction()
+			serverServingMutex.Unlock()
 		}
 
 		completed = true
@@ -108,6 +107,9 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 		if ac.verboseMode {
 			logrus.Info("Shutdown complete")
 		}
+
+		serverServingMutex.Lock()
+		defer serverServingMutex.Unlock()
 
 		// Forced shutdown
 		if gracefulServer != nil {

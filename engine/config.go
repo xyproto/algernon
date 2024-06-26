@@ -534,7 +534,6 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Lua LState pool
 	ac.luapool = pool.New()
 	AtShutdown(func() {
-		// TODO: Why not defer?
 		ac.luapool.Shutdown()
 	})
 
