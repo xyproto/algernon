@@ -1288,7 +1288,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.16.0
+* Version: 1.17.0
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
