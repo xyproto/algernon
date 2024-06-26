@@ -5,7 +5,7 @@ package engine
 
 import (
 	"net/http"
-	"sync"
+	"sync/atomic"
 
 	"github.com/quic-go/quic-go/http3"
 	"github.com/sirupsen/logrus"
@@ -15,7 +15,7 @@ const quicEnabled = true
 
 // ListenAndServeQUIC attempts to serve the given http.Handler over QUIC/HTTP3,
 // then reports back any errors when done serving.
-func (ac *Config) ListenAndServeQUIC(mux http.Handler, mut *sync.Mutex, justServeRegularHTTP chan bool, servingHTTPS *bool) {
+func (ac *Config) ListenAndServeQUIC(mux http.Handler, justServeRegularHTTP chan bool, servingHTTPS *atomic.Bool) {
 	// TODO: Handle ctrl-c by fetching the quicServer struct and passing it to GenerateShutdownFunction.
 	//       This can be done once CloseGracefully in h2quic has been implemented:
 	//       https://github.com/lucas-clemente/quic-go/blob/master/h2quic/server.go#L257
@@ -28,8 +28,6 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, mut *sync.Mutex, justServ
 		// If QUIC failed (perhaps the key + cert are missing),
 		// serve plain HTTP instead
 		justServeRegularHTTP <- true
-		mut.Lock()
-		*servingHTTPS = false
-		mut.Unlock()
+		servingHTTPS.Store(false)
 	}
 }
