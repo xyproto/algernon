@@ -4,7 +4,7 @@ package onthefly
 import (
 	"errors"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/onthefly"
 	"github.com/xyproto/tinysvg"
@@ -187,7 +187,7 @@ func Load(L *lua.LState) {
 		// Construct a new Page
 		userdata, err := constructPage(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}
@@ -202,7 +202,7 @@ func Load(L *lua.LState) {
 		// Construct a new Page
 		userdata, err := constructHTML5Page(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}
@@ -217,7 +217,7 @@ func Load(L *lua.LState) {
 		// Construct a new Page
 		userdata, err := constructTinySVGPage(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}
@@ -232,7 +232,7 @@ func Load(L *lua.LState) {
 		// Construct a new Tag
 		userdata, err := constructTag(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}

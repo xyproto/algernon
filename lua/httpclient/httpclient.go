@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/ddliu/go-httpclient"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
 )
@@ -111,7 +111,7 @@ func hcGet(L *lua.LState) int {
 				uv.Add(k, v)
 			default:
 				// TODO: Also support floats?
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
@@ -132,24 +132,24 @@ func hcGet(L *lua.LState) int {
 			case string:
 				headers[k] = v
 			default:
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
 
-	// log.Info("GET " + URL)
+	// logrus.Info("GET " + URL)
 
 	// GET the given URL with the given HTTP headers
 	resp, err := hc.Begin().Do("GET", URL, headers, nil)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
 	// Read the returned body
 	bodyString, err := resp.ToString()
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
@@ -186,7 +186,7 @@ func hcPost(L *lua.LState) int {
 				uv.Add(k, v)
 			default:
 				// TODO: Also support floats?
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
@@ -207,7 +207,7 @@ func hcPost(L *lua.LState) int {
 			case string:
 				headers[k] = v
 			default:
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
@@ -215,19 +215,19 @@ func hcPost(L *lua.LState) int {
 	// Body
 	bodyReader := strings.NewReader(L.ToString(5)) // arg 5 (optional)
 
-	// log.Info("POST " + URL)
+	// logrus.Info("POST " + URL)
 
 	// POST the given URL with the given HTTP headers
 	resp, err := hc.Begin().Do("POST", URL, headers, bodyReader)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
 	// Read the returned body
 	bodyString, err := resp.ToString()
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
@@ -269,7 +269,7 @@ func hcDo(L *lua.LState) int {
 				uv.Add(k, v)
 			default:
 				// TODO: Also support floats?
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
@@ -290,24 +290,24 @@ func hcDo(L *lua.LState) int {
 			case string:
 				headers[k] = v
 			default:
-				log.Warn("Unrecognized value in table:", v)
+				logrus.Warn("Unrecognized value in table:", v)
 			}
 		}
 	}
 
-	// log.Info(method + " " + URL)
+	// logrus.Info(method + " " + URL)
 
 	// Connect to the given URL with the given method and the given HTTP headers
 	resp, err := hc.Begin().Do(method, URL, headers, nil)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
 	// Read the returned body
 	bodyString, err := resp.ToString()
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // no results
 	}
 
@@ -419,7 +419,7 @@ func Load(L *lua.LState, userAgent string) {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			return 0 // Number of returned values
 		}
 
@@ -433,7 +433,7 @@ func Load(L *lua.LState, userAgent string) {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			return 0 // Number of returned values
 		}
 		L.Insert(userdata, 0)
@@ -445,7 +445,7 @@ func Load(L *lua.LState, userAgent string) {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			return 0 // Number of returned values
 		}
 		L.Insert(userdata, 0)
@@ -457,7 +457,7 @@ func Load(L *lua.LState, userAgent string) {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			return 0 // Number of returned values
 		}
 		L.Insert(userdata, 0)

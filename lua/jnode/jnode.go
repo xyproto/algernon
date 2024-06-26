@@ -8,7 +8,7 @@ import (
 	"net/http" // For sending JSON requests
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/jpath"
@@ -58,9 +58,9 @@ func jnodeAdd(L *lua.LState) int {
 	err := jnode.AddJSON(jsonpath, []byte(jsondata))
 	if err != nil {
 		if top == 2 || strings.HasPrefix(err.Error(), "invalid character") {
-			log.Error("JSON data: ", err)
+			logrus.Error("JSON data: ", err)
 		} else {
-			log.Error(err)
+			logrus.Error(err)
 		}
 	}
 	L.Push(lua.LBool(err == nil))
@@ -122,7 +122,7 @@ func jnodeDelKey(L *lua.LState) int {
 	}
 	err := jnode.DelKey(jsonpath)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	L.Push(lua.LBool(nil == err))
 	return 1 // number of results
@@ -191,7 +191,7 @@ func jnodePOSTToURL(L *lua.LState) int {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", posturl, bytes.NewReader(jsonData))
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 	if authtoken != "" {
@@ -202,7 +202,7 @@ func jnodePOSTToURL(L *lua.LState) int {
 	// Send request and return result
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 
@@ -244,7 +244,7 @@ func jnodePUTToURL(L *lua.LState) int {
 	client := &http.Client{}
 	req, err := http.NewRequest("PUT", puturl, bytes.NewReader(jsonData))
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 	if authtoken != "" {
@@ -255,7 +255,7 @@ func jnodePUTToURL(L *lua.LState) int {
 	// Send request and return result
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 
@@ -281,7 +281,7 @@ func jnodeGETFromURL(L *lua.LState) int {
 	// Send request
 	resp, err := http.Get(posturl)
 	if err != nil {
-		log.Error(err.Error())
+		logrus.Error(err.Error())
 		return 0 // number of results
 	}
 	if resp.Status != "200 OK" {
@@ -292,13 +292,13 @@ func jnodeGETFromURL(L *lua.LState) int {
 	bodyData, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 
 	newJnode, err := jpath.New(bodyData)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return 0 // number of results
 	}
 
@@ -322,7 +322,7 @@ func constructJNode(L *lua.LState) (*lua.LUserData, error) {
 		var err error
 		jnode, err = jpath.New(jsondata)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			jnode = jpath.NewNode()
 		}
 	} else {
@@ -364,7 +364,7 @@ func Load(L *lua.LState) {
 		// Construct a new JNode
 		userdata, err := constructJNode(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}
@@ -413,7 +413,7 @@ func LoadJSONFunctions(L *lua.LState) {
 			b, err = json.Marshal(mapinterface)
 		}
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			return 0 // number of results
 		}
 		L.Push(lua.LString(string(b)))

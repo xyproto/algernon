@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/dustin/go-humanize"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/ollamaclient/v2"
@@ -41,7 +41,7 @@ func ollamaPullIfNeeded(L *lua.LState) int {
 	// Pull the model, in a verbose way
 	err := oc.PullIfNeeded(true)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -55,7 +55,7 @@ func ollamaHas(L *lua.LState) int {
 	modelName := L.ToString(2) // arg 2
 	found, err := oc.Has(modelName)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -68,7 +68,7 @@ func ollamaList(L *lua.LState) int {
 	oc := checkOllamaClient(L) // arg 1
 	downloadedModels, _, _, err := oc.List()
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(convert.Strings2table(L, []string{}))
 		return 1 // number of results
 	}
@@ -88,7 +88,7 @@ func ollamaSizeInBytes(L *lua.LState) int {
 	}
 	size, err := oc.SizeOf(modelName) // get the size of the given model name
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -109,7 +109,7 @@ func ollamaSize(L *lua.LState) int {
 	}
 	size, err := oc.SizeOf(modelName) // Assume this gets the size of the given model name in bytes
 	if err != nil {
-		log.Println(err)
+		logrus.Println(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -151,7 +151,7 @@ func ollamaGenerateOutput(L *lua.LState) int {
 		oc.ModelName = L.ToString(3) // arg 3
 		err := oc.PullIfNeeded(true)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // number of results
 		}
@@ -161,7 +161,7 @@ func ollamaGenerateOutput(L *lua.LState) int {
 	oc.SetReproducible()
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -182,7 +182,7 @@ func ollamaEmbeddings(L *lua.LState) int {
 		oc.ModelName = L.ToString(3) // arg 3
 		err := oc.PullIfNeeded(true)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // number of results
 		}
@@ -194,7 +194,7 @@ func ollamaEmbeddings(L *lua.LState) int {
 	var floats []float64
 	floats, err = oc.Embeddings(prompt)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -220,7 +220,7 @@ func ollamaGenerateOutputCreative(L *lua.LState) int {
 		oc.ModelName = L.ToString(3) // arg 3
 		err := oc.PullIfNeeded(true)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // number of results
 		}
@@ -230,7 +230,7 @@ func ollamaGenerateOutputCreative(L *lua.LState) int {
 	oc.SetRandom()
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -284,13 +284,13 @@ func askOllama(L *lua.LState) int {
 	// Pull the model, in a verbose way
 	err := oc.PullIfNeeded(true)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
 	output, err := oc.GetOutput(prompt)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
@@ -360,7 +360,7 @@ func Load(L *lua.LState) {
 		// Construct a new OllamaClient
 		userdata, err := constructOllamaClient(L)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}

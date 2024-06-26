@@ -2,7 +2,7 @@
 package codelib
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
 )
@@ -36,7 +36,7 @@ func libAdd(L *lua.LState) int {
 	}
 	code := L.ToString(3)
 	if code == "" {
-		log.Warn("Empty Lua code given to codelib:add")
+		logrus.Warn("Empty Lua code given to codelib:add")
 		L.Push(lua.LBool(false))
 		return 1
 	}
@@ -61,11 +61,6 @@ func libSet(L *lua.LState) int {
 	}
 	code := L.ToString(3)
 	// Empty string is fine, for clearing a key
-	//if code == "" {
-	//	log.Warn("Empty Lua code given to codelib:set")
-	//	L.Push(lua.LBool(false))
-	//	return 1
-	//}
 	L.Push(lua.LBool(nil == lualib.Set(namespace, code)))
 	return 1 // number of results
 }
@@ -108,7 +103,7 @@ func libImport(L *lua.LState) int {
 	if err := L.DoString(code); err != nil {
 		L.Close()
 
-		log.Errorf("Error when importing Lua code:\n%s", err)
+		logrus.Errorf("Error when importing Lua code:\n%s", err)
 		L.Push(lua.LBool(false)) // error
 		return 1                 // number of results
 	}

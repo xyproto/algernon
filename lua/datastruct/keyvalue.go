@@ -1,10 +1,9 @@
 package datastruct
 
 import (
+	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Identifier for the Set class in Lua
@@ -76,7 +75,7 @@ func kvInc(L *lua.LState) int {
 	key := L.CheckString(2)
 	increased, err := kv.Inc(key)
 	if err != nil {
-		log.Error(err.Error())
+		logrus.Error(err.Error())
 		L.Push(lua.LString("0"))
 		return 1
 	}

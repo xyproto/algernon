@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/jpath"
@@ -193,36 +193,28 @@ func Table2map(luaTable *lua.LTable, preferInt bool) (any, bool) {
 	// Return the first map that has values
 	if !preferInt {
 		if lss > 0 {
-			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
 		}
 		if lsi > 0 {
-			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
 		}
 		if lis > 0 {
-			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
 		}
 		if lii > 0 {
-			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
 		}
 	} else {
 		if lii > 0 {
-			// log.Println(key, "INT -> INT map")
 			return any(mapII), lii < total
 		}
 		if lis > 0 {
-			// log.Println(key, "INT -> STRING map")
 			return any(mapIS), lis < total
 		}
 		if lsi > 0 {
-			// log.Println(key, "STRING -> INT map")
 			return any(mapSI), lsi < total
 		}
 		if lss > 0 {
-			// log.Println(key, "STRING -> STRING map")
 			return any(mapSS), lss < total
 		}
 	}
@@ -345,7 +337,7 @@ func Table2interfaceMap(luaTable *lua.LTable) map[string]any {
 			}
 			everything[sk] = sv
 		} else {
-			log.Warn("table2interfacemap: Unsupported type for map key. Value:", tvalue)
+			logrus.Warn("table2interfacemap: Unsupported type for map key. Value:", tvalue)
 		}
 	})
 

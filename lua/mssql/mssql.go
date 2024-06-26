@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
 
@@ -129,13 +129,13 @@ func Load(L *lua.LState) {
 			err := conn.Ping()
 			if err != nil {
 				// no
-				// log.Info("did not reuse the connection")
+				// logrus.Info("did not reuse the connection")
 				reuseMut.Lock()
 				delete(reuseDB, connectionString)
 				reuseMut.Unlock()
 			} else {
 				// yes
-				// log.Info("reused the connection")
+				// logrus.Info("reused the connection")
 				db = conn
 			}
 		}
@@ -144,7 +144,7 @@ func Load(L *lua.LState) {
 		if db == nil {
 			db, err = sql.Open("sqlserver", connectionString)
 			if err != nil {
-				log.Error("Could not connect to database using " + connectionString + ": " + err.Error())
+				logrus.Error("Could not connect to database using " + connectionString + ": " + err.Error())
 				return 0 // No results
 			}
 			// Save the connection for later
@@ -152,23 +152,23 @@ func Load(L *lua.LState) {
 			reuseDB[connectionString] = db
 			reuseMut.Unlock()
 		}
-		// log.Info(fmt.Sprintf("MSSQL database: %v (%T)\n", db, db))
+		// logrus.Info(fmt.Sprintf("MSSQL database: %v (%T)\n", db, db))
 		reuseMut.Lock()
 		rows, err := db.Query(query, queryArgs...)
 		reuseMut.Unlock()
 		if err != nil {
 			errMsg := err.Error()
 			if strings.Contains(errMsg, ": connect: connection refused") {
-				log.Info("MSSQL connection string: " + connectionString)
-				log.Info("MSSQL query: " + query)
-				log.Error("Could not connect to database: " + errMsg)
+				logrus.Info("MSSQL connection string: " + connectionString)
+				logrus.Info("MSSQL query: " + query)
+				logrus.Error("Could not connect to database: " + errMsg)
 			} else if strings.Contains(errMsg, "missing") && strings.Contains(errMsg, "in connection info string") {
-				log.Info("MSSQL connection string: " + connectionString)
-				log.Info("MSSQL query: " + query)
-				log.Error(errMsg)
+				logrus.Info("MSSQL connection string: " + connectionString)
+				logrus.Info("MSSQL query: " + query)
+				logrus.Error(errMsg)
 			} else {
-				log.Info("MSSQL query: " + query)
-				log.Error("Query failed: " + errMsg)
+				logrus.Info("MSSQL query: " + query)
+				logrus.Error("Query failed: " + errMsg)
 			}
 			return 0 // No results
 		}
@@ -179,7 +179,7 @@ func Load(L *lua.LState) {
 		}
 		cols, err := rows.Columns()
 		if err != nil {
-			log.Error("Failed to get columns: " + err.Error())
+			logrus.Error("Failed to get columns: " + err.Error())
 			return 0
 		}
 		// Return the rows as a 2-dimensional table
@@ -195,7 +195,7 @@ func Load(L *lua.LState) {
 			values = make(LValueWrappers, len(cols))
 			err = rows.Scan(values.Interfaces()...)
 			if err != nil {
-				log.Error("Failed to scan data: " + err.Error())
+				logrus.Error("Failed to scan data: " + err.Error())
 				break
 			}
 			m = make(map[string]lua.LValue, len(cols))
