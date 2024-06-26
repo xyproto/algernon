@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 )
 
@@ -43,7 +43,7 @@ func (rp *ReverseProxy) DoProxyPass(req http.Request) (*http.Response, error) {
 	req.URL.Host = endpoint.Host
 	res, err := client.Do(&req)
 	if err != nil {
-		log.Errorf("reverse proxy error: %v\nPlease check your server config for AddReverseProxy calls.\n", err)
+		logrus.Errorf("reverse proxy error: %v\nPlease check your server config for AddReverseProxy calls.\n", err)
 		return nil, err
 	}
 	return res, nil
@@ -67,7 +67,7 @@ func (rc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProx
 		return nil
 	}
 	if len(matches) > 1 {
-		log.Warnf("found more than one reverse proxy for `%s`: %+v. returning the longest", matches, path)
+		logrus.Warnf("found more than one reverse proxy for `%s`: %+v. returning the longest", matches, path)
 	}
 	var match *ReverseProxy
 	maxlen := 0

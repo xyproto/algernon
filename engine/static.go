@@ -11,7 +11,7 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 )
@@ -56,7 +56,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 	if ac.serverHost != "" {
 		hostname = ac.serverHost
 	}
-	log.Info("Serving " + filename + " on http://" + hostname + colonPort)
+	logrus.Info("Serving " + filename + " on http://" + hostname + colonPort)
 
 	if ac.openURLAfterServing {
 		go ac.openAfter(delayBeforeLaunchingBrowser, hostname, colonPort, false, cancelChannel)
@@ -67,7 +67,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 // It can be used as a quick and easy way to view a README.md file.
 // Will also serve local images if the resulting HTML contains them.
 func (ac *Config) ServeStaticFile(filename, colonPort string) error {
-	log.Info("Single file mode. Not using the regular parameters.")
+	logrus.Info("Single file mode. Not using the regular parameters.")
 
 	cancelChannel := make(chan bool, 1)
 
@@ -126,7 +126,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 					// Not a problem with address already being in use
 					ac.fatalExit(errServe)
 				}
-				log.Warn("Address already in use. Using next port number.")
+				logrus.Warn("Address already in use. Using next port number.")
 				if newPort, errNext := nextPort(colonPort); errNext != nil {
 					ac.fatalExit(errNext)
 				} else {

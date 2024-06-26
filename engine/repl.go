@@ -10,7 +10,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/lua/datastruct"
@@ -48,7 +48,7 @@ func exportREPLSpecific(L *lua.LState) {
 	L.SetGlobal("scriptdir", L.NewFunction(func(L *lua.LState) int {
 		scriptpath, err := os.Getwd()
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString("."))
 			return 1 // number of results
 		}
@@ -76,7 +76,7 @@ func exportREPLSpecific(L *lua.LState) {
 		} else {
 			basepath, err = os.Getwd()
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 				L.Push(lua.LNil)
 				return 1
 			}
@@ -90,7 +90,7 @@ func exportREPLSpecific(L *lua.LState) {
 		for _, match := range matches {
 			content, err := os.ReadFile(match)
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 				L.Push(lua.LNil)
 				return 1
 			}
@@ -256,7 +256,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 
 	historydir, err := homedir.Dir()
 	if err != nil {
-		log.Error("Could not find a user directory to store the REPL history.")
+		logrus.Error("Could not find a user directory to store the REPL history.")
 		historydir = "."
 	}
 
@@ -305,7 +305,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 		HistorySearchFold: true,
 	})
 	if err != nil {
-		log.Error("Could not initiate github.com/chzyer/readline: " + err.Error())
+		logrus.Error("Could not initiate github.com/chzyer/readline: " + err.Error())
 	}
 
 	// To be run at server shutdown
@@ -330,11 +330,11 @@ func (ac *Config) REPL(ready, done chan bool) error {
 					}
 					EOF = true
 				case err == readline.ErrInterrupt:
-					log.Warn("Interrupted")
+					logrus.Warn("Interrupted")
 					done <- true
 					return nil
 				default:
-					log.Error("Error reading line(" + err.Error() + ").")
+					logrus.Error("Error reading line(" + err.Error() + ").")
 					continue
 				}
 			}

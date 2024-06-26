@@ -9,7 +9,7 @@ import (
 	"runtime/trace"
 
 	"github.com/felixge/fgtrace"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -31,15 +31,15 @@ func traceStart() {
 	if *cpuProfileFilename != "" {
 		f, err := os.Create(*cpuProfileFilename)
 		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
+			logrus.Fatal("could not create CPU profile: ", err)
 		}
-		log.Info("Profiling CPU usage")
+		logrus.Info("Profiling CPU usage")
 		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
+			logrus.Fatal("could not start CPU profile: ", err)
 		}
 		AtShutdown(func() {
 			pprof.StopCPUProfile()
-			log.Info("Done profiling CPU usage")
+			logrus.Info("Done profiling CPU usage")
 			f.Close()
 		})
 	}
@@ -49,12 +49,12 @@ func traceStart() {
 			f, errProfile := os.Create(*memProfileFilename)
 			if errProfile != nil {
 				// Fatal is okay here, since it's inside the anonymous shutdown function
-				log.Fatal("could not create memory profile: ", errProfile)
+				logrus.Fatal("could not create memory profile: ", errProfile)
 			}
 			defer f.Close()
-			log.Info("Saving heap profile to ", *memProfileFilename)
+			logrus.Info("Saving heap profile to ", *memProfileFilename)
 			if err := pprof.WriteHeapProfile(f); err != nil {
-				log.Fatal("could not write memory profile: ", err)
+				logrus.Fatal("could not write memory profile: ", err)
 			}
 		})
 	}
@@ -64,7 +64,7 @@ func traceStart() {
 			panic(errTrace)
 		}
 		go func() {
-			log.Info("Tracing")
+			logrus.Info("Tracing")
 			if err := trace.Start(f); err != nil {
 				panic(err)
 			}
@@ -72,7 +72,7 @@ func traceStart() {
 		AtShutdown(func() {
 			pprof.StopCPUProfile()
 			trace.Stop()
-			log.Info("Done tracing")
+			logrus.Info("Done tracing")
 			f.Close()
 		})
 	}

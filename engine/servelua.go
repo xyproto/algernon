@@ -8,12 +8,11 @@ import (
 	"strings"
 
 	"github.com/flosch/pongo2/v6"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // LoadServeFile exposes functions for serving other files to Lua
@@ -28,11 +27,11 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))
 		}
 		if !ac.fs.Exists(serveFilename) {
-			log.Error("Could not serve " + serveFilename + ". File not found.")
+			logrus.Error("Could not serve " + serveFilename + ". File not found.")
 			return 0 // Number of results
 		}
 		if ac.fs.IsDir(serveFilename) {
-			log.Error("Could not serve " + serveFilename + ". Not a file.")
+			logrus.Error("Could not serve " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}
 		ac.FilePage(w, req, serveFilename, dataFilename)
@@ -52,7 +51,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			if ac.debugMode {
 				fmt.Fprintf(w, "Unable to read %s: %s", templateFilename, err)
 			} else {
-				log.Errorf("Unable to read %s: %s", templateFilename, err)
+				logrus.Errorf("Unable to read %s: %s", templateFilename, err)
 			}
 			return 0 // number of restuls
 		}
@@ -83,7 +82,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 
 			// fmt.Println("PONGOMAP", pongoMap, "LUA TABLE", luaTable)
 		} else if L.GetTop() > 2 {
-			log.Error("Too many arguments given to the serve2 function")
+			logrus.Error("Too many arguments given to the serve2 function")
 			return 0 // number of restuls
 		}
 
@@ -96,7 +95,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
 			}
 			return 0 // number of results
 		}
@@ -105,7 +104,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
 			}
 		}
 		return 0 // number of results
@@ -121,11 +120,11 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			dataFilename = filepath.Join(scriptdir, L.ToString(2))
 		}
 		if !ac.fs.Exists(serveFilename) {
-			log.Error("Could not render " + serveFilename + ". File not found.")
+			logrus.Error("Could not render " + serveFilename + ". File not found.")
 			return 0 // Number of results
 		}
 		if ac.fs.IsDir(serveFilename) {
-			log.Error("Could not render " + serveFilename + ". Not a file.")
+			logrus.Error("Could not render " + serveFilename + ". Not a file.")
 			return 0 // Number of results
 		}
 

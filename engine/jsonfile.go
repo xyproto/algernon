@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/datablock"
 	lua "github.com/xyproto/gopher-lua"
@@ -55,9 +55,9 @@ func jfileAdd(L *lua.LState) int {
 	err := jfile.AddJSON(jsonpath, []byte(jsondata))
 	if err != nil {
 		if top == 2 || strings.HasPrefix(err.Error(), "invalid character") {
-			log.Error("JSON data: ", err)
+			logrus.Error("JSON data: ", err)
 		} else {
-			log.Error(err)
+			logrus.Error(err)
 		}
 	}
 	L.Push(lua.LBool(err == nil))
@@ -74,7 +74,7 @@ func jfileGetString(L *lua.LState) int {
 	}
 	val, err := jfile.GetString(jsonpath)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		val = ""
 	}
 	L.Push(lua.LString(val))
@@ -121,14 +121,14 @@ func jfileGet(L *lua.LState) int {
 		retval = lua.LNil
 	} else if _, ok := node.CheckMap(); ok {
 		// Return the JNode instead of converting the map
-		log.Info("Returning a JSON node instead of a Lua map")
+		logrus.Info("Returning a JSON node instead of a Lua map")
 		ud := L.NewUserData()
 		ud.Value = node
 		L.SetMetatable(ud, L.GetTypeMetatable(jnode.Class))
 		retval = ud
 		// buf.WriteString(fmt.Sprintf("Map with %d elements.", len(m)))
 	} else if _, ok := node.CheckList(); ok {
-		log.Info("Returning a JSON node instead of a Lua map")
+		logrus.Info("Returning a JSON node instead of a Lua map")
 		// Return the JNode instead of converting the list
 		ud := L.NewUserData()
 		ud.Value = node
@@ -148,7 +148,7 @@ func jfileGet(L *lua.LState) int {
 	} else if f, ok := node.CheckFloat64(); ok {
 		retval = lua.LNumber(f)
 	} else {
-		log.Error("Unknown JSON node type")
+		logrus.Error("Unknown JSON node type")
 		return 0
 	}
 	// Return the LValue
@@ -170,7 +170,7 @@ func jfileSet(L *lua.LState) int {
 	}
 	err := jfile.SetString(jsonpath, sval)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	L.Push(lua.LBool(err == nil))
 	return 1 // number of results
@@ -186,7 +186,7 @@ func jfileDelKey(L *lua.LState) int {
 	}
 	err := jfile.DelKey(jsonpath)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	L.Push(lua.LBool(nil == err))
 	return 1 // number of results
@@ -219,7 +219,7 @@ func constructJFile(L *lua.LState, filename string, fperm os.FileMode, fs *datab
 	// Create a new JFile
 	jfile, err := jpath.NewFile(fullFilename)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return nil, err
 	}
 	// Create a new userdata struct
@@ -256,7 +256,7 @@ func (ac *Config) LoadJFile(L *lua.LState, scriptdir string) {
 		// Construct a new JFile
 		userdata, err := constructJFile(L, filepath.Join(scriptdir, filename), ac.defaultPermissions, ac.fs)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LString(err.Error()))
 			return 1 // Number of returned values
 		}

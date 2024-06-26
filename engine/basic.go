@@ -15,7 +15,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
@@ -41,7 +41,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 	L.SetGlobal("log", L.NewFunction(func(L *lua.LState) int {
 		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
-		log.Info(buf.String())
+		logrus.Info(buf.String())
 		return 0 // number of results
 	}))
 
@@ -49,7 +49,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 	L.SetGlobal("warn", L.NewFunction(func(L *lua.LState) int {
 		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
-		log.Warn(buf.String())
+		logrus.Warn(buf.String())
 		return 0 // number of results
 	}))
 
@@ -57,7 +57,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 	L.SetGlobal("err", L.NewFunction(func(L *lua.LState) int {
 		buf := convert.Arguments2buffer(L, false)
 		// Log the combined text
-		log.Error(buf.String())
+		logrus.Error(buf.String())
 		return 0 // number of results
 	}))
 
@@ -142,7 +142,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"print\" after closing the connection")
+				logrus.Error("call to \"print\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -168,7 +168,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"pprint\" after closing the connection")
+				logrus.Error("call to \"pprint\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -213,7 +213,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("flush", L.NewFunction(func(_ *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"flush\" after closing the connection")
+				logrus.Error("call to \"flush\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -248,7 +248,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("content", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"content\" after closing the connection")
+				logrus.Error("call to \"content\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -295,7 +295,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("setheader", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"setheader\" after closing the connection")
+				logrus.Error("call to \"setheader\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -323,7 +323,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("status", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"status\" after closing the connection")
+				logrus.Error("call to \"status\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -343,7 +343,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("call to \"error\" after closing the connection")
+				logrus.Error("call to \"error\" after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -452,7 +452,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			// Log error as warning if there are issues.
 			// An empty Value map will then be used.
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 				// return 0
 			}
 		} else {
@@ -475,7 +475,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("redirect after closing the connection")
+				logrus.Error("redirect after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -496,7 +496,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("permanent_redirect", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
-				log.Error("permanent_redirect after closing the connection")
+				logrus.Error("permanent_redirect after closing the connection")
 			}
 			return 0 // number of results
 		}
@@ -516,11 +516,11 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		givenFilename := L.ToString(1)
 		luaFilename := filepath.Join(filepath.Dir(filename), givenFilename)
 		if !ac.fs.Exists(luaFilename) {
-			log.Error("Could not find:", luaFilename)
+			logrus.Error("Could not find:", luaFilename)
 			return 0 // number of results
 		}
 		if err := L.DoFile(luaFilename); err != nil {
-			log.Errorf("Error running %s: %s\n", luaFilename, err)
+			logrus.Errorf("Error running %s: %s\n", luaFilename, err)
 			return 0 // number of results
 		}
 		// Retrieve the returned value from the script

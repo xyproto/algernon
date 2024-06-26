@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/datablock"
@@ -361,12 +360,11 @@ func (ac *Config) handleFlags(serverTempDir string) {
 
 	// CertMagic and Let's Encrypt
 	if ac.useCertMagic {
-		log.Info("Use Cert Magic")
+		logrus.Info("Use Cert Magic")
 		if dirEntries, err := os.ReadDir(ac.serverDirOrFilename); err != nil {
-			log.Error("Could not use Cert Magic:" + err.Error())
+			logrus.Error("Could not use Cert Magic:" + err.Error())
 			ac.useCertMagic = false
 		} else {
-			// log.Infof("Looping over %v files", len(files))
 			for _, dirEntry := range dirEntries {
 				basename := filepath.Base(dirEntry.Name())
 				dirOrSymlink := dirEntry.IsDir() || ((dirEntry.Type() & os.ModeSymlink) == os.ModeSymlink)

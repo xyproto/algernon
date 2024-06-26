@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 	bolt "github.com/xyproto/permissionbolt/v2"
@@ -153,7 +153,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 
 		parsedURL, err := url.Parse(endpointURLString)
 		if err != nil {
-			log.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
+			logrus.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
 		}
 		rp.Endpoint = *parsedURL
 
@@ -178,7 +178,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 			L.Push(luaDenyFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
-				log.Error("Permission denied handler failed:", err)
+				logrus.Error("Permission denied handler failed:", err)
 				// Use the default permission handler from now on if the lua function fails
 				ac.perm.SetDenyFunction(redis.PermissionDenied)
 				ac.perm.DenyFunction()(w, req)
@@ -198,7 +198,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 			L.Push(luaReadyFunc)
 			if err := L.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
-				log.Error("The OnReady function failed:", err)
+				logrus.Error("The OnReady function failed:", err)
 			}
 		}
 		return 0 // number of results
@@ -209,22 +209,22 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		filename := L.ToString(1)
 		ac.serverLogFile = filename
 		// Log as JSON by default
-		log.SetFormatter(&log.JSONFormatter{})
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 		// Log to stderr if an empty filename is given
 		if filename == "" {
-			log.SetOutput(os.Stderr)
+			logrus.SetOutput(os.Stderr)
 			L.Push(lua.LBool(true))
 			return 1 // number of results
 		}
 		// Try opening/creating the given filename, for appending
 		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
 		// Set the file to log to and return
-		log.SetOutput(f)
+		logrus.SetOutput(f)
 		L.Push(lua.LBool(true))
 		return 1 // number of results
 	}))
@@ -234,7 +234,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		givenFilename := L.ToString(1)
 		serverFilename := filepath.Join(filepath.Dir(filename), givenFilename)
 		if !ac.fs.Exists(serverFilename) {
-			log.Error("Could not find", serverFilename)
+			logrus.Error("Could not find", serverFilename)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
@@ -247,7 +247,7 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 	L.SetGlobal("ServerDir", L.NewFunction(func(L *lua.LState) int {
 		givenDirectory := L.ToString(1)
 		if !ac.fs.Exists(givenDirectory) {
-			log.Error("Could not find", givenDirectory)
+			logrus.Error("Could not find", givenDirectory)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
@@ -286,11 +286,11 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 			if err.Error() == "timeout" {
 				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
-					log.Fatal("Unable to find a temporary file to use:", errTemp)
+					logrus.Fatal("Unable to find a temporary file to use:", errTemp)
 				}
 				ac.boltFilename = tempFile.Name() + ".db"
 			} else {
-				log.Errorf("Could not use Bolt as database backend: %s", err)
+				logrus.Errorf("Could not use Bolt as database backend: %s", err)
 			}
 		} else {
 			ac.dbName = "Bolt (" + ac.boltFilename + ")"
@@ -300,9 +300,9 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 			perm, err = bolt.NewWithConf(ac.boltFilename)
 			if err != nil {
 				if err.Error() == "timeout" {
-					log.Error("The Bolt database timed out!")
+					logrus.Error("The Bolt database timed out!")
 				} else {
-					log.Errorf("Could not use Bolt as database backend: %s", err)
+					logrus.Errorf("Could not use Bolt as database backend: %s", err)
 				}
 			} else {
 				ac.dbName = "Bolt, temporary"
@@ -313,7 +313,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		// New permissions middleware, using a MariaDB/MySQL database
 		perm, err = mariadb.NewWithDSN(ac.mariadbDSN, ac.mariaDatabase)
 		if err != nil {
-			log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+			logrus.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			ac.dbName = "MariaDB/MySQL"
@@ -325,9 +325,9 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		perm, err = mariadb.NewWithConf("test:@127.0.0.1/" + ac.mariaDatabase)
 		if err != nil {
 			if ac.mariaDatabase != "" {
-				log.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
+				logrus.Errorf("Could not use MariaDB/MySQL as database backend: %s", err)
 			} else {
-				log.Warnf("Could not use MariaDB/MySQL as database backend: %s", err)
+				logrus.Warnf("Could not use MariaDB/MySQL as database backend: %s", err)
 			}
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
@@ -338,7 +338,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		// New permissions middleware, using a PostgreSQL database
 		perm, err = postgres.NewWithDSN(ac.postgresDSN, ac.postgresDatabase)
 		if err != nil {
-			log.Errorf("Could not use PostgreSQL as database backend: %s", err)
+			logrus.Errorf("Could not use PostgreSQL as database backend: %s", err)
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			ac.dbName = "PostgreSQL"
@@ -350,9 +350,9 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		perm, err = postgres.NewWithConf("postgres:@127.0.0.1/" + ac.postgresDatabase)
 		if err != nil {
 			if ac.postgresDatabase != "" {
-				log.Errorf("Could not use PostgreSQL as database backend: %s", err)
+				logrus.Errorf("Could not use PostgreSQL as database backend: %s", err)
 			} else {
-				log.Warnf("Could not use PostgreSQL as database backend: %s", err)
+				logrus.Warnf("Could not use PostgreSQL as database backend: %s", err)
 			}
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
@@ -361,22 +361,22 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 	}
 	if ac.dbName == "" && ac.redisAddrSpecified {
 		// New permissions middleware, using a Redis database
-		log.Info("Testing redis connection")
+		logrus.Info("Testing redis connection")
 		if err := simpleredis.TestConnectionHost(ac.redisAddr); err != nil {
-			log.Info("Redis connection failed")
+			logrus.Info("Redis connection failed")
 			// Only output an error when a Redis host other than the default host+port was specified
 			if ac.singleFileMode {
-				log.Warnf("Could not use Redis as database backend: %s", err)
+				logrus.Warnf("Could not use Redis as database backend: %s", err)
 			} else {
-				log.Errorf("Could not use Redis as database backend: %s", err)
+				logrus.Errorf("Could not use Redis as database backend: %s", err)
 			}
 		} else {
-			log.Info("Redis connection worked out")
+			logrus.Info("Redis connection worked out")
 			var err error
-			log.Info("Connecting to Redis...")
+			logrus.Info("Connecting to Redis...")
 			perm, err = redis.NewWithRedisConf2(ac.redisDBindex, ac.redisAddr)
 			if err != nil {
-				log.Warnf("Could not use Redis as database backend: %s", err)
+				logrus.Warnf("Could not use Redis as database backend: %s", err)
 			} else {
 				ac.dbName = "Redis"
 			}
@@ -389,11 +389,11 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 			if err.Error() == "timeout" {
 				tempFile, errTemp := os.CreateTemp("", "algernon")
 				if errTemp != nil {
-					log.Fatal("Unable to find a temporary file to use:", errTemp)
+					logrus.Fatal("Unable to find a temporary file to use:", errTemp)
 				}
 				ac.boltFilename = tempFile.Name() + ".db"
 			} else {
-				log.Errorf("Could not use Bolt as database backend: %s", err)
+				logrus.Errorf("Could not use Bolt as database backend: %s", err)
 			}
 		} else {
 			ac.dbName = "Bolt (" + ac.boltFilename + ")"
@@ -403,9 +403,9 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 			perm, err = bolt.NewWithConf(ac.boltFilename)
 			if err != nil {
 				if err.Error() == "timeout" {
-					log.Error("The Bolt database timed out!")
+					logrus.Error("The Bolt database timed out!")
 				} else {
-					log.Errorf("Could not use Bolt as database backend: %s", err)
+					logrus.Errorf("Could not use Bolt as database backend: %s", err)
 				}
 			} else {
 				ac.dbName = "Bolt, temporary"
@@ -418,7 +418,7 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 	}
 
 	if ac.verboseMode {
-		log.Info("Database backend success: " + ac.dbName)
+		logrus.Info("Database backend success: " + ac.dbName)
 	}
 
 	if perm != nil && ac.clearDefaultPathPrefixes {

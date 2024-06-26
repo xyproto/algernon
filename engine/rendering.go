@@ -14,7 +14,7 @@ import (
 	"github.com/flosch/pongo2/v6"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/wellington/sass/compiler"
 	"github.com/xyproto/algernon/console"
 	"github.com/xyproto/algernon/lua/convert"
@@ -96,7 +96,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Amber template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile Amber template:\n%s\n%s", err, buf.String())
 			}
 			return 0 // number of results
 		}
@@ -133,7 +133,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2 template:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, buf.String())
 			}
 			return 0 // number of results
 		}
@@ -142,7 +142,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile Pongo2:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile Pongo2:\n%s\n%s", err, buf.String())
 			}
 		}
 		return 0 // number of results
@@ -158,7 +158,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Could not compile GCSS:\n\t"+err.Error()+"\n\n"+buf.String())
 			} else {
-				log.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
+				logrus.Errorf("Could not compile GCSS:\n%s\n%s", err, buf.String())
 			}
 
 			// return 0 // number of results
@@ -184,10 +184,10 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			} else {
 				// TODO: Use a similar error page as for Lua
 				for _, errMsg := range result.Errors {
-					log.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
+					logrus.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					log.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
+					logrus.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			}
 			return 0 // number of results
@@ -198,7 +198,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Result from generated JavaScript is empty\n")
 			} else {
-				log.Error("Result from generated JavaScript is empty\n")
+				logrus.Error("Result from generated JavaScript is empty\n")
 			}
 			return 0 // number of results
 		}
@@ -224,10 +224,10 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			} else {
 				// TODO: Use a similar error page as for Lua
 				for _, errMsg := range result.Errors {
-					log.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
+					logrus.Errorf("error: %s %d:%d\n", errMsg.Text, errMsg.Location.Line, errMsg.Location.Column)
 				}
 				for _, warnMsg := range result.Warnings {
-					log.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
+					logrus.Errorf("warning: %s %d:%d\n", warnMsg.Text, warnMsg.Location.Line, warnMsg.Location.Column)
 				}
 			}
 			return 0 // number of results
@@ -240,7 +240,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 			if ac.debugMode {
 				fmt.Fprint(w, "Result from generated JavaScript is empty\n")
 			} else {
-				log.Error("Result from generated JavaScript is empty\n")
+				logrus.Error("Result from generated JavaScript is empty\n")
 			}
 			return 0 // number of results
 		}
@@ -470,7 +470,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 			// Use the highlight style from the current theme
 			highlighted, err := splash.UnescapeSplash(htmldata, themes.ThemeToCodeStyle(string(theme)))
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 			} else {
 				// Only use the new and highlighted HTML if there were no errors
 				//htmldata = highlighted
@@ -480,7 +480,7 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 			// Use the highlight style from codeStyle
 			highlighted, err := splash.UnescapeSplash(htmldata, codeStyle)
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 			} else {
 				// Only use the new HTML if there were no errors
 				htmldata = highlighted
@@ -539,7 +539,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
-			log.Errorf("Could not set base directory for Pongo2 to %s:\n%s", dirName, err)
+			logrus.Errorf("Could not set base directory for Pongo2 to %s:\n%s", dirName, err)
 		}
 		return
 	}
@@ -550,7 +550,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
-			log.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, string(pongodata))
+			logrus.Errorf("Could not compile Pongo2 template:\n%s\n%s", err, string(pongodata))
 		}
 		return
 	}
@@ -605,7 +605,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 			if ac.debugMode {
 				ac.PrettyError(w, req, filename, pongodata, errmsg, "pongo2")
 			} else {
-				log.Errorf("Could not execute Pongo2 template:\n%s", errmsg)
+				logrus.Errorf("Could not execute Pongo2 template:\n%s", errmsg)
 			}
 		}
 	}()
@@ -617,7 +617,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
-			log.Errorf("Could not execute Pongo2 template:\n%s", err)
+			logrus.Errorf("Could not execute Pongo2 template:\n%s", err)
 		}
 		return
 	}
@@ -639,7 +639,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 				if ac.debugMode {
 					ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
-					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+					logrus.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
 				return
 			}
@@ -656,7 +656,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 				if ac.debugMode {
 					ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 				} else {
-					log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+					logrus.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 				}
 				return
 			}
@@ -715,7 +715,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, amberdata, err.Error(), "amber")
 		} else {
-			log.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
+			logrus.Errorf("Could not compile Amber template:\n%s\n%s", err, string(amberdata))
 		}
 		return
 	}
@@ -732,13 +732,13 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 				ac.PrettyError(w, req, filename, amberdata, errortext, "amber")
 			} else {
 				errortext = strings.Replace(errortext, "<br>", "\n", 1)
-				log.Errorf("Could not execute Amber template:\n%s", errortext)
+				logrus.Errorf("Could not execute Amber template:\n%s", errortext)
 			}
 		} else {
 			if ac.debugMode {
 				ac.PrettyError(w, req, filename, amberdata, err.Error(), "amber")
 			} else {
-				log.Errorf("Could not execute Amber template:\n%s", err)
+				logrus.Errorf("Could not execute Amber template:\n%s", err)
 			}
 		}
 		return
@@ -755,7 +755,7 @@ func (ac *Config) AmberPage(w http.ResponseWriter, req *http.Request, filename s
 			if ac.debugMode {
 				ac.PrettyError(w, req, filename, amberdata, err.Error(), "amber")
 			} else {
-				log.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
+				logrus.Errorf("Can not write bytes to a buffer! Out of memory?\n%s", err)
 			}
 			return
 		}
@@ -777,7 +777,7 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		if ac.debugMode {
 			fmt.Fprintf(w, "Could not compile GCSS:\n\n%s\n%s", err, string(gcssdata))
 		} else {
-			log.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
+			logrus.Errorf("Could not compile GCSS:\n%s\n%s", err, string(gcssdata))
 		}
 		return
 	}
@@ -806,10 +806,10 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 		} else {
 			// TODO: Use a similar error page as for Lua
 			for _, errMsg := range result.Errors {
-				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
+				logrus.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
 			}
 			for _, warnMsg := range result.Warnings {
-				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
+				logrus.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
 			}
 		}
 		return
@@ -896,10 +896,10 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 		} else {
 			// TODO: Use a similar error page as for Lua
 			for _, errMsg := range jsxResult.Errors {
-				log.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
+				logrus.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
 			}
 			for _, warnMsg := range jsxResult.Warnings {
-				log.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
+				logrus.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
 			}
 		}
 		return
@@ -939,7 +939,7 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 // SCSSPage writes the given source bytes (in SCSS) converted to CSS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename string, scssdata []byte) {
-	// TODO: Gather stderr and print with log.Errorf if needed
+	// TODO: Gather stderr and print with logrus.Errorf if needed
 	o := console.Output{}
 	// Silence the compiler output
 	if !ac.debugMode {
@@ -955,7 +955,7 @@ func (ac *Config) SCSSPage(w http.ResponseWriter, req *http.Request, filename st
 		if ac.debugMode {
 			fmt.Fprintf(w, "Could not compile SCSS:\n\n%s\n%s", err, string(scssdata))
 		} else {
-			log.Errorf("Could not compile SCSS:\n%s\n%s", err, string(scssdata))
+			logrus.Errorf("Could not compile SCSS:\n%s\n%s", err, string(scssdata))
 		}
 		return
 	}

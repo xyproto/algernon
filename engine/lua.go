@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/lua/codelib"
 	"github.com/xyproto/algernon/lua/convert"
@@ -134,7 +134,7 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 				select {
 				case <-ctx.Done():
 					// Client is done
-					log.Warn("Connection to client closed")
+					logrus.Warn("Connection to client closed")
 				case <-done:
 					// We are done
 					return
@@ -373,18 +373,18 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 								},
 							})
 							if ac.debugMode && ac.verboseMode {
-								log.Info(utils.Infostring(functionName, args) + " -> (map)")
+								logrus.Info(utils.Infostring(functionName, args) + " -> (map)")
 							}
 						case lv.Type() == lua.LTString:
 							// lv is a Lua String
 							retstr := L2.ToString(1)
 							retval = retstr
 							if ac.debugMode && ac.verboseMode {
-								log.Info(utils.Infostring(functionName, args) + " -> \"" + retstr + "\"")
+								logrus.Info(utils.Infostring(functionName, args) + " -> \"" + retstr + "\"")
 							}
 						default:
 							retval = ""
-							log.Warn("The return type of " + utils.Infostring(functionName, args) + " can't be converted")
+							logrus.Warn("The return type of " + utils.Infostring(functionName, args) + " can't be converted")
 						}
 					}
 
