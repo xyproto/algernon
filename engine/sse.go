@@ -4,9 +4,30 @@ import (
 	"bytes"
 	"net/http"
 	"strings"
+	"text/template"
 
 	"github.com/xyproto/algernon/utils"
 )
+
+const autoloadTemplate = `
+if (!!window.EventSource) {
+  window.setTimeout(function() {
+    var source = new EventSource(window.location.protocol + '//{{.FullHost}}{{.EventPath}}');
+    source.addEventListener('message', function(e) {
+      const path = '/' + e.data;
+      if (path.indexOf(window.location.pathname) >= 0) {
+        location.reload()
+      }
+    }, false);
+  }, {{.RefreshTimeout}});
+}
+`
+
+type TemplateData struct {
+	FullHost       string
+	EventPath      string
+	RefreshTimeout string
+}
 
 // InsertAutoRefresh inserts JavaScript code to the page that makes the page
 // refresh itself when the source files changes.
@@ -27,20 +48,27 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	}
 	// Wait 70% of an event duration before starting to listen for events
 	multiplier := 0.7
-	js := `
-    if (!!window.EventSource) {
-	  window.setTimeout(function() {
-        var source = new EventSource(window.location.protocol + '//` + fullHost + ac.defaultEventPath + `');
-        source.addEventListener('message', function(e) {
-          const path = '/' + e.data;
-          if (path.indexOf(window.location.pathname) >= 0) {
-            location.reload()
-          }
-        }, false);
-	  }, ` + utils.DurationToMS(ac.refreshDuration, multiplier) + `);
-	}`
+	refreshTimeout := utils.DurationToMS(ac.refreshDuration, multiplier)
 
-	return InsertScriptTag(htmldata, []byte(js))
+	tmplData := TemplateData{
+		FullHost:       fullHost,
+		EventPath:      ac.defaultEventPath,
+		RefreshTimeout: refreshTimeout,
+	}
+
+	// Parse the template
+	t, err := template.New("auto-refresh").Parse(autoloadTemplate)
+	if err != nil {
+		return htmldata
+	}
+
+	var script bytes.Buffer
+	err = t.Execute(&script, tmplData)
+	if err != nil {
+		return htmldata
+	}
+
+	return InsertScriptTag(htmldata, script.Bytes())
 }
 
 // InsertScriptTag takes HTML and JS and tries to insert the JS in a good spot, then returns modified HTML.
@@ -50,8 +78,10 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 	// Reduce the size slightly
 	js = bytes.TrimSpace(bytes.ReplaceAll(js, []byte{'\n'}, []byte{}))
 
-	// Remove all whitespace that is more than one space
-	js = bytes.ReplaceAll(js, []byte{' ', ' '}, []byte{' '})
+	// Replace whitespace with single whitespace, repeatedly
+	for bytes.Contains(js, []byte{' ', ' '}) {
+		js = bytes.ReplaceAll(js, []byte{' ', ' '}, []byte{' '})
+	}
 
 	// Add tags, if needed (only check for <script and not <script> in case it is there and async)
 	if !bytes.HasPrefix(js, []byte("<script")) {
