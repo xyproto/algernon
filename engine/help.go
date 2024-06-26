@@ -273,6 +273,13 @@ oc:bytesize(string) -> number
 // Convenience function for passing a prompt and optional model name to the local Ollama server.
 // The default prompt generates a poem and the default model is "tinyllama".
 ollama([string], [string]) -> string
+// Convenience function for Base64-encoding the given file.
+base64EncodeFile(string) -> string
+// Describe the given base64-encoded image using Ollama (and the "llava-llama3" model, by default).
+describeImage(string, [string]) -> string
+// Given two embeddings (tables of floats, representing text or data, as returned by Ollama),
+// return the similarity from 0 to 1.
+embeddedDistance(table, table) -> number
 
 Various
 
