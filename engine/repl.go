@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -17,8 +16,8 @@ import (
 	"github.com/xyproto/algernon/lua/datastruct"
 	"github.com/xyproto/algernon/lua/jnode"
 	"github.com/xyproto/algernon/lua/pure"
+	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/ask"
-	"github.com/xyproto/env/v2"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/textoutput"
 )
@@ -267,17 +266,10 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	defer L.Close()
 
 	// Colors and input
-	windows := (runtime.GOOS == "windows")
-	mingw := windows && strings.HasPrefix(env.Str("TERM"), "xterm")
-	enableColors := !windows || mingw
-	o := textoutput.NewTextOutput(enableColors, true)
+	o := textoutput.NewTextOutput(platformdep.EnableColors, true)
 
 	// Command history file
-	if windows {
-		historyFilename = filepath.Join(historydir, "algernon_history.txt")
-	} else {
-		historyFilename = filepath.Join(historydir, ".algernon_history")
-	}
+	historyFilename = filepath.Join(historydir, platformdep.HistoryFilename)
 
 	// Export a selection of functions to the Lua state
 	ac.LoadLuaFunctionsForREPL(L, o)
@@ -326,7 +318,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	for {
 		// Retrieve user input
 		EOF = false
-		if mingw {
+		if platformdep.Mingw {
 			// No support for EOF
 			line = ask.Ask(prompt)
 		} else {
