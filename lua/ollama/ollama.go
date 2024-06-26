@@ -198,7 +198,6 @@ func ollamaEmbeddings(L *lua.LState) int {
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results
 	}
-
 	// Push the floats as Lua numbers
 	tbl := L.NewTable()
 	for i, f := range floats {
@@ -206,6 +205,53 @@ func ollamaEmbeddings(L *lua.LState) int {
 		L.SetField(tbl, index, lua.LNumber(f))
 	}
 	L.Push(tbl)
+	return 1 // number of results
+}
+
+// Return the given file as a base64-encoded string
+func base64EncodeFile(L *lua.LState) int {
+	filename := L.ToString(1) // try to get the first argument
+	base64encodedImage, err := ollamaclient.Base64EncodeFile(filename)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+	// return the encoded image
+	L.Push(lua.LString(base64encodedImage))
+	return 1 // number of results
+}
+
+// Use a new ollama client to describe the given base64 encoded image
+// Also takes an optional model name, such as "llava"
+func describeImage(L *lua.LState) int {
+	base64encodedImage := L.ToString(1) // arg 1
+	modelName := "llava"
+	if L.GetTop() > 1 {
+		modelName = L.ToString(2) // arg 2
+	}
+
+	oc := ollamaclient.New()
+	oc.ModelName = modelName
+
+	err := oc.PullIfNeeded(true)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+
+	oc.SetReproducible()
+
+	prompt := "Describe this image: " + base64encodedImage
+
+	description, err := oc.GetOutput(prompt)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+	L.Push(lua.LString(description))
 	return 1 // number of results
 }
 
@@ -298,8 +344,8 @@ func askOllama(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// distance calculates the cosine similarity between two embeddings (Lua tables of floats).
-func distance(L *lua.LState) int {
+// embeddedDistance calculates the cosine similarity between two embeddings (Lua tables of floats).
+func embeddedDistance(L *lua.LState) int {
 	// Check and get the first table argument
 	tbl1 := L.CheckTable(1)
 	// Check and get the second table argument
@@ -369,6 +415,15 @@ func Load(L *lua.LState) {
 		return 1 // number of results
 	}))
 
+	// Create an ollama client on the fly and submit a prompt
 	L.SetGlobal("ollama", L.NewFunction(askOllama))
-	L.SetGlobal("edistance", L.NewFunction(distance))
+
+	// Find the distance between two embeddings
+	L.SetGlobal("embeddedDistance", L.NewFunction(embeddedDistance))
+
+	// Base64-encode the given file
+	L.SetGlobal("base64EncodeFile", L.NewFunction(base64EncodeFile))
+
+	// Use Ollama and an optional model name to describe the given base64-encoded image
+	L.SetGlobal("describeImage", L.NewFunction(describeImage))
 }

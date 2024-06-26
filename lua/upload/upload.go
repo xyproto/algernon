@@ -3,6 +3,7 @@ package upload
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -103,8 +104,8 @@ func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*Uploa
 // an UploadedFile, which contains the file data and information.
 func checkUploadedFile(L *lua.LState) *UploadedFile {
 	ud := L.CheckUserData(1)
-	if uploadedfile, ok := ud.Value.(*UploadedFile); ok {
-		return uploadedfile
+	if uploadedFile, ok := ud.Value.(*UploadedFile); ok {
+		return uploadedFile
 	}
 	L.ArgError(1, "UploadedFile expected")
 	return nil
@@ -113,39 +114,39 @@ func checkUploadedFile(L *lua.LState) *UploadedFile {
 // Create a new Upload file
 func constructUploadedFile(L *lua.LState, req *http.Request, scriptdir, formID string, uploadLimit int64) (*lua.LUserData, error) {
 	// Create a new UploadedFile
-	uploadedfile, err := New(req, scriptdir, formID, uploadLimit)
+	uploadedFile, err := New(req, scriptdir, formID, uploadLimit)
 	if err != nil {
 		return nil, err
 	}
 	// Create a new userdata struct
 	ud := L.NewUserData()
-	ud.Value = uploadedfile
+	ud.Value = uploadedFile
 	L.SetMetatable(ud, L.GetTypeMetatable(Class))
 	return ud, nil
 }
 
 // String representation
-func uploadedfileToString(L *lua.LState) int {
+func uploadedFileToString(L *lua.LState) int {
 	L.Push(lua.LString("Uploaded file"))
 	return 1 // number of results
 }
 
 // File name
-func uploadedfileName(L *lua.LState) int {
+func uploadedFileName(L *lua.LState) int {
 	ulf := checkUploadedFile(L) // arg 1
 	L.Push(lua.LString(ulf.filename))
 	return 1 // number of results
 }
 
 // File size
-func uploadedfileSize(L *lua.LState) int {
+func uploadedFileSize(L *lua.LState) int {
 	ulf := checkUploadedFile(L) // arg 1
 	L.Push(lua.LNumber(ulf.buf.Len()))
 	return 1 // number of results
 }
 
 // Mime type
-func uploadedfileMimeType(L *lua.LState) int {
+func uploadedFileMimeType(L *lua.LState) int {
 	ulf := checkUploadedFile(L) // arg 1
 	contentType := ""
 	if contentTypes, ok := ulf.header["Content-Type"]; ok {
@@ -182,7 +183,7 @@ func (ulf *UploadedFile) write(fullFilename string, fperm os.FileMode) error {
 }
 
 // Save the file locally
-func uploadedfileSave(L *lua.LState) int {
+func uploadedFileSave(L *lua.LState) int {
 	ulf := checkUploadedFile(L) // arg 1
 	givenFilename := ""
 	if L.GetTop() == 2 {
@@ -211,7 +212,7 @@ func uploadedfileSave(L *lua.LState) int {
 }
 
 // Save the file locally, to a given directory
-func uploadedfileSaveIn(L *lua.LState) int {
+func uploadedFileSaveIn(L *lua.LState) int {
 	ulf := checkUploadedFile(L)     // arg 1
 	givenDirectory := L.ToString(2) // required argument
 
@@ -235,21 +236,30 @@ func uploadedfileSaveIn(L *lua.LState) int {
 }
 
 // Retrieve the file content
-func uploadedfileGet(L *lua.LState) int {
+func uploadedFileGet(L *lua.LState) int {
 	ulf := checkUploadedFile(L) // arg 1
 	L.Push(lua.LString(ulf.buf.Bytes()))
 	return 1 // number of results
 }
 
+// Encode the uploaded file as Base64
+func uploadedFileBase64Encode(L *lua.LState) int {
+	ulf := checkUploadedFile(L) // arg 1
+	encodedString := base64.StdEncoding.EncodeToString(ulf.buf.Bytes())
+	L.Push(lua.LString(encodedString))
+	return 1 // number of results
+}
+
 // The hash map methods that are to be registered
-var uploadedfileMethods = map[string]lua.LGFunction{
-	"__tostring": uploadedfileToString,
-	"filename":   uploadedfileName,
-	"size":       uploadedfileSize,
-	"mimetype":   uploadedfileMimeType,
-	"save":       uploadedfileSave,
-	"savein":     uploadedfileSaveIn,
-	"content":    uploadedfileGet,
+var uploadedFileMethods = map[string]lua.LGFunction{
+	"__tostring": uploadedFileToString,
+	"filename":   uploadedFileName,
+	"size":       uploadedFileSize,
+	"mimetype":   uploadedFileMimeType,
+	"save":       uploadedFileSave,
+	"savein":     uploadedFileSaveIn,
+	"content":    uploadedFileGet,
+	"base64":     uploadedFileBase64Encode,
 }
 
 // Load makes functions related to saving an uploaded file available
@@ -257,7 +267,7 @@ func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir str
 	// Register the UploadedFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
-	L.SetFuncs(mt, uploadedfileMethods)
+	L.SetFuncs(mt, uploadedFileMethods)
 
 	// The constructor for the UploadedFile userdata
 	// Takes a form ID (string) and an optional file upload limit in MiB
