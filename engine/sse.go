@@ -23,7 +23,7 @@ if (!!window.EventSource) {
 }
 `
 
-type TemplateData struct {
+type templateData struct {
 	FullHost       string
 	EventPath      string
 	RefreshTimeout string
@@ -50,7 +50,7 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	multiplier := 0.7
 	refreshTimeout := utils.DurationToMS(ac.refreshDuration, multiplier)
 
-	tmplData := TemplateData{
+	tmplData := templateData{
 		FullHost:       fullHost,
 		EventPath:      ac.defaultEventPath,
 		RefreshTimeout: refreshTimeout,
