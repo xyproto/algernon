@@ -69,6 +69,10 @@ func errorPageTitle(lang string) string {
 		return "HTML Error"
 	case "jsx":
 		return "JSX Error"
+	case "lua":
+		return "Lua Error"
+	case "teal":
+		return "Teal Error"
 	default:
 		return lang + " Error"
 	}
