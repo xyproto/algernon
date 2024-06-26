@@ -20,6 +20,9 @@ const (
 
 	defaultModel  = "tinyllama"
 	defaultPrompt = "Generate a haiku about the poet Algernon"
+
+	imageDescriptionModel  = "llava-llama3"
+	imageDescriptionPrompt = "Describe this image."
 )
 
 var mut sync.RWMutex
@@ -223,12 +226,18 @@ func base64EncodeFile(L *lua.LState) int {
 }
 
 // Use a new ollama client to describe the given base64 encoded image
-// Also takes an optional model name, such as "llava"
+// Also takes an optional model name, such as "llava" or "llava-llama3"
 func describeImage(L *lua.LState) int {
 	base64encodedImage := L.ToString(1) // arg 1
-	modelName := "llava"
+	modelName := imageDescriptionModel
 	if L.GetTop() > 1 {
-		modelName = L.ToString(2) // arg 2
+		if givenModelName := L.ToString(2); givenModelName != "" { // arg 2
+			modelName = givenModelName
+		}
+	}
+
+	if modelName == "" {
+		panic("BOLLE")
 	}
 
 	oc := ollamaclient.New()
@@ -243,9 +252,8 @@ func describeImage(L *lua.LState) int {
 
 	oc.SetReproducible()
 
-	prompt := "Describe this image: " + base64encodedImage
-
-	description, err := oc.GetOutput(prompt)
+	// Note that more images can be added as arguments, GetOutput accepts varargs
+	description, err := oc.GetOutput(imageDescriptionPrompt, base64encodedImage)
 	if err != nil {
 		logrus.Error(err)
 		L.Push(lua.LString(err.Error()))
