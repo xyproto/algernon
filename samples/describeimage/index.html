@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload and describe images</title>
+  <style>
+    body {
+      margin: 3em;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2em;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    .row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1em;
+    }
+    .row label {
+      margin-bottom: 0.5em;
+      font-weight: bold;
+    }
+    .file-info, .progress {
+      margin-top: 1em;
+      font-size: 0.9em;
+      color: #555;
+    }
+    input[type="file"] {
+      padding: 0.5em;
+    }
+    input[type="button"] {
+      padding: 0.75em;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    input[type="button"]:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script>
+    function fileSelected(fieldID) {
+      const file = document.getElementById(fieldID).files[0];
+      const KiB = 1024;
+      const MiB = KiB * KiB;
+
+      if (file) {
+        const fileSize = (file.size >= MiB) ?
+          (Math.round(file.size * 100 / MiB) / 100).toString() + ' MiB' :
+          (Math.round(file.size * 100 / KiB) / 100).toString() + ' KiB';
+
+        document.getElementById('fileName').textContent = 'Name: ' + file.name;
+        document.getElementById('fileSize').textContent = 'Size: ' + fileSize;
+        document.getElementById('fileType').textContent = 'Type: ' + file.type;
+      }
+    }
+
+    function uploadFile() {
+      const xhr = new XMLHttpRequest();
+      const fd = new FormData(document.getElementById('upload'));
+
+      xhr.upload.addEventListener("progress", uploadProgress, false);
+      xhr.addEventListener("load", uploadComplete, false);
+      xhr.addEventListener("error", uploadFailed, false);
+      xhr.addEventListener("abort", uploadCanceled, false);
+
+      xhr.open("POST", "describe.lua");
+      xhr.send(fd);
+    }
+
+    function uploadProgress(evt) {
+      const progressElement = document.getElementById('progressNumber');
+      if (evt.lengthComputable) {
+        const percentComplete = Math.round(evt.loaded * 100 / evt.total);
+        progressElement.textContent = percentComplete.toString() + '%';
+
+        if (percentComplete === 100) {
+          document.getElementById('status').textContent = 'Upload complete, please wait while Ollama and the llava model describes the image...';
+          progressElement.textContent = '';
+        }
+      } else {
+        progressElement.textContent = 'unable to compute';
+      }
+    }
+
+    function uploadComplete(evt) {
+      document.write(evt.target.responseText);
+      document.getElementById('status').textContent = 'Upload complete. Please wait for Ollama and the llava model to describe the image.';
+    }
+
+    function uploadFailed() {
+      alert("There was an error attempting to upload the file.");
+    }
+
+    function uploadCanceled() {
+      alert("Upload was canceled by the user, or the browser dropped the connection.");
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <form id="upload" enctype="multipart/form-data" method="post" action="describe.lua">
+      <div class="row">
+        <label for="fileToUpload">Select an image to upload and describe using Ollama and the llava model:</label>
+        <input id="fileToUpload" type="file" name="fileToUpload" onchange="fileSelected('fileToUpload')">
+      </div>
+      <div id="fileName" class="file-info"></div>
+      <div id="fileSize" class="file-info"></div>
+      <div id="fileType" class="file-info"></div>
+      <div class="row">
+        <br>
+        <input type="button" onclick="uploadFile()" value="Upload and describe">
+      </div>
+      <div id="progressNumber" class="progress"></div>
+      <div id="status" class="file-info">Please wait after uploading the file.</div>
+    </form>
+  </div>
+</body>
+</html>
