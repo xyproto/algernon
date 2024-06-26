@@ -8,10 +8,10 @@ import (
 	"sync"
 
 	"github.com/quic-go/quic-go/http3"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
-var quicEnabled = true
+const quicEnabled = true
 
 // ListenAndServeQUIC attempts to serve the given http.Handler over QUIC/HTTP3,
 // then reports back any errors when done serving.
@@ -23,8 +23,8 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, mut *sync.Mutex, justServ
 	//
 	// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
 	if err := http3.ListenAndServeTLS(ac.serverAddr, ac.serverCert, ac.serverKey, mux); err != nil {
-		log.Error("Not serving QUIC after all. Error: ", err)
-		log.Info("Use the -t flag for serving regular HTTP instead")
+		logrus.Error("Not serving QUIC after all. Error: ", err)
+		logrus.Info("Use the -t flag for serving regular HTTP instead")
 		// If QUIC failed (perhaps the key + cert are missing),
 		// serve plain HTTP instead
 		justServeRegularHTTP <- true

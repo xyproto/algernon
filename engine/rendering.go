@@ -34,6 +34,7 @@ var (
 	//go:embed static/tex-svg.js
 	mathJaxScript []byte
 
+	// For detecting mathematical formulas
 	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
 
 	// Available Markdown extensions: https://github.com/gomarkdown/markdown/blob/master/parser/parser.go#L20
@@ -356,12 +357,12 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 	var head strings.Builder
 
 	// If a favicon is specified, use that
-	favicon := kwmap["favicon"]
+	favicon := string(kwmap["favicon"])
 	if len(favicon) > 0 {
 		head.WriteString(`<link rel="shortcut icon" type="image/`)
 
 		// Switch on the lowercase file extension of the favicon
-		switch strings.ToLower(filepath.Ext(string(favicon))) {
+		switch strings.ToLower(filepath.Ext(favicon)) {
 		case ".ico":
 			head.WriteString("x-icon")
 		case ".bmp":
@@ -372,12 +373,14 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 			head.WriteString("jpeg")
 		case ".svg":
 			head.WriteString("svg+xml")
+		case ".webp":
+			head.WriteString("webp")
 		default:
 			head.WriteString("png")
 		}
 
 		head.WriteString(`" href="`)
-		head.Write(favicon)
+		head.WriteString(favicon)
 		head.WriteString(`"/>`)
 	}
 
@@ -556,10 +559,6 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 
 	// Go through the global Lua scope
 	for k, v := range funcs {
-		// Skip the ones starting with an underscore
-		//if strings.HasPrefix(k, "_") {
-		//	continue
-		//}
 
 		// Check if the name in question is a function
 		if f, ok := v.(func(...string) (any, error)); ok {

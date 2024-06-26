@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
-var quicEnabled = false
+const quicEnabled = false
 
 // ListanAndServeQUIC is just a placeholder for platforms with QUIC disabled
 func (ac *Config) ListenAndServeQUIC(_ http.Handler, _ *sync.Mutex, _ chan bool, _ *bool) {
-	log.Error("Not serving QUIC. This Algernon executable was built without QUIC-support.")
+	logrus.Error("Not serving QUIC. This Algernon executable was built without QUIC-support.")
 }
