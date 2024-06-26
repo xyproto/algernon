@@ -1,4 +1,4 @@
-.PHONY: algernon clean install install-doc
+.PHONY: clean install install-doc
 
 PROJECT ?= algernon
 
