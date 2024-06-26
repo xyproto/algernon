@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 )
 
@@ -59,11 +59,11 @@ func preloadModuleFromFS(L *lua.LState, fname string) error {
 func Load(L *lua.LState) {
 	for _, fname := range preloadTealFilenames {
 		if err := preloadModuleFromFS(L, fname); err != nil {
-			log.Errorf("Failed to load Teal: %v", err)
+			logrus.Errorf("Failed to load Teal: %v", err)
 			return
 		}
 	}
 	if err := L.DoString(tealLoadScript); err != nil {
-		log.Errorf("Failed to set `tl` global variable: %v", err)
+		logrus.Errorf("Failed to set `tl` global variable: %v", err)
 	}
 }

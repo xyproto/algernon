@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
 
@@ -26,7 +26,8 @@ var (
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState) {
-	// Register the PQ function
+
+	// Register the PQ (Postgres Query) function
 	L.SetGlobal("PQ", L.NewFunction(func(L *lua.LState) int {
 		// Check if the optional argument is given
 		query := defaultQuery
@@ -52,13 +53,11 @@ func Load(L *lua.LState) {
 			err := conn.Ping()
 			if err != nil {
 				// no
-				// log.Info("did not reuse the connection")
 				reuseMut.Lock()
 				delete(reuseDB, connectionString)
 				reuseMut.Unlock()
 			} else {
 				// yes
-				// log.Info("reused the connection")
 				db = conn
 			}
 		}
@@ -67,7 +66,7 @@ func Load(L *lua.LState) {
 		if db == nil {
 			db, err = sql.Open("postgres", connectionString)
 			if err != nil {
-				log.Error("Could not connect to database using " + connectionString + ": " + err.Error())
+				logrus.Error("Could not connect to database using " + connectionString + ": " + err.Error())
 				return 0 // No results
 			}
 			// Save the connection for later
@@ -75,23 +74,23 @@ func Load(L *lua.LState) {
 			reuseDB[connectionString] = db
 			reuseMut.Unlock()
 		}
-		// log.Info(fmt.Sprintf("PostgreSQL database: %v (%T)\n", db, db))
+		// logrus.Info(fmt.Sprintf("PostgreSQL database: %v (%T)\n", db, db))
 		reuseMut.Lock()
 		rows, err := db.Query(query)
 		reuseMut.Unlock()
 		if err != nil {
 			errMsg := err.Error()
 			if strings.Contains(errMsg, ": connect: connection refused") {
-				log.Info("PostgreSQL connection string: " + connectionString)
-				log.Info("PostgreSQL query: " + query)
-				log.Error("Could not connect to database: " + errMsg)
+				logrus.Info("PostgreSQL connection string: " + connectionString)
+				logrus.Info("PostgreSQL query: " + query)
+				logrus.Error("Could not connect to database: " + errMsg)
 			} else if strings.Contains(errMsg, "missing") && strings.Contains(errMsg, "in connection info string") {
-				log.Info("PostgreSQL connection string: " + connectionString)
-				log.Info("PostgreSQL query: " + query)
-				log.Error(errMsg)
+				logrus.Info("PostgreSQL connection string: " + connectionString)
+				logrus.Info("PostgreSQL query: " + query)
+				logrus.Error(errMsg)
 			} else {
-				log.Info("PostgreSQL query: " + query)
-				log.Error("Query failed: " + errMsg)
+				logrus.Info("PostgreSQL query: " + query)
+				logrus.Error("Query failed: " + errMsg)
 			}
 			return 0 // No results
 		}

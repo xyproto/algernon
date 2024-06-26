@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 )
@@ -56,7 +56,7 @@ type UploadedFile struct {
 func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*UploadedFile, error) {
 	clientLengthTotal, err := strconv.Atoi(req.Header.Get("Content-Length"))
 	if err != nil {
-		log.Error("Invalid Content-Length: ", req.Header.Get("Content-Length"))
+		logrus.Error("Invalid Content-Length: ", req.Header.Get("Content-Length"))
 	}
 	// Remove the extra 20 bytes and convert to int64
 	clientLength := int64(clientLengthTotal - 20)
@@ -162,20 +162,20 @@ func uploadedfileMimeType(L *lua.LState) int {
 func (ulf *UploadedFile) write(fullFilename string, fperm os.FileMode) error {
 	// Check if the file already exists
 	if _, err := os.Stat(fullFilename); err == nil { // exists
-		log.Error(fullFilename, " already exists")
+		logrus.Error(fullFilename, " already exists")
 		return fmt.Errorf("File exists: " + fullFilename)
 	}
 	// Write the uploaded file
 	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, fperm)
 	if err != nil {
-		log.Error("Error when creating ", fullFilename)
+		logrus.Error("Error when creating ", fullFilename)
 		return err
 	}
 	defer f.Close()
 	// Copy the data to a new buffer, to keep the data and the length
 	fileDataBuffer := bytes.NewBuffer(ulf.buf.Bytes())
 	if _, err := io.Copy(f, fileDataBuffer); err != nil {
-		log.Error("Error when writing: " + err.Error())
+		logrus.Error("Error when writing: " + err.Error())
 		return err
 	}
 	return nil
@@ -276,7 +276,7 @@ func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir str
 		userdata, err := constructUploadedFile(L, req, scriptdir, formID, uploadLimit)
 		if err != nil {
 			// Log the error
-			log.Error(err)
+			logrus.Error(err)
 
 			// Return an invalid UploadedFile object and an error string.
 			// It's up to the Lua script to send an error to the client.

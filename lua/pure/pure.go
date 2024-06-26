@@ -2,7 +2,7 @@
 package pure
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
 )
 
@@ -57,6 +57,6 @@ end
 // the given Lua state struct: py, run and dir
 func Load(L *lua.LState) {
 	if err := L.DoString(luacode); err != nil {
-		log.Errorf("Could not load extra Lua functions: %s", err)
+		logrus.Errorf("Could not load extra Lua functions: %s", err)
 	}
 }
