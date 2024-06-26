@@ -13,6 +13,8 @@
 
 package mysql
 
+import "math"
+
 type lengthAndDecimal struct {
 	length  int
 	decimal int
@@ -41,8 +43,8 @@ var defaultLengthAndDecimal = map[byte]lengthAndDecimal{
 	TypeTinyBlob:   {255, 0},
 	TypeBlob:       {65535, 0},
 	TypeMediumBlob: {16777215, 0},
-	TypeLongBlob:   {4294967295, 0},
-	TypeJSON:       {4294967295, 0},
+	TypeLongBlob:   {math.MaxUint16, 0},
+	TypeJSON:       {math.MaxUint16, 0},
 	TypeNull:       {0, 0},
 	TypeSet:        {-1, 0},
 	TypeEnum:       {-1, 0},

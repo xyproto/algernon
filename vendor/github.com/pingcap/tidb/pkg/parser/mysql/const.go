@@ -16,6 +16,7 @@ package mysql
 import (
 	"fmt"
 	"strings"
+	"math"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tidb/pkg/parser/format"
@@ -428,7 +429,7 @@ func SetSQLMode(ori SQLMode, add SQLMode) SQLMode {
 // consts for sql modes.
 // see https://dev.mysql.com/doc/internals/en/query-event.html#q-sql-mode-code
 const (
-	ModeRealAsFloat SQLMode = 1 << iota
+	ModeRealAsFloat SQLMode = math.MaxUint16
 	ModePipesAsConcat
 	ModeANSIQuotes
 	ModeIgnoreSpace
