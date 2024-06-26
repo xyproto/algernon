@@ -5,121 +5,19 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 const (
 	// Highlight of errors in the code
 	preHighlight  = "<font style='color: red !important'>"
 	postHighlight = "</font>"
-)
 
-// Given a lowercase string for the language, return an approprite error page title
-func errorPageTitle(lang string) string {
-	switch lang {
-	case "":
-		return "Error"
-	case "css":
-		return "CSS Error"
-	case "gcss":
-		return "GCSS Error"
-	case "html":
-		return "HTML Error"
-	case "jsx":
-		return "JSX Error"
-	default:
-		// string.Title(lang) was used here before, but staticcheck recommends against it
-		return lang + " Error"
-	}
-}
-
-// PrettyError serves an informative error page to the user
-// Takes a ResponseWriter, title (can be empty), filename, filebytes, errormessage and
-// programming/scripting/template language (i.e. "lua". Can be empty).
-func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
-	// HTTP status
-	// w.WriteHeader(http.StatusInternalServerError)
-	w.WriteHeader(http.StatusOK)
-
-	// HTTP content type
-	w.Header().Add("Content-Type", "text/html;charset=utf-8")
-
-	var (
-		// If there is code to be displayed
-		code string
-		err  error
-	)
-
-	// The line that the error refers to, for the case of Lua
-	linenr := -1
-
-	if len(filebytes) > 0 {
-		if lang == "lua" {
-			// If the first line of the error message has two colons, see if the second field is a number
-			fields := strings.SplitN(errormessage, ":", 3)
-			if len(fields) > 2 {
-				// Extract the line number from the error message, if possible
-				numberfield := fields[1]
-				if strings.Contains(numberfield, "(") {
-					numberfield = strings.Split(numberfield, "(")[0]
-				}
-				linenr, err = strconv.Atoi(numberfield)
-				// Subtract one to make it a slice index instead of human-friendly line number
-				linenr--
-				// Set linenumber to -1 if the conversion failed
-				if err != nil {
-					linenr = -1
-				}
-			}
-		} else if lang == "amber" {
-			// If the error contains "- Line: ", extract the line number
-			if strings.Contains(errormessage, "- Line: ") {
-				fields := strings.SplitN(errormessage, "- Line: ", 2)
-				if strings.Contains(fields[1], ",") {
-					numberfields := strings.SplitN(fields[1], ",", 2)
-					linenr, err = strconv.Atoi(strings.TrimSpace(numberfields[0]))
-					// Subtract one to make it a slice index instead of human-friendly line number
-					linenr--
-					// Set linenumber to -1 if the conversion failed
-					if err != nil {
-						linenr = -1
-					}
-				}
-			}
-		}
-
-		// Escape any HTML in the code, so that the pretty printer is not confused
-		filebytes = bytes.ReplaceAll(filebytes, []byte("<"), []byte("&lt;"))
-
-		// Modify the line that is to be highlighted
-		bytelines := bytes.Split(filebytes, []byte("\n"))
-		if (linenr >= 0) && (linenr < len(bytelines)) {
-			bytelines[linenr] = []byte(preHighlight + string(bytelines[linenr]) + postHighlight)
-		}
-
-		// Build a string from the bytelines slice
-		code = string(bytes.Join(bytelines, []byte("\n")))
-	}
-
-	// Set an appropriate title
-	title := errorPageTitle(lang)
-
-	// Set the highlight class
-	langclass := lang
-
-	// Turn off highlighting for some languages
-	switch lang {
-	case "", "amber", "gcss":
-		langclass = "nohighlight"
-	}
-
-	// Highlighting for the error message
-	errorclass := "json" // "nohighlight"
-
-	// Inform the user of the error
-	htmldata := []byte(`<!doctype html>
+	// HTML template for the error page
+	htmlTemplate = `<!doctype html>
 <html>
   <head>
-    <title>` + title + `</title>
+    <title>{{.Title}}</title>
     <style>
       body {
         background-color: #f0f0f0;
@@ -144,22 +42,124 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
     </style>
   </head>
   <body>
-    <div style="font-size: 3em; font-weight: bold;">` + title + `</div>
-    Contents of ` + filename + `:
+    <div style="font-size: 3em; font-weight: bold;">{{.Title}}</div>
+    Contents of {{.Filename}}:
     <div>
-      <pre><code class="` + langclass + `">` + code + `</code></pre>
+      <pre><code>{{.Code}}</code></pre>
     </div>
     Error message:
     <div>
-      <pre id="wrap"><code style="color: #A00000;" class="` + errorclass + `">` + strings.TrimSpace(errormessage) + `</code></pre>
+      <pre id="wrap"><code style="color: #A00000;">{{.ErrorMessage}}</code></pre>
     </div>
-    <div id="right">` + ac.versionString + `</div>
-`)
+    <div id="right">{{.VersionString}}</div>
+  </body>
+</html>`
+)
 
-	if ac.autoRefresh {
-		// Insert JavaScript for refreshing the page into the generated HTML
-		htmldata = ac.InsertAutoRefresh(req, htmldata)
+// Given a lowercase string for the language, return an appropriate error page title
+func errorPageTitle(lang string) string {
+	switch lang {
+	case "":
+		return "Error"
+	case "css":
+		return "CSS Error"
+	case "gcss":
+		return "GCSS Error"
+	case "html":
+		return "HTML Error"
+	case "jsx":
+		return "JSX Error"
+	default:
+		return lang + " Error"
+	}
+}
+
+// PrettyError serves an informative error page to the user
+func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
+	// HTTP status
+	w.WriteHeader(http.StatusOK)
+
+	// HTTP content type
+	w.Header().Add("Content-Type", "text/html;charset=utf-8")
+
+	var (
+		code string
+		err  error
+	)
+
+	// The line that the error refers to, for the case of Lua
+	linenr := -1
+
+	if len(filebytes) > 0 {
+		if lang == "lua" {
+			fields := strings.SplitN(errormessage, ":", 3)
+			if len(fields) > 2 {
+				numberfield := fields[1]
+				if strings.Contains(numberfield, "(") {
+					numberfield = strings.Split(numberfield, "(")[0]
+				}
+				linenr, err = strconv.Atoi(numberfield)
+				linenr--
+				if err != nil {
+					linenr = -1
+				}
+			}
+		} else if lang == "amber" {
+			if strings.Contains(errormessage, "- Line: ") {
+				fields := strings.SplitN(errormessage, "- Line: ", 2)
+				if strings.Contains(fields[1], ",") {
+					numberfields := strings.SplitN(fields[1], ",", 2)
+					linenr, err = strconv.Atoi(strings.TrimSpace(numberfields[0]))
+					linenr--
+					if err != nil {
+						linenr = -1
+					}
+				}
+			}
+		}
+
+		filebytes = bytes.ReplaceAll(filebytes, []byte("<"), []byte("&lt;"))
+		bytelines := bytes.Split(filebytes, []byte("\n"))
+		if (linenr >= 0) && (linenr < len(bytelines)) {
+			bytelines[linenr] = []byte(preHighlight + string(bytelines[linenr]) + postHighlight)
+		}
+		code = string(bytes.Join(bytelines, []byte("\n")))
 	}
 
-	w.Write(htmldata)
+	title := errorPageTitle(lang)
+
+	data := struct {
+		Title         string
+		Filename      string
+		Code          string
+		ErrorMessage  string
+		VersionString string
+	}{
+		Title:         title,
+		Filename:      filename,
+		Code:          code,
+		ErrorMessage:  strings.TrimSpace(errormessage),
+		VersionString: ac.versionString,
+	}
+
+	tmpl, err := template.New("errorPage").Parse(htmlTemplate)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if ac.autoRefresh {
+		var htmlbuf bytes.Buffer
+		if err := tmpl.Execute(&htmlbuf, data); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		w.Write(ac.InsertAutoRefresh(req, htmlbuf.Bytes()))
+		return
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
