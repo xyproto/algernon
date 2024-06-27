@@ -2,7 +2,7 @@
 function main()
   content("text/html; charset=utf-8")
 
-  print [[<!doctype html><html><head><title>upload</title>
+  print [[<!doctype html><html lang="en"><head><title>upload</title>
   <style>body { margin: 3em; font-family: courier; }</style></head><body>]]
 
   -- Receive the file
@@ -18,16 +18,15 @@ function main()
   print("Size: " .. u:size() .. [[ bytes<br>]])
   print("Content type: " .. u:mimetype() .. [[<br>]])
 
-  local base64encoded = u:base64()
+  local base64EncodedImage = u:base64()
 
   print([[<br><hr><br>]])
 
   -- Display the uploaded image
-  print([[<img src="data:]] .. u:mimetype() .. [[;base64, ]] .. base64encoded .. [[" /><br><br>]])
+  print([[<img src="data:]] .. u:mimetype() .. [[;base64, ]] .. base64EncodedImage .. [[" /><br><br>]])
 
   -- Describe the uploaded image using Ollama
-  local description = describeImage(base64encoded)
-  print(description .. [[<br>]])
+  print(describeImage(base64EncodedImage) .. [[<br>]])
 
   print [[</body></html>]]
 end
