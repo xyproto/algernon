@@ -758,6 +758,9 @@ uploadedfile:save([string]) -> bool
 // Save the uploaded data as the client-provided filename, in the specified directory.
 // Takes a relative or absolute path. Returns true on success.
 uploadedfile:savein(string)  -> bool
+
+// Return the uploaded data as a base64-encoded string
+uploadedfile:base64() -> string
 ~~~
 
 
