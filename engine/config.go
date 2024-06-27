@@ -351,14 +351,14 @@ func (ac *Config) shouldCache(ext string) bool {
 		return true
 	case cachemode.Production, cachemode.Small:
 		switch ext {
-		case ".amber", ".lua", ".tl", ".po2", ".tpl", ".pongo2":
+		case ".amber", ".lua", ".po2", ".pongo2", ".tl", ".tpl":
 			return false
 		default:
 			return true
 		}
 	case cachemode.Images:
 		switch ext {
-		case ".png", ".jpg", ".gif", ".svg", ".jpeg", ".ico", ".bmp", ".apng":
+		case ".apng", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp":
 			return true
 		default:
 			return false
@@ -369,7 +369,7 @@ func (ac *Config) shouldCache(ext string) bool {
 		fallthrough
 	default:
 		switch ext {
-		case ".amber", ".lua", ".tl", ".md", ".gcss", ".jsx", ".po2", ".tpl", ".pongo2", ".happ", ".js", ".scss":
+		case ".amber", ".gcss", ".happ", ".js", ".jsx", ".lua", ".md", ".po2", ".pongo2", ".scss", ".tl", ".tpl":
 			return false
 		default:
 			return true
