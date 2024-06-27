@@ -393,15 +393,6 @@ func has(sl []string, e string) bool {
 	return false
 }
 
-// repeat a string n number of times
-func repeat(s string, n int) string {
-	var sb strings.Builder
-	for i := 0; i < n; i++ {
-		sb.WriteString(s)
-	}
-	return sb.String()
-}
-
 // unique removes all repeated elements from a slice of strings
 func unique(sl []string) []string {
 	var nl []string
@@ -566,7 +557,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// c := colorstring.Colorize{Colors: colorstring.DefaultColors, Reset: false}
 
 	if (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
-		fmt.Println(to.Tags(dashLineColor + repeat("-", 49) + "<off>"))
+		fmt.Println(to.Tags(dashLineColor + strings.Repeat("-", 49) + "<off>"))
 	}
 
 	// Read server configuration script, if present.
@@ -644,7 +635,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Separator between the output of the configuration scripts and
 	// the rest of the server output.
 	if ranServerReadyFunction && (len(ac.serverConfigurationFilenames) > 0) && !ac.quietMode && !ac.onlyLuaMode {
-		to.Tags(dashLineColor + repeat("-", 49) + "<off>")
+		to.Tags(dashLineColor + strings.Repeat("-", 49) + "<off>")
 	}
 
 	// Direct internal logging elsewhere
