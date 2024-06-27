@@ -86,15 +86,8 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 			mdParser := parser.NewWithExtensions(enabledMarkdownExtensions)
 			// Convert from Markdown to HTML
 			mdContent := markdownData.Bytes()
-			htmlData := markdown.ToHTML(mdContent, mdParser, nil)
-
-			// Add a script for rendering MathJax, but only if at least one mathematical formula is present
-			if containsFormula(mdContent) {
-				js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
-				htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
-			}
-
-			localImages = utils.ExtractLocalImagePaths(string(htmlData))
+			tempHtmlData := markdown.ToHTML(mdContent, mdParser, nil)
+			localImages = utils.ExtractLocalImagePaths(string(tempHtmlData))
 		}
 
 		// Serve all local images mentioned in the Markdown document.
