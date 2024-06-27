@@ -1,9 +1,8 @@
-// Package ollama provides Lua functions for communicting with a local Ollama server
+// Package ollama provides Lua functions for communicating with a local Ollama server
 package ollama
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 
@@ -236,10 +235,6 @@ func describeImage(L *lua.LState) int {
 		}
 	}
 
-	if modelName == "" {
-		panic("BOLLE")
-	}
-
 	oc := ollamaclient.New()
 	oc.ModelName = modelName
 
@@ -352,59 +347,59 @@ func askOllama(L *lua.LState) int {
 	return 1 // number of results
 }
 
-// embeddedDistance calculates the cosine similarity between two embeddings (Lua tables of floats).
+// embeddedDistance calculates the distance between two embeddings (Lua tables of floats).
 func embeddedDistance(L *lua.LState) int {
 	// Check and get the first table argument
 	tbl1 := L.CheckTable(1)
 	// Check and get the second table argument
 	tbl2 := L.CheckTable(2)
+	// Get the distance metric (optional)
+	metric := L.OptString(3, "cosine")
 
 	// Convert Lua tables to slices of float64
-	slice1, err1 := tableToFloatSlice(tbl1)
-	if err1 != nil {
-		L.Push(lua.LString(err1.Error()))
+	slice1, err := tableToFloatSlice(tbl1)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
 		return 1 // number of results (error message)
 	}
-	slice2, err2 := tableToFloatSlice(tbl2)
-	if err2 != nil {
-		L.Push(lua.LString(err2.Error()))
+	slice2, err := tableToFloatSlice(tbl2)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
 		return 1 // number of results (error message)
 	}
 
-	// Calculate the cosine similarity
+	// Check if the slices have different length
 	if len(slice1) != len(slice2) {
 		L.Push(lua.LString("error: embeddings must be of the same length"))
 		return 1 // number of results (error message)
 	}
 
-	dotProduct := 0.0
-	normA := 0.0
-	normB := 0.0
-	for i := range slice1 {
-		dotProduct += slice1[i] * slice2[i]
-		normA += slice1[i] * slice1[i]
-		normB += slice2[i] * slice2[i]
+	// Choose the distance metric
+	var distance float64
+	switch metric {
+	case "euclidean":
+		distance, err = euclideanDistance(slice1, slice2)
+	case "manhattan":
+		distance, err = manhattanDistance(slice1, slice2)
+	case "chebyshev":
+		distance, err = chebyshevDistance(slice1, slice2)
+	case "hamming":
+		distance, err = hammingDistance(slice1, slice2)
+	default:
+		distance, err = cosineDistance(slice1, slice2)
 	}
-	normA = math.Sqrt(normA)
-	normB = math.Sqrt(normB)
-
-	if normA == 0.0 || normB == 0.0 {
-		L.Push(lua.LString("error: one or both vectors are zero vectors"))
-		return 1 // number of results
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results (error message)
 	}
 
-	cosineSimilarity := dotProduct / (normA * normB)
-
-	// Cosine similarity ranges from -1 to 1, higher values mean more similarity
-	// We convert it to a distance measure that ranges from 0 to 2
-	cosineDistance := 1 - cosineSimilarity
-	L.Push(lua.LNumber(cosineDistance))
+	L.Push(lua.LNumber(distance))
 	return 1 // number of results (distance)
 }
 
-// Load makes functions related Ollama clients available to the given Lua state
+// Load makes functions related to Ollama clients available to the given Lua state
 func Load(L *lua.LState) {
-	// Register the OllamaClient class and the methods that belongs with it.
+	// Register the OllamaClient class and the methods that belong with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)
 	L.SetFuncs(mt, ollamaMethods)

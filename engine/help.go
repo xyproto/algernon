@@ -277,9 +277,9 @@ ollama([string], [string]) -> string
 base64EncodeFile(string) -> string
 // Describe the given base64-encoded image using Ollama (and the "llava-llama3" model, by default).
 describeImage(string, [string]) -> string
-// Given two embeddings (tables of floats, representing text or data, as returned by Ollama),
-// return the similarity from 0 to 1.
-embeddedDistance(table, table) -> number
+// Given two embeddings (tables of floats, representing text or data, as returned by Ollama), return how similar they are.
+// The optional string is the algorithm for measuring the distance: "euclidean", "manhattan", "chebyshev" or "hamming".
+embeddedDistance(table, table, [string]) -> number
 
 Various
 
