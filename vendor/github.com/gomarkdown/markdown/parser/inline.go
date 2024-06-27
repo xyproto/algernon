@@ -1208,7 +1208,8 @@ func helperEmphasis(p *Parser, data []byte, c byte) (int, ast.Node) {
 		if data[i] == c && !IsSpace(data[i-1]) {
 
 			if p.extensions&NoIntraEmphasis != 0 {
-				if !(i+1 == len(data) || IsSpace(data[i+1]) || IsPunctuation(data[i+1])) {
+				rest := data[i+1:]
+				if !(len(rest) == 0 || IsSpace(rest[0]) || IsPunctuation2(rest)) {
 					continue
 				}
 			}

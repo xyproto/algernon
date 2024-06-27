@@ -116,7 +116,7 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
-# github.com/gomarkdown/markdown v0.0.0-20240625204355-a4f7c57820cb
+# github.com/gomarkdown/markdown v0.0.0-20240626202925-2eda941fd024
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -222,7 +222,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20240626120124-432bb79f9732
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20240627093423-08d5d29ff363
 ## explicit; go 1.19
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
