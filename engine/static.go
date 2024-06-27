@@ -56,7 +56,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 	if ac.serverHost != "" {
 		hostname = ac.serverHost
 	}
-	logrus.Info("Serving " + filename + " on http://" + hostname + colonPort)
+	logrus.Infof("Serving %s on http://%s%s", filename, hostname, colonPort)
 
 	if ac.openURLAfterServing {
 		go ac.openAfter(delayBeforeLaunchingBrowser, hostname, colonPort, false, cancelChannel)
