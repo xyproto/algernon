@@ -17,11 +17,18 @@ const (
 	// Class is an identifier for the OllamaClient class in Lua
 	Class = "OllamaClient"
 
-	defaultModel  = "tinyllama"
-	defaultPrompt = "Generate a haiku about the poet Algernon"
+	// Only used when constructing new ollama clients with no explicit model given.
+	// tinyllama is fast and small, but not great.
+	// Good alternatives right now: mixtral, llama3-gradient
+	defaultModel = "tinyllama"
 
 	imageDescriptionModel  = "llava-llama3"
 	imageDescriptionPrompt = "Describe this image."
+
+	defaultPrompt = "Generate a haiku about the poet Algernon"
+
+	// For measuring the distance between embeddings
+	defaultMetric = "cosine"
 )
 
 var mut sync.RWMutex
@@ -210,6 +217,75 @@ func ollamaEmbeddings(L *lua.LState) int {
 	return 1 // number of results
 }
 
+// Use ollama to get a []float64 representation of two given prompts,
+// and then find the distance between them and return the distance.
+// Also takes an optional model name and an optional metric:
+// cosine, euclidean, manhattan, chebyshev or hamming
+func ollamaDistance(L *lua.LState) int {
+	mut.Lock()
+	defer mut.Unlock()
+	oc := checkOllamaClient(L)                  // arg 1
+	prompt1 := L.ToString(2)                    // arg 2
+	prompt2 := L.ToString(3)                    // arg 3
+	metric := L.OptString(4, defaultMetric)     // arg 4
+	oc.ModelName = L.OptString(5, oc.ModelName) // arg 5
+
+	err := oc.PullIfNeeded(true)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+
+	oc.SetReproducible()
+
+	var slice1 []float64
+	slice1, err = oc.Embeddings(prompt1)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+
+	var slice2 []float64
+	slice2, err = oc.Embeddings(prompt2)
+	if err != nil {
+		logrus.Error(err)
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results
+	}
+
+	// Measure the distance between slice1 and slice2 and return the distance
+	var distance float64
+
+	metricLetters := defaultMetric[0:2]
+	if len(metric) > 1 {
+		metricLetters = metric[0:2]
+	}
+	switch metricLetters {
+	case "co": // cosine
+		distance, err = cosineDistance(slice1, slice2)
+	case "eu": // euclidean
+		distance, err = euclideanDistance(slice1, slice2)
+	case "ch": //chebyshev
+		distance, err = chebyshevDistance(slice1, slice2)
+	case "ha": // hamming
+		distance, err = hammingDistance(slice1, slice2)
+	case "ma": //  manhattan
+		distance, err = manhattanDistance(slice1, slice2)
+	default: // cosine
+		distance, err = cosineDistance(slice1, slice2)
+	}
+
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1 // number of results (error message)
+	}
+
+	L.Push(lua.LNumber(distance))
+	return 1 // number of results (distance)
+}
+
 // Return the given file as a base64-encoded string
 func base64EncodeFile(L *lua.LState) int {
 	filename := L.ToString(1) // try to get the first argument
@@ -316,6 +392,7 @@ var ollamaMethods = map[string]lua.LGFunction{
 	"pull":       ollamaPullIfNeeded,
 	"size":       ollamaSize,
 	"embeddings": ollamaEmbeddings, // get a []float64 representation of a given prompt
+	"distance":   ollamaDistance,   // get the distance between two prompts (via embeddings)
 }
 
 func askOllama(L *lua.LState) int {
@@ -354,7 +431,7 @@ func embeddedDistance(L *lua.LState) int {
 	// Check and get the second table argument
 	tbl2 := L.CheckTable(2)
 	// Get the distance metric (optional)
-	metric := L.OptString(3, "cosine")
+	metric := L.OptString(3, defaultMetric)
 
 	// Convert Lua tables to slices of float64
 	slice1, err := tableToFloatSlice(tbl1)
@@ -376,18 +453,26 @@ func embeddedDistance(L *lua.LState) int {
 
 	// Choose the distance metric
 	var distance float64
-	switch metric {
-	case "euclidean":
+
+	metricLetters := defaultMetric[0:2]
+	if len(metric) > 1 {
+		metricLetters = metric[0:2]
+	}
+	switch metricLetters {
+	case "co": // cosine
+		distance, err = cosineDistance(slice1, slice2)
+	case "eu": // euclidean
 		distance, err = euclideanDistance(slice1, slice2)
-	case "manhattan":
-		distance, err = manhattanDistance(slice1, slice2)
-	case "chebyshev":
+	case "ch": //chebyshev
 		distance, err = chebyshevDistance(slice1, slice2)
-	case "hamming":
+	case "ha": // hamming
 		distance, err = hammingDistance(slice1, slice2)
-	default:
+	case "ma": //  manhattan
+		distance, err = manhattanDistance(slice1, slice2)
+	default: // cosine
 		distance, err = cosineDistance(slice1, slice2)
 	}
+
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
 		return 1 // number of results (error message)
