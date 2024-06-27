@@ -349,6 +349,26 @@ Here are some examples of using the `qsort` function:
 I hope this helps! Let me know if you have any questions or need further clarification.
 ```
 
+Example use of finding the distance between how the LLM models interpret the prompts:
+
+```
+lua> oc = OllamaClient("llama3")
+lua> oc:distance("cat", "dog")
+0.3629187146002938
+lua> oc:distance("cat", "kitten")
+0.3584441305547792
+lua> oc:distance("dog", "puppy")
+0.2825554473355113
+lua> oc:distance("dog", "kraken", "manhattan")
+7945.885516248905
+lua> oc:distance("dog", "kraken", "cosine")
+0.5277307399621305
+```
+
+As you can tell, according to Llama3, "dog" is closer to "puppy" (0.28) than "cat" is to "kitten" (0.36) and "dog" is very different from "kraken" (0.53).
+
+The available distance measurement algorithms are: `cosine`, `euclidean`, `manhattan`, `chebyshev` and `hamming`. The default metric is `cosine`.
+
 Available Ollama models are available here: [Ollama Library](https://ollama.com/library).
 
 There is also support for `.prompt` files that can generate contents, such as HTML pages, in a reproducible way. The results will be cached for as long as Algernon is running.
@@ -672,6 +692,12 @@ oc:size(string) -> string
 // Get the size of the given model name, in bytes
 oc:bytesize(string) -> number
 
+// Given two prompts, return how similar they are.
+// The first optional string is the algorithm for measuring the distance: cosine, euclidean, manhattan, chebyshev or hamming.
+// Only the two first letters of the algorithm name are needed, so "co" or "ma" are also valid. The default is cosine.
+// The second optional string is the model name.
+oc:distance(string, string, [string], [string]) -> number
+
 // Convenience function for the local Ollama server that takes an optional prompt and an optional model name.
 // Generates a poem with the `tinyllama` model by default.
 ollama([string], [string]) -> string
@@ -682,8 +708,9 @@ base64EncodeFile(string) -> string
 // Describe the given base64-encoded image using Ollama (and the `llava-llama3` model, by default)
 describeImage(string, [string]) -> string
 
-// Given two embeddings (tables of floats, representing text or data, as returned by Ollama), return how similar they are.
-// The optional string is the algorithm for measuring the distance: "euclidean", "manhattan", "chebyshev" or "hamming".
+// Given two embeddings (tables of floats, representing text or data), return how similar they are.
+// The optional string is the algorithm for measuring the distance: cosine, euclidean, manhattan, chebyshev or hamming.
+// Only the two first letters of the algorithm name are needed, so "co" or "ma" are also valid. The default is cosine.
 embeddedDistance(table, table, [string]) -> number
 ~~~
 

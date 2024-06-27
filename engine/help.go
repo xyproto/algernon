@@ -270,6 +270,10 @@ oc:creative([string], [string]) -> string
 oc:size(string) -> string
 // Get the size of the given model name, in bytes.
 oc:bytesize(string) -> number
+// Given two prompts, return how similar they are. The first opt. string is the metric for the distance:
+// cosine, euclidean, manhattan, chebyshev or hamming. The default is "co", only 2 letters are needed.
+// The second optional string is the model name.
+oc:distance(string, string, [string], [string]) -> number
 // Convenience function for passing a prompt and optional model name to the local Ollama server.
 // The default prompt generates a poem and the default model is "tinyllama".
 ollama([string], [string]) -> string
@@ -277,8 +281,9 @@ ollama([string], [string]) -> string
 base64EncodeFile(string) -> string
 // Describe the given base64-encoded image using Ollama (and the "llava-llama3" model, by default).
 describeImage(string, [string]) -> string
-// Given two embeddings (tables of floats, representing text or data, as returned by Ollama), return how similar they are.
-// The optional string is the algorithm for measuring the distance: "euclidean", "manhattan", "chebyshev" or "hamming".
+// Given two embeddings (tables of floats, representing text or data), return how similar they are.
+// The opt. string is the metric for the distance: cosine, euclidean, manhattan, chebyshev or hamming.
+// Only the two first letters are needed, so "co" or "ma" are also valid. The default is cosine.
 embeddedDistance(table, table, [string]) -> number
 
 Various
