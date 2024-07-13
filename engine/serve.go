@@ -154,13 +154,6 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		}
 		servingHTTP.Store(true)
 		HTTPserver := ac.NewFastHTTPServer(mux, ac.serverAddr)
-		// Open the URL before the serving has started, in a short delay
-		if ac.openURLAfterServing {
-			go func() {
-				time.Sleep(delayBeforeLaunchingBrowser)
-				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
-			}()
-		}
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(ac.serverAddr); err != nil {
 			servingHTTP.Store(false)
