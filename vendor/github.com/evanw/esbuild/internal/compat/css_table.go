@@ -64,12 +64,11 @@ var cssTable = map[CSSFeature]map[Engine][]versionRange{
 		Safari:  {{start: v{12, 1, 0}}},
 	},
 	GradientInterpolation: {
-		Chrome:  {{start: v{111, 0, 0}}},
-		Edge:    {{start: v{111, 0, 0}}},
-		Firefox: {{start: v{127, 0, 0}}},
-		IOS:     {{start: v{16, 2, 0}}},
-		Opera:   {{start: v{97, 0, 0}}},
-		Safari:  {{start: v{16, 2, 0}}},
+		Chrome: {{start: v{111, 0, 0}}},
+		Edge:   {{start: v{111, 0, 0}}},
+		IOS:    {{start: v{16, 2, 0}}},
+		Opera:  {{start: v{97, 0, 0}}},
+		Safari: {{start: v{16, 2, 0}}},
 	},
 	GradientMidpoints: {
 		Chrome:  {{start: v{40, 0, 0}}},
@@ -192,8 +191,8 @@ var cssPrefixTable = map[css_ast.D][]prefixData{
 		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{15, 4, 0}},
 	},
 	css_ast.DBackdropFilter: {
-		{engine: IOS, prefix: WebkitPrefix},
-		{engine: Safari, prefix: WebkitPrefix},
+		{engine: IOS, prefix: WebkitPrefix, withoutPrefix: v{18, 0, 0}},
+		{engine: Safari, prefix: WebkitPrefix, withoutPrefix: v{18, 0, 0}},
 	},
 	css_ast.DBackgroundClip: {
 		{engine: Chrome, prefix: WebkitPrefix, withoutPrefix: v{120, 0, 0}},

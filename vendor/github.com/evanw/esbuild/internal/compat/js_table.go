@@ -572,6 +572,7 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Chrome:  {{start: v{74, 0, 0}}},
 		Deno:    {{start: v{1, 0, 0}}},
 		Edge:    {{start: v{79, 0, 0}}},
+		ES:      {{start: v{2023, 0, 0}}},
 		Firefox: {{start: v{67, 0, 0}}},
 		Hermes:  {{start: v{0, 7, 0}}},
 		IOS:     {{start: v{13, 4, 0}}},
@@ -792,7 +793,9 @@ var jsTable = map[JSFeature]map[Engine][]versionRange{
 		Opera:   {{start: v{51, 0, 0}}},
 		Safari:  {{start: v{11, 1, 0}}},
 	},
-	RegexpSetNotation: {},
+	RegexpSetNotation: {
+		ES: {{start: v{2024, 0, 0}}},
+	},
 	RegexpStickyAndUnicodeFlags: {
 		// Note: The latest version of "IE" failed 6 tests including: RegExp "y" and "u" flags: "u" flag
 		// Note: The latest version of "Rhino" failed 4 tests including: RegExp "y" and "u" flags: "u" flag
