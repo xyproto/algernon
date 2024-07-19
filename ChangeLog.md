@@ -1,5 +1,18 @@
 # Changelog
 
+Changes from 1.17.0 to 1.17.1
+=============================
+
+* Patch the `pingcap/tidb` dependency so that Algernon still compiles for ARM 6 and ARM 7.
+* Add the `oc:distance()` Lua method for finding the distance between two LLM prompts.
+* Let the `embeddedDistance` Lua function take a 3rd argument: `euclidean`, `manhattan`, `chebyshev`, `hamming` or `cosine`.
+* Improve the image description example.
+* Improve how images are served when serving a single Markdown document.
+* Fix the double opening of the browser when both `-m` and `-o` are specified.
+* Also cache `.webp` images, if caching of images is enabled.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.16.0 to 1.17.0
 =============================
 
