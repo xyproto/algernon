@@ -3,7 +3,8 @@
 
 RUN_TYPE=$1
 if [ -z "$RUN_TYPE" ]; then
-    echo "Please specify a run type (dev, interactive, lua, prod)"
+    echo 'Please specify a run type:'
+    echo '  dev | interactive | lua | prod'
     exit 1
 fi
 
