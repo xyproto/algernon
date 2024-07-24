@@ -85,9 +85,8 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 			// Create a Markdown parser with the desired extensions
 			mdParser := parser.NewWithExtensions(enabledMarkdownExtensions)
 			// Convert from Markdown to HTML
-			mdContent := markdownData.Bytes()
-			tempHtmlData := markdown.ToHTML(mdContent, mdParser, nil)
-			localImages = utils.ExtractLocalImagePaths(string(tempHtmlData))
+			tempHTMLData := string(markdown.ToHTML(markdownData.Bytes(), mdParser, nil))
+			localImages = utils.ExtractLocalImagePaths(tempHTMLData)
 		}
 
 		// Serve all local images mentioned in the Markdown document.
