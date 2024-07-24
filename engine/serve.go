@@ -60,7 +60,7 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 }
 
 // NewFastHTTPServer creates a new fasthttp server configuration
-func (ac *Config) NewFastHTTPServer(mux *http.ServeMux, addr string) *fasthttp.Server {
+func (ac *Config) NewFastHTTPServer(mux *http.ServeMux) *fasthttp.Server {
 	fastHTTPHandler := fasthttpadaptor.NewFastHTTPHandler(mux)
 	return &fasthttp.Server{
 		Handler: fastHTTPHandler,
@@ -153,7 +153,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			logrus.Info("Serving HTTP on http://" + ac.serverAddr + "/")
 		}
 		servingHTTP.Store(true)
-		HTTPserver := ac.NewFastHTTPServer(mux, ac.serverAddr)
+		HTTPserver := ac.NewFastHTTPServer(mux)
 		// Start serving. Shut down gracefully at exit.
 		if err := HTTPserver.ListenAndServe(ac.serverAddr); err != nil {
 			servingHTTP.Store(false)
