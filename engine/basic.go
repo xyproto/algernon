@@ -254,7 +254,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		}
 
 		lv := L.ToString(1)
-		w.Header().Add("Content-Type", lv)
+		w.Header().Add(contentType, lv)
 		return 0 // number of results
 	}))
 

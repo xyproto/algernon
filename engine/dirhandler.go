@@ -119,7 +119,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 	}
 
 	// Serve the page
-	w.Header().Add("Content-Type", "text/html;charset=utf-8")
+	w.Header().Add(contentType, htmlUTF8)
 	ac.DataToClient(w, req, dirname, htmldata)
 }
 

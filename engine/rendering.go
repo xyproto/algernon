@@ -28,7 +28,11 @@ import (
 	_ "embed"
 )
 
-const markdownCodeStyle = "base16-snazzy" // using xyproto/splash
+const (
+	markdownCodeStyle = "base16-snazzy" // using xyproto/splash
+	linkHref          = `<link href="`
+	stylesheetCSS     = `" rel="stylesheet" type="text/css">`
+)
 
 var (
 	//go:embed static/tex-svg.js
@@ -394,9 +398,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 	switch {
 	case ac.fs.Exists(CSSFilename):
 		// Link to stylesheet (without checking if the CSS file is valid first)
-		head.WriteString(`<link href="`)
+		head.WriteString(linkHref)
 		head.WriteString(themes.DefaultCSSFilename)
-		head.WriteString(`" rel="stylesheet" type="text/css">`)
+		head.WriteString(stylesheetCSS)
 	case ac.fs.Exists(GCSSFilename):
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
@@ -417,9 +421,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		head.WriteString(`<link href="`)
+		head.WriteString(linkHref)
 		head.WriteString(themes.DefaultGCSSFilename)
-		head.WriteString(`" rel="stylesheet" type="text/css">`)
+		head.WriteString(stylesheetCSS)
 	default:
 		// If not, use the theme by inserting the CSS style directly
 		head.Write(themes.StyleHead(string(theme)))
@@ -439,9 +443,9 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 			cssdata := cssblock.Bytes()
 			head.WriteString("<style>" + string(cssdata) + "</style>")
 		} else {
-			head.WriteString(`<link href="`)
+			head.WriteString(linkHref)
 			head.WriteString(additionalCSSfile)
-			head.WriteString(`" rel="stylesheet" type="text/css">`)
+			head.WriteString(stylesheetCSS)
 		}
 	}
 
@@ -845,9 +849,9 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 	switch {
 	case ac.fs.Exists(CSSFilename):
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		htmlbuf.WriteString(`<link href="`)
+		htmlbuf.WriteString(linkHref)
 		htmlbuf.WriteString(themes.DefaultCSSFilename)
-		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
+		htmlbuf.WriteString(stylesheetCSS)
 	case ac.fs.Exists(GCSSFilename):
 		if ac.debugMode {
 			gcssblock, err := ac.cache.Read(GCSSFilename, ac.shouldCache(".gcss"))
@@ -868,9 +872,9 @@ func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filenam
 			}
 		}
 		// Link to stylesheet (without checking if the GCSS file is valid first)
-		htmlbuf.WriteString(`<link href="`)
+		htmlbuf.WriteString(linkHref)
 		htmlbuf.WriteString(themes.DefaultGCSSFilename)
-		htmlbuf.WriteString(`" rel="stylesheet" type="text/css">`)
+		htmlbuf.WriteString(stylesheetCSS)
 	default:
 		// If not, use the default hyperapp theme by inserting the CSS style directly
 		theme := ac.defaultTheme

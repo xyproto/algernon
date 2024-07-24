@@ -84,7 +84,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 	w.WriteHeader(http.StatusOK)
 
 	// HTTP content type
-	w.Header().Add("Content-Type", "text/html;charset=utf-8")
+	w.Header().Add(contentType, htmlUTF8)
 
 	var (
 		code string

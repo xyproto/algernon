@@ -30,6 +30,9 @@ const (
 
 	// Used for deciding how long to wait before quitting when only serving a single file and starting a browser
 	defaultSoonDuration = time.Second * 3
+
+	contentType = "Content-Type"
+	htmlUTF8    = "text/html;charset=utf-8"
 )
 
 var oc *ollamaclient.Config
@@ -48,7 +51,7 @@ func (ac *Config) ClientCanGzip(req *http.Request) bool {
 
 // PongoHandler renders and serves a Pongo2 template
 func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filename, ext string) {
-	w.Header().Add("Content-Type", "text/html;charset=utf-8")
+	w.Header().Add(contentType, htmlUTF8)
 	pongoblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
 		if ac.debugMode {
@@ -147,7 +150,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
 	case ".html", ".htm":
-		w.Header().Add("Content-Type", "text/html;charset=utf-8")
+		w.Header().Add(contentType, htmlUTF8)
 
 		// Read the file (possibly in compressed format, straight from the cache)
 		htmlblock, err := ac.ReadAndLogErrors(w, filename, ext)
@@ -171,7 +174,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		return
 
 	case ".md", ".markdown":
-		w.Header().Add("Content-Type", "text/html;charset=utf-8")
+		w.Header().Add(contentType, htmlUTF8)
 		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the markdown page
 			ac.MarkdownPage(w, req, markdownblock.Bytes(), filename)
@@ -179,7 +182,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		return
 
 	case ".frm", ".form":
-		w.Header().Add("Content-Type", "text/html;charset=utf-8")
+		w.Header().Add(contentType, htmlUTF8)
 		formblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 		if err != nil {
 			return
@@ -194,7 +197,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		return
 
 	case ".amber", ".amb":
-		w.Header().Add("Content-Type", "text/html;charset=utf-8")
+		w.Header().Add(contentType, htmlUTF8)
 		amberblock, err := ac.ReadAndLogErrors(w, filename, ext)
 		if err != nil {
 			return
@@ -323,7 +326,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 
 	case ".gcss":
 		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			w.Header().Add("Content-Type", "text/css;charset=utf-8")
+			w.Header().Add(contentType, "text/css;charset=utf-8")
 			// Render the GCSS page as CSS
 			ac.GCSSPage(w, req, filename, gcssblock.Bytes())
 		}
@@ -332,7 +335,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	case ".scss":
 		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the SASS page (with .scss extension) as CSS
-			w.Header().Add("Content-Type", "text/css;charset=utf-8")
+			w.Header().Add(contentType, "text/css;charset=utf-8")
 			ac.SCSSPage(w, req, filename, scssblock.Bytes())
 		}
 		return
@@ -340,7 +343,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the JSX page as HTML with embedded JavaScript
-			w.Header().Add("Content-Type", "text/html;charset=utf-8")
+			w.Header().Add(contentType, htmlUTF8)
 			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
 		} else {
 			logrus.Error("Error when serving " + filename + ":" + err.Error())
@@ -351,7 +354,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	case ".jsx":
 		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			// Render the JSX page as JavaScript
-			w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
+			w.Header().Add(contentType, "text/javascript;charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.Bytes())
 		} else {
 			logrus.Error("Error when serving " + filename + ":" + err.Error())
@@ -370,7 +373,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				contentType := strings.TrimSpace(lines[0])
 				model := strings.TrimSpace(lines[1])
 				prompt := strings.TrimSpace(strings.Join(lines[3:], "\n"))
-				w.Header().Add("Content-Type", contentType)
+				w.Header().Add(contentType, contentType)
 				if oc == nil {
 					oc = ollamaclient.New()
 				}
@@ -401,20 +404,20 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	// Text and configuration files (most likely)
 	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".gitignore", ".gitmodules", ".ini", ".log", ".lst", ".me", ".nfo", ".pem", ".readme", ".sub", ".sum", ".tml", ".toml", ".txt", ".yaml", ".yml":
 		// Set headers for displaying it in the browser.
-		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
+		w.Header().Set(contentType, "text/plain;charset=utf-8")
 
 	// Source files that may be used by web pages
 	case ".js":
-		w.Header().Add("Content-Type", "text/javascript;charset=utf-8")
+		w.Header().Add(contentType, "text/javascript;charset=utf-8")
 
 	// JSON
 	case ".json":
-		w.Header().Add("Content-Type", "application/json;charset=utf-8")
+		w.Header().Add(contentType, "application/json;charset=utf-8")
 
 	// Source code files for viewing
 	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".mk", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh", ".ts", ".tsx":
 		// Set headers for displaying it in the browser.
-		w.Header().Set("Content-Type", "text/plain;charset=utf-8")
+		w.Header().Set(contentType, "text/plain;charset=utf-8")
 
 	// Common binary file extensions
 	case ".7z", ".arj", ".bin", ".com", ".dat", ".db", ".elf", ".exe", ".gz", ".iso", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
@@ -424,7 +427,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	default:
 		// If the filename starts with a ".", assume it's a plain text configuration file
 		if strings.HasPrefix(filepath.Base(lowercaseFilename), ".") {
-			w.Header().Set("Content-Type", "text/plain;charset=utf-8")
+			w.Header().Set(contentType, "text/plain;charset=utf-8")
 		} else {
 			// Set the correct Content-Type
 			if ac.mimereader != nil {
@@ -603,7 +606,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 	} else {
 		limiter := tollbooth.NewLimiter(float64(ac.limitRequests), nil)
 		limiter.SetMessage(themes.MessagePage("Rate-limit exceeded", "<div style='color:red'>You have reached the maximum request limit.</div>", theme))
-		limiter.SetMessageContentType("text/html;charset=utf-8")
+		limiter.SetMessageContentType(htmlUTF8)
 		mux.Handle(handlePath, tollbooth.LimitFuncHandler(limiter, allRequests))
 	}
 }
