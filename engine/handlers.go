@@ -33,6 +33,7 @@ const (
 
 	contentType = "Content-Type"
 	htmlUTF8    = "text/html;charset=utf-8"
+	textUTF8    = "text/plain;charset=utf-8"
 )
 
 var oc *ollamaclient.Config
@@ -404,7 +405,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	// Text and configuration files (most likely)
 	case "", ".asciidoc", ".conf", ".config", ".diz", ".example", ".gitignore", ".gitmodules", ".ini", ".log", ".lst", ".me", ".nfo", ".pem", ".readme", ".sub", ".sum", ".tml", ".toml", ".txt", ".yaml", ".yml":
 		// Set headers for displaying it in the browser.
-		w.Header().Set(contentType, "text/plain;charset=utf-8")
+		w.Header().Set(contentType, textUTF8)
 
 	// Source files that may be used by web pages
 	case ".js":
@@ -417,7 +418,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	// Source code files for viewing
 	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".mk", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh", ".ts", ".tsx":
 		// Set headers for displaying it in the browser.
-		w.Header().Set(contentType, "text/plain;charset=utf-8")
+		w.Header().Set(contentType, textUTF8)
 
 	// Common binary file extensions
 	case ".7z", ".arj", ".bin", ".com", ".dat", ".db", ".elf", ".exe", ".gz", ".iso", ".lz", ".rar", ".tar.bz", ".tar.bz2", ".tar.gz", ".tar.xz", ".tbz", ".tbz2", ".tgz", ".txz", ".xz", ".zip":
@@ -427,7 +428,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	default:
 		// If the filename starts with a ".", assume it's a plain text configuration file
 		if strings.HasPrefix(filepath.Base(lowercaseFilename), ".") {
-			w.Header().Set(contentType, "text/plain;charset=utf-8")
+			w.Header().Set(contentType, textUTF8)
 		} else {
 			// Set the correct Content-Type
 			if ac.mimereader != nil {
