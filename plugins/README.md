@@ -1,4 +1,4 @@
-[pie](https://github.comnatefinch/pie) plugins for Algernon
+[pie](https://github.com/natefinch/pie) plugins for Algernon
 ===========================================================
 
 Plugins must offer `Lua.Code` and `Lua.Help` functions.
