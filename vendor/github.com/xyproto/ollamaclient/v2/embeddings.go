@@ -7,6 +7,17 @@ import (
 	"net/http"
 )
 
+// EmbeddingsRequest represents the request payload for getting embeddings
+type EmbeddingsRequest struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+}
+
+// EmbeddingsResponse represents the response data containing embeddings
+type EmbeddingsResponse struct {
+	Embeddings []float64 `json:"embedding"`
+}
+
 // Embeddings sends a request to get embeddings for a given prompt
 func (oc *Config) Embeddings(prompt string) ([]float64, error) {
 	reqBody := EmbeddingsRequest{

@@ -49,9 +49,9 @@ func max(a, b int) int {
 
 func generateColorizedProgressBar(progress float64, width int) string {
 	progressInt := int(progress / 100 * float64(width))
-	bar := colors["blue"] + strings.Repeat("=", progressInt)
+	bar := colors["magenta"] + strings.Repeat("=", progressInt)
 	if progressInt > width/3 {
-		bar += colors["magenta"] + strings.Repeat("=", max(0, progressInt-width/3))
+		bar += colors["blue"] + strings.Repeat("=", max(0, progressInt-width/3))
 	}
 	if progressInt > 2*width/3 {
 		bar += colors["cyan"] + strings.Repeat("=", max(0, progressInt-2*width/3))
