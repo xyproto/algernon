@@ -20,6 +20,7 @@ const (
 	defaultHTTPTimeout = 10 * time.Minute // per HTTP request to Ollama
 	defaultFixedSeed   = 256              // for when generated output should not be random, but have temperature 0 and a specific seed
 	defaultPullTimeout = 48 * time.Hour   // pretty generous, in case someone has a poor connection
+	mimeJSON           = "application/json"
 )
 
 // RequestOptions holds the seed and temperature
@@ -27,32 +28,6 @@ type RequestOptions struct {
 	Seed          int     `json:"seed"`
 	Temperature   float64 `json:"temperature"`
 	ContextLength int64   `json:"num_ctx,omitempty"`
-}
-
-// GenerateRequest represents the request payload for generating output
-type GenerateRequest struct {
-	Model   string         `json:"model"`
-	Prompt  string         `json:"prompt,omitempty"`
-	Images  []string       `json:"images,omitempty"` // base64 encoded images
-	Stream  bool           `json:"stream,omitempty"`
-	Options RequestOptions `json:"options,omitempty"`
-}
-
-// GenerateResponse represents the response data from the generate API call
-type GenerateResponse struct {
-	Model              string `json:"model"`
-	CreatedAt          string `json:"created_at"`
-	Response           string `json:"response"`
-	Context            []int  `json:"context,omitempty"`
-	TotalDuration      int64  `json:"total_duration,omitempty"`
-	LoadDuration       int64  `json:"load_duration,omitempty"`
-	SampleCount        int    `json:"sample_count,omitempty"`
-	SampleDuration     int64  `json:"sample_duration,omitempty"`
-	PromptEvalCount    int    `json:"prompt_eval_count,omitempty"`
-	PromptEvalDuration int64  `json:"prompt_eval_duration,omitempty"`
-	EvalCount          int    `json:"eval_count,omitempty"`
-	EvalDuration       int64  `json:"eval_duration,omitempty"`
-	Done               bool   `json:"done"`
 }
 
 // Model represents a downloaded model
@@ -84,7 +59,8 @@ type Config struct {
 	TrimSpace                 bool
 	Verbose                   bool
 	ContextLength             int64
-	Tools                     []json.RawMessage
+	SystemPrompt              string
+	Tools                     []Tool
 }
 
 // Cache is used for caching reproducible results from Ollama (seed -1, temperature 0)
@@ -160,6 +136,11 @@ func (oc *Config) SetReproducible(optionalSeed ...int) {
 	oc.SeedOrNegative = defaultFixedSeed
 }
 
+// SetSystemPrompt sets the system prompt for this Ollama config
+func (oc *Config) SetSystemPrompt(prompt string) {
+	oc.SystemPrompt = prompt
+}
+
 // SetRandom configures the generated output to not be reproducible
 func (oc *Config) SetRandom() {
 	oc.SeedOrNegative = -1
@@ -171,18 +152,18 @@ func (oc *Config) SetContextLength(contextLength int64) {
 }
 
 // SetTool sets the tools for this Ollama config
-func (oc *Config) SetTool(tool json.RawMessage) {
+func (oc *Config) SetTool(tool Tool) {
 	oc.Tools = append(oc.Tools, tool)
 }
 
-// GetOutputChat sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, error) {
+// GetChatResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return OutputChat{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -192,18 +173,24 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	}
+	messages := []Message{}
+	if oc.SystemPrompt != "" {
+		messages = append(messages, Message{
+			Role:    "system",
+			Content: oc.SystemPrompt,
+		})
+	}
+	messages = append(messages, Message{
+		Role:    "user",
+		Content: prompt,
+	})
 	var reqBody GenerateChatRequest
 	if len(images) > 0 {
 		reqBody = GenerateChatRequest{
-			Model: oc.ModelName,
-			Messages: []Message{
-				{
-					Role:    "user",
-					Content: prompt,
-				},
-			},
-			Images: images,
-			Tools:  oc.Tools,
+			Model:    oc.ModelName,
+			Messages: messages,
+			Images:   images,
+			Tools:    oc.Tools,
 			Options: RequestOptions{
 				Seed:        seed,        // set to -1 to make it random
 				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
@@ -211,14 +198,9 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 		}
 	} else {
 		reqBody = GenerateChatRequest{
-			Model: oc.ModelName,
-			Messages: []Message{
-				{
-					Role:    "user",
-					Content: prompt,
-				},
-			},
-			Tools: oc.Tools,
+			Model:    oc.ModelName,
+			Messages: messages,
+			Tools:    oc.Tools,
 			Options: RequestOptions{
 				Seed:        seed,        // set to -1 to make it random
 				Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
@@ -230,7 +212,7 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/chat: %s\n", oc.ServerAddr, string(reqBytes))
@@ -238,12 +220,12 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return OutputChat{}, err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
-	var res = OutputChat{}
+	var res = OutputResponse{}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -255,25 +237,27 @@ func (oc *Config) GetOutputChat(promptAndOptionalImages ...string) (OutputChat, 
 		if genResp.Done {
 			res.Role = genResp.Message.Role
 			res.ToolCalls = genResp.Message.ToolCalls
+			res.PromptTokens = genResp.PromptEvalCount
+			res.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
-	res.Content = strings.TrimPrefix(sb.String(), "\n")
+	res.Response = strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
-		res.Content = strings.TrimSpace(res.Content)
+		res.Response = strings.TrimSpace(res.Response)
 	}
 	return res, nil
 }
 
-// GetOutput sends a request to the Ollama API and returns the generated output.
-func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+// GetResponse sends a request to the Ollama API and returns the generated response
+func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
 		temperature float64
 		cacheKey    string
 		seed        = oc.SeedOrNegative
 	)
 	if len(promptAndOptionalImages) == 0 {
-		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+		return OutputResponse{}, errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
 	}
 	prompt := promptAndOptionalImages[0]
 	var images []string
@@ -287,11 +271,13 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		cacheKey = prompt + "-" + oc.ModelName
 		if Cache == nil {
 			if err := InitCache(); err != nil {
-				return "", err
+				return OutputResponse{}, err
 			}
 		}
 		if entry, err := Cache.Get(cacheKey); err == nil {
-			return string(entry), nil
+			var res OutputResponse
+			json.Unmarshal(entry, &res)
+			return res, nil
 		}
 	}
 	var reqBody GenerateRequest
@@ -320,7 +306,7 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	if oc.Verbose {
 		fmt.Printf("Sending request to %s/api/generate: %s\n", oc.ServerAddr, string(reqBytes))
@@ -328,11 +314,14 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
-		return "", err
+		return OutputResponse{}, err
 	}
 	defer resp.Body.Close()
+	response := OutputResponse{
+		Role: "assistant",
+	}
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -342,6 +331,8 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 		}
 		sb.WriteString(genResp.Response)
 		if genResp.Done {
+			response.PromptTokens = genResp.PromptEvalCount
+			response.ResponseTokens = genResp.EvalCount
 			break
 		}
 	}
@@ -349,13 +340,25 @@ func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
 	if oc.TrimSpace {
 		outputString = strings.TrimSpace(outputString)
 	}
+	response.Response = outputString
 	if cacheKey != "" {
-		Cache.Set(cacheKey, []byte(outputString))
+		var data []byte
+		json.Unmarshal([]byte(data), &response)
+		Cache.Set(cacheKey, []byte(data))
 	}
-	return outputString, nil
+	return response, nil
 }
 
-// MustOutput returns the output from Ollama, or the error as a string if not
+// GetOutput sends a request to the Ollama API and returns the generated output string
+func (oc *Config) GetOutput(promptAndOptionalImages ...string) (string, error) {
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
+	if err != nil {
+		return "", err
+	}
+	return resp.Response, nil
+}
+
+// MustOutput returns the generated output string from Ollama, or the error as a string if not
 func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	output, err := oc.GetOutput(promptAndOptionalImages...)
 	if err != nil {
@@ -364,11 +367,20 @@ func (oc *Config) MustOutput(promptAndOptionalImages ...string) string {
 	return output
 }
 
-// MustOutputChat returns the output from Ollama, or the error as a string if not
-func (oc *Config) MustOutputChat(promptAndOptionalImages ...string) OutputChat {
-	output, err := oc.GetOutputChat(promptAndOptionalImages...)
+// MustGetResponse returns the response from Ollama, or an error if not
+func (oc *Config) MustGetResponse(promptAndOptionalImages ...string) OutputResponse {
+	resp, err := oc.GetResponse(promptAndOptionalImages...)
 	if err != nil {
-		return OutputChat{Error: err.Error()}
+		return OutputResponse{Error: err.Error()}
+	}
+	return resp
+}
+
+// MustGetChatResponse returns the response from Ollama, or a response with an error if not
+func (oc *Config) MustGetChatResponse(promptAndOptionalImages ...string) OutputResponse {
+	output, err := oc.GetChatResponse(promptAndOptionalImages...)
+	if err != nil {
+		return OutputResponse{Error: err.Error()}
 	}
 	return output
 }
@@ -519,7 +531,7 @@ func (oc *Config) CreateModel(name, modelfile string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(oc.ServerAddr+"/api/create", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/create", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}
@@ -534,7 +546,7 @@ func (oc *Config) CopyModel(source, destination string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(oc.ServerAddr+"/api/copy", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/copy", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}

@@ -34,7 +34,7 @@ func (oc *Config) Embeddings(prompt string) ([]float64, error) {
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/embeddings", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/embeddings", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return []float64{}, err
 	}

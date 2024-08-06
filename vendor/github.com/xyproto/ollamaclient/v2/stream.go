@@ -8,31 +8,6 @@ import (
 	"net/http"
 )
 
-// GenerateChatRequest represents the request payload for generating chat output
-type GenerateChatRequest struct {
-	Model    string            `json:"model"`
-	Messages []Message         `json:"messages,omitempty"`
-	Images   []string          `json:"images,omitempty"` // base64 encoded images
-	Stream   bool              `json:"stream"`
-	Tools    []json.RawMessage `json:"tools,omitempty"`
-	Options  RequestOptions    `json:"options,omitempty"`
-}
-
-// GenerateChatResponse represents the response data from the generate chat API call
-type GenerateChatResponse struct {
-	Model              string          `json:"model"`
-	CreatedAt          string          `json:"created_at"`
-	Message            MessageResponse `json:"message"`
-	DoneReason         string          `json:"done_reason"`
-	Done               bool            `json:"done"`
-	TotalDuration      int64           `json:"total_duration,omitempty"`
-	LoadDuration       int64           `json:"load_duration,omitempty"`
-	PromptEvalCount    int             `json:"prompt_eval_count,omitempty"`
-	PromptEvalDuration int64           `json:"prompt_eval_duration,omitempty"`
-	EvalCount          int             `json:"eval_count,omitempty"`
-	EvalDuration       int64           `json:"eval_duration,omitempty"`
-}
-
 // Message is a chat message
 type Message struct {
 	Role    string `json:"role"`
@@ -69,6 +44,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	if len(images) > 0 {
 		reqBody = GenerateRequest{
 			Model:  oc.ModelName,
+			System: oc.SystemPrompt,
 			Prompt: prompt,
 			Images: images,
 			Stream: true,
@@ -80,6 +56,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	} else {
 		reqBody = GenerateRequest{
 			Model:  oc.ModelName,
+			System: oc.SystemPrompt,
 			Prompt: prompt,
 			Stream: true,
 			Options: RequestOptions{
@@ -101,7 +78,7 @@ func (oc *Config) StreamOutput(callbackFunction func(string, bool), promptAndOpt
 	HTTPClient := &http.Client{
 		Timeout: oc.HTTPTimeout,
 	}
-	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/generate", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return err
 	}

@@ -85,7 +85,7 @@ func (oc *Config) Pull(optionalVerbose ...bool) (string, error) {
 		fmt.Printf("Sending request to %s/api/pull: %s\n", oc.ServerAddr, string(reqBytes))
 	}
 
-	resp, err := http.Post(oc.ServerAddr+"/api/pull", "application/json", bytes.NewBuffer(reqBytes))
+	resp, err := http.Post(oc.ServerAddr+"/api/pull", mimeJSON, bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return "", err
 	}
