@@ -22,7 +22,7 @@ type Digest struct {
 	bufn    int
 }
 
-// Read reads data frm the hasher into out. It always fills the entire buffer and
+// Read reads data from the hasher into out. It always fills the entire buffer and
 // never errors. The stream will wrap around when reading past 2^64 bytes.
 func (d *Digest) Read(p []byte) (n int, err error) {
 	n = len(p)

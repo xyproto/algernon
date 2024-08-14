@@ -4,3 +4,4 @@
 *.out
 
 /upstream
+/go.work

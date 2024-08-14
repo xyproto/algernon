@@ -51,6 +51,15 @@ type Certificate struct {
 	// the certificate for restoring a lost ACME client config.
 	CA string `json:"ca,omitempty"`
 
+	// The location of the account that obtained the certificate.
+	// This field is not part of the ACME spec, but it can be
+	// useful for management; for example, ARI recommends that
+	// servers enforce that the same account be used to indicate
+	// a replacement as was used to obtain the original cert.
+	// This field is set even when ARI is not enabled, for
+	// reference/troubleshooting purposes.
+	Account string `json:"account,omitempty"`
+
 	// When to renew the certificate, and related info, as
 	// prescribed by ARI.
 	RenewalInfo *RenewalInfo `json:"renewal_info,omitempty"`
@@ -99,6 +108,7 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 			URL:      certURL,
 			ChainPEM: chainPEM,
 			CA:       c.Directory,
+			Account:  account.Location,
 		}
 
 		// attach renewal information, if applicable (draft-ietf-acme-ari-03)

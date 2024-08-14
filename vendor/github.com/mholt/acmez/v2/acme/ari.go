@@ -198,10 +198,10 @@ func ARIUniqueIdentifier(leafCert *x509.Certificate) (string, error) {
 	if leafCert.SerialNumber == nil {
 		return "", fmt.Errorf("no serial number")
 	}
-	// TODO: Let's Encrypt's reference implementation switched from using
-	// SerialNumber.Bytes() to this method, which seems less efficient,
-	// but yields the same results !? I asked about it here:
-	// https://github.com/letsencrypt/website/issues/1670
+	// use asn1.Marshal to be correct even when the leading byte is 0x80
+	// or greater to ensure the number is interpreted as positive; note that
+	// SerialNumber.Bytes() does not account for this because it is a nuance
+	// of ASN.1 DER encodings. See https://github.com/letsencrypt/website/issues/1670.
 	serialDER, err := asn1.Marshal(leafCert.SerialNumber)
 	if err != nil {
 		return "", err
