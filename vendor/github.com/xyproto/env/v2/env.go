@@ -78,6 +78,11 @@ func Has(envName string) bool {
 	return Str(envName) != ""
 }
 
+// No returns true if the given environment variable name is not set or empty.
+func No(envName string) bool {
+	return Str(envName) == ""
+}
+
 // Is returns true if the given environment variable is the given string value.
 // The whitespace of both values are trimmed before the comparison.
 func Is(envName, value string) bool {

@@ -208,8 +208,8 @@ github.com/xyproto/cookie/v2 v2.2.5/go.mod h1:SkeeteOip8UEegYTF4H+WIzrgKVrqh7o0t
 github.com/xyproto/datablock v1.2.0 h1:BRHolvVGIbrbILKecRCGBWt1pp/bEsOC+m2I3A32tig=
 github.com/xyproto/datablock v1.2.0/go.mod h1:hQGlZYTpt2QOXcjPKri4bjwU1mebDvrY9Nlx2hUgQe0=
 github.com/xyproto/env/v2 v2.0.0/go.mod h1:n0AhHu2mZjNMK2auKEF6eUAU6LJ/1PQfss8UuT7Jhzc=
-github.com/xyproto/env/v2 v2.2.5 h1:FNrp56sptc7ebC2QpM8lqKSGEb3UoYUJZZFl4bmcrPs=
-github.com/xyproto/env/v2 v2.2.5/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/env/v2 v2.3.0 h1:9g1EOZYpccH1L2SeCXEvibyis/gPT+8+t34WqGMSBXQ=
+github.com/xyproto/env/v2 v2.3.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
 github.com/xyproto/files v1.4.2 h1:DpZbogck63U6fpjBlD91H/3n+Er90FppBUbCwo2bJMk=
 github.com/xyproto/files v1.4.2/go.mod h1:ev4YWddHsJYYyOmc+LL8wvfYMMWA3w7U+VDnpReALGs=
 github.com/xyproto/gluamapper v1.2.1 h1:7pDNxzX4P1QndBFkZEN7JmixrH0HSc7jKw2xyTZ0OjY=

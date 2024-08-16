@@ -30,7 +30,7 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
-	github.com/xyproto/env/v2 v2.2.5
+	github.com/xyproto/env/v2 v2.3.0
 	github.com/xyproto/files v1.4.2
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
