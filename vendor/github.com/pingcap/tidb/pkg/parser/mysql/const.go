@@ -351,7 +351,7 @@ var DefaultAuthPlugins = []string{
 
 // SQLMode is the type for MySQL sql_mode.
 // See https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html
-type SQLMode int64
+type SQLMode int
 
 // HasNoZeroDateMode detects if 'NO_ZERO_DATE' mode is set in SQLMode
 func (m SQLMode) HasNoZeroDateMode() bool {
