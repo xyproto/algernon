@@ -100,9 +100,10 @@ github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
-# github.com/go-mysql-org/go-mysql v1.8.0
+# github.com/go-mysql-org/go-mysql v1.9.0
 ## explicit; go 1.18
 github.com/go-mysql-org/go-mysql/client
+github.com/go-mysql-org/go-mysql/compress
 github.com/go-mysql-org/go-mysql/driver
 github.com/go-mysql-org/go-mysql/mysql
 github.com/go-mysql-org/go-mysql/packet
@@ -222,7 +223,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20240819080911-f751f7307761
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20240821072712-ae9e196dae85
 ## explicit; go 1.19
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -392,7 +393,7 @@ github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 ## explicit; go 1.9
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.16.4
+# github.com/xyproto/textoutput v1.16.5
 ## explicit; go 1.22.0
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v1.1.1
@@ -401,7 +402,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 ## explicit
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.14.4
+# github.com/xyproto/vt100 v1.14.5
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0

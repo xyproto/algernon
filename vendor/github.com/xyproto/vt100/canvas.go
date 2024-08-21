@@ -42,8 +42,8 @@ type canvasCopy struct {
 }
 
 func NewCanvas() *Canvas {
-	var err error
 	c := &Canvas{}
+	var err error
 	c.w, c.h, err = TermSize()
 	if err != nil {
 		// Use 80x25 if the size can't be detected
@@ -117,8 +117,8 @@ func (c *Canvas) Fill(fg AttributeColor) {
 // String returns only the characters, as a long string with a newline after each row
 func (c *Canvas) String() string {
 	var sb strings.Builder
+	c.mut.RLock()
 	for y := uint(0); y < c.h; y++ {
-		c.mut.RLock()
 		for x := uint(0); x < c.w; x++ {
 			cr := &((*c).chars[y*c.w+x])
 			if cr.r == rune(0) {
@@ -128,8 +128,8 @@ func (c *Canvas) String() string {
 			}
 		}
 		sb.WriteRune('\n')
-		c.mut.RUnlock()
 	}
+	c.mut.RUnlock()
 	return sb.String()
 }
 
@@ -209,24 +209,24 @@ func Clear() {
 // Clear canvas
 func (c *Canvas) Clear() {
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	for _, cr := range c.chars {
 		cr.r = rune(0)
 		cr.drawn = false
 	}
-	c.mut.Unlock()
 }
 
 func (c *Canvas) SetLineWrap(enable bool) {
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	SetLineWrap(enable)
-	c.mut.Unlock()
 }
 
 func (c *Canvas) SetShowCursor(enable bool) {
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	c.cursorVisible = enable
 	ShowCursor(enable)
-	c.mut.Unlock()
 }
 
 func (c *Canvas) W() uint {
@@ -251,8 +251,8 @@ func (c *Canvas) ShowCursor() {
 
 func (c *Canvas) SetRunewise(b bool) {
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	c.runewise = b
-	c.mut.Unlock()
 }
 
 // Draw the entire canvas
@@ -393,10 +393,10 @@ func (c *Canvas) Redraw() {
 
 // At returns the rune at the given coordinates, or an error if out of bounds
 func (c *Canvas) At(x, y uint) (rune, error) {
-	index := y*c.w + x
 	c.mut.RLock()
 	defer c.mut.RUnlock()
 	chars := (*c).chars
+	index := y*c.w + x
 	if index < uint(0) || index >= uint(len(chars)) {
 		return rune(0), errors.New("out of bounds")
 	}

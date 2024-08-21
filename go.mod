@@ -50,7 +50,7 @@ require (
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.6.5
 	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
-	github.com/xyproto/textoutput v1.16.4
+	github.com/xyproto/textoutput v1.16.5
 	github.com/xyproto/tinysvg v1.1.1
 	github.com/xyproto/unzip v0.0.0-20150601123358-823950573952
 	github.com/yosssi/gcss v0.1.0
@@ -68,7 +68,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-mysql-org/go-mysql v1.8.0 // indirect
+	github.com/go-mysql-org/go-mysql v1.9.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.14.4 // indirect
+	github.com/xyproto/vt100 v1.14.5 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

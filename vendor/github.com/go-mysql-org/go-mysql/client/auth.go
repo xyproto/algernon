@@ -42,8 +42,14 @@ func (c *Conn) readInitialHandshake() error {
 		return errors.Annotate(c.handleErrorPacket(data), "read initial handshake error")
 	}
 
-	if data[0] < MinProtocolVersion {
-		return errors.Errorf("invalid protocol version %d, must >= 10", data[0])
+	if data[0] != ClassicProtocolVersion {
+		if data[0] == XProtocolVersion {
+			return errors.Errorf(
+				"invalid protocol version %d, expected 10. "+
+					"This might be X Protocol, make sure to connect to the right port",
+				data[0])
+		}
+		return errors.Errorf("invalid protocol version %d, expected 10", data[0])
 	}
 	pos := 1
 
@@ -279,10 +285,8 @@ func (c *Conn) writeAuthHandshake() error {
 		return fmt.Errorf("invalid collation name %s", collationName)
 	}
 
-	// the MySQL protocol calls for the collation id to be sent as 1, where only the
-	// lower 8 bits are used in this field. But wireshark shows that the first byte of
-	// the 23 bytes of filler is used to send the right middle 8 bits of the collation id.
-	// see https://github.com/mysql/mysql-server/pull/541
+	// the MySQL protocol calls for the collation id to be sent as 1 byte, where only the
+	// lower 8 bits are used in this field.
 	data[12] = byte(collation.ID & 0xff)
 
 	// SSL Connection Request Packet
@@ -300,7 +304,7 @@ func (c *Conn) writeAuthHandshake() error {
 		}
 
 		currentSequence := c.Sequence
-		c.Conn = packet.NewConn(tlsConn)
+		c.Conn = packet.NewBufferedConn(tlsConn, c.BufferSize)
 		c.Sequence = currentSequence
 	}
 
