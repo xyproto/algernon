@@ -2,9 +2,7 @@
 package env
 
 import (
-	"errors"
 	"os"
-	"runtime"
 	"strings"
 	"sync"
 )
@@ -45,8 +43,8 @@ func Load() {
 	mut.Lock()
 	environment = make(map[string]string)
 	// Read all the environment variables into the map
-	for _, statement := range os.Environ() {
-		pair := strings.SplitN(statement, "=", 2)
+	for _, keyAndValue := range os.Environ() {
+		pair := strings.SplitN(keyAndValue, "=", 2)
 		environment[pair[0]] = pair[1]
 	}
 	mut.Unlock()
@@ -86,24 +84,4 @@ func Set(name, value string) error {
 // The cache entry will also be cleared if useCaching is true.
 func Unset(name string) error {
 	return Set(name, "")
-}
-
-// userHomeDir is the same as os.UserHomeDir, except that "getenv" is called instead of "os.Getenv",
-// and the two switches are refactored into one.
-func userHomeDir() (string, error) {
-	env, enverr := "HOME", "$HOME"
-	switch runtime.GOOS {
-	case "android":
-		return "/sdcard", nil
-	case "ios":
-		return "/", nil
-	case "windows":
-		env, enverr = "USERPROFILE", "%userprofile%"
-	case "plan9":
-		env, enverr = "home", "$home"
-	}
-	if v := getenv(env); v != "" {
-		return v, nil
-	}
-	return "", errors.New(enverr + " is not defined")
 }
