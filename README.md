@@ -1,7 +1,7 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, Redis, MariaDB/MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
-keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, React, BoltDB, Bolt, PostgreSQL, Redis, MariaDB, MySQL, Three.js
+description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, SQLite, Redis, MariaDB/MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions
+keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, MariaDB, MySQL, Three.js
 theme: material
 -->
 
@@ -10,7 +10,7 @@ theme: material
 
 ![Build](https://github.com/xyproto/algernon/workflows/Build/badge.svg) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Web server with built-in support for QUIC, HTTP/2, Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, PostgreSQL, MariaDB/MySQL, MSSQL, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for QUIC, HTTP/2, Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, PostgreSQL, SQLite, MariaDB/MySQL, MSSQL, rate limiting, graceful shutdown, plugins, users and permissions.
 
 All in one small self-contained executable.
 
@@ -62,7 +62,7 @@ And then visiting `http://localhost:4000` in a browser.
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/) or [Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/xyproto/quic) for serving over QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/), SQLite or [Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/xyproto/quic) for serving over QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 Design decisions
 ----------------
