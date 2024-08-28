@@ -641,6 +641,7 @@ Available flags:
   --nolimit                    Disable rate limiting.
   --postgres=DSN               Use the given PostgreSQL host/database.
   --postgresdb=NAME            Use the given PostgreSQL database name.
+  --sqlite=FILENAME            Use the given SQLite file (ie. "sqlite.db&cache=shared&mode=memory").
   --redis=[HOST][:PORT]        Use "` + ac.defaultRedisColonPort + `" for the Redis database.
   --rawcache                   Disable cache compression.
   --servername=STRING          Custom HTTP header value for the Server field.
