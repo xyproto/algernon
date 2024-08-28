@@ -167,6 +167,9 @@ github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
+# github.com/mattn/go-sqlite3 v1.14.22
+## explicit; go 1.19
+github.com/mattn/go-sqlite3
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
@@ -275,6 +278,12 @@ github.com/siddontang/go-log/loggers
 github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
+# github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
+## explicit; go 1.22
+github.com/terminar/permissionsqlite/v2
+# github.com/terminar/simplesqlite v0.0.0-20240811163019-f2a6c3cbea17
+## explicit; go 1.22
+github.com/terminar/simplesqlite
 # github.com/tylerb/graceful v1.2.15
 ## explicit
 github.com/tylerb/graceful

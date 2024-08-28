@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	sqlite "github.com/terminar/permissionsqlite/v2"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 	bolt "github.com/xyproto/permissionbolt/v2"
@@ -317,6 +318,16 @@ func (ac *Config) DatabaseBackend() (pinterface.IPermissions, error) {
 		} else {
 			// The connection string may contain a password, so don't include it in the dbName
 			ac.dbName = "MariaDB/MySQL"
+		}
+	}
+	if ac.dbName == "" && ac.sqliteConnectionString != "" {
+		// example connection string: sqlite.db&cache=shared&mode=memory
+		perm, err = sqlite.NewWithConf(ac.sqliteConnectionString)
+		if err != nil {
+			logrus.Errorf("Could not use SQLite as database backend: %s", err)
+		} else {
+			// The connection string may contain a password, so don't include it in the dbName
+			ac.dbName = "SQLite"
 		}
 	}
 	if ac.dbName == "" && ac.mariaDatabase != "" {

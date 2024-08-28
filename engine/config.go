@@ -88,6 +88,7 @@ type Config struct {
 	internalLogFilename          string               // exposed to the server configuration scripts(s)
 	mariadbDSN                   string               // connection string
 	mariaDatabase                string               // database name
+	sqliteConnectionString       string               // SQLite connection string
 	postgresDSN                  string               // connection string
 	postgresDatabase             string               // database name
 	dirBaseURL                   string               // optional Base URL, for the directory listings
