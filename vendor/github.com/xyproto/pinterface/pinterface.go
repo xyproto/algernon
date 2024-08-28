@@ -1,4 +1,4 @@
-// Package pinterface provides interface types for the xyproto/simple* and xyproto/permission* packages
+// Package pinterface provides interface types for the xyproto/simple* and xyproto/permission* packages + terminar/permissionsqlite
 package pinterface
 
 import "net/http"

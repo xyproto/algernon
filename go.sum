@@ -87,8 +87,8 @@ github.com/gomodule/redigo v1.9.2 h1:HrutZBLhSIU8abiSfW8pj8mPhOyMYjZT/wcA4/L9L9s
 github.com/gomodule/redigo v1.9.2/go.mod h1:KsU3hiK/Ay8U42qpaJk+kuNa3C+spxapWpM+ywhcgtw=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 h1:FKHo8hFI3A+7w0aUQuYXQ+6EN5stWmeY/AZqtM8xk9k=
-github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8/go.mod h1:K1liHPHnj73Fdn/EKuT8nrFqBihUSKXoLYU0BuatOYo=
+github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 h1:5iH8iuqE5apketRbSFBy+X1V0o+l+8NF1avt4HWl7cA=
+github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/css v1.0.1 h1:ntNaBIghp6JmvWnxbZKANoLyuXTPZ4cAMlo6RyhlbO8=
@@ -233,8 +233,9 @@ github.com/xyproto/permissions2/v2 v2.6.9 h1:gnbBvS6T71cYzaWsDE8IpDL0k1Gv5kbcLs6
 github.com/xyproto/permissions2/v2 v2.6.9/go.mod h1:Igavl4bu1/6ZTuoJx3AVA1w1QbBnVUDOZSKgGxrS3z0=
 github.com/xyproto/permissionsql/v2 v2.1.2 h1:WH61SZCdPoMCltPwYYPoOjv6mVmehdriZp/REIGPO9k=
 github.com/xyproto/permissionsql/v2 v2.1.2/go.mod h1:p7FIYR5tGXzBoyXEnGaeTTyM25RH0sNQNniqkdFMtjc=
-github.com/xyproto/pinterface v1.5.3 h1:RKkNT88cwrSqD9hU4cYAO5yeo8srg4TG+74Pcj88iz0=
 github.com/xyproto/pinterface v1.5.3/go.mod h1:X5B5pKE49ak7SpyDh5QvJvLH9cC9XuZNDcl5hEyYc34=
+github.com/xyproto/pinterface v1.5.4 h1:u7bVqjJIlZ5+FDFrVfLmOgL38XGXt7R+xkLsfiSGDEQ=
+github.com/xyproto/pinterface v1.5.4/go.mod h1:X5B5pKE49ak7SpyDh5QvJvLH9cC9XuZNDcl5hEyYc34=
 github.com/xyproto/pstore v1.3.2 h1:eD4S4KI6184FNXUM2rsVxfiWaFg67hA6xiwfoYNoevU=
 github.com/xyproto/pstore v1.3.2/go.mod h1:BJGQQFPvSCMWNRp9v7nTDHG9uoZF2N4hfn1uXTL2YZ4=
 github.com/xyproto/randomstring v0.0.0-20181220103026-e5e8317e5d67/go.mod h1:HcK1ojGYWgNJz1Rp9UouvxVGIWsMFAtkftDoHZ6DE9k=

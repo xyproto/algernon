@@ -11,12 +11,13 @@ Interfaces for:
 * Bolt: [permissionbolt](https://github.com/xyproto/permissionbolt) and [simplebolt](https://github.com/xyproto/simplebolt)
 * MariaDB/MySQL: [permissionsql](https://github.com/xyproto/permissionsql) and [simplemaria](https://github.com/xyproto/simplemaria)
 * PostgreSQL: [pstore](https://github.com/xyproto/pstore) and [simplehstore](https://github.com/xyproto/simplehstore)
+* SQLite: [permissionsqlite](https://github.com/terminar/permissionsqlite)
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/go:github-xyproto-pinterface.svg)](https://repology.org/project/go:github-xyproto-pinterface/versions)
 
 General information
 -------------------
 
-* Version: 1.5.3 (The tag is `v1.5.3` to work better with `go mod`. The API has version `5.3`.)
+* Version: 1.5.4 (The tag is `v1.5.4` to work better with `go mod`. The API has version `5.4`.)
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
