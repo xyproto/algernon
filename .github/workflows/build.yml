@@ -4,12 +4,12 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.21.x, 1.22.x]
+        go-version: [1.21.x, 1.22.x, 1.23.x]
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         stable: 'false'
         go-version: ${{ matrix.go-version }}
@@ -23,7 +23,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v4
       with:
-        go-version: 1.22.x
+        go-version: 1.23.x
     - name: Checkout code
       uses: actions/checkout@v4
     - uses: actions/cache@v4
