@@ -72,6 +72,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.mariaDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.StringVar(&ac.postgresDSN, "postgres", "", "PostgreSQL connection string (DSN)")
 	flag.StringVar(&ac.postgresDatabase, "postgresdb", "", "PostgreSQL database name")
+	flag.StringVar(&ac.sqliteConnectionString, "sqlite", "", "SQLite filename / connection string")
 	flag.BoolVar(&ac.useBolt, "bolt", false, "Use the default Bolt filename")
 	flag.StringVar(&ac.boltFilename, "boltdb", "", "Bolt database filename")
 	flag.Int64Var(&ac.limitRequests, "limit", ac.defaultLimit, "Limit clients to a number of requests per second")
