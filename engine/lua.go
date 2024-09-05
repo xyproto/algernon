@@ -380,11 +380,18 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 							retstr := L2.ToString(1)
 							retval = retstr
 							if ac.debugMode && ac.verboseMode {
-								logrus.Info(utils.Infostring(functionName, args) + " -> \"" + retstr + "\"")
+								logrus.Infof("%s -> %q", utils.Infostring(functionName, args), retstr)
+							}
+						case lv.Type() == lua.LTNumber:
+							// lv is a Lua Number
+							retnum := L2.ToNumber(1)
+							retval = retnum
+							if ac.debugMode && ac.verboseMode {
+								logrus.Infof("%s -> %v", utils.Infostring(functionName, args), retnum)
 							}
 						default:
-							retval = ""
-							logrus.Warn("The return type of " + utils.Infostring(functionName, args) + " can't be converted")
+							retval = "!! not a table, string or number !!"
+							logrus.Warnf("The returned value from %s has an unrecognized type: %v", utils.Infostring(functionName, args), lv.Type())
 						}
 					}
 
