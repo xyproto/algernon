@@ -373,7 +373,7 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 								},
 							})
 							if ac.debugMode && ac.verboseMode {
-								logrus.Info(utils.Infostring(functionName, args) + " -> (map)")
+								logrus.Infof("%s -> (map)", utils.Infostring(functionName, args))
 							}
 						case lv.Type() == lua.LTString:
 							// lv is a Lua String

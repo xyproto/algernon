@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
 
@@ -29,10 +28,10 @@ func (ac *Config) OpenURL(host, cPort string, httpsPrefix bool) error {
 	if ac.openExecutable != "" {
 		// Custom command for opening URLs
 		cmd := exec.Command(ac.openExecutable, url)
-		logrus.Info(fmt.Sprintf("Opening %q with %q", url, cmd.String()))
+		logrus.Infof("Opening %q with %q", url, cmd.String())
 		return cmd.Run()
 	}
 
-	logrus.Info(fmt.Sprintf("Opening %q in a browser", url))
+	logrus.Infof("Opening %q in a browser", url)
 	return browser.OpenURL(url)
 }
