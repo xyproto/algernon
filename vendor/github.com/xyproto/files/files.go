@@ -8,10 +8,18 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/xyproto/binary"
 	"github.com/xyproto/env/v2"
+)
+
+// cache for storing file existence results
+var (
+	cacheMutex  sync.RWMutex
+	existsCache = make(map[string]bool)
+	whichCache  = make(map[string]string)
 )
 
 // Exists checks if the given path exists
@@ -52,6 +60,24 @@ func Which(executable string) string {
 		return p
 	}
 	return ""
+}
+
+// WhichCached tries to find the given executable name in the $PATH, using a cache for faster access.
+// Assumes that the $PATH environment variable has not changed since the last check.
+func WhichCached(executable string) string {
+	cacheMutex.RLock()
+	cachedResult, cached := whichCache[executable]
+	cacheMutex.RUnlock()
+	if cached {
+		return cachedResult
+	}
+	// If not cached, perform the lookup
+	path := Which(executable)
+	// Cache the result
+	cacheMutex.Lock()
+	whichCache[executable] = path
+	cacheMutex.Unlock()
+	return path
 }
 
 // BinDirectory will check if the given filename is in one of these directories:
@@ -158,4 +184,55 @@ func Relative(path string) string {
 		return path
 	}
 	return relativePath
+}
+
+// Touch behaves like "touch" on the command line, and creates a file or updates the timestamp
+func Touch(filename string) error {
+	// Check if the file exists
+	if Exists(filename) {
+		// If the file exists, update its modification time
+		currentTime := time.Now()
+		return os.Chtimes(filename, currentTime, currentTime)
+	}
+
+	// If the file does not exist, create it with mode 0666
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+	return file.Close()
+}
+
+// ExistsCached checks if the given path exists, using a cache for faster access.
+// Assumes that the filesystem has not changed since the last check.
+func ExistsCached(path string) bool {
+	cacheMutex.RLock()
+	cachedResult, cached := existsCache[path]
+	cacheMutex.RUnlock()
+	if cached {
+		return cachedResult
+	}
+	// If not cached, check if the file exists
+	exists := Exists(path)
+	// Cache the result
+	cacheMutex.Lock()
+	existsCache[path] = exists
+	cacheMutex.Unlock()
+	return exists
+}
+
+// ClearCache clears the cache used by ExistsCached.
+func ClearCache() {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+	existsCache = make(map[string]bool)
+}
+
+// RemoveFile deletes a file, but it only returns an error if the file both exists and also could not be removed
+func RemoveFile(path string) error {
+	err := os.Remove(path)
+	if !os.IsNotExist(err) {
+		return err // the file both exists and could not be removed
+	}
+	return nil // the file has been removed, or did not exist in the first place
 }
