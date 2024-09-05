@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current UNIX Day</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 10vw;
+        }
+        #counter {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="counter"></div>
+    <script>
+        function updateUnixDay() {
+            const now = Date.now();
+            const unixDay = Math.floor(now / 1000 / 86400);
+            document.getElementById('counter').innerText = unixDay;
+        }
+        updateUnixDay();
+        setInterval(updateUnixDay, 86400000);
+    </script>
+</body>
+</html>

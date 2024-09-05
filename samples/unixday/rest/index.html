@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current UNIX Day</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 10vw;
+        }
+        #counter {
+            text-align: center;
+        }
+        .loader {
+            display: inline-flex;
+            border: 10px solid #fff;
+            border-radius: 5px;
+            padding: 0 10px;
+            overflow: hidden;
+        }
+        .loader span {
+            font-size: 30px;
+            font-family: monospace;
+            font-weight: bold;
+            line-height: 1em;
+            height: 1em;
+            width: 1.2ch;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 0 #fff;
+            animation: spin 2s infinite linear;
+        }
+        .loader span:nth-child(1) {
+            animation-duration: 4s;
+        }
+        @keyframes spin {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10em); }
+        }
+    </style>
+</head>
+<body>
+    <div id="counter">
+        <div class="loader">
+            <span>0 1 2 3 4 5 6 7 8 9 0</span>
+            <span>0 1 2 3 4 5 6 7 8 9 0</span>
+        </div>
+    </div>
+    <script>
+        let backoffTime = 60000;
+
+        function fetchDayData() {
+            fetch('/day')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('counter').innerText = data.unixday;
+                    scheduleNextUpdate(data.secondsToNextUpdate);
+                    backoffTime = 60000;
+                })
+                .catch(() => {
+                    console.error('Fetching UNIX day failed, retrying in', backoffTime / 1000, 'seconds');
+                    setTimeout(fetchDayData, backoffTime);
+                    backoffTime = Math.min(backoffTime * 2, 3600000);
+                });
+        }
+
+        function scheduleNextUpdate(secondsToNextUpdate) {
+            setTimeout(fetchDayData, secondsToNextUpdate * 1000);
+        }
+
+        fetchDayData();
+    </script>
+</body>
+</html>
