@@ -1,4 +1,5 @@
--- Get IP given as URL/?ip=123.123.123.123
+-- Store an IP address given as URL/?ip=123.123.123.123
+-- Serve a document with the last given IP if no new value is given.
 
 local urldataTable = urldata()
 
