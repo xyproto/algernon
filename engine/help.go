@@ -649,7 +649,7 @@ Available flags:
   --theme=NAME                 Builtin theme to use for Markdown, error pages,
                                directory listings and HyperApp apps.
                                Possible values are: light, dark, bw, redbox, wing,
-                               material, neon or werc.
+                               material, neon, werc or setconf.
   --timeout=N                  Timeout when serving files, in seconds.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
   -x, --simple                 Serve as regular HTTP, enable server mode and
