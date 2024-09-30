@@ -7,6 +7,8 @@ import (
 	"errors"
 	"syscall"
 	"unsafe"
+
+	"github.com/xyproto/env/v2"
 )
 
 type winsize struct {
@@ -24,6 +26,9 @@ func TermSize() (uint, uint, error) {
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(ws))); int(retCode) != -1 {
 		return uint(ws.Col), uint(ws.Row), nil
+	}
+	if w, h := env.Int("COLUMNS", 0), env.Int("LINES", 0); w > 0 && h > 0 {
+		return uint(w), uint(h), nil
 	}
 	return 0, 0, errors.New("could not get terminal size")
 }

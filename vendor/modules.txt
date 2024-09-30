@@ -60,7 +60,7 @@ github.com/dustin/go-humanize
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.23.1
+# github.com/evanw/esbuild v0.24.0
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -100,7 +100,7 @@ github.com/fsnotify/fsnotify
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
-# github.com/go-mysql-org/go-mysql v1.9.0
+# github.com/go-mysql-org/go-mysql v1.9.1
 ## explicit; go 1.18
 github.com/go-mysql-org/go-mysql/client
 github.com/go-mysql-org/go-mysql/compress
@@ -117,7 +117,7 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
-# github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
+# github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -126,7 +126,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20240910150728-a0b0bb1d4134
+# github.com/google/pprof v0.0.0-20240929191954-255acd752d31
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -135,8 +135,8 @@ github.com/google/uuid
 # github.com/gorilla/css v1.0.1
 ## explicit; go 1.20
 github.com/gorilla/css/scanner
-# github.com/klauspost/compress v1.17.9
-## explicit; go 1.20
+# github.com/klauspost/compress v1.17.10
+## explicit; go 1.21
 github.com/klauspost/compress
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
@@ -288,7 +288,7 @@ github.com/tylerb/graceful
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.55.0
+# github.com/valyala/fasthttp v1.56.0
 ## explicit; go 1.20
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttpadaptor
@@ -328,7 +328,7 @@ github.com/xyproto/datablock
 # github.com/xyproto/env/v2 v2.5.0
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.6.0
+# github.com/xyproto/files v1.7.0
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/gluamapper v1.2.1
@@ -409,7 +409,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.0
 ## explicit; go 1.23.1
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.14.5
+# github.com/xyproto/vt100 v1.14.7
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0

@@ -26,18 +26,9 @@ const (
 type ResponseHeader struct {
 	noCopy noCopy
 
-	disableNormalizing   bool
-	noHTTP11             bool
-	connectionClose      bool
-	noDefaultContentType bool
-	noDefaultDate        bool
-
-	statusCode            int
-	statusMessage         []byte
-	protocol              []byte
-	contentLength         int
-	contentLengthBytes    []byte
-	secureErrorLogMessage bool
+	statusMessage      []byte
+	protocol           []byte
+	contentLengthBytes []byte
 
 	contentType     []byte
 	contentEncoding []byte
@@ -46,9 +37,20 @@ type ResponseHeader struct {
 
 	h       []argsKV
 	trailer []argsKV
-	bufKV   argsKV
 
 	cookies []argsKV
+	bufK    []byte
+	bufV    []byte
+
+	statusCode    int
+	contentLength int
+
+	disableNormalizing    bool
+	noHTTP11              bool
+	connectionClose       bool
+	noDefaultContentType  bool
+	noDefaultDate         bool
+	secureErrorLogMessage bool
 }
 
 // RequestHeader represents HTTP request header.
@@ -61,19 +63,7 @@ type ResponseHeader struct {
 type RequestHeader struct {
 	noCopy noCopy
 
-	disableNormalizing   bool
-	noHTTP11             bool
-	connectionClose      bool
-	noDefaultContentType bool
-	disableSpecialHeader bool
-
-	// These two fields have been moved close to other bool fields
-	// for reducing RequestHeader object size.
-	cookiesCollected bool
-
-	contentLength         int
-	contentLengthBytes    []byte
-	secureErrorLogMessage bool
+	contentLengthBytes []byte
 
 	method      []byte
 	requestURI  []byte
@@ -85,19 +75,34 @@ type RequestHeader struct {
 
 	h       []argsKV
 	trailer []argsKV
-	bufKV   argsKV
 
 	cookies []argsKV
 
 	// stores an immutable copy of headers as they were received from the
 	// wire.
 	rawHeaders []byte
+	bufK       []byte
+	bufV       []byte
+
+	contentLength int
+
+	disableNormalizing   bool
+	noHTTP11             bool
+	connectionClose      bool
+	noDefaultContentType bool
+	disableSpecialHeader bool
+
+	// These two fields have been moved close to other bool fields
+	// for reducing RequestHeader object size.
+	cookiesCollected bool
+
+	secureErrorLogMessage bool
 }
 
 // SetContentRange sets 'Content-Range: bytes startPos-endPos/contentLength'
 // header.
 func (h *ResponseHeader) SetContentRange(startPos, endPos, contentLength int) {
-	b := h.bufKV.value[:0]
+	b := h.bufV[:0]
 	b = append(b, strBytes...)
 	b = append(b, ' ')
 	b = AppendUint(b, startPos)
@@ -105,9 +110,9 @@ func (h *ResponseHeader) SetContentRange(startPos, endPos, contentLength int) {
 	b = AppendUint(b, endPos)
 	b = append(b, '/')
 	b = AppendUint(b, contentLength)
-	h.bufKV.value = b
+	h.bufV = b
 
-	h.setNonSpecial(strContentRange, h.bufKV.value)
+	h.setNonSpecial(strContentRange, h.bufV)
 }
 
 // SetByteRange sets 'Range: bytes=startPos-endPos' header.
@@ -115,7 +120,7 @@ func (h *ResponseHeader) SetContentRange(startPos, endPos, contentLength int) {
 //   - If startPos is negative, then 'bytes=-startPos' value is set.
 //   - If endPos is negative, then 'bytes=startPos-' value is set.
 func (h *RequestHeader) SetByteRange(startPos, endPos int) {
-	b := h.bufKV.value[:0]
+	b := h.bufV[:0]
 	b = append(b, strBytes...)
 	b = append(b, '=')
 	if startPos >= 0 {
@@ -127,9 +132,9 @@ func (h *RequestHeader) SetByteRange(startPos, endPos int) {
 	if endPos >= 0 {
 		b = AppendUint(b, endPos)
 	}
-	h.bufKV.value = b
+	h.bufV = b
 
-	h.setNonSpecial(strRange, h.bufKV.value)
+	h.setNonSpecial(strRange, h.bufV)
 }
 
 // StatusCode returns response status code.
@@ -170,8 +175,8 @@ func (h *ResponseHeader) SetProtocol(protocol []byte) {
 
 // SetLastModified sets 'Last-Modified' header to the given value.
 func (h *ResponseHeader) SetLastModified(t time.Time) {
-	h.bufKV.value = AppendHTTPDate(h.bufKV.value[:0], t)
-	h.setNonSpecial(strLastModified, h.bufKV.value)
+	h.bufV = AppendHTTPDate(h.bufV[:0], t)
+	h.setNonSpecial(strLastModified, h.bufV)
 }
 
 // ConnectionClose returns true if 'Connection: close' header is set.
@@ -408,30 +413,30 @@ func (h *RequestHeader) SetContentEncodingBytes(contentEncoding []byte) {
 // 'multipart/form-data; boundary=...'
 // where ... is substituted by the given boundary.
 func (h *RequestHeader) SetMultipartFormBoundary(boundary string) {
-	b := h.bufKV.value[:0]
+	b := h.bufV[:0]
 	b = append(b, strMultipartFormData...)
 	b = append(b, ';', ' ')
 	b = append(b, strBoundary...)
 	b = append(b, '=')
 	b = append(b, boundary...)
-	h.bufKV.value = b
+	h.bufV = b
 
-	h.SetContentTypeBytes(h.bufKV.value)
+	h.SetContentTypeBytes(h.bufV)
 }
 
 // SetMultipartFormBoundaryBytes sets the following Content-Type:
 // 'multipart/form-data; boundary=...'
 // where ... is substituted by the given boundary.
 func (h *RequestHeader) SetMultipartFormBoundaryBytes(boundary []byte) {
-	b := h.bufKV.value[:0]
+	b := h.bufV[:0]
 	b = append(b, strMultipartFormData...)
 	b = append(b, ';', ' ')
 	b = append(b, strBoundary...)
 	b = append(b, '=')
 	b = append(b, boundary...)
-	h.bufKV.value = b
+	h.bufV = b
 
-	h.SetContentTypeBytes(h.bufKV.value)
+	h.SetContentTypeBytes(h.bufV)
 }
 
 // SetTrailer sets header Trailer value for chunked response
@@ -537,18 +542,24 @@ func (h *ResponseHeader) AddTrailerBytes(trailer []byte) error {
 			err = ErrBadTrailer
 			continue
 		}
-		h.bufKV.key = append(h.bufKV.key[:0], key...)
-		normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-		h.trailer = appendArgBytes(h.trailer, h.bufKV.key, nil, argsNoValue)
+		h.bufK = append(h.bufK[:0], key...)
+		normalizeHeaderKey(h.bufK, h.disableNormalizing)
+		h.trailer = appendArgBytes(h.trailer, h.bufK, nil, argsNoValue)
 	}
 
 	return err
 }
 
-// validHeaderFieldByte returns true if c is a valid tchar as defined
-// by section 5.6.2 of [RFC9110].
+// validHeaderFieldByte returns true if c valid header field byte
+// as defined by RFC 7230.
 func validHeaderFieldByte(c byte) bool {
 	return c < 128 && validHeaderFieldByteTable[c] == 1
+}
+
+// validHeaderValueByte returns true if c valid header value byte
+// as defined by RFC 7230.
+func validHeaderValueByte(c byte) bool {
+	return validHeaderValueByteTable[c] == 1
 }
 
 // VisitHeaderParams calls f for each parameter in the given header bytes.
@@ -879,9 +890,9 @@ func (h *RequestHeader) AddTrailerBytes(trailer []byte) error {
 			err = ErrBadTrailer
 			continue
 		}
-		h.bufKV.key = append(h.bufKV.key[:0], key...)
-		normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-		h.trailer = appendArgBytes(h.trailer, h.bufKV.key, nil, argsNoValue)
+		h.bufK = append(h.bufK[:0], key...)
+		normalizeHeaderKey(h.bufK, h.disableNormalizing)
+		h.trailer = appendArgBytes(h.trailer, h.bufK, nil, argsNoValue)
 	}
 
 	return err
@@ -945,8 +956,8 @@ func (h *ResponseHeader) IsHTTP11() bool {
 // HasAcceptEncoding returns true if the header contains
 // the given Accept-Encoding value.
 func (h *RequestHeader) HasAcceptEncoding(acceptEncoding string) bool {
-	h.bufKV.value = append(h.bufKV.value[:0], acceptEncoding...)
-	return h.HasAcceptEncodingBytes(h.bufKV.value)
+	h.bufV = append(h.bufV[:0], acceptEncoding...)
+	return h.HasAcceptEncodingBytes(h.bufV)
 }
 
 // HasAcceptEncodingBytes returns true if the header contains
@@ -1275,8 +1286,8 @@ func (h *RequestHeader) VisitAll(f func(key, value []byte)) {
 
 	h.collectCookies()
 	if len(h.cookies) > 0 {
-		h.bufKV.value = appendRequestCookieBytes(h.bufKV.value[:0], h.cookies)
-		f(strCookie, h.bufKV.value)
+		h.bufV = appendRequestCookieBytes(h.bufV[:0], h.cookies)
+		f(strCookie, h.bufV)
 	}
 	visitArgs(h.h, f)
 	if h.ConnectionClose() {
@@ -1304,15 +1315,15 @@ func (h *RequestHeader) VisitAllInOrder(f func(key, value []byte)) {
 
 // Del deletes header with the given key.
 func (h *ResponseHeader) Del(key string) {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	h.del(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	h.del(h.bufK)
 }
 
 // DelBytes deletes header with the given key.
 func (h *ResponseHeader) DelBytes(key []byte) {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	h.del(h.bufKV.key)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	h.del(h.bufK)
 }
 
 func (h *ResponseHeader) del(key []byte) {
@@ -1338,15 +1349,15 @@ func (h *ResponseHeader) del(key []byte) {
 
 // Del deletes header with the given key.
 func (h *RequestHeader) Del(key string) {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	h.del(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	h.del(h.bufK)
 }
 
 // DelBytes deletes header with the given key.
 func (h *RequestHeader) DelBytes(key []byte) {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	h.del(h.bufKV.key)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	h.del(h.bufK)
 }
 
 func (h *RequestHeader) del(key []byte) {
@@ -1554,8 +1565,8 @@ func (h *ResponseHeader) AddBytesKV(key, value []byte) {
 		return
 	}
 
-	k := getHeaderKeyBytes(&h.bufKV, b2s(key), h.disableNormalizing)
-	h.h = appendArgBytes(h.h, k, value, argsHasValue)
+	h.bufK = getHeaderKeyBytes(h.bufK, b2s(key), h.disableNormalizing)
+	h.h = appendArgBytes(h.h, h.bufK, value, argsHasValue)
 }
 
 // Set sets the given 'key: value' header.
@@ -1565,8 +1576,8 @@ func (h *ResponseHeader) AddBytesKV(key, value []byte) {
 //
 // Use Add for setting multiple header values under the same key.
 func (h *ResponseHeader) Set(key, value string) {
-	initHeaderKV(&h.bufKV, key, value, h.disableNormalizing)
-	h.SetCanonical(h.bufKV.key, h.bufKV.value)
+	h.bufK, h.bufV = initHeaderKV(h.bufK, h.bufV, key, value, h.disableNormalizing)
+	h.SetCanonical(h.bufK, h.bufV)
 }
 
 // SetBytesK sets the given 'key: value' header.
@@ -1576,8 +1587,8 @@ func (h *ResponseHeader) Set(key, value string) {
 //
 // Use AddBytesK for setting multiple header values under the same key.
 func (h *ResponseHeader) SetBytesK(key []byte, value string) {
-	h.bufKV.value = append(h.bufKV.value[:0], value...)
-	h.SetBytesKV(key, h.bufKV.value)
+	h.bufV = append(h.bufV[:0], value...)
+	h.SetBytesKV(key, h.bufV)
 }
 
 // SetBytesV sets the given 'key: value' header.
@@ -1587,8 +1598,8 @@ func (h *ResponseHeader) SetBytesK(key []byte, value string) {
 //
 // Use AddBytesV for setting multiple header values under the same key.
 func (h *ResponseHeader) SetBytesV(key string, value []byte) {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	h.SetCanonical(k, value)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	h.SetCanonical(h.bufK, value)
 }
 
 // SetBytesKV sets the given 'key: value' header.
@@ -1598,9 +1609,9 @@ func (h *ResponseHeader) SetBytesV(key string, value []byte) {
 //
 // Use AddBytesKV for setting multiple header values under the same key.
 func (h *ResponseHeader) SetBytesKV(key, value []byte) {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	h.SetCanonical(h.bufKV.key, value)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	h.SetCanonical(h.bufK, value)
 }
 
 // SetCanonical sets the given 'key: value' header assuming that
@@ -1765,8 +1776,8 @@ func (h *RequestHeader) AddBytesKV(key, value []byte) {
 		return
 	}
 
-	k := getHeaderKeyBytes(&h.bufKV, b2s(key), h.disableNormalizing)
-	h.h = appendArgBytes(h.h, k, value, argsHasValue)
+	h.bufK = getHeaderKeyBytes(h.bufK, b2s(key), h.disableNormalizing)
+	h.h = appendArgBytes(h.h, h.bufK, value, argsHasValue)
 }
 
 // Set sets the given 'key: value' header.
@@ -1776,8 +1787,8 @@ func (h *RequestHeader) AddBytesKV(key, value []byte) {
 //
 // Use Add for setting multiple header values under the same key.
 func (h *RequestHeader) Set(key, value string) {
-	initHeaderKV(&h.bufKV, key, value, h.disableNormalizing)
-	h.SetCanonical(h.bufKV.key, h.bufKV.value)
+	h.bufK, h.bufV = initHeaderKV(h.bufK, h.bufV, key, value, h.disableNormalizing)
+	h.SetCanonical(h.bufK, h.bufV)
 }
 
 // SetBytesK sets the given 'key: value' header.
@@ -1787,8 +1798,8 @@ func (h *RequestHeader) Set(key, value string) {
 //
 // Use AddBytesK for setting multiple header values under the same key.
 func (h *RequestHeader) SetBytesK(key []byte, value string) {
-	h.bufKV.value = append(h.bufKV.value[:0], value...)
-	h.SetBytesKV(key, h.bufKV.value)
+	h.bufV = append(h.bufV[:0], value...)
+	h.SetBytesKV(key, h.bufV)
 }
 
 // SetBytesV sets the given 'key: value' header.
@@ -1798,8 +1809,8 @@ func (h *RequestHeader) SetBytesK(key []byte, value string) {
 //
 // Use AddBytesV for setting multiple header values under the same key.
 func (h *RequestHeader) SetBytesV(key string, value []byte) {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	h.SetCanonical(k, value)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	h.SetCanonical(h.bufK, value)
 }
 
 // SetBytesKV sets the given 'key: value' header.
@@ -1809,9 +1820,9 @@ func (h *RequestHeader) SetBytesV(key string, value []byte) {
 //
 // Use AddBytesKV for setting multiple header values under the same key.
 func (h *RequestHeader) SetBytesKV(key, value []byte) {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	h.SetCanonical(h.bufKV.key, value)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	h.SetCanonical(h.bufK, value)
 }
 
 // SetCanonical sets the given 'key: value' header assuming that
@@ -1832,8 +1843,8 @@ func (h *RequestHeader) SetCanonical(key, value []byte) {
 // either though ReleaseResponse or your request handler returning.
 // Do not store references to the returned value. Make copies instead.
 func (h *ResponseHeader) Peek(key string) []byte {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	return h.peek(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	return h.peek(h.bufK)
 }
 
 // PeekBytes returns header value for the given key.
@@ -1842,9 +1853,9 @@ func (h *ResponseHeader) Peek(key string) []byte {
 // either though ReleaseResponse or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *ResponseHeader) PeekBytes(key []byte) []byte {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	return h.peek(h.bufKV.key)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	return h.peek(h.bufK)
 }
 
 // Peek returns header value for the given key.
@@ -1853,8 +1864,8 @@ func (h *ResponseHeader) PeekBytes(key []byte) []byte {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *RequestHeader) Peek(key string) []byte {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	return h.peek(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	return h.peek(h.bufK)
 }
 
 // PeekBytes returns header value for the given key.
@@ -1863,9 +1874,9 @@ func (h *RequestHeader) Peek(key string) []byte {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *RequestHeader) PeekBytes(key []byte) []byte {
-	h.bufKV.key = append(h.bufKV.key[:0], key...)
-	normalizeHeaderKey(h.bufKV.key, h.disableNormalizing)
-	return h.peek(h.bufKV.key)
+	h.bufK = append(h.bufK[:0], key...)
+	normalizeHeaderKey(h.bufK, h.disableNormalizing)
+	return h.peek(h.bufK)
 }
 
 func (h *ResponseHeader) peek(key []byte) []byte {
@@ -1926,8 +1937,8 @@ func (h *RequestHeader) peek(key []byte) []byte {
 // Any future calls to the Peek* will modify the returned value.
 // Do not store references to returned value. Make copies instead.
 func (h *RequestHeader) PeekAll(key string) [][]byte {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	return h.peekAll(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	return h.peekAll(h.bufK)
 }
 
 func (h *RequestHeader) peekAll(key []byte) [][]byte {
@@ -1974,8 +1985,8 @@ func (h *RequestHeader) peekAll(key []byte) [][]byte {
 // Any future calls to the Peek* will modify the returned value.
 // Do not store references to returned value. Make copies instead.
 func (h *ResponseHeader) PeekAll(key string) [][]byte {
-	k := getHeaderKeyBytes(&h.bufKV, key, h.disableNormalizing)
-	return h.peekAll(k)
+	h.bufK = getHeaderKeyBytes(h.bufK, key, h.disableNormalizing)
+	return h.peekAll(h.bufK)
 }
 
 func (h *ResponseHeader) peekAll(key []byte) [][]byte {
@@ -2323,7 +2334,7 @@ func (h *RequestHeader) tryRead(r *bufio.Reader, n int) error {
 		// n == 1 on the first read for the request.
 		if n == 1 {
 			// We didn't read a single byte.
-			return ErrNothingRead{err}
+			return ErrNothingRead{error: err}
 		}
 
 		return fmt.Errorf("error when reading request headers: %w", err)
@@ -2403,8 +2414,8 @@ func (h *ResponseHeader) WriteTo(w io.Writer) (int64, error) {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *ResponseHeader) Header() []byte {
-	h.bufKV.value = h.AppendBytes(h.bufKV.value[:0])
-	return h.bufKV.value
+	h.bufV = h.AppendBytes(h.bufV[:0])
+	return h.bufV
 }
 
 // writeTrailer writes response trailer to w.
@@ -2421,13 +2432,13 @@ func (h *ResponseHeader) writeTrailer(w *bufio.Writer) error {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *ResponseHeader) TrailerHeader() []byte {
-	h.bufKV.value = h.bufKV.value[:0]
+	h.bufV = h.bufV[:0]
 	for _, t := range h.trailer {
 		value := h.peek(t.key)
-		h.bufKV.value = appendHeaderLine(h.bufKV.value, t.key, value)
+		h.bufV = appendHeaderLine(h.bufV, t.key, value)
 	}
-	h.bufKV.value = append(h.bufKV.value, strCRLF...)
-	return h.bufKV.value
+	h.bufV = append(h.bufV, strCRLF...)
+	return h.bufV
 }
 
 // String returns response header representation.
@@ -2535,8 +2546,8 @@ func (h *RequestHeader) WriteTo(w io.Writer) (int64, error) {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *RequestHeader) Header() []byte {
-	h.bufKV.value = h.AppendBytes(h.bufKV.value[:0])
-	return h.bufKV.value
+	h.bufV = h.AppendBytes(h.bufV[:0])
+	return h.bufV
 }
 
 // writeTrailer writes request trailer to w.
@@ -2553,13 +2564,13 @@ func (h *RequestHeader) writeTrailer(w *bufio.Writer) error {
 // either though ReleaseRequest or your request handler returning.
 // Do not store references to returned value. Make copies instead.
 func (h *RequestHeader) TrailerHeader() []byte {
-	h.bufKV.value = h.bufKV.value[:0]
+	h.bufV = h.bufV[:0]
 	for _, t := range h.trailer {
 		value := h.peek(t.key)
-		h.bufKV.value = appendHeaderLine(h.bufKV.value, t.key, value)
+		h.bufV = appendHeaderLine(h.bufV, t.key, value)
 	}
-	h.bufKV.value = append(h.bufKV.value, strCRLF...)
-	return h.bufKV.value
+	h.bufV = append(h.bufV, strCRLF...)
+	return h.bufV
 }
 
 // RawHeaders returns raw header key/value bytes.
@@ -2849,6 +2860,15 @@ func (h *ResponseHeader) parseFirstLine(buf []byte) (int, error) {
 	return len(buf) - len(bNext), nil
 }
 
+func isValidMethod(method []byte) bool {
+	for _, ch := range method {
+		if validMethodValueByteTable[ch] == 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 	bNext := buf
 	var b []byte
@@ -2868,6 +2888,14 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 		return 0, fmt.Errorf("cannot find http request method in %q", buf)
 	}
 	h.method = append(h.method[:0], b[:n]...)
+
+	if !isValidMethod(h.method) {
+		if h.secureErrorLogMessage {
+			return 0, errors.New("unsupported http request method")
+		}
+		return 0, fmt.Errorf("unsupported http request method %q in %q", h.method, buf)
+	}
+
 	b = b[n+1:]
 
 	// parse requestURI
@@ -2945,75 +2973,90 @@ func (h *ResponseHeader) parseHeaders(buf []byte) (int, error) {
 	var s headerScanner
 	s.b = buf
 	s.disableNormalizing = h.disableNormalizing
-	var err error
 	var kv *argsKV
 
-outer:
 	for s.next() {
-		if len(s.key) > 0 {
-			for _, ch := range s.key {
-				if !validHeaderFieldByte(ch) {
-					err = fmt.Errorf("invalid header key %q", s.key)
-					continue outer
-				}
-			}
-
-			switch s.key[0] | 0x20 {
-			case 'c':
-				if caseInsensitiveCompare(s.key, strContentType) {
-					h.contentType = append(h.contentType[:0], s.value...)
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strContentEncoding) {
-					h.contentEncoding = append(h.contentEncoding[:0], s.value...)
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strContentLength) {
-					if h.contentLength != -1 {
-						if h.contentLength, err = parseContentLength(s.value); err != nil {
-							h.contentLength = -2
-						} else {
-							h.contentLengthBytes = append(h.contentLengthBytes[:0], s.value...)
-						}
-					}
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strConnection) {
-					if bytes.Equal(s.value, strClose) {
-						h.connectionClose = true
-					} else {
-						h.connectionClose = false
-						h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
-					}
-					continue
-				}
-			case 's':
-				if caseInsensitiveCompare(s.key, strServer) {
-					h.server = append(h.server[:0], s.value...)
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strSetCookie) {
-					h.cookies, kv = allocArg(h.cookies)
-					kv.key = getCookieKey(kv.key, s.value)
-					kv.value = append(kv.value[:0], s.value...)
-					continue
-				}
-			case 't':
-				if caseInsensitiveCompare(s.key, strTransferEncoding) {
-					if len(s.value) > 0 && !bytes.Equal(s.value, strIdentity) {
-						h.contentLength = -1
-						h.h = setArgBytes(h.h, strTransferEncoding, strChunked, argsHasValue)
-					}
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strTrailer) {
-					err = h.SetTrailerBytes(s.value)
-					continue
-				}
-			}
-			h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+		if len(s.key) == 0 {
+			h.connectionClose = true
+			return 0, fmt.Errorf("invalid header key %q", s.key)
 		}
+
+		for _, ch := range s.key {
+			if !validHeaderFieldByte(ch) {
+				h.connectionClose = true
+				return 0, fmt.Errorf("invalid header key %q", s.key)
+			}
+		}
+		for _, ch := range s.value {
+			if !validHeaderValueByte(ch) {
+				h.connectionClose = true
+				return 0, fmt.Errorf("invalid header value %q", s.value)
+			}
+		}
+
+		switch s.key[0] | 0x20 {
+		case 'c':
+			if caseInsensitiveCompare(s.key, strContentType) {
+				h.contentType = append(h.contentType[:0], s.value...)
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strContentEncoding) {
+				h.contentEncoding = append(h.contentEncoding[:0], s.value...)
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strContentLength) {
+				if h.contentLength != -1 {
+					var err error
+					h.contentLength, err = parseContentLength(s.value)
+					if err != nil {
+						h.contentLength = -2
+						h.connectionClose = true
+						return 0, err
+					}
+					h.contentLengthBytes = append(h.contentLengthBytes[:0], s.value...)
+				}
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strConnection) {
+				if bytes.Equal(s.value, strClose) {
+					h.connectionClose = true
+				} else {
+					h.connectionClose = false
+					h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+				}
+				continue
+			}
+		case 's':
+			if caseInsensitiveCompare(s.key, strServer) {
+				h.server = append(h.server[:0], s.value...)
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strSetCookie) {
+				h.cookies, kv = allocArg(h.cookies)
+				kv.key = getCookieKey(kv.key, s.value)
+				kv.value = append(kv.value[:0], s.value...)
+				continue
+			}
+		case 't':
+			if caseInsensitiveCompare(s.key, strTransferEncoding) {
+				if len(s.value) > 0 && !bytes.Equal(s.value, strIdentity) {
+					h.contentLength = -1
+					h.h = setArgBytes(h.h, strTransferEncoding, strChunked, argsHasValue)
+				}
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strTrailer) {
+				err := h.SetTrailerBytes(s.value)
+				if err != nil {
+					h.connectionClose = true
+					return 0, err
+				}
+				continue
+			}
+		}
+		h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
 	}
+
 	if s.err != nil {
 		h.connectionClose = true
 		return 0, s.err
@@ -3032,7 +3075,7 @@ outer:
 		h.connectionClose = !hasHeaderValue(v, strKeepAlive)
 	}
 
-	return len(buf) - len(s.b), err
+	return len(buf) - len(s.b), nil
 }
 
 func (h *RequestHeader) parseHeaders(buf []byte) (int, error) {
@@ -3043,103 +3086,109 @@ func (h *RequestHeader) parseHeaders(buf []byte) (int, error) {
 	var s headerScanner
 	s.b = buf
 	s.disableNormalizing = h.disableNormalizing
-	var err error
 
-outer:
 	for s.next() {
-		if len(s.key) > 0 {
-			for _, ch := range s.key {
-				if !validHeaderFieldByte(ch) {
-					err = fmt.Errorf("invalid header key %q", s.key)
-					continue outer
-				}
-			}
+		if len(s.key) == 0 {
+			h.connectionClose = true
+			return 0, fmt.Errorf("invalid header key %q", s.key)
+		}
 
-			if h.disableSpecialHeader {
-				h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+		for _, ch := range s.key {
+			if !validHeaderFieldByte(ch) {
+				h.connectionClose = true
+				return 0, fmt.Errorf("invalid header key %q", s.key)
+			}
+		}
+		for _, ch := range s.value {
+			if !validHeaderValueByte(ch) {
+				h.connectionClose = true
+				return 0, fmt.Errorf("invalid header value %q", s.value)
+			}
+		}
+
+		if h.disableSpecialHeader {
+			h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+			continue
+		}
+
+		switch s.key[0] | 0x20 {
+		case 'h':
+			if caseInsensitiveCompare(s.key, strHost) {
+				h.host = append(h.host[:0], s.value...)
 				continue
 			}
+		case 'u':
+			if caseInsensitiveCompare(s.key, strUserAgent) {
+				h.userAgent = append(h.userAgent[:0], s.value...)
+				continue
+			}
+		case 'c':
+			if caseInsensitiveCompare(s.key, strContentType) {
+				h.contentType = append(h.contentType[:0], s.value...)
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strContentLength) {
+				if contentLengthSeen {
+					h.connectionClose = true
+					return 0, errors.New("duplicate Content-Length header")
+				}
+				contentLengthSeen = true
 
-			switch s.key[0] | 0x20 {
-			case 'h':
-				if caseInsensitiveCompare(s.key, strHost) {
-					h.host = append(h.host[:0], s.value...)
-					continue
-				}
-			case 'u':
-				if caseInsensitiveCompare(s.key, strUserAgent) {
-					h.userAgent = append(h.userAgent[:0], s.value...)
-					continue
-				}
-			case 'c':
-				if caseInsensitiveCompare(s.key, strContentType) {
-					h.contentType = append(h.contentType[:0], s.value...)
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strContentLength) {
-					if contentLengthSeen {
-						return 0, errors.New("duplicate Content-Length header")
-					}
-					contentLengthSeen = true
-
-					if h.contentLength != -1 {
-						var nerr error
-						if h.contentLength, nerr = parseContentLength(s.value); nerr != nil {
-							if err == nil {
-								err = nerr
-							}
-							h.contentLength = -2
-						} else {
-							h.contentLengthBytes = append(h.contentLengthBytes[:0], s.value...)
-						}
-					}
-					continue
-				}
-				if caseInsensitiveCompare(s.key, strConnection) {
-					if bytes.Equal(s.value, strClose) {
+				if h.contentLength != -1 {
+					var err error
+					h.contentLength, err = parseContentLength(s.value)
+					if err != nil {
+						h.contentLength = -2
 						h.connectionClose = true
-					} else {
-						h.connectionClose = false
-						h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+						return 0, err
 					}
-					continue
+					h.contentLengthBytes = append(h.contentLengthBytes[:0], s.value...)
 				}
-			case 't':
-				if caseInsensitiveCompare(s.key, strTransferEncoding) {
-					isIdentity := caseInsensitiveCompare(s.value, strIdentity)
-					isChunked := caseInsensitiveCompare(s.value, strChunked)
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strConnection) {
+				if bytes.Equal(s.value, strClose) {
+					h.connectionClose = true
+				} else {
+					h.connectionClose = false
+					h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
+				}
+				continue
+			}
+		case 't':
+			if caseInsensitiveCompare(s.key, strTransferEncoding) {
+				isIdentity := caseInsensitiveCompare(s.value, strIdentity)
+				isChunked := caseInsensitiveCompare(s.value, strChunked)
 
-					if !isIdentity && !isChunked {
-						if h.secureErrorLogMessage {
-							return 0, errors.New("unsupported Transfer-Encoding")
-						}
-						return 0, fmt.Errorf("unsupported Transfer-Encoding: %q", s.value)
+				if !isIdentity && !isChunked {
+					h.connectionClose = true
+					if h.secureErrorLogMessage {
+						return 0, errors.New("unsupported Transfer-Encoding")
 					}
+					return 0, fmt.Errorf("unsupported Transfer-Encoding: %q", s.value)
+				}
 
-					if isChunked {
-						h.contentLength = -1
-						h.h = setArgBytes(h.h, strTransferEncoding, strChunked, argsHasValue)
-					}
-					continue
+				if isChunked {
+					h.contentLength = -1
+					h.h = setArgBytes(h.h, strTransferEncoding, strChunked, argsHasValue)
 				}
-				if caseInsensitiveCompare(s.key, strTrailer) {
-					if nerr := h.SetTrailerBytes(s.value); nerr != nil {
-						if err == nil {
-							err = nerr
-						}
-					}
-					continue
+				continue
+			}
+			if caseInsensitiveCompare(s.key, strTrailer) {
+				err := h.SetTrailerBytes(s.value)
+				if err != nil {
+					h.connectionClose = true
+					return 0, err
 				}
+				continue
 			}
 		}
 		h.h = appendArgBytes(h.h, s.key, s.value, argsHasValue)
 	}
-	if s.err != nil && err == nil {
-		err = s.err
-	}
-	if err != nil {
+
+	if s.err != nil {
 		h.connectionClose = true
-		return 0, err
+		return 0, s.err
 	}
 
 	if h.contentLength < 0 {
@@ -3187,15 +3236,14 @@ func parseContentLength(b []byte) (int, error) {
 }
 
 type headerScanner struct {
+	err error
+
 	b     []byte
 	key   []byte
 	value []byte
-	err   error
 
 	// hLen stores header subslice len
 	hLen int
-
-	disableNormalizing bool
 
 	// by checking whether the next line contains a colon or not to tell
 	// it's a header entry or a multi line value of current header entry.
@@ -3205,7 +3253,8 @@ type headerScanner struct {
 	nextColon   int
 	nextNewLine int
 
-	initialized bool
+	disableNormalizing bool
+	initialized        bool
 }
 
 func (s *headerScanner) next() bool {
@@ -3253,7 +3302,7 @@ func (s *headerScanner) next() bool {
 	s.key = s.b[:n]
 	normalizeHeaderKey(s.key, s.disableNormalizing)
 	n++
-	for len(s.b) > n && s.b[n] == ' ' {
+	for len(s.b) > n && (s.b[n] == ' ' || s.b[n] == '\t') {
 		n++
 		// the newline index is a relative index, and lines below trimmed `s.b` by `n`,
 		// so the relative newline index also shifted forward. it's safe to decrease
@@ -3307,13 +3356,14 @@ func (s *headerScanner) next() bool {
 	if n > 0 && s.value[n-1] == rChar {
 		n--
 	}
-	for n > 0 && s.value[n-1] == ' ' {
+	for n > 0 && (s.value[n-1] == ' ' || s.value[n-1] == '\t') {
 		n--
 	}
 	s.value = s.value[:n]
 	if isMultiLineValue {
 		s.value, s.b, s.hLen = normalizeHeaderValue(s.value, oldB, s.hLen)
 	}
+
 	return true
 }
 
@@ -3371,17 +3421,18 @@ func nextLine(b []byte) ([]byte, []byte, error) {
 	return b[:n], b[nNext+1:], nil
 }
 
-func initHeaderKV(kv *argsKV, key, value string, disableNormalizing bool) {
-	kv.key = getHeaderKeyBytes(kv, key, disableNormalizing)
+func initHeaderKV(bufK, bufV []byte, key, value string, disableNormalizing bool) ([]byte, []byte) {
+	bufK = getHeaderKeyBytes(bufK, key, disableNormalizing)
 	// https://tools.ietf.org/html/rfc7230#section-3.2.4
-	kv.value = append(kv.value[:0], value...)
-	kv.value = removeNewLines(kv.value)
+	bufV = append(bufV[:0], value...)
+	bufV = removeNewLines(bufV)
+	return bufK, bufV
 }
 
-func getHeaderKeyBytes(kv *argsKV, key string, disableNormalizing bool) []byte {
-	kv.key = append(kv.key[:0], key...)
-	normalizeHeaderKey(kv.key, disableNormalizing)
-	return kv.key
+func getHeaderKeyBytes(bufK []byte, key string, disableNormalizing bool) []byte {
+	bufK = append(bufK[:0], key...)
+	normalizeHeaderKey(bufK, disableNormalizing)
+	return bufK
 }
 
 func normalizeHeaderValue(ov, ob []byte, headerLength int) (nv, nb []byte, nhl int) {
@@ -3392,6 +3443,7 @@ func normalizeHeaderValue(ov, ob []byte, headerLength int) (nv, nb []byte, nhl i
 	}
 	write := 0
 	shrunk := 0
+	once := false
 	lineStart := false
 	for read := 0; read < length; read++ {
 		c := ov[read]
@@ -3400,10 +3452,17 @@ func normalizeHeaderValue(ov, ob []byte, headerLength int) (nv, nb []byte, nhl i
 			shrunk++
 			if c == nChar {
 				lineStart = true
+				once = false
 			}
 			continue
-		case lineStart && c == '\t':
-			c = ' '
+		case lineStart && (c == '\t' || c == ' '):
+			if !once {
+				c = ' '
+				once = true
+			} else {
+				shrunk++
+				continue
+			}
 		default:
 			lineStart = false
 		}

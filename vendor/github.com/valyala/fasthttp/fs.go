@@ -256,14 +256,46 @@ type FS struct {
 	// FS is filesystem to serve files from. eg: embed.FS os.DirFS
 	FS fs.FS
 
+	// Path rewriting function.
+	//
+	// By default request path is not modified.
+	PathRewrite PathRewriteFunc
+
+	// PathNotFound fires when file is not found in filesystem
+	// this functions tries to replace "Cannot open requested path"
+	// server response giving to the programmer the control of server flow.
+	//
+	// By default PathNotFound returns
+	// "Cannot open requested path"
+	PathNotFound RequestHandler
+
+	// Suffixes list to add to compressedFileSuffix depending on encoding
+	//
+	// This value has sense only if Compress is set.
+	//
+	// FSCompressedFileSuffixes is used by default.
+	CompressedFileSuffixes map[string]string
+
+	// If CleanStop is set, the channel can be closed to stop the cleanup handlers
+	// for the FS RequestHandlers created with NewRequestHandler.
+	// NEVER close this channel while the handler is still being used!
+	CleanStop chan struct{}
+
+	h RequestHandler
+
 	// Path to the root directory to serve files from.
 	Root string
 
-	// AllowEmptyRoot controls what happens when Root is empty. When false (default) it will default to the
-	// current working directory. An empty root is mostly useful when you want to use absolute paths
-	// on windows that are on different filesystems. On linux setting your Root to "/" already allows you to use
-	// absolute paths on any filesystem.
-	AllowEmptyRoot bool
+	// Path to the compressed root directory to serve files from. If this value
+	// is empty, Root is used.
+	CompressRoot string
+
+	// Suffix to add to the name of cached compressed file.
+	//
+	// This value has sense only if Compress is set.
+	//
+	// FSCompressedFileSuffix is used by default.
+	CompressedFileSuffix string
 
 	// List of index file names to try opening during directory access.
 	//
@@ -275,6 +307,26 @@ type FS struct {
 	//
 	// By default the list is empty.
 	IndexNames []string
+
+	// Expiration duration for inactive file handlers.
+	//
+	// FSHandlerCacheDuration is used by default.
+	CacheDuration time.Duration
+
+	once sync.Once
+
+	// AllowEmptyRoot controls what happens when Root is empty. When false (default) it will default to the
+	// current working directory. An empty root is mostly useful when you want to use absolute paths
+	// on windows that are on different filesystems. On linux setting your Root to "/" already allows you to use
+	// absolute paths on any filesystem.
+	AllowEmptyRoot bool
+
+	// Uses brotli encoding and fallbacks to gzip in responses if set to true, uses gzip if set to false.
+	//
+	// This value has sense only if Compress is set.
+	//
+	// Brotli encoding is disabled by default.
+	CompressBrotli bool
 
 	// Index pages for directories without files matching IndexNames
 	// are automatically generated if set.
@@ -298,66 +350,15 @@ type FS struct {
 	// Transparent compression is disabled by default.
 	Compress bool
 
-	// Uses brotli encoding and fallbacks to gzip in responses if set to true, uses gzip if set to false.
-	//
-	// This value has sense only if Compress is set.
-	//
-	// Brotli encoding is disabled by default.
-	CompressBrotli bool
-
-	// Path to the compressed root directory to serve files from. If this value
-	// is empty, Root is used.
-	CompressRoot string
-
 	// Enables byte range requests if set to true.
 	//
 	// Byte range requests are disabled by default.
 	AcceptByteRange bool
 
-	// Path rewriting function.
-	//
-	// By default request path is not modified.
-	PathRewrite PathRewriteFunc
-
-	// PathNotFound fires when file is not found in filesystem
-	// this functions tries to replace "Cannot open requested path"
-	// server response giving to the programmer the control of server flow.
-	//
-	// By default PathNotFound returns
-	// "Cannot open requested path"
-	PathNotFound RequestHandler
-
 	// SkipCache if true, will cache no file handler.
 	//
 	// By default is false.
 	SkipCache bool
-
-	// Expiration duration for inactive file handlers.
-	//
-	// FSHandlerCacheDuration is used by default.
-	CacheDuration time.Duration
-
-	// Suffix to add to the name of cached compressed file.
-	//
-	// This value has sense only if Compress is set.
-	//
-	// FSCompressedFileSuffix is used by default.
-	CompressedFileSuffix string
-
-	// Suffixes list to add to compressedFileSuffix depending on encoding
-	//
-	// This value has sense only if Compress is set.
-	//
-	// FSCompressedFileSuffixes is used by default.
-	CompressedFileSuffixes map[string]string
-
-	// If CleanStop is set, the channel can be closed to stop the cleanup handlers
-	// for the FS RequestHandlers created with NewRequestHandler.
-	// NEVER close this channel while the handler is still being used!
-	CleanStop chan struct{}
-
-	once sync.Once
-	h    RequestHandler
 }
 
 // FSCompressedFileSuffix is the suffix FS adds to the original file names
@@ -502,40 +503,41 @@ func (fs *FS) initRequestHandler() {
 }
 
 type fsHandler struct {
-	filesystem             fs.FS
-	root                   string
-	indexNames             []string
-	pathRewrite            PathRewriteFunc
-	pathNotFound           RequestHandler
-	generateIndexPages     bool
-	compress               bool
-	compressBrotli         bool
-	compressRoot           string
-	acceptByteRange        bool
-	compressedFileSuffixes map[string]string
+	smallFileReaderPool sync.Pool
+	filesystem          fs.FS
 
 	cacheManager cacheManager
 
-	smallFileReaderPool sync.Pool
+	pathRewrite            PathRewriteFunc
+	pathNotFound           RequestHandler
+	compressedFileSuffixes map[string]string
+
+	root               string
+	compressRoot       string
+	indexNames         []string
+	generateIndexPages bool
+	compress           bool
+	compressBrotli     bool
+	acceptByteRange    bool
 }
 
 type fsFile struct {
-	h             *fsHandler
-	f             fs.File
-	filename      string // fs.FileInfo.Name() return filename, isn't filepath.
-	dirIndex      []byte
-	contentType   string
-	contentLength int
-	compressed    bool
+	lastModified time.Time
 
-	lastModified    time.Time
+	t               time.Time
+	f               fs.File
+	h               *fsHandler
+	filename        string // fs.FileInfo.Name() return filename, isn't filepath.
+	contentType     string
+	dirIndex        []byte
 	lastModifiedStr []byte
 
-	t            time.Time
-	readersCount int
+	bigFiles      []*bigFileReader
+	contentLength int
+	readersCount  int
 
-	bigFiles     []*bigFileReader
 	bigFilesLock sync.Mutex
+	compressed   bool
 }
 
 func (ff *fsFile) NewReader() (io.Reader, error) {
@@ -817,6 +819,7 @@ func newCacheManager(fs *FS) cacheManager {
 		cache:         make(map[string]*fsFile),
 		cacheBrotli:   make(map[string]*fsFile),
 		cacheGzip:     make(map[string]*fsFile),
+		cacheZstd:     make(map[string]*fsFile),
 	}
 
 	go instance.handleCleanCache(fs.CleanStop)
@@ -845,10 +848,11 @@ func (*noopCacheManager) SetFileToCache(cacheKind CacheKind, path string, ff *fs
 }
 
 type inMemoryCacheManager struct {
-	cacheDuration time.Duration
 	cache         map[string]*fsFile
 	cacheBrotli   map[string]*fsFile
 	cacheGzip     map[string]*fsFile
+	cacheZstd     map[string]*fsFile
+	cacheDuration time.Duration
 	cacheLock     sync.Mutex
 }
 
@@ -867,6 +871,8 @@ func (cm *inMemoryCacheManager) getFsCache(cacheKind CacheKind) map[string]*fsFi
 		fileCache = cm.cacheBrotli
 	case gzipCacheKind:
 		fileCache = cm.cacheGzip
+	case zstdCacheKind:
+		fileCache = cm.cacheZstd
 	}
 
 	return fileCache
@@ -957,6 +963,7 @@ func (cm *inMemoryCacheManager) cleanCache(pendingFiles []*fsFile) []*fsFile {
 	pendingFiles, filesToRelease = cleanCacheNolock(cm.cache, pendingFiles, filesToRelease, cm.cacheDuration)
 	pendingFiles, filesToRelease = cleanCacheNolock(cm.cacheBrotli, pendingFiles, filesToRelease, cm.cacheDuration)
 	pendingFiles, filesToRelease = cleanCacheNolock(cm.cacheGzip, pendingFiles, filesToRelease, cm.cacheDuration)
+	pendingFiles, filesToRelease = cleanCacheNolock(cm.cacheZstd, pendingFiles, filesToRelease, cm.cacheDuration)
 
 	cm.cacheLock.Unlock()
 
@@ -1015,7 +1022,6 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 		path = ctx.Path()
 	}
 	hasTrailingSlash := len(path) > 0 && path[len(path)-1] == '/'
-	path = stripTrailingSlashes(path)
 
 	if n := bytes.IndexByte(path, 0); n >= 0 {
 		ctx.Logger().Printf("cannot serve path with nil byte at position %d: %q", n, path)
@@ -1054,9 +1060,13 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 		}
 	}
 
-	pathStr := string(path)
+	originalPathStr := string(path)
+	pathStr := originalPathStr
+	if hasTrailingSlash {
+		pathStr = originalPathStr[:len(originalPathStr)-1]
+	}
 
-	ff, ok := h.cacheManager.GetFileFromCache(fileCacheKind, pathStr)
+	ff, ok := h.cacheManager.GetFileFromCache(fileCacheKind, originalPathStr)
 	if !ok {
 		filePath := h.pathToFilePath(pathStr)
 
@@ -1091,7 +1101,7 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 			return
 		}
 
-		ff = h.cacheManager.SetFileToCache(fileCacheKind, pathStr, ff)
+		ff = h.cacheManager.SetFileToCache(fileCacheKind, originalPathStr, ff)
 	}
 
 	if !ctx.IfModifiedSince(ff.lastModified) {
@@ -1396,7 +1406,7 @@ func (h *fsHandler) compressAndOpenFSFile(filePath, fileEncoding string) (*fsFil
 	}
 
 	if compressedFilePath != filePath {
-		if err := os.MkdirAll(filepath.Dir(compressedFilePath), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(compressedFilePath), 0o750); err != nil {
 			return nil, err
 		}
 	}

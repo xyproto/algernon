@@ -736,7 +736,7 @@ func leftAngle(p *Parser, data []byte, offset int) (int, ast.Node) {
 }
 
 // '\\' backslash escape
-var escapeChars = []byte("\\`*_{}[]()#+-.!:|&<>~^$")
+var EscapeChars = []byte("\\`*_{}[]()#+-.!:|&<>~^$")
 
 func escape(p *Parser, data []byte, offset int) (int, ast.Node) {
 	data = data[offset:]
@@ -753,7 +753,7 @@ func escape(p *Parser, data []byte, offset int) (int, ast.Node) {
 		return 2, &ast.Hardbreak{}
 	}
 
-	if bytes.IndexByte(escapeChars, data[1]) < 0 {
+	if bytes.IndexByte(EscapeChars, data[1]) < 0 {
 		return 0, nil
 	}
 

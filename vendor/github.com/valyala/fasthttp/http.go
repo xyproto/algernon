@@ -38,21 +38,28 @@ func SetBodySizePoolLimit(reqBodyLimit, respBodyLimit int) {
 type Request struct {
 	noCopy noCopy
 
+	bodyStream io.Reader
+	w          requestBodyWriter
+	body       *bytebufferpool.ByteBuffer
+
+	multipartForm         *multipart.Form
+	multipartFormBoundary string
+
+	postArgs Args
+
+	bodyRaw []byte
+
+	uri URI
+
 	// Request header.
 	//
 	// Copying Header by value is forbidden. Use pointer to Header instead.
 	Header RequestHeader
 
-	uri      URI
-	postArgs Args
+	// Request timeout. Usually set by DoDeadline or DoTimeout
+	// if <= 0, means not set
+	timeout time.Duration
 
-	bodyStream io.Reader
-	w          requestBodyWriter
-	body       *bytebufferpool.ByteBuffer
-	bodyRaw    []byte
-
-	multipartForm         *multipart.Form
-	multipartFormBoundary string
 	secureErrorLogMessage bool
 
 	// Group bool members in order to reduce Request object size.
@@ -64,10 +71,6 @@ type Request struct {
 	// Used by Server to indicate the request was received on a HTTPS endpoint.
 	// Client/HostClient shouldn't use this field but should depend on the uri.scheme instead.
 	isTLS bool
-
-	// Request timeout. Usually set by DoDeadline or DoTimeout
-	// if <= 0, means not set
-	timeout time.Duration
 
 	// Use Host header (request.Header.SetHost) instead of the host from SetRequestURI, SetHost, or URI().SetHost
 	UseHostHeader bool
@@ -88,6 +91,17 @@ type Request struct {
 type Response struct {
 	noCopy noCopy
 
+	bodyStream io.Reader
+
+	// Remote TCPAddr from concurrently net.Conn.
+	raddr net.Addr
+	// Local TCPAddr from concurrently net.Conn.
+	laddr net.Addr
+	w     responseBodyWriter
+	body  *bytebufferpool.ByteBuffer
+
+	bodyRaw []byte
+
 	// Response header.
 	//
 	// Copying Header by value is forbidden. Use pointer to Header instead.
@@ -101,11 +115,6 @@ type Response struct {
 	// Use SetBodyStream to set the body stream.
 	StreamBody bool
 
-	bodyStream io.Reader
-	w          responseBodyWriter
-	body       *bytebufferpool.ByteBuffer
-	bodyRaw    []byte
-
 	// Response.Read() skips reading body if set to true.
 	// Use it for reading HEAD responses.
 	//
@@ -115,11 +124,6 @@ type Response struct {
 
 	keepBodyBuffer        bool
 	secureErrorLogMessage bool
-
-	// Remote TCPAddr from concurrently net.Conn.
-	raddr net.Addr
-	// Local TCPAddr from concurrently net.Conn.
-	laddr net.Addr
 }
 
 // SetHost sets host for the request.
@@ -1435,19 +1439,14 @@ func (resp *Response) ReadLimitBody(r *bufio.Reader, maxBodySize int) error {
 	if !resp.mustSkipBody() {
 		err = resp.ReadBody(r, maxBodySize)
 		if err != nil {
-			if isConnectionReset(err) {
-				return nil
-			}
 			return err
 		}
 	}
 
-	if resp.Header.ContentLength() == -1 && !resp.StreamBody {
+	// A response without a body can't have trailers.
+	if resp.Header.ContentLength() == -1 && !resp.StreamBody && !resp.mustSkipBody() {
 		err = resp.Header.ReadTrailer(r)
 		if err != nil && err != io.EOF {
-			if isConnectionReset(err) {
-				return nil
-			}
 			return err
 		}
 	}
@@ -1596,10 +1595,10 @@ func (req *Request) Write(w *bufio.Writer) error {
 			nl := len(uri.username) + len(uri.password) + 1
 			nb := nl + len(strBasicSpace)
 			tl := nb + base64.StdEncoding.EncodedLen(nl)
-			if tl > cap(req.Header.bufKV.value) {
-				req.Header.bufKV.value = make([]byte, 0, tl)
+			if tl > cap(req.Header.bufV) {
+				req.Header.bufV = make([]byte, 0, tl)
 			}
-			buf := req.Header.bufKV.value[:0]
+			buf := req.Header.bufV[:0]
 			buf = append(buf, uri.username...)
 			buf = append(buf, strColon...)
 			buf = append(buf, uri.password...)
@@ -2279,12 +2278,13 @@ func readBodyWithStreaming(r *bufio.Reader, contentLength, maxBodySize int, dst 
 		readN = 8 * 1024
 	}
 
-	if contentLength >= 0 && maxBodySize >= contentLength {
-		b, err = appendBodyFixedSize(r, dst, readN)
-	} else {
-		b, err = readBodyIdentity(r, readN, dst)
-	}
-
+	// A fixed-length pre-read function should be used here; otherwise,
+	// it may read content beyond the request body into areas outside
+	// the br buffer. This could affect the handling of the next request
+	// in the br buffer, if there is one. The original two branches can
+	// be handled with this single branch. by the way,
+	// fix issue: https://github.com/valyala/fasthttp/issues/1816
+	b, err = appendBodyFixedSize(r, dst, readN)
 	if err != nil {
 		return b, err
 	}

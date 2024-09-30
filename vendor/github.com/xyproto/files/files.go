@@ -80,6 +80,17 @@ func WhichCached(executable string) string {
 	return path
 }
 
+// PathHas checks if the given executable is in $PATH
+func PathHas(executable string) bool {
+	_, err := exec.LookPath(executable)
+	return err == nil
+}
+
+// PathHasCached checks if the given executable is in $PATH (looks in the cache first and then caches the result)
+func PathHasCached(executable string) bool {
+	return WhichCached(executable) != ""
+}
+
 // BinDirectory will check if the given filename is in one of these directories:
 // /bin, /sbin, /usr/bin, /usr/sbin, /usr/local/bin, /usr/local/sbin, ~/.bin, ~/bin, ~/.local/bin
 func BinDirectory(filename string) bool {

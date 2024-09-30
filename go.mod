@@ -10,11 +10,11 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.23.1
+	github.com/evanw/esbuild v0.24.0
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
+	github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -25,12 +25,12 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
 	github.com/tylerb/graceful v1.2.15
-	github.com/valyala/fasthttp v1.55.0
+	github.com/valyala/fasthttp v1.56.0
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
 	github.com/xyproto/env/v2 v2.5.0
-	github.com/xyproto/files v1.6.0
+	github.com/xyproto/files v1.7.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
@@ -67,15 +67,15 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-mysql-org/go-mysql v1.9.0 // indirect
+	github.com/go-mysql-org/go-mysql v1.9.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.9.2 // indirect
-	github.com/google/pprof v0.0.0-20240910150728-a0b0bb1d4134 // indirect
+	github.com/google/pprof v0.0.0-20240929191954-255acd752d31 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.10 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/libdns/libdns v0.2.2 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.14.5 // indirect
+	github.com/xyproto/vt100 v1.14.7 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.3.11 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

@@ -1,7 +1,37 @@
 # files
 
-Functions that has to do with files and/or directories.
+Functions for querying files and paths.
 
-* Version: 1.6.0
+## Function signatures
+
+```
+func Exists(path string) bool
+func IsFile(path string) bool
+func IsSymlink(path string) bool
+func IsFileOrSymlink(path string) bool
+func IsDir(path string) bool
+func Which(executable string) string
+func WhichCached(executable string) string
+func PathHas(executable string) bool
+func PathHasCached(executable string) bool
+func BinDirectory(filename string) bool
+func DataReadyOnStdin() bool
+func IsBinary(filename string) bool
+func FilterOutBinaryFiles(filenames []string) []string
+func TimestampedFilename(filename string) string
+func ShortPath(path string) string
+func FileHas(path, what string) bool
+func ReadString(filename string) string
+func CanRead(filename string) bool
+func Relative(path string) string
+func Touch(filename string) error
+func ExistsCached(path string) bool
+func ClearCache()
+func RemoveFile(path string) error
+```
+
+## General info
+
+* Version: 1.7.0
 * License: BSD-3
-* Author: Alexander F. Rødseth <xyproto@archlinux.org>
+* Author: Alexander F. Rødseth &gt;xyproto@archlinux.org&lt;
