@@ -230,16 +230,26 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		// Close the connection.
 		// Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
 		w.Header().Add("Connection", "close")
-		// Flush, if possible
+
+		// Flush, if a flush function is available
 		if flushFunc != nil {
 			flushFunc()
 		}
+
 		// Stop Lua functions from writing more to this client
 		req.Close = true
 
 		// TODO: Set up the HTTP/QUIC/HTTP/2 Server structs with a ConnContext
 		//       field and then fetch the connection from the req.Context()
 		//       and use it here for closing the connection.
+
+		// Hijack the connection (does not work with fasthttp!)
+		//if hijacker, ok := w.(http.Hijacker); ok { // success
+		//  if conn, buf, err := hijacker.Hijack(); err == nil { // success
+		//    buf.Flush()
+		//    conn.Close() // Close the hijacked connection
+		//  }
+		//}
 
 		return 0 // number of results
 	}))
