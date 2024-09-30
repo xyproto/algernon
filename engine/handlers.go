@@ -18,7 +18,6 @@ import (
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/ollamaclient/v2"
-	"github.com/xyproto/recwatch"
 	"github.com/xyproto/sheepcounter"
 	"github.com/xyproto/simpleform"
 	"github.com/xyproto/unzip"
@@ -284,8 +283,18 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			httpStatus := &FutureStatus{}
 			// The flush function writes the ResponseRecorder to the ResponseWriter
 			flushFunc := func() {
-				utils.WriteRecorder(w, recorder)
-				recwatch.Flush(w)
+				// If things went well, check if there is a status code we should write first
+				// (especially for the case of a redirect)
+				if httpStatus.code != 0 {
+					recorder.WriteHeader(httpStatus.code)
+				} else {
+					recorder.WriteHeader(http.StatusOK)
+				}
+				// Then write to the ResponseWriter
+				utils.WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				if flusher, ok := w.(http.Flusher); ok {
+					flusher.Flush()
+				}
 			}
 			// Run the lua script, without the possibility to flush
 			if err := ac.RunLua(recorder, req, filename, flushFunc, httpStatus); err != nil {
@@ -304,14 +313,19 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				// (especially for the case of a redirect)
 				if httpStatus.code != 0 {
 					recorder.WriteHeader(httpStatus.code)
+				} else {
+					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
-				utils.WriteRecorder(w, recorder)
+				utils.WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
 			}
 		} else {
 			// The flush function just flushes the ResponseWriter
 			flushFunc := func() {
-				recwatch.Flush(w)
+				w.WriteHeader(http.StatusOK)
+				if flusher, ok := w.(http.Flusher); ok {
+					flusher.Flush()
+				}
 			}
 			// Run the lua script, with the flush feature
 			if err := ac.RunLua(w, req, filename, flushFunc, nil); err != nil {

@@ -16,7 +16,11 @@ func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) i
 			w.Header().Set(key, value)
 		}
 	}
-	w.WriteHeader(recorder.Result().StatusCode)
+	if statusCode := recorder.Result().StatusCode; statusCode == 0 {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(statusCode)
+	}
 	bytesWritten, err := recorder.Body.WriteTo(w)
 	if err != nil {
 		// Writing failed
