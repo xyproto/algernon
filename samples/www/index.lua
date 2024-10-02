@@ -1,0 +1,5 @@
+print("hello")
+flush()
+close()
+sleep(5)
+print("finally")

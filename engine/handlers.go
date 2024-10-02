@@ -304,13 +304,16 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				// (especially for the case of a redirect)
 				if httpStatus.code != 0 {
 					recorder.WriteHeader(httpStatus.code)
+				} else {
+					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
 				utils.WriteRecorder(w, recorder)
 			}
 		} else {
-			// The flush function just flushes the ResponseWriter
+			// The flush function just flushes the ResponseWriter, but writes a header first
 			flushFunc := func() {
+				w.WriteHeader(http.StatusOK)
 				recwatch.Flush(w)
 			}
 			// Run the lua script, with the flush feature

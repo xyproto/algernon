@@ -236,11 +236,12 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		}
 		// Stop Lua functions from writing more to this client
 		req.Close = true
-
-		// TODO: Set up the HTTP/QUIC/HTTP/2 Server structs with a ConnContext
-		//       field and then fetch the connection from the req.Context()
-		//       and use it here for closing the connection.
-
+		// Hijack and close the connection, if possible
+		if hijacker, ok := w.(http.Hijacker); ok {
+			if conn, _, err := hijacker.Hijack(); err == nil { // success
+				conn.Close()
+			}
+		}
 		return 0 // number of results
 	}))
 
