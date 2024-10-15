@@ -3,6 +3,8 @@
 General
 -------
 
+- [ ] Check if fasthttp supports flush() and close() and then switch handlers over to fasthttp, or remove fasthttp.
+- [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
 - [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
 - [ ] When the -m flag is used, if the file is not found, exit with an error.
 - [ ] Add a built-in SSH3 server that can be configured with a flag.
