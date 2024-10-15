@@ -290,10 +290,15 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				} else {
 					recorder.WriteHeader(http.StatusOK)
 				}
+				w.Header().Set("Connection", "Keep-Alive")
+				w.Header().Set("X-Content-Type-Options", "nosniff")
+				w.Header().Set("Content-Type", "text/html")
 				// Then write to the ResponseWriter
 				utils.WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
 				if flusher, ok := w.(http.Flusher); ok {
 					flusher.Flush()
+				} else {
+					logrus.Error("NO FLUSHER")
 				}
 			}
 			// Run the lua script, without the possibility to flush
@@ -323,8 +328,13 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			// The flush function just flushes the ResponseWriter
 			flushFunc := func() {
 				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Connection", "Keep-Alive")
+				w.Header().Set("X-Content-Type-Options", "nosniff")
+				w.Header().Set("Content-Type", "text/html")
 				if flusher, ok := w.(http.Flusher); ok {
 					flusher.Flush()
+				} else {
+					logrus.Error("NO FLUSHER")
 				}
 			}
 			// Run the lua script, with the flush feature
