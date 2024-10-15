@@ -140,11 +140,54 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	}
 
 	var ari RenewalInfo
-	resp, err := c.httpReq(ctx, http.MethodGet, c.ariEndpoint(certID), nil, &ari)
-	if err != nil {
-		return RenewalInfo{}, err
+	var resp *http.Response
+	for i := 0; i < 3; i++ {
+		// backoff between retries; the if is probably not needed, but just for "properness"...
+		if i > 0 {
+			select {
+			case <-ctx.Done():
+				return RenewalInfo{}, ctx.Err()
+			case <-time.After(time.Duration(i*i+1) * time.Second):
+			}
+		}
+
+		resp, err = c.httpReq(ctx, http.MethodGet, c.ariEndpoint(certID), nil, &ari)
+		if err != nil {
+			if c.Logger != nil {
+				c.Logger.Warn("error getting ARI response",
+					zap.Error(err),
+					zap.Int("attempt", i),
+					zap.Strings("names", leafCert.DNSNames))
+			}
+			continue
+		}
+
+		// "If the client receives no response or a malformed response
+		// (e.g. an end timestamp which is equal to or precedes the start
+		// timestamp), it SHOULD make its own determination of when to
+		// renew the certificate, and MAY retry the renewalInfo request
+		// with appropriate exponential backoff behavior."
+		// draft-ietf-acme-ari-04 §4.2
+		if ari.SuggestedWindow.Start.IsZero() ||
+			ari.SuggestedWindow.End.IsZero() ||
+			ari.SuggestedWindow.Start.Equal(ari.SuggestedWindow.End) ||
+			(ari.SuggestedWindow.End.Unix()-ari.SuggestedWindow.Start.Unix()-1 <= 0) {
+			if c.Logger != nil {
+				c.Logger.Debug("invalid ARI window",
+					zap.Time("start", ari.SuggestedWindow.Start),
+					zap.Time("end", ari.SuggestedWindow.End),
+					zap.Strings("names", leafCert.DNSNames))
+			}
+			continue
+		}
+
+		// valid ARI window
+		ari.UniqueIdentifier = certID
+		break
 	}
-	ari.UniqueIdentifier = certID
+	if err != nil || resp == nil {
+		return RenewalInfo{}, fmt.Errorf("could not get a valid ARI response; last error: %v", err)
+	}
 
 	// "The server SHOULD include a Retry-After header indicating the polling
 	// interval that the ACME server recommends." draft-ietf-acme-ari-03 §4.2
@@ -161,7 +204,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	// time within the suggested window." §4.2
 	// TODO: It's unclear whether this time should be selected once
 	// or every time the client wakes to check ARI (see step 5 of the
-	// recommended algorithm); I've inquired here:
+	// recommended algorithm); I've enquired here:
 	// https://github.com/aarongable/draft-acme-ari/issues/70
 	// We add 1 to the start time since we are dealing in seconds for
 	// simplicity, but the server may provide sub-second timestamps.

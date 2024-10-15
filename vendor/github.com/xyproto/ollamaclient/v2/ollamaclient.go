@@ -4,6 +4,8 @@ package ollamaclient
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -267,8 +269,25 @@ func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse
 	if seed < 0 {
 		temperature = oc.TemperatureIfNegativeSeed
 	} else {
+		temperature = 0 // Since temperature is set to 0 when seed >=0
 		// The cache is only used for fixed seeds and a temperature of 0
-		cacheKey = prompt + "-" + oc.ModelName
+		keyData := struct {
+			Prompts     []string
+			ModelName   string
+			Seed        int
+			Temperature float64
+		}{
+			Prompts:     promptAndOptionalImages,
+			ModelName:   oc.ModelName,
+			Seed:        seed,
+			Temperature: temperature,
+		}
+		keyDataBytes, err := json.Marshal(keyData)
+		if err != nil {
+			return OutputResponse{}, err
+		}
+		hash := sha256.Sum256(keyDataBytes)
+		cacheKey = hex.EncodeToString(hash[:])
 		if Cache == nil {
 			if err := InitCache(); err != nil {
 				return OutputResponse{}, err
@@ -276,7 +295,10 @@ func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse
 		}
 		if entry, err := Cache.Get(cacheKey); err == nil {
 			var res OutputResponse
-			json.Unmarshal(entry, &res)
+			err = json.Unmarshal(entry, &res)
+			if err != nil {
+				return OutputResponse{}, err
+			}
 			return res, nil
 		}
 	}
@@ -342,9 +364,11 @@ func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse
 	}
 	response.Response = outputString
 	if cacheKey != "" {
-		var data []byte
-		json.Unmarshal([]byte(data), &response)
-		Cache.Set(cacheKey, []byte(data))
+		data, err := json.Marshal(response)
+		if err != nil {
+			return OutputResponse{}, err
+		}
+		Cache.Set(cacheKey, data)
 	}
 	return response, nil
 }

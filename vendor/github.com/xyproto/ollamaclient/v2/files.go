@@ -2,7 +2,7 @@ package ollamaclient
 
 import (
 	"encoding/base64"
-	"errors"
+	"fmt"
 	"os"
 )
 
@@ -13,7 +13,7 @@ func Base64EncodeFile(filePath string) (string, error) {
 		return "", err
 	}
 	if len(data) == 0 {
-		return "", errors.New(filePath + " is empty")
+		return "", fmt.Errorf("%s contains 0 bytes", filePath)
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 	return encoded, nil

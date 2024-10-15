@@ -149,6 +149,10 @@ type Config struct {
 	// EXPERIMENTAL: Subject to change or removal.
 	SubjectTransformer func(ctx context.Context, domain string) string
 
+	// Disables both ARI fetching and the use of ARI for renewal decisions.
+	// TEMPORARY: Will likely be removed in the future.
+	DisableARI bool
+
 	// Set a logger to enable logging. If not set,
 	// a default logger will be created.
 	Logger *zap.Logger
@@ -370,9 +374,11 @@ func (cfg *Config) manageAll(ctx context.Context, domainNames []string, async bo
 	}
 
 	for _, domainName := range domainNames {
+		domainName = normalizedName(domainName)
+
 		// if on-demand is configured, defer obtain and renew operations
 		if cfg.OnDemand != nil {
-			cfg.OnDemand.hostAllowlist[normalizedName(domainName)] = struct{}{}
+			cfg.OnDemand.hostAllowlist[domainName] = struct{}{}
 			continue
 		}
 
@@ -449,7 +455,7 @@ func (cfg *Config) manageOne(ctx context.Context, domainName string, async bool)
 
 		// ensure ARI is updated before we check whether the cert needs renewing
 		// (we ignore the second return value because we already check if needs renewing anyway)
-		if cert.ari.NeedsRefresh() {
+		if !cfg.DisableARI && cert.ari.NeedsRefresh() {
 			cert, _, err = cfg.updateARI(ctx, cert, cfg.Logger)
 			if err != nil {
 				cfg.Logger.Error("updating ARI upon managing", zap.Error(err))
@@ -886,11 +892,13 @@ func (cfg *Config) renewCert(ctx context.Context, name string, force, interactiv
 			// if we're renewing with the same ACME CA as before, have the ACME
 			// client tell the server we are replacing a certificate (but doing
 			// this on the wrong CA, or when the CA doesn't recognize the certID,
-			// can fail the order)
-			if acmeData, err := certRes.getACMEData(); err == nil && acmeData.CA != "" {
-				if acmeIss, ok := issuer.(*ACMEIssuer); ok {
-					if acmeIss.CA == acmeData.CA {
-						ctx = context.WithValue(ctx, ctxKeyARIReplaces, leaf)
+			// can fail the order) -- TODO: change this check to whether we're using the same ACME account, not CA
+			if !cfg.DisableARI {
+				if acmeData, err := certRes.getACMEData(); err == nil && acmeData.CA != "" {
+					if acmeIss, ok := issuer.(*ACMEIssuer); ok {
+						if acmeIss.CA == acmeData.CA {
+							ctx = context.WithValue(ctx, ctxKeyARIReplaces, leaf)
+						}
 					}
 				}
 			}
@@ -982,23 +990,26 @@ func (cfg *Config) generateCSR(privateKey crypto.PrivateKey, sans []string, useC
 	csrTemplate := new(x509.CertificateRequest)
 
 	for _, name := range sans {
+		// identifiers should be converted to punycode before going into the CSR
+		// (convert IDNs to ASCII according to RFC 5280 section 7)
+		normalizedName, err := idna.ToASCII(name)
+		if err != nil {
+			return nil, fmt.Errorf("converting identifier '%s' to ASCII: %v", name, err)
+		}
+
 		// TODO: This is a temporary hack to support ZeroSSL API...
-		if useCN && csrTemplate.Subject.CommonName == "" && len(name) <= 64 {
-			csrTemplate.Subject.CommonName = name
+		if useCN && csrTemplate.Subject.CommonName == "" && len(normalizedName) <= 64 {
+			csrTemplate.Subject.CommonName = normalizedName
 			continue
 		}
-		if ip := net.ParseIP(name); ip != nil {
+
+		if ip := net.ParseIP(normalizedName); ip != nil {
 			csrTemplate.IPAddresses = append(csrTemplate.IPAddresses, ip)
-		} else if strings.Contains(name, "@") {
-			csrTemplate.EmailAddresses = append(csrTemplate.EmailAddresses, name)
-		} else if u, err := url.Parse(name); err == nil && strings.Contains(name, "/") {
+		} else if strings.Contains(normalizedName, "@") {
+			csrTemplate.EmailAddresses = append(csrTemplate.EmailAddresses, normalizedName)
+		} else if u, err := url.Parse(normalizedName); err == nil && strings.Contains(normalizedName, "/") {
 			csrTemplate.URIs = append(csrTemplate.URIs, u)
 		} else {
-			// convert IDNs to ASCII according to RFC 5280 section 7
-			normalizedName, err := idna.ToASCII(name)
-			if err != nil {
-				return nil, fmt.Errorf("converting identifier '%s' to ASCII: %v", name, err)
-			}
 			csrTemplate.DNSNames = append(csrTemplate.DNSNames, normalizedName)
 		}
 	}
@@ -1006,6 +1017,16 @@ func (cfg *Config) generateCSR(privateKey crypto.PrivateKey, sans []string, useC
 	if cfg.MustStaple {
 		csrTemplate.ExtraExtensions = append(csrTemplate.ExtraExtensions, mustStapleExtension)
 	}
+
+	// IP addresses aren't printed here because I'm too lazy to marshal them as strings, but
+	// we at least print the incoming SANs so it should be obvious what became IPs
+	cfg.Logger.Debug("created CSR",
+		zap.Strings("identifiers", sans),
+		zap.Strings("san_dns_names", csrTemplate.DNSNames),
+		zap.Strings("san_emails", csrTemplate.EmailAddresses),
+		zap.String("common_name", csrTemplate.Subject.CommonName),
+		zap.Int("extra_extensions", len(csrTemplate.ExtraExtensions)),
+	)
 
 	csrDER, err := x509.CreateCertificateRequest(rand.Reader, csrTemplate, privateKey)
 	if err != nil {
@@ -1244,8 +1265,10 @@ func (cfg *Config) managedCertNeedsRenewal(certRes CertificateResource, emitLogs
 		return 0, nil, true
 	}
 	var ari acme.RenewalInfo
-	if ariPtr, err := certRes.getARI(); err == nil && ariPtr != nil {
-		ari = *ariPtr
+	if !cfg.DisableARI {
+		if ariPtr, err := certRes.getARI(); err == nil && ariPtr != nil {
+			ari = *ariPtr
+		}
 	}
 	remaining := time.Until(expiresAt(certChain[0]))
 	return remaining, certChain[0], cfg.certNeedsRenewal(certChain[0], ari, emitLogs)

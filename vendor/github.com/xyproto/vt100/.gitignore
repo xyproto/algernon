@@ -1,25 +1,49 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Object files and cached files
+*.o
+*.a
 *.bak
-*.swp
+
+# Build directories
+bin/
+
+# Logs and temp files
+*.log
 *.tmp
-cmd/bg/bg
-cmd/bgc/bgc
-cmd/blink/blink
-cmd/box/box
-cmd/canvas/canvas
-cmd/color/color
-cmd/icegame/icegame
-cmd/image/image
-cmd/info/info
-cmd/key/key
-cmd/menu/menu
-cmd/move/move
-cmd/ok/ok
-cmd/resize/resize
-cmd/rune/rune
-cmd/shooter/shooter
-cmd/string/string
-cmd/waitkey/waitkey
-cmd/widget/widget
-cmd/writerune/writerune
+*.swp
+*.bak
+*.log
+.DS_Store
+
+# Ignore editor or IDE directories
+.idea/
+.vscode/
+*.iml
+
+# cmd directory: ignore everything except Go source files and documentation
+cmd/*/*
+!cmd/*/*.go
+!cmd/*/*.txt
+!cmd/*/*.md
+!cmd/*/*.rst
+!cmd/*/*.asciidoc
+!cmd/*/*.1*
+
+# images not in img/
+*.bmp
+*.gif
+*.jpeg
+*.jpg
+*.png
+*.webp
+!img/*
+
+# Orbiton include.txt file
 include.txt
-output.txt

@@ -8,6 +8,7 @@ type GenerateRequest struct {
 	Images  []string       `json:"images,omitempty"` // base64 encoded images
 	Stream  bool           `json:"stream,omitempty"`
 	Options RequestOptions `json:"options,omitempty"`
+	Suffix  string         `json:"suffix,omitempty"`
 }
 
 // GenerateResponse represents the response data from the generate API call
@@ -35,6 +36,7 @@ type GenerateChatRequest struct {
 	Stream   bool           `json:"stream"`
 	Tools    []Tool         `json:"tools,omitempty"`
 	Options  RequestOptions `json:"options,omitempty"`
+	Suffix   string         `json:"suffix,omitempty"`
 }
 
 // GenerateChatResponse represents the response data from the generate chat API call

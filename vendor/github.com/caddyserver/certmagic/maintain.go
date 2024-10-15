@@ -136,7 +136,7 @@ func (certCache *Cache) RenewManagedCertificates(ctx context.Context) error {
 		}
 
 		// ACME-specific: see if if ACME Renewal Info (ARI) window needs refreshing
-		if cert.ari.NeedsRefresh() {
+		if !cfg.DisableARI && cert.ari.NeedsRefresh() {
 			configs[cert.hash] = cfg
 			ariQueue = append(ariQueue, cert)
 		}
@@ -427,7 +427,7 @@ func (cfg *Config) storageHasNewerARI(ctx context.Context, cert Certificate) (bo
 	// or if the one in storage has a later RetryAfter (though I suppose
 	// it's not guaranteed, typically those will move forward in time)
 	if (!cert.ari.HasWindow() && storedCertData.RenewalInfo.HasWindow()) ||
-		storedCertData.RenewalInfo.RetryAfter.After(*cert.ari.RetryAfter) {
+		(cert.ari.RetryAfter == nil || storedCertData.RenewalInfo.RetryAfter.After(*cert.ari.RetryAfter)) {
 		return true, *storedCertData.RenewalInfo, nil
 	}
 	return false, acme.RenewalInfo{}, nil
@@ -459,6 +459,9 @@ func (cfg *Config) loadStoredACMECertificateMetadata(ctx context.Context, cert C
 // updated in the cache. The certificate with the updated ARI is returned. If true is
 // returned, the ARI window or selected time has changed, and the caller should check if
 // the cert needs to be renewed now, even if there is an error.
+//
+// This will always try to ARI without checking if it needs to be refreshed. Call
+// NeedsRefresh() on the RenewalInfo first, and only call this if that returns true.
 func (cfg *Config) updateARI(ctx context.Context, cert Certificate, logger *zap.Logger) (updatedCert Certificate, changed bool, err error) {
 	logger = logger.With(
 		zap.Strings("identifiers", cert.Names),
@@ -468,6 +471,17 @@ func (cfg *Config) updateARI(ctx context.Context, cert Certificate, logger *zap.
 
 	updatedCert = cert
 	oldARI := cert.ari
+
+	// synchronize ARI fetching; see #297
+	lockName := "ari_" + cert.ari.UniqueIdentifier
+	if err := acquireLock(ctx, cfg.Storage, lockName); err != nil {
+		return cert, false, fmt.Errorf("unable to obtain ARI lock: %v", err)
+	}
+	defer func() {
+		if err := releaseLock(ctx, cfg.Storage, lockName); err != nil {
+			logger.Error("unable to release ARI lock", zap.Error(err))
+		}
+	}()
 
 	// see if the stored value has been refreshed already by another instance
 	gotNewARI, newARI, err := cfg.storageHasNewerARI(ctx, cert)
@@ -615,11 +629,11 @@ func CleanStorage(ctx context.Context, storage Storage, opts CleanStorageOptions
 	opts.Logger = opts.Logger.With(zap.Any("storage", storage))
 
 	// storage cleaning should be globally exclusive
-	if err := storage.Lock(ctx, lockName); err != nil {
+	if err := acquireLock(ctx, storage, lockName); err != nil {
 		return fmt.Errorf("unable to acquire %s lock: %v", lockName, err)
 	}
 	defer func() {
-		if err := storage.Unlock(ctx, lockName); err != nil {
+		if err := releaseLock(ctx, storage, lockName); err != nil {
 			opts.Logger.Error("unable to release lock", zap.Error(err))
 			return
 		}
