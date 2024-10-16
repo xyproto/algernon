@@ -68,10 +68,10 @@ type UserState struct {
 	usernames         *simpleredis.Set            // A list of all usernames, for easy enumeration
 	unconfirmed       *simpleredis.Set            // A list of unconfirmed usernames, for easy enumeration
 	pool              *simpleredis.ConnectionPool // A connection pool for Redis
-	dbindex           int                         // Redis database index
 	cookieSecret      string                      // Secret for storing secure cookies
-	cookieTime        int64                       // How long a cookie should last, in seconds
 	passwordAlgorithm string                      // Password hashing algorithm ("sha256", "bcrypt" or "bcrypt+").
+	dbindex           int                         // Redis database index
+	cookieTime        int64                       // How long a cookie should last, in seconds
 }
 
 // NewUserStateSimple will create a new *UserState that can be used for
@@ -407,9 +407,7 @@ func (state *UserState) UsernameCookie(req *http.Request) (string, error) {
 // Store the given username in a cookie in the browser, if possible.
 // The user must exist.
 // There are two cookie flags (ref RFC6265: https://tools.ietf.org/html/rfc6265#section-5.2.5):
-// - secure is for only allowing cookies to be set over HTTPS
-// - httponly is for only allowing cookies for the same server
-func (state *UserState) setUsernameCookieWithFlags(w http.ResponseWriter, username string, secure, httponly bool) error {
+func (state *UserState) setUsernameCookieWithFlags(w http.ResponseWriter, username string) error {
 	if username == "" {
 		return ErrNoCookieEmptyUsername
 
@@ -431,9 +429,8 @@ func (state *UserState) setUsernameCookieWithFlags(w http.ResponseWriter, userna
  */
 func (state *UserState) SetUsernameCookie(w http.ResponseWriter, username string) error {
 	// These cookie flags are set (ref RFC6265)
-	// "secure" is set to false (only allow cookies to be set over HTTPS)
 	// "httponly" is set to true (only allow cookies being set/read from the same server)
-	return state.setUsernameCookieWithFlags(w, username, false, true)
+	return state.setUsernameCookieWithFlags(w, username)
 }
 
 /*SetUsernameCookieOnlyHTTPS tries to store the given username in a cookie in the browser.
@@ -445,9 +442,8 @@ func (state *UserState) SetUsernameCookie(w http.ResponseWriter, username string
  */
 func (state *UserState) SetUsernameCookieOnlyHTTPS(w http.ResponseWriter, username string) error {
 	// These cookie flags are set (ref RFC6265)
-	// "secure" is set to true (only allow cookies to be set over HTTPS)
 	// "httponly" is set to true (only allow cookies being set/read from the same server)
-	return state.setUsernameCookieWithFlags(w, username, true, true)
+	return state.setUsernameCookieWithFlags(w, username)
 }
 
 // AllUsernames retrieves a list of all usernames.
@@ -597,7 +593,7 @@ func (state *UserState) Username(req *http.Request) string {
 }
 
 // CookieTimeout gets how long a login cookie should last, in seconds.
-func (state *UserState) CookieTimeout(username string) int64 {
+func (state *UserState) CookieTimeout(_ string) int64 {
 	return state.cookieTime
 }
 

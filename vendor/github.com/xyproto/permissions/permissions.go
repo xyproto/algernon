@@ -9,18 +9,18 @@ import (
 )
 
 const (
-	// Version number. Stable API within major version numbers.
-	Version = 2.6
+	// VersionString is the current version. The API is stable within major versions.
+	VersionString = "1.0.0"
 )
 
 // Permissions is a structure that keeps track of the permissions for various path prefixes
 type Permissions struct {
 	state              *UserState
+	denied             http.HandlerFunc
 	adminPathPrefixes  []string
 	userPathPrefixes   []string
 	publicPathPrefixes []string
 	rootIsPublic       bool
-	denied             http.HandlerFunc
 }
 
 // New will initialize a Permissions struct with all the default settings.
@@ -60,6 +60,7 @@ func NewWithRedisConf2(dbindex int, hostPort string) (*Permissions, error) {
 func NewPermissions(state *UserState) *Permissions {
 	// default permissions
 	return &Permissions{state,
+		PermissionDenied,
 		[]string{"/admin"},         // admin path prefixes
 		[]string{"/repo", "/data"}, // user path prefixes
 		[]string{"/",
@@ -72,8 +73,7 @@ func NewPermissions(state *UserState) *Permissions {
 			"/favicon.ico",
 			"/robots.txt",
 			"/sitemap_index.xml"}, // public
-		true,
-		PermissionDenied}
+		true} // root ("/") is public?
 }
 
 // SetDenyFunction can be used for specifying a http.HandlerFunc that will be used when the permissions are denied.
@@ -128,25 +128,24 @@ func (perm *Permissions) SetPublicPath(pathPrefixes []string) {
 }
 
 // PermissionDenied is the default "permission denied" http handler.
-func PermissionDenied(w http.ResponseWriter, req *http.Request) {
+func PermissionDenied(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Permission denied.", http.StatusForbidden)
 }
 
 // Rejected checks if a given request should be rejected.
-func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
+func (perm *Permissions) Rejected(_ http.ResponseWriter, req *http.Request) bool {
 	path := req.URL.Path // the path of the url that the user wish to visit
 
-	// If it's not "/" and set to be public regardless of permissions
+	// If root is set to be public regardless of permissions and the path is "/", accept it
 	if perm.rootIsPublic && path == "/" {
-		return false
+		return false // accept
 	}
 
 	// Reject if it is an admin page and user does not have admin permissions
 	for _, prefix := range perm.adminPathPrefixes {
 		if strings.HasPrefix(path, prefix) {
 			if !perm.state.AdminRights(req) {
-				// Reject
-				return true
+				return true // reject
 			}
 		}
 	}
@@ -155,8 +154,7 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 	for _, prefix := range perm.userPathPrefixes {
 		if strings.HasPrefix(path, prefix) {
 			if !perm.state.UserRights(req) {
-				// Reject
-				return true
+				return true // reject
 			}
 		}
 	}
@@ -164,13 +162,12 @@ func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool
 	// Don't reject if it's a public page
 	for _, prefix := range perm.publicPathPrefixes {
 		if strings.HasPrefix(path, prefix) {
-			// Don't reject
-			return false
+			return false // accept
 		}
 	}
 
-	// Reject
-	return true
+	// Otherwise
+	return true // reject
 }
 
 // Middleware handler (compatible with Negroni)

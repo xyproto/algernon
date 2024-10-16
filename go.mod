@@ -21,7 +21,7 @@ require (
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.4.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/quic-go/quic-go v0.47.0
+	github.com/quic-go/quic-go v0.48.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
 	github.com/tylerb/graceful v1.2.15
@@ -38,7 +38,7 @@ require (
 	github.com/xyproto/ollamaclient/v2 v2.7.0
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
-	github.com/xyproto/permissions2/v2 v2.6.9
+	github.com/xyproto/permissions v1.0.0
 	github.com/xyproto/permissionsql/v2 v2.1.2
 	github.com/xyproto/pinterface v1.5.4
 	github.com/xyproto/pstore v1.3.2
@@ -108,7 +108,7 @@ require (
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
-	github.com/xyproto/vt100 v1.15.5 // indirect
+	github.com/xyproto/vt100 v1.16.3 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.3.11 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

@@ -32,13 +32,12 @@ func correctSha256(hash []byte, cookieSecret, username, password string) bool {
 	if len(hash) != len(comparisonHash) {
 		return false
 	}
-	// prevents timing attack
+	// helps prevent timing attacks
 	return subtle.ConstantTimeCompare(hash, comparisonHash) == 1
 }
 
 // Check if a given password is correct, for a given bcrypt hash
 func correctBcrypt(hash []byte, password string) bool {
-	// prevents timing attack
 	return bcrypt.CompareHashAndPassword(hash, []byte(password)) == nil
 }
 

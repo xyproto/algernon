@@ -245,7 +245,7 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.5.1
 ## explicit; go 1.22
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.47.0
+# github.com/quic-go/quic-go v0.48.0
 ## explicit; go 1.22
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -356,9 +356,9 @@ github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt/v2 v2.6.3
 ## explicit; go 1.17
 github.com/xyproto/permissionbolt/v2
-# github.com/xyproto/permissions2/v2 v2.6.9
-## explicit; go 1.17
-github.com/xyproto/permissions2/v2
+# github.com/xyproto/permissions v1.0.0
+## explicit; go 1.21
+github.com/xyproto/permissions
 # github.com/xyproto/permissionsql/v2 v2.1.2
 ## explicit; go 1.21
 github.com/xyproto/permissionsql/v2
@@ -410,7 +410,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.0
 ## explicit; go 1.23.1
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.15.5
+# github.com/xyproto/vt100 v1.16.3
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
