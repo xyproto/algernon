@@ -7,7 +7,7 @@ import (
 
 	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt/v2"
-	permissions "github.com/xyproto/permissions2/v2"
+	"github.com/xyproto/permissions"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simpleredis/v2"
