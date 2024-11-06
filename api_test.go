@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/xyproto/algernon/engine"
@@ -47,8 +48,8 @@ func TestAPI(t *testing.T) {
 	if err := New("simpleredis", simpleredis.Version, 2.6).Check(); err != nil {
 		t.Error(err)
 	}
-	if err := New("permissions2", permissions.Version, 2.6).Check(); err != nil {
-		t.Error(err)
+	if !strings.HasPrefix(permissions.VersionString, "1.") {
+		t.Error(fmt.Errorf("permissions is %q, requires %q", permissions.VersionString, "1.*"))
 	}
 	if err := New("pinterface", pinterface.Version, 5.3).Check(); err != nil {
 		t.Error(err)
