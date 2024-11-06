@@ -95,9 +95,10 @@ github.com/felixge/fgtrace/internal
 # github.com/flosch/pongo2/v6 v6.0.0
 ## explicit; go 1.18
 github.com/flosch/pongo2/v6
-# github.com/fsnotify/fsnotify v1.7.0
+# github.com/fsnotify/fsnotify v1.8.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
+github.com/fsnotify/fsnotify/internal
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
@@ -118,7 +119,7 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
-# github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
+# github.com/gomarkdown/markdown v0.0.0-20241105142532-d03b89096d81
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -127,7 +128,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20241009165004-a3522334989c
+# github.com/google/pprof v0.0.0-20241101162523-b92577c0c142
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -197,8 +198,8 @@ github.com/natefinch/pie
 # github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
 ## explicit
 github.com/nathan-fiscaletti/consolesize-go
-# github.com/onsi/ginkgo/v2 v2.20.2
-## explicit; go 1.22
+# github.com/onsi/ginkgo/v2 v2.21.0
+## explicit; go 1.22.0
 github.com/onsi/ginkgo/v2/config
 github.com/onsi/ginkgo/v2/formatter
 github.com/onsi/ginkgo/v2/ginkgo
@@ -245,7 +246,7 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.5.1
 ## explicit; go 1.22
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.48.0
+# github.com/quic-go/quic-go v0.48.1
 ## explicit; go 1.22
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -289,8 +290,8 @@ github.com/tylerb/graceful
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.56.0
-## explicit; go 1.20
+# github.com/valyala/fasthttp v1.57.0
+## explicit; go 1.21
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttpadaptor
 github.com/valyala/fasthttp/fasthttputil
@@ -326,7 +327,7 @@ github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v1.2.0
 ## explicit; go 1.12
 github.com/xyproto/datablock
-# github.com/xyproto/env/v2 v2.5.0
+# github.com/xyproto/env/v2 v2.5.2
 ## explicit; go 1.19
 github.com/xyproto/env/v2
 # github.com/xyproto/files v1.7.0
@@ -401,7 +402,7 @@ github.com/xyproto/splash
 # github.com/xyproto/symwalk v1.1.1
 ## explicit; go 1.9
 github.com/xyproto/symwalk
-# github.com/xyproto/textoutput v1.16.6
+# github.com/xyproto/textoutput v1.17.1
 ## explicit; go 1.22.0
 github.com/xyproto/textoutput
 # github.com/xyproto/tinysvg v1.1.1
@@ -410,7 +411,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.0
 ## explicit; go 1.23.1
 github.com/xyproto/unzip
-# github.com/xyproto/vt100 v1.16.3
+# github.com/xyproto/vt100 v1.16.11
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/yosssi/gcss v0.1.0
@@ -434,8 +435,8 @@ go.etcd.io/bbolt
 # go.uber.org/atomic v1.11.0
 ## explicit; go 1.18
 go.uber.org/atomic
-# go.uber.org/mock v0.4.0
-## explicit; go 1.20
+# go.uber.org/mock v0.5.0
+## explicit; go 1.22
 go.uber.org/mock/mockgen
 go.uber.org/mock/mockgen/model
 # go.uber.org/multierr v1.11.0

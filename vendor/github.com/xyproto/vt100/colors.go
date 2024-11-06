@@ -1395,20 +1395,35 @@ func (ac AttributeColor) Error(text string) {
 	fmt.Fprintln(os.Stderr, ac.Get(text))
 }
 
+// Combine the unique bytes from ac and other
 func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
-	for _, a1 := range ac {
-		a2has := false
-		for _, a2 := range other {
-			if a1 == a2 {
-				a2has = true
-				break
+	lac := len(ac)
+	if lac == 0 {
+		return other
+	}
+	lot := len(other)
+	if lot == 0 {
+		return ac
+	} else if lot == 1 && lac == 1 {
+		return AttributeColor([]byte{ac[0], other[0]})
+	}
+	counter := 0
+	combined := make(AttributeColor, lac+lot)
+	for i := 0; i < lac; i++ {
+		combined[counter] = ac[i]
+		counter++
+	}
+OUT:
+	for i := 0; i < lot; i++ {
+		for i2 := 0; i2 < lac; i2++ {
+			if ac[i2] == other[i] {
+				continue OUT
 			}
 		}
-		if !a2has {
-			other = append(other, a1)
-		}
+		combined[counter] = other[i]
+		counter++
 	}
-	return AttributeColor(other)
+	return AttributeColor(combined[:counter])
 }
 
 // Return a new AttributeColor that has "Bright" added to the list of attributes

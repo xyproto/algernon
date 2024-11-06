@@ -2,6 +2,7 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -60,7 +61,16 @@ func Unload() {
 // Set calls os.Setenv.
 // If caching is enabled, the value in the environment map is also set and there
 // is no need to call Load() to re-read the environment variables from the system.
-func Set(name, value string) error {
+func Set(name string, values ...string) error {
+	var value string
+	switch len(values) {
+	case 0:
+		value = "1" // use "1" as the environment var value if none is given
+	case 1:
+		value = values[0] // use the given value if only one is given
+	default:
+		return fmt.Errorf("can only set %s to a maximum of 1 value", name)
+	}
 	if useCaching {
 		mut.RLock()
 		if environment == nil {
@@ -70,12 +80,9 @@ func Set(name, value string) error {
 			mut.RUnlock()
 		}
 		mut.Lock()
-		if value == "" {
-			delete(environment, name)
-		} else {
-			environment[name] = value
-		}
+		environment[name] = value
 		mut.Unlock()
+
 	}
 	return os.Setenv(name, value)
 }
@@ -83,5 +90,17 @@ func Set(name, value string) error {
 // Unset will clear an environment variable by calling os.Setenv(name, "").
 // The cache entry will also be cleared if useCaching is true.
 func Unset(name string) error {
-	return Set(name, "")
+	if useCaching {
+		mut.RLock()
+		if environment == nil {
+			mut.RUnlock()
+			Load()
+		} else {
+			mut.RUnlock()
+		}
+		mut.Lock()
+		delete(environment, name)
+		mut.Unlock()
+	}
+	return os.Setenv(name, "")
 }

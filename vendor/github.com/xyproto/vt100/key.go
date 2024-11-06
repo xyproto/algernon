@@ -100,11 +100,12 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 	tty.SetTimeout(tty.timeout)
 	// Read bytes from the terminal
 	numRead, err = tty.t.Read(bytes)
-	// Restore the terminal settings
-	tty.Restore()
-	tty.t.Flush()
 
 	if err != nil {
+		// Restore the terminal settings
+		tty.Restore()
+		// Clear the key buffer
+		tty.t.Flush()
 		return
 	}
 
@@ -116,6 +117,10 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
 		if code, found := keyCodeLookup[seq]; found {
 			keyCode = code
+			// Restore the terminal settings
+			tty.Restore()
+			// Clear the key buffer
+			tty.t.Flush()
 			return
 		}
 		// Not found, check if it's a printable character
@@ -127,12 +132,20 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
 		if code, found := pageNavLookup[seq]; found {
 			keyCode = code
+			// Restore the terminal settings
+			tty.Restore()
+			// Clear the key buffer
+			tty.t.Flush()
 			return
 		}
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
 		if code, found := ctrlInsertLookup[seq]; found {
 			keyCode = code
+			// Restore the terminal settings
+			tty.Restore()
+			// Clear the key buffer
+			tty.t.Flush()
 			return
 		}
 	default:
@@ -143,6 +156,10 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		}
 	}
 
+	// Restore the terminal settings
+	tty.Restore()
+	// Clear the key buffer
+	tty.t.Flush()
 	return
 }
 
@@ -171,20 +188,19 @@ func (tty *TTY) Key() int {
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
 	var numRead int
-
 	// Set the terminal into raw mode with a timeout
 	tty.RawMode()
 	tty.SetTimeout(0)
 	// Read bytes from the terminal
 	numRead, err := tty.t.Read(bytes)
-	// Restore the terminal settings
-	tty.Restore()
-	tty.t.Flush()
-
+	defer func() {
+		// Restore the terminal settings
+		tty.Restore()
+		tty.t.Flush()
+	}()
 	if err != nil || numRead == 0 {
 		return ""
 	}
-
 	switch {
 	case numRead == 1:
 		r := rune(bytes[0])
@@ -210,11 +226,20 @@ func (tty *TTY) String() string {
 		if str, found := ctrlInsertStringLookup[seq]; found {
 			return str
 		}
-		return string(bytes[:numRead])
+		fallthrough
 	default:
-		// Attempt to interpret as UTF-8 string
-		return string(bytes[:numRead])
+		bytesLeftToRead, err := tty.t.Available()
+		if err == nil { // success
+			bytes2 := make([]byte, bytesLeftToRead)
+			numRead2, err := tty.t.Read(bytes2)
+			if err != nil { // error
+				// Just read the first read bytes
+				return string(bytes[:numRead])
+			}
+			return string(append(bytes[:numRead], bytes2[:numRead2]...))
+		}
 	}
+	return string(bytes[:numRead])
 }
 
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.

@@ -124,6 +124,8 @@ type Parser struct {
 	// collect headings where we auto-generated id so that we can
 	// ensure they are unique at the end
 	allHeadingsWithAutoID []*ast.Heading
+
+	didParse bool
 }
 
 // New creates a markdown parser with CommonExtensions.
@@ -292,7 +294,14 @@ type Reference struct {
 //
 // You can then convert AST to html using html.Renderer, to some other format
 // using a custom renderer or transform the tree.
+//
+// Parser is not reusable. Create a new Parser for each Parse() call.
 func (p *Parser) Parse(input []byte) ast.Node {
+	if p.didParse {
+		panic("Parser is not reusable. Must create new Parser for each Parse() call.")
+	}
+	p.didParse = true
+
 	// the code only works with Unix CR newlines so to make life easy for
 	// callers normalize newlines
 	input = NormalizeNewlines(input)
