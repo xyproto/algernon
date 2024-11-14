@@ -308,7 +308,7 @@ Using AI / LLMs / Ollama
 
 * The `ollama` server must be running locally, or a `host:port` must be set in the `OLLAMA_HOST` environment variable.
 
-Example use, using the default `tinyllama` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
+For example, using the default `tinyllama` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
 
 ```
 lua> ollama()
@@ -388,7 +388,7 @@ The experimental `prompt` format is very simple:
 * The first line is the `content-type`.
 * The second line is the Ollama model, such as `tinyllama:latest` or just `tinyllama`.
 * The third line is blank.
-* The rest of the lines is the prompt that will be passed to the large language model.
+* The rest of the lines are the prompt that will be passed to the large language model.
 
 Note that the Ollama server must be fast enough to reply within 10 seconds for this to work!
 `tinyllama` or `gemma` should be more than fast enough with a good GPU or on an M1/M2/M3 processor.
