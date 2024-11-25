@@ -91,7 +91,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20240907083015-47bbca3bc9b0 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20241125112247-06c6e400bdf6 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -103,7 +103,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xyproto/binary v1.3.3 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
-	github.com/xyproto/cookie/v2 v2.2.5 // indirect
+	github.com/xyproto/cookie/v2 v2.2.6 // indirect
 	github.com/xyproto/randomstring v1.1.0 // indirect
 	github.com/xyproto/simplehstore v1.8.2 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
