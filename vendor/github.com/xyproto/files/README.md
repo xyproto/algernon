@@ -28,10 +28,13 @@ func Touch(filename string) error
 func ExistsCached(path string) bool
 func ClearCache()
 func RemoveFile(path string) error
+func DirectoryWithFiles(path string) (bool, error)
+func IsExecutable(path string) bool
+func IsExecutableCached(path string) bool
 ```
 
 ## General info
 
-* Version: 1.7.0
+* Version: 1.9.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &gt;xyproto@archlinux.org&lt;

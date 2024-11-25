@@ -17,9 +17,10 @@ import (
 
 // cache for storing file existence results
 var (
-	cacheMutex  sync.RWMutex
-	existsCache = make(map[string]bool)
-	whichCache  = make(map[string]string)
+	cacheMutex      sync.RWMutex
+	existsCache     = make(map[string]bool)
+	whichCache      = make(map[string]string)
+	executableCache = make(map[string]bool)
 )
 
 // Exists checks if the given path exists
@@ -232,11 +233,13 @@ func ExistsCached(path string) bool {
 	return exists
 }
 
-// ClearCache clears the cache used by ExistsCached.
+// ClearCache clears all cache
 func ClearCache() {
 	cacheMutex.Lock()
 	defer cacheMutex.Unlock()
 	existsCache = make(map[string]bool)
+	executableCache = make(map[string]bool)
+	whichCache = make(map[string]string)
 }
 
 // RemoveFile deletes a file, but it only returns an error if the file both exists and also could not be removed
@@ -246,4 +249,49 @@ func RemoveFile(path string) error {
 		return err // the file both exists and could not be removed
 	}
 	return nil // the file has been removed, or did not exist in the first place
+}
+
+// DirectoryWithFiles checks if the given path is a directory and contains at least one file
+func DirectoryWithFiles(path string) (bool, error) {
+	if fileInfo, err := os.Stat(path); err != nil {
+		return false, err
+	} else if !fileInfo.IsDir() {
+		return false, fmt.Errorf("path is not a directory")
+	}
+	if entries, err := os.ReadDir(path); err != nil {
+		return false, err
+	} else {
+		for _, entry := range entries {
+			if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+// IsExecutable checks if the given path exists and is executable
+func IsExecutable(path string) bool {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	mode := fi.Mode()
+	return mode.IsRegular() && mode&0111 != 0
+}
+
+// IsExecutableCached checks if the given path exists and is an executable file, with cache support.
+// Assumes that the filesystem permissions have not changed since the last check.
+func IsExecutableCached(path string) bool {
+	cacheMutex.RLock()
+	cachedResult, cached := executableCache[path]
+	cacheMutex.RUnlock()
+	if cached {
+		return cachedResult
+	}
+	isExecutable := IsExecutable(path)
+	cacheMutex.Lock()
+	executableCache[path] = isExecutable
+	cacheMutex.Unlock()
+	return isExecutable
 }
