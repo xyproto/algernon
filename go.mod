@@ -21,7 +21,7 @@ require (
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.4.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/quic-go/quic-go v0.48.1
+	github.com/quic-go/quic-go v0.48.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
 	github.com/tylerb/graceful v1.2.15
@@ -47,7 +47,7 @@ require (
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simplejwt v1.2.0
-	github.com/xyproto/simpleredis/v2 v2.6.5
+	github.com/xyproto/simpleredis/v2 v2.8.1
 	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
 	github.com/xyproto/textoutput v1.17.1
 	github.com/xyproto/tinysvg v1.1.1
@@ -72,7 +72,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.9.2 // indirect
-	github.com/google/pprof v0.0.0-20241122213907-cbe949e5a41b // indirect
+	github.com/google/pprof v0.0.0-20241128161848-dc51965c6481 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
@@ -91,7 +91,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20241125112247-06c6e400bdf6 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20241202114859-018ab99b8038 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -104,8 +104,8 @@ require (
 	github.com/xyproto/binary v1.3.3 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/cookie/v2 v2.2.6 // indirect
-	github.com/xyproto/randomstring v1.1.0 // indirect
-	github.com/xyproto/simplehstore v1.8.2 // indirect
+	github.com/xyproto/randomstring v1.2.0 // indirect
+	github.com/xyproto/simplehstore v1.8.3 // indirect
 	github.com/xyproto/simplemaria v1.3.4 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/xyproto/vt100 v1.16.11 // indirect

@@ -45,7 +45,7 @@ func TestAPI(t *testing.T) {
 	if err := New("permissionbolt", permissionbolt.Version, 2.6).Check(); err != nil {
 		t.Error(err)
 	}
-	if err := New("simpleredis", simpleredis.Version, 2.6).Check(); err != nil {
+	if err := New("simpleredis", simpleredis.Version, 2.8).Check(); err != nil {
 		t.Error(err)
 	}
 	if !strings.HasPrefix(permissions.VersionString, "1.") {

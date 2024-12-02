@@ -21,5 +21,5 @@ Used by [cookie](https://github.com/xyproto/cookie) and [alienpdf](https://githu
 
 ### General info
 
-* Version: 1.1.0
+* Version: 1.2.0
 * License: BSD-3

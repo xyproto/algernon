@@ -156,6 +156,14 @@ func String(length int) string {
 	return string(b)
 }
 
+// StringNoAlloc generates a random string in the given byte slice,
+// but does not allocate memory with "make".
+func StringNoAlloc(placeholder []byte) {
+	for i := 0; i < len(placeholder); i++ {
+		(placeholder)[i] = byte(random.Int63() & 0xff)
+	}
+}
+
 // EnglishFrequencyString returns a random string that uses the letter frequency of English,
 // ref: http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
 func EnglishFrequencyString(length int) string {
@@ -223,6 +231,15 @@ func CookieFriendlyString(length int) string {
 		b[i] = allowed[random.Intn(len(allowed))]
 	}
 	return string(b)
+}
+
+// CookieFriendlyStringNoAlloc generates a random, but cookie-friendly, string.
+// The bytes of the string are stored in the given byte slice.
+func CookieFriendlyStringNoAlloc(placeholder []byte) {
+	const allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	for i := 0; i < len(placeholder); i++ {
+		(placeholder)[i] = allowed[random.Intn(len(allowed))]
+	}
 }
 
 // CookieFriendlyBytes generates a random, but cookie-friendly, byte slice of the given length.
