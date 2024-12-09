@@ -66,13 +66,19 @@ func MessagePageBytes(title string, body []byte, theme string) []byte {
 // SimpleHTMLPage provides a quick way to build a HTML page
 func SimpleHTMLPage(title, headline, inhead, body []byte) []byte {
 	var buf bytes.Buffer
-	buf.WriteString("<!doctype html><html><head><title>")
-	buf.Write(title)
-	buf.WriteString("</title>")
+	buf.WriteString("<!doctype html><html>")
+	if len(title) > 0 {
+		buf.WriteString("<head><title>")
+		buf.Write(title)
+		buf.WriteString("</title></head>")
+	}
 	buf.Write(inhead)
-	buf.WriteString("</head><body><h1>")
-	buf.Write(headline)
-	buf.WriteString("</h1>")
+	buf.WriteString("<body>")
+	if len(headline) > 0 {
+		buf.WriteString("<h1>")
+		buf.Write(headline)
+		buf.WriteString("</h1>")
+	}
 	buf.Write(body)
 	return buf.Bytes()
 }
