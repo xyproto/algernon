@@ -7,6 +7,8 @@ Middleware for keeping track of users, login states and permissions.
 Uses [PostgreSQL](https://postgresql.org) for the database. For using [Redis](http://redis.io) as a backend instead, look into [permissions2](https://github.com/xyproto/permissions2).
 There is also a [BoltDB](https://github.com/xyproto/permissionbolt) and [MariaDB/MySQL](https://github.com/xyproto/permissionsql) backend. They are interchangeable.
 
+Uses [simplehstore](https://github.com/xyproto/simplehstore).
+
 Online API Documentation
 ------------------------
 
@@ -22,8 +24,7 @@ Features and limitations
 ------------------------
 
 * Uses secure cookies and stores user information in a PostgreSQL database.
-* Suitable for running a local PostgreSQL server, registering/confirming users and managing public/user/admin pages.
-* Also supports connecting to remote PostgreSQL servers.
+* Suitable for connecting to a local or remote PostgreSQL server, registering/confirming users and managing public/user/admin pages.
 * Supports registration and confirmation via generated confirmation codes.
 * Tries to keep things simple.
 * Only supports "public", "user" and "admin" permissions out of the box, but offers functionality for implementing more fine grained permissions, if so desired.
@@ -671,6 +672,6 @@ func main() {
 General information
 -------------------
 
-* Version: 1.3.2 (API version 3.2)
+* Version: 1.3.3 (API version 3.2)
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -14,7 +14,7 @@ require (
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomarkdown/markdown v0.0.0-20241105142532-d03b89096d81
+	github.com/gomarkdown/markdown v0.0.0-20241205020045-f7e15b2f3e62
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -25,7 +25,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
 	github.com/tylerb/graceful v1.2.15
-	github.com/valyala/fasthttp v1.57.0
+	github.com/valyala/fasthttp v1.58.0
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
@@ -41,7 +41,7 @@ require (
 	github.com/xyproto/permissions v1.0.0
 	github.com/xyproto/permissionsql/v2 v2.1.2
 	github.com/xyproto/pinterface v1.5.4
-	github.com/xyproto/pstore v1.3.2
+	github.com/xyproto/pstore v1.3.3
 	github.com/xyproto/recwatch v1.1.0
 	github.com/xyproto/sheepcounter v1.6.1
 	github.com/xyproto/simplebolt v1.5.2
@@ -53,7 +53,7 @@ require (
 	github.com/xyproto/tinysvg v1.1.1
 	github.com/xyproto/unzip v1.0.0
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.31.0
+	golang.org/x/net v0.32.0
 )
 
 require (
@@ -72,7 +72,7 @@ require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.9.2 // indirect
-	github.com/google/pprof v0.0.0-20241128161848-dc51965c6481 // indirect
+	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
@@ -91,7 +91,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20241202114859-018ab99b8038 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20241210092621-3adc71cc71bd // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -115,14 +115,14 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
+	golang.org/x/crypto v0.30.0 // indirect
+	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
-	golang.org/x/tools v0.27.0 // indirect
+	golang.org/x/tools v0.28.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

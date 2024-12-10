@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xyproto/cookie/v2"          // Functions related to cookies
-	"github.com/xyproto/env/v2"             // Fetch values from environment variables and support defaults
+	"github.com/xyproto/cookie/v2"       // Functions related to cookies
+	"github.com/xyproto/env/v2"          // Fetch values from environment variables and support defaults
 	"github.com/xyproto/pinterface"      // Database interfaces
 	db "github.com/xyproto/simplehstore" // PostgreSQL database wrapper
 )
@@ -188,20 +188,20 @@ func (state *UserState) HasEmail(email string) (string, error) {
 	if email == "" {
 		return "", ErrNotFound
 	}
-	usernames, err := state.AllUsernames()
+
+	usernames, err := state.users.AllWhere("email", email)
 	if err != nil {
 		return "", err
 	}
-	for _, username := range usernames {
-		if user_email, err := state.Email(username); err != nil {
-			return "", err
-		} else {
-			if user_email == email {
-				return username, nil
-			}
-		}
+
+	switch len(usernames) {
+	case 0:
+		return "", ErrNotFound
+	case 1:
+		return usernames[0], nil
+	default:
+		return usernames[0], errors.New("multiple usernames has the same e-mail address")
 	}
-	return "", ErrNotFound
 }
 
 // BooleanField returns a boolean value for the given username and fieldname.
