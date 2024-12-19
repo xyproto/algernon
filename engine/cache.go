@@ -61,3 +61,11 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 		return 1                // number of results
 	}))
 }
+
+// ClearCache tries to clear the Ollama client cache and the disk cache
+func (ac *Config) ClearCache() {
+	ollamaclient.ClearCache()
+	if ac.cache != nil {
+		ac.cache.Clear()
+	}
+}
