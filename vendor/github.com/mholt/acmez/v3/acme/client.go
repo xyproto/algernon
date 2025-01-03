@@ -29,11 +29,10 @@ package acme
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // Client facilitates ACME client operations as defined by the spec.
@@ -71,7 +70,7 @@ type Client struct {
 	PollTimeout time.Duration
 
 	// An optional logger. Default: no logs
-	Logger *zap.Logger
+	Logger *slog.Logger
 
 	mu     sync.Mutex // protects all unexported fields
 	dir    Directory

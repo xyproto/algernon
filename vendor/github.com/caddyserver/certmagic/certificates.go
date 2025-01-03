@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/acmez/v2/acme"
+	"github.com/mholt/acmez/v3/acme"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ocsp"
 )
@@ -186,6 +186,14 @@ func (cert Certificate) Expired() bool {
 		return false
 	}
 	return time.Now().After(expiresAt(cert.Leaf))
+}
+
+// Lifetime returns the duration of the certificate's validity.
+func (cert Certificate) Lifetime() time.Duration {
+	if cert.Leaf == nil || cert.Leaf.NotAfter.IsZero() {
+		return 0
+	}
+	return expiresAt(cert.Leaf).Sub(cert.Leaf.NotBefore)
 }
 
 // currentlyInRenewalWindow returns true if the current time is within

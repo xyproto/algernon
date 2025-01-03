@@ -16,8 +16,7 @@ package acme
 
 import (
 	"fmt"
-
-	"go.uber.org/zap/zapcore"
+	"log/slog"
 )
 
 // Problem carries the details of an error from HTTP APIs as
@@ -92,15 +91,14 @@ func (p Problem) Error() string {
 	return s
 }
 
-// MarshalLogObject satisfies the zapcore.ObjectMarshaler interface.
-// This allows problems to be serialized by the zap logger.
-func (p Problem) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-	enc.AddString("type", p.Type)
-	enc.AddString("title", p.Title)
-	enc.AddString("detail", p.Detail)
-	enc.AddString("instance", p.Instance)
-	enc.AddArray("subproblems", loggableSubproblems(p.Subproblems))
-	return nil
+func (p Problem) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("type", p.Type),
+		slog.String("title", p.Title),
+		slog.String("detail", p.Detail),
+		slog.String("instance", p.Instance),
+		slog.Any("subproblems", p.Subproblems),
+	)
 }
 
 // Subproblem describes a more specific error in a problem according to
@@ -115,24 +113,11 @@ type Subproblem struct {
 	Identifier Identifier `json:"identifier,omitempty"`
 }
 
-// MarshalLogObject satisfies the zapcore.ObjectMarshaler interface.
-// This allows subproblems to be serialized by the zap logger.
-func (sp Subproblem) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-	enc.AddString("identifier_type", sp.Identifier.Type)
-	enc.AddString("identifier", sp.Identifier.Value)
-	enc.AddObject("subproblem", sp.Problem)
-	return nil
-}
-
-type loggableSubproblems []Subproblem
-
-// MarshalLogArray satisfies the zapcore.ArrayMarshaler interface.
-// This allows a list of subproblems to be serialized by the zap logger.
-func (ls loggableSubproblems) MarshalLogArray(enc zapcore.ArrayEncoder) error {
-	for _, sp := range ls {
-		enc.AppendObject(sp)
-	}
-	return nil
+func (sp Subproblem) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("identifier_type", sp.Identifier.Type),
+		slog.String("identifier", sp.Identifier.Value),
+		slog.Any("subproblem", sp.Problem))
 }
 
 // Standard token values for the "type" field of problems, as defined

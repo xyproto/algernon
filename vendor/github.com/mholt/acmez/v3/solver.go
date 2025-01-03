@@ -17,7 +17,7 @@ package acmez
 import (
 	"context"
 
-	"github.com/mholt/acmez/v2/acme"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 // Solver is a type that can solve ACME challenges. All

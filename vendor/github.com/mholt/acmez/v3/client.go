@@ -36,13 +36,13 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log/slog"
 	weakrand "math/rand"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/mholt/acmez/v2/acme"
-	"go.uber.org/zap"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 // Client is a high-level API for ACME operations. It wraps
@@ -147,13 +147,13 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 			if c.Logger != nil {
 				l := c.Logger
 				if haveAuthz {
-					l = l.With(zap.String("identifier", authz.IdentifierValue()))
+					l = l.With(slog.String("identifier", authz.IdentifierValue()))
 				}
 				l.Error("validating authorization",
-					zap.Object("problem", problem),
-					zap.String("order", order.Location),
-					zap.Int("attempt", attempt),
-					zap.Int("max_attempts", maxAttempts))
+					slog.Any("problem", problem),
+					slog.String("order", order.Location),
+					slog.Int("attempt", attempt),
+					slog.Int("max_attempts", maxAttempts))
 			}
 			errStr := "solving challenge"
 			if haveAuthz {
@@ -170,7 +170,7 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 	}
 
 	if c.Logger != nil {
-		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
+		c.Logger.Info("validations succeeded; finalizing order", slog.String("order", order.Location))
 	}
 
 	// get the CSR
@@ -205,8 +205,8 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 			c.Logger.Info("no certificate chains offered by server")
 		} else {
 			c.Logger.Info("successfully downloaded available certificate chains",
-				zap.Int("count", len(certChains)),
-				zap.String("first_url", certChains[0].URL))
+				slog.Int("count", len(certChains)),
+				slog.String("first_url", certChains[0].URL))
 		}
 	}
 
@@ -316,9 +316,9 @@ func (c *Client) solveChallenges(ctx context.Context, account acme.Account, orde
 			if err := authz.currentSolver.CleanUp(ctx, authz.currentChallenge); err != nil {
 				if c.Logger != nil {
 					c.Logger.Error("cleaning up solver",
-						zap.String("identifier", authz.IdentifierValue()),
-						zap.String("challenge_type", authz.currentChallenge.Type),
-						zap.Error(err))
+						slog.String("identifier", authz.IdentifierValue()),
+						slog.String("challenge_type", authz.currentChallenge.Type),
+						slog.Any("error", err))
 				}
 			}
 		}
@@ -338,9 +338,9 @@ func (c *Client) solveChallenges(ctx context.Context, account acme.Account, orde
 			if err != nil {
 				if c.Logger != nil {
 					c.Logger.Error("deactivating authorization",
-						zap.String("identifier", authz.IdentifierValue()),
-						zap.String("authz", authz.Location),
-						zap.Error(err))
+						slog.String("identifier", authz.IdentifierValue()),
+						slog.String("authz", authz.Location),
+						slog.Any("error", err))
 				}
 			}
 			authz.Authorization = updatedAuthz
@@ -388,9 +388,9 @@ func (c *Client) presentForNextChallenge(ctx context.Context, authz *authzState)
 	if authz.Status != acme.StatusPending {
 		if authz.Status == acme.StatusValid && c.Logger != nil {
 			c.Logger.Info("authorization already valid",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("authz_url", authz.Location),
-				zap.Time("expires", authz.Expires))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("authz_url", authz.Location),
+				slog.Time("expires", authz.Expires))
 		}
 		return nil
 	}
@@ -402,9 +402,9 @@ func (c *Client) presentForNextChallenge(ctx context.Context, authz *authzState)
 
 	if c.Logger != nil {
 		c.Logger.Info("trying to solve challenge",
-			zap.String("identifier", authz.IdentifierValue()),
-			zap.String("challenge_type", authz.currentChallenge.Type),
-			zap.String("ca", c.Directory))
+			slog.String("identifier", authz.IdentifierValue()),
+			slog.String("challenge_type", authz.currentChallenge.Type),
+			slog.String("ca", c.Directory))
 	}
 
 	err = authz.currentSolver.Present(ctx, authz.currentChallenge)
@@ -419,8 +419,8 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 	if authz.Status != acme.StatusPending {
 		if c.Logger != nil {
 			c.Logger.Debug("skipping challenge initiation because authorization is not pending",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("authz_status", authz.Status))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("authz_status", authz.Status))
 		}
 		return nil
 	}
@@ -433,14 +433,14 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 	if waiter, ok := authz.currentSolver.(Waiter); ok {
 		if c.Logger != nil {
 			c.Logger.Debug("waiting for solver before continuing",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("challenge_type", authz.currentChallenge.Type))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("challenge_type", authz.currentChallenge.Type))
 		}
 		err := waiter.Wait(ctx, authz.currentChallenge)
 		if c.Logger != nil {
 			c.Logger.Debug("done waiting for solver",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("challenge_type", authz.currentChallenge.Type))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("challenge_type", authz.currentChallenge.Type))
 		}
 		if err != nil {
 			return fmt.Errorf("waiting for solver %T to be ready: %w", authz.currentSolver, err)
@@ -452,14 +452,14 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 	if payloader, ok := authz.currentSolver.(Payloader); ok {
 		if c.Logger != nil {
 			c.Logger.Debug("getting payload from solver before continuing",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("challenge_type", authz.currentChallenge.Type))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("challenge_type", authz.currentChallenge.Type))
 		}
 		p, err := payloader.Payload(ctx, authz.currentChallenge)
 		if c.Logger != nil {
 			c.Logger.Debug("done getting payload from solver",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("challenge_type", authz.currentChallenge.Type))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("challenge_type", authz.currentChallenge.Type))
 		}
 		if err != nil {
 			return fmt.Errorf("getting payload from solver %T failed: %w", authz.currentSolver, err)
@@ -476,8 +476,8 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 
 	if c.Logger != nil {
 		c.Logger.Debug("challenge accepted",
-			zap.String("identifier", authz.IdentifierValue()),
-			zap.String("challenge_type", authz.currentChallenge.Type))
+			slog.String("identifier", authz.IdentifierValue()),
+			slog.String("challenge_type", authz.currentChallenge.Type))
 	}
 
 	return nil
@@ -503,7 +503,7 @@ func (c *Client) nextChallenge(authz *authzState) error {
 				return nil
 			}
 			if c.Logger != nil {
-				c.Logger.Debug("no solver configured", zap.String("challenge_type", remainingChal.Type))
+				c.Logger.Debug("no solver configured", slog.String("challenge_type", remainingChal.Type))
 			}
 			break
 		}
@@ -542,9 +542,9 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 		cleanupErr := authz.currentSolver.CleanUp(ctx, authz.currentChallenge)
 		if cleanupErr != nil && c.Logger != nil {
 			c.Logger.Error("cleaning up solver",
-				zap.String("identifier", authz.IdentifierValue()),
-				zap.String("challenge_type", authz.currentChallenge.Type),
-				zap.Error(cleanupErr))
+				slog.String("identifier", authz.IdentifierValue()),
+				slog.String("challenge_type", authz.currentChallenge.Type),
+				slog.Any("error", cleanupErr))
 		}
 		authz.currentSolver = nil // avoid cleaning it up again later
 	}
@@ -555,9 +555,9 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 		if errors.As(err, &problem) {
 			if c.Logger != nil {
 				c.Logger.Error("challenge failed",
-					zap.String("identifier", authz.IdentifierValue()),
-					zap.String("challenge_type", authz.currentChallenge.Type),
-					zap.Object("problem", problem))
+					slog.String("identifier", authz.IdentifierValue()),
+					slog.String("challenge_type", authz.currentChallenge.Type),
+					slog.Any("problem", problem))
 			}
 
 			failedChallengeTypes.rememberFailedChallenge(authz)
@@ -579,8 +579,8 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 
 	if c.Logger != nil {
 		c.Logger.Info("authorization finalized",
-			zap.String("identifier", authz.IdentifierValue()),
-			zap.String("authz_status", authz.Status))
+			slog.String("identifier", authz.IdentifierValue()),
+			slog.String("authz_status", authz.Status))
 	}
 
 	return nil

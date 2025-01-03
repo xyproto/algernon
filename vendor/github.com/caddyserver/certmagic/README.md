@@ -90,7 +90,7 @@ CertMagic - Automatic HTTPS using Let's Encrypt
 	- Exponential backoff with carefully-tuned intervals
 	- Retries with optional test/staging CA endpoint instead of production, to avoid rate limits
 - Written in Go, a language with memory-safety guarantees
-- Powered by [ACMEz](https://github.com/mholt/acmez/v2), _the_ premier ACME client library for Go
+- Powered by [ACMEz](https://github.com/mholt/acmez/v3), _the_ premier ACME client library for Go
 - All [libdns](https://github.com/libdns) DNS providers work out-of-the-box
 - Pluggable storage backends (default: file system)
 - Pluggable key sources
@@ -567,7 +567,7 @@ We welcome your contributions! Please see our **[contributing guidelines](https:
 
 ## Project History
 
-CertMagic is the core of Caddy's advanced TLS automation code, extracted into a library. The underlying ACME client implementation is [ACMEz](https://github.com/mholt/acmez/v2). CertMagic's code was originally a central part of Caddy even before Let's Encrypt entered public beta in 2015.
+CertMagic is the core of Caddy's advanced TLS automation code, extracted into a library. The underlying ACME client implementation is [ACMEz](https://github.com/mholt/acmez/v3). CertMagic's code was originally a central part of Caddy even before Let's Encrypt entered public beta in 2015.
 
 In the years since then, Caddy's TLS automation techniques have been widely adopted, tried and tested in production, and served millions of sites and secured trillions of connections.
 
@@ -579,9 +579,9 @@ Caddy was also the first to sport "on-demand" issuance technology, which obtains
 
 Consequently, CertMagic brings all these (and more) features and capabilities right into your own Go programs.
 
-You can [watch a 2016 dotGo talk](https://www.dotconferences.com/2016/10/matthew-holt-go-with-acme) by the author of this library about using ACME to automate certificate management in Go programs:
+You can [watch a 2016 dotGo talk](https://youtu.be/KdX51QJWQTA) by the author of this library about using ACME to automate certificate management in Go programs:
 
-[![Matthew Holt speaking at dotGo 2016 about ACME in Go](https://user-images.githubusercontent.com/1128849/49921557-2d506780-fe6b-11e8-97bf-6053b6b4eb48.png)](https://www.dotconferences.com/2016/10/matthew-holt-go-with-acme)
+[![Matthew Holt speaking at dotGo 2016 about ACME in Go](https://user-images.githubusercontent.com/1128849/49921557-2d506780-fe6b-11e8-97bf-6053b6b4eb48.png)](https://youtu.be/KdX51QJWQTA)
 
 
 

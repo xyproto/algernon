@@ -64,7 +64,17 @@ type Account struct {
 	// orders (required, string):  A URL from which a list of orders
 	// submitted by this account can be fetched via a POST-as-GET
 	// request, as described in Section 7.1.2.1.
-	Orders string `json:"orders"`
+	//
+	// When empty, this field is omitted from JSON encodings since it
+	// is not in the subset of fields described by the spec for inclusion
+	// when creating an account (§7.3), but the spec also says in that
+	// same section: "The server MUST ignore any values provided in the
+	// "orders" fields in account objects sent by the client." Yet, we
+	// have reports of non-compliant ACME servers (see
+	// https://caddy.community/t/failing-to-register-an-acme-account/27220/5)
+	// so we tighten up our serialization a bit to omit empty Orders,
+	// even though the spec also says this field is "required".
+	Orders string `json:"orders,omitempty"`
 
 	// In response to new-account, "the server returns this account
 	// object in a 201 (Created) response, with the account URL

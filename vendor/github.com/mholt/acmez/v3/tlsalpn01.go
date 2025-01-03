@@ -27,7 +27,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/mholt/acmez/v2/acme"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 // TLSALPN01ChallengeCert creates a certificate that can be used for

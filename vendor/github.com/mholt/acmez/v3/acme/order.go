@@ -19,9 +19,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // Order is an object that "represents a client's request for a certificate
@@ -127,9 +126,9 @@ func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Or
 		return order, err
 	}
 	if c.Logger != nil {
-		c.Logger.Debug("creating order",
-			zap.String("account", account.Location),
-			zap.Strings("identifiers", order.identifierValues()))
+		c.Logger.LogAttrs(ctx, slog.LevelDebug, "creating order",
+			slog.String("account", account.Location),
+			slog.Any("identifiers", order.identifierValues()))
 	}
 	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, c.dir.NewOrder, order, &order)
 	if err != nil {

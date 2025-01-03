@@ -3,7 +3,7 @@ module github.com/xyproto/algernon
 go 1.23.1
 
 require (
-	github.com/caddyserver/certmagic v0.21.4
+	github.com/caddyserver/certmagic v0.21.5
 	github.com/chzyer/readline v1.5.1
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -83,15 +83,15 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/mholt/acmez/v2 v2.0.3 // indirect
+	github.com/mholt/acmez/v3 v3.0.0 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
-	github.com/onsi/ginkgo/v2 v2.22.1 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20241210092621-3adc71cc71bd // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20250103133128-35f329d3adaf // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -115,8 +115,9 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap/exp v0.3.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
+	golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect

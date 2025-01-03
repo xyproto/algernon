@@ -20,11 +20,10 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // ErrUnsupported is used to indicate lack of support by an ACME server.
@@ -131,7 +130,8 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	}
 
 	if c.Logger != nil {
-		c.Logger.Debug("getting renewal info", zap.Strings("names", leafCert.DNSNames))
+		c.Logger.LogAttrs(ctx, slog.LevelDebug, "getting renewal info",
+			slog.Any("names", leafCert.DNSNames))
 	}
 
 	certID, err := ARIUniqueIdentifier(leafCert)
@@ -154,10 +154,10 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 		resp, err = c.httpReq(ctx, http.MethodGet, c.ariEndpoint(certID), nil, &ari)
 		if err != nil {
 			if c.Logger != nil {
-				c.Logger.Warn("error getting ARI response",
-					zap.Error(err),
-					zap.Int("attempt", i),
-					zap.Strings("names", leafCert.DNSNames))
+				c.Logger.LogAttrs(ctx, slog.LevelWarn, "error getting ARI response",
+					slog.Any("error", err),
+					slog.Int("attempt", i),
+					slog.Any("names", leafCert.DNSNames))
 			}
 			continue
 		}
@@ -173,10 +173,10 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 			ari.SuggestedWindow.Start.Equal(ari.SuggestedWindow.End) ||
 			(ari.SuggestedWindow.End.Unix()-ari.SuggestedWindow.Start.Unix()-1 <= 0) {
 			if c.Logger != nil {
-				c.Logger.Debug("invalid ARI window",
-					zap.Time("start", ari.SuggestedWindow.Start),
-					zap.Time("end", ari.SuggestedWindow.End),
-					zap.Strings("names", leafCert.DNSNames))
+				c.Logger.LogAttrs(ctx, slog.LevelDebug, "invalid ARI window",
+					slog.Time("start", ari.SuggestedWindow.Start),
+					slog.Time("end", ari.SuggestedWindow.End),
+					slog.Any("names", leafCert.DNSNames))
 			}
 			continue
 		}
@@ -193,7 +193,8 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	// interval that the ACME server recommends." draft-ietf-acme-ari-03 §4.2
 	raTime, err := retryAfterTime(resp)
 	if err != nil && c.Logger != nil {
-		c.Logger.Error("invalid Retry-After value", zap.Error(err))
+		c.Logger.LogAttrs(ctx, slog.LevelError, "invalid Retry-After value",
+			slog.Any("error", err))
 	}
 	if !raTime.IsZero() {
 		ari.RetryAfter = &raTime
@@ -212,14 +213,13 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	ari.SelectedTime = time.Unix(rand.Int63n(end-start)+start, 0).UTC()
 
 	if c.Logger != nil {
-		c.Logger.Info("got renewal info",
-			zap.Strings("names", leafCert.DNSNames),
-			zap.Time("window_start", ari.SuggestedWindow.Start),
-			zap.Time("window_end", ari.SuggestedWindow.End),
-			zap.Time("selected_time", ari.SelectedTime),
-			zap.Timep("recheck_after", ari.RetryAfter),
-			zap.String("explanation_url", ari.ExplanationURL),
-		)
+		c.Logger.LogAttrs(ctx, slog.LevelInfo, "got renewal info",
+			slog.Any("names", leafCert.DNSNames),
+			slog.Time("window_start", ari.SuggestedWindow.Start),
+			slog.Time("window_end", ari.SuggestedWindow.End),
+			slog.Time("selected_time", ari.SelectedTime),
+			slog.Time("recheck_after", *ari.RetryAfter),
+			slog.String("explanation_url", ari.ExplanationURL))
 	}
 
 	return ari, nil
