@@ -5,6 +5,7 @@
 *.exe~
 *.log
 *.mem
+*.o
 *.orig
 *.out
 *.prof
@@ -12,7 +13,7 @@
 *.swp
 *.tmp
 .DS_Store
-.vscode
+.vscode/
 _vendor-*/
 alg2docker/Dockerfile
 algernon
@@ -32,6 +33,7 @@ plugins/cpp/main
 plugins/go/go
 regtest/issue13/large-file
 release/
+samples/flush
 samples/getip/ip.md
 test.json
 trace.out
