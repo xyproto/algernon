@@ -10,7 +10,6 @@ import (
 	"github.com/flosch/pongo2/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
-	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
 )
@@ -133,7 +132,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		ac.FilePage(recorder, req, serveFilename, dataFilename)
 
 		// Return the recorder as a string
-		L.Push(lua.LString(utils.RecorderToString(recorder)))
+		L.Push(lua.LString(RecorderToString(recorder)))
 		return 1 // Number of results
 	}))
 }

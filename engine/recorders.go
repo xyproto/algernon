@@ -1,11 +1,11 @@
-package utils
+package engine
 
 import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // WriteRecorder writes to a ResponseWriter from a ResponseRecorder.
@@ -24,7 +24,7 @@ func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) i
 	bytesWritten, err := recorder.Body.WriteTo(w)
 	if err != nil {
 		// Writing failed
-		log.Error(err)
+		logrus.Error(err)
 		return 0
 	}
 	recorder.Flush()

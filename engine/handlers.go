@@ -291,7 +291,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
-				utils.WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
 				if flusher, ok := w.(http.Flusher); ok {
 					flusher.Flush()
 				}
@@ -317,7 +317,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
-				utils.WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
 			}
 		} else {
 			// The flush function just flushes the ResponseWriter
