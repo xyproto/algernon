@@ -218,9 +218,11 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			return 0 // number of results
 		}
 
-		if flushFunc != nil {
-			flushFunc()
+		if flushFunc == nil {
+			logrus.Error("cannot flush(): flushFunc is nil")
+			return 0 // number of results
 		}
+		flushFunc()
 		return 0 // number of results
 	}))
 
@@ -233,6 +235,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 
 		// Flush, if a flush function is available
 		if flushFunc != nil {
+			// TODO: If flush() was called, and no further writing to w was done by now, then don't flush twice
 			flushFunc()
 		}
 
