@@ -548,10 +548,10 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		urlpath := req.URL.Path
 
-		//logrus.Debugln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
+		//logrus.Infoln("Checking reverse proxy", urlpath, ac.reverseProxyConfig)
 		if ac.reverseProxyConfig != nil {
 			if rproxy := ac.reverseProxyConfig.FindMatchingReverseProxy(urlpath); rproxy != nil {
-				//logrus.Debugf("Querying reverse proxy %+v, %+v\n", rproxy, req)
+				//logrus.Infof("Querying reverse proxy %+v, %+v\n", rproxy, req)
 				res, err := rproxy.DoProxyPass(*req)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
