@@ -2,8 +2,6 @@ package engine
 
 import (
 	"errors"
-	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -14,8 +12,6 @@ import (
 	"github.com/caddyserver/certmagic"
 	"github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
 )
@@ -40,10 +36,12 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 	s := &http.Server{
 		Addr:    addr,
 		Handler: mux,
+
 		// The timeout values is also the maximum time it can take
 		// for a complete page of Server-Sent Events (SSE).
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   time.Duration(ac.writeTimeout) * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
+
 		MaxHeaderBytes: 1 << 20,
 	}
 	if http2support {
@@ -59,30 +57,8 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 	return gracefulServer
 }
 
-// NewFastHTTPServer creates a new fasthttp server configuration
-func (ac *Config) NewFastHTTPServer(mux *http.ServeMux) *fasthttp.Server {
-	fastHTTPHandler := fasthttpadaptor.NewFastHTTPHandler(mux)
-	return &fasthttp.Server{
-		Handler: fastHTTPHandler,
-		Name:    ac.serverHeaderName,
-
-		// The timeout values is also the maximum time it can take
-		// for a complete page of Server-Sent Events (SSE).
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
-
-		ErrorHandler: func(ctx *fasthttp.RequestCtx, err error) {
-			if strings.Contains(err.Error(), "error when reading request headers: ") {
-				return // Suppress this particular error message
-			}
-			logrus.Errorf("error when serving connection %q<->%q: %v", ctx.RemoteAddr(), ctx.LocalAddr(), err)
-		},
-		Logger: log.New(io.Discard, "", 0), // use a discarding logger to avoid duplicate logging
-	}
-}
-
 // GenerateShutdownFunction generates a function that will run the postponed
-// shutdown functions. Note that gracefulServer can be nil. It's only used for
+// shutdown functions.  Note that gracefulServer can be nil. It's only used for
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
 func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
@@ -152,11 +128,20 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		} else {
 			logrus.Info("Serving HTTP on http://" + ac.serverAddr + "/")
 		}
+
 		servingHTTP.Store(true)
-		HTTPserver := ac.NewFastHTTPServer(mux)
+		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
+		// Open the URL before the serving has started, in a short delay
+		if ac.openURLAfterServing && ac.luaServerFilename != "" {
+			go func() {
+				time.Sleep(delayBeforeLaunchingBrowser)
+				ac.OpenURL(ac.serverHost, ac.serverAddr, false)
+			}()
+		}
 		// Start serving. Shut down gracefully at exit.
-		if err := HTTPserver.ListenAndServe(ac.serverAddr); err != nil {
+		if err := HTTPserver.ListenAndServe(); err != nil {
 			servingHTTP.Store(false)
+
 			// If we can't serve regular HTTP on port 80, give up
 			ac.fatalExit(err)
 		}
