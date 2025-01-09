@@ -101,3 +101,10 @@ func (sc *SheepCounter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 func (sc *SheepCounter) ResponseWriter() http.ResponseWriter {
 	return sc.wrappedResponseWriter
 }
+
+// Flush implements the http.Flusher interface and tries to flush the data.
+func (sc *SheepCounter) Flush() {
+	if flusher, ok := sc.wrappedResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}

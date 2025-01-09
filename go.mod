@@ -42,7 +42,7 @@ require (
 	github.com/xyproto/pinterface v1.5.4
 	github.com/xyproto/pstore v1.3.3
 	github.com/xyproto/recwatch v1.1.0
-	github.com/xyproto/sheepcounter v1.6.1
+	github.com/xyproto/sheepcounter v1.6.2
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simplejwt v1.2.0

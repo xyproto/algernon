@@ -361,7 +361,7 @@ github.com/xyproto/randomstring
 # github.com/xyproto/recwatch v1.1.0
 ## explicit; go 1.9
 github.com/xyproto/recwatch
-# github.com/xyproto/sheepcounter v1.6.1
+# github.com/xyproto/sheepcounter v1.6.2
 ## explicit; go 1.18
 github.com/xyproto/sheepcounter
 # github.com/xyproto/simplebolt v1.5.2

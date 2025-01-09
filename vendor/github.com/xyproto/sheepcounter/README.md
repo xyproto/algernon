@@ -106,6 +106,6 @@ func main() {
 
 # General information
 
-* Version: 1.6.1
+* Version: 1.6.2
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * License: BSD-3

@@ -246,8 +246,8 @@ github.com/xyproto/randomstring v1.2.0 h1:y7PXAEBM3XlwJjPG2JQg4voxBYZ4+hPgRdGKCf
 github.com/xyproto/randomstring v1.2.0/go.mod h1:rgmS5DeNXLivK7YprL0pY+lTuhNQW3iGxZ18UQApw/E=
 github.com/xyproto/recwatch v1.1.0 h1:M8raxpfOb1HChmMxE+72PmhugC+/LlJ3tPDs2dQjpzc=
 github.com/xyproto/recwatch v1.1.0/go.mod h1:L5vSDqREe0dO3awl3+gESUo/5jQTTxPe1TmhFMpBa2w=
-github.com/xyproto/sheepcounter v1.6.1 h1:tYK/S54fpLuJpIQk4TLa64EbZpVT6FAO9qJJZcrChpI=
-github.com/xyproto/sheepcounter v1.6.1/go.mod h1:o2/EM3ibNDo4LjW2S3rG0O+eZ1PQnKRZ5YboGlBJhGM=
+github.com/xyproto/sheepcounter v1.6.2 h1:a8M2XZRk+OQ1NktUwzgtgSBkOWfuhAPpsDkjqocVJAo=
+github.com/xyproto/sheepcounter v1.6.2/go.mod h1:o2/EM3ibNDo4LjW2S3rG0O+eZ1PQnKRZ5YboGlBJhGM=
 github.com/xyproto/simplebolt v1.5.2 h1:Q576fLNHnfzn0HFSlyZyaHmXfdzGC8RAlZLM/0mfDQ0=
 github.com/xyproto/simplebolt v1.5.2/go.mod h1:19ub+nPXHfvhde8eqk/5g56zGZNnaYIYLikrkZe+OF0=
 github.com/xyproto/simpleform v0.2.0 h1:01YuPkzSUabU8dq3tk+hunoHdA3wYsfXVImimmXX0tU=
