@@ -1,7 +1,7 @@
 acmez - ACME client library for Go
 ==================================
 
-[![godoc](https://pkg.go.dev/badge/github.com/mholt/acmez/v2)](https://pkg.go.dev/github.com/mholt/acmez/v2)
+[![godoc](https://pkg.go.dev/badge/github.com/mholt/acmez/v3)](https://pkg.go.dev/github.com/mholt/acmez/v3)
 
 ACMEz ("ack-measy" or "acme-zee", whichever you prefer) is a fully-compliant [RFC 8555](https://tools.ietf.org/html/rfc8555) (ACME) implementation in pure Go. It is lightweight, has an elegant Go API, and its retry logic is highly robust against external errors. ACMEz is suitable for large-scale enterprise deployments. It also supports common IETF-standardized ACME extensions.
 
@@ -34,12 +34,13 @@ In other words, the `acmez` package is **porcelain** while the `acme` package is
 	- [RFC 8737](https://www.rfc-editor.org/rfc/rfc8737.html) (tls-alpn-01 challenge)
 	- [RFC 8823](https://www.rfc-editor.org/rfc/rfc8823.html) (email-reply-00 challenge; S/MIME)
 - ACME Renewal Information (ARI) support ([draft-ietf-acme-ari-03](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/))
+- ACME profiles ([draft-aaron-acme-profiles](https://datatracker.ietf.org/doc/draft-aaron-acme-profiles/))
 
 
 ## Install
 
 ```
-go get github.com/mholt/acmez/v2
+go get github.com/mholt/acmez/v3
 ```
 
 
@@ -50,7 +51,7 @@ See the [`examples` folder](https://github.com/mholt/acmez/tree/master/examples)
 
 ## Challenge solvers
 
-The `acmez` package is "bring-your-own-solver." It provides helper utilities for http-01, dns-01, and tls-alpn-01 challenges, but does not actually solve them for you. You must write or use an implementation of [`acmez.Solver`](https://pkg.go.dev/github.com/mholt/acmez/v2#Solver) in order to get certificates. How this is done depends on your environment/situation.
+The `acmez` package is "bring-your-own-solver." It provides helper utilities for http-01, dns-01, and tls-alpn-01 challenges, but does not actually solve them for you. You must write or use an implementation of [`acmez.Solver`](https://pkg.go.dev/github.com/mholt/acmez/v3#Solver) in order to get certificates. How this is done depends on your environment/situation.
 
 However, you can find [a general-purpose dns-01 solver in CertMagic](https://pkg.go.dev/github.com/caddyserver/certmagic#DNS01Solver), which uses [libdns](https://github.com/libdns) packages to integrate with numerous DNS providers. You can use it like this:
 
@@ -69,7 +70,7 @@ client := acmez.Client{
 }
 ```
 
-If you're implementing a tls-alpn-01 solver, the `acmez` package can help. It has the constant [`ACMETLS1Protocol`](https://pkg.go.dev/github.com/mholt/acmez/v2#pkg-constants) which you can use to identify challenge handshakes by inspecting the ClientHello's ALPN extension. Simply complete the handshake using a certificate from the [`acmez.TLSALPN01ChallengeCert()`](https://pkg.go.dev/github.com/mholt/acmez/v2#TLSALPN01ChallengeCert) function to solve the challenge.
+If you're implementing a tls-alpn-01 solver, the `acmez` package can help. It has the constant [`ACMETLS1Protocol`](https://pkg.go.dev/github.com/mholt/acmez/v3#pkg-constants) which you can use to identify challenge handshakes by inspecting the ClientHello's ALPN extension. Simply complete the handshake using a certificate from the [`acmez.TLSALPN01ChallengeCert()`](https://pkg.go.dev/github.com/mholt/acmez/v3#TLSALPN01ChallengeCert) function to solve the challenge.
 
 
 

@@ -57,9 +57,9 @@ type RenewalInfo struct {
 
 	// The following fields are not part of the RenewalInfo object in
 	// the ARI spec, but are important for proper conformance to the
-	// spec, and are practically useful for implementators:
+	// spec, and are practically useful for implementers:
 
-	// "The unique identifer is constructed by concatenating the
+	// "The unique identifier is constructed by concatenating the
 	// base64url-encoding Section 5 of [RFC4648] of the bytes of the
 	// keyIdentifier field of certificate's Authority Key Identifier
 	// (AKI) Section 4.2.1.1 of [RFC5280] extension, a literal period,

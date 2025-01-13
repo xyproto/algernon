@@ -93,7 +93,7 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 	}
 
 	// create the ACME order
-	order := acme.Order{Identifiers: params.Identifiers}
+	order := acme.Order{Profile: params.Profile, Identifiers: params.Identifiers}
 	if !params.NotBefore.IsZero() {
 		order.NotBefore = &params.NotBefore
 	}

@@ -98,6 +98,13 @@ type OrderParameters struct {
 	// "valid" status.
 	Account acme.Account
 
+	// The name of the ACME profile to use for the order.
+	// The list of profiles offered by the ACME server is
+	// available at its directory endpoint.
+	// EXPERIMENTAL: Subject to change.
+	// (https://datatracker.ietf.org/doc/draft-aaron-acme-profiles/)
+	Profile string
+
 	// The list of identifiers for which to issue the certificate.
 	// Identifiers may become Subject Alternate Names (SANs) in the
 	// certificate. This slice must be consistent with the SANs

@@ -63,7 +63,7 @@ type Client struct {
 	UserAgent string
 
 	// Delay between poll attempts. Only used if server
-	// does not supply a Retry-Afer header. Default: 250ms
+	// does not supply a Retry-After header. Default: 250ms
 	PollInterval time.Duration
 
 	// Maximum duration for polling. Default: 5m
@@ -188,6 +188,12 @@ type DirectoryMeta struct {
 	Website                 string   `json:"website,omitempty"`
 	CAAIdentities           []string `json:"caaIdentities,omitempty"`
 	ExternalAccountRequired bool     `json:"externalAccountRequired,omitempty"`
+
+	// ACME profiles are an EXPERIMENTAL DRAFT feature and are subject to change. See:
+	// - https://letsencrypt.org/2025/01/09/acme-profiles/
+	// - https://datatracker.ietf.org/doc/draft-aaron-acme-profiles/
+	// The key is the profile name, and the value is a description.
+	Profiles map[string]string `json:"profiles,omitempty"`
 }
 
 // stack is a simple thread-safe stack.
