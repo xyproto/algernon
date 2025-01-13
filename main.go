@@ -4,7 +4,7 @@ package main
 import (
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/engine"
 )
 
@@ -22,7 +22,7 @@ func main() {
 			return
 		}
 		// Exit if there are problems with the fundamental setup
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 	}
 
 	// Set up a mux
