@@ -3,7 +3,6 @@
 General
 -------
 
-- [ ] Check if fasthttp supports flush() and close() and then switch handlers over to fasthttp, or remove fasthttp.
 - [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
 - [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
 - [ ] When the -m flag is used, if the file is not found, exit with an error.
@@ -46,7 +45,6 @@ Performance and memory usage
 - [ ] Profile the startup process and make it even faster.
 - [ ] Add a flag for caching to the database backend instead of to memory.
 - [ ] Add an option for using **brotly** compression instead of **gzip**.
-- [ ] Use fasthttp (or something equally performant) when using regular HTTP: [switching to fasthttp](https://github.com/valyala/fasthttp#switching-from-nethttp-to-fasthttp).
 - [ ] When requests are handled, spawn each switch/case as a Go routine. Benchmark to see if there is a difference.
 
 Styles and themes
@@ -110,7 +108,6 @@ Various
 - [ ] Describe how to set up a system a bit similar to a wiki, but more lightweight, using git + git hooks + algernon.
 - [ ] Add a flag for listing and selecting styles for Markdown and directory listings.
 - [ ] Specify if rate limiting is per user/ip/handler
-- [ ] Add a flag for serving with fasthttp: https://github.com/valyala/fasthttp
 - [ ] Create alg2systemd-nspawn and alg2runc.
 - [ ] Create a site generator for Algernon. Draw inspiration from http://nanoc.ws/doc/tutorial/
 - [ ] Draw inspiration from https://lwan.ws/
