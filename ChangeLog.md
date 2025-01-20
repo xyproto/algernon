@@ -1,5 +1,19 @@
 # Changelog
 
+Changes from 1.17.1 to 1.17.2
+=============================
+
+* Use `net/http` instead of `fasthttp` for serving regular HTTP to make the `flush()` function work again.
+* Add support for SQLite using https://github.com/terminar/permissionsqlite.
+* Skip empty `<h1></h1>` tags.
+* Make it possible to clear all cache with a `USR1` signal.
+* Add a new Markdown theme named `setconf`.
+* Add three new samples.
+* Minor performance improvements.
+* Some refactoring and cleanup.
+* Update documentation.
+* Update dependencies.
+
 Changes from 1.17.0 to 1.17.1
 =============================
 
