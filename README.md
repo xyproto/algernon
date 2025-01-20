@@ -1328,7 +1328,7 @@ Other resources
 General information
 -------------------
 
-* Version: 1.17.1
+* Version: 1.17.2
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
