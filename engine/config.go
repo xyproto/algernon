@@ -9,13 +9,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -705,18 +703,8 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		platformdep.IgnoreTerminalResizeSignal()
 	}
 
-	// Listen for SIGUSR1 to clear the cache
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGUSR1)
-	go func() {
-		for {
-			// Wait for a signal of the type given to signal.Notify
-			sig := <-signals
-			logrus.Infof("Received %v", sig)
-			// Launch a goroutine for clearing the cache
-			go ac.ClearCache()
-		}
-	}()
+	// Setup a signal handler for clearing the cache when USR1 is received, for some platforms
+	platformdep.SetupSignals(ac.ClearCache, logrus.Infof)
 
 	// Run the shutdown functions if graceful does not
 	defer ac.GenerateShutdownFunction(nil)()
