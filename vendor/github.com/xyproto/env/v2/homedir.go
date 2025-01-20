@@ -1,4 +1,4 @@
-//go:build !android && !ios && !plan9
+//go:build !android && !ios && !plan9 && !windows
 
 package env
 

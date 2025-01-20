@@ -18,7 +18,7 @@ github.com/allegro/bigcache/v3/queue
 ## explicit
 github.com/aymerick/douceur/css
 github.com/aymerick/douceur/parser
-# github.com/caddyserver/certmagic v0.21.6
+# github.com/caddyserver/certmagic v0.21.7
 ## explicit; go 1.21.0
 github.com/caddyserver/certmagic
 github.com/caddyserver/certmagic/internal/atomicfile
@@ -223,7 +223,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20250113182422-1f74ac33d036
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20250120092514-62f9a39346ce
 ## explicit; go 1.22
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -313,7 +313,7 @@ github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v1.2.0
 ## explicit; go 1.12
 github.com/xyproto/datablock
-# github.com/xyproto/env/v2 v2.5.2
+# github.com/xyproto/env/v2 v2.5.3
 ## explicit; go 1.19
 github.com/xyproto/env/v2
 # github.com/xyproto/files v1.9.0

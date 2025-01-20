@@ -293,7 +293,8 @@ func HomeDir() string {
 }
 
 // ExpandUser replaces a leading ~ or $HOME with the path
-// to the home directory of the current user
+// to the home directory of the current user.
+// If no expansion is done, then the original given path is returned.
 func ExpandUser(path string) string {
 	// this is a simpler alternative to using os.UserHomeDir (which requires Go 1.12 or later)
 	if strings.HasPrefix(path, "~") {
@@ -303,6 +304,7 @@ func ExpandUser(path string) string {
 		// Expand a leading $HOME variable to the home directory
 		path = strings.Replace(path, "$HOME", HomeDir(), 1)
 	}
+	// Return the original given path
 	return path
 }
 
