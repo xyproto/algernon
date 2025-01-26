@@ -98,7 +98,7 @@ github.com/fsnotify/fsnotify/internal
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
-# github.com/go-mysql-org/go-mysql v1.10.0
+# github.com/go-mysql-org/go-mysql v1.11.0
 ## explicit; go 1.22
 github.com/go-mysql-org/go-mysql/client
 github.com/go-mysql-org/go-mysql/compress
@@ -124,7 +124,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad
+# github.com/google/pprof v0.0.0-20250125003558-7fdb3d7e6fa0
 ## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -178,7 +178,7 @@ github.com/mholt/acmez/v3/acme
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.62
+# github.com/miekg/dns v1.1.63
 ## explicit; go 1.19
 github.com/miekg/dns
 # github.com/mitchellh/go-homedir v1.1.0
@@ -223,7 +223,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20250120092514-62f9a39346ce
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20250126143029-f52206cd688d
 ## explicit; go 1.22
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -241,7 +241,7 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.5.1
 ## explicit; go 1.22
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.48.2
+# github.com/quic-go/quic-go v0.49.0
 ## explicit; go 1.22
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -263,9 +263,6 @@ github.com/quic-go/quic-go/quicvarint
 # github.com/shopspring/decimal v1.4.0
 ## explicit; go 1.10
 github.com/shopspring/decimal
-# github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-## explicit
-github.com/siddontang/go/hack
 # github.com/siddontang/go-log v0.0.0-20190221022429-1e957dd83bed
 ## explicit
 github.com/siddontang/go-log/log

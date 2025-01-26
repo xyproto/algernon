@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/pingcap/errors"
-	"github.com/siddontang/go/hack"
 
 	. "github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/utils"
@@ -40,7 +39,7 @@ func (c *Conn) handleOKPacket(data []byte) (*Result, error) {
 	var n int
 	var pos = 1
 
-	r := new(Result)
+	r := NewResultReserveResultset(0)
 
 	r.AffectedRows, _, n = LengthEncodedInt(data[pos:])
 	pos += n
@@ -78,11 +77,11 @@ func (c *Conn) handleErrorPacket(data []byte) error {
 	if c.capability&CLIENT_PROTOCOL_41 > 0 {
 		// skip '#'
 		pos++
-		e.State = hack.String(data[pos : pos+5])
+		e.State = utils.ByteSliceToString(data[pos : pos+5])
 		pos += 5
 	}
 
-	e.Message = hack.String(data[pos:])
+	e.Message = utils.ByteSliceToString(data[pos:])
 
 	return e
 }
@@ -284,9 +283,7 @@ func (c *Conn) readResultset(data []byte, binary bool) (*Result, error) {
 		return nil, ErrMalformPacket
 	}
 
-	result := &Result{
-		Resultset: NewResultset(int(count)),
-	}
+	result := NewResultReserveResultset(int(count))
 
 	if err := c.readResultColumns(result); err != nil {
 		return nil, errors.Trace(err)
@@ -372,7 +369,7 @@ func (c *Conn) readResultColumns(result *Result) (err error) {
 			return err
 		}
 
-		result.FieldNames[hack.String(result.Fields[i].Name)] = i
+		result.FieldNames[utils.ByteSliceToString(result.Fields[i].Name)] = i
 
 		i++
 	}
