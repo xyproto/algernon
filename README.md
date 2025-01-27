@@ -19,14 +19,14 @@ Distro Packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/algernon.svg)](https://repology.org/project/algernon/versions)
 
-Quick installation (development version)
-----------------------------------------
+Quick installation
+------------------
 
 Requires Go 1.21 or later.
 
     go install github.com/xyproto/algernon@latest
 
-Or manually:
+Or manually (development version):
 
 ```
 git clone https://github.com/xyproto/algernon
