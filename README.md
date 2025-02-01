@@ -119,7 +119,7 @@ Features and limitations
 * No file converters needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and macOS, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Includes an interactive REPL.
-* If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. Handy for viewing `README.md` files locally.
+* If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. This can be handy for viewing `README.md` files locally. Use `-m` to display it in a browser and only serve it once.
 * Full multi-threading. All available CPUs will be used.
 * Supports rate limiting, by using [tollbooth](https://github.com/didip/tollbooth).
 * The `help` command is available at the Lua REPL, for a quick overview of the available Lua functions.
