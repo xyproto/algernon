@@ -85,8 +85,8 @@ github.com/gomodule/redigo v1.9.2 h1:HrutZBLhSIU8abiSfW8pj8mPhOyMYjZT/wcA4/L9L9s
 github.com/gomodule/redigo v1.9.2/go.mod h1:KsU3hiK/Ay8U42qpaJk+kuNa3C+spxapWpM+ywhcgtw=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/pprof v0.0.0-20250125003558-7fdb3d7e6fa0 h1:my2ucqBZmv+cWHIhZNSIYKzgN8EBGyHdC7zD5sASRAg=
-github.com/google/pprof v0.0.0-20250125003558-7fdb3d7e6fa0/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
+github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf h1:BvBLUD2hkvLI3dJTJMiopAq8/wp43AAZKTP7qdpptbU=
+github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/css v1.0.1 h1:ntNaBIghp6JmvWnxbZKANoLyuXTPZ4cAMlo6RyhlbO8=
@@ -152,8 +152,8 @@ github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f h1:FxA+NgsdHNOv+
 github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f/go.mod h1:X2r9ueLEUZgtx2cIogM0v4Zj5uvvzhuuiu7Pn8HzMPg=
 github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d h1:y3EueKVfVykdpTyfUnQGqft0ud+xVFuCdp1XkVL0X1E=
 github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d/go.mod h1:ORfBOFp1eteu2odzsyaxI+b8TzJwgjwyQcGhI+9SfEA=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20250126143029-f52206cd688d h1:frMvadvyTH0ygNy6KW137AyrDIIt7ovUTsVs3T6RApM=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20250126143029-f52206cd688d/go.mod h1:Hju1TEWZvrctQKbztTRwXH7rd41Yq0Pgmq4PrEKcq7o=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20250130070702-43f2fb91d740 h1:Q2NMLB912nLSL9y6IAWdeBeH8+RvXG3eqC781TrDSXU=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20250130070702-43f2fb91d740/go.mod h1:Hju1TEWZvrctQKbztTRwXH7rd41Yq0Pgmq4PrEKcq7o=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
@@ -219,10 +219,10 @@ github.com/xyproto/gopher-lua v1.0.2 h1:tOtkVygD46OWICSEov9Yf9XheBy8bCSnmhVzLGVA
 github.com/xyproto/gopher-lua v1.0.2/go.mod h1:aoM62BSDxywYkGaMufChYLqnYEmp0PKcPcw0jtxU/x0=
 github.com/xyproto/jpath v0.6.1 h1:CmpbtuRgHZKW5fM9tYgdH6wIMpvnSOhnt4UwAYSacpM=
 github.com/xyproto/jpath v0.6.1/go.mod h1:bm5t4NVGsu+09lxa0qgsyjpd3kd9Sy2uBpszwAbgeB4=
-github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4 h1:fpHb9zxYkydDS3VBjvH6VWCvCrttqzVzj2MjyNCgoko=
-github.com/xyproto/mime v0.0.0-20210817202956-28bafd7b06b4/go.mod h1:Vb1NBbNUHAKQGBERkD/s0+W/wW7ZygautwBonIxchuk=
-github.com/xyproto/ollamaclient/v2 v2.7.0 h1:mlTOmhACueaqLEsoTnxpE2NAvhxRF4TmYprnMIjUhnU=
-github.com/xyproto/ollamaclient/v2 v2.7.0/go.mod h1:o1GmnP7/qLen2lmuTdVk4MO+4EgbdblE3SFvC+rcOvU=
+github.com/xyproto/mime v0.2.1 h1:sAFo45J5XbBj5qvn4NpMAGHtNr+kwWWU4WBo+iFv/ng=
+github.com/xyproto/mime v0.2.1/go.mod h1:Vb1NBbNUHAKQGBERkD/s0+W/wW7ZygautwBonIxchuk=
+github.com/xyproto/ollamaclient/v2 v2.7.1 h1:kYel2Ye2ZfnzG+trjlImq4Hmoeupb5+nfYYDDVVQ4sk=
+github.com/xyproto/ollamaclient/v2 v2.7.1/go.mod h1:493pxyifwu57ifEg8DK45cw9aZuzvewXc/mReBlVI2o=
 github.com/xyproto/onthefly v1.2.3 h1:91QuXkfqP7l4yFsGTGbN3S+iqYZLLJfVEWo4BFpewnA=
 github.com/xyproto/onthefly v1.2.3/go.mod h1:FQNxGnPtw8YSfZMHGbNKMGqtoI5ZZS+66Sw+eDTcTRE=
 github.com/xyproto/permissionbolt/v2 v2.6.3 h1:nmdk7fZZ2yBEM/eBqDDRcy34n2UTxbqbeutW4xyOqMM=
@@ -317,8 +317,8 @@ golang.org/x/crypto v0.23.0/go.mod h1:CKFgDieR+mRhux2Lsu27y0fO304Db0wZe70UKqHu0v
 golang.org/x/crypto v0.29.0/go.mod h1:+F4F4N5hv6v38hfeYwTdx20oUvLLc+QfrE9Ax9HtgRg=
 golang.org/x/crypto v0.32.0 h1:euUpcYgM8WcP71gNpTqQCn6rC2t6ULUPiOzfWaXVVfc=
 golang.org/x/crypto v0.32.0/go.mod h1:ZnnJkOaASj8g0AjIduWNlq2NRxL0PlBrbKVyZ6V/Ugc=
-golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 h1:yqrTHse8TCMW1M1ZCP+VAR/l0kKxwaAIqN/il7x4voA=
-golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8/go.mod h1:tujkw807nyEEAamNbDrEGzRav+ilXA7PCRAd6xsmwiU=
+golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c h1:KL/ZBHXgKGVmuZBZ01Lt57yE5ws8ZPSkkihmEyq7FXc=
+golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c/go.mod h1:tujkw807nyEEAamNbDrEGzRav+ilXA7PCRAd6xsmwiU=
 golang.org/x/image v0.10.0/go.mod h1:jtrku+n79PfroUbvDdeUWMAI+heR786BofxrbiSF+J0=
 golang.org/x/lint v0.0.0-20190930215403-16217165b5de/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=

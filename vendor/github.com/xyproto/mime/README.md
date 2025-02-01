@@ -37,6 +37,6 @@ func main() {
 General information
 -------------------
 
-* Version: 0.2.0
+* Version: 0.2.1
 * License: MIT
-* Alexander F Rødseth
+* Alexander F. Rødseth

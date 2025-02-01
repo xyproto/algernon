@@ -251,6 +251,87 @@ func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResp
 	return res, nil
 }
 
+// GetOutputChatVision sends a request to the Ollama API and returns the generated response.
+// It is similar to GetChatResponse, but it adds the images into the Message struct before sending them.
+func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (string, error) {
+	var (
+		temperature float64
+		seed        = oc.SeedOrNegative
+	)
+	if len(promptAndOptionalImages) == 0 {
+		return "", errors.New("at least one prompt must be given (and then optionally, base64 encoded JPG or PNG image strings)")
+	}
+	prompt := promptAndOptionalImages[0]
+	var images []string
+	if len(promptAndOptionalImages) > 1 {
+		images = promptAndOptionalImages[1:]
+	}
+	if seed < 0 {
+		temperature = oc.TemperatureIfNegativeSeed
+	}
+	messages := []Message{}
+	if oc.SystemPrompt != "" {
+		messages = append(messages, Message{
+			Role:    "system",
+			Content: oc.SystemPrompt,
+		})
+	}
+	messages = append(messages, Message{
+		Role:    "user",
+		Content: prompt,
+		Images:  images,
+	})
+
+	reqBody := GenerateChatRequest{
+		Model:    oc.ModelName,
+		Messages: messages,
+		Tools:    oc.Tools,
+		Options: RequestOptions{
+			Seed:        seed,        // set to -1 to make it random
+			Temperature: temperature, // set to 0 together with a specific seed to make output reproducible
+		},
+	}
+
+	if oc.ContextLength != 0 {
+		reqBody.Options.ContextLength = oc.ContextLength
+	}
+	reqBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+	if oc.Verbose {
+		fmt.Printf("Sending request to %s/api/chat: %s\n", oc.ServerAddr, string(reqBytes))
+	}
+	HTTPClient := &http.Client{
+		Timeout: oc.HTTPTimeout,
+	}
+	resp, err := HTTPClient.Post(oc.ServerAddr+"/api/chat", mimeJSON, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	var res = ""
+	var sb strings.Builder
+	decoder := json.NewDecoder(resp.Body)
+	for {
+		var genResp GenerateChatResponse
+		if err := decoder.Decode(&genResp); err != nil {
+			break
+		}
+		sb.WriteString(genResp.Message.Content)
+		if genResp.Done {
+			d, _ := json.Marshal(genResp.Message.ToolCalls)
+			res = string(d)
+			break
+		}
+	}
+	res = strings.TrimPrefix(sb.String(), "\n")
+	if oc.TrimSpace {
+		res = strings.TrimSpace(res)
+	}
+	return res, nil
+}
+
 // GetResponse sends a request to the Ollama API and returns the generated response
 func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse, error) {
 	var (
