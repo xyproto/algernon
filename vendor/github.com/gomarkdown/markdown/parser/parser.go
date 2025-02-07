@@ -103,7 +103,7 @@ type Parser struct {
 	inlineCallback [256]InlineParser
 	nesting        int
 	maxNesting     int
-	insideLink     bool
+	InsideLink     bool
 	indexCnt       int // incremented after every index
 
 	// Footnotes need to be ordered as well as available to quickly check for
@@ -143,7 +143,7 @@ func NewWithExtensions(extension Extensions) *Parser {
 		refs:         make(map[string]*reference),
 		refsRecord:   make(map[string]struct{}),
 		maxNesting:   64,
-		insideLink:   false,
+		InsideLink:   false,
 		Doc:          &ast.Document{},
 		extensions:   extension,
 		allClosed:    true,
