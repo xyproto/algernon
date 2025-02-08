@@ -298,11 +298,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					}
 				} else if err != nil {
 					if req.Close {
-						//if ac.debugMode {
-						logrus.Error(filename + ": call to \"flush\" after closing the connection")
-						//}
+						if ac.debugMode {
+							logrus.Warn(filename + ": call to \"flush\" after closing the connection")
+						}
 					} else {
-						logrus.Error("when serving " + filename + ": WriteRecorder: " + err.Error())
+						logrus.Warn(filename + ": WriteRecorder: " + err.Error())
 						// Close the connection. Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
 						w.Header().Add("Connection", "close")
 						req.Close = true
@@ -334,11 +334,11 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				// Note: no flushing here, because there was an error when running the Lua script
 				if writeErr != nil {
 					if req.Close {
-						//if ac.debugMode {
-						logrus.Error(filename + ": call to \"flush\" after closing the connection")
-						//}
+						if ac.debugMode {
+							logrus.Warn(filename + ": call to \"flush\" after closing the connection")
+						}
 					} else {
-						logrus.Error("when serving " + filename + ": WriteRecorder: " + writeErr.Error())
+						logrus.Warn(filename + ": WriteRecorder: " + writeErr.Error())
 						// Close the connection. Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
 						w.Header().Add("Connection", "close")
 						req.Close = true
@@ -387,7 +387,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			w.Header().Add(contentType, htmlUTF8)
 			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
 		} else {
-			logrus.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error(filename + ":" + err.Error())
 		}
 		return
 
@@ -398,7 +398,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			w.Header().Add(contentType, "text/javascript;charset=utf-8")
 			ac.JSXPage(w, req, filename, jsxblock.Bytes())
 		} else {
-			logrus.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error(filename + ":" + err.Error())
 		}
 		return
 
@@ -436,7 +436,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				}
 			}
 		} else {
-			logrus.Error("Error when serving " + filename + ":" + err.Error())
+			logrus.Error(filename + ":" + err.Error())
 		}
 		return
 
