@@ -169,7 +169,9 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		// Final newline
 		buf.WriteString("\n")
 		// Write the combined text to the http.ResponseWriter
-		buf.WriteTo(w)
+		if _, err := buf.WriteTo(w); err != nil && ac.debugMode {
+			logrus.Error("print: could not write to buffer: " + err.Error())
+		}
 		return 0 // number of results
 	}))
 
@@ -190,7 +192,9 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			}
 		}
 		// Write the combined text to the http.ResponseWriter
-		buf.WriteTo(w)
+		if _, err := buf.WriteTo(w); err != nil && ac.debugMode {
+			logrus.Error("print_nonl: could not write to buffer: " + err.Error())
+		}
 		return 0 // number of results
 	}))
 
@@ -216,7 +220,9 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		buf.WriteString("\n")
 
 		// Write the combined text to the http.ResponseWriter
-		buf.WriteTo(w)
+		if _, err := buf.WriteTo(w); err != nil && ac.debugMode {
+			logrus.Error("pprint: could not write to buffer: " + err.Error())
+		}
 
 		return 0 // number of results
 	}))
