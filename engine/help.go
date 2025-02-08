@@ -517,14 +517,16 @@ render(string) -> string
 // in the URL ("/some/page?x=7" makes "x" with the value "7" available).
 formdata() -> table
 // Redirect to an absolute or relative URL. Also takes a HTTP status code.
-redirect(string[, number])
+// Returns false if the connection has been closed.
+redirect(string[, number]) -> bool
 // Permanently redirect to an absolute or relative URL. Uses status code 302.
-permanent_redirect(string)
+// Returns false if the connection has been closed.
+permanent_redirect(string) -> bool
 // Send "Connection: close" as a header to the client, flush the body and also
 // stop Lua functions from writing more data to the HTTP body.
 close()
-// Transmit what has been outputted so far, to the client.
-flush()
+// Transmit what has been outputted so far, to the client. Returns true if success.
+flush() -> bool
 `
 
 const configHelpText = `Available functions:

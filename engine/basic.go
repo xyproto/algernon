@@ -241,18 +241,17 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Needed in debug mode, where ResponseWriter is buffered.
 	L.SetGlobal("flush", L.NewFunction(func(_ *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"flush\" after closing the connection")
-			}
-			return 0 // number of results
+			L.Push(lua.LBool(false)) // not a success, the connection has been closed
+			return 1                 // number of results
 		}
-
 		if flushFunc == nil {
-			logrus.Error("cannot flush(): flushFunc is nil")
-			return 0 // number of results
+			logrus.Warn("cannot flush(): flushFunc is nil")
+			L.Push(lua.LBool(true)) // not a failure, ignore the missing flashFunc
+			return 1                // number of results
 		}
 		flushFunc()
-		return 0 // number of results
+		L.Push(lua.LBool(true)) // success
+		return 1                // number of results
 	}))
 
 	// Close the communication with the client by setting a "Connection: close" header,
@@ -504,10 +503,8 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Redirect a request (as found, by default)
 	L.SetGlobal("redirect", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("redirect after closing the connection")
-			}
-			return 0 // number of results
+			L.Push(lua.LBool(false)) // can not redirect, since the connection is closed
+			return 1                 // number of results
 		}
 
 		newurl := L.ToString(1)
@@ -519,16 +516,15 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			httpStatus.code = httpStatusCode
 		}
 		http.Redirect(w, req, newurl, httpStatusCode)
-		return 0 // number of results
+		L.Push(lua.LBool(true)) // success
+		return 1                // number of results
 	}))
 
 	// Permanently redirect a request, which is the same as redirect(url, 301)
 	L.SetGlobal("permanent_redirect", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("permanent_redirect after closing the connection")
-			}
-			return 0 // number of results
+			L.Push(lua.LBool(false)) // not a success, the connection has been closed
+			return 1                 // number of results
 		}
 
 		newurl := L.ToString(1)
@@ -537,7 +533,8 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			httpStatus.code = httpStatusCode
 		}
 		http.Redirect(w, req, newurl, httpStatusCode)
-		return 0 // number of results
+		L.Push(lua.LBool(true)) // success
+		return 1                // number of results
 	}))
 
 	// Run the given Lua file (replacement for the built-in dofile, to look in the right directory)

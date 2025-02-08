@@ -489,17 +489,19 @@ formdata() -> table
 urldata([string]) -> table
 
 // Redirect to an absolute or relative URL. May take an HTTP status code that will be used when redirecting.
-redirect(string[, number])
+// Returns false if the connection has been closed.
+redirect(string[, number]) -> bool
 
 // Permanent redirect to an absolute or relative URL. Uses status code 302.
-permanent_redirect(string)
+// Returns false if the connection has been closed.
+permanent_redirect(string) -> bool
 
 // Send "Connection: close" as a header to the client, flush the body and also
 // stop Lua functions from writing more data to the HTTP body.
 close()
 
-// Transmit what has been outputted so far, to the client.
-flush()
+// Transmit what has been outputted so far, to the client. Returns true if it worked out and the connection has not been closed.
+flush() -> bool
 ~~~
 
 
