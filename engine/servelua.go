@@ -131,8 +131,13 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 		recorder := httptest.NewRecorder()
 		ac.FilePage(recorder, req, serveFilename, dataFilename)
 
-		// Return the recorder as a string
-		L.Push(lua.LString(RecorderToString(recorder)))
-		return 1 // Number of results
+		if s, err := RecorderToString(recorder); err != nil {
+			logrus.Error("RecorderToString: " + err.Error())
+			return 0 // number of results
+		} else {
+			// Return the recorder as a string
+			L.Push(lua.LString(s))
+			return 1 // Number of results
+		}
 	}))
 }

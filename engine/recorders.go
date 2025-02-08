@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/sirupsen/logrus"
 )
 
 // WriteRecorder writes to a ResponseWriter from a ResponseRecorder.
 // Also flushes the recorder and returns how many bytes were written.
-func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) int64 {
+func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) (int64, error) {
 	for key, values := range recorder.Result().Header {
 		for _, value := range values {
 			w.Header().Set(key, value)
@@ -22,20 +20,19 @@ func WriteRecorder(w http.ResponseWriter, recorder *httptest.ResponseRecorder) i
 		w.WriteHeader(statusCode)
 	}
 	bytesWritten, err := recorder.Body.WriteTo(w)
-	if err != nil {
-		// Writing failed
-		logrus.Error(err)
-		return 0
+	if bytesWritten > 0 && err == nil {
+		recorder.Flush()
 	}
-	recorder.Flush()
-	return bytesWritten
+	return bytesWritten, err
 }
 
 // RecorderToString discards the HTTP headers and return the recorder body as
 // a string. Also flushes the recorder.
-func RecorderToString(recorder *httptest.ResponseRecorder) string {
+func RecorderToString(recorder *httptest.ResponseRecorder) (string, error) {
 	var buf bytes.Buffer
-	recorder.Body.WriteTo(&buf)
-	recorder.Flush()
-	return buf.String()
+	n, err := recorder.Body.WriteTo(&buf)
+	if n > 0 && err == nil {
+		recorder.Flush()
+	}
+	return buf.String(), err
 }

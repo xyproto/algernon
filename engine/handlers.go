@@ -291,9 +291,22 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
-				WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
-				if flusher, ok := w.(http.Flusher); ok {
-					flusher.Flush()
+				n, err := WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				if n > 0 && err == nil {
+					if flusher, ok := w.(http.Flusher); ok {
+						flusher.Flush()
+					}
+				} else if err != nil {
+					if req.Close {
+						//if ac.debugMode {
+						logrus.Error(filename + ": call to \"flush\" after closing the connection")
+						//}
+					} else {
+						logrus.Error("when serving " + filename + ": WriteRecorder: " + err.Error())
+						// Close the connection. Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
+						w.Header().Add("Connection", "close")
+						req.Close = true
+					}
 				}
 			}
 			// Run the lua script, without the possibility to flush
@@ -317,7 +330,20 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					recorder.WriteHeader(http.StatusOK)
 				}
 				// Then write to the ResponseWriter
-				WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				_, writeErr := WriteRecorder(w, recorder) // WriteRecorder starts out by writing the status header
+				// Note: no flushing here, because there was an error when running the Lua script
+				if writeErr != nil {
+					if req.Close {
+						//if ac.debugMode {
+						logrus.Error(filename + ": call to \"flush\" after closing the connection")
+						//}
+					} else {
+						logrus.Error("when serving " + filename + ": WriteRecorder: " + writeErr.Error())
+						// Close the connection. Works for both HTTP and HTTP/2 now, ref: https://github.com/golang/go/issues/20977
+						w.Header().Add("Connection", "close")
+						req.Close = true
+					}
+				}
 			}
 		} else {
 			// The flush function just flushes the ResponseWriter
