@@ -149,7 +149,8 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 // the browser, setting headers, pretty printing and dealing with the directory
 // where files are being served, into the given Lua state.
 func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.LState, filename string, flushFunc func(), httpStatus *FutureStatus) {
-	// Print text to the web page that is being served. Add a newline.
+
+	// Print the given arguments to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
 			if ac.debugMode {
@@ -157,7 +158,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			}
 			return 0 // number of results
 		}
-
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
@@ -168,10 +168,29 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		}
 		// Final newline
 		buf.WriteString("\n")
-
 		// Write the combined text to the http.ResponseWriter
 		buf.WriteTo(w)
+		return 0 // number of results
+	}))
 
+	// Print the given arguments to the web page that is being served. Do not add a newline.
+	L.SetGlobal("print_nonl", L.NewFunction(func(L *lua.LState) int {
+		if req.Close {
+			if ac.debugMode {
+				logrus.Error("call to \"print_nonl\" after closing the connection")
+			}
+			return 0 // number of results
+		}
+		var buf bytes.Buffer
+		top := L.GetTop()
+		for i := 1; i <= top; i++ {
+			buf.WriteString(L.Get(i).String())
+			if i != top {
+				buf.WriteString("\t")
+			}
+		}
+		// Write the combined text to the http.ResponseWriter
+		buf.WriteTo(w)
 		return 0 // number of results
 	}))
 

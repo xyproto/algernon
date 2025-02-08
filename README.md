@@ -449,6 +449,9 @@ method() -> string
 // Output text to the browser/client. Takes a variable number of strings.
 print(...)
 
+// Same as print, but does not add a newline at the end.
+print_nonl(...)
+
 // Return the requested URL path.
 urlpath() -> string
 
