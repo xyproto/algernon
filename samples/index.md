@@ -26,6 +26,7 @@ Samples
 * [Bootstrap](bootstrap)
 * [Permissions](permissions)
 * [Mathematical Formulas](formulas)
+* [Typewriter](typewriter)
 
 There are more samples in the `samples/` directory.
 

@@ -33,7 +33,6 @@ plugins/cpp/main
 plugins/go/go
 regtest/issue13/large-file
 release/
-samples/flush
 samples/getip/ip.md
 test.json
 trace.out
