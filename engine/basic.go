@@ -153,11 +153,9 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Print the given arguments to the web page that is being served. Add a newline.
 	L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"print\" after closing the connection")
-			}
 			return 0 // number of results
 		}
+
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
@@ -178,11 +176,9 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Print the given arguments to the web page that is being served. Do not add a newline.
 	L.SetGlobal("print_nonl", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"print_nonl\" after closing the connection")
-			}
 			return 0 // number of results
 		}
+
 		var buf bytes.Buffer
 		top := L.GetTop()
 		for i := 1; i <= top; i++ {
@@ -201,9 +197,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Pretty print text to the web page that is being served. Add a newline.
 	L.SetGlobal("pprint", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"pprint\" after closing the connection")
-			}
 			return 0 // number of results
 		}
 
@@ -296,9 +289,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Set the Content-Type for the page
 	L.SetGlobal("content", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"content\" after closing the connection")
-			}
 			return 0 // number of results
 		}
 
@@ -343,9 +333,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Set the HTTP header in the request, for a given key and value
 	L.SetGlobal("setheader", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"setheader\" after closing the connection")
-			}
 			return 0 // number of results
 		}
 
@@ -371,9 +358,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Set the HTTP status code (must come before print)
 	L.SetGlobal("status", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"status\" after closing the connection")
-			}
 			return 0 // number of results
 		}
 
@@ -391,9 +375,6 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Set a HTTP status code and print a message (optional)
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
 		if req.Close {
-			if ac.debugMode {
-				logrus.Error("call to \"error\" after closing the connection")
-			}
 			return 0 // number of results
 		}
 
