@@ -1,16 +1,18 @@
 -- Function to read and render *.md files in the script directory
 local function render_markdown_files()
     local md_files = readglob("*.md")
+    local additionalJS = ""
     for i = 1, #md_files do
         local content = md_files[i]
         if content then
             print('<div class="formula-box">')
-            mprint(content)
+            additionalJS = mprint_ret(content)
             print('</div>')
         else
             print('<div class="formula-box"><p>Error: Unable to read markdown file</p></div>')
         end
     end
+    return additionalJS
 end
 
 -- Main function
@@ -29,11 +31,18 @@ local function main()
     ]]
 
     -- Render markdown files
-    render_markdown_files()
+    additionalScriptTag = render_markdown_files()
 
     print[[
             </div>
         </div>
+    ]]
+
+    if additionalScriptTag ~= "" then
+      print(additionalScriptTag)
+    end
+
+    print[[
     </body>
     </html>
     ]]
