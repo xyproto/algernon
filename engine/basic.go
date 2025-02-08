@@ -17,6 +17,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
+	"github.com/xyproto/algernon/lua/run3"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/splash"
@@ -131,6 +132,16 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		}
 		L.Push(lua.LString(serverdir))
 		return 1 // number of results
+	}))
+
+	// run3 returns stdout and stderr as tables of lines, and also the exit code
+	L.SetGlobal("run3", L.NewFunction(func(L *lua.LState) int {
+		command := L.ToString(1)
+		workingDir, err := os.Getwd()
+		if err != nil {
+			workingDir = ""
+		}
+		return run3.Helper(L, command, workingDir)
 	}))
 }
 
@@ -543,4 +554,12 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		L.Push(retval)
 		return 1 // number of results
 	}))
+
+	// run3 returns stdout and stderr as tables of lines, and also the exit code
+	L.SetGlobal("run3", L.NewFunction(func(L *lua.LState) int {
+		command := L.ToString(1)
+		workingDir := filepath.Dir(filename)
+		return run3.Helper(L, command, workingDir)
+	}))
+
 }

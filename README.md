@@ -1213,9 +1213,13 @@ pprint(...)
 // Returns the output as a Lua table, where each line is an entry.
 py(string) -> table
 
-// Takes one or more system commands (possibly separated by `;`) and runs them.
+// Takes one or more system commands (separated by `;`) and runs them.
 // Returns the output lines as a table.
 run(string) -> table
+
+// Takes one or more system commands (separated by `;`) and runs them.
+// Returns stdout as a table, stderr as a table and the exit code as a number.
+run3(string) -> table, table, number
 
 // Lists the keys and values of a Lua table. Returns a string.
 // Lists the contents of the global namespace `_G` if no arguments are given.
