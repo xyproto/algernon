@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/caddyserver/certmagic"
+	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"github.com/xyproto/env/v2"
@@ -30,18 +31,22 @@ func AtShutdown(shutdownFunction func()) {
 	shutdownFunctions = append(shutdownFunctions, shutdownFunction)
 }
 
+func adaptHTTPHandlerFunc(h http.HandlerFunc) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		h(w, r)
+	}
+}
+
 // NewGracefulServer creates a new graceful server configuration
-func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr string) *graceful.Server {
+func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *graceful.Server {
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,
-		Handler: mux,
-
-		// The timeout values is also the maximum time it can take
+		Handler: handler, // Use the provided http.Handler (e.g. httprouter)
+		// The timeout values are also the maximum time it can take
 		// for a complete page of Server-Sent Events (SSE).
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: time.Duration(ac.writeTimeout) * time.Second,
-
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   time.Duration(ac.writeTimeout) * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	if http2support {
@@ -52,8 +57,8 @@ func (ac *Config) NewGracefulServer(mux *http.ServeMux, http2support bool, addr 
 		Server:  s,
 		Timeout: ac.shutdownTimeout,
 	}
-	// Handle ctrl-c
-	gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(gracefulServer) // for investigating gracefulServer.Interrupted
+	// Handle ctrl-c: run the shutdown functions
+	gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(gracefulServer)
 	return gracefulServer
 }
 
@@ -101,7 +106,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 }
 
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
-func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
+func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 	// If we are not writing internal logs to a file, reduce the verbosity
 	http2.VerboseLogs = (ac.internalLogFilename != os.DevNull)
 
@@ -130,7 +135,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		}
 
 		servingHTTP.Store(true)
-		HTTPserver := ac.NewGracefulServer(mux, false, ac.serverAddr)
+		HTTPserver := ac.NewGracefulServer(handler, false, ac.serverAddr)
 		// Open the URL before the serving has started, in a short delay
 		if ac.openURLAfterServing && ac.luaServerFilename != "" {
 			go func() {
@@ -175,7 +180,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 			// TODO: Find a way for Algernon users to agree on this manually
 			certmagic.DefaultACME.Agreed = true
 			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
-			if err := certmagic.HTTPS(ac.certMagicDomains, mux); err != nil {
+			if err := certmagic.HTTPS(ac.certMagicDomains, handler); err != nil {
 				servingHTTPS.Store(false)
 				logrus.Error(err)
 				// Don't serve HTTP if CertMagic fails, just quit
@@ -190,7 +195,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		}
 		servingHTTPS.Store(true)
 		// Start serving over QUIC
-		go ac.ListenAndServeQUIC(mux, justServeRegularHTTP, &servingHTTPS)
+		go ac.ListenAndServeQUIC(handler, justServeRegularHTTP, &servingHTTPS)
 	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
 		if len(ac.serverHost) == 0 {
@@ -202,7 +207,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
-			HTTPS2server := ac.NewGracefulServer(mux, true, ac.serverHost+":443")
+			HTTPS2server := ac.NewGracefulServer(handler, true, ac.serverHost+":443")
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
 				servingHTTPS.Store(false)
@@ -228,7 +233,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 				}
 			} else {
 				// Don't redirect, but serve the same contents as the HTTPS server as HTTP on port 80
-				HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+":80")
+				HTTPserver := ac.NewGracefulServer(handler, false, ac.serverHost+":80")
 				if err := HTTPserver.ListenAndServe(); err != nil {
 					servingHTTP.Store(false)
 					// If we can't serve regular HTTP on port 80, give up
@@ -245,7 +250,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		servingHTTPS.Store(true)
 		go func() {
 			// Listen for HTTP/2 requests
-			HTTP2server := ac.NewGracefulServer(mux, true, ac.serverAddr)
+			HTTP2server := ac.NewGracefulServer(handler, true, ac.serverAddr)
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
 				servingHTTPS.Store(false)
@@ -261,7 +266,7 @@ func (ac *Config) Serve(mux *http.ServeMux, done, ready chan bool) error {
 		}
 		servingHTTPS.Store(true)
 		// Listen for HTTPS + HTTP/2 requests
-		HTTPS2server := ac.NewGracefulServer(mux, true, ac.serverAddr)
+		HTTPS2server := ac.NewGracefulServer(handler, true, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
