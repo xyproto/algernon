@@ -93,7 +93,8 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 			htmlData = highlightedHTML
 		}
 
-		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
+		// Add a script for rendering MathJax, but only if at least one mathematical formula is present,
+		// and if it hasn't been added already.
 		if containsFormula(mdContent) {
 			js := append([]byte(`<script id="MathJax-script">`), []byte(mathJaxScript)...)
 			htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
