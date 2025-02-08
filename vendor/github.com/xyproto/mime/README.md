@@ -37,6 +37,6 @@ func main() {
 General information
 -------------------
 
-* Version: 0.2.1
+* Version: 0.3.0
 * License: MIT
-* Alexander F. Rødseth
+* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

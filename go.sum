@@ -221,8 +221,8 @@ github.com/xyproto/gopher-lua v1.0.2 h1:tOtkVygD46OWICSEov9Yf9XheBy8bCSnmhVzLGVA
 github.com/xyproto/gopher-lua v1.0.2/go.mod h1:aoM62BSDxywYkGaMufChYLqnYEmp0PKcPcw0jtxU/x0=
 github.com/xyproto/jpath v0.6.1 h1:CmpbtuRgHZKW5fM9tYgdH6wIMpvnSOhnt4UwAYSacpM=
 github.com/xyproto/jpath v0.6.1/go.mod h1:bm5t4NVGsu+09lxa0qgsyjpd3kd9Sy2uBpszwAbgeB4=
-github.com/xyproto/mime v0.2.1 h1:sAFo45J5XbBj5qvn4NpMAGHtNr+kwWWU4WBo+iFv/ng=
-github.com/xyproto/mime v0.2.1/go.mod h1:Vb1NBbNUHAKQGBERkD/s0+W/wW7ZygautwBonIxchuk=
+github.com/xyproto/mime v0.3.0 h1:UazaQeK2jEsBc8SkzSqZUV6wBvmEJtd7bIGPma7g8f4=
+github.com/xyproto/mime v0.3.0/go.mod h1:Vb1NBbNUHAKQGBERkD/s0+W/wW7ZygautwBonIxchuk=
 github.com/xyproto/ollamaclient/v2 v2.7.1 h1:kYel2Ye2ZfnzG+trjlImq4Hmoeupb5+nfYYDDVVQ4sk=
 github.com/xyproto/ollamaclient/v2 v2.7.1/go.mod h1:493pxyifwu57ifEg8DK45cw9aZuzvewXc/mReBlVI2o=
 github.com/xyproto/onthefly v1.2.3 h1:91QuXkfqP7l4yFsGTGbN3S+iqYZLLJfVEWo4BFpewnA=

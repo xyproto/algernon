@@ -36,7 +36,7 @@ require (
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
-	github.com/xyproto/mime v0.2.1
+	github.com/xyproto/mime v0.3.0
 	github.com/xyproto/ollamaclient/v2 v2.7.1
 	github.com/xyproto/onthefly v1.2.3
 	github.com/xyproto/permissionbolt/v2 v2.6.3
