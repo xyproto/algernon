@@ -509,8 +509,11 @@ Lua functions for formatted output
 ----------------------------------
 
 ~~~c
-// Output rendered Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings.
+// Output rendered Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings. A script tag may also be added.
 mprint(...)
+
+// Output rendered Markdown to the browser/client. The given text is converted from Markdown to HTML. Takes a variable number of strings. If a script tag needs to be added to the HTML, it is returned as a string.
+mprint_ret(...) -> string
 
 // Output rendered Amber to the browser/client. The given text is converted from Amber to HTML. Takes a variable number of strings.
 aprint(...)

@@ -73,20 +73,44 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 		mdContent := buf.Bytes()
 		// Convert the buffer from Markdown to HTML
 		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
-
 		// Apply syntax highlighting
 		if highlightedHTML, err := splash.Splash(htmlData, markdownCodeStyle); err == nil { // success
 			htmlData = highlightedHTML
 		}
-
 		// Add a script for rendering MathJax, but only if at least one mathematical formula is present
 		if containsFormula(mdContent) {
 			js := append([]byte(`<script id="MathJax-script">`), mathJaxScript...)
 			htmlData = InsertScriptTag(htmlData, js) // also adds the closing </script> tag
 		}
-
+		// Output the generated HTML
 		w.Write(htmlData)
 		return 0 // number of results
+	}))
+
+	// Output Markdown as HTML, but if any scripts are added, return them as a string
+	L.SetGlobal("mprint_ret", L.NewFunction(func(L *lua.LState) int {
+		var results int
+		// Retrieve all the function arguments as a bytes.Buffer
+		buf := convert.Arguments2buffer(L, true)
+		// Create a Markdown parser with the desired extensions
+		extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+		mdParser := parser.NewWithExtensions(extensions)
+		mdContent := buf.Bytes()
+		// Convert the buffer from Markdown to HTML
+		htmlData := markdown.ToHTML(mdContent, mdParser, nil)
+		// Apply syntax highlighting
+		if highlightedHTML, err := splash.Splash(htmlData, markdownCodeStyle); err == nil { // success
+			htmlData = highlightedHTML
+		}
+		// Return a script for rendering MathJax, but only if at least one mathematical formula is present
+		if containsFormula(mdContent) {
+			scriptTag := `<script id="MathJax-script">` + string(mathJaxScript) + "</script>"
+			L.Push(lua.LString(scriptTag))
+			results++
+		}
+		// Output the generated HTML
+		w.Write(htmlData)
+		return results // number of results
 	}))
 
 	// Output text as rendered amber.

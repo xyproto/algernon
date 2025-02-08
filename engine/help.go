@@ -109,8 +109,10 @@ warn(...)
 err(...)
 // Output text. Takes a variable number of strings.
 print(...)
-// Output rendered HTML given Markdown. Takes a variable number of strings.
+// Output rendered HTML given Markdown. Takes a variable number of strings. May add a script.
 mprint(...)
+// Output rendered HTML given Markdown. Takes a variable number of strings. May return a script.
+mprint_ret(...) -> string
 // Output rendered HTML given Amber. Takes a variable number of strings.
 aprint(...)
 // Output rendered CSS given GCSS. Takes a variable number of strings.
