@@ -20,17 +20,19 @@ h1, h2 {
     flex-wrap: wrap;
     gap: 1em;
     margin-bottom: 2em;
+    animation: fadeIn 2s ease-in-out;
 }
 
-.section p, .section div {
+.section p,
+.section div {
     margin: 0.5em 0;
 }
 
 .formula-box {
+    flex: 1 1 calc(33.333% - 1em);
     background: #333;
     border-radius: 10px;
     padding: 1em;
-    width: calc(33% - 2em);
     box-sizing: border-box;
     transition: transform 0.2s;
 }
@@ -39,11 +41,19 @@ h1, h2 {
     transform: scale(1.05);
 }
 
+@media (max-width: 900px) {
+    .formula-box {
+        flex: 1 1 calc(50% - 1em);
+    }
+}
+
+@media (max-width: 600px) {
+    .formula-box {
+        flex: 1 1 100%;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-}
-
-.section {
-    animation: fadeIn 2s ease-in-out;
 }
