@@ -46,7 +46,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2 v1.11.4
+# github.com/dlclark/regexp2 v1.11.5
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
@@ -226,7 +226,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20250211112339-e7d7cdc600e3 => github.com/pingcap/tidb/pkg/parser v0.0.0-20250130070702-43f2fb91d740
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20250212102037-453ccd738de4 => github.com/pingcap/tidb/pkg/parser v0.0.0-20250130070702-43f2fb91d740
 ## explicit; go 1.22
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
