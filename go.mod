@@ -78,7 +78,7 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
-	github.com/libdns/libdns v0.2.2 // indirect
+	github.com/libdns/libdns v0.2.3 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -92,7 +92,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20240318064555-6bd07397691f // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20250212102037-453ccd738de4 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20250214113125-72a1145688e5 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -116,7 +116,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
+	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect

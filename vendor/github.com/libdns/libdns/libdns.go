@@ -121,9 +121,10 @@ type Record struct {
 	Value string
 	TTL   time.Duration
 
-	// type-dependent record fields
-	Priority uint // HTTPS, MX, SRV, and URI records
-	Weight   uint // SRV and URI records
+	// common, type-dependent record fields
+	Priority uint   // HTTPS, MX, SRV, and URI records
+	Weight   uint   // SRV and URI records
+	Target   string // HTTPS records
 }
 
 // Zone is a generalized representation of a DNS zone.
