@@ -25,7 +25,7 @@ Samples
 * [Iterate](iterate)
 * [Bootstrap](bootstrap)
 * [Permissions](permissions)
-* [Mathematical Formulas](formulas)
+* [Formulas](formulas)
 * [Typewriter](typewriter)
 
 There are more samples in the `samples/` directory.
