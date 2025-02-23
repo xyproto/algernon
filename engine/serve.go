@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/caddyserver/certmagic"
-	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 	"github.com/xyproto/env/v2"
@@ -29,12 +28,6 @@ func AtShutdown(shutdownFunction func()) {
 	serverServingMutex.Lock()
 	defer serverServingMutex.Unlock()
 	shutdownFunctions = append(shutdownFunctions, shutdownFunction)
-}
-
-func adaptHTTPHandlerFunc(h http.HandlerFunc) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		h(w, r)
-	}
 }
 
 // NewGracefulServer creates a new graceful server configuration
