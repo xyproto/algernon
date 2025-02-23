@@ -6,4 +6,3 @@ Greetings
 * How
 * are
 * you
-
