@@ -5,6 +5,7 @@ package engine
 import (
 	"errors"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -68,6 +69,9 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 // Will also serve local images if the resulting HTML contains them.
 func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 	logrus.Info("Single file mode. Not using the regular parameters.")
+	if filepath.Base(filename) == "README.md" {
+		logrus.Info("Try using the -m flag for displaying Markdown files in a browser.")
+	}
 
 	cancelChannel := make(chan bool, 1)
 
