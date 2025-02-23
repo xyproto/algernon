@@ -306,7 +306,7 @@ func (ac *Config) LoadRenderFunctions(w http.ResponseWriter, _ *http.Request, L 
 // MarkdownPage write the given source bytes as markdown wrapped in HTML to a writer, with a title
 func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdContent []byte, filename string) {
 	// Prepare for receiving title and codeStyle information
-	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css", "favicon"}
+	searchKeywords := []string{"title", "codestyle", "theme", "replace_with_theme", "css", "favicon", "language", "lang"}
 
 	// Also prepare for receiving meta tag information
 	searchKeywords = append(searchKeywords, themes.MetaKeywords...)
@@ -487,8 +487,16 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 		}
 	}
 
+	// Check if lang or language has been specified for the <html> tag
+	var language []byte // the lang string, like "en", for example
+	if lang, ok := kwmap["lang"]; ok {
+		language = lang
+	} else if lang, ok := kwmap["language"]; ok {
+		language = lang
+	}
+
 	// Embed the style and rendered markdown into a simple HTML 5 page
-	htmldata := themes.SimpleHTMLPage(title, h1title, []byte(head.String()), htmlbody)
+	htmldata := themes.SimpleHTMLPage(title, h1title, []byte(head.String()), htmlbody, language)
 
 	// TODO: Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time
 
