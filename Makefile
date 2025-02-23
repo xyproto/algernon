@@ -23,10 +23,10 @@ UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
 LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
-BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
+BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -buildvcs=false -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 else
 # Default settings
-BUILDFLAGS ?= -mod=vendor -trimpath
+BUILDFLAGS ?= -mod=vendor -trimpath -ldflags "-s -w" -buildvcs=false
 endif
 
 algernon:
