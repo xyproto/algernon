@@ -1,4 +1,5 @@
 title: Iterating over a table
+lang: en
 
 # Iterating over a Lua table
 

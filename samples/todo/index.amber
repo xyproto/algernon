@@ -1,5 +1,5 @@
 doctype 5
-html
+html[lang="en"]
   head
     title TODO
     script[src="js/react.production.min.js"]
