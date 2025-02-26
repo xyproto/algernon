@@ -13,7 +13,7 @@ import (
 
 // tableToString converts a Lua table (assumed to be an array of strings)
 // into a single string with each element separated by a newline.
-func tableToString(L *lua.LState, tbl *lua.LTable) string {
+func tableToString(_ *lua.LState, tbl *lua.LTable) string {
 	var lines []string
 	n := tbl.Len()
 	for i := 1; i <= n; i++ {
@@ -85,7 +85,7 @@ func TestRun3System(t *testing.T) {
 	})
 
 	// Test a failing command. This should return exit code 42.
-	testRun3Command(t, L, "exit 42", func(stdout, stderr string, exitCode int) {
+	testRun3Command(t, L, "exit 42", func(_, _ string, exitCode int) {
 		if exitCode != 42 {
 			t.Errorf("Expected exit code 42 for command 'exit 42', got %d", exitCode)
 		}
@@ -164,7 +164,7 @@ func TestRun3Web(t *testing.T) {
 	})
 
 	// Test a failing command.
-	testRun3Command(t, L, "exit 42", func(stdout, stderr string, exitCode int) {
+	testRun3Command(t, L, "exit 42", func(_, _ string, exitCode int) {
 		if exitCode != 42 {
 			t.Errorf("Expected exit code 42 for command 'exit 42' in web context, got %d", exitCode)
 		}
