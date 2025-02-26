@@ -1,5 +1,24 @@
 # Changelog
 
+Changes from 1.17.2 to 1.17.3
+=============================
+
+* Only listen for the USR1 signal on some platforms. Fixes #157.
+* Add a `run3` function, ref #158.
+* Add `print_nonl` that can be used in connection with `flush`.
+* Add the `mprint_ret` function that can return required JS code instead of inserting it.
+* Let `flush`, `redirect` and `permanent_redirect` return `true` if the connection was not closed when sending.
+* Add support for ie. `lang: en` and `language: en` in Markdown files.
+* Improve the "mathematical formulas" sample.
+* Add a typewriter / server-side flush example.
+* Set the language to `en` for 3 of the samples.
+* Build with `-ldflags "-s -w" -buildvcs=false` by default in the `Makefile`.
+* Improve error handling in connection with recorders and flushing.
+* Improve some warnings and error messages.
+* Add an informative message when serving `README.md` files without `-m`.
+* Update documentation.
+* Update dependencies.
+
 Changes from 1.17.1 to 1.17.2
 =============================
 
