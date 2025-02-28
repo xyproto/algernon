@@ -2,8 +2,6 @@ module github.com/xyproto/algernon
 
 go 1.23.1
 
-replace github.com/pingcap/tidb/pkg/parser => github.com/pingcap/tidb/pkg/parser v0.0.0-20250130070702-43f2fb91d740
-
 require (
 	github.com/caddyserver/certmagic v0.21.7
 	github.com/chzyer/readline v1.5.1
