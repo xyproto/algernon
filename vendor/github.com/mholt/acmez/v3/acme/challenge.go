@@ -90,6 +90,12 @@ type Challenge struct {
 	// be included in the POST request. This field is applicable when responding
 	// to "device-attest-01" challenges.
 	Payload any `json:"-"`
+
+	// TkAuthType is the Authority Token Subtype as described in RFC9447 §3
+	// This field is only applicable when responding to "tkauth-01" challenges
+	// and indicates the type of Authority token that will be used
+	// to validate the challenge.
+	TkAuthType string `json:"tkauth-type,omitempty"`
 }
 
 // HTTP01ResourcePath returns the URI path for solving the http-01 challenge.
@@ -170,4 +176,5 @@ const (
 	ChallengeTypeTLSALPN01      = "tls-alpn-01"      // RFC 8737 §3
 	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
 	ChallengeTypeEmailReply00   = "email-reply-00"   // RFC 8823 §5.2
+	ChallengeTypeAuthorityToken = "tkauth-01"        // RFC 9447 §3 - ACME Authority Token challenge type
 )

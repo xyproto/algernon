@@ -32,10 +32,7 @@ To convert markdown text to HTML using reasonable defaults:
 package main
 
 import (
-	"os"
-
 	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 

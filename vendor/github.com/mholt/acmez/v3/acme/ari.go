@@ -218,7 +218,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 			slog.Time("window_start", ari.SuggestedWindow.Start),
 			slog.Time("window_end", ari.SuggestedWindow.End),
 			slog.Time("selected_time", ari.SelectedTime),
-			slog.Time("recheck_after", *ari.RetryAfter),
+			slog.Time("recheck_after", raTime),
 			slog.String("explanation_url", ari.ExplanationURL))
 	}
 

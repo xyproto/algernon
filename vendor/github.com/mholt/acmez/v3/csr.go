@@ -20,6 +20,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/asn1"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -196,6 +197,7 @@ var (
 	oidExtensionSubjectAltName = []int{2, 5, 29, 17}
 	oidPermanentIdentifier     = []int{1, 3, 6, 1, 5, 5, 7, 8, 3}
 	oidHardwareModuleName      = []int{1, 3, 6, 1, 5, 5, 7, 8, 4}
+	oidExtensionTNAuthList     = []int{1, 3, 6, 1, 5, 5, 7, 1, 26} // TNAuthListIdentifier is defined in RFC9448
 )
 
 // RFC 5280 - https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.6
@@ -282,9 +284,19 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 		})
 	}
 
-	// Extract permanent identifiers and hardware module values.
+	// Extract TNAuthList, permanent identifiers and hardware module values.
 	// This block will ignore errors.
 	for _, ext := range csr.Extensions {
+		// Extract TNAuthList Identifier
+		if ext.Id.Equal(oidExtensionTNAuthList) {
+			ids = append(ids, acme.Identifier{
+				Type: "TNAuthList",
+				// https://www.rfc-editor.org/rfc/rfc9448.html#section-3-2
+				// The TNAuthlist value will be base64url encoded
+				// with no padding characters.
+				Value: base64.RawURLEncoding.EncodeToString(ext.Value),
+			})
+		}
 		if ext.Id.Equal(oidExtensionSubjectAltName) {
 			err := forEachSAN(ext.Value, func(tag int, data []byte) error {
 				var on otherName
