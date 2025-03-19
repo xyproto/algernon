@@ -12,6 +12,6 @@ Package for controlling text output, with or without colors, using VT100 termina
 
 ## General info
 
-* Version: 1.17.1
+* Version: 1.17.2
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

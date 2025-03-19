@@ -18,7 +18,7 @@ Features and limitations
 * Deals mainly with strings.
 * Uses the [mysql](https://github.com/go-sql-driver/mysql) package.
 * Modeled after [simpleredis](https://github.com/xyproto/simpleredis).
-* The hash maps behaves like hash maps, but are not backed by actual hashmaps, unlike with [simpleredis](https://github.com/xyproto/simpleredis). This is for keeping compatibility with simpleredis. If performance when scaling up is a concern, simpleredis backed by [redis](https://redis.io) might be a better choice.
+* The hash maps behaves like hash maps, but are not backed by actual hashmaps, unlike with [simpleredis](https://github.com/xyproto/simpleredis). This is for keeping compatibility with simpleredis. If performance when scaling up is a concern, simpleredis combined with [redis](https://redis.io) or [Valkey](https://github.com/valkey-io/valkey) might be a better choice.
 * MariaDB/MySQL normally has issues with variable size UTF-8 strings, even for for some combinations of characters. This package avoids these problems by compressing and hex encoding the data before storing in the database. This may slow down or speed up the time it takes to access the data, depending on your setup, but it's a safe way to encode *any* string. This behavior is optional and can be disabled with `host.SetRawUTF8(true)`, (to just use `utf8mb4`).
 
 
@@ -85,6 +85,6 @@ A MariaDB/MySQL Database must be up and running locally for `go test` to work.
 Version, license and author
 ---------------------------
 
-* Version: 1.3.4
+* Version: 1.3.5
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
