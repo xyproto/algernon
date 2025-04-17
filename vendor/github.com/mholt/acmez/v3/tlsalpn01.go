@@ -28,11 +28,18 @@ import (
 	"time"
 
 	"github.com/mholt/acmez/v3/acme"
+	"golang.org/x/net/idna"
 )
 
 // TLSALPN01ChallengeCert creates a certificate that can be used for
 // handshakes while solving the tls-alpn-01 challenge. See RFC 8737 §3.
 func TLSALPN01ChallengeCert(challenge acme.Challenge) (*tls.Certificate, error) {
+	// certificates must encode their SANs as ASCII
+	asciiIdentifier, err := idna.ToASCII(challenge.Identifier.Value)
+	if err != nil {
+		return nil, err
+	}
+
 	keyAuthSum := sha256.Sum256([]byte(challenge.KeyAuthorization))
 	keyAuthSumASN1, err := asn1.Marshal(keyAuthSum[:sha256.Size])
 	if err != nil {
@@ -60,7 +67,7 @@ func TLSALPN01ChallengeCert(challenge acme.Challenge) (*tls.Certificate, error) 
 		NotAfter:              time.Now().Add(24 * time.Hour * 365),
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames:              []string{challenge.Identifier.Value},
+		DNSNames:              []string{asciiIdentifier},
 
 		// add key authentication digest as the acmeValidation-v1 extension
 		// (marked as critical such that it won't be used by non-ACME software).
