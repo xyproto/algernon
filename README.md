@@ -78,7 +78,7 @@ Design decisions
     * index.txt is plain text that is outputted with the correct Content-Type.
     * index.pongo2, index.po2 or index.tmpl is Pongo2 code that is rendered as HTML.
     * index.amber is Amber code that is rendered as HTML.
-    * index.hyper.js or index.hyper.jsx is JSX+HyperApp code that is rendered as HTML
+    * index.hyper.js, index.hyper.jsx or index.happ is JSX+HyperApp code that is rendered as HTML.
     * index.tl is Teal code that is interpreted as a handler function for the current directory.
     * index.prompt is a content-type, an Ollama model, a blank line and a prompt, for generating content with LLMs.
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
