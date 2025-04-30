@@ -6,18 +6,29 @@
 // This documentation uses the definitions for terms from RFC 9499:
 // https://datatracker.ietf.org/doc/html/rfc9499
 //
-// This package represents DNS records in two primary ways: as opaque [RR]
-// structs, where the data is serialized as a single string as in a zone file;
-// and as individual type structures, where the data is parsed into its separate
-// fields for easier manipulation by Go programs (for example: [SRV] and [HTTPS]
-// types). This hybrid design offers great flexibility for both DNS provider
-// packages and consumer Go programs.
+// This package represents records with the [Record] interface, which is any
+// type that can transform itself into the [RR] struct. This interface is
+// implemented by the various record abstractions this package offers: [RR]
+// structs, where the data is serialized as a single opaque string as if in
+// a zone file, being a type-agnostic [Resource Record] (that is, a name,
+// type, class, TTL, and data); and individual RR-type structures, where the
+// data is parsed into its separate fields for easier manipulation by Go
+// programs (for example: [SRV], [TXT], and [ServiceBinding] types). This
+// hybrid design grants great flexibility for both DNS provider packages and
+// consumer Go programs.
 //
-// This package represents records flexibly with the [Record] interface, which
-// is any type that can transform itself into the [RR] struct, which is a
-// type-agnostic [Resource Record] (that is, a name, type, class, TTL, and data).
-// Specific record types such as [Address], [SRV], [TXT], and others implement
-// the [Record] interface.
+// [Record] values should not be primitvely compared (==) unless they are [RR],
+// because other struct types contain maps, for which equality is not defined;
+// additionally, some packages may attach custom data to each RR struct-type's
+// `ProviderData` field, whose values might not be comparable either. The
+// `ProviderData` field is not portable across providers, or possibly even
+// zones. Because it is not portable, and we want to ensure that [RR] structs
+// remain both portable and comparable, the `RR()` method does not preserve
+// `ProviderData` in its return value. Users of libdns packages should check
+// the documentation of provider packages, as some may use the `ProviderData`
+// field to reduce API calls / increase effiency. But implementations must
+// never rely on `ProviderData` for correctness if possible (and should
+// document clearly otherwise).
 //
 // Implementations of the libdns interfaces should accept as input any [Record]
 // value, and should return as output the concrete struct types that implement
@@ -96,7 +107,7 @@ type RecordAppender interface {
 	// zone in an invalid state.
 	//
 	// Implementations should return struct types defined by this package which
-	// correspond with the specific RR-type, rather than the [RR] struct, if possible.
+	// correspond with the specific RR-type (instead of the opaque [RR] struct).
 	//
 	// Implementations must honor context cancellation and be safe for concurrent
 	// use.
@@ -142,7 +153,7 @@ type RecordSetter interface {
 	// CNAME records.
 	//
 	// Implementations should return struct types defined by this package which
-	// correspond with the specific RR-type, rather than the [RR] struct, if possible.
+	// correspond with the specific RR-type (instead of the opaque [RR] struct).
 	//
 	// Implementations must honor context cancellation and be safe for concurrent
 	// use.
@@ -208,7 +219,7 @@ type RecordDeleter interface {
 	// zone, so attempting to do is undefined behavior.
 	//
 	// Implementations should return struct types defined by this package which
-	// correspond with the specific RR-type, rather than the [RR] struct, if possible.
+	// correspond with the specific RR-type (instead of the opaque [RR] struct).
 	//
 	// Implementations must honor context cancellation and be safe for concurrent
 	// use.
@@ -221,9 +232,6 @@ type ZoneLister interface {
 	// [libdns] methods. Not every upstream provider API supports listing
 	// available zones, and very few [libdns]-dependent packages use this
 	// method, so this method is optional.
-	//
-	// Implementations should return struct types defined by this package which
-	// correspond with the specific RR-type, rather than the [RR] struct, if possible.
 	//
 	// Implementations must honor context cancellation and be safe for
 	// concurrent use.

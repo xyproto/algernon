@@ -3,6 +3,7 @@ package libdns
 import (
 	"fmt"
 	"net/netip"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,10 @@ type Address struct {
 	Name string
 	TTL  time.Duration
 	IP   netip.Addr
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (a Address) RR() RR {
@@ -27,11 +32,19 @@ func (a Address) RR() RR {
 	if a.IP.Is6() {
 		recType = "AAAA"
 	}
+	data := a.IP.String()
+	if a.IP == (netip.Addr{}) {
+		// If the IP address is null, then we get the string "invalid IP". We'll
+		// convert this to the empty string to make
+		// [libdns.RecordDeleter.DeleteRecords] easier to use when missing IP
+		// addresses are passed.
+		data = ""
+	}
 	return RR{
 		Name: a.Name,
 		TTL:  a.TTL,
 		Type: recType,
-		Data: a.IP.String(),
+		Data: data,
 	}
 }
 
@@ -46,14 +59,23 @@ type CAA struct {
 	Flags uint8 // As of March 2025, the only valid values are 0 and 128.
 	Tag   string
 	Value string
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (c CAA) RR() RR {
+	data := fmt.Sprintf(`%d %s %q`, c.Flags, c.Tag, c.Value)
+	// Make sure that the zero value is an empty string
+	if c.Flags == 0 && c.Tag == "" && c.Value == "" {
+		data = ""
+	}
 	return RR{
 		Name: c.Name,
 		TTL:  c.TTL,
 		Type: "CAA",
-		Data: fmt.Sprintf(`%d %s %q`, c.Flags, c.Tag, c.Value),
+		Data: data,
 	}
 }
 
@@ -63,6 +85,10 @@ type CNAME struct {
 	Name   string
 	TTL    time.Duration
 	Target string
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (c CNAME) RR() RR {
@@ -81,14 +107,23 @@ type MX struct {
 	TTL        time.Duration
 	Preference uint16 // Lower values indicate that clients should prefer this server. This field is similar to the “Priority” field in SRV records.
 	Target     string // The hostname of the mail server
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (m MX) RR() RR {
+	data := fmt.Sprintf("%d %s", m.Preference, m.Target)
+	// Make sure that the zero value is an empty string
+	if m.Preference == 0 && m.Target == "" {
+		data = ""
+	}
 	return RR{
 		Name: m.Name,
 		TTL:  m.TTL,
 		Type: "MX",
-		Data: fmt.Sprintf("%d %s", m.Preference, m.Target),
+		Data: data,
 	}
 }
 
@@ -108,6 +143,10 @@ type NS struct {
 	Name   string
 	TTL    time.Duration
 	Target string
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (n NS) RR() RR {
@@ -150,6 +189,10 @@ type SRV struct {
 	Weight   uint16 // Higher values indicate that clients should prefer this server when choosing between targets with the same priority
 	Port     uint16 // The port on which the service is running.
 	Target   string // The hostname of the server providing the service, which must not point to a CNAME.
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (s SRV) RR() RR {
@@ -164,11 +207,19 @@ func (s SRV) RR() RR {
 		name = fmt.Sprintf("_%s._%s.%s", s.Service, s.Transport, s.Name)
 	}
 
+	name = strings.TrimSuffix(name, ".@")
+
+	data := fmt.Sprintf("%d %d %d %s", s.Priority, s.Weight, s.Port, s.Target)
+	// Make sure that the zero value is an empty string
+	if s.Priority == 0 && s.Weight == 0 && s.Port == 0 && s.Target == "" {
+		data = ""
+	}
+
 	return RR{
 		Name: name,
 		TTL:  s.TTL,
 		Type: "SRV",
-		Data: fmt.Sprintf("%d %d %d %s", s.Priority, s.Weight, s.Port, s.Target),
+		Data: data,
 	}
 }
 
@@ -295,6 +346,10 @@ type ServiceBinding struct {
 	// ignore the entire record. This is similar to the “critical” flag in CAA
 	// records.
 	Params SvcParams
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 // RR converts the parsed record data to a generic [Record] struct.
@@ -328,11 +383,19 @@ func (s ServiceBinding) RR() RR {
 		params = s.Params.String()
 	}
 
+	name = strings.TrimSuffix(name, ".@")
+
+	data := fmt.Sprintf("%d %s %s", s.Priority, s.Target, params)
+	// Make sure that the zero value is an empty string
+	if s.Priority == 0 && s.Target == "" && params == "" {
+		data = ""
+	}
+
 	return RR{
 		Name: name,
 		TTL:  s.TTL,
 		Type: recType,
-		Data: fmt.Sprintf("%d %s %s", s.Priority, s.Target, params),
+		Data: data,
 	}
 }
 
@@ -363,6 +426,10 @@ type TXT struct {
 	// [RFC 7208 §3.3]: https://datatracker.ietf.org/doc/html/rfc7208#section-3.3
 	// [DNSControl explainer]: https://docs.dnscontrol.org/developer-info/opinions#opinion-8-txt-records-are-one-long-string
 	Text string
+
+	// Optional custom data associated with the provider serving this record.
+	// See the package godoc for important details on this field.
+	ProviderData any
 }
 
 func (t TXT) RR() RR {

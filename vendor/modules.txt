@@ -8,7 +8,7 @@ github.com/DataDog/gostackparse
 # github.com/Masterminds/semver v1.5.0
 ## explicit
 github.com/Masterminds/semver
-# github.com/alecthomas/chroma/v2 v2.16.0
+# github.com/alecthomas/chroma/v2 v2.17.0
 ## explicit; go 1.22
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
@@ -61,7 +61,7 @@ github.com/dustin/go-humanize
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.25.2
+# github.com/evanw/esbuild v0.25.3
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -128,8 +128,8 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20250403155104-27863c87afa6
-## explicit; go 1.23
+# github.com/google/pprof v0.0.0-20250423184734-337e5dd93bb4
+## explicit; go 1.23.0
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
 ## explicit
@@ -157,7 +157,7 @@ github.com/klauspost/cpuid/v2
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/libdns/libdns v1.0.0-beta.1
+# github.com/libdns/libdns v1.0.0
 ## explicit; go 1.18
 github.com/libdns/libdns
 # github.com/mattetti/filebuffer v1.0.1
@@ -228,7 +228,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20250321121322-0929f3353f4e
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20250430052046-ea6440367b54
 ## explicit; go 1.23
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -246,7 +246,7 @@ github.com/pkg/term/termios
 # github.com/quic-go/qpack v0.5.1
 ## explicit; go 1.22
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.50.1
+# github.com/quic-go/quic-go v0.51.0
 ## explicit; go 1.23
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -427,8 +427,8 @@ go.uber.org/automaxprocs
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
-# go.uber.org/mock v0.5.1
-## explicit; go 1.22
+# go.uber.org/mock v0.5.2
+## explicit; go 1.23
 go.uber.org/mock/mockgen
 go.uber.org/mock/mockgen/model
 # go.uber.org/multierr v1.11.0
@@ -463,9 +463,6 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
-## explicit; go 1.23.0
-golang.org/x/exp/rand
 # golang.org/x/mod v0.24.0
 ## explicit; go 1.23.0
 golang.org/x/mod/internal/lazyregexp

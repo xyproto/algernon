@@ -30,6 +30,11 @@ type Record interface {
 // consistency for callers who can then reliably type-switch or type-assert the
 // output without the possibility for errors.
 //
+// Implementations are permitted to define their own types that implement the
+// [RR] interface, but this should only be done for provider-specific types. If
+// you're instead wanting to use a general-purpose DNS RR type that is not yet
+// supported by this package, please open an issue or PR to add it.
+//
 // [DNS Resource Record]: https://en.wikipedia.org/wiki/Domain_Name_System#Resource_records
 type RR struct {
 	// The name of the record. It is partially qualified, relative to the zone.
@@ -52,7 +57,7 @@ type RR struct {
 	//
 	// Valid, but probably doesn't do what you want:
 	//   - “www.example.net” (refers to “www.example.net.example.com.”)
-	Name string
+	Name string `json:"name"`
 
 	// The time-to-live of the record. This is represented in the DNS zone file as
 	// an unsigned integral number of seconds, but is provided here as a
@@ -64,7 +69,7 @@ type RR struct {
 	// Note that some providers may reject or silently increase TTLs that are below
 	// a certain threshold, and that DNS resolvers may choose to ignore your TTL
 	// settings, so it is recommended to not rely on the exact TTL value.
-	TTL time.Duration
+	TTL time.Duration `json:"ttl"`
 
 	// The type of the record as an uppercase string. DNS provider packages are
 	// encouraged to support as many of the most common record types as possible,
@@ -72,7 +77,7 @@ type RR struct {
 	//
 	// Other custom record types may be supported with implementation-defined
 	// behavior.
-	Type string
+	Type string `json:"type"`
 
 	// The data (or "value") of the record. This field should be formatted in
 	// the *unescaped* standard zone file syntax (technically, the "RDATA" field
@@ -97,7 +102,7 @@ type RR struct {
 	//
 	// Implementations are not expected to support RFC 3597 “\#” escape
 	// sequences, but may choose to do so if they wish.
-	Data string
+	Data string `json:"data"`
 }
 
 // RR returns itself. This may be the case when trying to parse an RR type
@@ -246,14 +251,18 @@ func (r RR) toSRV() (SRV, error) {
 	target := fields[3]
 
 	parts := strings.SplitN(r.Name, ".", 3)
-	if len(parts) < 3 {
-		return SRV{}, fmt.Errorf("name %v does not contain enough fields; expected format: '_service._proto.name'", r.Name)
+	if len(parts) < 2 {
+		return SRV{}, fmt.Errorf("name %v does not contain enough fields; expected format: '_service._proto.name' or '_service._proto'", r.Name)
+	}
+	name := "@"
+	if len(parts) == 3 {
+		name = parts[2]
 	}
 
 	return SRV{
 		Service:   strings.TrimPrefix(parts[0], "_"),
 		Transport: strings.TrimPrefix(parts[1], "_"),
-		Name:      parts[2],
+		Name:      name,
 		TTL:       r.TTL,
 		Priority:  uint16(priority),
 		Weight:    uint16(weight),
@@ -290,6 +299,14 @@ func (r RR) toServiceBinding() (ServiceBinding, error) {
 	scheme := ""
 	var port uint64 = 0
 	nameParts := strings.SplitN(r.Name, ".", 3)
+	// Handle the case where the name is only underscore-prefixed labels
+	if len(nameParts) <= 1 && strings.HasPrefix(nameParts[0], "_") {
+		nameParts = append(nameParts, "@")
+	} else if len(nameParts) == 2 && strings.HasPrefix(nameParts[1], "_") {
+		nameParts = append(nameParts, "@")
+	}
+
+	// Parse the first two parts of the name
 	if strings.HasPrefix(nameParts[0], "_") && strings.HasPrefix(nameParts[1], "_") {
 		portStr := strings.TrimPrefix(nameParts[0], "_")
 		scheme = strings.TrimPrefix(nameParts[1], "_")
