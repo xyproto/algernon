@@ -8,7 +8,7 @@ github.com/DataDog/gostackparse
 # github.com/Masterminds/semver v1.5.0
 ## explicit
 github.com/Masterminds/semver
-# github.com/alecthomas/chroma/v2 v2.17.0
+# github.com/alecthomas/chroma/v2 v2.17.2
 ## explicit; go 1.22
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
@@ -61,7 +61,7 @@ github.com/dustin/go-humanize
 ## explicit
 github.com/eknkc/amber
 github.com/eknkc/amber/parser
-# github.com/evanw/esbuild v0.25.3
+# github.com/evanw/esbuild v0.25.4
 ## explicit; go 1.13
 github.com/evanw/esbuild/internal/api_helpers
 github.com/evanw/esbuild/internal/ast
@@ -128,7 +128,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/gomodule/redigo v1.9.2
 ## explicit; go 1.17
 github.com/gomodule/redigo/redis
-# github.com/google/pprof v0.0.0-20250423184734-337e5dd93bb4
+# github.com/google/pprof v0.0.0-20250501235452-c0086092b71a
 ## explicit; go 1.23.0
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
@@ -183,8 +183,8 @@ github.com/mholt/acmez/v3/acme
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.65
-## explicit; go 1.22.0
+# github.com/miekg/dns v1.1.66
+## explicit; go 1.23.0
 github.com/miekg/dns
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
@@ -228,7 +228,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20250430052046-ea6440367b54
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20250513140448-41045f18714a
 ## explicit; go 1.23
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -450,7 +450,7 @@ go.uber.org/zap/zaptest
 # go.uber.org/zap/exp v0.3.0
 ## explicit; go 1.19
 go.uber.org/zap/exp/zapslog
-# golang.org/x/crypto v0.37.0
+# golang.org/x/crypto v0.38.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -469,7 +469,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.39.0
+# golang.org/x/net v0.40.0
 ## explicit; go 1.23.0
 golang.org/x/net/bpf
 golang.org/x/net/html
@@ -483,15 +483,15 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sync v0.13.0
+# golang.org/x/sync v0.14.0
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.32.0
+# golang.org/x/sys v0.33.0
 ## explicit; go 1.23.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.24.0
+# golang.org/x/text v0.25.0
 ## explicit; go 1.23.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -511,7 +511,7 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.11.0
 ## explicit; go 1.23.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.32.0
+# golang.org/x/tools v0.33.0
 ## explicit; go 1.23.0
 golang.org/x/tools/cover
 golang.org/x/tools/go/ast/astutil
