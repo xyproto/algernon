@@ -164,7 +164,7 @@ func (ulf *UploadedFile) write(fullFilename string, fperm os.FileMode) error {
 	// Check if the file already exists
 	if _, err := os.Stat(fullFilename); err == nil { // exists
 		logrus.Error(fullFilename, " already exists")
-		return fmt.Errorf("File exists: " + fullFilename)
+		return fmt.Errorf("File exists: %s", fullFilename)
 	}
 	// Write the uploaded file
 	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, fperm)
