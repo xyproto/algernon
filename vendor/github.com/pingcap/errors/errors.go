@@ -91,6 +91,12 @@ import (
 	"io"
 )
 
+// represent an error carries with message
+type messenger interface {
+	// GetSelfMsg get its own message, the message of its cause error is NOT included.
+	GetSelfMsg() string
+}
+
 // New returns an error with the supplied message.
 // New also records the stack trace at the point it was called.
 func New(message string) error {
@@ -135,7 +141,11 @@ type fundamental struct {
 	*stack
 }
 
+var _ messenger = (*fundamental)(nil)
+
 func (f *fundamental) Error() string { return f.msg }
+
+func (f *fundamental) GetSelfMsg() string { return f.msg }
 
 func (f *fundamental) Format(s fmt.State, verb rune) {
 	switch verb {
@@ -172,10 +182,14 @@ func WithStack(err error) error {
 // AddStack is similar to WithStack.
 // However, it will first check with HasStack to see if a stack trace already exists in the causer chain before creating another one.
 func AddStack(err error) error {
-	if HasStack(err) {
+	if err == nil || HasStack(err) {
 		return err
 	}
-	return WithStack(err)
+
+	return &withStack{
+		err,
+		callers(),
+	}
 }
 
 type withStack struct {
@@ -183,7 +197,15 @@ type withStack struct {
 	*stack
 }
 
+var _ messenger = (*withStack)(nil)
+
 func (w *withStack) Cause() error { return w.error }
+
+func (w *withStack) GetSelfMsg() string {
+	// it doesn't have its own message, but we still need impl it to avoid calling
+	// err.Error() for its cause
+	return ""
+}
 
 // Unwrap provides compatibility for Go 1.13 error chains.
 func (w *withStack) Unwrap() error { return w.error }
@@ -267,8 +289,12 @@ type withMessage struct {
 	causeHasStack bool
 }
 
+var _ messenger = (*withMessage)(nil)
+
 func (w *withMessage) Error() string { return w.msg + ": " + w.cause.Error() }
 func (w *withMessage) Cause() error  { return w.cause }
+
+func (w *withMessage) GetSelfMsg() string { return w.msg }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
 func (w *withMessage) Unwrap() error  { return w.cause }
@@ -333,4 +359,34 @@ func Find(origErr error, test func(error) bool) error {
 		return false
 	})
 	return foundErr
+}
+
+// GetErrStackMsg get the concat error message the whole error stack.
+// it's different from err.Error(), as pingcap/errors.Error will prepend the error
+// code in the result of err.Error(), like below:
+//
+//	[types:1292]Truncated incorrect
+//
+// and when there are multiple errors.Error in the chain, the err.Error() will
+// return like this:
+//
+//	[Lightning:Restore:ErrEncodeKV]encode kv error ... : [types:1292]Truncated incorrect DOUBLE value: 'a'"
+//
+// But sometimes we only want a single error code with pure message part.
+func GetErrStackMsg(err error) string {
+	if err == nil {
+		return ""
+	}
+	m, ok := err.(messenger)
+	if ok {
+		msg := m.GetSelfMsg()
+		causeMsg := GetErrStackMsg(Unwrap(err))
+		if msg == "" {
+			msg = causeMsg
+		} else if causeMsg != "" {
+			msg = msg + ": " + causeMsg
+		}
+		return msg
+	}
+	return err.Error()
 }

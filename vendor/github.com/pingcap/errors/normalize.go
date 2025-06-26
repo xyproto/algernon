@@ -82,6 +82,8 @@ type Error struct {
 	line  int
 }
 
+var _ messenger = (*Error)(nil)
+
 // Code returns the numeric code of this error.
 // ID() will return textual error if there it is,
 // when you just want to get the purely numeric error
@@ -127,10 +129,6 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
-	describe := e.codeText
-	if len(describe) == 0 {
-		describe = ErrCodeText(strconv.Itoa(int(e.code)))
-	}
 	if e.cause != nil {
 		return fmt.Sprintf("[%s]%s: %s", e.RFCCode(), e.GetMsg(), e.cause.Error())
 	}
@@ -142,6 +140,10 @@ func (e *Error) GetMsg() string {
 		return fmt.Sprintf(e.message, e.args...)
 	}
 	return e.message
+}
+
+func (e *Error) GetSelfMsg() string {
+	return e.GetMsg()
 }
 
 func (e *Error) fillLineAndFile(skip int) {
