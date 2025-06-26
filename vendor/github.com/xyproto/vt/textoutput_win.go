@@ -241,13 +241,6 @@ func (o *TextOutput) LightBlue(s string) string {
 	return s
 }
 
-func (o *TextOutput) LightPurple(s string) string {
-	if o.color {
-		return ansi.Color(s, "magenta+h")
-	}
-	return s
-}
-
 func (o *TextOutput) LightCyan(s string) string {
 	if o.color {
 		return ansi.Color(s, "cyan+h")

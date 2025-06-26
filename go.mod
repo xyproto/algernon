@@ -50,7 +50,7 @@ require (
 	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
 	github.com/xyproto/tinysvg v1.1.1
 	github.com/xyproto/unzip v1.0.0
-	github.com/xyproto/vt v1.2.3
+	github.com/xyproto/vt v1.2.4
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.41.0
 )

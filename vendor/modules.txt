@@ -366,7 +366,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.0
 ## explicit; go 1.23.1
 github.com/xyproto/unzip
-# github.com/xyproto/vt v1.2.3
+# github.com/xyproto/vt v1.2.4
 ## explicit; go 1.24.4
 github.com/xyproto/vt
 # github.com/yosssi/gcss v0.1.0
