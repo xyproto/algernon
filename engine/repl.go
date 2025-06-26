@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/ask"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/textoutput"
+	"github.com/xyproto/vt"
 )
 
 const exitMessage = "bye"
@@ -101,55 +101,31 @@ func exportREPLSpecific(L *lua.LState) {
 	}))
 }
 
-// Split the given line in three parts, and color the parts
-func colorSplit(line, sep string, colorFunc1, colorFuncSep, colorFunc2 func(string) string, reverse bool) (string, string) {
-	if strings.Contains(line, sep) {
-		fields := strings.SplitN(line, sep, 2)
-		s1 := ""
-		if colorFunc1 != nil {
-			s1 += colorFunc1(fields[0])
-		} else {
-			s1 += fields[0]
-		}
-		s2 := ""
-		if colorFunc2 != nil {
-			s2 += colorFuncSep(sep) + colorFunc2(fields[1])
-		} else {
-			s2 += sep + fields[1]
-		}
-		return s1, s2
-	}
-	if reverse {
-		return "", line
-	}
-	return line, ""
-}
-
 // Syntax highlight the given line
-func highlight(o *textoutput.TextOutput, line string) string {
+func highlight(o *vt.TextOutput, line string) string {
 	unprocessed := line
-	unprocessed, comment := colorSplit(unprocessed, "//", nil, o.DarkGray, o.DarkGray, false)
-	module, unprocessed := colorSplit(unprocessed, ":", o.LightGreen, o.DarkRed, nil, true)
+	unprocessed, comment := vt.ColorSplit(unprocessed, "//", 0, vt.DarkGray, vt.DarkGray, false)
+	module, unprocessed := vt.ColorSplit(unprocessed, ":", vt.LightGreen, vt.Red, 0, true)
 	function := ""
 	if unprocessed != "" {
 		// Green function names
 		if strings.Contains(unprocessed, "(") {
 			fields := strings.SplitN(unprocessed, "(", 2)
-			function = o.LightGreen(fields[0])
+			function = vt.LightGreen.Get(fields[0])
 			unprocessed = "(" + fields[1]
 		} else if strings.Contains(unprocessed, "|") {
 			unprocessed = "<magenta>" + strings.ReplaceAll(unprocessed, "|", "<white>|</white><magenta>") + "</magenta>"
 		}
 	}
-	unprocessed, typed := colorSplit(unprocessed, "->", nil, o.LightBlue, o.DarkRed, false)
-	unprocessed = strings.ReplaceAll(unprocessed, "string", o.LightBlue("string"))
-	unprocessed = strings.ReplaceAll(unprocessed, "number", o.LightYellow("number"))
-	unprocessed = strings.ReplaceAll(unprocessed, "function", o.LightCyan("function"))
+	unprocessed, typed := vt.ColorSplit(unprocessed, "->", 0, vt.LightBlue, vt.Red, false)
+	unprocessed = strings.ReplaceAll(unprocessed, "string", vt.LightBlue.Get("string"))
+	unprocessed = strings.ReplaceAll(unprocessed, "number", vt.LightYellow.Get("number"))
+	unprocessed = strings.ReplaceAll(unprocessed, "function", vt.LightCyan.Get("function"))
 	return module + function + unprocessed + typed + comment
 }
 
 // Output syntax highlighted help text, with an additional usage message
-func outputHelp(o *textoutput.TextOutput, helpText string) {
+func outputHelp(o *vt.TextOutput, helpText string) {
 	for _, line := range strings.Split(helpText, "\n") {
 		o.Println(highlight(o, line))
 	}
@@ -157,19 +133,19 @@ func outputHelp(o *textoutput.TextOutput, helpText string) {
 }
 
 // Output syntax highlighted help about a specific topic or function
-func outputHelpAbout(o *textoutput.TextOutput, helpText, topic string) {
+func outputHelpAbout(o *vt.TextOutput, helpText, topic string) {
 	switch topic {
 	case "help":
-		o.Println(o.DarkGray("Output general help or help about a specific topic."))
+		o.Println(vt.DarkGray.Get("Output general help or help about a specific topic."))
 		return
 	case "webhelp":
-		o.Println(o.DarkGray("Output help about web-related functions."))
+		o.Println(vt.DarkGray.Get("Output help about web-related functions."))
 		return
 	case "confighelp":
-		o.Println(o.DarkGray("Output help about configuration-related functions."))
+		o.Println(vt.DarkGray.Get("Output help about configuration-related functions."))
 		return
 	case "quit", "exit", "shutdown", "halt":
-		o.Println(o.DarkGray("Quit Algernon."))
+		o.Println(vt.DarkGray.Get("Quit Algernon."))
 		return
 	}
 	comment := ""
@@ -177,7 +153,7 @@ func outputHelpAbout(o *textoutput.TextOutput, helpText, topic string) {
 		if strings.HasPrefix(line, topic) {
 			// Output help text, with some surrounding blank lines
 			o.Println("\n" + highlight(o, line))
-			o.Println("\n" + o.DarkGray(strings.TrimSpace(comment)) + "\n")
+			o.Println("\n" + vt.DarkGray.Get(strings.TrimSpace(comment)) + "\n")
 			return
 		}
 		// Gather comments until a non-comment is encountered
@@ -187,7 +163,7 @@ func outputHelpAbout(o *textoutput.TextOutput, helpText, topic string) {
 			comment = ""
 		}
 	}
-	o.Println(o.DarkGray("Found no help for: ") + o.White(topic))
+	o.Println(vt.DarkGray.Get("Found no help for: ") + vt.White.Get(topic))
 }
 
 // Take all functions mentioned in the given help text string and add them to the readline completer
@@ -205,7 +181,7 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 }
 
 // LoadLuaFunctionsForREPL exports the various Lua functions that might be needed in the REPL
-func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *textoutput.TextOutput) {
+func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *vt.TextOutput) {
 	// Server configuration functions
 	ac.LoadServerConfigFunctions(L, "")
 
@@ -266,7 +242,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	defer L.Close()
 
 	// Colors and input
-	o := textoutput.NewTextOutput(platformdep.EnableColors, true)
+	o := vt.NewTextOutput(platformdep.EnableColors, true)
 
 	// Command history file
 	historyFilename = filepath.Join(historydir, platformdep.HistoryFilename)
@@ -277,12 +253,12 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	<-ready // Wait for the server to be ready
 
 	// Tell the user that the server is ready
-	o.Println(o.LightGreen("Ready"))
+	o.Println(vt.LightGreen.Get("Ready"))
 
 	// Start the read, eval, print loop
 	var (
 		line     string
-		prompt   = o.LightCyan("lua> ")
+		prompt   = vt.LightCyan.Get("lua> ")
 		EOF      bool
 		EOFcount int
 	)
@@ -312,7 +288,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	AtShutdown(func() {
 		// Verbose mode has different log output at shutdown
 		if !ac.verboseMode {
-			o.Println(o.LightBlue(exitMessage))
+			o.Println(vt.LightBlue.Get(exitMessage))
 		}
 	})
 	for {
@@ -326,7 +302,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 				switch {
 				case err == io.EOF:
 					if ac.debugMode {
-						o.Println(o.LightPurple(err.Error()))
+						o.Println(vt.LightMagenta.Get(err.Error()))
 					}
 					EOF = true
 				case err == readline.ErrInterrupt:

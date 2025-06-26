@@ -27,8 +27,8 @@ import (
 	"github.com/xyproto/mime"
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/recwatch"
-	"github.com/xyproto/textoutput"
 	"github.com/xyproto/unzip"
+	"github.com/xyproto/vt"
 )
 
 const (
@@ -498,7 +498,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.serveJustHTTP = true
 	}
 
-	to := textoutput.NewTextOutput(runtime.GOOS != "windows", !ac.quietMode)
+	to := vt.NewTextOutput(runtime.GOOS != "windows", !ac.quietMode)
 
 	// Console output
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
