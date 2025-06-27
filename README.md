@@ -254,11 +254,6 @@ This enables debug mode, uses the internal Bolt database, uses regular HTTP inst
 
 Then try creating an `index.lua` file with `print("Hello, World!")` and visit the served web page in a browser.
 
-##### Enable HTTP/2 in the browser (for older browsers)
-
-* Chrome: go to `chrome://flags/#enable-spdy4`, enable, save and restart the browser.
-* Firefox: go to `about:config`, set `network.http.spdy.enabled.http2draft` to `true`. You might need the nightly version of Firefox.
-
 ##### Configure the required ports for local use
 
 * You may need to change the firewall settings for port 3000, if you wish to use the default port for exploring the samples.
@@ -267,7 +262,8 @@ Then try creating an `index.lua` file with `print("Hello, World!")` and visit th
 ##### Prepare for running the samples
 
     git clone https://github.com/xyproto/algernon
-    make -C algernon
+    cd algernon
+    make
 
 ##### Launch the "welcome" page
 
