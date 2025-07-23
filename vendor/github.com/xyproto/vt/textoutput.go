@@ -39,6 +39,16 @@ func NewTextOutput(color, enabled bool) *TextOutput {
 	return o
 }
 
+// New can initialize a new TextOutput struct,
+// which can have colors turned on or off and where the
+// output can be enabled (verbose) or disabled (silent).
+// If NO_COLOR is set, colors are disabled.
+func New() *TextOutput {
+	o := &TextOutput{nil, nil, !EnvNoColor, true}
+	o.initializeTagReplacers()
+	return o
+}
+
 // OutputTags will output text that may have tags like "<blue>", "</blue>" or "<off>" for
 // enabling or disabling color attributes. Respects the color/enabled settings
 // of this TextOutput.

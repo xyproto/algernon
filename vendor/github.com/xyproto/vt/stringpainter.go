@@ -19,6 +19,7 @@ func colorWrite(sb *strings.Builder, s string, colorIndex int) {
 }
 
 // Colorize comments in gray. Colorize (){}[] in an alternating way.
+// This provides simple/rudimentary syntax highlighting.
 func Colorize(line string) string {
 	var sb strings.Builder
 	trimmed := strings.TrimSpace(line)
