@@ -91,15 +91,16 @@ func CollectFileChangeEvents(watcher *RecursiveWatcher, mut *sync.Mutex, events 
 // GenFileChangeEvents creates an SSE event whenever a file in the server directory changes.
 //
 // Uses the following HTTP headers:
-//   Content-Type: text/event-stream;charset=utf-8
-//   Cache-Control: no-cache
-//   Connection: keep-alive
-//   Access-Control-Allow-Origin: (custom value)
+//
+//	Content-Type: text/event-stream;charset=utf-8
+//	Cache-Control: no-cache
+//	Connection: keep-alive
+//	Access-Control-Allow-Origin: (custom value)
 //
 // The "Access-Control-Allow-Origin" header uses the value that is passed in the "allowed" argument.
-//
 func GenFileChangeEvents(events TimeEventMap, mut *sync.Mutex, maxAge time.Duration, allowed string) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+
 		w.Header().Set("Content-Type", "text/event-stream;charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")

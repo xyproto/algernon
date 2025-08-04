@@ -14,7 +14,7 @@ require (
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+	github.com/gomarkdown/markdown v0.0.0-20250731182530-5d03d1963446
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -35,22 +35,22 @@ require (
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.3.0
 	github.com/xyproto/ollamaclient/v2 v2.7.1
-	github.com/xyproto/onthefly v1.2.3
+	github.com/xyproto/onthefly v1.4.1
 	github.com/xyproto/permissionbolt/v2 v2.6.3
 	github.com/xyproto/permissions v1.0.0
 	github.com/xyproto/permissionsql/v2 v2.1.2
 	github.com/xyproto/pinterface v1.5.4
 	github.com/xyproto/pstore v1.3.3
-	github.com/xyproto/recwatch v1.1.0
+	github.com/xyproto/recwatch v1.2.0
 	github.com/xyproto/sheepcounter v1.6.2
 	github.com/xyproto/simplebolt v1.5.2
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.8.1
 	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
-	github.com/xyproto/tinysvg v1.1.1
+	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.0
-	github.com/xyproto/vt v1.2.5
+	github.com/xyproto/vt v1.2.9
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.42.0
 )
@@ -59,7 +59,7 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.19.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
@@ -77,17 +77,14 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/libdns/libdns v1.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.28 // indirect
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/mattn/go-sqlite3 v1.14.30 // indirect
 	github.com/mholt/acmez/v3 v3.1.2 // indirect
-	github.com/miekg/dns v1.1.67 // indirect
+	github.com/miekg/dns v1.1.68 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20240314023424-862ccc32f18d // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20250723094327-2e223fab9937 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20250804155209-463f7a9a6d21 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -112,6 +109,7 @@ require (
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/term v0.33.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect

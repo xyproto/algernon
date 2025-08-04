@@ -35,7 +35,7 @@ func SampleSVG2() []byte {
 	return document.Bytes()
 }
 
-// Sample OnTheFly-page (generates HTML5+CSS)
+// SamplePage creates a sample OnTheFly-page (generates HTML5+CSS)
 func SamplePage(cssurl string) *Page {
 	page := NewHTML5Page("Hello")
 	body, _ := page.SetMargin(3)

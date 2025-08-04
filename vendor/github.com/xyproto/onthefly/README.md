@@ -1,11 +1,10 @@
 On The Fly
 ==========
 
-[![Build Status](https://travis-ci.org/xyproto/onthefly.svg?branch=master)](https://travis-ci.org/xyproto/onthefly)
+[![Build](https://github.com/xyproto/onthefly/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/onthefly/actions/workflows/build.yml)
 [![GoDoc](https://godoc.org/github.com/xyproto/onthefly?status.svg)](http://godoc.org/github.com/xyproto/onthefly)
-[![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/onthefly/master/LICENSE)
+[![License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](https://raw.githubusercontent.com/xyproto/onthefly/master/LICENSE)
 [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/onthefly)
-
 
 * Package for generating HTML and CSS together, on the fly.
 * Can also be used for generating HTML, XML or CSS (or templates).
@@ -14,8 +13,9 @@ On The Fly
   (something similar could also be achieved by using templates that are not stored on disk).
 
 New/experimental features:
-* Generating WebGL graphics with Three.JS on the fly.
-* Generating AngularJS applications on the fly.
+
+* Generate WebGL graphics with Three.JS on the fly.
+* Generate AngularJS applications on the fly.
 
 The SVG related code has been refactored out, optimized and moved to the [tinysvg](https://github.com/xyproto/tinysvg) package.
 
@@ -26,15 +26,15 @@ Online API Documentation
 
 Generate HTML, CSS and SVG in one go
 ------------------------------------
-<img src="https://raw.github.com/xyproto/onthefly/master/img/onthefly.png">
+<img src="img/onthefly.png">
 
 Create hardware accelerated 3D-graphics with [three.js](http://threejs.org/)
 -----------------------------------------------------
-<img src="https://raw.github.com/xyproto/onthefly/master/img/threejs.png">
+<img src="img/threejs.png">
 
 Experiment with [AngularJS](https://angularjs.org/)
 -----------------------
-<img src="https://raw.github.com/xyproto/onthefly/master/img/angular.png">
+<img src="img/angular.png">
 
 Example for [Negroni](https://github.com/urfave/negroni)
 --------------------
@@ -260,18 +260,14 @@ Additional screenshots
 
 Screenshots from version 0.8:
 
-<img src="https://raw.github.com/xyproto/onthefly/master/img/svg_dark.png">
+<img src="img/svg_dark.png">
 
-<img src="https://raw.github.com/xyproto/onthefly/master/img/svg_light.png">
+<img src="img/svg_light.png">
 
-TODO
-----
-
-* Create a version 2 that is more focused on performance and has more consistent API function names.
 
 Version, license and author
 ---------------------------
 
-* Version: 1.2.3
+* Version: 1.4.1
 * Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
 * License: BSD-3

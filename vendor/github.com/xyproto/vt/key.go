@@ -1,9 +1,10 @@
+//go:build !windows
+
 package vt
 
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 	"unicode"
@@ -320,13 +321,59 @@ func (tty *TTY) WriteString(s string) error {
 	return nil
 }
 
-// ReadString reads a string from the TTY
+// ReadString reads a string from the TTY with timeout
 func (tty *TTY) ReadString() (string, error) {
-	b, err := io.ReadAll(tty.t)
-	if err != nil {
+	// Set up a timeout channel
+	timeout := time.After(100 * time.Millisecond)
+	resultChan := make(chan string, 1)
+	errorChan := make(chan error, 1)
+
+	go func() {
+		// Set raw mode temporarily
+		tty.RawMode()
+		defer tty.Restore()
+		defer tty.Flush()
+
+		var result []byte
+		buffer := make([]byte, 1)
+
+		for {
+			n, err := tty.t.Read(buffer)
+			if err != nil {
+				errorChan <- err
+				return
+			}
+			if n > 0 {
+				// For terminal responses, look for bell character (0x07) which terminates OSC sequences
+				if buffer[0] == 0x07 || buffer[0] == '\a' {
+					resultChan <- string(result)
+					return
+				}
+				// Also break on ESC sequence end for some terminals
+				if len(result) > 0 && buffer[0] == '\\' && result[len(result)-1] == 0x1b {
+					resultChan <- string(result)
+					return
+				}
+				result = append(result, buffer[0])
+
+				// Prevent infinite reading - limit response size
+				if len(result) > 512 {
+					resultChan <- string(result)
+					return
+				}
+			}
+		}
+	}()
+
+	select {
+	case result := <-resultChan:
+		return result, nil
+	case err := <-errorChan:
 		return "", err
+	case <-timeout:
+		// Timeout - return empty string (no error, just no response from terminal)
+		return "", nil
 	}
-	return string(b), nil
 }
 
 // PrintRawBytes for debugging raw byte sequences
@@ -373,7 +420,7 @@ func (tty *TTY) KeyCode() int {
 	return keyCode
 }
 
-// WaitForKey waits for Return, Esc, Space, or 'q' to be pressed
+// WaitForKey waits for ctrl-c, Return, Esc, Space, or 'q' to be pressed
 func WaitForKey() {
 	// Get a new TTY and start reading keypresses in a loop
 	r, err := NewTTY()
@@ -383,7 +430,7 @@ func WaitForKey() {
 	defer r.Close()
 	for {
 		switch r.Key() {
-		case 13, 27, 32, 113:
+		case 3, 13, 27, 32, 113:
 			return
 		}
 	}

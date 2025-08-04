@@ -151,202 +151,77 @@ func (tag *Tag) getFlatXML() []byte {
 // writeFlatXML renders an XML tag to an io.Writer.
 // This will generate a bytes for a tag, non-recursively.
 func (tag *Tag) writeFlatXML(w io.Writer) (n int64, err error) {
-	// TODO: This function is a bit long and verbose
+	nameLen := len(tag.name)
 
-	// For the root tag
-	if (len(tag.name) > 0) && (tag.name[0] == '<') {
-		x, err := w.Write(tag.name)
-		n += int64(x)
-		if err != nil {
-			return n, err
+	if nameLen > 0 && tag.name[0] == '<' { // root tag
+		parts := [][]byte{tag.name, tag.content, tag.xmlContent, tag.lastContent}
+		for _, part := range parts {
+			if len(part) > 0 {
+				x, err := w.Write(part)
+				n += int64(x)
+				if err != nil {
+					return n, err
+				}
+			}
 		}
-		x, err = w.Write(tag.content)
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-		x, err = w.Write(tag.xmlContent)
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-		x, err = w.Write(tag.lastContent)
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-		n += int64(x)
 		return n, nil
 	}
-	// For indenting
-	spacing := make([]byte, 0)
-	// Generate the XML based on the tag
+
 	attrs := tag.GetAttrString()
+	attrsLen := len(attrs)
+	contentLen := len(tag.content)
+	xmlContentLen := len(tag.xmlContent)
+	lastContentLen := len(tag.lastContent)
+	ltLen := len(lt)
+	gtLen := len(gt)
+	spaceLen := len(space)
+	spaceSlashGtLen := len(spaceSlashGt)
+	ltSlashLen := len(ltSlash)
 
-	x, err := w.Write(spacing)
-	n += int64(x)
-	if err != nil {
-		return n, err
+	totalSize := ltLen + nameLen + gtLen
+
+	if attrsLen > 0 {
+		totalSize += spaceLen + attrsLen
 	}
 
-	x, err = w.Write(lt) // <
-	n += int64(x)
-	if err != nil {
-		return n, err
-	}
+	isEmpty := contentLen == 0 && xmlContentLen == 0 && lastContentLen == 0
 
-	x, err = w.Write(tag.name)
-	n += int64(x)
-	if err != nil {
-		return n, err
-	}
-
-	if len(attrs) > 0 {
-		x, err = w.Write(space)
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-		x, err = w.Write(attrs)
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-	}
-
-	if (len(tag.content) == 0) && (len(tag.xmlContent) == 0) && (len(tag.lastContent) == 0) {
-
-		x, err = w.Write(spaceSlashGt) //  />
-		n += int64(x)
-		if err != nil {
-			return n, err
-		}
-
+	if isEmpty {
+		totalSize += spaceSlashGtLen - gtLen
 	} else {
-
-		if len(tag.xmlContent) > 0 {
-			if tag.xmlContent[0] != ' ' {
-
-				x, err = w.Write(gt) // >
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(spacing)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(tag.xmlContent)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(spacing)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(ltSlash) // </
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(tag.name)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(gt) // >
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-			} else {
-				x, err = w.Write(gt) // >
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(tag.xmlContent)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(spacing)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(ltSlash) // </
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(tag.name)
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-				x, err = w.Write(gt) // >
-				n += int64(x)
-				if err != nil {
-					return n, err
-				}
-
-			}
-		} else {
-			x, err = w.Write(gt) // >
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-			x, err = w.Write(tag.content)
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-			x, err = w.Write(tag.lastContent)
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-			x, err = w.Write(ltSlash) // </
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-			x, err = w.Write(tag.name)
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-			x, err = w.Write(gt) // >
-			n += int64(x)
-			if err != nil {
-				return n, err
-			}
-
-		}
+		totalSize += contentLen + xmlContentLen + lastContentLen
+		totalSize += ltSlashLen + nameLen + gtLen
 	}
-	return n, nil
+
+	buf := make([]byte, 0, totalSize)
+
+	buf = append(buf, lt...)
+	buf = append(buf, tag.name...)
+
+	if attrsLen > 0 {
+		buf = append(buf, space...)
+		buf = append(buf, attrs...)
+	}
+
+	if isEmpty {
+		buf = append(buf, spaceSlashGt...)
+	} else {
+		buf = append(buf, gt...)
+
+		if xmlContentLen > 0 {
+			buf = append(buf, tag.xmlContent...)
+		} else {
+			buf = append(buf, tag.content...)
+			buf = append(buf, tag.lastContent...)
+		}
+
+		buf = append(buf, ltSlash...)
+		buf = append(buf, tag.name...)
+		buf = append(buf, gt...)
+	}
+
+	x, err := w.Write(buf)
+	return int64(x), err
 }
 
 // GetChildren returns all children for a given tag.

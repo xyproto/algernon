@@ -107,12 +107,12 @@ func ShowInlineAnimatedIf(booleanURL, tagname string) string {
 	return "$.get(" + quote(booleanURL) + ", function(data) { if (data == \"1\") {" + ShowInlineAnimated(tagname) + "}; });"
 }
 
-// Return JavaScript that loads the contents of the given URL into the given tag name
+// Load returns JavaScript that loads the contents of the given URL into the given tag name
 func Load(tagname, url string) string {
 	return methodString(tagname, "load", url)
 }
 
-// HidIfNot returns JavaScript that will hide a tag if booleanURL doesn't return "1"
+// HideIfNot returns JavaScript that will hide a tag if booleanURL doesn't return "1"
 func HideIfNot(booleanURL, tagname string) string {
 	return "$.get(" + quote(booleanURL) + ", function(data) { if (data != \"1\") {" + Hide(tagname) + "}; });"
 }
@@ -135,7 +135,7 @@ func JS(source string) string {
 	return ""
 }
 
-// Returns HTML that will run the given JavaScript code once the document is ready.
+// DocumentReadyJS returns HTML that will run the given JavaScript code once the document is ready.
 // Returns an empty string if there is no JavaScript code to run.
 func DocumentReadyJS(source string) string {
 	if source != "" {

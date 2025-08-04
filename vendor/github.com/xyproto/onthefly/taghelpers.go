@@ -45,7 +45,7 @@ func (tag *Tag) AddBox(id string, rounded bool, em, text, fgColor, bgColor, left
 	return div
 }
 
-// Add an <img> image
+// AddImage adds an <img> image
 func (tag *Tag) AddImage(url string, width string) *Tag {
 	img := tag.AddNewTag("img")
 	img.AddAttrib("src", url)
@@ -53,7 +53,7 @@ func (tag *Tag) AddImage(url string, width string) *Tag {
 	return img
 }
 
-// Repeat the background. repeat can be for instance "repeat-x"
+// RepeatBackground repeats the background. repeat can be for instance "repeat-x"
 func (tag *Tag) RepeatBackground(bgimageurl, repeat string) {
 	tag.AddStyle("background-image", "url('"+bgimageurl+"')")
 	tag.AddStyle("background-repeat", repeat)

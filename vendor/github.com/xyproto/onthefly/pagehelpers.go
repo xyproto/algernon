@@ -1,17 +1,25 @@
 package onthefly
 
 import (
+	_ "embed"
 	"strconv"
 	"strings"
 )
 
+//go:embed angular.min.js
+var angularJS string
+
+//go:embed three.min.js
+var threeJS string
+
 type (
-	// Various function signatures for handling requests
+	// SimpleWebHandle is a function signature for handling requests
 	SimpleWebHandle (func(string) string)
-	TemplateValues  map[string]string
+	// TemplateValues is a map of template values
+	TemplateValues map[string]string
 )
 
-// Create a blank HTML5 page
+// NewHTML5Page will create a blank new HTML5 page
 func NewHTML5Page(titleText string) *Page {
 	page := NewPage(titleText, "<!doctype html>")
 	html := page.root.AddNewTag("html")
@@ -22,8 +30,9 @@ func NewHTML5Page(titleText string) *Page {
 	return page
 }
 
-// Create a blank HTML5 page that links with Angular.JS
-func NewAngularPage(titleText, angularVersion string) *Page {
+// NewAngularPage will create a blank HTML5 page that includes embedded AngularJS
+// The second argument used to be "angularVersion", but is now deprecated.
+func NewAngularPage(titleText string) *Page {
 	page := NewPage(titleText, "<!doctype html>")
 	html := page.root.AddNewTag("html")
 	html.AddSingularAttrib("ng-app")
@@ -31,23 +40,47 @@ func NewAngularPage(titleText, angularVersion string) *Page {
 	title := head.AddNewTag("title")
 	title.AddContent(titleText)
 	html.AddNewTag("body")
-	// Must be added after head has been added
-	page.LinkToJS("//ajax.googleapis.com/ajax/libs/angularjs/" + angularVersion + "/angular.min.js")
+	// Add embedded AngularJS script directly to head
+	script := head.AddNewTag("script")
+	script.AddAttrib("type", "text/javascript")
+	script.AddContent(angularJS)
 	return page
 }
 
-// Set the margins of the body
+// NewThreeJSPageWithEmbedded will create a blank HTML5 page that includes embedded Three.js
+func NewThreeJSPageWithEmbedded(titleText string) (*Page, *Tag) {
+	page := NewHTML5Page(titleText)
+
+	// Style the page for showing a fullscreen canvas
+	page.FullCanvas()
+
+	// Add embedded Three.js script to body
+	body, _ := page.GetTag("body")
+	script := body.AddNewTag("script")
+	script.AddAttrib("type", "text/javascript")
+	script.AddContent(threeJS)
+
+	// Add a scene
+	sceneScript, _ := page.AddScriptToBody("var scene = new THREE.Scene();")
+
+	// Return the script tag that can be used for adding additional
+	// javascript/Three.JS code
+	return page, sceneScript
+}
+
+// SetMargin sets the margins of the body
 func (page *Page) SetMargin(em int) (*Tag, error) {
 	value := strconv.Itoa(em) + "em"
 	return page.bodyAttr("margin", value)
 }
 
-// Disable scrollbars. Needed when using "<!doctype html>" together with fullscreen canvas/webgl
+// NoScrollbars disables scrollbars.
+// Needed when using "<!doctype html>" together with fullscreen canvas/webgl.
 func (page *Page) NoScrollbars() (*Tag, error) {
 	return page.bodyAttr("overflow", "hidden")
 }
 
-// Prepare for a canvas/webgl tag that covers the entire page
+// FullCanvas perpares for a canvas/webgl tag that covers the entire page
 func (page *Page) FullCanvas() {
 	page.SetMargin(0)
 	// overflow:hidden
@@ -56,7 +89,7 @@ func (page *Page) FullCanvas() {
 	page.AddStyle("canvas { width: 100%; height: 100%; }")
 }
 
-// Set one of the CSS styles of the body
+// bodyAttr sets one of the CSS styles of the body
 func (page *Page) bodyAttr(key, value string) (*Tag, error) {
 	tag, err := page.root.GetTag("body")
 	if err == nil {
@@ -65,7 +98,7 @@ func (page *Page) bodyAttr(key, value string) (*Tag, error) {
 	return tag, err
 }
 
-// Set the foreground and background color of the body
+// SetColor sets the foreground and background color of the body
 func (page *Page) SetColor(fgColor string, bgColor string) (*Tag, error) {
 	tag, err := page.root.GetTag("body")
 	if err == nil {
@@ -75,7 +108,7 @@ func (page *Page) SetColor(fgColor string, bgColor string) (*Tag, error) {
 	return tag, err
 }
 
-// Set the font family
+// SetFontFamily sets the font family
 func (page *Page) SetFontFamily(fontFamily string) (*Tag, error) {
 	return page.bodyAttr("font-family", fontFamily)
 }
@@ -89,7 +122,7 @@ func (page *Page) addBox(id string, rounded bool) (*Tag, error) {
 	return tag, err
 }
 
-// Link a page up with a CSS file
+// LinkToCSS links a page up with a CSS file
 // Takes the url to a CSS file as a string
 // The given page must have a "head" tag for this to work
 // Returns an error if no "head" tag is found, or nil
@@ -104,7 +137,7 @@ func (page *Page) LinkToCSS(cssurl string) error {
 	return err
 }
 
-// Link a page up with a Favicon file
+// LinkToFavicon links a page up with a Favicon file
 // Takes the url to a favicon file as a string
 // The given page must have a "head" tag for this to work
 // Returns an error if no "head" tag is found, or nil
@@ -118,7 +151,7 @@ func (page *Page) LinkToFavicon(favurl string) error {
 	return err
 }
 
-// Takes a charset, for example UTF-8, and creates a <meta> tag in <head>
+// MetaCharset takes a charset, for example UTF-8, and creates a <meta> tag in <head>
 func (page *Page) MetaCharset(charset string) error {
 	// Add a meta tag
 	head, err := page.GetTag("head")
@@ -130,7 +163,7 @@ func (page *Page) MetaCharset(charset string) error {
 	return err
 }
 
-// Link to Google Fonts
+// LinkToGoogleFont links to Google Fonts
 func (page *Page) LinkToGoogleFont(name string) error {
 	url := "http://fonts.googleapis.com/css?family="
 	// Replace space with +, if needed
@@ -143,7 +176,7 @@ func (page *Page) LinkToGoogleFont(name string) error {
 	return page.LinkToCSS(url)
 }
 
-// Add javascript to the header and specify UTF-8 as the charset
+// AddHeader adds javascript to the header and specifies UTF-8 as the charset
 func AddHeader(page *Page, js string) {
 	page.MetaCharset("UTF-8")
 	AddScriptToHeader(page, js)

@@ -1,33 +1,36 @@
-// onthefly can generate TinySVG, HTML and CSS on the fly
+// Package onthefly can generate TinySVG, HTML and CSS on the fly
 package onthefly
 
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 )
 
 const (
+	// Version is the current version of onthefly
 	Version     = 1.2
 	noAttribute = "NIL"
 )
 
+// Tag represents an XML/HTML/SVG tag with attributes, styles, and content
 type Tag struct {
-	name        string
 	style       map[string]string
-	content     string
-	lastContent string
-	xmlContent  string
 	attrs       map[string]string
 	nextSibling *Tag // siblings
 	firstChild  *Tag // first child
+	name        string
+	content     string
+	lastContent string
+	xmlContent  string
 }
 
+// Page represents an XML/HTML/SVG page with a root tag and title
 type Page struct {
-	title string
 	root  *Tag
+	title string
 }
 
 // NewPage creates a new XML/HTML/SVG page, with a root tag.
@@ -207,12 +210,12 @@ func (tag *Tag) AddContent(content string) {
 	tag.content += content
 }
 
-// AppendContent appends content to the end of the exising content of a tag
+// AppendContent appends content to the end of the existing content of a tag
 func (tag *Tag) AppendContent(content string) {
 	tag.lastContent += content
 }
 
-// AddLastContent appends content to the end of the exising content of a tag.
+// AddLastContent appends content to the end of the existing content of a tag.
 // Deprecated.
 func (tag *Tag) AddLastContent(content string) {
 	tag.AppendContent(content)
@@ -406,35 +409,135 @@ func (page *Page) String() string {
 // If refresh is false, the contents are cached.
 func (page *Page) Publish(mux *http.ServeMux, htmlurl, cssurl string, refresh bool) {
 	page.LinkToCSS(cssurl)
+
 	if refresh {
 		// Serve HTML that is generated for each call
-		mux.HandleFunc(htmlurl, func(w http.ResponseWriter, req *http.Request) {
+		mux.HandleFunc(htmlurl, func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Add("Content-Type", "text/html")
 			fmt.Fprint(w, page.GetHTML())
 		})
 		// Serve CSS that is generated for each call
-		mux.HandleFunc(cssurl, func(w http.ResponseWriter, req *http.Request) {
+		mux.HandleFunc(cssurl, func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Add("Content-Type", "text/css")
 			fmt.Fprint(w, page.GetCSS())
 		})
-	} else {
-		// Cached
-		html := page.GetHTML()
-		css := page.GetCSS()
-		// Serve HTML
-		mux.HandleFunc(htmlurl, func(w http.ResponseWriter, req *http.Request) {
-			w.Header().Add("Content-Type", "text/html")
-			fmt.Fprint(w, html)
-		})
-		// Serve CSS
-		mux.HandleFunc(cssurl, func(w http.ResponseWriter, req *http.Request) {
-			w.Header().Add("Content-Type", "text/css")
-			fmt.Fprint(w, css)
-		})
+		return // done
 	}
+
+	// Cached
+	html := page.GetHTML()
+	css := page.GetCSS()
+	// Serve HTML
+	mux.HandleFunc(htmlurl, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Content-Type", "text/html")
+		fmt.Fprint(w, html)
+	})
+	// Serve CSS
+	mux.HandleFunc(cssurl, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Content-Type", "text/css")
+		fmt.Fprint(w, css)
+	})
 }
 
-// Save the current page as an SVG file
+// SaveSVG tries to sSave the current page as an SVG file
 func (page *Page) SaveSVG(filename string) error {
-	return ioutil.WriteFile(filename, []byte(page.GetXML(false)), 0644)
+	return os.WriteFile(filename, []byte(page.GetXML(false)), 0644)
+}
+
+// GetName returns the tag name
+func (tag *Tag) GetName() string {
+	return tag.name
+}
+
+// GetContent returns the tag content
+func (tag *Tag) GetContent() string {
+	return tag.content
+}
+
+// SetContent replaces the tag content
+func (tag *Tag) SetContent(content string) {
+	tag.content = content
+}
+
+// GetFirstChild returns the first child tag
+func (tag *Tag) GetFirstChild() *Tag {
+	return tag.firstChild
+}
+
+// GetNextSibling returns the next sibling tag
+func (tag *Tag) GetNextSibling() *Tag {
+	return tag.nextSibling
+}
+
+// ClearChildren removes all child tags
+func (tag *Tag) ClearChildren() {
+	tag.firstChild = nil
+}
+
+// RemoveAttribute removes an attribute from the tag
+func (tag *Tag) RemoveAttribute(attrName string) {
+	delete(tag.attrs, attrName)
+}
+
+// HasAttribute checks if the tag has a specific attribute
+func (tag *Tag) HasAttribute(attrName string) bool {
+	_, exists := tag.attrs[attrName]
+	return exists
+}
+
+// GetAttribute returns the value of an attribute
+func (tag *Tag) GetAttribute(attrName string) (string, bool) {
+	value, exists := tag.attrs[attrName]
+	return value, exists
+}
+
+// CloneTag creates a deep copy of a tag
+func (tag *Tag) CloneTag() *Tag {
+	clone := NewTag(tag.name)
+
+	// Copy attributes
+	for key, value := range tag.attrs {
+		clone.attrs[key] = value
+	}
+
+	// Copy styles
+	for key, value := range tag.style {
+		clone.style[key] = value
+	}
+
+	clone.content = tag.content
+	clone.lastContent = tag.lastContent
+	clone.xmlContent = tag.xmlContent
+
+	return clone
+}
+
+// FindChildByName searches for a child tag with the given name
+func (tag *Tag) FindChildByName(name string) *Tag {
+	child := tag.firstChild
+	for child != nil {
+		if child.name == name {
+			return child
+		}
+		if found := child.FindChildByName(name); found != nil {
+			return found
+		}
+		child = child.nextSibling
+	}
+	return nil
+}
+
+// FindChildByAttribute searches for a child tag with the given attribute
+func (tag *Tag) FindChildByAttribute(attrName, attrValue string) *Tag {
+	child := tag.firstChild
+	for child != nil {
+		if value, exists := child.attrs[attrName]; exists && value == attrValue {
+			return child
+		}
+		if found := child.FindChildByAttribute(attrName, attrValue); found != nil {
+			return found
+		}
+		child = child.nextSibling
+	}
+	return nil
 }

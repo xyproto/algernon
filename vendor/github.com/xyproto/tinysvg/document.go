@@ -2,7 +2,7 @@ package tinysvg
 
 import (
 	"io"
-	"io/ioutil"
+	"os"
 )
 
 // Document is an XML document, with a title and a root tag
@@ -56,7 +56,7 @@ func (image *Document) String() string {
 
 // SaveSVG will save the current image as an SVG file
 func (image *Document) SaveSVG(filename string) error {
-	return ioutil.WriteFile(filename, image.Bytes(), 0644)
+	return os.WriteFile(filename, image.Bytes(), 0644)
 }
 
 // WriteTo will write the current image to the given io.Writer.
