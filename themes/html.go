@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/microcosm-cc/bluemonday"
 )
 
 const (
@@ -148,7 +150,11 @@ func InsertDoctype(htmldata []byte) []byte {
 	return htmldata
 }
 
-// NoPage provides the same functionality as NoPage, but returns []byte
+// NoPage generates a HTML page for when a file is not found
 func NoPage(filename, theme string) []byte {
-	return MessagePageBytes("Not found", []byte("File not found: "+filename), theme)
+	// Sanitize the filename
+	policy := bluemonday.UGCPolicy()
+	sanitizedFilename := policy.Sanitize(filename)
+	// Return a HTML page
+	return MessagePageBytes("Not found", []byte("File not found: "+sanitizedFilename), theme)
 }
