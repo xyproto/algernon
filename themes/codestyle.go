@@ -1,3 +1,4 @@
+// Package themes contains several different styles that can be applied to ie. rendered Markdown documents
 package themes
 
 const (
