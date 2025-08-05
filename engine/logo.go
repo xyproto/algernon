@@ -1,6 +1,4 @@
-//go:build unix
-
-package platformdep
+package engine
 
 import (
 	"bytes"

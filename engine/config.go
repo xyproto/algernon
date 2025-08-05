@@ -503,7 +503,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	// Console output
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
 		// Output a colorful ansi logo if a proper terminal is available
-		fmt.Println(platformdep.Banner(ac.versionString, ac.description))
+		fmt.Println(Banner(ac.versionString, ac.description))
 	} else if !ac.quietMode {
 		timestamp := time.Now().Format("2006-01-02 15:04")
 		to.OutputTags("<cyan>" + ac.versionString + "<darkgray> - " + timestamp + "<off>")
