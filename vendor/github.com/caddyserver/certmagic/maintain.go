@@ -111,7 +111,7 @@ func (certCache *Cache) RenewManagedCertificates(ctx context.Context) error {
 		}
 
 		// the list of names on this cert should never be empty... programmer error?
-		if cert.Names == nil || len(cert.Names) == 0 {
+		if len(cert.Names) == 0 {
 			log.Warn("certificate has no names; removing from cache", zap.String("cert_key", certKey))
 			deleteQueue = append(deleteQueue, cert)
 			continue
@@ -123,12 +123,6 @@ func (certCache *Cache) RenewManagedCertificates(ctx context.Context) error {
 			log.Error("unable to get configuration to manage certificate; unable to renew",
 				zap.Strings("identifiers", cert.Names),
 				zap.Error(err))
-			continue
-		}
-		if cfg == nil {
-			// this is bad if this happens, probably a programmer error (oops)
-			log.Error("no configuration associated with certificate; unable to manage",
-				zap.Strings("identifiers", cert.Names))
 			continue
 		}
 		if cfg.OnDemand != nil {
