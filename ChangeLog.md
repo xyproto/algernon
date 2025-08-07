@@ -1,5 +1,18 @@
 # Changelog
 
+Changes from 1.17.3 to 1.17.4
+=============================
+
+* Update go.mod, ref #159.
+* Fix a missing `m` character when drawing the banner/logo at start.
+* Also show the banner/logo at start on Windows.
+* Add HTML sanitization of the filename for the "file not found" page". This fixes an [XSS issue](https://security.snyk.io/vuln/SNYK-GOLANG-GITHUBCOMXYPROTOALGERNONTHEMES-3312112).
+* Switch from [vt100](https://github.com/xyproto/vt100) to the [vt](https://github.com/xyproto/vt) package.
+* Update CI configuration.
+* Remove `FUNDING.yml`.
+* Update documentation.
+* Update dependencies.
+
 Changes from 1.17.2 to 1.17.3
 =============================
 
