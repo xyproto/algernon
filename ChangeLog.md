@@ -74,7 +74,7 @@ Changes from 1.16.0 to 1.17.0
 * Use `strconf.FormatInt` instead of `fmt.Sprintf` whenever possible.
 * Use `github.com/pkg/browser` for opening URLs in a browser.
 * Fix an issue with inserting JS into HTML.
-* Serve HTTP with `fasthttp´ (ref #4)
+* Serve HTTP with `fasthttp` (ref #4)
 * Improve how favicons are handled.
 * Make it possible to ignore files in a directory listing (ref #149).
 * Add a `sanhtml` function for sanitizing HTML.
