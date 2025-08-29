@@ -168,8 +168,8 @@ func Parse[M iMember[V], V Equaler[V]](e Enum[M, V], value V) *M {
 
 // Builder is a constructor for an [Enum].
 //
-// Use [Builder.Add] to add new members to the future enum
-// and then call [Builder.Enum] to create a new [Enum] with all added members.
+// Use [Builder.Add] or [Builder.AddValue] to add new members to the future enum and
+// then call [Builder.Enum] to create a new [Enum] with all added members.
 //
 // Builder is useful for when you have lots of enum members, and new ones
 // are added over time, as the project grows. In such scenario, it's easy to forget
@@ -178,11 +178,26 @@ func Parse[M iMember[V], V Equaler[V]](e Enum[M, V], value V) *M {
 type Builder[M iMember[V], V comparable] struct {
 	members  []M
 	finished bool
+	strict   bool
 }
 
 // NewBuilder creates a new [Builder], a constructor for an [Enum].
 func NewBuilder[V comparable, M iMember[V]]() Builder[M, V] {
-	return Builder[M, V]{make([]M, 0), false}
+	return Builder[M, V]{
+		members:  make([]M, 0),
+		finished: false,
+		strict:   false,
+	}
+}
+
+// NewStrictBuilder creates a new [Builder], a constructor for an [Enum], that panics
+// if two members share the same value.
+func NewStrictBuilder[V comparable, M iMember[V]]() Builder[M, V] {
+	return Builder[M, V]{
+		members:  make([]M, 0),
+		finished: false,
+		strict:   true,
+	}
 }
 
 // Add registers a new [Member] in the builder.
@@ -191,9 +206,29 @@ func (b *Builder[M, V]) Add(m M) M {
 	return m
 }
 
+// AddValue registers a new [Member] in the builder.
+func (b *Builder[M, V]) AddValue(v V) M {
+	m := M{v}
+	b.members = append(b.members, m)
+	return m
+}
+
 // Enum creates a new [Enum] with all members registered using [Builder.Add].
 func (b *Builder[M, V]) Enum() Enum[M, V] {
 	b.finished = true
+	if b.strict {
+		b.panicOnDupe()
+	}
 	e := New(b.members...)
 	return e
+}
+
+func (b *Builder[M, V]) panicOnDupe() {
+	seen := make(map[M]struct{})
+	for _, m := range b.members {
+		if _, ok := seen[m]; ok {
+			panic(fmt.Sprintf("'%v' appears more than once", m))
+		}
+		seen[m] = struct{}{}
+	}
 }

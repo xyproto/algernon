@@ -108,9 +108,10 @@ func InitLoggerWithWriteSyncer(cfg *Config, output, errOutput zapcore.WriteSynce
 	opts = append(cfg.buildOptions(errOutput), opts...)
 	lg := zap.New(core, opts...)
 	r := &ZapProperties{
-		Core:   core,
-		Syncer: output,
-		Level:  level,
+		Core:      core,
+		Syncer:    output,
+		ErrSyncer: errOutput,
+		Level:     level,
 	}
 	return lg, r, nil
 }

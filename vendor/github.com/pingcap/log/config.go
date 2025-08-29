@@ -80,9 +80,10 @@ type Config struct {
 
 // ZapProperties records some information about zap.
 type ZapProperties struct {
-	Core   zapcore.Core
-	Syncer zapcore.WriteSyncer
-	Level  zap.AtomicLevel
+	Core      zapcore.Core
+	Syncer    zapcore.WriteSyncer
+	ErrSyncer zapcore.WriteSyncer
+	Level     zap.AtomicLevel
 }
 
 func (cfg *Config) buildOptions(errSink zapcore.WriteSyncer) []zap.Option {

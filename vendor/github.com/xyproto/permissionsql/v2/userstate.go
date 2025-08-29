@@ -37,8 +37,8 @@ type UserState struct {
 	unconfirmed       *db.Set     // A list of unconfirmed usernames, for easy enumeration
 	host              *db.Host    // A database host
 	cookieSecret      string      // Secret for storing secure cookies
-	cookieTime        int64       // How long a cookie should last, in seconds
 	passwordAlgorithm string      // The hashing algorithm to utilize default: "bcrypt+" allowed: ("sha256", "bcrypt", "bcrypt+")
+	cookieTime        int64       // How long a cookie should last, in seconds
 }
 
 // Create a new *UserState that can be used for managing users.
@@ -401,7 +401,7 @@ func (state *UserState) Username(req *http.Request) string {
 }
 
 // Get how long a login cookie should last, in seconds.
-func (state *UserState) CookieTimeout(username string) int64 {
+func (state *UserState) CookieTimeout(_ string) int64 {
 	return state.cookieTime
 }
 

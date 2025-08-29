@@ -2,19 +2,20 @@
 package permissionsql
 
 import (
-	"github.com/xyproto/pinterface"
 	"net/http"
 	"strings"
+
+	"github.com/xyproto/pinterface"
 )
 
 // The structure that keeps track of the permissions for various path prefixes
 type Permissions struct {
 	state              *UserState
+	denied             http.HandlerFunc
 	adminPathPrefixes  []string
 	userPathPrefixes   []string
 	publicPathPrefixes []string
 	rootIsPublic       bool
-	denied             http.HandlerFunc
 }
 
 const (
@@ -54,13 +55,24 @@ func NewWithDSN(connectionString string, database_name string) (*Permissions, er
 // a few default paths for admin/user/public path prefixes.
 func NewPermissions(state *UserState) *Permissions {
 	// default permissions
-	return &Permissions{state,
-		[]string{"/admin"},         // admin path prefixes
-		[]string{"/repo", "/data"}, // user path prefixes
-		[]string{"/", "/login", "/register", "/favicon.ico", "/style", "/img", "/js",
-			"/favicon.ico", "/robots.txt", "/sitemap_index.xml"}, // public
-		true,
-		PermissionDenied}
+	return &Permissions{
+		state:             state,
+		denied:            PermissionDenied,
+		adminPathPrefixes: []string{"/admin"},         // admin path prefixes
+		userPathPrefixes:  []string{"/repo", "/data"}, // user path prefixes
+		publicPathPrefixes: []string{
+			"/",
+			"/login",
+			"/register",
+			"/favicon.ico",
+			"/style",
+			"/img",
+			"/js",
+			"/favicon.ico",
+			"/robots.txt",
+			"/sitemap_index.xml",
+		}, // public
+		rootIsPublic: true}
 }
 
 // Specify the http.HandlerFunc for when the permissions are denied
@@ -115,12 +127,12 @@ func (perm *Permissions) SetPublicPath(pathPrefixes []string) {
 }
 
 // The default "permission denied" http handler.
-func PermissionDenied(w http.ResponseWriter, req *http.Request) {
+func PermissionDenied(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Permission denied.", http.StatusForbidden)
 }
 
 // Check if a given request should be rejected.
-func (perm *Permissions) Rejected(w http.ResponseWriter, req *http.Request) bool {
+func (perm *Permissions) Rejected(_ http.ResponseWriter, req *http.Request) bool {
 	reject := false
 	path := req.URL.Path // the path of the url that the user wish to visit
 
