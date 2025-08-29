@@ -390,22 +390,13 @@ func (ac *Config) MarkdownPage(w http.ResponseWriter, req *http.Request, mdConte
 		head.WriteString(`<link rel="shortcut icon" type="image/`)
 
 		// Switch on the lowercase file extension of the favicon
-		lowerExt := strings.TrimPrefix(strings.ToLower(filepath.Ext(favicon)), ".")
-		switch strings.ToLower(filepath.Ext(favicon)) {
+		switch lowerExt := strings.TrimPrefix(strings.ToLower(filepath.Ext(favicon)), "."); lowerExt {
 		case "ico":
 			head.WriteString("x-icon")
-		case "bmp":
-			head.WriteString("bmp")
-		case "gif":
-			head.WriteString("gif")
-		case "jpg", "jpeg":
+		case "jpg":
 			head.WriteString("jpeg")
 		case "svg":
 			head.WriteString("svg+xml")
-		case "webp":
-			head.WriteString("webp")
-		case "png":
-			head.WriteString("png")
 		default:
 			// rudimentary support for unrecognized image formats
 			head.WriteString(lowerExt)
