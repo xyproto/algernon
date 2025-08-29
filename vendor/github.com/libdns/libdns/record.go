@@ -159,7 +159,7 @@ func (r RR) toCAA() (CAA, error) {
 		return CAA{}, fmt.Errorf("record type not %s: %s", expectedType, r.Type)
 	}
 
-	fields := strings.Fields(r.Data)
+	fields := strings.SplitN(r.Data, " ", 3)
 	if expectedLen := 3; len(fields) != expectedLen {
 		return CAA{}, fmt.Errorf(`malformed CAA value; expected %d fields in the form 'flags tag "value"'`, expectedLen)
 	}
@@ -169,7 +169,13 @@ func (r RR) toCAA() (CAA, error) {
 		return CAA{}, fmt.Errorf("invalid flags %s: %v", fields[0], err)
 	}
 	tag := fields[1]
-	value := strings.Trim(fields[2], `"`)
+
+	// If only https://tip.golang.org/src/cmd/internal/quoted/quoted.go were
+	// public...
+	value, err := strconv.Unquote(fields[2])
+	if err != nil {
+		value = fields[2]
+	}
 
 	return CAA{
 		Name:  r.Name,

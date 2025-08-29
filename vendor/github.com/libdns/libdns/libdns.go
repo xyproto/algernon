@@ -129,6 +129,25 @@ type RecordSetter interface {
 	// zone so that for each RRset in the input, the records provided in the input
 	// are the only members of their RRset in the output zone.
 	//
+	// SetRecords is distinct from [libdns.RecordAppender.AppendRecords] in that
+	// AppendRecords *only* adds records to the zone, while SetRecords may also
+	// delete records if necessary. Therefore, SetRecords behaves similarly to
+	// the following code:
+	//
+	//	func SetRecords(ctx context.Context, zone string, recs []Record) ([]Record, error) {
+	//		prevs, _ := p.GetRecords(ctx, zone)
+	//		toDelete := []Record{}
+	//		for _, prev := range prevs {
+	//			for _, new := range recs {
+	//				if prev.RR().Name == new.RR().Name && prev.RR().Type == new.RR().Type {
+	//					toDelete = append(toDelete, prev)
+	//				}
+	//			}
+	//		}
+	//		DeleteRecords(ctx, zone, toDelete)
+	//		return AppendRecords(ctx, zone, recs)
+	//	}
+	//
 	// Implementations may decide whether or not to support DNSSEC-related records
 	// in calls to SetRecords, but should document their decision. Note that the
 	// decision to support DNSSEC records in SetRecords is independent of the

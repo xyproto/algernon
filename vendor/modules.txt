@@ -150,7 +150,7 @@ github.com/klauspost/cpuid/v2
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/libdns/libdns v1.1.0
+# github.com/libdns/libdns v1.1.1
 ## explicit; go 1.18
 github.com/libdns/libdns
 # github.com/mattetti/filebuffer v1.0.1

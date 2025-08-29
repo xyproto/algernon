@@ -74,7 +74,7 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
-	github.com/libdns/libdns v1.1.0 // indirect
+	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/mholt/acmez/v3 v3.1.2 // indirect
