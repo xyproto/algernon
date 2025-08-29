@@ -359,7 +359,7 @@ func (ac *Config) shouldCache(ext string) bool {
 		}
 	case cachemode.Images:
 		switch ext {
-		case ".apng", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp":
+		case ".apng", ".bmp", ".gif", ".ico", ".jpeg", ".jpg", ".png", ".qoi", ".svg", ".webp":
 			return true
 		default:
 			return false
