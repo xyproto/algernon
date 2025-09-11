@@ -504,10 +504,9 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {
 		// Output a colorful ansi logo if a proper terminal is available
 		fmt.Println(Banner(ac.versionString, ac.description))
-	} else if !ac.quietMode {
+	} else if !ac.quietMode && !ac.singleFileMode {
 		timestamp := time.Now().Format("2006-01-02 15:04")
 		to.OutputTags("<cyan>" + ac.versionString + "<darkgray> - " + timestamp + "<off>")
-		// colorstring.Println("[cyan]" + ac.versionString + "[dark_gray] - " + timestamp + "[reset]")
 	}
 
 	// Disable the database backend if the BoltDB filename is the /dev/null file (or OS equivalent)
