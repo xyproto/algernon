@@ -1333,6 +1333,54 @@ Other resources
 
 * [Algernon on Docker Hub](https://hub.docker.com/r/xyproto/algernon/)
 
+Algernon as a Lua runtime
+-------------------------
+
+Algernon can also be used as a standalone Lua runtime.
+
+For example, create a `main.lua` that looks like this:
+
+```lua
+x = 42
+print("The number is " .. x)
+os.exit()
+```
+
+And then run it as:
+
+```sh
+algernon -lua main.lua
+```
+
+Which should produce an output like this:
+
+```
+The number is 42
+```
+
+For examining values after running the script, remove `os.exit()` from `main.lua`, run it and then use the Lua REPL:
+
+```
+$ algernon -lua main.lua
+The number is 42
+Ready
+lua> x
+42
+lua>
+```
+
+It is also possible to handle requests with a single given Lua script, like this (`server.lua`):
+
+```lua
+hello = function()
+  print("Hello, World!")
+end
+
+handle("/", hello)
+```
+
+And then just run it with `algernon server.lua`.
+
 General information
 -------------------
 
