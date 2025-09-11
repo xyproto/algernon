@@ -3,6 +3,7 @@
 General
 -------
 
+- [ ] Consider adding `; HttpOnly` by default to `Set-Cookie` headers.
 - [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
 - [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
 - [ ] When the -m flag is used, if the file is not found, exit with an error.
