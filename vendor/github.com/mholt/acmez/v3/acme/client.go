@@ -177,7 +177,7 @@ type Directory struct {
 	NewAuthz    string         `json:"newAuthz,omitempty"`
 	RevokeCert  string         `json:"revokeCert"`
 	KeyChange   string         `json:"keyChange"`
-	RenewalInfo string         `json:"renewalInfo,omitempty"` // draft-ietf-acme-ari
+	RenewalInfo string         `json:"renewalInfo,omitempty"` // RFC 9773
 	Meta        *DirectoryMeta `json:"meta,omitempty"`
 }
 

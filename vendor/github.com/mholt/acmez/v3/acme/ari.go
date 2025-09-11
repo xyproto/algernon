@@ -34,7 +34,7 @@ var ErrUnsupported = fmt.Errorf("unsupported by ACME server")
 // on when they should renew certificates."
 //
 // ACME Renewal Information (ARI):
-// https://www.ietf.org/archive/id/draft-ietf-acme-ari-03.html §4.2
+// https://datatracker.ietf.org/doc/html/rfc9773 §4.2
 //
 // This is a DRAFT specification and the API is subject to change.
 type RenewalInfo struct {
@@ -168,7 +168,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 		// timestamp), it SHOULD make its own determination of when to
 		// renew the certificate, and MAY retry the renewalInfo request
 		// with appropriate exponential backoff behavior."
-		// draft-ietf-acme-ari-04 §4.2
+		// RFC 9773 §4.2
 		if ari.SuggestedWindow.Start.IsZero() ||
 			ari.SuggestedWindow.End.IsZero() ||
 			ari.SuggestedWindow.Start.Equal(ari.SuggestedWindow.End) ||
@@ -191,7 +191,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	}
 
 	// "The server SHOULD include a Retry-After header indicating the polling
-	// interval that the ACME server recommends." draft-ietf-acme-ari-03 §4.2
+	// interval that the ACME server recommends." RFC 9773 §4.2
 	raTime, err := retryAfterTime(resp)
 	if err != nil && c.Logger != nil {
 		c.Logger.LogAttrs(ctx, slog.LevelError, "invalid Retry-After value",
@@ -244,7 +244,6 @@ func (c *Client) ariEndpoint(ariCertID string) string {
 
 // ARIUniqueIdentifier returns the unique identifier for the certificate
 // as used by ACME Renewal Information.
-// EXPERIMENTAL: ARI is a draft RFC spec: draft-ietf-acme-ari-03
 func ARIUniqueIdentifier(leafCert *x509.Certificate) (string, error) {
 	if leafCert.SerialNumber == nil {
 		return "", fmt.Errorf("no serial number")

@@ -17,6 +17,7 @@ package acme
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base32"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -132,6 +133,15 @@ func (c Challenge) DNS01KeyAuthorization() string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
+// DNSAcccount01TXTRecordName returns the name of the TXT record to create
+// for solving the dns-account-01 challenge. §3.2
+func (Challenge) DNSAcccount01TXTRecordName(a Account) string {
+	acctURLhash := sha256.Sum256([]byte(a.Location))
+	truncAcctURLHash := acctURLhash[:10]
+	b32TruncAcctURLHash := base32.StdEncoding.EncodeToString(truncAcctURLHash)
+	return fmt.Sprintf("_%s._acme_challenge", b32TruncAcctURLHash)
+}
+
 // MailReply00KeyAuthorization encodes a key authorization value
 // to be sent back to the reply-to address of the ACME challenge email.
 // The subject of that mail contains token-part1, which must be combined
@@ -177,4 +187,5 @@ const (
 	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
 	ChallengeTypeEmailReply00   = "email-reply-00"   // RFC 8823 §5.2
 	ChallengeTypeAuthorityToken = "tkauth-01"        // RFC 9447 §3 - ACME Authority Token challenge type
+	ChallengeTypeDNSAccount01   = "dns-account-01"   // draft-ietf-acme-dns-account-label-01 §5
 )

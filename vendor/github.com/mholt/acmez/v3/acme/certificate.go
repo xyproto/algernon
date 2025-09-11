@@ -110,7 +110,7 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 			Account:  account.Location,
 		}
 
-		// attach renewal information, if applicable (draft-ietf-acme-ari-03)
+		// attach renewal information, if applicable (RFC 9773)
 		if c.dir.RenewalInfo != "" {
 			certDERBlock, _ := pem.Decode(chainPEM)
 			if certDERBlock != nil && certDERBlock.Type == "CERTIFICATE" {

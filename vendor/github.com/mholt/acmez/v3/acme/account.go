@@ -115,6 +115,15 @@ func (a *Account) SetExternalAccountBinding(ctx context.Context, client *Client,
 	return nil
 }
 
+// Thumbprint returns the ACME account's thumbprint. The PrivateKey field
+// must be set so the public key can be derived for the thumbprint, or this
+// will panic.
+//
+// EXPERIMENTAL: Subject to change/removal.
+func (a *Account) Thumbprint() (string, error) {
+	return jwkThumbprint(a.PrivateKey.Public())
+}
+
 // NewAccount creates a new account on the ACME server.
 //
 // "A client creates a new account with the server by sending a POST

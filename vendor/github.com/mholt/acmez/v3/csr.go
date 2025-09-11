@@ -88,7 +88,7 @@ func NewCSR(privateKey crypto.Signer, sans []string) (*x509.CertificateRequest, 
 
 // OrderParameters contains high-level input parameters for ACME transactions,
 // the state of which are represented by Order objects. This type is used as a
-// convenient high-level way to convey alk the configuration needed to obtain a
+// convenient high-level way to convey all the configuration needed to obtain a
 // certificate (except the private key, which is provided separately to prevent
 // inadvertent exposure of secret material) through ACME in one consolidated value.
 //
