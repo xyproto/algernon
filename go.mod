@@ -10,7 +10,7 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.25.9
+	github.com/evanw/esbuild v0.25.10
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
@@ -34,13 +34,13 @@ require (
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.3.0
-	github.com/xyproto/ollamaclient/v2 v2.7.1
+	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/onthefly v1.4.1
 	github.com/xyproto/permissionbolt/v2 v2.6.4
 	github.com/xyproto/permissions v1.0.0
 	github.com/xyproto/permissionsql/v2 v2.1.3
 	github.com/xyproto/pinterface v1.5.4
-	github.com/xyproto/pstore v1.3.3
+	github.com/xyproto/pstore v1.3.4
 	github.com/xyproto/recwatch v1.2.0
 	github.com/xyproto/sheepcounter v1.6.2
 	github.com/xyproto/simplebolt v1.5.2
@@ -83,7 +83,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20250911094654-3d613f8fbb94 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20250922120501-724cd2f1b699 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -94,7 +94,7 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/cookie/v2 v2.2.6 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect
-	github.com/xyproto/simplehstore v1.8.3 // indirect
+	github.com/xyproto/simplehstore v1.8.4 // indirect
 	github.com/xyproto/simplemaria v1.3.7 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
