@@ -288,6 +288,9 @@ github.com/xyproto/gopher-lua
 github.com/xyproto/gopher-lua/ast
 github.com/xyproto/gopher-lua/parse
 github.com/xyproto/gopher-lua/pm
+# github.com/xyproto/huldra v0.0.2
+## explicit; go 1.25.1
+github.com/xyproto/huldra
 # github.com/xyproto/jpath v0.6.1
 ## explicit; go 1.19
 github.com/xyproto/jpath

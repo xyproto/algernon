@@ -189,6 +189,8 @@ github.com/xyproto/gluamapper v1.2.1/go.mod h1:uN8tJzpgFmctChbuKGSlLGea/8p5q2v2+
 github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=
 github.com/xyproto/gopher-lua v1.0.2 h1:tOtkVygD46OWICSEov9Yf9XheBy8bCSnmhVzLGVAwvo=
 github.com/xyproto/gopher-lua v1.0.2/go.mod h1:aoM62BSDxywYkGaMufChYLqnYEmp0PKcPcw0jtxU/x0=
+github.com/xyproto/huldra v0.0.2 h1:LnLJzA+fS7qVGkC/BwBxYVORjcQ5GFO7lEKoStOpDf8=
+github.com/xyproto/huldra v0.0.2/go.mod h1:gxAKCuvoGk/d2NVjm4NDXMGxk8Qw0devRWUunRaDAXc=
 github.com/xyproto/jpath v0.6.1 h1:CmpbtuRgHZKW5fM9tYgdH6wIMpvnSOhnt4UwAYSacpM=
 github.com/xyproto/jpath v0.6.1/go.mod h1:bm5t4NVGsu+09lxa0qgsyjpd3kd9Sy2uBpszwAbgeB4=
 github.com/xyproto/mime v0.3.0 h1:UazaQeK2jEsBc8SkzSqZUV6wBvmEJtd7bIGPma7g8f4=

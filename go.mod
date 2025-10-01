@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.24.4
+go 1.25.1
 
 require (
 	github.com/caddyserver/certmagic v0.25.0
@@ -32,6 +32,7 @@ require (
 	github.com/xyproto/files v1.9.0
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
+	github.com/xyproto/huldra v0.0.2
 	github.com/xyproto/jpath v0.6.1
 	github.com/xyproto/mime v0.3.0
 	github.com/xyproto/ollamaclient/v2 v2.7.2

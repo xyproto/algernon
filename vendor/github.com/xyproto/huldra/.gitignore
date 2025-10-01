@@ -1,0 +1,61 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Object files and cached files
+*.o
+*.a
+*.bak
+
+# Build directories
+bin/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.bak
+*.log
+.DS_Store
+
+# Ignore editor or IDE directories
+.idea/
+.vscode/
+*.iml
+
+# cmd directory: ignore everything except Go source files and documentation
+cmd/*/*
+!cmd/*/*.go
+!cmd/*/*.txt
+!cmd/*/*.md
+!cmd/*/*.rst
+!cmd/*/*.asciidoc
+!cmd/*/*.1*
+
+# images not in img/
+*.bmp
+*.gif
+*.jpeg
+*.jpg
+*.png
+*.webp
+*.qoi
+!img/*
+
+# Orbiton include.txt file
+include.txt
+
+# Java and Kotlin
+build/
+.gradle/
+.kotlin/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
