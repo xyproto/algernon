@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/xyproto/algernon/utils"
+	"github.com/xyproto/huldra"
 )
 
 const autoloadTemplate = `
@@ -96,6 +97,8 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 		return js
 	}
 
+	// TODO: Write a better HTML manipulator. Create an external package.
+
 	// Place the script at the end of the body, if there is a body
 	switch {
 	case bytes.Contains(htmldata, []byte("</body>")):
@@ -103,9 +106,15 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 	case bytes.Contains(htmldata, []byte("<head>")):
 		// If not, place the script in the <head>, if there is a head
 		return bytes.Replace(htmldata, []byte("<head>"), append([]byte("<head>"), js...), 1)
-	case bytes.Contains(htmldata, []byte("<html>")):
+	case huldra.IsHTML(htmldata):
+		const maxPosition = 200
+		htmlTagBytes, err := huldra.GetHTMLTag(htmldata, maxPosition) // try to retrieve the entire <html[...]> tag
+		if err != nil {
+			htmlTagBytes = []byte("<html>")
+		}
+		htmlAndHeadTagBytes := append(htmlTagBytes, []byte("<head>")...)
 		// If not, place the script in the <html> as a new <head>
-		return bytes.Replace(htmldata, []byte("<html>"), append(append([]byte("<html><head>"), js...), []byte("</head>")...), 1)
+		return bytes.Replace(htmldata, htmlTagBytes, append(append(htmlAndHeadTagBytes, js...), []byte("</head>")...), 1)
 	}
 
 	// In the unlikely event that no place to insert the JavaScript was found, just add the script tag to the end

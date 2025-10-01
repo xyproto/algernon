@@ -21,6 +21,7 @@ import (
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
+	"github.com/xyproto/huldra"
 	"github.com/xyproto/splash"
 	"github.com/yosssi/gcss"
 
@@ -654,7 +655,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}
 
 	// Check if we are dealing with HTML
-	if strings.Contains(buf.String(), "<html>") {
+	if huldra.IsHTML(buf.Bytes()) {
 
 		if linkInCSS || linkInGCSS {
 			// Link in stylesheet
