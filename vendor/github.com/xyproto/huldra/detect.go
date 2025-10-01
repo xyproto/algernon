@@ -7,10 +7,8 @@ import (
 
 var errNoHTML = errors.New("could not find a <html> tag")
 
-func IsHTML(data []byte) bool {
-	return HasHTMLTag(data, 200)
-}
-
+// HasHTMLTag checks if the literal <html[...]> tag exists in the given data,
+// within the given max character position.
 func HasHTMLTag(data []byte, maxpos uint64) bool {
 	var (
 		foundCounter uint8
@@ -50,8 +48,6 @@ func HasHTMLTag(data []byte, maxpos uint64) bool {
 		default:
 			if r == '<' {
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
@@ -62,6 +58,8 @@ func HasHTMLTag(data []byte, maxpos uint64) bool {
 	return false
 }
 
+// HasScriptTag checks if the literal <script> tag exists in the given data,
+// within the given max character position.
 func HasScriptTag(data []byte, maxpos uint64) bool {
 	var (
 		foundCounter uint8
@@ -114,8 +112,6 @@ func HasScriptTag(data []byte, maxpos uint64) bool {
 		default:
 			if r == '<' {
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
@@ -167,8 +163,6 @@ func HTMLIndex(data []byte, maxpos uint64) (uint64, error) {
 			if r == '<' {
 				pos = i
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
@@ -220,8 +214,6 @@ func HTMLIndexString(s string, maxpos uint64) (uint64, error) {
 			if r == '<' {
 				pos = i
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
@@ -273,8 +265,6 @@ func HasHTMLTagString(s string, maxpos uint64) bool {
 		default:
 			if r == '<' {
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
@@ -285,6 +275,8 @@ func HasHTMLTagString(s string, maxpos uint64) bool {
 	return false
 }
 
+// HasScriptTagString checks if the literal <script> tag exists in the given string,
+// within the given max rune position.
 func HasScriptTagString(s string, maxpos uint64) bool {
 	var (
 		foundCounter uint8
@@ -336,8 +328,6 @@ func HasScriptTagString(s string, maxpos uint64) bool {
 		default:
 			if r == '<' {
 				foundCounter = 1
-			} else {
-				foundCounter = 0
 			}
 		}
 		if maxpos > 0 && i > maxpos {
