@@ -133,13 +133,19 @@ func (c Challenge) DNS01KeyAuthorization() string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
-// DNSAcccount01TXTRecordName returns the name of the TXT record to create
+// DNSAccount01TXTRecordName returns the name of the TXT record to create
 // for solving the dns-account-01 challenge. §3.2
-func (Challenge) DNSAcccount01TXTRecordName(a Account) string {
+//
+// The base32 encoding uses the standard RFC 4648 alphabet (uppercase A-Z),
+// but DNS labels are converted to lowercase for canonical form and
+// interoperability. Some providers (e.g., CloudFront, GlobalSign) enforce
+// lowercase labels, making lowercase conversion essential for reliable operation.
+func (c Challenge) DNSAccount01TXTRecordName(a Account) string {
 	acctURLhash := sha256.Sum256([]byte(a.Location))
 	truncAcctURLHash := acctURLhash[:10]
 	b32TruncAcctURLHash := base32.StdEncoding.EncodeToString(truncAcctURLHash)
-	return fmt.Sprintf("_%s._acme_challenge", b32TruncAcctURLHash)
+	canonicalForm := strings.ToLower(b32TruncAcctURLHash)
+	return fmt.Sprintf("_%s._acme-challenge.%s", canonicalForm, c.Identifier.Value)
 }
 
 // MailReply00KeyAuthorization encodes a key authorization value

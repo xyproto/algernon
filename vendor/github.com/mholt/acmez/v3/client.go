@@ -95,10 +95,14 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 	// create the ACME order
 	order := acme.Order{Profile: params.Profile, Identifiers: params.Identifiers}
 	if !params.NotBefore.IsZero() {
-		order.NotBefore = &params.NotBefore
+		// partial seconds are not permitted
+		trunc := params.NotBefore.Truncate(time.Second)
+		order.NotBefore = &trunc
 	}
 	if !params.NotAfter.IsZero() {
-		order.NotAfter = &params.NotAfter
+		// partial seconds are not permitted
+		trunc := params.NotAfter.Truncate(time.Second)
+		order.NotAfter = &trunc
 	}
 	if params.Replaces != nil {
 		certID, err := acme.ARIUniqueIdentifier(params.Replaces)
