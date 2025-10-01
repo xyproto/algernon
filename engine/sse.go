@@ -108,13 +108,12 @@ func InsertScriptTag(htmldata, js []byte) []byte {
 		return bytes.Replace(htmldata, []byte("<head>"), append([]byte("<head>"), js...), 1)
 	case huldra.IsHTML(htmldata):
 		const maxPosition = 200
-		htmlTagBytes, err := huldra.GetHTMLTag(htmldata, maxPosition) // try to retrieve the entire <html[...]> tag
-		if err != nil {
-			htmlTagBytes = []byte("<html>")
+		// try to retrieve the entire <html[...]> tag
+		if htmlTagBytes, err := huldra.GetHTMLTag(htmldata, maxPosition); err == nil { // success
+			htmlAndHeadTagBytes := append(htmlTagBytes, []byte("<head>")...)
+			// Place the script in the <html> as a new <head>
+			return bytes.Replace(htmldata, htmlTagBytes, append(append(htmlAndHeadTagBytes, js...), []byte("</head>")...), 1)
 		}
-		htmlAndHeadTagBytes := append(htmlTagBytes, []byte("<head>")...)
-		// If not, place the script in the <html> as a new <head>
-		return bytes.Replace(htmldata, htmlTagBytes, append(append(htmlAndHeadTagBytes, js...), []byte("</head>")...), 1)
 	}
 
 	// In the unlikely event that no place to insert the JavaScript was found, just add the script tag to the end
