@@ -29,7 +29,7 @@ func (pm *PrefixMatch) Build(prefixes []string) {
 				current.Children[char] = node
 				//fmt.Printf("adding %c -> %p\n", char, current.GetChild(char))
 			}
-			current, _ = current.Children[char]
+			current = current.Children[char]
 		}
 	}
 }

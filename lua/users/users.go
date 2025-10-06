@@ -145,7 +145,7 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	}))
 
 	// Clear the user cookie. The result depends on the browser.
-	L.SetGlobal("ClearCookie", L.NewFunction(func(L *lua.LState) int {
+	L.SetGlobal("ClearCookie", L.NewFunction(func(_ *lua.LState) int {
 		userstate.ClearCookie(w)
 		return 0 // number of results
 	}))

@@ -164,19 +164,19 @@ func (ulf *UploadedFile) write(fullFilename string, fperm os.FileMode) error {
 	// Check if the file already exists
 	if _, err := os.Stat(fullFilename); err == nil { // exists
 		logrus.Error(fullFilename, " already exists")
-		return fmt.Errorf("File exists: %s", fullFilename)
+		return fmt.Errorf("file exists: %s", fullFilename)
 	}
 	// Write the uploaded file
 	f, err := os.OpenFile(fullFilename, os.O_WRONLY|os.O_CREATE, fperm)
 	if err != nil {
-		logrus.Error("Error when creating ", fullFilename)
+		logrus.Error("error when creating ", fullFilename)
 		return err
 	}
 	defer f.Close()
 	// Copy the data to a new buffer, to keep the data and the length
 	fileDataBuffer := bytes.NewBuffer(ulf.buf.Bytes())
 	if _, err := io.Copy(f, fileDataBuffer); err != nil {
-		logrus.Error("Error when writing: " + err.Error())
+		logrus.Error("error when writing: " + err.Error())
 		return err
 	}
 	return nil
@@ -263,7 +263,7 @@ var uploadedFileMethods = map[string]lua.LGFunction{
 }
 
 // Load makes functions related to saving an uploaded file available
-func Load(L *lua.LState, w http.ResponseWriter, req *http.Request, scriptdir string) {
+func Load(L *lua.LState, _ http.ResponseWriter, req *http.Request, scriptdir string) {
 	// Register the UploadedFile class and the methods that belongs with it.
 	mt := L.NewTypeMetatable(Class)
 	mt.RawSetH(lua.LString("__index"), mt)

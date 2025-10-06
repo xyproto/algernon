@@ -102,7 +102,7 @@ func exportREPLSpecific(L *lua.LState) {
 }
 
 // Syntax highlight the given line
-func highlight(o *vt.TextOutput, line string) string {
+func highlight(line string) string {
 	unprocessed := line
 	unprocessed, comment := vt.ColorSplit(unprocessed, "//", 0, vt.DarkGray, vt.DarkGray, false)
 	module, unprocessed := vt.ColorSplit(unprocessed, ":", vt.LightGreen, vt.Red, 0, true)
@@ -127,7 +127,7 @@ func highlight(o *vt.TextOutput, line string) string {
 // Output syntax highlighted help text, with an additional usage message
 func outputHelp(o *vt.TextOutput, helpText string) {
 	for _, line := range strings.Split(helpText, "\n") {
-		o.Println(highlight(o, line))
+		o.Println(highlight(line))
 	}
 	o.Println(usageMessage)
 }
@@ -152,7 +152,7 @@ func outputHelpAbout(o *vt.TextOutput, helpText, topic string) {
 	for _, line := range strings.Split(helpText, "\n") {
 		if strings.HasPrefix(line, topic) {
 			// Output help text, with some surrounding blank lines
-			o.Println("\n" + highlight(o, line))
+			o.Println("\n" + highlight(line))
 			o.Println("\n" + vt.DarkGray.Get(strings.TrimSpace(comment)) + "\n")
 			return
 		}

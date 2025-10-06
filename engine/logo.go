@@ -45,9 +45,8 @@ var (
 	// From a photo of Algernon Charles Swinburne, the poet
 	AlgernonPoet = SplashImage{encodedAlgernonPoet}
 
-	splashImages = enum.New(GopherEyes, WhiteGrid, AlgernonPoet)
-
 	// Select a random splash/banner image every time
+	//splashImages = enum.New(GopherEyes, WhiteGrid, AlgernonPoet)
 	//splashImage *SplashImage = splashImages.Choice(0)
 
 	// Select the gopher eyes every time

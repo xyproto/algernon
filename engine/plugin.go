@@ -103,7 +103,7 @@ func (ac *Config) LoadPluginFunctions(L *lua.LState, o *vt.TextOutput) {
 		if o != nil {
 			luahelp = strings.TrimSpace(luahelp)
 			// Add syntax highlighting and output the text
-			o.Println(highlight(o, luahelp))
+			o.Println(highlight(luahelp))
 		}
 
 		L.Push(lua.LBool(true)) // Success
