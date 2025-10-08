@@ -53,7 +53,7 @@ require (
 	github.com/xyproto/unzip v1.0.0
 	github.com/xyproto/vt v1.2.9
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.44.0
+	golang.org/x/net v0.45.0
 )
 
 require (
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20251005150007-bfdd3986c7c2 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20251007161106-fb8c9c132916 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
