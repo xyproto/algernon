@@ -58,6 +58,10 @@ func (o *TextOutput) OutputTags(colors ...string) {
 	}
 }
 
+func Println(msg ...interface{})               { New().Println(msg...) }
+func Print(msg ...interface{})                 { New().Print(msg...) }
+func Printf(format string, msg ...interface{}) { New().Printf(format, msg...) }
+
 // Println writes a message to stdout if output is enabled
 func (o *TextOutput) Println(msg ...interface{}) {
 	if o.enabled {

@@ -7,15 +7,32 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf8"
+	"unsafe"
 
 	"golang.org/x/term"
 )
 
 var (
-	defaultTimeout = 2 * time.Millisecond
+	kernel32           = syscall.NewLazyDLL("kernel32.dll")
+	procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode = kernel32.NewProc("SetConsoleMode")
+	procGetStdHandle   = kernel32.NewProc("GetStdHandle")
+)
+
+const (
+	STD_INPUT_HANDLE                   = ^uintptr(10) // -11
+	STD_OUTPUT_HANDLE                  = ^uintptr(11) // -12
+	ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+	ENABLE_VIRTUAL_TERMINAL_INPUT      = 0x0200
+	DISABLE_NEWLINE_AUTO_RETURN        = 0x0008
+)
+
+var (
+	defaultTimeout = 50 * time.Millisecond
 	lastKey        int
 )
 
@@ -66,9 +83,52 @@ var ctrlInsertStringLookup = map[[6]byte]string{
 }
 
 type TTY struct {
-	fd            int
-	originalState *term.State
-	timeout       time.Duration
+	fd                 int
+	originalState      *term.State
+	timeout            time.Duration
+	originalInputMode  uint32
+	originalOutputMode uint32
+}
+
+// enableVTMode enables VT100/ANSI escape sequence processing on Windows
+func enableVTMode() error {
+	// Enable VT processing for stdout
+	stdout, _, _ := procGetStdHandle.Call(STD_OUTPUT_HANDLE)
+	if stdout == 0 {
+		return errors.New("could not get stdout handle")
+	}
+
+	var outputMode uint32
+	ret, _, _ := procGetConsoleMode.Call(stdout, uintptr(unsafe.Pointer(&outputMode)))
+	if ret == 0 {
+		return errors.New("could not get console output mode")
+	}
+
+	outputMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN
+	ret, _, _ = procSetConsoleMode.Call(stdout, uintptr(outputMode))
+	if ret == 0 {
+		return errors.New("could not set console output mode")
+	}
+
+	// Enable VT processing for stdin
+	stdin, _, _ := procGetStdHandle.Call(STD_INPUT_HANDLE)
+	if stdin == 0 {
+		return errors.New("could not get stdin handle")
+	}
+
+	var inputMode uint32
+	ret, _, _ = procGetConsoleMode.Call(stdin, uintptr(unsafe.Pointer(&inputMode)))
+	if ret == 0 {
+		return errors.New("could not get console input mode")
+	}
+
+	inputMode |= ENABLE_VIRTUAL_TERMINAL_INPUT
+	ret, _, _ = procSetConsoleMode.Call(stdin, uintptr(inputMode))
+	if ret == 0 {
+		return errors.New("could not set console input mode")
+	}
+
+	return nil
 }
 
 // NewTTY opens stdin/stdout for terminal input/output on Windows
@@ -78,12 +138,23 @@ func NewTTY() (*TTY, error) {
 		return nil, errors.New("not a terminal")
 	}
 
+	// Enable VT100/ANSI mode for Windows Console
+	err := enableVTMode()
+	if err != nil {
+		// Don't fail if VT mode can't be enabled, just warn
+		fmt.Fprintf(os.Stderr, "Warning: Could not enable VT100 mode: %v\n", err)
+	}
+
 	originalState, err := term.GetState(fd)
 	if err != nil {
 		return nil, err
 	}
 
-	return &TTY{fd, originalState, defaultTimeout}, nil
+	return &TTY{
+		fd:            fd,
+		originalState: originalState,
+		timeout:       defaultTimeout,
+	}, nil
 }
 
 // SetTimeout sets a timeout for reading a key
@@ -104,16 +175,26 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 	var numRead int
 
 	// Set the terminal into raw mode
-	_, err = term.MakeRaw(tty.fd)
+	rawState, err := term.MakeRaw(tty.fd)
 	if err != nil {
 		return 0, 0, err
 	}
-	defer term.Restore(tty.fd, tty.originalState)
+	defer term.Restore(tty.fd, rawState)
 
-	// Read bytes from stdin
-	numRead, err = os.Stdin.Read(bytes)
-	if err != nil {
-		return 0, 0, err
+	// Read bytes from stdin with timeout
+	done := make(chan bool, 1)
+	go func() {
+		numRead, err = os.Stdin.Read(bytes)
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		if err != nil {
+			return 0, 0, err
+		}
+	case <-time.After(tty.timeout):
+		return 0, 0, errors.New("read timeout")
 	}
 
 	// Handle multi-byte sequences
@@ -158,7 +239,6 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 func (tty *TTY) Key() int {
 	ascii, keyCode, err := asciiAndKeyCode(tty)
 	if err != nil {
-		lastKey = 0
 		return 0
 	}
 	var key int
@@ -167,11 +247,7 @@ func (tty *TTY) Key() int {
 	} else {
 		key = ascii
 	}
-	if key == lastKey {
-		lastKey = 0
-		return 0
-	}
-	lastKey = key
+	// Don't filter repeated keys - let the application handle key repeats
 	return key
 }
 
@@ -179,18 +255,29 @@ func (tty *TTY) Key() int {
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
 	var numRead int
+	var err error
 
 	// Set the terminal into raw mode
-	_, err := term.MakeRaw(tty.fd)
+	rawState, err := term.MakeRaw(tty.fd)
 	if err != nil {
 		return ""
 	}
-	defer term.Restore(tty.fd, tty.originalState)
+	defer term.Restore(tty.fd, rawState)
 
-	// Read bytes from stdin
-	numRead, err = os.Stdin.Read(bytes)
-	if err != nil || numRead == 0 {
-		return ""
+	// Read bytes from stdin with timeout
+	done := make(chan bool, 1)
+	go func() {
+		numRead, err = os.Stdin.Read(bytes)
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		if err != nil || numRead == 0 {
+			return ""
+		}
+	case <-time.After(tty.timeout):
+		return "" // timeout
 	}
 	switch {
 	case numRead == 1:
@@ -229,18 +316,29 @@ func (tty *TTY) String() string {
 func (tty *TTY) Rune() rune {
 	bytes := make([]byte, 6)
 	var numRead int
+	var err error
 
 	// Set the terminal into raw mode
-	_, err := term.MakeRaw(tty.fd)
+	rawState, err := term.MakeRaw(tty.fd)
 	if err != nil {
 		return rune(0)
 	}
-	defer term.Restore(tty.fd, tty.originalState)
+	defer term.Restore(tty.fd, rawState)
 
-	// Read bytes from stdin
-	numRead, err = os.Stdin.Read(bytes)
-	if err != nil || numRead == 0 {
-		return rune(0)
+	// Read bytes from stdin with timeout
+	done := make(chan bool, 1)
+	go func() {
+		numRead, err = os.Stdin.Read(bytes)
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		if err != nil || numRead == 0 {
+			return rune(0)
+		}
+	case <-time.After(tty.timeout):
+		return rune(0) // timeout
 	}
 
 	switch {

@@ -10,7 +10,7 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.25.10
+	github.com/evanw/esbuild v0.25.11
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
@@ -51,9 +51,9 @@ require (
 	github.com/xyproto/splash v1.1.7-0.20240319004143-dbbd0f5afd74
 	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.0
-	github.com/xyproto/vt v1.2.9
+	github.com/xyproto/vt v1.2.10
 	github.com/yosssi/gcss v0.1.0
-	golang.org/x/net v0.45.0
+	golang.org/x/net v0.46.0
 )
 
 require (
@@ -69,11 +69,11 @@ require (
 	github.com/go-mysql-org/go-mysql v1.13.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/gomodule/redigo v1.9.2 // indirect
+	github.com/gomodule/redigo v1.9.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20251007161106-fb8c9c132916 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20251022095426-4865e394b321 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -93,7 +93,7 @@ require (
 	github.com/terminar/simplesqlite v0.0.0-20240811163019-f2a6c3cbea17 // indirect
 	github.com/xyproto/binary v1.3.3 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
-	github.com/xyproto/cookie/v2 v2.2.6 // indirect
+	github.com/xyproto/cookie/v2 v2.2.7 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect
 	github.com/xyproto/simplehstore v1.8.4 // indirect
 	github.com/xyproto/simplemaria v1.3.7 // indirect
@@ -105,14 +105,14 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/mod v0.28.0 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.37.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
