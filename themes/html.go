@@ -32,13 +32,20 @@ func MessagePage(title, body, theme string) string {
 	return fmt.Sprintf("<!doctype html><html><head><title>%s</title>%s</head><body><h1>%s</h1>%s", title, StyleHead(theme), title, body)
 }
 
+var policy = bluemonday.UGCPolicy()
+
 // StyleHead returns contents that goes in "<head>", as bytes.
 // This is either CSS wrapped in a "<style>" tag, or "<link>" tags to CSS and JS.
 func StyleHead(theme string) []byte {
+
+	// Sanitize the theme name
+	theme = policy.Sanitize(theme)
+
 	var buf bytes.Buffer
 	if theme == "material" {
 		buf.WriteString(MaterialHead())
 	}
+
 	if strings.HasSuffix(theme, ".css") {
 		buf.WriteString("<style>html { margin: 3em; }</style>")
 		buf.WriteString("<link rel=\"stylesheet\" href=\"" + theme + "\">")
@@ -53,6 +60,11 @@ func StyleHead(theme string) []byte {
 // MessagePageBytes provides the same functionalityt as MessagePage,
 // but with []byte instead of string, and without closing </body></html>
 func MessagePageBytes(title string, body []byte, theme string) []byte {
+
+	// Sanitize the theme and title
+	theme = policy.Sanitize(theme)
+	title = policy.Sanitize(title)
+
 	var buf bytes.Buffer
 	buf.WriteString("<!doctype html><html><head><title>")
 	buf.WriteString(title)
@@ -67,24 +79,30 @@ func MessagePageBytes(title string, body []byte, theme string) []byte {
 
 // SimpleHTMLPage provides a quick way to build a HTML page
 func SimpleHTMLPage(title, headline, inhead, body, language []byte) []byte {
+
+	// Sanitize the title, headline and language
+	titleString := policy.Sanitize(string(title))
+	headlineString := policy.Sanitize(string(headline))
+	languageString := policy.Sanitize(string(language))
+
 	var buf bytes.Buffer
-	if len(language) > 0 {
+	if len(languageString) > 0 {
 		buf.WriteString("<!doctype html><html lang=\"")
-		buf.Write(language)
+		buf.WriteString(languageString)
 		buf.WriteString("\">")
 	} else {
 		buf.WriteString("<!doctype html><html>")
 	}
-	if len(title) > 0 {
+	if len(titleString) > 0 {
 		buf.WriteString("<head><title>")
-		buf.Write(title)
+		buf.WriteString(titleString)
 		buf.WriteString("</title></head>")
 	}
 	buf.Write(inhead)
 	buf.WriteString("<body>")
-	if len(headline) > 0 {
+	if len(headlineString) > 0 {
 		buf.WriteString("<h1>")
-		buf.Write(headline)
+		buf.WriteString(headlineString)
 		buf.WriteString("</h1>")
 	}
 	buf.Write(body)
@@ -94,6 +112,11 @@ func SimpleHTMLPage(title, headline, inhead, body, language []byte) []byte {
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory
 // and a boolean that is true if the given URL is to a directory.
 func HTMLLink(text, url string, isDirectory bool) string {
+
+	// Sanitize the link text and the link URL
+	text = policy.Sanitize(text)
+	url = policy.Sanitize(url)
+
 	// Add a final slash, if needed
 	if isDirectory {
 		text += "/"
@@ -104,6 +127,10 @@ func HTMLLink(text, url string, isDirectory bool) string {
 
 // StyleAmber modifies Amber source code so that a link to the given stylesheet URL is added
 func StyleAmber(amberdata []byte, url string) []byte {
+
+	// Sanitize the URL
+	url = policy.Sanitize(url)
+
 	// If the given url is not already mentioned and the data contains "body"
 	if !bytes.Contains(amberdata, []byte(url)) && bytes.Contains(amberdata, []byte("html")) && bytes.Contains(amberdata, []byte("body")) {
 		// Extract one level of indendation
@@ -122,6 +149,10 @@ func StyleAmber(amberdata []byte, url string) []byte {
 
 // StyleHTML modifies HTML source code so that a link to the given stylesheet URL is added
 func StyleHTML(htmldata []byte, url string) []byte {
+
+	// Sanitize the URL
+	url = policy.Sanitize(url)
+
 	// If the given url is not already mentioned and the data contains "body"
 	if !bytes.Contains(htmldata, []byte(url)) && bytes.Contains(htmldata, []byte("body")) {
 		if bytes.Contains(htmldata, []byte("</head>")) {
@@ -152,9 +183,11 @@ func InsertDoctype(htmldata []byte) []byte {
 
 // NoPage generates a HTML page for when a file is not found
 func NoPage(filename, theme string) []byte {
-	// Sanitize the filename
-	policy := bluemonday.UGCPolicy()
-	sanitizedFilename := policy.Sanitize(filename)
+
+	// Sanitize the filename and the theme name
+	filename = policy.Sanitize(filename)
+	theme = policy.Sanitize(theme)
+
 	// Return a HTML page
-	return MessagePageBytes("Not found", []byte("File not found: "+sanitizedFilename), theme)
+	return MessagePageBytes("Not found", []byte("File not found: "+filename), theme)
 }
