@@ -3,6 +3,7 @@
 General
 -------
 
+- [ ] Consider keeping package level handles for the access logs open, instead of open+append, together with handling SIGHUP when logs are rotated.
 - [ ] Consider adding `; HttpOnly` by default to `Set-Cookie` headers.
 - [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
 - [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
