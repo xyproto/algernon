@@ -4,6 +4,8 @@ PROJECT ?= algernon
 
 GOBUILD := go build -mod=vendor -v
 
+GOEXPERIMENT := greenteagc
+
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
