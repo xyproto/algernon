@@ -10,7 +10,7 @@ import (
 
 const (
 	// VersionString is the current version. The API is stable within major versions.
-	VersionString = "1.0.0"
+	VersionString = "1.0.1"
 )
 
 // Permissions is a structure that keeps track of the permissions for various path prefixes

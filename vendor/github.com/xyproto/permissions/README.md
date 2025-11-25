@@ -2,6 +2,8 @@
 
 Middleware for keeping track of users, login states and permissions.
 
+This is the continuation of [permissions2](https://github.com/xyproto/permissions2).
+
 ## Online API Documentation
 
 [godoc.org](http://godoc.org/github.com/xyproto/permissions)
@@ -24,7 +26,7 @@ Middleware for keeping track of users, login states and permissions.
 ## Requirements
 
 * Redis >= 2.6.12 (or an open source Redis clone)
-* Go >= 1.17
+* Go >= 1.21
 
 ## Examples
 
@@ -791,10 +793,8 @@ func main() {
 }
 ```
 
-Note that the `redigo` repository was recently moved to `https://github.com/gomodule/redigo`. The above code will not work if you use the old redigo package.
-
 ## General information
 
-* Version: 1.0.0
+* Version: 1.0.1
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -191,7 +191,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20251113125847-8a733f3e0f78
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20251125090050-594203d587bf
 ## explicit; go 1.23
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -206,10 +206,10 @@ github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
-# github.com/quic-go/qpack v0.5.1
-## explicit; go 1.22
+# github.com/quic-go/qpack v0.6.0
+## explicit; go 1.24
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.56.0
+# github.com/quic-go/quic-go v0.57.0
 ## explicit; go 1.24
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -310,8 +310,8 @@ github.com/xyproto/onthefly
 # github.com/xyproto/permissionbolt/v2 v2.6.4
 ## explicit; go 1.24.0
 github.com/xyproto/permissionbolt/v2
-# github.com/xyproto/permissions v1.0.0
-## explicit; go 1.21
+# github.com/xyproto/permissions v1.0.1
+## explicit; go 1.24.0
 github.com/xyproto/permissions
 # github.com/xyproto/permissionsql/v2 v2.1.3
 ## explicit; go 1.23.0
@@ -393,7 +393,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# go.uber.org/zap v1.27.0
+# go.uber.org/zap v1.27.1
 ## explicit; go 1.19
 go.uber.org/zap
 go.uber.org/zap/buffer

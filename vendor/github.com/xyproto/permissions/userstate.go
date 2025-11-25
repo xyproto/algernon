@@ -309,26 +309,21 @@ func (state *UserState) HasUser2(username string) (bool, error) {
 	return val, nil
 }
 
-// HasEmail finds the user that has a given e-mail address.
-// Returns the username and nil if found or a blank string and ErrNotFound if not.
+// HasEmail finds the username that has a given email address.
+// Returns the username and nil if found, or a blank string and ErrNotFound if not.
 func (state *UserState) HasEmail(email string) (string, error) {
 	if email == "" {
 		return "", ErrNotFound
 	}
-	usernames, err := state.AllUsernames()
+	// Use the new FindIDByFieldValue method to find the username by email
+	username, err := state.users.FindIDByFieldValue("email", email)
 	if err != nil {
+		if err == simpleredis.ErrNotFound {
+			return "", ErrNotFound
+		}
 		return "", err
 	}
-	for _, username := range usernames {
-		userEmail, err := state.Email(username)
-		if err != nil {
-			return "", err
-		}
-		if userEmail == email {
-			return username, nil
-		}
-	}
-	return "", ErrNotFound
+	return username, nil
 }
 
 // BooleanField returns the boolean value for a given username and field name.
