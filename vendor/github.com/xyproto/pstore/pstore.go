@@ -19,7 +19,7 @@ type Permissions struct {
 }
 
 const (
-	// Version number. Stable API within major version numbers.
+	// API version. Stable API within major version numbers.
 	Version = 3.2
 )
 

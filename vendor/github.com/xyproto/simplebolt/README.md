@@ -1,18 +1,12 @@
-# Simple Bolt
-
-![Build](https://github.com/xyproto/simplebolt/workflows/Build/badge.svg) [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplebolt)](https://goreportcard.com/report/github.com/xyproto/simplebolt) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplebolt/main/LICENSE)
+# Simple Bolt ![Build](https://github.com/xyproto/simplebolt/workflows/Build/badge.svg) [![GoDoc](https://godoc.org/github.com/xyproto/simplebolt?status.svg)](http://godoc.org/github.com/xyproto/simplebolt) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/simplebolt)](https://goreportcard.com/report/github.com/xyproto/simplebolt) [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/simplebolt/main/LICENSE)
 
 Simple way to use the [Bolt](https://github.com/coreos/bbolt) database. Similar design to [simpleredis](https://github.com/xyproto/simpleredis).
-
-## Online API Documentation
-
-[godoc.org](http://godoc.org/github.com/xyproto/simplebolt)
 
 ## Features and limitations
 
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
-* Requires Go 1.9 or later.
+* Requires Go 1.17 or later.
 * Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
 ## Example usage
@@ -65,6 +59,6 @@ func main() {
 
 ## Version, license and author
 
-* License: MIT
-* Version: 5.2.0
+* License: BSD-3
+* Version: 1.5.3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

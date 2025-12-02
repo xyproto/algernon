@@ -130,7 +130,7 @@ github.com/google/uuid
 # github.com/gorilla/css v1.0.1
 ## explicit; go 1.20
 github.com/gorilla/css/scanner
-# github.com/klauspost/compress v1.18.1
+# github.com/klauspost/compress v1.18.2
 ## explicit; go 1.23
 github.com/klauspost/compress
 github.com/klauspost/compress/flate
@@ -191,7 +191,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20251127115626-f2b702e07c1f
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20251202100123-75b04e23a5e4
 ## explicit; go 1.23
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -307,19 +307,19 @@ github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/onthefly v1.4.1
 ## explicit; go 1.21
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt/v2 v2.6.4
+# github.com/xyproto/permissionbolt/v2 v2.6.5
 ## explicit; go 1.24.0
 github.com/xyproto/permissionbolt/v2
 # github.com/xyproto/permissions v1.0.1
 ## explicit; go 1.24.0
 github.com/xyproto/permissions
-# github.com/xyproto/permissionsql/v2 v2.1.3
-## explicit; go 1.23.0
+# github.com/xyproto/permissionsql/v2 v2.1.4
+## explicit; go 1.24.0
 github.com/xyproto/permissionsql/v2
 # github.com/xyproto/pinterface v1.5.4
 ## explicit; go 1.8
 github.com/xyproto/pinterface
-# github.com/xyproto/pstore v1.3.4
+# github.com/xyproto/pstore v1.3.5
 ## explicit; go 1.24.0
 github.com/xyproto/pstore
 # github.com/xyproto/randomstring v1.2.0
@@ -331,19 +331,19 @@ github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.2
 ## explicit; go 1.18
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v1.5.2
-## explicit; go 1.9
+# github.com/xyproto/simplebolt v1.5.3
+## explicit; go 1.24.0
 github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 ## explicit; go 1.15
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v1.8.4
+# github.com/xyproto/simplehstore v1.8.5
 ## explicit; go 1.24.0
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplejwt v1.2.0
 ## explicit; go 1.20
 github.com/xyproto/simplejwt
-# github.com/xyproto/simplemaria v1.3.7
+# github.com/xyproto/simplemaria v1.3.8
 ## explicit; go 1.24.0
 github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis/v2 v2.8.1

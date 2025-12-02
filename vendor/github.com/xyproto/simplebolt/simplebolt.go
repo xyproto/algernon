@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// Version number. Stable API within major version numbers.
+	// API Version number. Stable API within major version numbers.
 	Version = 5.1
 )
 
