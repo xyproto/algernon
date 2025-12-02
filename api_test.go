@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/pinterface"
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simpleredis/v2"
-	//"github.com/xyproto/permissionsql"
+	//"github.com/xyproto/permissionsql/v2"
 	//"github.com/xyproto/pstore"
 	//"github.com/xyproto/simplehstore"
 	//"github.com/xyproto/simplemaria"
