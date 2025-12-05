@@ -52,8 +52,8 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
-github.com/evanw/esbuild v0.27.0 h1:1fbrgepqU1rZeu4VPcQRZJpvIfQpbrYqRr1wJdeMkfM=
-github.com/evanw/esbuild v0.27.0/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
+github.com/evanw/esbuild v0.27.1 h1:SkYgb1wrwJkJYwBp5hjmQGm3riUHbCdfViyEvjAA/KA=
+github.com/evanw/esbuild v0.27.1/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
 github.com/felixge/fgtrace v0.2.0 h1:lq7RO6ELjR+S74+eD+ai/vhYvsjno7Vb84yzU6RPSeU=
 github.com/felixge/fgtrace v0.2.0/go.mod h1:q9vMuItthu3CRfNhirTCTwzBcJ8atUFkrJUhgQbjg8c=
 github.com/flosch/pongo2/v6 v6.0.0 h1:lsGru8IAzHgIAw6H2m4PCyleO58I40ow6apih0WprMU=
@@ -130,8 +130,8 @@ github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee h1:/IDPbpzkzA97t
 github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee/go.mod h1:X2r9ueLEUZgtx2cIogM0v4Zj5uvvzhuuiu7Pn8HzMPg=
 github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a h1:WIhmJBlNGmnCWH6TLMdZfNEDaiU8cFpZe3iaqDbQ0M8=
 github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a/go.mod h1:ORfBOFp1eteu2odzsyaxI+b8TzJwgjwyQcGhI+9SfEA=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20251202100123-75b04e23a5e4 h1:1CZa1TezAfPeO1IjvwVDA16amO3ryZWcA8MM0TyzAPw=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20251202100123-75b04e23a5e4/go.mod h1:F7q7Qh9lNJyVS5ZliB1hA4uioJN1tOfnNf9KleLZVqo=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20251205072938-45b15978606a h1:SAh0X9TTtzQrS1DwOzckf7mCoTyhvw8ouF6zdp8PrNI=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20251205072938-45b15978606a/go.mod h1:F7q7Qh9lNJyVS5ZliB1hA4uioJN1tOfnNf9KleLZVqo=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
@@ -181,8 +181,8 @@ github.com/xyproto/datablock v1.2.0 h1:BRHolvVGIbrbILKecRCGBWt1pp/bEsOC+m2I3A32t
 github.com/xyproto/datablock v1.2.0/go.mod h1:hQGlZYTpt2QOXcjPKri4bjwU1mebDvrY9Nlx2hUgQe0=
 github.com/xyproto/env/v2 v2.5.3 h1:H/Fd1OAld+sPQrPKpAEkfwF3xn7eZiFys2QeH7c7oFE=
 github.com/xyproto/env/v2 v2.5.3/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
-github.com/xyproto/files v1.9.0 h1:nbSLLEhVTcuN/1qZ17BcNogiVsFnfU+apr3R5XpAv7s=
-github.com/xyproto/files v1.9.0/go.mod h1:johy1UtusLfkGuQ98zGJIHkQ1hWPUre5GHQ0GrUzKnk=
+github.com/xyproto/files v1.9.1 h1:wAIPn7Npxzvo5NBbef4zPZdDDOzIk2qAwkErGxSCh7s=
+github.com/xyproto/files v1.9.1/go.mod h1:qdjxPTPCNWG4Gk83G6QgDE0Vbzx9zcxc6eTMSaG+INU=
 github.com/xyproto/gluamapper v1.2.1 h1:7pDNxzX4P1QndBFkZEN7JmixrH0HSc7jKw2xyTZ0OjY=
 github.com/xyproto/gluamapper v1.2.1/go.mod h1:uN8tJzpgFmctChbuKGSlLGea/8p5q2v2+5WCnqcUS+8=
 github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=

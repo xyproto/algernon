@@ -10,7 +10,7 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
-	github.com/evanw/esbuild v0.27.0
+	github.com/evanw/esbuild v0.27.1
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
 	github.com/xyproto/env/v2 v2.5.3
-	github.com/xyproto/files v1.9.0
+	github.com/xyproto/files v1.9.1
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/huldra v0.0.3
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20251202100123-75b04e23a5e4 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20251205072938-45b15978606a // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect

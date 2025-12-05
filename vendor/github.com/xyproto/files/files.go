@@ -117,10 +117,14 @@ func DataReadyOnStdin() bool {
 	return err == nil && !(fileInfo.Mode()&os.ModeNamedPipe == 0)
 }
 
-// IsBinary returns true if the given filename can be read and is a binary file
+// IsBinary returns true if the given filename can be read and is a binary file.
+// It checks if the given filename is a regular file first, to avoid hangs when reading named pipes.
 func IsBinary(filename string) bool {
-	isBinary, err := binary.File(filename)
-	return err == nil && isBinary
+	if IsFile(filename) {
+		isBinary, err := binary.File(filename)
+		return err == nil && isBinary
+	}
+	return false
 }
 
 // FilterOutBinaryFiles filters out files that are either binary or can not be read
