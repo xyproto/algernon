@@ -30,15 +30,18 @@ h1, h2 {
 
 .formula-box {
     flex: 1 1 calc(33.333% - 1em);
-    background: #333;
+    background: #111;
     border-radius: 10px;
     padding: 1em;
     box-sizing: border-box;
     transition: transform 0.2s;
+    z-index: 1;
 }
 
 .formula-box:hover {
     transform: scale(1.05);
+    background: #333;
+    z-index: 2;
 }
 
 @media (max-width: 900px) {
