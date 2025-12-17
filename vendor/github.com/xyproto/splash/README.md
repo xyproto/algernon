@@ -10,13 +10,14 @@ The generated output is tested by visual inspection in Chromium, Midori and Nets
 package main
 
 import (
+    "os"
+
     "github.com/xyproto/splash"
-    "io/ioutil"
 )
 
 func main() {
     // Read "input.html"
-    inputHTML, err := ioutil.ReadFile("input.html")
+    inputHTML, err := os.ReadFile("input.html")
     if err != nil {
         panic(err)
     }
@@ -28,7 +29,7 @@ func main() {
     }
 
     // Write the highlighted HTML to "output.html"
-    if err := ioutil.WriteFile("output.html", outputHTML, 0644); err != nil {
+    if err := os.WriteFile("output.html", outputHTML, 0644); err != nil {
         panic(err)
     }
 }
@@ -40,6 +41,6 @@ See the [Style Gallery](https://xyproto.github.io/splash/docs/) for a full overv
 
 ## General information
 
-* Version: 1.1.6
+* Version: 1.3.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

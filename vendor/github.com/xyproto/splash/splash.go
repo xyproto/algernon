@@ -6,6 +6,7 @@ import (
 	"errors"
 	"html"
 	"regexp"
+	"strings"
 	"unicode"
 
 	"github.com/alecthomas/chroma/v2"
@@ -19,6 +20,43 @@ var (
 
 	defaultLanguage = "shell"
 )
+
+// getStyle attempts to retrieve a style by name, trying multiple normalization strategies.
+// This makes splash more robust when style names don't exactly match (e.g., filename vs display name).
+func getStyle(styleName string) *chroma.Style {
+	// Try the name as-is first
+	style := styles.Get(styleName)
+	if style != nil && style.Name != styles.Fallback.Name {
+		return style
+	}
+
+	// Try normalizing kebab-case/snake_case to Title Case
+	// e.g., "aura-theme-dark" -> "Aura Theme Dark"
+	normalized := normalizeStyleName(styleName)
+	style = styles.Get(normalized)
+	if style != nil && style.Name != styles.Fallback.Name {
+		return style
+	}
+
+	// Fall back to default
+	return styles.Fallback
+}
+
+// normalizeStyleName converts kebab-case or snake_case to Title Case.
+// e.g., "aura-theme-dark" -> "Aura Theme Dark"
+func normalizeStyleName(name string) string {
+	words := strings.FieldsFunc(name, func(r rune) bool {
+		return r == '-' || r == '_'
+	})
+
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = string(unicode.ToUpper(rune(word[0]))) + word[1:]
+		}
+	}
+
+	return strings.Join(words, " ")
+}
 
 // Splash takes HTML code as bytes and tries to syntax highlight code between
 // <pre> and </pre> tags.
@@ -61,12 +99,8 @@ func SetDefaultLanguage(languageName string) {
 // which can be useful when highlighting code in newly rendered markdown.
 func Highlight(htmlData []byte, styleName string, unescape bool) ([]byte, []byte, error) {
 
-	// Try to use the given style name
-	style := styles.Get(styleName)
-	if style == nil {
-		// Could not use the given style name
-		style = styles.Fallback
-	}
+	// Try to use the given style name with robust lookup
+	style := getStyle(styleName)
 
 	// Create a HTML formatter
 	formatter := chromaHTML.New(chromaHTML.WithClasses(true))
