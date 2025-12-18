@@ -7,8 +7,8 @@ github.com/DataDog/gostackparse v0.7.0 h1:i7dLkXHvYzHV308hnkvVGDL3BR4FWl7IsXNPz/
 github.com/DataDog/gostackparse v0.7.0/go.mod h1:lTfqcJKqS9KnXQGnyQMCugq3u1FP6UZMfWR0aitKFMM=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
 github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
-github.com/alecthomas/chroma/v2 v2.21.1-0.20251216104716-24089176a39c h1:RCld7UiX9ph0l7BzFG3JnAB02r+powX183Wq4fQANbI=
-github.com/alecthomas/chroma/v2 v2.21.1-0.20251216104716-24089176a39c/go.mod h1:NqVhfBR0lte5Ouh3DcthuUCTUpDC9cxBOfyMbMQPs3o=
+github.com/alecthomas/chroma/v2 v2.21.1 h1:FaSDrp6N+3pphkNKU6HPCiYLgm8dbe5UXIXcoBhZSWA=
+github.com/alecthomas/chroma/v2 v2.21.1/go.mod h1:NqVhfBR0lte5Ouh3DcthuUCTUpDC9cxBOfyMbMQPs3o=
 github.com/alecthomas/repr v0.5.2 h1:SU73FTI9D1P5UNtvseffFSGmdNci/O6RsqzeXJtP0Qs=
 github.com/alecthomas/repr v0.5.2/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae h1:bxpX/pcXKxGLYVbgDyrWUO7IoTIuW0HpTBnT4FywxD8=
@@ -126,8 +126,8 @@ github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee h1:/IDPbpzkzA97t
 github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee/go.mod h1:X2r9ueLEUZgtx2cIogM0v4Zj5uvvzhuuiu7Pn8HzMPg=
 github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a h1:WIhmJBlNGmnCWH6TLMdZfNEDaiU8cFpZe3iaqDbQ0M8=
 github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a/go.mod h1:ORfBOFp1eteu2odzsyaxI+b8TzJwgjwyQcGhI+9SfEA=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20251217123756-a14f0c8f22f6 h1:pHPbc30J4R9y9kaQ5MDcrTBreAPvrBRVKfkdwgB2p78=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20251217123756-a14f0c8f22f6/go.mod h1:oHE+ub2QaDERd+UNHe4z2BhFV2jZrm7VNOe6atR9AF4=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20251218045959-8227b493baf1 h1:Q9PSCUdmPa3r93v56ZhY8LG0IjIIuQGzzKMWyifgvks=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20251218045959-8227b493baf1/go.mod h1:oHE+ub2QaDERd+UNHe4z2BhFV2jZrm7VNOe6atR9AF4=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
@@ -224,8 +224,8 @@ github.com/xyproto/simplemaria v1.3.8 h1:mXQC9jCQIJvffIYpZn3JBiRJf4Jiih072dKvE4/
 github.com/xyproto/simplemaria v1.3.8/go.mod h1:UU7PcE23rZyUREJ11I+bQXlzMi7udHN7rEknMAtCiNY=
 github.com/xyproto/simpleredis/v2 v2.8.1 h1:AUdTMtjX8XewUj2ouoH0z/T8Fqy59xr0FPv2/ZJlwbk=
 github.com/xyproto/simpleredis/v2 v2.8.1/go.mod h1:ErpU/OaAGxqW8/B65GmOBLoEsHyB++Wkpn+HqGnhkQE=
-github.com/xyproto/splash v1.3.1-0.20251217140521-9c0c6cf9c753 h1:0ZNqAWTnzVcf9XdRB9Gg1q/v6IDY3vGWPKY+bVO+DLM=
-github.com/xyproto/splash v1.3.1-0.20251217140521-9c0c6cf9c753/go.mod h1:pPKiP7yt2hqo5ruczAKRIGdXZQXKNWYjaFh6FZpCFrU=
+github.com/xyproto/splash v1.3.1 h1:63hf5tp3nJszXROD6XumuZFNIkMNC+YGAlH013per5E=
+github.com/xyproto/splash v1.3.1/go.mod h1:pPKiP7yt2hqo5ruczAKRIGdXZQXKNWYjaFh6FZpCFrU=
 github.com/xyproto/symwalk v1.1.1 h1:icxMUiRAOqw8x9q9UWtpNz3rN7fngSYNMRguWzsyiWI=
 github.com/xyproto/symwalk v1.1.1/go.mod h1:u40/s1ER3LYv1ibNLeyH1PAR9oX62BPHNRt295/9zQc=
 github.com/xyproto/tinysvg v1.2.1 h1:rj2+8LwTYwSpi3elIKsWJd3fjNeFeso5GIUXCzbDWuU=

@@ -48,7 +48,7 @@ require (
 	github.com/xyproto/simpleform v0.2.0
 	github.com/xyproto/simplejwt v1.2.0
 	github.com/xyproto/simpleredis/v2 v2.8.1
-	github.com/xyproto/splash v1.3.1-0.20251217140521-9c0c6cf9c753
+	github.com/xyproto/splash v1.3.1
 	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.0
 	github.com/xyproto/vt v1.2.10
@@ -59,7 +59,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.21.1-0.20251216104716-24089176a39c // indirect
+	github.com/alecthomas/chroma/v2 v2.21.1 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
@@ -84,7 +84,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20251217123756-a14f0c8f22f6 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20251218045959-8227b493baf1 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
