@@ -177,8 +177,8 @@ github.com/xyproto/datablock v1.2.0 h1:BRHolvVGIbrbILKecRCGBWt1pp/bEsOC+m2I3A32t
 github.com/xyproto/datablock v1.2.0/go.mod h1:hQGlZYTpt2QOXcjPKri4bjwU1mebDvrY9Nlx2hUgQe0=
 github.com/xyproto/env/v2 v2.5.3 h1:H/Fd1OAld+sPQrPKpAEkfwF3xn7eZiFys2QeH7c7oFE=
 github.com/xyproto/env/v2 v2.5.3/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
-github.com/xyproto/files v1.9.1 h1:wAIPn7Npxzvo5NBbef4zPZdDDOzIk2qAwkErGxSCh7s=
-github.com/xyproto/files v1.9.1/go.mod h1:qdjxPTPCNWG4Gk83G6QgDE0Vbzx9zcxc6eTMSaG+INU=
+github.com/xyproto/files v1.9.2 h1:23VBm02mt0qJKuTCc4hpPfxDfxHuCCHGaSoN4waeOvw=
+github.com/xyproto/files v1.9.2/go.mod h1:qdjxPTPCNWG4Gk83G6QgDE0Vbzx9zcxc6eTMSaG+INU=
 github.com/xyproto/gluamapper v1.2.1 h1:7pDNxzX4P1QndBFkZEN7JmixrH0HSc7jKw2xyTZ0OjY=
 github.com/xyproto/gluamapper v1.2.1/go.mod h1:uN8tJzpgFmctChbuKGSlLGea/8p5q2v2+5WCnqcUS+8=
 github.com/xyproto/gopher-lua v1.0.0/go.mod h1:VCAgqVjLOz4AzuaxCORQNg4/0C3piilmVLcbMrJ9AJw=

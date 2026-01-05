@@ -31,10 +31,11 @@ func RemoveFile(path string) error
 func DirectoryWithFiles(path string) (bool, error)
 func IsExecutable(path string) bool
 func IsExecutableCached(path string) bool
+func Run(command string) error
 ```
 
 ## General info
 
-* Version: 1.9.1
+* Version: 1.9.2
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

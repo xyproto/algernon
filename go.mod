@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
 	github.com/xyproto/env/v2 v2.5.3
-	github.com/xyproto/files v1.9.1
+	github.com/xyproto/files v1.9.2
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/huldra v0.0.3
