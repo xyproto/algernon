@@ -14,7 +14,7 @@ jobs:
         stable: 'false'
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Test
       run: go test
   test-cache:
@@ -25,7 +25,7 @@ jobs:
       with:
         go-version: 1.25.x
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - uses: actions/cache@v5
       with:
         path: |
