@@ -35,11 +35,15 @@ func IsFile(path string) bool {
 	return err == nil && fi.Mode().IsRegular()
 }
 
+var File = IsFile
+
 // IsSymlink checks if the given path exists and is a symbolic link
 func IsSymlink(path string) bool {
 	fi, err := os.Lstat(path)
 	return err == nil && fi.Mode()&os.ModeSymlink != 0
 }
+
+var Symlink = IsSymlink
 
 // IsFileOrSymlink checks if the given path exists and is a regular file or a symbolic link
 func IsFileOrSymlink(path string) bool {
@@ -48,11 +52,15 @@ func IsFileOrSymlink(path string) bool {
 	return err == nil && (fi.Mode().IsRegular() || (fi.Mode()&os.ModeSymlink != 0))
 }
 
+var FileOrSymlink = IsFileOrSymlink
+
 // IsDir checks if the given path exists and is a directory
 func IsDir(path string) bool {
 	fi, err := os.Stat(path)
 	return err == nil && fi.Mode().IsDir()
 }
+
+var Dir = IsDir
 
 // Which tries to find the given executable name in the $PATH
 // Returns an empty string if not found.
@@ -127,6 +135,8 @@ func IsBinary(filename string) bool {
 	return false
 }
 
+var Binary = IsBinary
+
 // FilterOutBinaryFiles filters out files that are either binary or can not be read
 func FilterOutBinaryFiles(filenames []string) []string {
 	var nonBinaryFilenames []string
@@ -188,9 +198,9 @@ func CanRead(filename string) bool {
 	return err == nil && n == 1
 }
 
-// Relative takes an absolute or relative path and attempts to return it relative to the current directory.
+// IsRelative takes an absolute or relative path and attempts to return it relative to the current directory.
 // If there are errors, it simply returns the given path.
-func Relative(path string) string {
+func IsRelative(path string) string {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return path
@@ -201,6 +211,8 @@ func Relative(path string) string {
 	}
 	return relativePath
 }
+
+var Relative = IsRelative
 
 // Touch behaves like "touch" on the command line, and creates a file or updates the timestamp
 func Touch(filename string) error {
@@ -262,13 +274,13 @@ func DirectoryWithFiles(path string) (bool, error) {
 	} else if !fileInfo.IsDir() {
 		return false, fmt.Errorf("path is not a directory")
 	}
-	if entries, err := os.ReadDir(path); err != nil {
+	entries, err := os.ReadDir(path)
+	if err != nil {
 		return false, err
-	} else {
-		for _, entry := range entries {
-			if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
-				return true, nil
-			}
+	}
+	for _, entry := range entries {
+		if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
+			return true, nil
 		}
 	}
 	return false, nil
@@ -283,6 +295,8 @@ func IsExecutable(path string) bool {
 	mode := fi.Mode()
 	return mode.IsRegular() && mode&0111 != 0
 }
+
+var Executable = IsExecutable
 
 // IsExecutableCached checks if the given path exists and is an executable file, with cache support.
 // Assumes that the filesystem permissions have not changed since the last check.
@@ -299,3 +313,15 @@ func IsExecutableCached(path string) bool {
 	cacheMutex.Unlock()
 	return isExecutable
 }
+
+var ExecutableCached = IsExecutableCached
+
+func IsEmpty(path string) bool {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fi.Size() == 0
+}
+
+var Empty = IsEmpty

@@ -2,6 +2,7 @@ package vt
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -58,14 +59,34 @@ func (o *TextOutput) OutputTags(colors ...string) {
 	}
 }
 
-func Println(msg ...interface{})               { New().Println(msg...) }
-func Print(msg ...interface{})                 { New().Print(msg...) }
-func Printf(format string, msg ...interface{}) { New().Printf(format, msg...) }
+func Println(msg ...interface{})                             { New().Println(msg...) }
+func Print(msg ...interface{})                               { New().Print(msg...) }
+func Printf(format string, msg ...interface{})               { New().Printf(format, msg...) }
+func Eprintln(msg ...interface{})                            { New().Eprintln(msg...) }
+func Eprint(msg ...interface{})                              { New().Eprint(msg...) }
+func Eprintf(format string, msg ...interface{})              { New().Eprintf(format, msg...) }
+func Fprintln(w io.Writer, msg ...interface{})               { New().Fprintln(w, msg...) }
+func Fprint(w io.Writer, msg ...interface{})                 { New().Fprint(w, msg...) }
+func Fprintf(w io.Writer, format string, msg ...interface{}) { New().Fprintf(w, format, msg...) }
 
 // Println writes a message to stdout if output is enabled
 func (o *TextOutput) Println(msg ...interface{}) {
 	if o.enabled {
 		fmt.Println(o.InterfaceTags(msg...))
+	}
+}
+
+// Eprintln writes a message to stderr if output is enabled
+func (o *TextOutput) Eprintln(msg ...interface{}) {
+	if o.enabled {
+		fmt.Fprintln(os.Stderr, o.InterfaceTags(msg...))
+	}
+}
+
+// Fprintln writes a message to the given io.Writer, if output is enabled
+func (o *TextOutput) Fprintln(w io.Writer, msg ...interface{}) {
+	if o.enabled {
+		fmt.Fprintln(w, o.InterfaceTags(msg...))
 	}
 }
 
@@ -76,10 +97,38 @@ func (o *TextOutput) Print(msg ...interface{}) {
 	}
 }
 
+// Eprint writes a message to stderr if output is enabled
+func (o *TextOutput) Eprint(msg ...interface{}) {
+	if o.enabled {
+		fmt.Fprint(os.Stderr, o.InterfaceTags(msg...))
+	}
+}
+
+// Fprint writes a message to the given io.Writer, if output is enabled
+func (o *TextOutput) Fprint(w io.Writer, msg ...interface{}) {
+	if o.enabled {
+		fmt.Fprint(w, o.InterfaceTags(msg...))
+	}
+}
+
 // Printf writes a formatted message to stdout if output is enabled
 func (o *TextOutput) Printf(format string, args ...interface{}) {
 	if o.enabled {
 		fmt.Print(o.Tags(fmt.Sprintf(format, args...)))
+	}
+}
+
+// Eprintf writes a formatted message to stderr if output is enabled
+func (o *TextOutput) Eprintf(format string, args ...interface{}) {
+	if o.enabled {
+		fmt.Fprint(os.Stderr, o.Tags(fmt.Sprintf(format, args...)))
+	}
+}
+
+// Fprintf writes a formatted message to the given io.Writer, if output is enabled
+func (o *TextOutput) Fprintf(w io.Writer, format string, args ...interface{}) {
+	if o.enabled {
+		fmt.Fprint(w, o.Tags(fmt.Sprintf(format, args...)))
 	}
 }
 
@@ -91,6 +140,11 @@ func (o *TextOutput) Disable() {
 // Enable text output
 func (o *TextOutput) Enable() {
 	o.enabled = true
+}
+
+// Enabled checks if the text output is enabled
+func (o *TextOutput) Enabled() bool {
+	return o.enabled
 }
 
 // Err writes an error message in red to stderr if output is enabled
@@ -270,4 +324,13 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 		}
 	}
 	return counter
+}
+
+// WriteTagged writes a tagged string ("<green>hello</green>") to the Canvas
+func (c *Canvas) WriteTagged(x, y uint, bgColor AttributeColor, tagged string) {
+	pcc := make([]CharAttribute, len([]rune(tagged)))
+	n := New().ExtractToSlice(tagged, &pcc)
+	for i := uint(0); i < n; i++ {
+		c.WriteRune(i+x, y, pcc[i].A, bgColor, pcc[i].R)
+	}
 }

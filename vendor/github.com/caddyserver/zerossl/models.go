@@ -60,6 +60,7 @@ type CertificateObject struct {
 		EmailValidation map[string][]string         `json:"email_validation,omitempty"`
 		OtherMethods    map[string]ValidationObject `json:"other_methods,omitempty"`
 	} `json:"validation,omitempty"`
+	SignatureAlgorithmProperties any `json:"signature_algorithm_properties,omitempty"` // unsure what this is, but fixes #3
 }
 
 type ValidationObject struct {

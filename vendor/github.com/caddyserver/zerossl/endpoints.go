@@ -201,7 +201,7 @@ func (c Client) RevokeCertificate(ctx context.Context, certificateID string, rea
 	var result struct {
 		Success anyBool `json:"success"`
 	}
-	if err := c.httpGet(ctx, endpoint, qs, &result); err != nil {
+	if err := c.httpPost(ctx, endpoint, qs, nil,&result); err != nil {
 		return err
 	}
 
