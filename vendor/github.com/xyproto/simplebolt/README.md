@@ -6,7 +6,7 @@ Simple way to use the [Bolt](https://github.com/coreos/bbolt) database. Similar 
 
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
-* Requires Go 1.17 or later.
+* Requires Go 1.24 or later.
 * Note that `HashMap` is implemented only for API-compatibility with [simpleredis](https://github.com/xyproto/simpleredis), and does not have the same performance profile as the `HashMap` implementation in [simpleredis](https://github.com/xyproto/simpleredis), [simplemaria](https://github.com/xyproto/simplemaria) (MariaDB/MySQL) or [simplehstore](https://github.com/xyproto/simplehstore) (PostgreSQL w/ HSTORE).
 
 ## Example usage
@@ -60,5 +60,5 @@ func main() {
 ## Version, license and author
 
 * License: BSD-3
-* Version: 1.5.3
+* Version: 1.5.4
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
