@@ -59,7 +59,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.23.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.23.1 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caddyserver/zerossl v0.1.4 // indirect
@@ -79,12 +79,12 @@ require (
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.33 // indirect
 	github.com/mholt/acmez/v3 v3.1.4 // indirect
-	github.com/miekg/dns v1.1.70 // indirect
+	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260120075450-8e961f7a7416 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260123192541-2c0a134cf522 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
