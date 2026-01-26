@@ -314,8 +314,12 @@ func IsExecutableCached(path string) bool {
 	return isExecutable
 }
 
+// ExecutableCached checks if the given path exists and is an executable file, with cache support.
+// Assumes that the filesystem permissions have not changed since the last check.
 var ExecutableCached = IsExecutableCached
 
+// IsEmpty checks if the given path is an empty file.
+// Also returns false if something went wrong.
 func IsEmpty(path string) bool {
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -324,4 +328,28 @@ func IsEmpty(path string) bool {
 	return fi.Size() == 0
 }
 
+// Empty checks if the given path is an empty file.
+// Also returns false if something went wrong.
 var Empty = IsEmpty
+
+// IsRealPath checks if the given path is the same if symlinks are not followed (like "pwd -P" / the "real" path)
+// Also returns false if something went wrong.
+func IsRealPath(path string) bool {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	realPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return false
+	}
+	realAbsPath, err := filepath.Abs(realPath)
+	if err != nil {
+		return false
+	}
+	return absPath == realAbsPath
+}
+
+// RealPath checks if the given path is the same if symlinks are not followed (like "pwd -P" / the "real" path)
+// Also returns false if something went wrong.
+var RealPath = IsRealPath

@@ -32,6 +32,7 @@ func DirectoryWithFiles(path string) (bool, error)
 func Executable(path string) bool
 func ExecutableCached(path string) bool
 func Empty(path string) bool
+func RealPath(path string) bool
 ```
 
 ## Running commands
@@ -49,6 +50,6 @@ func Fish(command string) (string, error)
 
 ## General info
 
-* Version: 1.10.1
+* Version: 1.10.2
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
