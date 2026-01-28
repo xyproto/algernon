@@ -288,31 +288,63 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.cacheMaxEntitySize = ac.defaultCacheMaxEntitySize
 	}
 
-	serverAddrChanged := false
-
-	// For backward compatibility with previous versions of Algernon
-	// TODO: Remove, in favor of a better config/flag system
+	// For backward compatibility with previous versions of Algernon.
+	// Classify positional arguments by content rather than by position,
+	// so that the directory and address can be given in any order.
 	args := flag.Args()
-	if len(args) > 0 {
-		// Only override the default server directory if Algernon can find it
-		firstArg := args[0]
-		fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
-		// Interpret as a file or directory
-		if fs.IsDir(firstArg) || fs.Exists(firstArg) {
-			if strings.HasSuffix(firstArg, string(os.PathSeparator)) {
-				ac.serverDirOrFilename = firstArg[:len(firstArg)-1]
-			} else {
-				ac.serverDirOrFilename = firstArg
-			}
-		} else if strings.Contains(firstArg, ":") {
-			// Interpret as the server address
-			ac.serverAddr = firstArg
-			serverAddrChanged = true
-		} else if _, err := strconv.Atoi(firstArg); err == nil { // no error
-			// Is a number. Interpret as the server address
-			ac.serverAddr = ":" + firstArg
-			serverAddrChanged = true
+	fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
+	looksLikeCertOrKey := func(arg string) bool {
+		switch strings.ToLower(filepath.Ext(arg)) {
+		case ".pem", ".crt", ".cer", ".key":
+			return true
+		default:
+			return false
 		}
+	}
+	looksLikeRedisAddr := func(arg string) bool {
+		return strings.HasSuffix(arg, ":6379") || strings.HasSuffix(arg, ":6380")
+	}
+	looksLikeWebPort := func(port string) bool {
+		return port == "80" || port == "8080" || strings.HasSuffix(port, "000")
+	}
+	var remainingArgs []string
+	serverDirSet := false
+	redisAddrFromArgs := false
+	for _, arg := range args {
+		if looksLikeCertOrKey(arg) {
+			remainingArgs = append(remainingArgs, arg)
+			continue
+		}
+		if !serverDirSet && (fs.IsDir(arg) || fs.Exists(arg)) {
+			if strings.HasSuffix(arg, string(os.PathSeparator)) {
+				ac.serverDirOrFilename = arg[:len(arg)-1]
+			} else {
+				ac.serverDirOrFilename = arg
+			}
+			serverDirSet = true
+			continue
+		}
+		if looksLikeRedisAddr(arg) {
+			ac.redisAddr = arg
+			ac.redisAddrSpecified = true
+			redisAddrFromArgs = true
+			continue
+		}
+		if strings.Contains(arg, ":") {
+			// If in doubt, assume this is the web server address.
+			ac.serverAddr = arg
+			continue
+		}
+		if _, err := strconv.Atoi(arg); err == nil { // no error
+			// If in doubt, assume this is the web server port.
+			if looksLikeWebPort(arg) || !redisAddrFromArgs {
+				ac.serverAddr = ":" + arg
+			} else {
+				remainingArgs = append(remainingArgs, arg)
+			}
+			continue
+		}
+		remainingArgs = append(remainingArgs, arg)
 	}
 	// Clean up path in ac.serverDirOrFilename
 	// .Rel calls .Clean on the result.
@@ -321,33 +353,26 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			ac.serverDirOrFilename = cleanPath
 		}
 	}
-	// TODO: Replace the code below with a good config/flag package.
-	shift := 0
-	if serverAddrChanged {
-		shift = 1
+	// Handle remaining unclassified positional arguments for backward compatibility.
+	// Expected order: cert file, key file, redis address, redis db index.
+	if len(remainingArgs) > 0 {
+		ac.serverCert = remainingArgs[0]
 	}
-	if len(args) > 1 {
-		secondArg := args[1]
-		if strings.Contains(secondArg, ":") {
-			ac.serverAddr = secondArg
-		} else if _, err := strconv.Atoi(secondArg); err == nil { // no error
-			// Is a number. Interpret as the server address.
-			ac.serverAddr = ":" + secondArg
-		} else if len(args) >= 3-shift {
-			ac.serverCert = args[2-shift]
-		}
+	if len(remainingArgs) > 1 {
+		ac.serverKey = remainingArgs[1]
 	}
-	if len(args) >= 4-shift {
-		ac.serverKey = args[3-shift]
-	}
-	if len(args) >= 5-shift {
-		ac.redisAddr = args[4-shift]
+	if len(remainingArgs) > 2 && !redisAddrFromArgs {
+		ac.redisAddr = remainingArgs[2]
 		ac.redisAddrSpecified = true
 	}
-	if len(args) >= 6-shift {
+	dbIndexArgIndex := 3
+	if redisAddrFromArgs {
+		dbIndexArgIndex = 2
+	}
+	if len(remainingArgs) > dbIndexArgIndex {
 		// Convert the dbindex from string to int
-		DBindex, err := strconv.Atoi(args[5-shift])
-		if err != nil {
+		DBindex, err := strconv.Atoi(remainingArgs[dbIndexArgIndex])
+		if err == nil { // no error
 			ac.redisDBindex = DBindex
 		}
 	}
