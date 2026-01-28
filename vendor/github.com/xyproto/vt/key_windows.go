@@ -17,10 +17,15 @@ import (
 )
 
 var (
-	kernel32           = syscall.NewLazyDLL("kernel32.dll")
-	procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
-	procSetConsoleMode = kernel32.NewProc("SetConsoleMode")
-	procGetStdHandle   = kernel32.NewProc("GetStdHandle")
+	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	procGetConsoleMode      = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode      = kernel32.NewProc("SetConsoleMode")
+	procGetStdHandle        = kernel32.NewProc("GetStdHandle")
+	procWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
+)
+
+const (
+	WAIT_TIMEOUT = 0x00000102
 )
 
 const (
@@ -29,6 +34,9 @@ const (
 	ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
 	ENABLE_VIRTUAL_TERMINAL_INPUT      = 0x0200
 	DISABLE_NEWLINE_AUTO_RETURN        = 0x0008
+	ENABLE_ECHO_INPUT                  = 0x0004
+	ENABLE_LINE_INPUT                  = 0x0002
+	ENABLE_PROCESSED_INPUT             = 0x0001
 )
 
 var (
@@ -91,44 +99,46 @@ type TTY struct {
 }
 
 // enableVTMode enables VT100/ANSI escape sequence processing on Windows
-func enableVTMode() error {
+// and configures console for raw input mode with VT sequences
+func enableVTMode() (uint32, uint32, error) {
+	var originalInputMode, originalOutputMode uint32
+
 	// Enable VT processing for stdout
 	stdout, _, _ := procGetStdHandle.Call(STD_OUTPUT_HANDLE)
-	if stdout == 0 {
-		return errors.New("could not get stdout handle")
+	if stdout != 0 && stdout != ^uintptr(0) {
+		var outputMode uint32
+		ret, _, _ := procGetConsoleMode.Call(stdout, uintptr(unsafe.Pointer(&outputMode)))
+		if ret != 0 {
+			originalOutputMode = outputMode
+			outputMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN
+			procSetConsoleMode.Call(stdout, uintptr(outputMode))
+		}
 	}
 
-	var outputMode uint32
-	ret, _, _ := procGetConsoleMode.Call(stdout, uintptr(unsafe.Pointer(&outputMode)))
-	if ret == 0 {
-		return errors.New("could not get console output mode")
-	}
-
-	outputMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN
-	ret, _, _ = procSetConsoleMode.Call(stdout, uintptr(outputMode))
-	if ret == 0 {
-		return errors.New("could not set console output mode")
-	}
-
-	// Enable VT processing for stdin
+	// Enable VT processing for stdin and set raw mode
 	stdin, _, _ := procGetStdHandle.Call(STD_INPUT_HANDLE)
-	if stdin == 0 {
-		return errors.New("could not get stdin handle")
+	if stdin == 0 || stdin == ^uintptr(0) {
+		return 0, 0, errors.New("could not get stdin handle")
 	}
 
 	var inputMode uint32
-	ret, _, _ = procGetConsoleMode.Call(stdin, uintptr(unsafe.Pointer(&inputMode)))
+	ret, _, _ := procGetConsoleMode.Call(stdin, uintptr(unsafe.Pointer(&inputMode)))
 	if ret == 0 {
-		return errors.New("could not get console input mode")
+		return 0, 0, errors.New("could not get console input mode")
 	}
+	originalInputMode = inputMode
 
+	// Set raw mode: disable echo, line input, and processed input
+	// but KEEP VT input enabled for arrow keys
+	inputMode &^= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT
 	inputMode |= ENABLE_VIRTUAL_TERMINAL_INPUT
+
 	ret, _, _ = procSetConsoleMode.Call(stdin, uintptr(inputMode))
 	if ret == 0 {
-		return errors.New("could not set console input mode")
+		return originalInputMode, originalOutputMode, errors.New("could not set console input mode")
 	}
 
-	return nil
+	return originalInputMode, originalOutputMode, nil
 }
 
 // NewTTY opens stdin/stdout for terminal input/output on Windows
@@ -138,22 +148,28 @@ func NewTTY() (*TTY, error) {
 		return nil, errors.New("not a terminal")
 	}
 
-	// Enable VT100/ANSI mode for Windows Console
-	err := enableVTMode()
-	if err != nil {
-		// Don't fail if VT mode can't be enabled, just warn
-		fmt.Fprintf(os.Stderr, "Warning: Could not enable VT100 mode: %v\n", err)
-	}
-
 	originalState, err := term.GetState(fd)
 	if err != nil {
 		return nil, err
 	}
 
+	// Try to enable VT100/ANSI mode and set raw mode with proper VT support
+	originalInputMode, originalOutputMode, err := enableVTMode()
+	if err != nil {
+		// If we can't set console modes directly, fall back to term.MakeRaw
+		// This might happen in some terminal emulators
+		_, err = term.MakeRaw(fd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &TTY{
-		fd:            fd,
-		originalState: originalState,
-		timeout:       defaultTimeout,
+		fd:                 fd,
+		originalState:      originalState,
+		timeout:            defaultTimeout,
+		originalInputMode:  originalInputMode,
+		originalOutputMode: originalOutputMode,
 	}, nil
 }
 
@@ -162,39 +178,55 @@ func (tty *TTY) SetTimeout(d time.Duration) {
 	tty.timeout = d
 }
 
+// SetEscTimeout is a no-op on Windows.
+func (tty *TTY) SetEscTimeout(d time.Duration) {}
+
 // Close will restore the terminal state
 func (tty *TTY) Close() {
 	if tty.originalState != nil {
 		term.Restore(tty.fd, tty.originalState)
 	}
+	// Also restore console modes
+	stdin, _, _ := procGetStdHandle.Call(STD_INPUT_HANDLE)
+	if stdin != 0 {
+		procSetConsoleMode.Call(stdin, uintptr(tty.originalInputMode))
+	}
+	stdout, _, _ := procGetStdHandle.Call(STD_OUTPUT_HANDLE)
+	if stdout != 0 {
+		procSetConsoleMode.Call(stdout, uintptr(tty.originalOutputMode))
+	}
+}
+
+// hasInput checks if there's console input available using WaitForSingleObject
+func hasInput() bool {
+	stdin, _, _ := procGetStdHandle.Call(STD_INPUT_HANDLE)
+	if stdin == 0 {
+		return false
+	}
+	// Wait with 0 timeout (non-blocking check)
+	ret, _, _ := procWaitForSingleObject.Call(stdin, 0)
+	// ret == 0 (WAIT_OBJECT_0) means input is available
+	// ret == WAIT_TIMEOUT means no input
+	return ret == 0
 }
 
 // asciiAndKeyCode processes input into an ASCII code or key code, handling multi-byte sequences like Ctrl-Insert
 func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
+	// Check if input is available
+	if !hasInput() {
+		return 0, 0, nil
+	}
+
 	bytes := make([]byte, 6) // Use 6 bytes to cover longer sequences like Ctrl-Insert
 	var numRead int
 
-	// Set the terminal into raw mode
-	rawState, err := term.MakeRaw(tty.fd)
+	// Read bytes from stdin - terminal is already in raw mode
+	numRead, err = os.Stdin.Read(bytes)
 	if err != nil {
 		return 0, 0, err
 	}
-	defer term.Restore(tty.fd, rawState)
-
-	// Read bytes from stdin with timeout
-	done := make(chan bool, 1)
-	go func() {
-		numRead, err = os.Stdin.Read(bytes)
-		done <- true
-	}()
-
-	select {
-	case <-done:
-		if err != nil {
-			return 0, 0, err
-		}
-	case <-time.After(tty.timeout):
-		return 0, 0, errors.New("read timeout")
+	if numRead == 0 {
+		return 0, 0, nil
 	}
 
 	// Handle multi-byte sequences
@@ -251,34 +283,28 @@ func (tty *TTY) Key() int {
 	return key
 }
 
+// KeyRaw reads a key without suppressing repeats.
+func (tty *TTY) KeyRaw() int {
+	return tty.Key()
+}
+
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
+	// Check if input is available
+	if !hasInput() {
+		return ""
+	}
+
 	bytes := make([]byte, 6)
 	var numRead int
 	var err error
 
-	// Set the terminal into raw mode
-	rawState, err := term.MakeRaw(tty.fd)
-	if err != nil {
+	// Read bytes from stdin - terminal is already in raw mode
+	numRead, err = os.Stdin.Read(bytes)
+	if err != nil || numRead == 0 {
 		return ""
 	}
-	defer term.Restore(tty.fd, rawState)
 
-	// Read bytes from stdin with timeout
-	done := make(chan bool, 1)
-	go func() {
-		numRead, err = os.Stdin.Read(bytes)
-		done <- true
-	}()
-
-	select {
-	case <-done:
-		if err != nil || numRead == 0 {
-			return ""
-		}
-	case <-time.After(tty.timeout):
-		return "" // timeout
-	}
 	switch {
 	case numRead == 1:
 		r := rune(bytes[0])
@@ -312,33 +338,26 @@ func (tty *TTY) String() string {
 	return string(bytes[:numRead])
 }
 
+// StringRaw reads a string without suppressing repeats.
+func (tty *TTY) StringRaw() string {
+	return tty.String()
+}
+
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
+	// Check if input is available
+	if !hasInput() {
+		return rune(0)
+	}
+
 	bytes := make([]byte, 6)
 	var numRead int
 	var err error
 
-	// Set the terminal into raw mode
-	rawState, err := term.MakeRaw(tty.fd)
-	if err != nil {
+	// Read bytes from stdin - terminal is already in raw mode
+	numRead, err = os.Stdin.Read(bytes)
+	if err != nil || numRead == 0 {
 		return rune(0)
-	}
-	defer term.Restore(tty.fd, rawState)
-
-	// Read bytes from stdin with timeout
-	done := make(chan bool, 1)
-	go func() {
-		numRead, err = os.Stdin.Read(bytes)
-		done <- true
-	}()
-
-	select {
-	case <-done:
-		if err != nil || numRead == 0 {
-			return rune(0)
-		}
-	case <-time.After(tty.timeout):
-		return rune(0) // timeout
 	}
 
 	switch {
@@ -371,6 +390,11 @@ func (tty *TTY) Rune() rune {
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		return r
 	}
+}
+
+// RuneRaw reads a rune without suppressing repeats.
+func (tty *TTY) RuneRaw() rune {
+	return tty.Rune()
 }
 
 // RawMode switches the terminal to raw mode
