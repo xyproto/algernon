@@ -26,13 +26,6 @@ func lowContrastLevelWithThreshold(fg, bg AttributeColor, lightBackground bool, 
 	return false
 }
 
-// contrastRatio returns the WCAG contrast ratio between the two colors
-func contrastRatio(fg, bg AttributeColor, lightBackground bool) float64 {
-	fr, fgG, fb := colorForContrast(fg, true, lightBackground)
-	br, bgG, bb := colorForContrast(bg, false, lightBackground)
-	return contrastRatioFromRGB(fr, fgG, fb, br, bgG, bb)
-}
-
 func contrastRatioFromRGB(fr, fgG, fb, br, bgG, bb float64) float64 {
 	l1 := luminance(fr, fgG, fb)
 	l2 := luminance(br, bgG, bb)

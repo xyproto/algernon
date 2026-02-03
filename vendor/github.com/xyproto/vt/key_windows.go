@@ -197,14 +197,15 @@ func (tty *TTY) Close() {
 	}
 }
 
-// hasInput checks if there's console input available using WaitForSingleObject
-func hasInput() bool {
+// waitForInput waits for console input using WaitForSingleObject with timeout
+func waitForInput(timeout time.Duration) bool {
 	stdin, _, _ := procGetStdHandle.Call(STD_INPUT_HANDLE)
 	if stdin == 0 {
 		return false
 	}
-	// Wait with 0 timeout (non-blocking check)
-	ret, _, _ := procWaitForSingleObject.Call(stdin, 0)
+	// Convert timeout to milliseconds
+	timeoutMs := uint32(timeout / time.Millisecond)
+	ret, _, _ := procWaitForSingleObject.Call(stdin, uintptr(timeoutMs))
 	// ret == 0 (WAIT_OBJECT_0) means input is available
 	// ret == WAIT_TIMEOUT means no input
 	return ret == 0
@@ -212,8 +213,8 @@ func hasInput() bool {
 
 // asciiAndKeyCode processes input into an ASCII code or key code, handling multi-byte sequences like Ctrl-Insert
 func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
-	// Check if input is available
-	if !hasInput() {
+	// Wait for input with timeout
+	if !waitForInput(tty.timeout) {
 		return 0, 0, nil
 	}
 
@@ -290,8 +291,8 @@ func (tty *TTY) KeyRaw() int {
 
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
-	// Check if input is available
-	if !hasInput() {
+	// Wait for input with timeout
+	if !waitForInput(tty.timeout) {
 		return ""
 	}
 
@@ -345,8 +346,8 @@ func (tty *TTY) StringRaw() string {
 
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
-	// Check if input is available
-	if !hasInput() {
+	// Wait for input with timeout
+	if !waitForInput(tty.timeout) {
 		return rune(0)
 	}
 
