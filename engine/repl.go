@@ -104,14 +104,18 @@ func exportREPLSpecific(L *lua.LState) {
 // Syntax highlight the given line
 func highlight(line string) string {
 	unprocessed := line
+	moduleName := ""
 	unprocessed, comment := vt.ColorSplit(unprocessed, "//", 0, vt.DarkGray, vt.DarkGray, false)
-	module, unprocessed := vt.ColorSplit(unprocessed, ":", vt.LightGreen, vt.Red, 0, true)
-	function := ""
+	// Only split on : when present
+	if strings.Contains(unprocessed, ":") {
+		moduleName, unprocessed = vt.ColorSplit(unprocessed, ":", vt.LightGreen, vt.Red, 0, false)
+	}
+	functionName := ""
 	if unprocessed != "" {
 		// Green function names
 		if strings.Contains(unprocessed, "(") {
 			fields := strings.SplitN(unprocessed, "(", 2)
-			function = vt.LightGreen.Get(fields[0])
+			functionName = vt.LightGreen.Get(fields[0])
 			unprocessed = "(" + fields[1]
 		} else if strings.Contains(unprocessed, "|") {
 			unprocessed = "<magenta>" + strings.ReplaceAll(unprocessed, "|", "<white>|</white><magenta>") + "</magenta>"
@@ -121,7 +125,7 @@ func highlight(line string) string {
 	unprocessed = strings.ReplaceAll(unprocessed, "string", vt.LightBlue.Get("string"))
 	unprocessed = strings.ReplaceAll(unprocessed, "number", vt.LightYellow.Get("number"))
 	unprocessed = strings.ReplaceAll(unprocessed, "function", vt.LightCyan.Get("function"))
-	return module + function + unprocessed + typed + comment
+	return moduleName + functionName + unprocessed + typed + comment
 }
 
 // Output syntax highlighted help text, with an additional usage message
