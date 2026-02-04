@@ -6,23 +6,20 @@ import (
 
 	"github.com/pkg/browser"
 	"github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/utils"
 )
 
 // OpenURL tries to open an URL with the system browser
 func (ac *Config) OpenURL(host, cPort string, httpsPrefix bool) error {
-	// Build the URL
+	// Build the URL using IPv6-safe formatting
 	var sb strings.Builder
 	if httpsPrefix {
 		sb.WriteString("https://")
 	} else {
 		sb.WriteString("http://")
 	}
-	if host == "" {
-		sb.WriteString("localhost")
-	} else {
-		sb.WriteString(host)
-	}
-	sb.WriteString(cPort)
+	// Combine host and port, then format for URL (handles IPv6 brackets)
+	sb.WriteString(utils.HostPortToURL(utils.JoinHostPort(host, cPort)))
 	url := sb.String()
 
 	if ac.openExecutable != "" {

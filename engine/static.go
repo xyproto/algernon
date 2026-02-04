@@ -4,6 +4,7 @@ package engine
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -25,15 +26,15 @@ const (
 
 // nextPort increases the port number by 1
 func nextPort(colonPort string) (string, error) {
-	if !strings.HasPrefix(colonPort, ":") {
-		return colonPort, errors.New("colonPort does not start with a colon! \"" + colonPort + "\"")
-	}
-	num, err := strconv.Atoi(colonPort[1:])
+	_, port, err := net.SplitHostPort(colonPort)
 	if err != nil {
-		return colonPort, errors.New("Could not convert port number to string: \"" + colonPort[1:] + "\"")
+		return colonPort, errors.New("invalid port format: \"" + colonPort + "\"")
 	}
-	// Increase the port number by 1, add a colon, convert to string and return
-	return ":" + strconv.Itoa(num+1), nil
+	num, err := strconv.Atoi(port)
+	if err != nil {
+		return colonPort, errors.New("could not convert port number: \"" + port + "\"")
+	}
+	return net.JoinHostPort("", strconv.Itoa(num+1)), nil
 }
 
 // This is a bit hacky, but it's only used when serving a single static file
@@ -57,7 +58,7 @@ func (ac *Config) shortInfoAndOpen(filename, colonPort string, cancelChannel cha
 	if ac.serverHost != "" {
 		hostname = ac.serverHost
 	}
-	logrus.Infof("Serving %s on http://%s%s", filename, hostname, colonPort)
+	logrus.Infof("Serving %s on http://%s", filename, utils.HostPortToURL(utils.JoinHostPort(hostname, colonPort)))
 
 	if ac.openURLAfterServing {
 		go ac.openAfter(delayBeforeLaunchingBrowser, hostname, colonPort, false, cancelChannel)
@@ -110,7 +111,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 		ac.FilePage(w, req, filename, defaultLuaDataFilename)
 	})
 
-	HTTPserver := ac.NewGracefulServer(mux, false, ac.serverHost+colonPort)
+	HTTPserver := ac.NewGracefulServer(mux, false, utils.JoinHostPort(ac.serverHost, colonPort))
 
 	// Attempt to serve the handler functions above
 	if errServe := HTTPserver.ListenAndServe(); errServe != nil {
@@ -133,7 +134,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 				cancelChannel = make(chan bool, 1)
 				ac.shortInfoAndOpen(filename, colonPort, cancelChannel)
 
-				HTTPserver = ac.NewGracefulServer(mux, false, ac.serverHost+colonPort)
+				HTTPserver = ac.NewGracefulServer(mux, false, utils.JoinHostPort(ac.serverHost, colonPort))
 			}
 		}
 		// Several attempts failed

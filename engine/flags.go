@@ -2,6 +2,7 @@ package engine
 
 import (
 	"flag"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
 	"github.com/xyproto/algernon/themes"
+	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -49,7 +51,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 
 	// Commandline flag configuration
 	flag.StringVar(&ac.serverDirOrFilename, "dir", ".", "Server directory")
-	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\")")
+	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\" or \"[::1]:443\")")
 	flag.StringVar(&ac.serverCert, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&ac.serverKey, "key", "key.pem", "Server key")
 	flag.StringVar(&ac.redisAddr, "redis", "", "Redis [host][:port] (ie \""+ac.defaultRedisColonPort+"\")")
@@ -183,7 +185,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.redisAddrSpecified = ac.redisAddr != ""
 	if ac.redisAddr == "" {
 		// The default host and port
-		ac.redisAddr = host + ac.defaultRedisColonPort
+		ac.redisAddr = utils.JoinHostPort(host, ac.defaultRedisColonPort)
 	}
 
 	// May be overridden by devMode
@@ -330,15 +332,16 @@ func (ac *Config) handleFlags(serverTempDir string) {
 			redisAddrFromArgs = true
 			continue
 		}
-		if strings.Contains(arg, ":") {
-			// If in doubt, assume this is the web server address.
+		// Check if this looks like a host:port address (handles IPv4, IPv6, and port-only)
+		if _, _, err := net.SplitHostPort(arg); err == nil {
+			// Valid host:port format, assume this is the web server address
 			ac.serverAddr = arg
 			continue
 		}
 		if _, err := strconv.Atoi(arg); err == nil { // no error
 			// If in doubt, assume this is the web server port.
 			if looksLikeWebPort(arg) || !redisAddrFromArgs {
-				ac.serverAddr = ":" + arg
+				ac.serverAddr = net.JoinHostPort("", arg)
 			} else {
 				remainingArgs = append(remainingArgs, arg)
 			}
@@ -413,13 +416,13 @@ func (ac *Config) finalConfiguration(host string) bool {
 		if ac.serverAddrLua != "" {
 			ac.serverAddr = ac.serverAddrLua
 		} else {
-			ac.serverAddr = host + ac.defaultWebColonPort
+			ac.serverAddr = utils.JoinHostPort(host, ac.defaultWebColonPort)
 		}
 	}
 
 	// Set the event server host and port
 	if ac.eventAddr == "" {
-		ac.eventAddr = host + ac.defaultEventColonPort
+		ac.eventAddr = utils.JoinHostPort(host, ac.defaultEventColonPort)
 	}
 
 	// Turn off debug mode if production mode is enabled

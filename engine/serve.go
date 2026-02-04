@@ -12,6 +12,7 @@ import (
 	"github.com/caddyserver/certmagic"
 	"github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
+	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
 )
@@ -121,11 +122,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 	// Goroutine that wait for a message to just serve regular HTTP, if needed
 	go func() {
 		<-justServeRegularHTTP // Wait for a message to just serve regular HTTP
-		if strings.HasPrefix(ac.serverAddr, ":") {
-			logrus.Info("Serving HTTP on http://localhost" + ac.serverAddr + "/")
-		} else {
-			logrus.Info("Serving HTTP on http://" + ac.serverAddr + "/")
-		}
+		logrus.Info("Serving HTTP on http://" + utils.HostPortToURL(ac.serverAddr) + "/")
 
 		servingHTTP.Store(true)
 		HTTPserver := ac.NewGracefulServer(handler, false, ac.serverAddr)
@@ -181,37 +178,25 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			}
 		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
-		if strings.HasPrefix(ac.serverAddr, ":") {
-			logrus.Info("Serving QUIC on https://localhost" + ac.serverAddr + "/")
-		} else {
-			logrus.Info("Serving QUIC on https://" + ac.serverAddr + "/")
-		}
+		logrus.Info("Serving QUIC on https://" + utils.HostPortToURL(ac.serverAddr) + "/")
 		servingHTTPS.Store(true)
 		// Start serving over QUIC
 		go ac.ListenAndServeQUIC(handler, justServeRegularHTTP, &servingHTTPS)
 	case ac.productionMode:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
-		if len(ac.serverHost) == 0 {
-			logrus.Info("Serving HTTP/2 on https://localhost/")
-		} else {
-			logrus.Info("Serving HTTP/2 on https://" + ac.serverHost + "/")
-		}
+		logrus.Info("Serving HTTP/2 on https://" + utils.HostPortToURL(utils.JoinHostPort(ac.serverHost, ":443")) + "/")
 		servingHTTPS.Store(true)
 		go func() {
 			// Start serving. Shut down gracefully at exit.
 			// Listen for HTTPS + HTTP/2 requests
-			HTTPS2server := ac.NewGracefulServer(handler, true, ac.serverHost+":443")
+			HTTPS2server := ac.NewGracefulServer(handler, true, utils.JoinHostPort(ac.serverHost, ":443"))
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
 				servingHTTPS.Store(false)
 				logrus.Error(err)
 			}
 		}()
-		if len(ac.serverHost) == 0 {
-			logrus.Info("Serving HTTP on http://localhost/")
-		} else {
-			logrus.Info("Serving HTTP on http://" + ac.serverHost + "/")
-		}
+		logrus.Info("Serving HTTP on http://" + utils.HostPortToURL(utils.JoinHostPort(ac.serverHost, ":80")) + "/")
 		servingHTTP.Store(true)
 		go func() {
 			if ac.redirectHTTP {
@@ -219,14 +204,14 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 				redirectFunc := func(w http.ResponseWriter, req *http.Request) {
 					http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
 				}
-				if err := http.ListenAndServe(ac.serverHost+":80", http.HandlerFunc(redirectFunc)); err != nil {
+				if err := http.ListenAndServe(utils.JoinHostPort(ac.serverHost, ":80"), http.HandlerFunc(redirectFunc)); err != nil {
 					servingHTTP.Store(false)
 					// If we can't serve regular HTTP on port 80, give up
 					ac.fatalExit(err)
 				}
 			} else {
 				// Don't redirect, but serve the same contents as the HTTPS server as HTTP on port 80
-				HTTPserver := ac.NewGracefulServer(handler, false, ac.serverHost+":80")
+				HTTPserver := ac.NewGracefulServer(handler, false, utils.JoinHostPort(ac.serverHost, ":80"))
 				if err := HTTPserver.ListenAndServe(); err != nil {
 					servingHTTP.Store(false)
 					// If we can't serve regular HTTP on port 80, give up
@@ -235,11 +220,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			}
 		}()
 	case ac.serveJustHTTP2: // It's unusual to serve HTTP/2 without HTTPS
-		if strings.HasPrefix(ac.serverAddr, ":") {
-			logrus.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://localhost" + ac.serverAddr + "/")
-		} else {
-			logrus.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + ac.serverAddr + "/")
-		}
+		logrus.Warn("Serving HTTP/2 without HTTPS (not recommended!) on http://" + utils.HostPortToURL(ac.serverAddr) + "/")
 		servingHTTPS.Store(true)
 		go func() {
 			// Listen for HTTP/2 requests
@@ -252,11 +233,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			}
 		}()
 	case !ac.serveJustHTTP2 && !ac.serveJustHTTP:
-		if strings.HasPrefix(ac.serverAddr, ":") {
-			logrus.Info("Serving HTTP/2 on https://localhost" + ac.serverAddr + "/")
-		} else {
-			logrus.Info("Serving HTTP/2 on https://" + ac.serverAddr + "/")
-		}
+		logrus.Info("Serving HTTP/2 on https://" + utils.HostPortToURL(ac.serverAddr) + "/")
 		servingHTTPS.Store(true)
 		// Listen for HTTPS + HTTP/2 requests
 		HTTPS2server := ac.NewGracefulServer(handler, true, ac.serverAddr)

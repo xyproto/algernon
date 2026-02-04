@@ -536,6 +536,7 @@ const configHelpText = `Available functions:
 Only available when used in serverconf.lua
 
 // Set the default address for the server on the form [host][:port].
+// For IPv6, use brackets: [::1]:3000 or [2001:db8::1]:443
 SetAddr(string)
 // Reset the URL prefixes and make everything *public*.
 ClearPermissions()
@@ -578,6 +579,8 @@ func generateUsageFunction(ac *Config) func() {
 Syntax:
   algernon [flags] [file or directory to serve] [host][:port]
 
+  IPv6 addresses must use brackets: [::1]:3000 or [2001:db8::1]:443
+
 Available flags:
   -a, --autorefresh            Enable event server and auto-refresh feature.
                                Sets cache mode to "images".
@@ -608,7 +611,8 @@ Available flags:
   -V, --verbose                Slightly more verbose logging.
   -z, --quit                   Quit after the first request has been served.
   --accesslog=FILENAME         Access log filename. Logged in Combined Log Format (CLF).
-  --addr=[HOST][:PORT]         Server host and port ("` + ac.defaultWebColonPort + `" is default)
+  --addr=[HOST][:PORT]         Server host and port ("` + ac.defaultWebColonPort + `" is default).
+                               IPv6 example: --addr='[::1]:3000'
   --boltdb=FILENAME            Use a specific file for the Bolt database
   --cache=MODE                 Sets a cache mode. The default is "on".
                                "on"      - Cache everything.
