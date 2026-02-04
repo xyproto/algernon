@@ -2,10 +2,11 @@ package engine
 
 import (
 	"bytes"
+	"net"
 	"net/http"
-	"strings"
 	"text/template"
 
+	"github.com/xyproto/algernon/timeutils"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/huldra"
 )
@@ -38,18 +39,18 @@ type templateData struct {
 // (looks for body/head/html tags when inserting a script tag)
 func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	fullHost := ac.eventAddr
-	// If the host+port starts with ":", assume it's only the port number
-	if strings.HasPrefix(fullHost, ":") {
-		// Add the hostname in front
+	// If the host+port is just a port, add the hostname in front
+	if host, _, err := net.SplitHostPort(fullHost); err == nil && host == "" {
+		// eventAddr is just a port like ":5553", add hostname
 		if ac.serverHost != "" {
-			fullHost = ac.serverHost + ac.eventAddr
+			fullHost = utils.JoinHostPort(ac.serverHost, ac.eventAddr)
 		} else {
-			fullHost = utils.GetDomain(req) + ac.eventAddr
+			fullHost = utils.JoinHostPort(utils.GetDomain(req), ac.eventAddr)
 		}
 	}
 	// Wait 70% of an event duration before starting to listen for events
 	multiplier := 0.7
-	refreshTimeout := utils.DurationToMS(ac.refreshDuration, multiplier)
+	refreshTimeout := timeutils.DurationToMS(ac.refreshDuration, multiplier)
 
 	tmplData := templateData{
 		FullHost:       fullHost,

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -60,21 +59,10 @@ func GetFilenames(dirname string) []string {
 	return filenames
 }
 
-// DurationToMS converts time.Duration to milliseconds, as a string,
-// (just the number as a string, no "ms" suffix).
-func DurationToMS(d time.Duration, multiplier float64) string {
-	return strconv.Itoa(int(d.Seconds() * 1000.0 * multiplier))
-}
-
 // DescribeBytes converts bytes to KiB or MiB. Returns a string.
 func DescribeBytes(size int64) string {
 	if size < MiB {
-		return strconv.Itoa(int(round(float64(size)*100.0/KiB)/100)) + " KiB"
+		return strconv.Itoa(int(math.Round(float64(size)*100.0/KiB)/100)) + " KiB"
 	}
-	return strconv.Itoa(int(round(float64(size)*100.0/MiB)/100)) + " MiB"
-}
-
-// Round a float64 to the nearest integer
-func round(x float64) int64 {
-	return int64(math.Round(x))
+	return strconv.Itoa(int(math.Round(float64(size)*100.0/MiB)/100)) + " MiB"
 }
