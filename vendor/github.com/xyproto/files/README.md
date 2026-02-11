@@ -1,6 +1,6 @@
 # files
 
-Functions for querying files and paths.
+Functions for dealing with files, paths and processes.
 
 ## Function signatures
 
@@ -48,8 +48,21 @@ func Bash(command string) (string, error)
 func Fish(command string) (string, error)
 ```
 
+## Examining and stopping processes
+
+```
+// Try to find the PID given a process name (similar to pgrep)
+func GetPID(name string) (int64, error)
+// Return true if a valid PID for the given process name is found in /proc (similar to pgrep)
+func HasProcess(name string) bool
+// Find and kill all processes that match the given name, returns the number of processes killed.
+func Pkill(name string) (int, error)
+// Resolve and returns the specified path (e.g., "exe", "cwd") for the process identified by pid.
+func GetProcPath(pid int, suffix string) (string, error)
+```
+
 ## General info
 
-* Version: 1.10.2
+* Version: 1.10.4
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
