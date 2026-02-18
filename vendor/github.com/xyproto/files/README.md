@@ -63,6 +63,6 @@ func GetProcPath(pid int, suffix string) (string, error)
 
 ## General info
 
-* Version: 1.10.4
+* Version: 1.10.6
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

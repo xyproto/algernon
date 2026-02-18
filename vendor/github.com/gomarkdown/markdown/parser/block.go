@@ -1409,6 +1409,9 @@ func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 	// process the following lines
 	containsBlankLine := false
 	sublist := 0
+	// track fenced code blocks inside list items so that lines within
+	// the fence are gathered verbatim (not misinterpreted as list items)
+	fenceMarker := ""
 
 gatherlines:
 	for line < len(data) {
@@ -1441,6 +1444,39 @@ gatherlines:
 		}
 
 		chunk := data[line+indentIndex : i]
+
+		// track fenced code blocks inside list items;
+		// only track fences that are indented (part of the list item content),
+		// a fence at indent 0 ends the list (handled below)
+		if !isDefinitionList && p.extensions&FencedCode != 0 {
+			if fenceMarker != "" {
+				if indent == 0 {
+					// non-indented line while inside a fence means we
+					// left the list item content -- abandon the fence
+					fenceMarker = ""
+				} else {
+					// inside a fence: check for closing fence
+					_, marker := isFenceLine(chunk, nil, fenceMarker)
+					if marker != "" {
+						fenceMarker = ""
+					}
+					// gather the line verbatim, skip structure detection
+					if containsBlankLine {
+						containsBlankLine = false
+						raw.WriteByte('\n')
+					}
+					raw.Write(chunk)
+					line = i
+					continue
+				}
+			} else if indent > 0 {
+				// not inside a fence: check for opening fence (indented only)
+				_, marker := isFenceLine(chunk, nil, "")
+				if marker != "" {
+					fenceMarker = marker
+				}
+			}
+		}
 
 		// If there is a fence line (marking starting of a code block)
 		// without indent do not process it as part of the list.

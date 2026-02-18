@@ -12,15 +12,15 @@ func ColorSplit(line, sep string, headColor, sepColor, tailColor AttributeColor,
 		}
 		return line, ""
 	}
-	idx := strings.Index(line, sep)
-	if idx == -1 {
+	before, after, ok := strings.Cut(line, sep)
+	if !ok {
 		if reverse {
 			return "", line
 		}
 		return line, ""
 	}
-	head := line[:idx]
-	tail := line[idx+len(sep):]
+	head := before
+	tail := after
 	var a, b string
 	if reverse {
 		if tailColor != 0 {

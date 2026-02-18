@@ -247,6 +247,7 @@ func SetNoColor() {
 }
 
 func Init() {
+	initTerminal()
 	Reset()
 	Clear()
 	ShowCursor(false)
@@ -261,7 +262,9 @@ func Close() {
 }
 
 func EchoOff() {
-	fmt.Print(echoOff)
+	if echoOffHelper() {
+		fmt.Print(echoOff)
+	}
 }
 
 func SetLineWrap(enable bool) {
@@ -273,6 +276,7 @@ func SetLineWrap(enable bool) {
 }
 
 func ShowCursor(enable bool) {
+	showCursorHelper(enable)
 	if enable {
 		fmt.Print(showCursor)
 	} else {
@@ -302,8 +306,8 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 			return 0, 0, 0, err
 		}
 	}
-	if pos := strings.Index(result, "rgb:"); pos != -1 {
-		rgb := result[pos+4:]
+	if _, after, ok := strings.Cut(result, "rgb:"); ok {
+		rgb := after
 		if strings.Count(rgb, "/") == 2 {
 			parts := strings.SplitN(rgb, "/", 3)
 			if len(parts) == 3 {
@@ -525,7 +529,7 @@ func (c *Canvas) PlotAll() {
 	w := c.w
 	h := c.h
 	c.mut.Lock()
-	for y := uint(0); y < h; y++ {
+	for y := range h {
 		for x := int(w - 1); x >= 0; x-- {
 			cr := &((*c).chars[y*w+uint(x)])
 			r := cr.r
@@ -650,7 +654,7 @@ func (c *Canvas) HideCursorAndDraw() {
 	sb.Grow(int(size))
 
 	if !firstRun {
-		for index := uint(0); index < size; index++ {
+		for index := range size {
 			cr = (*c).chars[index]
 			oldcr = (*c).oldchars[index]
 			if cr.fg.Equal(lastfg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(lastbg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
@@ -672,7 +676,7 @@ func (c *Canvas) HideCursorAndDraw() {
 			lastbg = cr.bg
 		}
 	} else {
-		for index := uint(0); index < size; index++ {
+		for index := range size {
 			cr = (*c).chars[index]
 			// Only output a color code if it's different from the last character, or it's the first one
 			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
@@ -764,7 +768,7 @@ func (c *Canvas) Draw() {
 	sb.Grow(int(size))
 
 	if !firstRun {
-		for index := uint(0); index < size; index++ {
+		for index := range size {
 			cr = (*c).chars[index]
 			oldcr = (*c).oldchars[index]
 			if cr.fg.Equal(lastfg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(lastbg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
@@ -786,7 +790,7 @@ func (c *Canvas) Draw() {
 			lastbg = cr.bg
 		}
 	} else {
-		for index := uint(0); index < size; index++ {
+		for index := range size {
 			cr = (*c).chars[index]
 			// Only output a color code if it's different from the last character, or it's the first one
 			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {

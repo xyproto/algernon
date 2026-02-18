@@ -14,7 +14,7 @@ require (
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-gcfg/gcfg v1.2.3
-	github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a
+	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
 	github.com/lib/pq v1.11.2
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -28,8 +28,8 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.0
-	github.com/xyproto/env/v2 v2.5.4
-	github.com/xyproto/files v1.10.4
+	github.com/xyproto/env/v2 v2.5.5
+	github.com/xyproto/files v1.10.6
 	github.com/xyproto/gluamapper v1.2.1
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/huldra v0.0.3
@@ -51,18 +51,18 @@ require (
 	github.com/xyproto/splash v1.3.1
 	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.0
-	github.com/xyproto/vt v1.4.0
+	github.com/xyproto/vt v1.5.7
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.50.0
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.23.1 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/caddyserver/zerossl v0.1.4 // indirect
+	github.com/caddyserver/zerossl v0.1.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -77,24 +77,20 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.34 // indirect
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/acmez/v3 v3.1.4 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260211092237-1f6f9eb58834 // indirect
-	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260218085726-543b83a64e12 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/terminar/simplesqlite v0.0.0-20240811163019-f2a6c3cbea17 // indirect
-	github.com/xyproto/binary v1.3.3 // indirect
+	github.com/xyproto/binary v1.4.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/cookie/v2 v2.2.7 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect

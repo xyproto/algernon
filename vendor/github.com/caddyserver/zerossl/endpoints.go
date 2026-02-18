@@ -79,7 +79,7 @@ func (c Client) DownloadCertificateFile(ctx context.Context, certificateID strin
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: HTTP %d", resp.StatusCode)
 	}
@@ -201,7 +201,7 @@ func (c Client) RevokeCertificate(ctx context.Context, certificateID string, rea
 	var result struct {
 		Success anyBool `json:"success"`
 	}
-	if err := c.httpPost(ctx, endpoint, qs, nil,&result); err != nil {
+	if err := c.httpPost(ctx, endpoint, qs, nil, &result); err != nil {
 		return err
 	}
 
@@ -255,16 +255,12 @@ func (c Client) ValidateCSR(ctx context.Context, csrASN1DER []byte) error {
 
 func (c Client) GenerateEABCredentials(ctx context.Context) (keyID, hmacKey string, err error) {
 	var result struct {
-		APIError
 		EABKID     string `json:"eab_kid"`
 		EABHMACKey string `json:"eab_hmac_key"`
 	}
 	err = c.httpPost(ctx, "/acme/eab-credentials", nil, nil, &result)
 	if err != nil {
 		return
-	}
-	if !result.Success {
-		err = fmt.Errorf("failed to create EAB credentials: %v", result.APIError)
 	}
 	return result.EABKID, result.EABHMACKey, err
 }

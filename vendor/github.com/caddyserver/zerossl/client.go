@@ -56,55 +56,49 @@ func (c Client) httpRequest(ctx context.Context, method, reqURL string, reqBody 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	// because the ZeroSSL API doesn't use HTTP status codes to indicate an error,
 	// nor does each response body have a consistent way of detecting success/error,
-	// we have to implement a hack: download the entire response body and try
-	// decoding it as JSON in a way that errors if there's any unknown fields
-	// (such as "success"), because if there is an unkown field, either our model
-	// is outdated, or there was an error payload in the response instead of the
-	// expected structure, so we then try again to decode to an error struct
-	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024*1024*2))
+	// we have to work around this by buffering the entire response body and then
+	// checking it for expected value(s) to determine if there's an error
+	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024*1024*5))
 	if err != nil {
 		return fmt.Errorf("failed reading response body: %v", err)
 	}
 
-	// assume success first by trying to decode payload into output target
-	dec := json.NewDecoder(bytes.NewReader(respBytes))
-	dec.DisallowUnknownFields() // important hacky hack so we can detect an error payload
-	originalDecodeErr := dec.Decode(&target)
-	if originalDecodeErr == nil {
-		return nil
-	}
-
-	// could have gotten any kind of error, really; but assuming valid JSON,
-	// most likely it is an error payload
+	// assume error first, since the ZeroSSL API does not use status codes for errors
+	// (see https://github.com/caddyserver/zerossl/issues/3)
 	var apiError APIError
 	if err := json.NewDecoder(bytes.NewReader(respBytes)).Decode(&apiError); err != nil {
-		return fmt.Errorf("request succeeded, but decoding JSON response failed: %v (raw=%s)", err, respBytes)
+		return fmt.Errorf("decoding JSON error body failed: %v (raw=%s)", err, respBytes)
+	}
+	if apiError.Success != nil && !*apiError.Success {
+		// remove access_key from URL so it doesn't leak into logs
+		u, err := url.Parse(reqURL)
+		if err != nil {
+			reqURL = fmt.Sprintf("<invalid url: %v>", err)
+		}
+		if u != nil {
+			q, err := url.ParseQuery(u.RawQuery)
+			if err == nil {
+				q.Set(accessKeyParam, "redacted")
+				u.RawQuery = q.Encode()
+				reqURL = u.String()
+			}
+		}
+		apiError.URL = reqURL
+		return apiError
 	}
 
-	// successfully got an error! or did we?
-	if apiError.Success {
-		return apiError // ummm... why are we getting an error if it was successful ??? is this not really an error?
-	}
-
-	// remove access_key from URL so it doesn't leak into logs
-	u, err := url.Parse(reqURL)
-	if err != nil {
-		reqURL = fmt.Sprintf("<invalid url: %v>", err)
-	}
-	if u != nil {
-		q, err := url.ParseQuery(u.RawQuery)
-		if err == nil {
-			q.Set(accessKeyParam, "redacted")
-			u.RawQuery = q.Encode()
-			reqURL = u.String()
+	// if there was no error, decode into target payload
+	if target != nil {
+		if err = json.NewDecoder(bytes.NewReader(respBytes)).Decode(target); err != nil {
+			return fmt.Errorf("request succeeded, but decoding JSON response body failed: %v (raw=%s)", err, respBytes)
 		}
 	}
 
-	return fmt.Errorf("%s %s: HTTP %d: %v (raw=%s decode_error=%v)", method, reqURL, resp.StatusCode, apiError, respBytes, originalDecodeErr)
+	return nil
 }
 
 func (c Client) url(endpoint string, qs url.Values) string {

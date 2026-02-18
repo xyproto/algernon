@@ -1,15 +1,16 @@
+//go:build !windows && !plan9
+
 package vt
 
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/pkg/term"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -17,95 +18,150 @@ var (
 	lastKey        int
 )
 
-// Key codes for 3-byte sequences (arrows, Home, End)
-var keyCodeLookup = map[[3]byte]int{
-	{27, 91, 65}:  253, // Up Arrow
-	{27, 91, 66}:  255, // Down Arrow
-	{27, 91, 67}:  254, // Right Arrow
-	{27, 91, 68}:  252, // Left Arrow
-	{27, 91, 'H'}: 1,   // Home (Ctrl-A)
-	{27, 91, 'F'}: 5,   // End (Ctrl-E)
-}
-
-// Key codes for 4-byte sequences (Page Up, Page Down, Home, End)
-var pageNavLookup = map[[4]byte]int{
-	{27, 91, 49, 126}: 1,   // Home (ESC [1~)
-	{27, 91, 52, 126}: 5,   // End (ESC [4~)
-	{27, 91, 53, 126}: 251, // Page Up (custom code)
-	{27, 91, 54, 126}: 250, // Page Down (custom code)
-}
-
-// Key codes for 6-byte sequences (Ctrl-Insert)
-var ctrlInsertLookup = map[[6]byte]int{
-	{27, 91, 50, 59, 53, 126}: 258, // Ctrl-Insert (ESC [2;5~)
-}
-
-// String representations for 3-byte sequences
-var keyStringLookup = map[[3]byte]string{
-	{27, 91, 65}:  "↑", // Up Arrow
-	{27, 91, 66}:  "↓", // Down Arrow
-	{27, 91, 67}:  "→", // Right Arrow
-	{27, 91, 68}:  "←", // Left Arrow
-	{27, 91, 'H'}: "⇱", // Home
-	{27, 91, 'F'}: "⇲", // End
-}
-
-// String representations for 4-byte sequences
-var pageStringLookup = map[[4]byte]string{
-	{27, 91, 49, 126}: "⇱", // Home
-	{27, 91, 52, 126}: "⇲", // End
-	{27, 91, 53, 126}: "⇞", // Page Up
-	{27, 91, 54, 126}: "⇟", // Page Down
-}
-
-// String representations for 6-byte sequences (Ctrl-Insert)
-var ctrlInsertStringLookup = map[[6]byte]string{
-	{27, 91, 50, 59, 53, 126}: "⎘", // Ctrl-Insert (Copy)
-}
-
 type TTY struct {
-	t       *term.Term
+	fd      int
+	orig    unix.Termios
 	timeout time.Duration
 }
 
-// NewTTY opens /dev/tty in raw and cbreak mode as a term.Term
+// clamp restricts v to the range [lo, hi]
+func clamp(v, lo, hi int64) int64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// timeoutVals converts d into VMIN and VTIME values, matching the old pkg/term behavior.
+// VTIME is in deciseconds (1/10th of a second), so durations under 100ms clamp to 100ms.
+// A zero or negative duration means block indefinitely (VMIN=1, VTIME=0).
+func timeoutVals(d time.Duration) (uint8, uint8) {
+	if d > 0 {
+		vtimeDeci := d.Nanoseconds() / 1e6 / 100
+		vtime := uint8(clamp(vtimeDeci, 1, 0xff))
+		return 0, vtime
+	}
+	return 1, 0
+}
+
+// cfmakeraw sets the termios attributes for raw mode
+func cfmakeraw(attr *unix.Termios) {
+	attr.Iflag &^= unix.BRKINT | unix.ICRNL | unix.INPCK | unix.ISTRIP | unix.IXON
+	attr.Oflag &^= unix.OPOST
+	attr.Cflag &^= unix.CSIZE | unix.PARENB
+	attr.Cflag |= unix.CS8
+	attr.Lflag &^= unix.ECHO | unix.ICANON | unix.IEXTEN | unix.ISIG
+	attr.Cc[unix.VMIN] = 1
+	attr.Cc[unix.VTIME] = 0
+}
+
+// cfmakecbreak sets the termios attributes for cbreak mode
+func cfmakecbreak(attr *unix.Termios) {
+	attr.Lflag &^= unix.ECHO | unix.ICANON
+	attr.Cc[unix.VMIN] = 1
+	attr.Cc[unix.VTIME] = 0
+}
+
+// tcgetattr gets the current terminal attributes
+func tcgetattr(fd int) (unix.Termios, error) {
+	t, err := unix.IoctlGetTermios(fd, ioctlGETATTR)
+	if err != nil {
+		return unix.Termios{}, err
+	}
+	return *t, nil
+}
+
+// tcsetattr sets the terminal attributes
+func tcsetattr(fd int, attr *unix.Termios) error {
+	return unix.IoctlSetTermios(fd, ioctlSETATTR, attr)
+}
+
+// NewTTY opens /dev/tty in raw+cbreak mode with a read timeout
 func NewTTY() (*TTY, error) {
-	t, err := term.Open("/dev/tty", term.RawMode, term.CBreakMode, term.ReadTimeout(defaultTimeout))
+	fd, err := unix.Open("/dev/tty", unix.O_NOCTTY|unix.O_CLOEXEC|unix.O_NDELAY|unix.O_RDWR, 0666)
 	if err != nil {
 		return nil, err
 	}
-	return &TTY{t, defaultTimeout}, nil
+
+	// Save original terminal state
+	orig, err := tcgetattr(fd)
+	if err != nil {
+		unix.Close(fd)
+		return nil, err
+	}
+
+	// Apply RawMode, then CBreakMode, then ReadTimeout (same order as old pkg/term)
+	var a unix.Termios
+
+	a = orig
+	cfmakeraw(&a)
+	if err := tcsetattr(fd, &a); err != nil {
+		unix.Close(fd)
+		return nil, err
+	}
+
+	a = orig
+	cfmakeraw(&a)
+	cfmakecbreak(&a)
+	a.Cc[unix.VMIN], a.Cc[unix.VTIME] = timeoutVals(defaultTimeout)
+	if err := tcsetattr(fd, &a); err != nil {
+		unix.Close(fd)
+		return nil, err
+	}
+
+	// Clear O_NDELAY
+	if err := unix.SetNonblock(fd, false); err != nil {
+		unix.Close(fd)
+		return nil, err
+	}
+
+	return &TTY{fd: fd, orig: orig, timeout: defaultTimeout}, nil
 }
 
-// SetTimeout sets a timeout for reading a key
+// SetTimeout sets the read timeout by updating VMIN/VTIME
 func (tty *TTY) SetTimeout(d time.Duration) {
 	tty.timeout = d
-	tty.t.SetReadTimeout(tty.timeout)
+	a, err := tcgetattr(tty.fd)
+	if err != nil {
+		return
+	}
+	a.Cc[unix.VMIN], a.Cc[unix.VTIME] = timeoutVals(d)
+	tcsetattr(tty.fd, &a)
 }
 
-// Close will restore and close the raw terminal
+// Close restores the terminal and closes the file descriptor
 func (tty *TTY) Close() {
-	tty.t.Restore()
-	tty.t.Close()
+	tty.Restore()
+	unix.Close(tty.fd)
 }
 
-// asciiAndKeyCode processes input into an ASCII code or key code, handling multi-byte sequences like Ctrl-Insert
+// asciiAndKeyCode processes input into an ASCII code or key code
 func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
-	bytes := make([]byte, 6) // Use 6 bytes to cover longer sequences like Ctrl-Insert
-	var numRead int
+	bytes := make([]byte, 6)
 
-	// Set the terminal into raw mode and non-blocking mode with a timeout
+	// Set raw mode, cbreak, and timeout before each read
 	tty.RawMode()
 	tty.NoBlock()
 	tty.SetTimeout(tty.timeout)
+
 	// Read bytes from the terminal
-	numRead, err = tty.t.Read(bytes)
+	numRead, err := unix.Read(tty.fd, bytes)
+	if numRead < 0 {
+		numRead = 0
+	}
 
 	if err != nil {
-		// Restore the terminal settings
 		tty.Restore()
-		// Clear the key buffer
-		tty.t.Flush()
+		tty.Flush()
+		return
+	}
+
+	if numRead == 0 {
+		tty.Restore()
+		tty.Flush()
 		return
 	}
 
@@ -117,13 +173,10 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
 		if code, found := keyCodeLookup[seq]; found {
 			keyCode = code
-			// Restore the terminal settings
 			tty.Restore()
-			// Clear the key buffer
-			tty.t.Flush()
+			tty.Flush()
 			return
 		}
-		// Not found, check if it's a printable character
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		if unicode.IsPrint(r) {
 			ascii = int(r)
@@ -132,34 +185,27 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
 		if code, found := pageNavLookup[seq]; found {
 			keyCode = code
-			// Restore the terminal settings
 			tty.Restore()
-			// Clear the key buffer
-			tty.t.Flush()
+			tty.Flush()
 			return
 		}
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
 		if code, found := ctrlInsertLookup[seq]; found {
 			keyCode = code
-			// Restore the terminal settings
 			tty.Restore()
-			// Clear the key buffer
-			tty.t.Flush()
+			tty.Flush()
 			return
 		}
 	default:
-		// Attempt to decode as UTF-8
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		if unicode.IsPrint(r) {
 			ascii = int(r)
 		}
 	}
 
-	// Restore the terminal settings
 	tty.Restore()
-	// Clear the key buffer
-	tty.t.Flush()
+	tty.Flush()
 	return
 }
 
@@ -187,16 +233,15 @@ func (tty *TTY) Key() int {
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
-	var numRead int
-	// Set the terminal into raw mode with a timeout
 	tty.RawMode()
-	tty.SetTimeout(0)
-	// Read bytes from the terminal
-	numRead, err := tty.t.Read(bytes)
+	tty.SetTimeout(0) // block until data
+	numRead, err := unix.Read(tty.fd, bytes)
+	if numRead < 0 {
+		numRead = 0
+	}
 	defer func() {
-		// Restore the terminal settings
 		tty.Restore()
-		tty.t.Flush()
+		tty.Flush()
 	}()
 	if err != nil || numRead == 0 {
 		return ""
@@ -213,7 +258,6 @@ func (tty *TTY) String() string {
 		if str, found := keyStringLookup[seq]; found {
 			return str
 		}
-		// Attempt to interpret as UTF-8 string
 		return string(bytes[:numRead])
 	case numRead == 4:
 		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
@@ -228,16 +272,17 @@ func (tty *TTY) String() string {
 		}
 		fallthrough
 	default:
-		bytesLeftToRead, err := tty.t.Available()
-		if err == nil { // success
-			bytes2 := make([]byte, bytesLeftToRead)
-			numRead2, err := tty.t.Read(bytes2)
-			if err != nil { // error
-				// Just read the first read bytes
-				return string(bytes[:numRead])
-			}
-			return string(append(bytes[:numRead], bytes2[:numRead2]...))
+		// Try to read any remaining bytes with a short timeout
+		tty.SetTimeout(defaultTimeout)
+		bytes2 := make([]byte, 256)
+		numRead2, err := unix.Read(tty.fd, bytes2)
+		if numRead2 < 0 {
+			numRead2 = 0
 		}
+		if err != nil || numRead2 == 0 {
+			return string(bytes[:numRead])
+		}
+		return string(append(bytes[:numRead], bytes2[:numRead2]...))
 	}
 	return string(bytes[:numRead])
 }
@@ -245,16 +290,14 @@ func (tty *TTY) String() string {
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
 	bytes := make([]byte, 6)
-	var numRead int
-
-	// Set the terminal into raw mode with a timeout
 	tty.RawMode()
-	tty.SetTimeout(0)
-	// Read bytes from the terminal
-	numRead, err := tty.t.Read(bytes)
-	// Restore the terminal settings
+	tty.SetTimeout(0) // block until data
+	numRead, err := unix.Read(tty.fd, bytes)
+	if numRead < 0 {
+		numRead = 0
+	}
 	tty.Restore()
-	tty.t.Flush()
+	tty.Flush()
 
 	if err != nil || numRead == 0 {
 		return rune(0)
@@ -268,7 +311,6 @@ func (tty *TTY) Rune() rune {
 		if str, found := keyStringLookup[seq]; found {
 			return []rune(str)[0]
 		}
-		// Attempt to interpret as UTF-8 rune
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		return r
 	case numRead == 4:
@@ -286,7 +328,6 @@ func (tty *TTY) Rune() rune {
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		return r
 	default:
-		// Attempt to interpret as UTF-8 rune
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		return r
 	}
@@ -294,65 +335,88 @@ func (tty *TTY) Rune() rune {
 
 // RawMode switches the terminal to raw mode
 func (tty *TTY) RawMode() {
-	term.RawMode(tty.t)
+	a, err := tcgetattr(tty.fd)
+	if err != nil {
+		return
+	}
+	cfmakeraw(&a)
+	tcsetattr(tty.fd, &a)
 }
 
-// NoBlock sets the terminal to cbreak mode (non-blocking)
+// NoBlock sets the terminal to cbreak mode
 func (tty *TTY) NoBlock() {
-	tty.t.SetCbreak()
+	a, err := tcgetattr(tty.fd)
+	if err != nil {
+		return
+	}
+	cfmakecbreak(&a)
+	tcsetattr(tty.fd, &a)
 }
 
 // Restore the terminal to its original state
 func (tty *TTY) Restore() {
-	tty.t.Restore()
+	unix.IoctlSetTermios(tty.fd, ioctlFLUSHSET, &tty.orig)
 }
 
-// Flush flushes the terminal output
+// Flush discards pending input/output
 func (tty *TTY) Flush() {
-	tty.t.Flush()
+	tcflush(tty.fd)
 }
 
 // WriteString writes a string to the terminal
 func (tty *TTY) WriteString(s string) error {
-	if n, err := tty.t.Write([]byte(s)); err != nil || n == 0 {
+	n, err := unix.Write(tty.fd, []byte(s))
+	if err != nil {
+		return err
+	}
+	if n == 0 {
 		return errors.New("no bytes written to the TTY")
 	}
 	return nil
 }
 
-// ReadString reads a string from the TTY
+// ReadString reads all available data from the TTY
 func (tty *TTY) ReadString() (string, error) {
-	b, err := io.ReadAll(tty.t)
-	if err != nil {
-		return "", err
+	var result []byte
+	buf := make([]byte, 128)
+	// Temporarily set a short read timeout
+	tty.SetTimeout(100 * time.Millisecond)
+	defer tty.SetTimeout(tty.timeout)
+	for {
+		n, err := unix.Read(tty.fd, buf)
+		if n < 0 {
+			n = 0
+		}
+		if n > 0 {
+			result = append(result, buf[:n]...)
+		}
+		if err != nil || n == 0 {
+			break
+		}
 	}
-	return string(b), nil
+	if len(result) == 0 {
+		return "", errors.New("no data read from TTY")
+	}
+	return string(result), nil
 }
 
 // PrintRawBytes for debugging raw byte sequences
 func (tty *TTY) PrintRawBytes() {
 	bytes := make([]byte, 6)
-	var numRead int
-
-	// Set the terminal into raw mode with a timeout
 	tty.RawMode()
 	tty.SetTimeout(0)
-	// Read bytes from the terminal
-	numRead, err := tty.t.Read(bytes)
-	// Restore the terminal settings
+	numRead, err := unix.Read(tty.fd, bytes)
+	if numRead < 0 {
+		numRead = 0
+	}
 	tty.Restore()
-	tty.t.Flush()
+	tty.Flush()
 
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 	fmt.Printf("Raw bytes: %v\n", bytes[:numRead])
-}
-
-// Term will return the underlying term.Term
-func (tty *TTY) Term() *term.Term {
-	return tty.t
 }
 
 // ASCII returns the ASCII code of the key pressed
@@ -375,7 +439,6 @@ func (tty *TTY) KeyCode() int {
 
 // WaitForKey waits for ctrl-c, Return, Esc, Space, or 'q' to be pressed
 func WaitForKey() {
-	// Get a new TTY and start reading keypresses in a loop
 	r, err := NewTTY()
 	if err != nil {
 		panic(err)

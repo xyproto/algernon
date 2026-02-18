@@ -137,11 +137,34 @@ func IsBinary(filename string) bool {
 
 var Binary = IsBinary
 
+// IsBinaryAccurate returns true if the given filename can be read and is a binary file.
+// It checks if the given filename is a regular file first, to avoid hangs when reading named pipes.
+func IsBinaryAccurate(filename string) bool {
+	if IsFile(filename) {
+		isBinary, err := binary.FileAccurate(filename)
+		return err == nil && isBinary
+	}
+	return false
+}
+
+var BinaryAccurate = IsBinaryAccurate
+
 // FilterOutBinaryFiles filters out files that are either binary or can not be read
 func FilterOutBinaryFiles(filenames []string) []string {
 	var nonBinaryFilenames []string
 	for _, filename := range filenames {
 		if isBinary, err := binary.File(filename); !isBinary && err == nil {
+			nonBinaryFilenames = append(nonBinaryFilenames, filename)
+		}
+	}
+	return nonBinaryFilenames
+}
+
+// FilterOutBinaryFilesAccurate filters out files that are either binary or can not be read
+func FilterOutBinaryFilesAccurate(filenames []string) []string {
+	var nonBinaryFilenames []string
+	for _, filename := range filenames {
+		if isBinary, err := binary.FileAccurate(filename); !isBinary && err == nil {
 			nonBinaryFilenames = append(nonBinaryFilenames, filename)
 		}
 	}
