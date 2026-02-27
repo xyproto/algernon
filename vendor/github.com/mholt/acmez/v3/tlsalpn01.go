@@ -24,7 +24,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
+	"fmt"
 	"math/big"
+	"net"
 	"time"
 
 	"github.com/mholt/acmez/v3/acme"
@@ -34,10 +36,26 @@ import (
 // TLSALPN01ChallengeCert creates a certificate that can be used for
 // handshakes while solving the tls-alpn-01 challenge. See RFC 8737 §3.
 func TLSALPN01ChallengeCert(challenge acme.Challenge) (*tls.Certificate, error) {
-	// certificates must encode their SANs as ASCII
-	asciiIdentifier, err := idna.ToASCII(challenge.Identifier.Value)
-	if err != nil {
-		return nil, err
+	dnsNames := []string{}
+	ipAddresses := []net.IP{}
+
+	// https://www.iana.org/assignments/acme/acme.xhtml#acme-identifier-types
+	switch challenge.Identifier.Type {
+	case "dns":
+		// certificates must encode their SANs as ASCII
+		asciiIdentifier, err := idna.ToASCII(challenge.Identifier.Value)
+		if err != nil {
+			return nil, err
+		}
+		dnsNames = append(dnsNames, asciiIdentifier)
+	case "ip":
+		ipIdentifier := net.ParseIP(challenge.Identifier.Value)
+		if ipIdentifier == nil {
+			return nil, fmt.Errorf("invalid ip identifier: %s", challenge.Identifier.Value)
+		}
+		ipAddresses = append(ipAddresses, ipIdentifier)
+	default:
+		return nil, fmt.Errorf("unsupported identifier type: %s", challenge.Identifier.Type)
 	}
 
 	keyAuthSum := sha256.Sum256([]byte(challenge.KeyAuthorization))
@@ -67,7 +85,8 @@ func TLSALPN01ChallengeCert(challenge acme.Challenge) (*tls.Certificate, error) 
 		NotAfter:              time.Now().Add(24 * time.Hour * 365),
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
-		DNSNames:              []string{asciiIdentifier},
+		DNSNames:              dnsNames,
+		IPAddresses:           ipAddresses,
 
 		// add key authentication digest as the acmeValidation-v1 extension
 		// (marked as critical such that it won't be used by non-ACME software).

@@ -133,6 +133,7 @@ const (
 	ProblemTypeNamespace = "urn:ietf:params:acme:error:"
 
 	ProblemTypeAccountDoesNotExist     = ProblemTypeNamespace + "accountDoesNotExist"
+	ProblemTypeAlreadyReplaced         = ProblemTypeNamespace + "alreadyReplaced"
 	ProblemTypeAlreadyRevoked          = ProblemTypeNamespace + "alreadyRevoked"
 	ProblemTypeBadCSR                  = ProblemTypeNamespace + "badCSR"
 	ProblemTypeBadNonce                = ProblemTypeNamespace + "badNonce"

@@ -6,36 +6,26 @@ import (
 	"strconv"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/sys/unix"
 )
 
-// CustomString reads a key string like String(), but preserves any pending
-// input in the kernel's tty buffer. This is critical for operations like
-// shift-insert paste, where the key escape sequence is immediately followed
-// by paste data — flushing the buffer after reading the key would lose it.
-//
-// Differences from String():
-//   - Saves and restores timeout via SetTimeout instead of Restore()+Flush(),
-//     so the terminal stays in raw mode and pending input is preserved.
-//   - When the first byte is ESC, reads the escape sequence byte-by-byte
-//     to avoid consuming any trailing paste data.
-func (tty *TTY) CustomString() string {
+// KeyString reads a keypress and returns it as a string, without flushing pending input
+func (tty *TTY) KeyString() string {
 	buf := make([]byte, 1)
-
-	// Save timeout before SetTimeout(0) overwrites it
 	savedTimeout := tty.timeout
 
 	tty.RawMode()
 
-	// Blocking read for first byte (VMIN=1, VTIME=0)
+	// Block until first byte arrives
 	tty.SetTimeout(0)
 	n, err := unix.Read(tty.fd, buf)
 	if n < 0 {
 		n = 0
 	}
 
-	// Restore the saved timeout without flushing pending input
+	// Restore the timeout without flushing pending input
 	defer tty.SetTimeout(savedTimeout)
 
 	if err != nil || n == 0 {
@@ -43,9 +33,42 @@ func (tty *TTY) CustomString() string {
 	}
 
 	b := buf[0]
+	escTimeout := 50 * time.Millisecond
 
-	// Non-ESC single byte: return immediately
+	// Non-ESC: single ASCII byte or multi-byte UTF-8
 	if b != 27 {
+		// Multi-byte UTF-8 sequence
+		if b >= 0xC0 {
+			var expected int
+			switch {
+			case b < 0xE0:
+				expected = 2
+			case b < 0xF0:
+				expected = 3
+			default:
+				expected = 4
+			}
+			utfBuf := make([]byte, expected)
+			utfBuf[0] = b
+			one := make([]byte, 1)
+			for i := 1; i < expected; i++ {
+				tty.SetTimeout(escTimeout)
+				numRead, err := unix.Read(tty.fd, one)
+				if numRead < 0 {
+					numRead = 0
+				}
+				if err != nil || numRead == 0 {
+					break
+				}
+				utfBuf[i] = one[0]
+			}
+			r, _ := utf8.DecodeRune(utfBuf)
+			if r != utf8.RuneError && unicode.IsPrint(r) {
+				return string(r)
+			}
+			return "c:" + strconv.Itoa(int(b))
+		}
+		// Single ASCII byte
 		r := rune(b)
 		if unicode.IsPrint(r) {
 			return string(r)
@@ -53,14 +76,9 @@ func (tty *TTY) CustomString() string {
 		return "c:" + strconv.Itoa(int(b))
 	}
 
-	// ESC byte received — collect the rest of the escape sequence
-	// one byte at a time so we stop exactly at the sequence boundary.
-	var seq []byte
-	seq = append(seq, b)
+	// ESC byte: collect the rest of the escape sequence one byte at a time
+	seq := []byte{b}
 
-	escTimeout := 50 * time.Millisecond
-
-	// Read the next byte with a short timeout; if nothing follows ESC, it's a bare ESC
 	one := make([]byte, 1)
 	tty.SetTimeout(escTimeout)
 	n, err = unix.Read(tty.fd, one)
@@ -68,13 +86,12 @@ func (tty *TTY) CustomString() string {
 		n = 0
 	}
 	if err != nil || n == 0 {
-		return "c:27"
+		return "c:27" // bare ESC
 	}
 	seq = append(seq, one[0])
 
-	// If second byte is '[', this is a CSI sequence (ESC [ ... finalByte)
+	// CSI sequence: ESC [ ... finalByte (0x40-0x7E)
 	if one[0] == '[' {
-		// Read parameter/intermediate bytes until a final byte (0x40-0x7E) arrives
 		for {
 			tty.SetTimeout(escTimeout)
 			n, err = unix.Read(tty.fd, one)
@@ -85,14 +102,13 @@ func (tty *TTY) CustomString() string {
 				break
 			}
 			seq = append(seq, one[0])
-			// Final byte of a CSI sequence is in the range 0x40–0x7E (@ through ~)
 			if one[0] >= 0x40 && one[0] <= 0x7E {
 				break
 			}
 		}
 	}
 
-	// Now match against the known lookup tables
+	// Match against the known lookup tables
 	switch len(seq) {
 	case 3:
 		var key [3]byte

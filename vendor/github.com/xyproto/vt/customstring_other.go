@@ -2,5 +2,5 @@
 
 package vt
 
-// CustomString is not supported on this platform. Returns an empty string.
-func (tty *TTY) CustomString() string { return "" }
+// KeyString is not supported on this platform, falls back to String.
+func (tty *TTY) KeyString() string { return tty.String() }

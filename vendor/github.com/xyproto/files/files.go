@@ -119,12 +119,6 @@ func BinDirectory(filename string) bool {
 	return false
 }
 
-// DataReadyOnStdin checks if data is ready on stdin
-func DataReadyOnStdin() bool {
-	fileInfo, err := os.Stdin.Stat()
-	return err == nil && !(fileInfo.Mode()&os.ModeNamedPipe == 0)
-}
-
 // IsBinary returns true if the given filename can be read and is a binary file.
 // It checks if the given filename is a regular file first, to avoid hangs when reading named pipes.
 func IsBinary(filename string) bool {

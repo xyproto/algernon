@@ -133,6 +133,15 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 		// create order for a new certificate
 		order, err = c.Client.NewOrder(ctx, params.Account, order)
 		if err != nil {
+			var problem acme.Problem
+			if errors.As(err, &problem) {
+				if problem.Type == acme.ProblemTypeAlreadyReplaced && order.Replaces != "" {
+					// retry without replace
+					// https://github.com/caddyserver/certmagic/issues/361
+					order.Replaces = ""
+					continue
+				}
+			}
 			return nil, fmt.Errorf("creating new order: %w", err)
 		}
 

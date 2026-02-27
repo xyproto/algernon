@@ -202,17 +202,29 @@ func (o *TextOutput) DarkTags(colors ...string) string {
 }
 
 func (o *TextOutput) initializeTagReplacers() {
-	// Initialize tag replacement tables, with as few memory allocations as possible (no append)
+	// Initialize tag replacement tables with as few memory allocations as possible (no append).
+	// Each lowercase map key generates 4 replacer pairs: <key>/</key> and <Key>/</Key>,
+	// so both <blue> and <Blue> are recognized without storing title-case duplicates in the map.
 	off := NoColor
-	rs := make([]string, len(LightColorMap)*4+2)
+	rs := make([]string, len(LightColorMap)*8+2)
 	i := 0
 	if o.color {
 		for key, value := range LightColorMap {
+			titled := strings.ToUpper(key[:1]) + key[1:]
+			vs := value.String()
 			rs[i] = "<" + key + ">"
 			i++
-			rs[i] = value.String()
+			rs[i] = vs
 			i++
 			rs[i] = "</" + key + ">"
+			i++
+			rs[i] = off
+			i++
+			rs[i] = "<" + titled + ">"
+			i++
+			rs[i] = vs
+			i++
+			rs[i] = "</" + titled + ">"
 			i++
 			rs[i] = off
 			i++
@@ -222,11 +234,20 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = off
 	} else {
 		for key := range LightColorMap {
+			titled := strings.ToUpper(key[:1]) + key[1:]
 			rs[i] = "<" + key + ">"
 			i++
 			rs[i] = ""
 			i++
 			rs[i] = "</" + key + ">"
+			i++
+			rs[i] = ""
+			i++
+			rs[i] = "<" + titled + ">"
+			i++
+			rs[i] = ""
+			i++
+			rs[i] = "</" + titled + ">"
 			i++
 			rs[i] = ""
 			i++
@@ -236,15 +257,25 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = ""
 	}
 	o.lightReplacer = strings.NewReplacer(rs...)
-	// Initialize the replacer for the dark color scheme, while reusing the rs slice
+	// Initialize the replacer for the dark color scheme, reusing the rs slice
 	i = 0
 	if o.color {
 		for key, value := range DarkColorMap {
+			titled := strings.ToUpper(key[:1]) + key[1:]
+			vs := value.String()
 			rs[i] = "<" + key + ">"
 			i++
-			rs[i] = value.String()
+			rs[i] = vs
 			i++
 			rs[i] = "</" + key + ">"
+			i++
+			rs[i] = off
+			i++
+			rs[i] = "<" + titled + ">"
+			i++
+			rs[i] = vs
+			i++
+			rs[i] = "</" + titled + ">"
 			i++
 			rs[i] = off
 			i++
@@ -254,11 +285,20 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = off
 	} else {
 		for key := range DarkColorMap {
+			titled := strings.ToUpper(key[:1]) + key[1:]
 			rs[i] = "<" + key + ">"
 			i++
 			rs[i] = ""
 			i++
 			rs[i] = "</" + key + ">"
+			i++
+			rs[i] = ""
+			i++
+			rs[i] = "<" + titled + ">"
+			i++
+			rs[i] = ""
+			i++
+			rs[i] = "</" + titled + ">"
 			i++
 			rs[i] = ""
 			i++
@@ -311,7 +351,13 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 		case r == '\033':
 			escaped = true
 		case escaped && r != 'm':
-			colorcode.WriteRune(r)
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				// A letter other than 'm' terminates a non-SGR escape sequence; discard it
+				colorcode.Reset()
+				escaped = false
+			} else {
+				colorcode.WriteRune(r)
+			}
 		default:
 			if counter >= uint(len(*pcc)) {
 				// Extend the slice

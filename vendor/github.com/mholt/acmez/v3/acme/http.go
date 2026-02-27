@@ -268,7 +268,7 @@ func (c *Client) doHTTPRequest(req *http.Request, buf *bytes.Buffer) (resp *http
 	if err != nil {
 		return resp, true, fmt.Errorf("performing request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if c.Logger != nil {
 		c.Logger.Debug("http request",

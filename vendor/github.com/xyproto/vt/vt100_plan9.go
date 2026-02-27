@@ -10,10 +10,6 @@ func showCursorHelper(enable bool) {
 	// No-op
 }
 
-func ensureCursorHidden(visible bool) {
-	// No-op
-}
-
 func echoOffHelper() bool {
 	return true
 }

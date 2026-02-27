@@ -7,7 +7,7 @@ import (
 	"golang.org/x/term"
 )
 
-// MustTermSize returns the terminal size using golang.org/x/term for cross-platform compatibility
+// MustTermSize returns the current terminal width and height
 func MustTermSize() (uint, uint) {
 	fd := int(os.Stdout.Fd())
 	if term.IsTerminal(fd) {

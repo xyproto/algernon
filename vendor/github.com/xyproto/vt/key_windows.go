@@ -17,14 +17,14 @@ import (
 )
 
 var (
-	defaultTimeout = 2 * time.Millisecond
-	lastKey        int
+	defaultTimeout = 100 * time.Millisecond // consistent with Unix VTIME minimum of 1 decisecond
 )
 
 type TTY struct {
 	fd              int
 	orig            *term.State
 	timeout         time.Duration
+	lastKey         int
 	useConsoleInput bool
 	conin           *os.File
 	pending         []byte
@@ -114,7 +114,7 @@ func (tty *TTY) Close() {
 func (tty *TTY) Key() int {
 	ascii, keyCode, err := asciiAndKeyCode(tty)
 	if err != nil {
-		lastKey = 0
+		tty.lastKey = 0
 		return 0
 	}
 	var key int
@@ -123,11 +123,11 @@ func (tty *TTY) Key() int {
 	} else {
 		key = ascii
 	}
-	if key == lastKey {
-		lastKey = 0
+	if key == tty.lastKey {
+		tty.lastKey = 0
 		return 0
 	}
-	lastKey = key
+	tty.lastKey = key
 	return key
 }
 
@@ -565,6 +565,11 @@ func (tty *TTY) Restore() {
 	}
 }
 
+// RestoreNoFlush restores the terminal without flushing pending input
+func (tty *TTY) RestoreNoFlush() {
+	tty.Restore() // Windows Restore does not flush input
+}
+
 // Flush discards pending input/output
 func (tty *TTY) Flush() {
 	// Windows FlushConsoleInputBuffer
@@ -584,6 +589,28 @@ func (tty *TTY) ReadString() (string, error) {
 	// Temporarily set a short read timeout
 	tty.SetTimeout(100 * time.Millisecond)
 	defer tty.SetTimeout(tty.timeout)
+	for {
+		n, err := tty.readWithTimeout(buf)
+		if n > 0 {
+			result = append(result, buf[:n]...)
+		}
+		if err != nil || n == 0 {
+			break
+		}
+	}
+	if len(result) == 0 {
+		return "", errors.New("no data read from TTY")
+	}
+	return string(result), nil
+}
+
+// ReadStringKeepTiming reads all available data while preserving the caller's timeout value.
+func (tty *TTY) ReadStringKeepTiming() (string, error) {
+	var result []byte
+	buf := make([]byte, 128)
+	savedTimeout := tty.timeout
+	tty.SetTimeout(100 * time.Millisecond)
+	defer tty.SetTimeout(savedTimeout)
 	for {
 		n, err := tty.readWithTimeout(buf)
 		if n > 0 {

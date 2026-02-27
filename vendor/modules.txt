@@ -19,7 +19,7 @@ github.com/allegro/bigcache/v3/queue
 ## explicit
 github.com/aymerick/douceur/css
 github.com/aymerick/douceur/parser
-# github.com/caddyserver/certmagic v0.25.1
+# github.com/caddyserver/certmagic v0.25.2
 ## explicit; go 1.24.0
 github.com/caddyserver/certmagic
 github.com/caddyserver/certmagic/internal/atomicfile
@@ -99,13 +99,14 @@ github.com/fsnotify/fsnotify/internal
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
-# github.com/go-mysql-org/go-mysql v1.13.0
-## explicit; go 1.23.0
+# github.com/go-mysql-org/go-mysql v1.14.0
+## explicit; go 1.24.0
 github.com/go-mysql-org/go-mysql/client
 github.com/go-mysql-org/go-mysql/compress
 github.com/go-mysql-org/go-mysql/driver
 github.com/go-mysql-org/go-mysql/mysql
 github.com/go-mysql-org/go-mysql/packet
+github.com/go-mysql-org/go-mysql/stmt
 github.com/go-mysql-org/go-mysql/utils
 # github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9
 ## explicit
@@ -163,8 +164,8 @@ github.com/mattetti/filebuffer
 # github.com/mattn/go-sqlite3 v1.14.34
 ## explicit; go 1.19
 github.com/mattn/go-sqlite3
-# github.com/mholt/acmez/v3 v3.1.4
-## explicit; go 1.21.0
+# github.com/mholt/acmez/v3 v3.1.6
+## explicit; go 1.24.0
 github.com/mholt/acmez/v3
 github.com/mholt/acmez/v3/acme
 # github.com/microcosm-cc/bluemonday v1.0.27
@@ -195,7 +196,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260218085726-543b83a64e12
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260227164817-b104014256b8
 ## explicit; go 1.24
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -277,10 +278,10 @@ github.com/xyproto/cookie/v2
 # github.com/xyproto/datablock v1.2.0
 ## explicit; go 1.12
 github.com/xyproto/datablock
-# github.com/xyproto/env/v2 v2.5.5
+# github.com/xyproto/env/v2 v2.5.6
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.10.6
+# github.com/xyproto/files v1.10.7
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/gluamapper v1.2.1
@@ -361,7 +362,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.0
 ## explicit; go 1.23.1
 github.com/xyproto/unzip
-# github.com/xyproto/vt v1.5.7
+# github.com/xyproto/vt v1.7.2
 ## explicit; go 1.24.4
 github.com/xyproto/vt
 # github.com/yosssi/gcss v0.1.0
@@ -425,8 +426,8 @@ golang.org/x/crypto/ocsp
 # golang.org/x/mod v0.33.0
 ## explicit; go 1.24.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.50.0
-## explicit; go 1.24.0
+# golang.org/x/net v0.51.0
+## explicit; go 1.25.0
 golang.org/x/net/bpf
 golang.org/x/net/html
 golang.org/x/net/html/atom

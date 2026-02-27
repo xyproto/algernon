@@ -76,12 +76,6 @@ func setCursorVis(handle windows.Handle, enable bool) bool {
 	return r1 != 0
 }
 
-func ensureCursorHidden(visible bool) {
-	if !visible {
-		ShowCursor(false)
-	}
-}
-
 func echoOffHelper() bool {
 	return false
 }

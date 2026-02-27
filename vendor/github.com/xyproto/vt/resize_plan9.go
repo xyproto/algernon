@@ -4,5 +4,5 @@ package vt
 
 import "os"
 
-// SetupResizeHandler is a no-op on Plan 9 (no SIGWINCH signal)
+// SetupResizeHandler is a no-op on Plan 9
 func SetupResizeHandler(sigChan chan os.Signal) {}

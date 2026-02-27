@@ -133,7 +133,7 @@ func jwkEncode(pub crypto.PublicKey) (string, error) {
 		), nil
 	case *ecdsa.PublicKey:
 		// https://tools.ietf.org/html/rfc7518#section-6.2.1
-		p := pub.Curve.Params()
+		p := pub.Params()
 		n := p.BitSize / 8
 		if p.BitSize%8 != 0 {
 			n++

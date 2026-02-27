@@ -19,6 +19,13 @@ func UseSslOption(c *client.Conn) error {
 	return nil
 }
 
+// UseSslSkipVerifyOption sets the connection to use a tls.Config with InsecureSkipVerify set to true.
+// Currently the same as `SetTLSConfig`.
+func UseSslSkipVerifyOption(c *client.Conn) error {
+	c.UseSSL(true)
+	return nil
+}
+
 func CollationOption(c *client.Conn, value string) error {
 	return c.SetCollation(value)
 }
@@ -38,9 +45,9 @@ func WriteTimeoutOption(c *client.Conn, value string) error {
 func CompressOption(c *client.Conn, value string) error {
 	switch value {
 	case "zlib":
-		c.SetCapability(mysql.CLIENT_COMPRESS)
+		_ = c.SetCapability(mysql.CLIENT_COMPRESS)
 	case "zstd":
-		c.SetCapability(mysql.CLIENT_ZSTD_COMPRESSION_ALGORITHM)
+		_ = c.SetCapability(mysql.CLIENT_ZSTD_COMPRESSION_ALGORITHM)
 	case "uncompressed":
 		c.UnsetCapability(mysql.CLIENT_COMPRESS)
 		c.UnsetCapability(mysql.CLIENT_ZSTD_COMPRESSION_ALGORITHM)

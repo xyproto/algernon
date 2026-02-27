@@ -38,7 +38,7 @@ type Account struct {
 	// initiated deactivation.  See Section 7.1.6.
 	//
 	// The client need NOT set this field when creating a new account.
-	Status string `json:"status"`
+	Status string `json:"status,omitempty"`
 
 	// contact (optional, array of string):  An array of URLs that the
 	// server can use to contact the client for issues related to this

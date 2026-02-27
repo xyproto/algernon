@@ -10,6 +10,8 @@ import (
 
 func (c *Canvas) ToImage() (image.Image, error) {
 	const charWidth, charHeight = 8, 8
+	c.mut.RLock()
+	defer c.mut.RUnlock()
 	width, height := int(c.w)*charWidth, int(c.h)*charHeight
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	filled := false

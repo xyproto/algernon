@@ -8,7 +8,7 @@ import (
 	"syscall"
 )
 
-// SetupResizeHandler sets up terminal resize signal handling on Unix systems
+// SetupResizeHandler sets up a terminal resize signal handler
 func SetupResizeHandler(sigChan chan os.Signal) {
 	signal.Notify(sigChan, syscall.SIGWINCH)
 }

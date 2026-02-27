@@ -9,7 +9,21 @@ type Result struct {
 	InsertId     uint64
 	AffectedRows uint64
 
+	StatusMessage   string
+	SessionTracking *SessionTrackingInfo
+
 	*Resultset
+
+	StreamResult *StreamResult
+}
+
+type SessionTrackingInfo struct {
+	GTID             string
+	TransactionState string
+	Variables        map[string]string
+	Schema           string
+	State            string
+	Characteristics  string
 }
 
 func NewResult(resultset *Resultset) *Result {
@@ -25,13 +39,17 @@ func NewResultReserveResultset(fieldCount int) *Result {
 }
 
 type Executer interface {
-	Execute(query string, args ...interface{}) (*Result, error)
+	Execute(query string, args ...any) (*Result, error)
 }
 
 func (r *Result) Close() {
 	if r.Resultset != nil {
 		r.returnToPool()
 		r.Resultset = nil
+	}
+	if r.StreamResult != nil {
+		r.StreamResult.Close()
+		r.StreamResult = nil
 	}
 }
 
@@ -43,4 +61,8 @@ func (r *Result) HasResultset() bool {
 		return true
 	}
 	return false
+}
+
+func (r *Result) IsStreaming() bool {
+	return r != nil && r.StreamResult != nil
 }
