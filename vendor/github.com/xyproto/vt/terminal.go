@@ -93,9 +93,6 @@ var underTMUX = env.Has("TMUX")
 // underScreen is true if running inside GNU Screen
 var underScreen = env.Has("STY")
 
-// underZellij is true if running inside Zellij
-var underZellij = env.Has("ZELLIJ")
-
 // underDvtm is true if running inside dvtm
 var underDvtm = env.Has("DVTM")
 
@@ -103,7 +100,7 @@ var underDvtm = env.Has("DVTM")
 var underAbduco = env.Has("ABDUCO")
 
 // multiplexed is true when running inside any known terminal multiplexer
-var multiplexed = underTMUX || underScreen || underZellij || underDvtm || underAbduco
+var multiplexed = underTMUX || underScreen || underDvtm || underAbduco
 
 // xtermLike is true when $TERM looks like an xterm-class emulator
 var xtermLike = strings.HasPrefix(env.Str("TERM"), "xterm")
