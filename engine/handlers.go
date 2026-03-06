@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -33,6 +34,8 @@ const (
 	contentType = "Content-Type"
 	htmlUTF8    = "text/html;charset=utf-8"
 	textUTF8    = "text/plain;charset=utf-8"
+
+	cspReportPath = "/_csp_report"
 )
 
 var oc *ollamaclient.Config
@@ -521,12 +524,61 @@ func (ac *Config) ServerHeaders(w http.ResponseWriter) {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+		// Report-only CSP that mirrors X-Frame-Options, letting browsers
+		// report violations back without blocking extra content
+		w.Header().Set("Content-Security-Policy-Report-Only",
+			"frame-ancestors 'self'; report-uri "+cspReportPath)
 	}
 	if !ac.autoRefresh && ac.stricterHeaders {
 		w.Header().Set("Content-Security-Policy",
-			"connect-src 'self'; object-src 'self'; form-action 'self'")
+			"connect-src 'self'; object-src 'self'; form-action 'self'; report-uri "+cspReportPath)
 	}
 	// w.Header().Set("X-Powered-By", name+"/"+version)
+}
+
+// cspReport is the JSON body browsers POST when a CSP directive is violated
+type cspReport struct {
+	Body struct {
+		DocumentURI        string `json:"document-uri"`
+		BlockedURI         string `json:"blocked-uri"`
+		ViolatedDirective  string `json:"violated-directive"`
+		EffectiveDirective string `json:"effective-directive"`
+		OriginalPolicy     string `json:"original-policy"`
+		Disposition        string `json:"disposition"`
+	} `json:"csp-report"`
+}
+
+// HandleCSPReport receives CSP violation reports and warns once per unique violation
+func (ac *Config) HandleCSPReport(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	body, err := io.ReadAll(io.LimitReader(req.Body, 8192))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer req.Body.Close()
+
+	var report cspReport
+	if err := json.Unmarshal(body, &report); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	r := report.Body
+	directive := r.ViolatedDirective
+	if directive == "" {
+		directive = r.EffectiveDirective
+	}
+
+	key := directive + "|" + r.BlockedURI
+	if _, loaded := ac.cspReported.LoadOrStore(key, true); !loaded {
+		logrus.Warnf("CSP %s: %q blocked %q on %s (use --noheaders to disable)", r.Disposition, directive, r.BlockedURI, r.DocumentURI)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // RegisterHandlers configures the given mutex and request limiter to handle
@@ -541,6 +593,12 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 	// Handle all requests with this function
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
+		// Handle CSP violation reports from browsers
+		if req.URL.Path == cspReportPath {
+			ac.HandleCSPReport(w, req)
+			return
+		}
+
 		// Rejecting requests is handled by the permission system, which
 		// in turn requires a database backend.
 		if ac.perm != nil {

@@ -146,6 +146,7 @@ type Config struct {
 	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
+	cspReported                  sync.Map // for deduplicating CSP violation warnings
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
