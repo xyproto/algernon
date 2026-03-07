@@ -33,6 +33,8 @@ const (
 	hideCursor         = "\033[?25l"
 	echoOff            = "\033[12h"
 	attributeTemplate  = "\033[%sm"
+	beginSyncUpdate    = "\033[?2026h"
+	endSyncUpdate      = "\033[?2026l"
 )
 
 // NoColor is the escape sequence for resetting all color attributes

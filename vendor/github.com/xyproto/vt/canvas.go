@@ -58,7 +58,7 @@ func NewCanvas() *Canvas {
 	c.cursorVisible = false
 	c.termCursorVisible = true // assume visible so flushCursor emits the hide escape
 	c.lineWrap = false
-	c.runewise = multiplexed // use explicit cursor positioning under multiplexers to avoid line-wrap issues
+	c.runewise = false // per-line positioning with synchronized output works correctly under multiplexers
 	c.flushCursor()
 	c.SetLineWrap(c.lineWrap)
 	return c
@@ -259,25 +259,6 @@ func (c *Canvas) DrawAndSetCursor(x, y uint) {
 // draw is the shared implementation for Draw and HideCursorAndDraw.
 // When permanentlyHideCursor is true, the cursor stays hidden after drawing.
 func (c *Canvas) draw(permanentlyHideCursor bool) {
-	var (
-		lastfg        = Default
-		lastbg        = Default
-		cr            ColorRune
-		oldcr         ColorRune
-		sb            strings.Builder
-		cursorVisible bool
-		lineWrap      bool
-		runewise      bool
-	)
-
-	cr.fg = Default
-	cr.bg = Default
-	oldcr.fg = Default
-	oldcr.bg = Default
-
-	// NOTE: If too many runes are written to the screen, the contents will scroll up
-	// and it will appear as though the first line(s) are lost.
-
 	c.mut.RLock()
 
 	if len((*c).chars) == 0 {
@@ -285,109 +266,148 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		return
 	}
 
+	w := c.w
+	h := c.h
 	firstRun := len(c.oldchars) == 0
-	skipAll := !firstRun // assume nothing changed; disproved below
-	cursorVisible = c.cursorVisible
-	lineWrap = c.lineWrap
-	runewise = c.runewise
+	cursorVisible := c.cursorVisible
+	runewise := c.runewise
 
-	size := c.w*c.h - 1
-	sb.Grow(int(size))
-
+	// Quick change detection with early exit
 	if !firstRun {
-		for index := range size {
-			cr = (*c).chars[index]
-			if cr.cw == 1 {
-				continue // continuation of a wide character
-			}
-			oldcr = (*c).oldchars[index]
-			// Any difference from the last rendered frame means we cannot skip
-			if !cr.fg.Equal(oldcr.fg) || !cr.bg.Equal(oldcr.bg) || cr.r != oldcr.r {
-				skipAll = false
-			}
-			// Only emit a color code when it differs from the previous cell
-			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
-				sb.WriteString(cr.fg.Combine(cr.bg).String())
-			}
-			if cr.r != 0 {
-				sb.WriteRune(cr.r)
-			} else {
-				sb.WriteByte(' ')
-			}
-			lastfg = cr.fg
-			lastbg = cr.bg
-		}
-	} else {
-		for index := range size {
-			cr = (*c).chars[index]
+		skipAll := true
+		size := w*h - 1
+		for i := range size {
+			cr := (*c).chars[i]
 			if cr.cw == 1 {
 				continue
 			}
-			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
-				sb.WriteString(cr.fg.Combine(cr.bg).String())
+			oldcr := (*c).oldchars[i]
+			if !cr.fg.Equal(oldcr.fg) || !cr.bg.Equal(oldcr.bg) || cr.r != oldcr.r {
+				skipAll = false
+				break
 			}
-			if cr.r != 0 {
-				sb.WriteRune(cr.r)
-			} else {
-				sb.WriteByte(' ')
-			}
-			lastfg = cr.fg
-			lastbg = cr.bg
+		}
+		if skipAll {
+			c.mut.RUnlock()
+			return
 		}
 	}
+
+	// Build the entire output in a single buffer
+	var sb strings.Builder
+	sb.Grow(int(w * h * 2))
+
+	// Begin synchronized update so the terminal renders atomically
+	sb.WriteString(beginSyncUpdate)
+	// Hide cursor while drawing to prevent flicker
+	sb.WriteString(hideCursor)
+
+	if runewise {
+		// Per-cell rendering with explicit positioning (robust fallback).
+		// Only rewrite cells that actually changed.
+		for y := range h {
+			base := y * w
+			for x := range w {
+				idx := base + x
+				if y == h-1 && x == w-1 {
+					break // skip bottom-right corner to prevent scroll
+				}
+				cr := (*c).chars[idx]
+				if cr.cw == 1 {
+					continue
+				}
+				if !firstRun {
+					oldcr := (*c).oldchars[idx]
+					if cr.fg.Equal(oldcr.fg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
+						continue
+					}
+				}
+				r := cr.r
+				if r == 0 {
+					r = ' '
+				}
+				fmt.Fprintf(&sb, "\033[%d;%dH", y+1, x+1)
+				sb.WriteString(cr.fg.Combine(cr.bg).String())
+				sb.WriteRune(r)
+			}
+		}
+	} else {
+		// Per-line differential rendering with explicit cursor positioning.
+		// Only lines with at least one changed cell are rewritten.
+		var lastfg, lastbg AttributeColor
+		for y := range h {
+			base := y * w
+			maxX := w
+			if y == h-1 {
+				maxX = w - 1 // skip bottom-right corner to prevent scroll
+			}
+
+			lineChanged := firstRun
+			if !firstRun {
+				for x := range maxX {
+					cr := (*c).chars[base+x]
+					if cr.cw == 1 {
+						continue
+					}
+					oldcr := (*c).oldchars[base+x]
+					if !cr.fg.Equal(oldcr.fg) || !cr.bg.Equal(oldcr.bg) || cr.r != oldcr.r {
+						lineChanged = true
+						break
+					}
+				}
+			}
+
+			if !lineChanged {
+				continue
+			}
+
+			// Position cursor at start of this line
+			fmt.Fprintf(&sb, "\033[%d;1H", y+1)
+			lastfg = Default
+			lastbg = Default
+
+			for x := range maxX {
+				cr := (*c).chars[base+x]
+				if cr.cw == 1 {
+					continue
+				}
+				if x == 0 || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
+					sb.WriteString(cr.fg.Combine(cr.bg).String())
+				}
+				if cr.r != 0 {
+					sb.WriteRune(cr.r)
+				} else {
+					sb.WriteByte(' ')
+				}
+				lastfg = cr.fg
+				lastbg = cr.bg
+			}
+		}
+	}
+
+	// Restore cursor visibility if it should be shown after drawing
+	if !permanentlyHideCursor && cursorVisible {
+		sb.WriteString(showCursor)
+	}
+
+	// End synchronized update — terminal renders the buffered frame
+	sb.WriteString(endSyncUpdate)
 
 	c.mut.RUnlock()
 
-	if skipAll {
-		return
-	}
+	// Write the complete frame to stdout in a single call
+	writeAllToStdout([]byte(sb.String()))
 
-	// Hide cursor before drawing, then flush once
-	reEnableCursor := false
+	// Update internal state to match what was emitted
 	c.mut.Lock()
 	if permanentlyHideCursor {
 		c.cursorVisible = false
+		c.termCursorVisible = false
 	} else if cursorVisible {
-		c.cursorVisible = false
-		reEnableCursor = true
-	}
-	c.mut.Unlock()
-	c.flushCursor()
-
-	// Temporarily enable line wrap if needed so the full screen write works
-	reDisableLineWrap := false
-	if !lineWrap {
-		c.SetLineWrap(true)
-		reDisableLineWrap = true
-	}
-
-	if runewise {
-		Clear()
-		c.PlotAll()
+		c.termCursorVisible = true
 	} else {
-		c.mut.Lock()
-		SetXY(0, 0)
-		if !writeAllToStdout([]byte(sb.String())) {
-			c.mut.Unlock()
-			return
-		}
-		c.mut.Unlock()
+		c.termCursorVisible = false
 	}
-
-	// Restore cursor if it was only temporarily hidden
-	if reEnableCursor {
-		c.mut.Lock()
-		c.cursorVisible = true
-		c.mut.Unlock()
-		c.flushCursor()
-	}
-
-	if reDisableLineWrap {
-		c.SetLineWrap(false)
-	}
-
-	// Save the current state to oldchars
-	c.mut.Lock()
 	if lc := len(c.chars); len(c.oldchars) != lc {
 		c.oldchars = make([]ColorRune, lc)
 	}
@@ -650,18 +670,12 @@ func (c *Canvas) Resized() *Canvas {
 		c.mut.Lock()
 		defer c.mut.Unlock()
 		defer nc.mut.Unlock()
-	OUT:
 		// Copy over old characters, marking them as not yet drawn
 		for y := uint(0); y < umin(oldc.h, h); y++ {
 			for x := uint(0); x < umin(oldc.w, w); x++ {
-				oldIndex := y*oldc.w + x
-				index := y*nc.w + x
-				if oldIndex > index {
-					break OUT
-				}
-				cr := oldc.chars[oldIndex]
+				cr := oldc.chars[y*oldc.w+x]
 				cr.drawn = false
-				nc.chars[index] = cr
+				nc.chars[y*nc.w+x] = cr
 			}
 		}
 		return nc
