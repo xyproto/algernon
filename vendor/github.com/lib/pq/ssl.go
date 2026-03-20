@@ -1,17 +1,18 @@
 package pq
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
+	"slices"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/lib/pq/internal/pqutil"
 )
@@ -59,76 +60,91 @@ func getTLSConfigClone(key string) *tls.Config {
 
 // ssl generates a function to upgrade a net.Conn based on the "sslmode" and
 // related settings. The function is nil when no upgrade should take place.
-func ssl(cfg Config) (func(net.Conn) (net.Conn, error), error) {
+//
+// Don't refer to Config.SSLMode here, as the mode in arguments may be different
+// in case of sslmode=allow or prefer.
+func ssl(cfg Config, mode SSLMode) (func(net.Conn) (net.Conn, error), error) {
 	var (
+		home = pqutil.Home()
+		// Don't set defaults here, because tlsConf may be overwritten if a
+		// custom one was registered. Set it after the sslmode switch.
+		tlsConf = &tls.Config{}
+		// Only verify the CA signing but not the hostname.
 		verifyCaOnly = false
-		tlsConf      = &tls.Config{}
-		mode         = cfg.SSLMode
 	)
+	if mode.useSSL() && !cfg.SSLInline && cfg.SSLRootCert == "" && home != "" {
+		f := filepath.Join(home, "root.crt")
+		if _, err := os.Stat(f); err == nil {
+			cfg.SSLRootCert = f
+		}
+	}
 	switch {
-	// "require" is the default.
-	case mode == "" || mode == SSLModeRequire:
-		// We must skip TLS's own verification since it requires full
-		// verification since Go 1.3.
+	case mode == SSLModeDisable || mode == SSLModeAllow:
+		return nil, nil
+
+	case mode == SSLModeRequire || mode == SSLModePrefer:
+		// Skip TLS's own verification since it requires full verification.
 		tlsConf.InsecureSkipVerify = true
 
 		// From http://www.postgresql.org/docs/current/static/libpq-ssl.html:
 		//
-		// Note: For backwards compatibility with earlier versions of
-		// PostgreSQL, if a root CA file exists, the behavior of
-		// sslmode=require will be the same as that of verify-ca, meaning the
-		// server certificate is validated against the CA. Relying on this
-		// behavior is discouraged, and applications that need certificate
-		// validation should always use verify-ca or verify-full.
+		// For backwards compatibility with earlier versions of PostgreSQL, if a
+		// root CA file exists, the behavior of sslmode=require will be the same
+		// as that of verify-ca, meaning the server certificate is validated
+		// against the CA. Relying on this behavior is discouraged, and
+		// applications that need certificate validation should always use
+		// verify-ca or verify-full.
 		if cfg.SSLRootCert != "" {
-			if _, err := os.Stat(cfg.SSLRootCert); err == nil {
+			if cfg.SSLInline {
 				verifyCaOnly = true
-			} else {
+			} else if _, err := os.Stat(cfg.SSLRootCert); err == nil {
+				verifyCaOnly = true
+			} else if cfg.SSLRootCert != "system" {
 				cfg.SSLRootCert = ""
 			}
 		}
 	case mode == SSLModeVerifyCA:
-		// We must skip TLS's own verification since it requires full
-		// verification since Go 1.3.
+		// Skip TLS's own verification since it requires full verification.
 		tlsConf.InsecureSkipVerify = true
 		verifyCaOnly = true
 	case mode == SSLModeVerifyFull:
 		tlsConf.ServerName = cfg.Host
-	case mode == SSLModeDisable:
-		return nil, nil
 	case strings.HasPrefix(string(mode), "pqgo-"):
 		tlsConf = getTLSConfigClone(string(mode[5:]))
 		if tlsConf == nil {
 			return nil, fmt.Errorf(`pq: unknown custom sslmode %q`, mode)
 		}
 	default:
-		return nil, fmt.Errorf(
-			`pq: unsupported sslmode %q; only "require" (default), "verify-full", "verify-ca", and "disable" supported`,
-			mode)
+		panic("unreachable")
 	}
 
-	// Set Server Name Indication (SNI), if enabled by connection parameters.
+	tlsConf.MinVersion = cfg.SSLMinProtocolVersion.tlsconf()
+	tlsConf.MaxVersion = cfg.SSLMaxProtocolVersion.tlsconf()
+
+	// RFC 6066 asks to not set SNI if the host is a literal IP address (IPv4 or
+	// IPv6). This check is coded already crypto.tls.hostnameInSNI, so just
+	// always set ServerName here and let crypto/tls do the filtering.
 	if cfg.SSLSNI {
-		// RFC 6066 asks to not set SNI if the host is a literal IP address (IPv4
-		// or IPv6). This check is coded already crypto.tls.hostnameInSNI, so
-		// just always set ServerName here and let crypto/tls do the filtering.
 		tlsConf.ServerName = cfg.Host
 	}
 
-	err := sslClientCertificates(tlsConf, cfg)
+	err := sslClientCertificates(tlsConf, cfg, home)
 	if err != nil {
 		return nil, err
 	}
-	err = sslCertificateAuthority(tlsConf, cfg)
+	rootPem, err := sslCertificateAuthority(tlsConf, cfg)
 	if err != nil {
 		return nil, err
 	}
+	sslAppendIntermediates(tlsConf, cfg, rootPem)
 
 	// Accept renegotiation requests initiated by the backend.
 	//
-	// Renegotiation was deprecated then removed from PostgreSQL 9.5, but
-	// the default configuration of older versions has it enabled. Redshift
-	// also initiates renegotiations and cannot be reconfigured.
+	// Renegotiation was deprecated then removed from PostgreSQL 9.5, but the
+	// default configuration of older versions has it enabled. Redshift also
+	// initiates renegotiations and cannot be reconfigured.
+	//
+	// TODO: I think this can be removed?
 	tlsConf.Renegotiation = tls.RenegotiateFreelyAsClient
 
 	return func(conn net.Conn) (net.Conn, error) {
@@ -157,94 +173,140 @@ func ssl(cfg Config) (func(net.Conn) (net.Conn, error), error) {
 // "sslkey" settings, or if they aren't set, from the .postgresql directory
 // in the user's home directory. The configured files must exist and have
 // the correct permissions.
-func sslClientCertificates(tlsConf *tls.Config, cfg Config) error {
+func sslClientCertificates(tlsConf *tls.Config, cfg Config, home string) error {
 	if cfg.SSLInline {
 		cert, err := tls.X509KeyPair([]byte(cfg.SSLCert), []byte(cfg.SSLKey))
 		if err != nil {
 			return err
 		}
-		tlsConf.Certificates = []tls.Certificate{cert}
-		return nil
-	}
-
-	home := pqutil.Home()
-
-	// In libpq, the client certificate is only loaded if the setting is not blank.
-	//
-	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1036-L1037
-	sslcert := cfg.SSLCert
-	if len(sslcert) == 0 && home != "" {
-		if runtime.GOOS == "windows" {
-			sslcert = filepath.Join(sslcert, "postgresql.crt")
-		} else {
-			sslcert = filepath.Join(home, ".postgresql/postgresql.crt")
+		// Use GetClientCertificate instead of the Certificates field. When
+		// Certificates is set, Go's TLS client only sends the cert if the
+		// server's CertificateRequest includes a CA that issued it. When the
+		// client cert was signed by an intermediate CA but the server only
+		// advertises the root CA, Go skips sending the cert entirely.
+		// GetClientCertificate bypasses this filtering.
+		tlsConf.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			return &cert, nil
 		}
-	}
-	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1045
-	if len(sslcert) == 0 {
 		return nil
 	}
-	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1050:L1054
-	_, err := os.Stat(sslcert)
+
+	// Only load client certificate and key if the setting is not blank, like libpq.
+	if cfg.SSLCert == "" && home != "" {
+		cfg.SSLCert = filepath.Join(home, "postgresql.crt")
+	}
+	if cfg.SSLCert == "" {
+		return nil
+	}
+	_, err := os.Stat(cfg.SSLCert)
 	if err != nil {
-		perr := new(os.PathError)
-		if errors.As(err, &perr) && (perr.Err == syscall.ENOENT || perr.Err == syscall.ENOTDIR) {
+		if pqutil.ErrNotExists(err) {
 			return nil
 		}
 		return err
 	}
 
 	// In libpq, the ssl key is only loaded if the setting is not blank.
-	//
-	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L1123-L1222
-	sslkey := cfg.SSLKey
-	if len(sslkey) == 0 && home != "" {
-		if runtime.GOOS == "windows" {
-			sslkey = filepath.Join(home, "postgresql.key")
-		} else {
-			sslkey = filepath.Join(home, ".postgresql/postgresql.key")
-		}
+	if cfg.SSLKey == "" && home != "" {
+		cfg.SSLKey = filepath.Join(home, "postgresql.key")
 	}
-
-	if len(sslkey) > 0 {
-		err := pqutil.SSLKeyPermissions(sslkey)
+	if cfg.SSLKey != "" {
+		err := pqutil.SSLKeyPermissions(cfg.SSLKey)
 		if err != nil {
 			return err
 		}
 	}
 
-	cert, err := tls.LoadX509KeyPair(sslcert, sslkey)
+	cert, err := tls.LoadX509KeyPair(cfg.SSLCert, cfg.SSLKey)
 	if err != nil {
 		return err
 	}
 
-	tlsConf.Certificates = []tls.Certificate{cert}
+	// Using GetClientCertificate instead of Certificates per comment above.
+	tlsConf.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+		return &cert, nil
+	}
 	return nil
 }
 
+var testSystemRoots *x509.CertPool
+
 // sslCertificateAuthority adds the RootCA specified in the "sslrootcert" setting.
-func sslCertificateAuthority(tlsConf *tls.Config, cfg Config) error {
-	// In libpq, the root certificate is only loaded if the setting is not blank.
-	//
-	// https://github.com/postgres/postgres/blob/REL9_6_2/src/interfaces/libpq/fe-secure-openssl.c#L950-L951
-	if sslrootcert := cfg.SSLRootCert; len(sslrootcert) > 0 {
-		tlsConf.RootCAs = x509.NewCertPool()
+func sslCertificateAuthority(tlsConf *tls.Config, cfg Config) ([]byte, error) {
+	// Only load root certificate if not blank, like libpq.
+	if cfg.SSLRootCert == "" {
+		return nil, nil
+	}
 
-		var cert []byte
-		if cfg.SSLInline {
-			cert = []byte(sslrootcert)
-		} else {
-			var err error
-			cert, err = os.ReadFile(sslrootcert)
-			if err != nil {
-				return err
-			}
-		}
+	if cfg.SSLRootCert == "system" {
+		// No work to do as system CAs are used by default if RootCAs is nil.
+		tlsConf.RootCAs = testSystemRoots
+		return nil, nil
+	}
 
-		if !tlsConf.RootCAs.AppendCertsFromPEM(cert) {
-			return errors.New("pq: couldn't parse pem in sslrootcert")
+	tlsConf.RootCAs = x509.NewCertPool()
+
+	var cert []byte
+	if cfg.SSLInline {
+		cert = []byte(cfg.SSLRootCert)
+	} else {
+		var err error
+		cert, err = os.ReadFile(cfg.SSLRootCert)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	if !tlsConf.RootCAs.AppendCertsFromPEM(cert) {
+		return nil, errors.New("pq: couldn't parse pem from sslrootcert")
+	}
+	return cert, nil
+}
+
+// sslAppendIntermediates appends intermediate CA certificates from sslrootcert
+// to the client certificate chain. This is needed so the server can verify the
+// client cert when it was signed by an intermediate CA — without this, the TLS
+// handshake only sends the leaf client cert.
+func sslAppendIntermediates(tlsConf *tls.Config, cfg Config, rootPem []byte) {
+	if cfg.SSLRootCert == "" || tlsConf.GetClientCertificate == nil || len(rootPem) == 0 {
+		return
+	}
+
+	var (
+		pemData       = slices.Clone(rootPem)
+		intermediates [][]byte
+	)
+	for {
+		var block *pem.Block
+		block, pemData = pem.Decode(pemData)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" {
+			continue
+		}
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			continue
+		}
+		// Skip self-signed root CAs; only append intermediates.
+		if cert.IsCA && !bytes.Equal(cert.RawIssuer, cert.RawSubject) {
+			intermediates = append(intermediates, block.Bytes)
+		}
+	}
+	if len(intermediates) == 0 {
+		return
+	}
+
+	// Wrap the existing GetClientCertificate to append intermediate certs to
+	// the certificate chain returned during the TLS handshake.
+	origGetCert := tlsConf.GetClientCertificate
+	tlsConf.GetClientCertificate = func(info *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+		cert, err := origGetCert(info)
+		if err != nil {
+			return cert, err
+		}
+		cert.Certificate = append(cert.Certificate, intermediates...)
+		return cert, nil
+	}
 }

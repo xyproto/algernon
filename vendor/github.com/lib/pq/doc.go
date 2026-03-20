@@ -78,17 +78,18 @@ pq may return errors of type [*pq.Error] which contain error details:
 
 # Bulk imports
 
-You can perform bulk imports by preparing a statement returned by [CopyIn] (or
-[CopyInSchema]) in an explicit transaction ([sql.Tx]). The returned statement
-handle can then be repeatedly "executed" to copy data into the target table.
-After all data has been processed you should call Exec() once with no arguments
-to flush all buffered data. Any call to Exec() might return an error which
-should be handled appropriately, but because of the internal buffering an error
-returned by Exec() might not be related to the data passed in the call that
-failed.
+You can perform bulk imports by preparing a "COPY [..] FROM STDIN" statement in
+a transaction ([sql.Tx]). The returned [sql.Stmt] handle can then be repeatedly
+"executed" to copy data into the target table. After all data has been processed
+you should call Exec() once with no arguments to flush all buffered data. Any
+call to Exec() might return an error which should be handled appropriately, but
+because of the internal buffering an error returned by Exec() might not be
+related to the data passed in the call that failed.
 
-CopyIn uses COPY FROM internally. It is not possible to COPY outside of an
-explicit transaction in pq.
+It is not possible to COPY outside of an explicit transaction in pq.
+
+Use nil for NULL, or explicitly add WITH NULL 'SOME STRING' (the default of \N
+doesn't work).
 
 # Notifications
 
@@ -116,8 +117,6 @@ The channel name in both Listen and Unlisten is case sensitive, and can contain
 any characters legal in an [identifier]. Note that the channel name will be
 truncated to 63 bytes by the PostgreSQL server.
 
-You can find a complete, working example of Listener usage at [cmd/pqlisten].
-
 # Kerberos Support
 
 If you need support for Kerberos authentication, add the following to your main
@@ -132,7 +131,6 @@ package:
 This package is in a separate module so that users who don't need Kerberos don't
 have to add unnecessary dependencies.
 
-[cmd/pqlisten]: https://github.com/lib/pq/tree/master/cmd/pqlisten
 [identifier]: http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
 [NOTIFY]: http://www.postgresql.org/docs/current/static/sql-notify.html
 */

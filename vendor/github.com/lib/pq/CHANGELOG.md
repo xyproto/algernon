@@ -1,4 +1,86 @@
-v1.11.2 (2025-02-10)
+unreleased
+----------
+
+- This release changes the default `sslmode` from `require` to `prefer`, which
+  is the default used by libpq and the rest of the PostgreSQL ecosystem. See
+  [#1271] for some background.
+
+v1.12.0 (2026-03-18)
+--------------------
+
+- The next release may change the default sslmode from `require` to `prefer`.
+  See [#1271] for details.
+
+- `CopyIn()` and `CopyInToSchema()` have been marked as deprecated. These are
+  simple query builders and not needed for `COPY [..] FROM STDIN` support (which
+  is *not* deprecated). ([#1279])
+
+      // Old
+      tx.Prepare(CopyIn("temp", "num", "text", "blob", "nothing"))
+
+      // Replacement
+      tx.Prepare(`copy temp (num, text, blob, nothing) from stdin`)
+
+### Features
+
+- Support protocol 3.2, and the `min_protocol_version` and
+  `max_protocol_version` DSN parameters ([#1258]).
+
+- Support `sslmode=prefer` and `sslmode=allow` ([#1270]).
+
+- Support `ssl_min_protocol_version` and `ssl_max_protocol_version` ([#1277]).
+
+- Support connection service file to load connection details ([#1285]).
+
+- Support `sslrootcert=system` and use `~/.postgresql/root.crt` as the default
+  value of sslrootcert ([#1280], [#1281]).
+
+- Add a new `pqerror` package with PostgreSQL error codes ([#1275]).
+
+  For example, to test if an error is a UNIQUE constraint violation:
+
+      if pqErr, ok := errors.AsType[*pq.Error](err); ok && pqErr.Code == pqerror.UniqueViolation {
+          log.Fatalf("email %q already exsts", email)
+      }
+
+  To make this a bit more convenient, it also adds a `pq.As()` function:
+
+      pqErr := pq.As(err, pqerror.UniqueViolation)
+      if pqErr != nil {
+          log.Fatalf("email %q already exsts", email)
+      }
+
+### Fixes
+
+- Fix SSL key permission check to allow modes stricter than 0600/0640#1265 ([#1265]).
+
+- Fix Hstore to work with binary parameters ([#1278]).
+
+- Clearer error when starting a new query while pq is still processing another
+  query ([#1272]).
+
+- Send intermediate CAs with client certificates, so they can be signed by an
+  intermediate CA ([#1267]).
+
+- Use `time.UTC` for UTC aliases such as `Etc/UTC` ([#1282]).
+
+[#1258]: https://github.com/lib/pq/pull/1258
+[#1265]: https://github.com/lib/pq/pull/1265
+[#1267]: https://github.com/lib/pq/pull/1267
+[#1270]: https://github.com/lib/pq/pull/1270
+[#1271]: https://github.com/lib/pq/pull/1271
+[#1272]: https://github.com/lib/pq/pull/1272
+[#1275]: https://github.com/lib/pq/pull/1275
+[#1277]: https://github.com/lib/pq/pull/1277
+[#1278]: https://github.com/lib/pq/pull/1278
+[#1279]: https://github.com/lib/pq/pull/1279
+[#1280]: https://github.com/lib/pq/pull/1280
+[#1281]: https://github.com/lib/pq/pull/1281
+[#1282]: https://github.com/lib/pq/pull/1282
+[#1283]: https://github.com/lib/pq/pull/1283
+[#1285]: https://github.com/lib/pq/pull/1285
+
+v1.11.2 (2026-02-10)
 --------------------
 This fixes two regressions:
 
@@ -12,7 +94,7 @@ This fixes two regressions:
 [#1260]: https://github.com/lib/pq/pull/1260
 [#1261]: https://github.com/lib/pq/pull/1261
 
-v1.11.1 (2025-01-29)
+v1.11.1 (2026-01-29)
 --------------------
 This fixes two regressions present in the v1.11.0 release:
 
@@ -24,7 +106,7 @@ This fixes two regressions present in the v1.11.0 release:
 [#1252]: https://github.com/lib/pq/pull/1252
 [#1253]: https://github.com/lib/pq/pull/1253
 
-v1.11.0 (2025-01-28)
+v1.11.0 (2026-01-28)
 --------------------
 This version of pq requires Go 1.21 or newer.
 
@@ -108,6 +190,8 @@ newer. Previously PostgreSQL 8.4 and newer were supported.
 
 - Handle ErrorResponse in readReadyForQuery and return proper error ([#1136]).
 
+- Detect COPY even if the query starts with whitespace or comments ([#1198]).
+
 - CopyIn() and CopyInSchema() now work if the list of columns is empty, in which
   case it will copy all columns ([#1239]).
 
@@ -133,6 +217,7 @@ newer. Previously PostgreSQL 8.4 and newer were supported.
 [#1180]: https://github.com/lib/pq/pull/1180
 [#1184]: https://github.com/lib/pq/pull/1184
 [#1188]: https://github.com/lib/pq/pull/1188
+[#1198]: https://github.com/lib/pq/pull/1198
 [#1211]: https://github.com/lib/pq/pull/1211
 [#1212]: https://github.com/lib/pq/pull/1212
 [#1214]: https://github.com/lib/pq/pull/1214

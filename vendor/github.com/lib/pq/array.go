@@ -388,7 +388,7 @@ FoundType:
 func (a GenericArray) Scan(src any) error {
 	dpv := reflect.ValueOf(a.A)
 	switch {
-	case dpv.Kind() != reflect.Ptr:
+	case dpv.Kind() != reflect.Pointer:
 		return fmt.Errorf("pq: destination %T is not a pointer to array or slice", a.A)
 	case dpv.IsNil():
 		return fmt.Errorf("pq: destination %T is nil", a.A)
@@ -486,7 +486,7 @@ func (a GenericArray) Value() (driver.Value, error) {
 		}
 	case reflect.Array:
 	default:
-		return nil, fmt.Errorf("pq: Unable to convert %T to array", a.A)
+		return nil, fmt.Errorf("pq: unable to convert %T to array", a.A)
 	}
 
 	if n := rv.Len(); n > 0 {
@@ -732,7 +732,7 @@ func appendArrayElement(b []byte, rv reflect.Value) ([]byte, string, error) {
 
 	var del = ","
 	var err error
-	var iv any = rv.Interface()
+	var iv = rv.Interface()
 
 	if ad, ok := iv.(ArrayDelimiter); ok {
 		del = ad.ArrayDelimiter()

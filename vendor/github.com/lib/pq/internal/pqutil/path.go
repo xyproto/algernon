@@ -1,16 +1,23 @@
 package pqutil
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"syscall"
 )
 
-// Home gets the user's home directory. Matches pqGetHomeDirectory() from
-// PostgreSQL
+// Home gets the PostgreSQL configuration dir in the user's home directory:
+// %APPDATA%/postgresql on Windows, and $HOME/.postgresql/postgresql.crt
+// everywhere else.
 //
+// Returns an empy string if no home directory was found.
+//
+// Matches pqGetHomeDirectory() from PostgreSQL.
 // https://github.com/postgres/postgres/blob/2b117bb/src/interfaces/libpq/fe-connect.c#L8214
 func Home() string {
 	if runtime.GOOS == "windows" {
@@ -33,8 +40,22 @@ func Home() string {
 		}
 		home = u.HomeDir
 	}
-	return home
+	return filepath.Join(home, ".postgresql")
 }
+
+// ErrNotExists reports if err is a "path doesn't exist" type error.
+//
+// fs.ErrNotExist is not enough, as "/dev/null/somefile" will return ENOTDIR
+// instead of ENOENT.
+func ErrNotExists(err error) bool {
+	perr := new(os.PathError)
+	if errors.As(err, &perr) && (perr.Err == syscall.ENOENT || perr.Err == syscall.ENOTDIR) {
+		return true
+	}
+	return false
+}
+
+var WarnFD io.Writer = os.Stderr
 
 // Pgpass gets the filepath to the pgpass file to use, returning "" if a pgpass
 // file shouldn't be used.
@@ -55,7 +76,7 @@ func Pgpass(passfile string) string {
 			return ""
 		}
 		if fi.Mode().Perm()&(0x77) != 0 {
-			fmt.Fprintf(os.Stderr,
+			fmt.Fprintf(WarnFD,
 				"WARNING: password file %q has group or world access; permissions should be u=rw (0600) or less\n",
 				passfile)
 			return ""

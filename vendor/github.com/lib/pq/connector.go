@@ -2,6 +2,7 @@ package pq
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql/driver"
 	"fmt"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -18,7 +20,9 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/lib/pq/internal/pgservice"
 	"github.com/lib/pq/internal/pqutil"
+	"github.com/lib/pq/internal/proto"
 )
 
 type (
@@ -33,26 +37,48 @@ type (
 
 	// LoadBalanceHosts is a load_balance_hosts setting.
 	LoadBalanceHosts string
+
+	// ProtocolVersion is a min_protocol_version or max_protocol_version
+	// setting.
+	ProtocolVersion string
+
+	// SSLProtocolVersion is a ssl_min_protocol_version or
+	// ssl_max_protocol_version setting.
+	SSLProtocolVersion string
 )
 
 // Values for [SSLMode] that pq supports.
 const (
-	// disable: No SSL
+	// No SSL
 	SSLModeDisable = SSLMode("disable")
 
-	// require: require SSL, but skip verification.
+	// First try a non-SSL connection and if that fails try an SSL connection.
+	SSLModeAllow = SSLMode("allow")
+
+	// First try an SSL connection and if that fails try a non-SSL connection.
+	SSLModePrefer = SSLMode("prefer")
+
+	// Require SSL, but skip verification. This is the default.
 	SSLModeRequire = SSLMode("require")
 
-	// verify-ca: require SSL and verify that the certificate was signed by a
-	// trusted CA.
+	// Require SSL and verify that the certificate was signed by a trusted CA.
 	SSLModeVerifyCA = SSLMode("verify-ca")
 
-	// verify-full: require SSK and verify that the certificate was signed by a
-	// trusted CA and the server host name matches the one in the certificate.
+	// Require SSL and verify that the certificate was signed by a trusted CA
+	// and the server host name matches the one in the certificate.
 	SSLModeVerifyFull = SSLMode("verify-full")
 )
 
-var sslModes = []SSLMode{SSLModeDisable, SSLModeRequire, SSLModeVerifyFull, SSLModeVerifyCA}
+var sslModes = []SSLMode{SSLModeDisable, SSLModeAllow, SSLModePrefer, SSLModeRequire,
+	SSLModeVerifyFull, SSLModeVerifyCA}
+
+func (s SSLMode) useSSL() bool {
+	switch s {
+	case SSLModePrefer, SSLModeRequire, SSLModeVerifyCA, SSLModeVerifyFull:
+		return true
+	}
+	return false
+}
 
 // Values for [SSLNegotiation] that pq supports.
 const (
@@ -110,6 +136,49 @@ const (
 
 var loadBalanceHosts = []LoadBalanceHosts{LoadBalanceHostsDisable, LoadBalanceHostsRandom}
 
+// Values for [ProtocolVersion] that pq supports.
+const (
+	// ProtocolVersion30 is the default protocol version, supported in
+	// PostgreSQL 3.0 and newer.
+	ProtocolVersion30 = ProtocolVersion("3.0")
+
+	// ProtocolVersion32 uses a longer secret key length for query cancellation,
+	// supported in PostgreSQL 18 and newer.
+	ProtocolVersion32 = ProtocolVersion("3.2")
+
+	// ProtocolVersionLatest is the latest protocol version that pq supports
+	// (which may not be supported by the server).
+	ProtocolVersionLatest = ProtocolVersion("latest")
+)
+
+var protocolVersions = []ProtocolVersion{ProtocolVersion30, ProtocolVersion32, ProtocolVersionLatest}
+
+// Values for [SSLProtocolVersion] that pq supports.
+const (
+	SSLProtocolVersionTLS10 = SSLProtocolVersion("TLSv1.0")
+	SSLProtocolVersionTLS11 = SSLProtocolVersion("TLSv1.1")
+	SSLProtocolVersionTLS12 = SSLProtocolVersion("TLSv1.2")
+	SSLProtocolVersionTLS13 = SSLProtocolVersion("TLSv1.3")
+)
+
+var sslProtocolVersions = []SSLProtocolVersion{SSLProtocolVersionTLS10, SSLProtocolVersionTLS11,
+	SSLProtocolVersionTLS12, SSLProtocolVersionTLS13}
+
+func (s SSLProtocolVersion) tlsconf() uint16 {
+	switch s {
+	case SSLProtocolVersionTLS10:
+		return tls.VersionTLS10
+	case SSLProtocolVersionTLS11:
+		return tls.VersionTLS11
+	case SSLProtocolVersionTLS12:
+		return tls.VersionTLS12
+	case SSLProtocolVersionTLS13:
+		return tls.VersionTLS13
+	default:
+		return 0
+	}
+}
+
 // Connector represents a fixed configuration for the pq driver with a given
 // dsn. Connector satisfies the [database/sql/driver.Connector] interface and
 // can be used to create any number of DB Conn's via [sql.OpenDB].
@@ -147,6 +216,15 @@ func (c *Connector) Dialer(dialer Dialer) { c.dialer = dialer }
 
 // Driver returns the underlying driver of this Connector.
 func (c *Connector) Driver() driver.Driver { return &Driver{} }
+
+func (p ProtocolVersion) proto() int {
+	switch p {
+	default:
+		return proto.ProtocolVersion30
+	case ProtocolVersion32, ProtocolVersionLatest:
+		return proto.ProtocolVersion32
+	}
+}
 
 // Config holds options pq supports when connecting to PostgreSQL.
 //
@@ -234,18 +312,43 @@ type Config struct {
 	// When set to "direct" it will use SSL without negotiation (PostgreSQL ≥17 only).
 	SSLNegotiation SSLNegotiation `postgres:"sslnegotiation" env:"PGSSLNEGOTIATION"`
 
-	// Cert file location. The file must contain PEM encoded data.
+	// Path to client SSL certificate. The file must contain PEM encoded data.
+	//
+	// Defaults to ~/.postgresql/postgresql.crt
 	SSLCert string `postgres:"sslcert" env:"PGSSLCERT"`
 
-	// Key file location. The file must contain PEM encoded data.
+	// Path to secret key for sslcert. The file must contain PEM encoded data.
+	//
+	// Defaults to ~/.postgresql/postgresql.key
 	SSLKey string `postgres:"sslkey" env:"PGSSLKEY"`
 
-	// The location of the root certificate file. The file must contain PEM encoded data.
+	// Path to root certificate. The file must contain PEM encoded data.
+	//
+	// The special value "system" can be used to load the system's root
+	// certificates ([x509.SystemCertPool]). This will change the default
+	// sslmode to verify-full and issue an error if a lower setting is used – as
+	// anyone can register a valid certificate hostname verification becomes
+	// essential.
+	//
+	// Defaults to ~/.postgresql/root.crt.
 	SSLRootCert string `postgres:"sslrootcert" env:"PGSSLROOTCERT"`
 
 	// By default SNI is on, any value which is not starting with "1" disables
 	// SNI.
 	SSLSNI bool `postgres:"sslsni" env:"PGSSLSNI"`
+
+	// Minimum SSL/TLS protocol version to allow for the connection.
+	//
+	// The default is determined by [tls.Config.MinVersion], which is TLSv1.2 at
+	// the time of writing.
+	SSLMinProtocolVersion SSLProtocolVersion `postgres:"ssl_min_protocol_version" env:"SSLPGMINPROTOCOLVERSION"`
+
+	// Maximum SSL/TLS protocol version to allow for the connection. If not set,
+	// this parameter is ignored and the connection will use the maximum bound
+	// defined by the backend, if set. Setting the maximum protocol version is
+	// mainly useful for testing or if some component has issues working with a
+	// newer protocol.
+	SSLMaxProtocolVersion SSLProtocolVersion `postgres:"ssl_max_protocol_version" env:"SSLPGMAXPROTOCOLVERSION"`
 
 	// Interpert sslcert and sslkey as PEM encoded data, rather than a path to a
 	// PEM file. This is a pq extension, not supported in libpq.
@@ -303,6 +406,31 @@ type Config struct {
 	// to the same server.
 	LoadBalanceHosts LoadBalanceHosts `postgres:"load_balance_hosts" env:"PGLOADBALANCEHOSTS"`
 
+	// Minimum acceptable PostgreSQL protocol version. If the server does not
+	// support at least this version, the connection will fail. Defaults to
+	// "3.0".
+	MinProtocolVersion ProtocolVersion `postgres:"min_protocol_version" env:"PGMINPROTOCOLVERSION"`
+
+	// Maximum PostgreSQL protocol version to request from the server. Defaults to "3.0".
+	MaxProtocolVersion ProtocolVersion `postgres:"max_protocol_version" env:"PGMAXPROTOCOLVERSION"`
+
+	// Load connection parameters from the service file at ~/.pg_service.conf
+	// (which can be configured with PGSERVICEFILE).
+	//
+	// The service file is a INI-like file to configure connection parameters:
+	//
+	//   [servicename]
+	//   # Comment
+	//   dbname=foo
+	//
+	// Unlike libpq, this does not look at the system-wide service file, as the
+	// location of this is a compile-time value that is not easy for pq to
+	// retrieve.
+	Service string `postgres:"service" env:"PGSERVICE"`
+
+	// Path to connection service file. Defaults to ~/.pg_service.conf.
+	ServiceFile string `postgres:"-" env:"PGSERVICEFILE"`
+
 	// Runtime parameters: any unrecognized parameter in the DSN will be added
 	// to this and sent to PostgreSQL during startup.
 	Runtime map[string]string `postgres:"-" env:"-"`
@@ -331,14 +459,16 @@ type ConfigMultihost struct {
 	Port     uint16
 }
 
-// NewConfig creates a new [Config] from the current environment and given DSN.
+// NewConfig creates a new [Config] from the defaults, environment, service
+// file, and DSN, in that order. That is: a service overrides any value from the
+// environment, which in turn gets overridden by the same parameter in the
+// connection string.
 //
-// A subset of the connection parameters supported by PostgreSQL are supported
-// by pq; see the [Config] struct fields for supported parameters. pq also lets
-// you specify any [run-time parameter] (such as search_path or work_mem)
-// directly in the connection string. This is different from libpq, which does
-// not allow run-time parameters in the connection string, instead requiring you
-// to supply them in the options parameter.
+// Most connection parameters supported by PostgreSQL are supported; see the
+// [Config] struct for supported parameters. pq also lets you specify any
+// [run-time parameter] such as search_path or work_mem in the connection
+// string. This is different from libpq, which uses the "options" parameter for
+// this (which also works in pq).
 //
 // # key=value connection strings
 //
@@ -377,8 +507,8 @@ type ConfigMultihost struct {
 // support are set. Environment variables have a lower precedence than
 // explicitly provided connection parameters.
 //
-// [run-time parameter]: http://www.postgresql.org/docs/current/static/runtime-config.html
 // [PostgreSQL environment variables]: http://www.postgresql.org/docs/current/static/libpq-envars.html
+// [run-time parameter]: http://www.postgresql.org/docs/current/static/runtime-config.html
 func NewConfig(dsn string) (Config, error) {
 	return newConfig(dsn, os.Environ())
 }
@@ -413,11 +543,21 @@ func (cfg Config) hosts() []Config {
 }
 
 func newConfig(dsn string, env []string) (Config, error) {
-	cfg := Config{Host: "localhost", Port: 5432, SSLSNI: true}
+	cfg := Config{
+		Host:               "localhost",
+		Port:               5432,
+		SSLSNI:             true,
+		SSLMode:            SSLModePrefer,
+		MinProtocolVersion: "3.0",
+		MaxProtocolVersion: "3.0",
+	}
 	if err := cfg.fromEnv(env); err != nil {
 		return Config{}, err
 	}
 	if err := cfg.fromDSN(dsn); err != nil {
+		return Config{}, err
+	}
+	if err := cfg.fromService(); err != nil {
 		return Config{}, err
 	}
 
@@ -487,6 +627,29 @@ func newConfig(dsn string, env []string) (Config, error) {
 		cfg.SSLMode = SSLModeDisable
 	}
 
+	if cfg.MinProtocolVersion > cfg.MaxProtocolVersion {
+		return Config{}, fmt.Errorf("pq: min_protocol_version %q cannot be greater than max_protocol_version %q",
+			cfg.MinProtocolVersion, cfg.MaxProtocolVersion)
+	}
+	if cfg.SSLNegotiation == SSLNegotiationDirect {
+		switch cfg.SSLMode {
+		case SSLModeDisable, SSLModeAllow, SSLModePrefer:
+			return Config{}, fmt.Errorf(
+				`pq: weak sslmode %q may not be used with sslnegotiation=direct (use "require", "verify-ca", or "verify-full")`,
+				cfg.SSLMode)
+		}
+	}
+	if cfg.SSLRootCert == "system" {
+		if !cfg.isset("sslmode") {
+			cfg.SSLMode = SSLModeVerifyFull
+		}
+		if cfg.SSLMode != SSLModeVerifyFull {
+			return Config{}, fmt.Errorf(
+				`pq: weak sslmode %q may not be used with sslrootcert=system (use "verify-full")`,
+				cfg.SSLMode)
+		}
+	}
+
 	return cfg, nil
 }
 
@@ -511,10 +674,10 @@ func (cfg *Config) fromEnv(env []string) error {
 			continue
 		}
 		switch k {
-		case "PGREQUIREAUTH", "PGCHANNELBINDING", "PGSERVICE", "PGSERVICEFILE", "PGREALM",
-			"PGSSLCERTMODE", "PGSSLCOMPRESSION", "PGREQUIRESSL", "PGSSLCRL", "PGREQUIREPEER",
-			"PGSYSCONFDIR", "PGLOCALEDIR", "PGSSLCRLDIR", "PGSSLMINPROTOCOLVERSION", "PGSSLMAXPROTOCOLVERSION",
-			"PGGSSENCMODE", "PGGSSDELEGATION", "PGMINPROTOCOLVERSION", "PGMAXPROTOCOLVERSION", "PGGSSLIB":
+		case "PGREQUIRESSL", "PGSSLCOMPRESSION", // Deprecated.
+			"PGREALM", "PGGSSENCMODE", "PGGSSDELEGATION", "PGGSSLIB", // krb stuff
+			"PGREQUIREAUTH", "PGCHANNELBINDING",
+			"PGSSLCERTMODE", "PGSSLCRL", "PGSSLCRLDIR", "PGREQUIREPEER":
 			return fmt.Errorf("pq: environment variable $%s is not supported", k)
 		case "PGKRBSRVNAME":
 			if newGss == nil {
@@ -523,7 +686,7 @@ func (cfg *Config) fromEnv(env []string) error {
 		}
 		e[k] = v
 	}
-	return cfg.setFromTag(e, "env")
+	return cfg.setFromTag(e, "env", false)
 }
 
 // parseOpts parses the options from name and adds them to the values.
@@ -629,10 +792,31 @@ func (cfg *Config) fromDSN(dsn string) error {
 		opt[string(keyRunes)] = string(valRunes)
 	}
 
-	return cfg.setFromTag(opt, "postgres")
+	return cfg.setFromTag(opt, "postgres", false)
 }
 
-func (cfg *Config) setFromTag(o map[string]string, tag string) error {
+func (cfg *Config) fromService() error {
+	if cfg.Service == "" {
+		return nil
+	}
+
+	if !cfg.isset("PGSERVICEFILE") {
+		if home := pqutil.Home(); home != "" {
+			if runtime.GOOS != "windows" {
+				home = filepath.Dir(home) // Unlike other files this uses ~/ and not ~/.postgresql
+			}
+			cfg.ServiceFile = filepath.Join(home, ".pg_service.conf")
+		}
+	}
+
+	opts, err := pgservice.FindService(cfg.ServiceFile, cfg.Service)
+	if err != nil {
+		return fmt.Errorf("pq: %w", err)
+	}
+	return cfg.setFromTag(opts, "postgres", true)
+}
+
+func (cfg *Config) setFromTag(o map[string]string, tag string, service bool) error {
 	f := "pq: wrong value for %q: "
 	if tag == "env" {
 		f = "pq: wrong value for $%s: "
@@ -643,17 +827,21 @@ func (cfg *Config) setFromTag(o map[string]string, tag string) error {
 	)
 	for i := 0; i < types.NumField(); i++ {
 		var (
-			rt                 = types.Field(i)
-			rv                 = values.Field(i)
-			k                  = rt.Tag.Get(tag)
-			connectTimeout     = (tag == "postgres" && k == "connect_timeout") || (tag == "env" && k == "PGCONNECT_TIMEOUT")
-			host               = (tag == "postgres" && k == "host") || (tag == "env" && k == "PGHOST")
-			hostaddr           = (tag == "postgres" && k == "hostaddr") || (tag == "env" && k == "PGHOSTADDR")
-			port               = (tag == "postgres" && k == "port") || (tag == "env" && k == "PGPORT")
-			sslmode            = (tag == "postgres" && k == "sslmode") || (tag == "env" && k == "PGSSLMODE")
-			sslnegotiation     = (tag == "postgres" && k == "sslnegotiation") || (tag == "env" && k == "PGSSLNEGOTIATION")
-			targetsessionattrs = (tag == "postgres" && k == "target_session_attrs") || (tag == "env" && k == "PGTARGETSESSIONATTRS")
-			loadbalancehosts   = (tag == "postgres" && k == "load_balance_hosts") || (tag == "env" && k == "PGLOADBALANCEHOSTS")
+			rt                    = types.Field(i)
+			rv                    = values.Field(i)
+			k                     = rt.Tag.Get(tag)
+			connectTimeout        = (tag == "postgres" && k == "connect_timeout") || (tag == "env" && k == "PGCONNECT_TIMEOUT")
+			host                  = (tag == "postgres" && k == "host") || (tag == "env" && k == "PGHOST")
+			hostaddr              = (tag == "postgres" && k == "hostaddr") || (tag == "env" && k == "PGHOSTADDR")
+			port                  = (tag == "postgres" && k == "port") || (tag == "env" && k == "PGPORT")
+			sslmode               = (tag == "postgres" && k == "sslmode") || (tag == "env" && k == "PGSSLMODE")
+			sslnegotiation        = (tag == "postgres" && k == "sslnegotiation") || (tag == "env" && k == "PGSSLNEGOTIATION")
+			targetsessionattrs    = (tag == "postgres" && k == "target_session_attrs") || (tag == "env" && k == "PGTARGETSESSIONATTRS")
+			loadbalancehosts      = (tag == "postgres" && k == "load_balance_hosts") || (tag == "env" && k == "PGLOADBALANCEHOSTS")
+			minprotocolversion    = (tag == "postgres" && k == "min_protocol_version") || (tag == "env" && k == "PGMINPROTOCOLVERSION")
+			maxprotocolversion    = (tag == "postgres" && k == "max_protocol_version") || (tag == "env" && k == "PGMAXPROTOCOLVERSION")
+			sslminprotocolversion = (tag == "postgres" && k == "ssl_min_protocol_version") || (tag == "env" && k == "SSLPGMINPROTOCOLVERSION")
+			sslmaxprotocolversion = (tag == "postgres" && k == "ssl_max_protocol_version") || (tag == "env" && k == "SSLPGMAXPROTOCOLVERSION")
 		)
 		if k == "" || k == "-" {
 			continue
@@ -662,7 +850,11 @@ func (cfg *Config) setFromTag(o map[string]string, tag string) error {
 		v, ok := o[k]
 		delete(o, k)
 		if ok {
-			if t, ok := rt.Tag.Lookup("postgres"); ok && t != "" && t != "-" {
+			t, ok := rt.Tag.Lookup("postgres")
+			if !ok || t == "" || t == "-" { // For PGSERVICEFILE, which can only be from env
+				t, ok = rt.Tag.Lookup("env")
+			}
+			if ok && t != "" && t != "-" {
 				cfg.set = append(cfg.set, t)
 			}
 			switch rt.Type.Kind() {
@@ -705,6 +897,12 @@ func (cfg *Config) setFromTag(o map[string]string, tag string) error {
 				}
 				if loadbalancehosts && !slices.Contains(loadBalanceHosts, LoadBalanceHosts(v)) {
 					return fmt.Errorf(f+`%q is not supported; supported values are %s`, k, v, pqutil.Join(loadBalanceHosts))
+				}
+				if (minprotocolversion || maxprotocolversion) && !slices.Contains(protocolVersions, ProtocolVersion(v)) {
+					return fmt.Errorf(f+`%q is not supported; supported values are %s`, k, v, pqutil.Join(protocolVersions))
+				}
+				if (sslminprotocolversion || sslmaxprotocolversion) && !slices.Contains(sslProtocolVersions, SSLProtocolVersion(v)) {
+					return fmt.Errorf(f+`%q is not supported; supported values are %s`, k, v, pqutil.Join(sslProtocolVersions))
 				}
 				if host {
 					vv := strings.Split(v, ",")
@@ -756,8 +954,18 @@ func (cfg *Config) setFromTag(o map[string]string, tag string) error {
 		}
 	}
 
+	if service && len(o) > 0 {
+		// TODO(go1.23): use maps.Keys once we require Go 1.23.
+		var key string
+		for k := range o {
+			key = k
+			break
+		}
+		return fmt.Errorf("pq: unknown setting %q in service file for service %q", key, cfg.Service)
+	}
+
 	// Set run-time; we delete map keys as they're set in the struct.
-	if tag == "postgres" {
+	if !service && tag == "postgres" {
 		// Make sure database= sets dbname=, as that previously worked (kind of
 		// by accident).
 		// TODO(v2): remove
@@ -833,7 +1041,7 @@ func (cfg Config) string() string {
 		switch k {
 		case "datestyle", "client_encoding":
 			continue
-		case "host", "port", "user", "sslsni":
+		case "host", "port", "user", "sslsni", "sslmode", "min_protocol_version", "max_protocol_version":
 			if !cfg.isset(k) {
 				continue
 			}
