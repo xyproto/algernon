@@ -62,6 +62,14 @@ func IsDir(path string) bool {
 
 var Dir = IsDir
 
+// IsDirAndNotSymlink checks if the given path exists and is a directory that is not a symlink
+func IsDirAndNotSymlink(path string) bool {
+	fi, err := os.Lstat(path)
+	return err == nil && fi.IsDir()
+}
+
+var DirAndNotSymlink = IsDirAndNotSymlink
+
 // Which tries to find the given executable name in the $PATH
 // Returns an empty string if not found.
 func Which(executable string) string {
