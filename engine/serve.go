@@ -21,7 +21,7 @@ import (
 var (
 	shutdownFunctions  []func()
 	serverServingMutex sync.Mutex
-	completed          bool
+	completed          atomic.Bool
 )
 
 // AtShutdown adds a function to the list of functions that will be ran at shutdown
@@ -61,7 +61,7 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
 func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
 	return func() {
-		if completed {
+		if completed.Load() {
 			// The shutdown functions have already been called
 			return
 		}
@@ -77,7 +77,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 			serverServingMutex.Unlock()
 		}
 
-		completed = true
+		completed.Store(true)
 
 		if ac.verboseMode {
 			logrus.Info("Shutdown complete")
