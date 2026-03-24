@@ -202,7 +202,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260323192809-dffbd3e60fec
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260324150956-51dfd15efc19
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
