@@ -9,11 +9,11 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 )
 
-// Helper executes the given shell command in the specified working directory.
+// ShellHelper executes the given shell command in the specified working directory.
 // It converts stdout and stderr into slices of strings (one entry per line) and then
-// uses convert.Strings2table to return two Lua tables. The exit code is also pushed.
+// uses convert.Strings2table to return two Lua tables. The exit code is also returned.
 // If the command is empty, both output tables are empty and exit code 1 is returned.
-func Helper(L *lua.LState, command string, workingDir string) int {
+func ShellHelper(L *lua.LState, command, workingDir string) int {
 	if command == "" { // no command given
 		L.Push(L.NewTable())   // stdout: empty table
 		L.Push(L.NewTable())   // stderr: empty table

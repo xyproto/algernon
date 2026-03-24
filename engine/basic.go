@@ -142,7 +142,7 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		if err != nil {
 			workingDir = ""
 		}
-		return run3.Helper(L, command, workingDir)
+		return run3.ShellHelper(L, command, workingDir)
 	}))
 }
 
@@ -563,7 +563,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	L.SetGlobal("run3", L.NewFunction(func(L *lua.LState) int {
 		command := L.ToString(1)
 		workingDir := filepath.Dir(filename)
-		return run3.Helper(L, command, workingDir)
+		return run3.ShellHelper(L, command, workingDir)
 	}))
 
 }
