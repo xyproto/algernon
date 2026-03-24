@@ -98,6 +98,15 @@ Filename for where to log requests in the Combined Log Format (CLF).
 .B \-\-ncsa=FILENAME
 Filename for where to log requests in the Common Log Format (NCSA).
 .TP
+.B \-\-letsencrypt
+Use certificates provided by Let's Encrypt for all served domains and serve
+over regular HTTPS by using CertMagic. Implies \fB\-\-domain\fP.
+.TP
+.B \-\-testcert
+Use the Let's Encrypt staging CA instead of the production CA, to avoid
+hitting rate limits while configuring a new domain. Use together with
+\fB\-\-letsencrypt\fP.
+.TP
 .B \-\-domain
 Serve files from the subdirectory with the same name as the requested domain,
 for instance \fB/srv/algernon/mydomain.com\fP and \fB/srv/algernon/otherweb.com\fP,

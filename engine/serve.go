@@ -170,6 +170,9 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			// TODO: Find a way for Algernon users to agree on this manually
 			certmagic.DefaultACME.Agreed = true
 			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
+			if ac.useCertMagicStaging {
+				certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+			}
 			if err := certmagic.HTTPS(ac.certMagicDomains, handler); err != nil {
 				servingHTTPS.Store(false)
 				logrus.Error(err)

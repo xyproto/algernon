@@ -642,6 +642,8 @@ Available flags:
   --largesize=N                Threshold for not reading static files into memory, in bytes.
   --letsencrypt                Use certificates provided by Let's Encrypt for all served
                                domains and serve over regular HTTPS by using CertMagic.
+  --testcert                   Use the Let's Encrypt staging CA instead of the production CA,
+                               to avoid hitting rate limits while configuring a new domain.
   --limit=N                    Limit clients to N requests per second
                                (the default is ` + ac.defaultLimitString + `).
   --log=FILENAME               Log to a file instead of to the console.

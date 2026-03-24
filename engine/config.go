@@ -144,6 +144,7 @@ type Config struct {
 	disableRateLimiting          bool
 	redirectHTTP                 bool // redirect HTTP traffic to HTTPS?
 	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
+	useCertMagicStaging          bool // use the Let's Encrypt staging CA instead of the production CA
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 }

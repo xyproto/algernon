@@ -1275,6 +1275,8 @@ For instance, if `/srv/myhappydomain.com` exists, then `algernon --letsencrypt -
 
 When `--letsencrypt` is used, it will try to serve on port 443 and 80 (which redirects to 443).
 
+Use `--testcert` together with `--letsencrypt` to use the Let's Encrypt staging CA instead of the production CA. This is useful when first setting up a domain, to avoid hitting rate limits before the configuration is known to be correct.
+
 Releases
 --------
 
