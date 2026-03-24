@@ -25,7 +25,10 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 		}
 		info := ac.cache.Stats()
 		// Return the string, but drop the final newline
-		L.Push(lua.LString(info[:len(info)-1]))
+		if len(info) > 0 {
+			info = info[:len(info)-1]
+		}
+		L.Push(lua.LString(info))
 		return 1 // number of results
 	})
 

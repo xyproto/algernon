@@ -27,6 +27,7 @@ type HTTPClient struct {
 func NewHTTPClient() *HTTPClient {
 	var hc HTTPClient
 	hc.client = httpclient.NewHttpClient()
+	hc.cookieMap = make(map[string]string)
 	hc.timeout = 10
 	return &hc
 }

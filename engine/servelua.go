@@ -72,7 +72,11 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 				// Try to convert from map[any]any to map[string]any
 				convertedMap := make(map[string]any)
 				for k, v := range interfaceMap {
-					convertedMap[k.(string)] = v
+					if ks, ok := k.(string); ok {
+						convertedMap[ks] = v
+					} else {
+						logrus.Warnf("serve2: skipping non-string key in table: %v (%T)", k, k)
+					}
 				}
 				pongoMap = pongo2.Context(convertedMap)
 			} else if m, ok := goMap.(map[string]any); ok {

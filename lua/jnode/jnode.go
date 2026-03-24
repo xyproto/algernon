@@ -205,6 +205,7 @@ func jnodePOSTToURL(L *lua.LState) int {
 		logrus.Error(err)
 		return 0 // number of results
 	}
+	defer resp.Body.Close()
 
 	L.Push(lua.LString(resp.Status))
 	return 1 // number of results
@@ -258,6 +259,7 @@ func jnodePUTToURL(L *lua.LState) int {
 		logrus.Error(err)
 		return 0 // number of results
 	}
+	defer resp.Body.Close()
 
 	L.Push(lua.LString(resp.Status))
 	return 1 // number of results
