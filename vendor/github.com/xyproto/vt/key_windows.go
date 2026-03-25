@@ -110,6 +110,17 @@ func (tty *TTY) Close() {
 	}
 }
 
+// Poll checks if data is available
+func (tty *TTY) Poll(d time.Duration) (bool, error) {
+	handle := windows.Handle(os.Stdin.Fd())
+	ms := uint32(d.Milliseconds())
+	event, err := windows.WaitForSingleObject(handle, ms)
+	if err != nil {
+		return false, err
+	}
+	return event == windows.WAIT_OBJECT_0, nil
+}
+
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int {
 	ascii, keyCode, err := asciiAndKeyCode(tty)

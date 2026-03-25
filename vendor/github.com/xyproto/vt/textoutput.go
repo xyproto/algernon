@@ -25,7 +25,7 @@ type TextOutput struct {
 }
 
 // EnvNoColor respects the NO_COLOR environment variable
-var EnvNoColor = env.Bool("NO_COLOR")
+var EnvNoColor = env.Bool("NO_COLOR") || env.Str("TERM") == "vt100"
 
 // NewTextOutput can initialize a new TextOutput struct,
 // which can have colors turned on or off and where the
@@ -38,6 +38,16 @@ func NewTextOutput(color, enabled bool) *TextOutput {
 	o := &TextOutput{nil, nil, color, enabled}
 	o.initializeTagReplacers()
 	return o
+}
+
+// DisableColors will enable color output
+func (o *TextOutput) EnableColors() {
+	o.color = true
+}
+
+// DisableColors will disable color output
+func (o *TextOutput) DisableColors() {
+	o.color = false
 }
 
 // New can initialize a new TextOutput struct,

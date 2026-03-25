@@ -361,7 +361,7 @@ func (cache *FileCache) fetchAndCache(filename string) (*DataBlock, error) {
 	// Copy the data from the cache
 	data := make([]byte, size)
 	var i uint64
-	for i = 0; i < size; i++ {
+	for i = range size {
 		data[i] = cache.blob[startpos+i]
 	}
 
@@ -374,6 +374,13 @@ func (cache *FileCache) fetchAndCache(filename string) (*DataBlock, error) {
 
 func (cache *FileCache) freeSpace() uint64 {
 	return cache.size - cache.offset
+}
+
+// BytesUsed returns the number of bytes currently used in the cache
+func (cache *FileCache) BytesUsed() uint64 {
+	cache.rw.RLock()
+	defer cache.rw.RUnlock()
+	return cache.offset
 }
 
 // Stats returns formatted cache statistics

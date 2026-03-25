@@ -152,6 +152,30 @@ func (tty *TTY) Close() {
 	unix.Close(tty.fd)
 }
 
+// Poll checks if there is data available to read from the TTY within the given timeout.
+// Returns true if data is available, false if the timeout was reached.
+func (tty *TTY) Poll(d time.Duration) (bool, error) {
+	var readfds unix.FdSet
+	readfds.Bits[tty.fd/64] |= 1 << (uint(tty.fd) % 64)
+
+	var tv *unix.Timeval
+	if d >= 0 {
+		t := unix.NsecToTimeval(d.Nanoseconds())
+		tv = &t
+	}
+
+	for {
+		n, err := unix.Select(tty.fd+1, &readfds, nil, nil, tv)
+		if err == unix.EINTR {
+			continue
+		}
+		if err != nil {
+			return false, err
+		}
+		return n > 0, nil
+	}
+}
+
 // asciiAndKeyCode processes input into an ASCII or key code
 func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 	bytes := make([]byte, 6)

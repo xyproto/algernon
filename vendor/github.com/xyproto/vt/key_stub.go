@@ -43,6 +43,9 @@ func (tty *TTY) SetTimeout(d time.Duration) {
 // Close will restore and close the raw terminal
 func (tty *TTY) Close() {}
 
+// Poll checks if data is available (stub)
+func (tty *TTY) Poll(d time.Duration) (bool, error) { return true, nil }
+
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int { return 0 }
 
