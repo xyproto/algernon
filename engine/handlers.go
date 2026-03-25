@@ -442,6 +442,20 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	// Source files that may be used by web pages
 	case ".js":
 		w.Header().Add(contentType, "text/javascript;charset=utf-8")
+		if jsblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil {
+			jsdata := jsblock.Bytes()
+			if needsBundling(jsdata) {
+				if bundled, err := ac.bundleFile(filename, jsdata); err == nil {
+					ac.DataToClient(w, req, filename, bundled)
+				} else {
+					logrus.Warnf("Could not bundle %s, serving raw: %v", filename, err)
+					ac.DataToClient(w, req, filename, jsdata)
+				}
+			} else {
+				ac.DataToClient(w, req, filename, jsdata)
+			}
+		}
+		return
 
 	// JSON
 	case ".json":

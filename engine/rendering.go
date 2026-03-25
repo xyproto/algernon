@@ -820,6 +820,22 @@ func (ac *Config) GCSSPage(w http.ResponseWriter, req *http.Request, filename st
 // JSXPage writes the given source bytes (in JSX) converted to JS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {
+	// If the source contains import/require statements, use the full bundler
+	// with on-the-fly caching rather than a single-file transform.
+	if needsBundling(jsxdata) {
+		data, err := ac.bundleFile(filename, jsxdata)
+		if err != nil {
+			if ac.debugMode {
+				ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+			} else {
+				logrus.Error(err)
+			}
+			return
+		}
+		ac.DataToClient(w, req, filename, data)
+		return
+	}
+
 	var buf bytes.Buffer
 	buf.Write(jsxdata)
 

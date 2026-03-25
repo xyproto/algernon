@@ -68,6 +68,9 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 // ClearCache tries to clear the Ollama client cache and the disk cache
 func (ac *Config) ClearCache() {
 	ollamaclient.ClearCache()
+	if ac.bundleCache != nil {
+		ac.bundleCache.Clear()
+	}
 	if ac.cache != nil {
 		ac.cache.Clear()
 	}

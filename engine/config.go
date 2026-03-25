@@ -92,11 +92,13 @@ type Config struct {
 	postgresDSN                  string               // connection string
 	postgresDatabase             string               // database name
 	dirBaseURL                   string               // optional Base URL, for the directory listings
+	bundleCache                  *bundleCache         // cache for on-the-fly esbuild bundles
 	jsxOptions                   api.TransformOptions // JSX rendering options
 	certMagicDomains             []string
 	serverConfigurationFilenames []string // list of configuration filenames to check
 	cacheMaxGivenDataSize        uint64
 	largeFileSize                uint64        // threshold for not reading large files into memory
+	bundleCacheMaxMemory         uint64        // max memory for bundle cache (0 = unlimited)
 	refreshDuration              time.Duration // for the auto-refresh feature
 	redisDBindex                 int
 	cacheSize                    uint64
@@ -206,6 +208,9 @@ func New(versionString, description string) (*Config, error) {
 		// General information about Algernon
 		versionString: versionString,
 		description:   description,
+
+		// Cache for on-the-fly esbuild bundles
+		bundleCache: newBundleCache(),
 
 		// JSX rendering options
 		jsxOptions: api.TransformOptions{
