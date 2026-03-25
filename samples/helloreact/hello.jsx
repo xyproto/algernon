@@ -1,4 +1,3 @@
-React.render(
-  <h1>Hello, React!</h1>,
-  document.getElementById('content')
+ReactDOM.createRoot(document.getElementById('content')).render(
+  <h1>Hello, React!</h1>
 );

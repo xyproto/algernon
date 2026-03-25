@@ -1,39 +1,37 @@
-class TodoList extends React.Component {
-  render() {
-    const createItem = (itemText, index) => <li key={index + itemText}>{itemText}</li>;
-    return <ul>{this.props.items.map(createItem)}</ul>;
-  }
+function TodoList(props) {
+  return (
+    <ul>
+      {props.items.map((itemText, index) => (
+        <li key={index + itemText}>{itemText}</li>
+      ))}
+    </ul>
+  );
 }
 
-class TodoApp extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { items: [], text: '' };
+function TodoApp() {
+  const [items, setItems] = React.useState([]);
+  const [text, setText] = React.useState('');
+
+  function handleChange(e) {
+    setText(e.target.value);
   }
 
-  onChange = (e) => {
-    this.setState({ text: e.target.value });
-  }
-
-  handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
-    const nextItems = this.state.items.concat([this.state.text]);
-    const nextText = '';
-    this.setState({ items: nextItems, text: nextText });
+    setItems(prev => [...prev, text]);
+    setText('');
   }
 
-  render() {
-    return (
-      <div>
-        <h3>TODO</h3>
-        <TodoList items={this.state.items} />
-        <form onSubmit={this.handleSubmit}>
-          <input onChange={this.onChange} value={this.state.text} />
-          <button>{'Add #' + (this.state.items.length + 1)}</button>
-        </form>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h3>TODO</h3>
+      <TodoList items={items} />
+      <form onSubmit={handleSubmit}>
+        <input onChange={handleChange} value={text} />
+        <button>{'Add #' + (items.length + 1)}</button>
+      </form>
+    </div>
+  );
 }
 
-ReactDOM.render(<TodoApp />, document.getElementById('content'));
+ReactDOM.createRoot(document.getElementById('content')).render(<TodoApp />);

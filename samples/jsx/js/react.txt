@@ -1,4 +1,27 @@
-The react files are from:
+React 19.2.4 — bundled with esbuild via `algernon --bundle`
 
-https://unpkg.com/react@16.9.0/umd/react.production.min.js
-https://unpkg.com/react-dom@16.9.0/umd/react-dom.production.min.js
+React 19 removed UMD/standalone builds. These files were produced by:
+
+  # 1. Bundle react as an IIFE that sets window.React
+  algernon --bundle react-entry.js --bundle --platform=browser --format=iife \
+    --global-name=React --define:process.env.NODE_ENV='"production"' \
+    --minify --outfile=react.production.min.js
+
+  # react-entry.js:
+  #   var React = require('react'); module.exports = React;
+
+  # 2. Bundle react-dom/client as an IIFE that sets window.ReactDOM,
+  #    reading React from window.React via a shim (avoids duplicate instances)
+  algernon --bundle node_modules/react-dom/client.js --bundle \
+    --platform=browser --format=iife --global-name=ReactDOM \
+    --define:process.env.NODE_ENV='"production"' \
+    --alias:react=./react-global-shim.js --minify \
+    --outfile=react-dom.production.min.js
+
+  # react-global-shim.js:
+  #   module.exports = window.React;
+
+npm packages used (extracted from tarballs, no npm CLI required):
+  react@19.2.4
+  react-dom@19.2.4
+  scheduler@0.27.0  (required by react-dom@19)

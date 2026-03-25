@@ -1,125 +1,90 @@
-class CommentBox extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { data: [] };
-    this.loadCommentsFromServer = this.loadCommentsFromServer.bind(this);
-    this.handleCommentSubmit = this.handleCommentSubmit.bind(this);
-  }
-
-  loadCommentsFromServer() {
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      cache: false,
-      success: (data) => {
-        this.setState({ data: data });
-      },
-      error: (xhr, status, err) => {
-        console.error(this.props.url, status, err.toString());
-      }
-    });
-  }
-
-  handleCommentSubmit(comment) {
-    const comments = this.state.data;
-    const newComments = comments.concat([comment]);
-    this.setState({ data: newComments });
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      type: 'POST',
-      data: comment,
-      success: (data) => {
-        this.setState({ data: data });
-      },
-      error: (xhr, status, err) => {
-        console.error(this.props.url, status, err.toString());
-      }
-    });
-  }
-
-  componentDidMount() {
-    this.loadCommentsFromServer();
-    this.interval = setInterval(this.loadCommentsFromServer, this.props.pollInterval);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.interval);
-  }
-
-  render() {
-    return (
-      <div className="commentBox">
-        <h1>Comments</h1>
-        <CommentList data={this.state.data} />
-        <CommentForm onCommentSubmit={this.handleCommentSubmit} />
-      </div>
-    );
-  }
+function Comment(props) {
+  const rawMarkup = marked.parse(props.children.toString());
+  return (
+    <div className="comment">
+      <h2 className="commentAuthor">
+        {props.author}
+      </h2>
+      <span dangerouslySetInnerHTML={{ __html: rawMarkup }} />
+    </div>
+  );
 }
 
-class CommentForm extends React.Component {
-  constructor(props) {
-    super(props);
-    this.authorRef = React.createRef();
-    this.textRef = React.createRef();
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
+function CommentList(props) {
+  const commentNodes = props.data.map((comment, index) => (
+    <Comment key={index} author={comment.author}>
+      {comment.text}
+    </Comment>
+  ));
+  return (
+    <div className="commentList">
+      {commentNodes}
+    </div>
+  );
+}
 
-  handleSubmit(e) {
+function CommentForm(props) {
+  const authorRef = React.useRef(null);
+  const textRef = React.useRef(null);
+
+  function handleSubmit(e) {
     e.preventDefault();
-    const author = this.authorRef.current.value.trim();
-    const text = this.textRef.current.value.trim();
+    const author = authorRef.current.value.trim();
+    const text = textRef.current.value.trim();
     if (!text || !author) {
       return;
     }
-    this.props.onCommentSubmit({ author, text });
-    this.authorRef.current.value = '';
-    this.textRef.current.value = '';
-    this.authorRef.current.focus();
+    props.onCommentSubmit({ author, text });
+    authorRef.current.value = '';
+    textRef.current.value = '';
+    authorRef.current.focus();
   }
 
-  render() {
-    return (
-      <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input type="text" placeholder="Your name" ref={this.authorRef} />
-        <input type="text" placeholder="Say something..." ref={this.textRef} />
-        <input type="submit" value="Post" />
-      </form>
-    );
-  }
+  return (
+    <form className="commentForm" onSubmit={handleSubmit}>
+      <input type="text" placeholder="Your name" ref={authorRef} />
+      <input type="text" placeholder="Say something..." ref={textRef} />
+      <input type="submit" value="Post" />
+    </form>
+  );
 }
 
-class CommentList extends React.Component {
-  render() {
-    const commentNodes = this.props.data.map((comment, index) => (
-      <Comment key={index} author={comment.author}>
-        {comment.text}
-      </Comment>
-    ));
-    return (
-      <div className="commentList">
-        {commentNodes}
-      </div>
-    );
+function CommentBox(props) {
+  const [data, setData] = React.useState([]);
+
+  function handleCommentSubmit(comment) {
+    setData(prev => [...prev, comment]);
+    fetch(props.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(comment).toString()
+    })
+      .then(response => response.json())
+      .then(data => setData(data))
+      .catch(err => console.error(props.url, err.toString()));
   }
+
+  React.useEffect(() => {
+    function loadCommentsFromServer() {
+      fetch(props.url)
+        .then(response => response.json())
+        .then(data => setData(data))
+        .catch(err => console.error(props.url, err.toString()));
+    }
+    loadCommentsFromServer();
+    const interval = setInterval(loadCommentsFromServer, props.pollInterval);
+    return () => clearInterval(interval);
+  }, [props.url, props.pollInterval]);
+
+  return (
+    <div className="commentBox">
+      <h1>Comments</h1>
+      <CommentList data={data} />
+      <CommentForm onCommentSubmit={handleCommentSubmit} />
+    </div>
+  );
 }
 
-class Comment extends React.Component {
-  render() {
-    const rawMarkup = marked.parse(this.props.children.toString());
-    return (
-      <div className="comment">
-        <h2 className="commentAuthor">
-          {this.props.author}
-        </h2>
-        <span dangerouslySetInnerHTML={{ __html: rawMarkup }} />
-      </div>
-    );
-  }
-}
-
-ReactDOM.render(
-  <CommentBox url="comments.lua" pollInterval={2000} />,
-  document.getElementById('content')
+ReactDOM.createRoot(document.getElementById('content')).render(
+  <CommentBox url="comments.lua" pollInterval={2000} />
 );

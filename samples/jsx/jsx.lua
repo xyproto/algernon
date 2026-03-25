@@ -6,7 +6,6 @@ content("text/javascript")
 local formatted = asciiArtUpper(formdata()["msg"])
 
 -- Output JSX as JavaScript
-jprint([[ReactDOM.render(
-  <]] .. tag .. ">" .. formatted .. "</" .. tag .. [[>,
-  document.getElementById('example')
+jprint([[ReactDOM.createRoot(document.getElementById('example')).render(
+  <]] .. tag .. ">" .. formatted .. "</" .. tag .. [[>
 );]])

@@ -4,8 +4,7 @@ html
     title Comments
     script[src="js/react.production.min.js"]
     script[src="js/react-dom.production.min.js"]
-    script[src="js/jquery.min.js"]
-    script[src="js/marked.min.js"]
+    script[src="js/marked.umd.js"]
   body
     div[id="content"]
     script[src="comments.jsx"]
