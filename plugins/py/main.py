@@ -113,8 +113,10 @@ def main():
     # Build the Lua RPC namespace for methods that starts with an uppercase letter
     for name in dir(rpc):
       if name[0].isupper():
-        setattr(rpc, "Lua." + name, getattr(rpc, name, None))
-       
+        method = getattr(rpc, name, None)
+        if callable(method):
+          setattr(rpc, "Lua." + name, method)
+        
     line = sys.stdin.readline()
 
     # The handling of lines is asynchronous,
