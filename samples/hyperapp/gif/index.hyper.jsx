@@ -1,4 +1,4 @@
-const GIPHY_API_KEY = "dc6zaTOxFJmzC"
+const TENOR_API_KEY = "AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ"
 
 app({
   state: {
@@ -32,11 +32,11 @@ app({
 
       actions.toggleFetching()
 
-      fetch(`//api.giphy.com/v1/gifs/search?q=${text}&api_key=${GIPHY_API_KEY}`)
+      fetch(`https://tenor.googleapis.com/v2/search?q=${text}&key=${TENOR_API_KEY}&limit=1&media_filter=gif`)
         .then(data => data.json())
-        .then(({ data }) => {
+        .then(({ results }) => {
           actions.toggleFetching()
-          data[0] && actions.setURL(data[0].images.original.url)
+          results[0] && actions.setURL(results[0].media_formats.gif.url)
         })
     },
     setURL: (state, actions, url) => ({ url }),
