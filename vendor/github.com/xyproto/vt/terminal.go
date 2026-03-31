@@ -215,3 +215,13 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 
 	return 0, 0, 0, fmt.Errorf("could not read rgb value from terminal emulator, got: %q", result)
 }
+
+// BeginSyncUpdate sends the terminal's begin synchronized update escape sequence
+func BeginSyncUpdate() {
+	fmt.Print(beginSyncUpdate)
+}
+
+// EndSyncUpdate sends the terminal's end synchronized update escape sequence
+func EndSyncUpdate() {
+	fmt.Print(endSyncUpdate)
+}

@@ -1,9 +1,12 @@
-unreleased
-----------
+v1.12.1 (2026-03-30)
+--------------------
 
-- This release changes the default `sslmode` from `require` to `prefer`, which
-  is the default used by libpq and the rest of the PostgreSQL ecosystem. See
-  [#1271] for some background.
+- Look for pgpass file in ~/.pgpass instead of ~/.postgresql/pgpass ([#1300]).
+
+- Don't clear password if directly set on pq.Config ([#1302]).
+
+[#1300]: https://github.com/lib/pq/pull/1300
+[#1302]: https://github.com/lib/pq/pull/1302
 
 v1.12.0 (2026-03-18)
 --------------------
