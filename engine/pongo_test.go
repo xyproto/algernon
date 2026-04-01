@@ -58,7 +58,7 @@ func pongoPageTest(n int, t *testing.T) {
 	}
 
 	// Trigger the error (now resolved)
-	for i := 0; i < n; i++ {
+	for range n {
 		go ac.PongoPage(w, req, filename, pongodata, funcs)
 	}
 }

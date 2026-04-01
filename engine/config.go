@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -392,12 +393,7 @@ func hasHandlers(fn string) bool {
 
 // has checks if a given slice of strings contains a given string
 func has(sl []string, e string) bool {
-	for _, s := range sl {
-		if e == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(sl, e)
 }
 
 // unique removes all repeated elements from a slice of strings
@@ -619,6 +615,12 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	} else {
 		// Register HTTP handler functions
 		ac.RegisterHandlers(mux, "/", ac.serverDirOrFilename, ac.serverAddDomain)
+	}
+
+	// Register the HMR endpoints when auto-refresh is active
+	if ac.autoRefresh {
+		mux.HandleFunc(hmrUpdatePrefix, ac.HMRUpdateHandler)
+		mux.HandleFunc(hmrRefreshRuntimePath, ac.HMRRefreshRuntimeHandler)
 	}
 
 	// Set the values that has not been set by flags nor scripts

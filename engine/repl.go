@@ -130,7 +130,7 @@ func highlight(line string) string {
 
 // Output syntax highlighted help text, with an additional usage message
 func outputHelp(o *vt.TextOutput, helpText string) {
-	for _, line := range strings.Split(helpText, "\n") {
+	for line := range strings.SplitSeq(helpText, "\n") {
 		o.Println(highlight(line))
 	}
 	o.Println(usageMessage)
@@ -153,7 +153,7 @@ func outputHelpAbout(o *vt.TextOutput, helpText, topic string) {
 		return
 	}
 	comment := ""
-	for _, line := range strings.Split(helpText, "\n") {
+	for line := range strings.SplitSeq(helpText, "\n") {
 		if strings.HasPrefix(line, topic) {
 			// Output help text, with some surrounding blank lines
 			o.Println("\n" + highlight(line))
@@ -172,7 +172,7 @@ func outputHelpAbout(o *vt.TextOutput, helpText, topic string) {
 
 // Take all functions mentioned in the given help text string and add them to the readline completer
 func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.PrefixCompleter) {
-	for _, line := range strings.Split(helpText, "\n") {
+	for line := range strings.SplitSeq(helpText, "\n") {
 		if !strings.HasPrefix(line, "//") && strings.Contains(line, "(") {
 			parts := strings.Split(line, "(")
 			if strings.Contains(line, "()") {

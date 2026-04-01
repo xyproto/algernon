@@ -116,7 +116,7 @@ func (ac *Config) ServeStaticFile(filename, colonPort string) error {
 	// Attempt to serve the handler functions above
 	if errServe := HTTPserver.ListenAndServe(); errServe != nil {
 		// If it fails, try several times, increasing the port by 1 each time
-		for i := 0; i < maxAttemptsAtIncreasingPortNumber; i++ {
+		for range maxAttemptsAtIncreasingPortNumber {
 			if errServe = HTTPserver.ListenAndServe(); errServe != nil {
 				cancelChannel <- true
 				if !strings.HasSuffix(errServe.Error(), "already in use") {

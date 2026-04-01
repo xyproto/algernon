@@ -11,15 +11,59 @@ import (
 	"github.com/xyproto/huldra"
 )
 
+// autoloadTemplate is the SSE listener injected into HTML pages when
+// auto-refresh is active. It hot-swaps CSS and JSX changes in-place
+// and falls back to a full reload for everything else.
 const autoloadTemplate = `
 if (!!window.EventSource) {
   window.setTimeout(function() {
     var source = new EventSource(window.location.protocol + '//{{.FullHost}}{{.EventPath}}');
     source.addEventListener('message', function(e) {
-      const path = '/' + e.data;
-      if (path.indexOf(window.location.pathname) >= 0) {
-        location.reload()
+      var changed = e.data;
+      var basename = changed.replace(/.*[\/\\]/, '');
+      if (/\.(css|gcss)$/i.test(basename)) {
+        var cssBase = basename.replace(/\.gcss$/i, '.css');
+        var swapped = false;
+        document.querySelectorAll('link[rel=stylesheet][href]').forEach(function(link) {
+          var b = link.getAttribute('href').split('?')[0].replace(/.*[\/\\]/, '');
+          if (b === cssBase || b === basename) { link.href = link.href.split('?')[0] + '?t=' + Date.now(); swapped = true; }
+        });
+        if (swapped) { return; }
       }
+      if (/\.jsx?$/i.test(basename)) {
+        var oldEl = null;
+        document.querySelectorAll('script[src]').forEach(function(s) {
+          if (s.getAttribute('src').split('?')[0].replace(/.*[\/\\]/, '') === basename) { oldEl = s; }
+        });
+        if (oldEl) {
+          if (window.__algernonHMRBegin) { window.__algernonHMRBegin(); }
+          var freshEl = document.createElement('script');
+          freshEl.src = '{{.HMRUpdatePath}}' + changed + '?t=' + Date.now();
+          freshEl.onload = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
+          freshEl.onerror = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
+          oldEl.parentNode.replaceChild(freshEl, oldEl);
+          return;
+        }
+        var pageDir = window.location.pathname.replace(/\/[^\/]*$/, '/').slice(1);
+        var refreshed = false;
+        if (window.__algernonHMRBegin) { window.__algernonHMRBegin(); }
+        document.querySelectorAll('script[src]').forEach(function(s) {
+          var raw = s.getAttribute('src').split('?')[0];
+          if (!/\.jsx$/i.test(raw)) { return; }
+          var rel = raw.replace(/^\//, '').replace(/^__algernon_hmr__\//, '');
+          if (!rel) { return; }
+          if (rel.indexOf('/') < 0 && pageDir) { rel = pageDir + rel; }
+          var n = document.createElement('script');
+          n.src = '{{.HMRUpdatePath}}' + rel + '?t=' + Date.now();
+          n.onload = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
+          n.onerror = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
+          s.parentNode.replaceChild(n, s);
+          refreshed = true;
+        });
+        if (!refreshed && window.__algernonHMREnd) { window.__algernonHMREnd(); }
+        if (refreshed) { return; }
+      }
+      if (('/' + changed).indexOf(window.location.pathname) >= 0) { location.reload(); }
     }, false);
   }, {{.RefreshTimeout}});
 }
@@ -29,6 +73,36 @@ type templateData struct {
 	FullHost       string
 	EventPath      string
 	RefreshTimeout string
+	HMRUpdatePath  string
+}
+
+// insertBeforeEndTag inserts js immediately before endTag in htmldata
+func insertBeforeEndTag(htmldata, js []byte, endTag string) []byte {
+	tag := []byte(endTag)
+	idx := bytes.Index(htmldata, tag)
+	if idx < 0 {
+		return htmldata
+	}
+	result := make([]byte, 0, len(htmldata)+len(js))
+	result = append(result, htmldata[:idx]...)
+	result = append(result, js...)
+	result = append(result, htmldata[idx:]...)
+	return result
+}
+
+// insertAfterStartTag inserts js immediately after startTag in htmldata
+func insertAfterStartTag(htmldata, js []byte, startTag string) []byte {
+	tag := []byte(startTag)
+	idx := bytes.Index(htmldata, tag)
+	if idx < 0 {
+		return htmldata
+	}
+	after := idx + len(tag)
+	result := make([]byte, 0, len(htmldata)+len(js))
+	result = append(result, htmldata[:after]...)
+	result = append(result, js...)
+	result = append(result, htmldata[after:]...)
+	return result
 }
 
 // InsertAutoRefresh inserts JavaScript code to the page that makes the page
@@ -56,7 +130,19 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 		FullHost:       fullHost,
 		EventPath:      ac.defaultEventPath,
 		RefreshTimeout: refreshTimeout,
+		HMRUpdatePath:  hmrUpdatePrefix,
 	}
+
+	// Swap React production builds to development equivalents for react-refresh
+	htmldata = ac.swapReactProdToDev(htmldata)
+
+	// Inject the react-refresh runtime as the first script in <head>
+	runtimeTag := []byte(`<script src="` + hmrRefreshRuntimePath + `"></script>`)
+	htmldata = insertAfterStartTag(htmldata, runtimeTag, "<head>")
+
+	// Inject the root-capture shim before </head>
+	rootScript := []byte("<script>" + hmrRootCaptureScript + "</script>")
+	htmldata = insertBeforeEndTag(htmldata, rootScript, "</head>")
 
 	// Parse the template
 	t, err := template.New("auto-refresh").Parse(autoloadTemplate)

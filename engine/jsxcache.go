@@ -97,14 +97,21 @@ func (ac *Config) bundleFile(filename string, srcData []byte) ([]byte, error) {
 		if strings.HasSuffix(strings.ToLower(filename), ".jsx") {
 			loader = api.LoaderJSX
 		}
+		contents := string(srcData)
+		if ac.autoRefresh {
+			contents = injectRefreshRegistrations(contents, filepath.Base(filename))
+		}
 		opts.Stdin = &api.StdinOptions{
-			Contents:   string(srcData),
+			Contents:   contents,
 			ResolveDir: dir,
 			Sourcefile: filename,
 			Loader:     loader,
 		}
 	} else {
 		opts.EntryPoints = []string{filename}
+	}
+	if ac.autoRefresh {
+		opts.Plugins = []api.Plugin{reactRefreshPlugin()}
 	}
 
 	result := api.Build(opts)

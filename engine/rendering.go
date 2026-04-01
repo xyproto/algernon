@@ -836,11 +836,14 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 		return
 	}
 
-	var buf bytes.Buffer
-	buf.Write(jsxdata)
+	// When auto-refresh is active, inject react-refresh registrations
+	src := string(jsxdata)
+	if ac.autoRefresh {
+		src = injectRefreshRegistrations(src, filepath.Base(filename))
+	}
 
 	// Convert JSX to JS
-	result := api.Transform(buf.String(), ac.jsxOptions)
+	result := api.Transform(src, ac.jsxOptions)
 	if len(result.Errors) > 0 {
 		if ac.debugMode {
 			var sb strings.Builder

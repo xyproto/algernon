@@ -156,7 +156,7 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 	// Serve handler.lua, if found in parent directories
 	var ancestor string
 	ancestor = filepath.Dir(dirname)
-	for x := 0; x < 100; x++ { // a maximum of 100 directories deep
+	for range 100 { // a maximum of 100 directories deep
 		filename = filepath.Join(ancestor, "handler.lua")
 		if ac.fs.Exists(filename) {
 			ac.FilePage(w, req, filename, luaDataFilename)
