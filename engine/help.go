@@ -277,7 +277,7 @@ oc:bytesize(string) -> number
 // The second optional string is the model name.
 oc:distance(string, string, [string], [string]) -> number
 // Convenience function for passing a prompt and optional model name to the local Ollama server.
-// The default prompt generates a poem and the default model is "tinyllama".
+// The default prompt generates a poem and the default model is "qwen2.5-coder:1.5b".
 ollama([string], [string]) -> string
 // Convenience function for Base64-encoding the given file.
 base64EncodeFile(string) -> string

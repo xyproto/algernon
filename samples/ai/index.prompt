@@ -1,5 +1,7 @@
 text/html
-gemma
+qwen2.5-coder:1.5b
 
-Generate a HTML document that includes the text "<img src='circle.prompt' alt='A circle'>".
-Use inline CSS and CSS animations. Make it fun and stylish. Include several elements.
+Generate an example HTML document that includes this text: "<img src='circle.prompt' alt='A circle'>".
+"circle.prompt" is an SVG image with the mimetype set by the server.
+Use an HTML title.
+Only output the raw HTML code.

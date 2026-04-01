@@ -18,9 +18,9 @@ const (
 	Class = "OllamaClient"
 
 	// Only used when constructing new ollama clients with no explicit model given.
-	// tinyllama is fast and small, but not great.
+	// qwen2.5-coder:1.5b is fast and small, but not great.
 	// Good alternatives right now: mixtral, llama3-gradient
-	defaultModel = "tinyllama"
+	defaultModel = "qwen2.5-coder:1.5b"
 
 	imageDescriptionModel  = "llava-llama3"
 	imageDescriptionPrompt = "Describe this image."

@@ -305,7 +305,7 @@ Using AI / LLMs / Ollama
 
 * The `ollama` server must be running locally, or a `host:port` must be set in the `OLLAMA_HOST` environment variable.
 
-For example, using the default `tinyllama` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
+For example, using the default `qwen2.5-coder:1.5b` model (will be downloaded at first use, the size is 637 MiB and it should run anywhere).
 
 ```
 lua> ollama()
@@ -383,12 +383,12 @@ Everything should be inline in one HTML document. Only output the full and compl
 The experimental `prompt` format is very simple:
 
 * The first line is the `content-type`.
-* The second line is the Ollama model, such as `tinyllama:latest` or just `tinyllama`.
+* The second line is the Ollama model, such as `qwen2.5-coder:1.5b:latest` or just `qwen2.5-coder:1.5b`.
 * The third line is blank.
 * The rest of the lines are the prompt that will be passed to the large language model.
 
 Note that the Ollama server must be fast enough to reply within 10 seconds for this to work!
-`tinyllama` or `gemma` should be more than fast enough with a good GPU or on an M1/M2/M3 processor.
+`qwen2.5-coder:1.5b` should be fast enough with a good GPU or on an M1/M2/M3 processor.
 
 For more fine-grained control, try using the Ollama-related Lua functions instead, and please create a PR or issue if something central is missing.
 
@@ -667,7 +667,7 @@ Lua functions for AI
 --------------------
 
 ~~~c
-// Connect to the local Ollama server and use either the `tinyllama` model, or the supplied model string (like ie. mixtral:latest).
+// Connect to the local Ollama server and use either the `qwen2.5-coder:1.5b` model, or the supplied model string (like ie. mixtral:latest).
 // Also takes an optional host address.
 OllamaClient([string], [string]) -> userdata
 
@@ -704,7 +704,7 @@ oc:bytesize(string) -> number
 oc:distance(string, string, [string], [string]) -> number
 
 // Convenience function for the local Ollama server that takes an optional prompt and an optional model name.
-// Generates a poem with the `tinyllama` model by default.
+// Generates a poem with the `qwen2.5-coder:1.5b` model by default.
 ollama([string], [string]) -> string
 
 // Convenience function for Base64-encoding the given file
