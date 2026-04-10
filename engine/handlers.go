@@ -398,15 +398,13 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 	case ".prompt":
 		if promptblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
 			lines := strings.Split(promptblock.String(), "\n")
-			if len(lines) < 4 {
-				logrus.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
-			} else if strings.TrimSpace(lines[2]) != "" {
+			if (len(lines) < 4) || (strings.TrimSpace(lines[2]) != "") {
 				logrus.Error(filename + " must contain a content type, a model name, a blank line and then a prompt to be usable")
 			} else {
-				contentType := strings.TrimSpace(lines[0])
+				foundContentType := strings.TrimSpace(lines[0])
 				model := strings.TrimSpace(lines[1])
 				prompt := strings.TrimSpace(strings.Join(lines[3:], "\n"))
-				w.Header().Add(contentType, contentType)
+				w.Header().Add(contentType, foundContentType)
 				if oc == nil {
 					oc = ollamaclient.New()
 				}
@@ -414,6 +412,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					oc.ModelName = model
 				}
 				oc.HTTPTimeout = time.Duration(ac.writeTimeout) * time.Second
+				const errFmt = "could not convert %s to content: %s"
 				if err := oc.PullIfNeeded(true); err == nil { // success
 					if output, err := oc.GetOutput(prompt); err == nil { // success
 						if strings.Contains(output, "<") && strings.Contains(output, ">") {
@@ -421,10 +420,10 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 						}
 						w.Write([]byte(output))
 					} else {
-						logrus.Error("could not convert " + filename + " to content: " + err.Error())
+						logrus.Errorf(errFmt, filename, err.Error())
 					}
 				} else {
-					logrus.Error("could not convert " + filename + " to content: " + err.Error())
+					logrus.Errorf(errFmt, filename, err.Error())
 				}
 			}
 		} else {
