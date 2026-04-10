@@ -125,7 +125,7 @@ func (tty *TTY) KeyString() string {
 	case 6:
 		var key [6]byte
 		copy(key[:], seq)
-		if s, found := ctrlInsertStringLookup[key]; found {
+		if s, found := modKeyStringLookup[key]; found {
 			return s
 		}
 	}

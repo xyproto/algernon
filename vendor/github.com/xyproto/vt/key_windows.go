@@ -190,7 +190,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		}
 		if len(tty.pending) >= 6 {
 			seq6 := [6]byte{tty.pending[0], tty.pending[1], tty.pending[2], tty.pending[3], tty.pending[4], tty.pending[5]}
-			if code, found := ctrlInsertLookup[seq6]; found {
+			if code, found := modKeyLookup[seq6]; found {
 				tty.pending = tty.pending[6:]
 				tty.escArmed = false
 				return 0, code, nil
@@ -514,7 +514,7 @@ func (tty *TTY) String() string {
 		return string(bytes[:numRead])
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := ctrlInsertStringLookup[seq]; found {
+		if str, found := modKeyStringLookup[seq]; found {
 			return str
 		}
 		fallthrough

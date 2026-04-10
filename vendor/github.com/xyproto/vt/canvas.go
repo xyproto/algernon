@@ -516,26 +516,24 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	if x >= c.w || y >= c.h {
 		return
 	}
-	c.mut.RLock()
-	chars := (*c).chars
-	counter := uint(0)
+	bgb := bg.Background()
+	c.mut.Lock()
+	chars := c.chars
 	startpos := y*c.w + x
 	lchars := uint(len(chars))
-	c.mut.RUnlock()
-	bgb := bg.Background()
+	counter := uint(0)
 	for _, r := range s {
 		i := startpos + counter
 		if i >= lchars {
 			break
 		}
-		c.mut.Lock()
 		chars[i].r = r
 		chars[i].fg = fg
 		chars[i].bg = bgb
 		chars[i].drawn = false
-		c.mut.Unlock()
 		counter++
 	}
+	c.mut.Unlock()
 }
 
 // WriteRune will write a colored rune to the canvas
