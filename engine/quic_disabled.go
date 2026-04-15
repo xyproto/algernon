@@ -1,5 +1,4 @@
 //go:build plan9 || solaris || openbsd
-// +build plan9 solaris openbsd
 
 package engine
 
