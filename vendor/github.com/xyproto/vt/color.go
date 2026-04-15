@@ -15,7 +15,9 @@ const (
 	// Non-color attributes
 	ResetAll   AttributeColor = 0
 	Bright     AttributeColor = 1
+	Bold       AttributeColor = 1
 	Dim        AttributeColor = 2
+	Italic     AttributeColor = 3
 	Underscore AttributeColor = 4
 	Blink      AttributeColor = 5
 	Reverse    AttributeColor = 7
@@ -49,6 +51,16 @@ const (
 	BackgroundCyan      AttributeColor = 46
 	BackgroundLightGray AttributeColor = 47
 
+	// Bright background colors (xterm codes 100–107)
+	BackgroundBrightBlack   AttributeColor = 100
+	BackgroundBrightRed     AttributeColor = 101
+	BackgroundBrightGreen   AttributeColor = 102
+	BackgroundBrightYellow  AttributeColor = 103
+	BackgroundBrightBlue    AttributeColor = 104
+	BackgroundBrightMagenta AttributeColor = 105
+	BackgroundBrightCyan    AttributeColor = 106
+	BackgroundBrightWhite   AttributeColor = 107
+
 	Default           AttributeColor = 39
 	DefaultBackground AttributeColor = 49
 )
@@ -60,6 +72,16 @@ var (
 	BackgroundGray    = BackgroundLightGray
 	BackgroundDefault = DefaultBackground
 )
+
+// envResetSeq is the ANSI reset escape sequence, or "" when NO_COLOR is set.
+// It is evaluated once at startup so that Wrap/Stop never emit a bare reset
+// when the caller has asked for no color output.
+var envResetSeq = func() string {
+	if EnvNoColor {
+		return ""
+	}
+	return NoColor
+}()
 
 // Bit flags used in the upper bits of AttributeColor to signal extended modes.
 // Layout (uint32):
@@ -100,6 +122,15 @@ var DarkColorMap = map[string]AttributeColor{
 	"lightmagenta": LightMagenta,
 	"lightcyan":    LightCyan,
 	"lightgray":    LightGray,
+	"bold":         Bold,
+	"italic":       Italic,
+	"boldwhite":    Bold.Combine(White),
+	"boldred":      Bold.Combine(LightRed),
+	"boldgreen":    Bold.Combine(LightGreen),
+	"boldyellow":   Bold.Combine(LightYellow),
+	"boldblue":     Bold.Combine(LightBlue),
+	"boldmagenta":  Bold.Combine(LightMagenta),
+	"boldcyan":     Bold.Combine(LightCyan),
 }
 
 // LightColorMap maps color names to AttributeColor values for light terminals
@@ -128,6 +159,15 @@ var LightColorMap = map[string]AttributeColor{
 	"darkmagenta":  Magenta,
 	"darkcyan":     Cyan,
 	"darkgray":     DarkGray,
+	"bold":         Bold,
+	"italic":       Italic,
+	"boldwhite":    Bold.Combine(White),
+	"boldred":      Bold.Combine(LightRed),
+	"boldgreen":    Bold.Combine(LightGreen),
+	"boldyellow":   Bold.Combine(LightYellow),
+	"boldblue":     Bold.Combine(LightBlue),
+	"boldmagenta":  Bold.Combine(LightMagenta),
+	"boldcyan":     Bold.Combine(LightCyan),
 }
 
 // ansiEscapes holds the pre-computed VT100 escape sequence for every standard
@@ -163,9 +203,15 @@ func (ac AttributeColor) Background() AttributeColor {
 		return AttributeColor(val | bgFlag)
 	}
 	if val >= 30 && val <= 39 {
+		// Standard foreground (30–39) → standard background (40–49)
 		return AttributeColor(val + 10)
 	}
-	if val >= 40 && val <= 49 {
+	if val >= 90 && val <= 97 {
+		// Bright foreground (90–97) → bright background (100–107)
+		return AttributeColor(val + 10)
+	}
+	if val >= 40 && val <= 49 || val >= 100 && val <= 107 {
+		// Already a background code
 		return ac
 	}
 	return ac
@@ -175,7 +221,11 @@ func (ac AttributeColor) Background() AttributeColor {
 // Standard ANSI codes (0–255) are served from a pre-computed array with no
 // allocation. Extended values (true-color, 256-color, combined attributes) are
 // computed once and memoized in extCache.
+// Returns "" when NO_COLOR is set.
 func (ac AttributeColor) String() string {
+	if EnvNoColor {
+		return ""
+	}
 	val := uint32(ac)
 
 	// Fast path: standard ANSI attribute/color codes (the vast majority of calls)
@@ -195,11 +245,20 @@ func (ac AttributeColor) String() string {
 			r := uint8((val >> 16) & 0xFF)
 			g := uint8((val >> 8) & 0xFF)
 			b := uint8(val & 0xFF)
-			if Has256Colors() {
+			if hasTrueColorEnv {
+				// Terminal supports 24-bit color
 				if isBg {
 					result = fmt.Sprintf("\033[48;2;%d;%d;%dm", r, g, b)
 				} else {
 					result = fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+				}
+			} else if Has256Colors() {
+				// Degrade to nearest xterm-256color entry
+				nearest := NearestColor256(r, g, b)
+				if isBg {
+					result = nearest.Background().String()
+				} else {
+					result = nearest.String()
 				}
 			} else {
 				// Terminal only supports 16 colors: find the nearest ANSI match
@@ -245,9 +304,10 @@ func Background256(n uint8) AttributeColor {
 	return AttributeColor(uint32(1<<31) | uint32(1<<30) | uint32(n))
 }
 
-// Wrap returns text wrapped with this color's escape sequence and a trailing reset
+// Wrap returns text wrapped with this color's escape sequence and a trailing reset.
+// Returns text unchanged when NO_COLOR is set.
 func (ac AttributeColor) Wrap(text string) string {
-	return ac.String() + text + NoColor
+	return ac.String() + text + envResetSeq
 }
 
 // StartStop is an alias for Wrap
@@ -265,9 +325,10 @@ func (ac AttributeColor) Start(text string) string {
 	return ac.String() + text
 }
 
-// Stop returns text followed by the reset escape sequence
+// Stop returns text followed by the reset escape sequence.
+// Returns text unchanged when NO_COLOR is set.
 func (ac AttributeColor) Stop(text string) string {
-	return text + NoColor
+	return text + envResetSeq
 }
 
 // Output prints text with this color to stdout, followed by a newline
@@ -298,6 +359,16 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 // Bright returns a new AttributeColor with the Bright attribute combined in
 func (ac AttributeColor) Bright() AttributeColor {
 	return ac.Combine(Bright)
+}
+
+// Bold returns a new AttributeColor with the Bold attribute combined in
+func (ac AttributeColor) Bold() AttributeColor {
+	return ac.Combine(Bold)
+}
+
+// Italic returns a new AttributeColor with the Italic attribute combined in
+func (ac AttributeColor) Italic() AttributeColor {
+	return ac.Combine(Italic)
 }
 
 func (ac AttributeColor) Ints() []int {

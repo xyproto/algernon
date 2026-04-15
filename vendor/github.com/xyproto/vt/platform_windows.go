@@ -3,6 +3,7 @@
 package vt
 
 import (
+	"os"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -11,7 +12,6 @@ import (
 func initTerminal() {
 	if handle, ok := consoleOutHandle(); ok {
 		_ = enableVT(handle)
-		return
 	}
 }
 
@@ -46,10 +46,6 @@ func showCursorHelper(enable bool) {
 }
 
 func setCursorVis(handle windows.Handle, enable bool) bool {
-	// windows.GetConsoleCursorInfo takes *ConsoleCursorInfo.
-	// If the function is not exported, I have to load it myself.
-	// "GetConsoleCursorInfo" in kernel32.
-
 	type ConsoleCursorInfo struct {
 		Size    uint32
 		Visible int32
@@ -64,18 +60,21 @@ func setCursorVis(handle windows.Handle, enable bool) bool {
 	if r1 == 0 {
 		return false
 	}
-
 	if enable {
 		info.Visible = 1
 		info.Size = 100
 	} else {
 		info.Visible = 0
 	}
-
 	r1, _, _ = procSetConsoleCursorInfo.Call(uintptr(handle), uintptr(unsafe.Pointer(&info)))
 	return r1 != 0
 }
 
 func echoOffHelper() bool {
 	return false
+}
+
+// SetupResizeHandler is a no-op on Windows
+func SetupResizeHandler(sigChan chan os.Signal) {
+	// No-op on Windows
 }

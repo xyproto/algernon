@@ -77,18 +77,23 @@ func (c *Canvas) ToImage() (image.Image, error) {
 }
 
 // ansiCodeToColor converts an AttributeColor to its approximate NRGBA value for
-// canvas-to-image rendering. True-color values are decoded directly from their
-// embedded RGB bits; standard ANSI codes are served from ansiRenderPalette.
+// canvas-to-image rendering. True-color and 256-color values are decoded from
+// their embedded bits; standard ANSI codes are served from ansiRenderPalette.
 func ansiCodeToColor(ac AttributeColor) color.NRGBA {
 	code := uint32(ac)
-	// True-color (24-bit RGB): bits 0–23 hold R, G, B
-	if code&extendedFlag != 0 && code&trueColorFlag != 0 {
-		return color.NRGBA{
-			R: uint8((code >> 16) & 0xFF),
-			G: uint8((code >> 8) & 0xFF),
-			B: uint8(code & 0xFF),
-			A: 255,
+	if code&extendedFlag != 0 {
+		if code&trueColorFlag != 0 {
+			// True-color (24-bit RGB): bits 0–23 hold R, G, B
+			return color.NRGBA{
+				R: uint8((code >> 16) & 0xFF),
+				G: uint8((code >> 8) & 0xFF),
+				B: uint8(code & 0xFF),
+				A: 255,
+			}
 		}
+		// 256-color: palette index in bits 0–7
+		r, g, b := Color256ToRGB(uint8(code & 0xFF))
+		return color.NRGBA{R: r, G: g, B: b, A: 255}
 	}
 	if code < uint32(len(ansiRenderPalette)) {
 		if c := ansiRenderPalette[code]; c.A != 0 {

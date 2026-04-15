@@ -7,6 +7,14 @@ import (
 	"sync"
 )
 
+// umin returns the smaller of two uint values
+func umin(a, b uint) uint {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // ColorRune holds a single terminal cell
 type ColorRune struct {
 	fg    AttributeColor
@@ -152,7 +160,11 @@ func (c *Canvas) PlotAll() {
 				r = ' '
 			}
 			SetXY(uint(x), y)
-			fmt.Print(cr.fg.Combine(cr.bg).String() + string(r) + NoColor)
+			if uint32(cr.fg) < 256 && uint32(cr.bg) < 256 {
+				fmt.Print(cr.fg.Combine(cr.bg).String() + string(r) + envResetSeq)
+			} else {
+				fmt.Print(cr.fg.String() + cr.bg.String() + string(r) + envResetSeq)
+			}
 		}
 	}
 	c.mut.Unlock()
@@ -327,7 +339,11 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 					r = ' '
 				}
 				fmt.Fprintf(&sb, "\033[%d;%dH", y+1, x+1)
-				sb.WriteString(cr.fg.Combine(cr.bg).String())
+				if uint32(cr.fg) < 256 && uint32(cr.bg) < 256 {
+					sb.WriteString(cr.fg.Combine(cr.bg).String())
+				} else {
+					sb.WriteString(cr.fg.String() + cr.bg.String())
+				}
 				sb.WriteRune(r)
 			}
 		}
@@ -372,7 +388,11 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 					continue
 				}
 				if x == 0 || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
-					sb.WriteString(cr.fg.Combine(cr.bg).String())
+					if uint32(cr.fg) < 256 && uint32(cr.bg) < 256 {
+						sb.WriteString(cr.fg.Combine(cr.bg).String())
+					} else {
+						sb.WriteString(cr.fg.String() + cr.bg.String())
+					}
 				}
 				if cr.r != 0 {
 					sb.WriteRune(cr.r)
@@ -465,6 +485,15 @@ func (c *Canvas) HideCursorAndRedrawFull() {
 	c.oldchars = nil
 	c.mut.Unlock()
 	c.draw(true)
+}
+
+// WriteTagged writes a tagged string ("<green>hello</green>") to the canvas
+func (c *Canvas) WriteTagged(x, y uint, bgColor AttributeColor, tagged string) {
+	pcc := make([]CharAttribute, len([]rune(tagged)))
+	n := New().ExtractToSlice(tagged, &pcc)
+	for i := range n {
+		c.WriteRune(i+x, y, pcc[i].A, bgColor, pcc[i].R)
+	}
 }
 
 // At returns the rune at the given coordinates, or an error if out of bounds

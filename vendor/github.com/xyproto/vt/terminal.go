@@ -2,8 +2,8 @@ package vt
 
 import (
 	"fmt"
-	"math/big"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/xyproto/env/v2"
@@ -40,16 +40,10 @@ const (
 // NoColor is the escape sequence for resetting all color attributes
 const NoColor string = "\033[0m"
 
-var maybeNoColor *string
-
-// Stop returns the escape sequence for resetting all color attributes
+// Stop returns the escape sequence for resetting all color attributes,
+// or "" when NO_COLOR is set.
 func Stop() string {
-	if maybeNoColor != nil {
-		return *maybeNoColor
-	}
-	s := NoColor
-	maybeNoColor = &s
-	return s
+	return envResetSeq
 }
 
 // writeAllToStdout writes the given byte slice to stdout, retrying on partial writes
@@ -207,8 +201,10 @@ func ShowCursor(enable bool) {
 
 // GetBackgroundColor queries the terminal for its background color.
 // Returns normalized RGB values in [0.0, 1.0], or an error.
+// The terminal response format is "rgb:RRRR/GGGG/BBBB" where each component
+// is a 16-bit hex value (0000–ffff).
 func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
-	// First try the escape code used by ie. alacritty
+	// First try the escape code used by e.g. alacritty
 	if err := tty.WriteString("\033]11;?\a"); err != nil {
 		return 0, 0, 0, err
 	}
@@ -217,7 +213,7 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 		return 0, 0, 0, err
 	}
 	if !strings.Contains(result, "rgb:") {
-		// Then try the escape code used by ie. gnome-terminal
+		// Then try the escape code used by e.g. gnome-terminal
 		if err := tty.WriteString("\033]10;?\a\033]11;?\a"); err != nil {
 			return 0, 0, 0, err
 		}
@@ -227,17 +223,19 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 		}
 	}
 	if _, after, ok := strings.Cut(result, "rgb:"); ok {
-		rgb := after
-		if strings.Count(rgb, "/") == 2 {
-			parts := strings.SplitN(rgb, "/", 3)
+		// Trim anything after the three hex components (e.g. trailing BEL, ST, newline)
+		rgb := strings.FieldsFunc(after, func(r rune) bool {
+			return r < 0x20 || r == '\033' || r == '\a' || r == '\\'
+		})
+		if len(rgb) > 0 {
+			parts := strings.SplitN(rgb[0], "/", 3)
 			if len(parts) == 3 {
-				r := new(big.Int)
-				r.SetString(parts[0], 16)
-				g := new(big.Int)
-				g.SetString(parts[1], 16)
-				b := new(big.Int)
-				b.SetString(parts[2], 16)
-				return float64(r.Int64() / 65535.0), float64(g.Int64() / 65535.0), float64(b.Int64() / 65535.0), nil
+				rv, err1 := strconv.ParseUint(strings.TrimSpace(parts[0]), 16, 16)
+				gv, err2 := strconv.ParseUint(strings.TrimSpace(parts[1]), 16, 16)
+				bv, err3 := strconv.ParseUint(strings.TrimSpace(parts[2]), 16, 16)
+				if err1 == nil && err2 == nil && err3 == nil {
+					return float64(rv) / 65535.0, float64(gv) / 65535.0, float64(bv) / 65535.0, nil
+				}
 			}
 		}
 	}

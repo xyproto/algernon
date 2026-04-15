@@ -263,6 +263,16 @@ func init() {
 	cachedDarkOffReplacer = buildTagReplacer(DarkColorMap, false)
 }
 
+// RebuildTagReplacers rebuilds the cached tag replacers from the current
+// DarkColorMap and LightColorMap. Call this after adding entries to either map
+// so that the new entries are recognized by DarkTags and LightTags.
+func RebuildTagReplacers() {
+	cachedLightOnReplacer = buildTagReplacer(LightColorMap, true)
+	cachedLightOffReplacer = buildTagReplacer(LightColorMap, false)
+	cachedDarkOnReplacer = buildTagReplacer(DarkColorMap, true)
+	cachedDarkOffReplacer = buildTagReplacer(DarkColorMap, false)
+}
+
 // initializeTagReplacers assigns pre-built singleton replacers to this
 // TextOutput based on whether colors are enabled.
 func (o *TextOutput) initializeTagReplacers() {
@@ -278,8 +288,9 @@ func (o *TextOutput) initializeTagReplacers() {
 // ExtractToSlice iterates over an ANSI encoded string, parsing out color codes and places it in
 // a slice of CharAttribute. Each CharAttribute in the slice represents a character in the
 // input string and its corresponding color attributes. This function handles escaping sequences
-// and converts ANSI color codes to AttributeColor structs, including 256-color sequences
-// of the form ESC[38;5;Nm (foreground) and ESC[48;5;Nm (background).
+// and converts ANSI color codes to AttributeColor structs, including 24-bit truecolor sequences
+// of the form ESC[38;2;R;G;Bm (foreground) and ESC[48;2;R;G;Bm (background), 256-color sequences
+// of the form ESC[38;5;Nm (foreground) and ESC[48;5;Nm (background), and standard ANSI codes.
 // The returned uint is the number of stored elements.
 func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 	var (
@@ -301,6 +312,12 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 					}
 				}
 				switch {
+				case len(nums) >= 5 && nums[0] == 38 && nums[1] == 2:
+					// ESC[38;2;R;G;Bm — 24-bit truecolor foreground
+					currentColor = TrueColor(uint8(nums[2]), uint8(nums[3]), uint8(nums[4]))
+				case len(nums) >= 5 && nums[0] == 48 && nums[1] == 2:
+					// ESC[48;2;R;G;Bm — 24-bit truecolor background
+					currentColor = TrueBackground(uint8(nums[2]), uint8(nums[3]), uint8(nums[4]))
 				case len(nums) >= 3 && nums[0] == 38 && nums[1] == 5:
 					// ESC[38;5;Nm — 256-color foreground
 					currentColor = Color256(uint8(nums[2]))
@@ -339,13 +356,4 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 		}
 	}
 	return counter
-}
-
-// WriteTagged writes a tagged string ("<green>hello</green>") to the Canvas
-func (c *Canvas) WriteTagged(x, y uint, bgColor AttributeColor, tagged string) {
-	pcc := make([]CharAttribute, len([]rune(tagged)))
-	n := New().ExtractToSlice(tagged, &pcc)
-	for i := range n {
-		c.WriteRune(i+x, y, pcc[i].A, bgColor, pcc[i].R)
-	}
 }
