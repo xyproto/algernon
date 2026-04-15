@@ -1,7 +1,7 @@
 text/html
 qwen2.5-coder:1.5b
 
-Generate an example HTML document that includes this text: "<img src='circle.prompt' alt='A circle'>".
-"circle.prompt" is an SVG image with the mimetype set by the server.
-Use an HTML title.
-Only output the raw HTML code.
+Generate an HTML document that includes "<img src='circle.prompt' alt='A circle'>" and has the title "Fun Circle".
+Use CSS for animating the img so that it pulses.
+Use CSS to make the HTML background look like a sunset.
+Only output the raw HTML code, with inline CSS.
