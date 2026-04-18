@@ -42,7 +42,7 @@ function CommentForm(props) {
 
   return (
     <form className="commentForm" onSubmit={handleSubmit}>
-      <input type="text" placeholder="Your namme" ref={authorRef} />
+      <input type="text" placeholder="Your name" ref={authorRef} />
       <input type="text" placeholder="Say something..." ref={textRef} />
       <input type="submit" value="Post" />
     </form>
