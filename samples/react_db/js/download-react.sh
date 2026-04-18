@@ -1,6 +1,9 @@
 #!/bin/sh
-for x in react.production.min react-dom.production.min react.development react-dom.development; do
-  echo "Downloading $x.js..."
-  curl --progress-bar -L -o "/tmp/$x.js" "https://unpkg.com/umd-react/dist/$x.js" -C - && mv -f "/tmp/$x.js" "$x.js" || exit 1
+for x in react react-dom; do
+  for variant in production.min development; do
+    file="$x.$variant.js"
+    echo "Downloading $file..."
+    curl --progress-bar -L -o "/tmp/$file" "https://unpkg.com/$x/umd/$file" -C - && mv -f "/tmp/$file" "$file" || exit 1
+  done
 done
 echo Done.
