@@ -258,13 +258,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// Convert the request limit to a string
 	ac.limitRequestsString = strconv.FormatInt(ac.limitRequests, 10)
 
-	// If auto-refresh is enabled, change the caching
+	// If auto-refresh is enabled, change the caching and disable minification
 	if ac.autoRefresh {
 		if cacheModeString == "" {
 			// Disable caching by default, when auto-refresh is enabled
 			ac.cacheMode = cachemode.Off
 			ac.cacheFileStat = false
 		}
+		// Readable output is more useful than minified output during development
+		ac.jsxOptions.MinifyWhitespace = false
+		ac.jsxOptions.MinifyIdentifiers = false
+		ac.jsxOptions.MinifySyntax = false
 	}
 
 	// The cache flag overrides the settings from the other modes
