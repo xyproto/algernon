@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"github.com/xyproto/algernon/timeutils"
@@ -35,22 +36,24 @@ if (!!window.EventSource) {
         document.querySelectorAll('script[src]').forEach(function(s) {
           if (s.getAttribute('src').split('?')[0].replace(/.*[\/\\]/, '') === basename) { oldEl = s; }
         });
+        var pageDir = window.location.pathname.replace(/\/[^\/]*$/, '/').slice(1);
         if (oldEl) {
           if (window.__algernonHMRBegin) { window.__algernonHMRBegin(); }
           var freshEl = document.createElement('script');
-          freshEl.src = '{{.HMRUpdatePath}}' + changed + '?t=' + Date.now();
+          var oldSrc = oldEl.getAttribute('src').split('?')[0].replace(/^\//, '').replace('{{.HMRUpdatePrefix}}', '');
+          if (oldSrc.indexOf('/') < 0 && pageDir) { oldSrc = pageDir + oldSrc; }
+          freshEl.src = '{{.HMRUpdatePath}}' + oldSrc + '?t=' + Date.now();
           freshEl.onload = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
           freshEl.onerror = function() { if (window.__algernonHMREnd) { window.__algernonHMREnd(); } };
           oldEl.parentNode.replaceChild(freshEl, oldEl);
           return;
         }
-        var pageDir = window.location.pathname.replace(/\/[^\/]*$/, '/').slice(1);
         var refreshed = false;
         if (window.__algernonHMRBegin) { window.__algernonHMRBegin(); }
         document.querySelectorAll('script[src]').forEach(function(s) {
           var raw = s.getAttribute('src').split('?')[0];
           if (!/\.jsx$/i.test(raw)) { return; }
-          var rel = raw.replace(/^\//, '').replace(/^__algernon_hmr__\//, '');
+          var rel = raw.replace(/^\//, '').replace('{{.HMRUpdatePrefix}}', '');
           if (!rel) { return; }
           if (rel.indexOf('/') < 0 && pageDir) { rel = pageDir + rel; }
           var n = document.createElement('script');
@@ -70,10 +73,11 @@ if (!!window.EventSource) {
 `
 
 type templateData struct {
-	FullHost       string
-	EventPath      string
-	RefreshTimeout string
-	HMRUpdatePath  string
+	FullHost        string
+	EventPath       string
+	RefreshTimeout  string
+	HMRUpdatePath   string // URL path with leading slash
+	HMRUpdatePrefix string // URL path without leading slash, for JS string replace
 }
 
 // insertBeforeEndTag inserts js immediately before endTag in htmldata
@@ -127,10 +131,11 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 	refreshTimeout := timeutils.DurationToMS(ac.refreshDuration, multiplier)
 
 	tmplData := templateData{
-		FullHost:       fullHost,
-		EventPath:      ac.defaultEventPath,
-		RefreshTimeout: refreshTimeout,
-		HMRUpdatePath:  hmrUpdatePrefix,
+		FullHost:        fullHost,
+		EventPath:       ac.defaultEventPath,
+		RefreshTimeout:  refreshTimeout,
+		HMRUpdatePath:   hmrUpdatePrefix,
+		HMRUpdatePrefix: strings.TrimPrefix(hmrUpdatePrefix, "/"),
 	}
 
 	// Swap React production builds to development equivalents for react-refresh

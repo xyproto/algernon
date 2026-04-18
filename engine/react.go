@@ -19,7 +19,7 @@ import (
 var reactRefreshRuntimeJS []byte
 
 // hmrRefreshRuntimePath is the URL for the embedded react-refresh runtime
-const hmrRefreshRuntimePath = "/__algernon_hmr_refresh__.js"
+const hmrRefreshRuntimePath = "/@algernon/react-refresh.js"
 
 // HMRRefreshRuntimeHandler serves the embedded react-refresh runtime
 func (ac *Config) HMRRefreshRuntimeHandler(w http.ResponseWriter, req *http.Request) {

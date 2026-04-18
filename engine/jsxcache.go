@@ -42,11 +42,10 @@ func (bc *bundleCache) Clear() {
 }
 
 // needsBundling reports whether the JS/JSX source requires full bundling,
-// i.e. it contains ES module import statements or CommonJS require() calls.
+// i.e. it contains ES module import statements.
 func needsBundling(data []byte) bool {
 	return bytes.Contains(data, []byte("import ")) ||
-		bytes.Contains(data, []byte("import(")) ||
-		bytes.Contains(data, []byte("require("))
+		bytes.Contains(data, []byte("import("))
 }
 
 // minified) and caches the result in memory. Subsequent calls return the cached

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -15,7 +16,7 @@ import (
 )
 
 // hmrUpdatePrefix is the URL prefix for the HMR update endpoint
-const hmrUpdatePrefix = "/__algernon_hmr__/"
+const hmrUpdatePrefix = "/@algernon/hmr/"
 
 // HMRUpdateHandler serves a freshly compiled (never cached) version of a
 // JSX or JS file so the browser can hot-swap it without reloading the page.
@@ -26,7 +27,8 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if strings.Contains(relPath, "..") {
+	// Reject path components that are exactly ".."
+	if slices.Contains(strings.FieldsFunc(relPath, func(r rune) bool { return r == '/' || r == '\\' }), "..") {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
@@ -36,7 +38,14 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	absPath := filepath.Join(serverRoot, filepath.FromSlash(relPath))
+	// Strip the server root prefix if the client sent an absolute path
+	relPath = filepath.FromSlash(relPath)
+	if filepath.IsAbs(relPath) {
+		if rel, err2 := filepath.Rel(serverRoot, relPath); err2 == nil && !strings.HasPrefix(rel, "..") {
+			relPath = rel
+		}
+	}
+	absPath := filepath.Join(serverRoot, relPath)
 	if !strings.HasPrefix(absPath+string(filepath.Separator), serverRoot+string(filepath.Separator)) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
