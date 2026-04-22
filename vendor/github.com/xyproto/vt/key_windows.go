@@ -121,6 +121,21 @@ func (tty *TTY) Poll(d time.Duration) (bool, error) {
 	return event == windows.WAIT_OBJECT_0, nil
 }
 
+// HasPendingInput reports whether ReadKey would return another key without
+// having to wait — either bytes are already buffered inside the TTY or more
+// input is available on the console right now. Matches the Unix semantics so
+// callers can use it for frame-skipping in a cross-platform way.
+func (tty *TTY) HasPendingInput() bool {
+	if len(tty.pending) > 0 {
+		return true
+	}
+	ok, err := tty.Poll(0)
+	if err != nil {
+		return false
+	}
+	return ok
+}
+
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int {
 	ascii, keyCode, err := asciiAndKeyCode(tty)

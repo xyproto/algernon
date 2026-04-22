@@ -405,6 +405,41 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		}
 	}
 
+	// Paint the bottom-right cell last with autowrap disabled. Writing a
+	// printable character into the last cell of a terminal with DECAWM
+	// (ESC [ ? 7) enabled would scroll the screen; the DECAWM-off / write /
+	// DECAWM-on dance avoids that and lets the status bar (or any other
+	// full-width painted row) occupy the entire bottom row. Only emit when
+	// the cell actually changed to keep diff-rendering efficient, and only
+	// when both dimensions are >= 1.
+	if w > 0 && h > 0 {
+		lastIdx := w*h - 1
+		lastCR := (*c).chars[lastIdx]
+		if lastCR.cw != 1 {
+			emitLast := firstRun
+			if !firstRun {
+				oldLast := (*c).oldchars[lastIdx]
+				emitLast = !lastCR.fg.Equal(oldLast.fg) || !lastCR.bg.Equal(oldLast.bg) || lastCR.r != oldLast.r
+			}
+			if emitLast {
+				r := lastCR.r
+				if r == 0 {
+					r = ' '
+				}
+				// DECAWM off, move to (h, w), emit SGR + rune, DECAWM on.
+				sb.WriteString("\033[?7l")
+				fmt.Fprintf(&sb, "\033[%d;%dH", h, w)
+				if uint32(lastCR.fg) < 256 && uint32(lastCR.bg) < 256 {
+					sb.WriteString(lastCR.fg.Combine(lastCR.bg).String())
+				} else {
+					sb.WriteString(lastCR.fg.String() + lastCR.bg.String())
+				}
+				sb.WriteRune(r)
+				sb.WriteString("\033[?7h")
+			}
+		}
+	}
+
 	// Restore cursor visibility if it should be shown after drawing
 	if !permanentlyHideCursor && cursorVisible {
 		sb.WriteString(showCursor)
