@@ -13,16 +13,17 @@ type AttributeColor uint32
 
 const (
 	// Non-color attributes
-	ResetAll   AttributeColor = 0
-	Bright     AttributeColor = 1
-	Bold       AttributeColor = 1
-	Dim        AttributeColor = 2
-	Italic     AttributeColor = 3
-	Underscore AttributeColor = 4
-	Blink      AttributeColor = 5
-	Reverse    AttributeColor = 7
-	Hidden     AttributeColor = 8
-	None       AttributeColor = 0
+	ResetAll      AttributeColor = 0
+	Bright        AttributeColor = 1
+	Bold          AttributeColor = 1
+	Dim           AttributeColor = 2
+	Italic        AttributeColor = 3
+	Underscore    AttributeColor = 4
+	Blink         AttributeColor = 5
+	Reverse       AttributeColor = 7
+	Hidden        AttributeColor = 8
+	Strikethrough AttributeColor = 9
+	None          AttributeColor = 0
 
 	Black     AttributeColor = 30
 	Red       AttributeColor = 31
@@ -369,6 +370,11 @@ func (ac AttributeColor) Bold() AttributeColor {
 // Italic returns a new AttributeColor with the Italic attribute combined in
 func (ac AttributeColor) Italic() AttributeColor {
 	return ac.Combine(Italic)
+}
+
+// Strike returns a new AttributeColor with the Strikethrough attribute combined in
+func (ac AttributeColor) Strike() AttributeColor {
+	return ac.Combine(Strikethrough)
 }
 
 func (ac AttributeColor) Ints() []int {

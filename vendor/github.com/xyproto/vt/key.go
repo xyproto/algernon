@@ -22,6 +22,13 @@ type TTY struct {
 	orig    unix.Termios
 	timeout time.Duration
 	lastKey int
+	// pending holds input bytes that were read from the terminal but not yet
+	// consumed by a String()/Key() call. When a user holds down a key (or
+	// pastes text), a single unix.Read can return multiple queued key
+	// sequences; we parse the first one and stash the rest here so the next
+	// call returns them as separate keys instead of concatenating everything
+	// into one giant literal string.
+	pending []byte
 }
 
 // clamp restricts v to the range [lo, hi]
@@ -152,6 +159,22 @@ func (tty *TTY) Close() {
 	unix.Close(tty.fd)
 }
 
+// HasPendingInput reports whether ReadKey would return another key without
+// having to wait — either bytes are already buffered inside the TTY or more
+// bytes are readable from the file descriptor right now. Useful for frame
+// skipping: if more input is pending, the current frame can be dropped in
+// favour of the next one.
+func (tty *TTY) HasPendingInput() bool {
+	if len(tty.pending) > 0 {
+		return true
+	}
+	ok, err := tty.Poll(0)
+	if err != nil {
+		return false
+	}
+	return ok
+}
+
 // Poll checks if there is data available to read from the TTY within the given timeout.
 // Returns true if data is available, false if the timeout was reached.
 func (tty *TTY) Poll(d time.Duration) (bool, error) {
@@ -276,72 +299,151 @@ func (tty *TTY) Key() int {
 	return key
 }
 
-// String reads a string, handling key sequences and printable characters
-func (tty *TTY) String() string {
-	bytes := make([]byte, 6)
+// parseFirstKey parses the first key sequence from buf and returns its string
+// representation plus the number of bytes consumed. When the buffer starts
+// with an incomplete sequence (e.g. only ESC), consumed == 0 signals the
+// caller to try reading more bytes before classifying. A return of
+// (key, consumed) with consumed > 0 means a complete key has been recognised.
+func parseFirstKey(buf []byte) (string, int) {
+	n := len(buf)
+	if n == 0 {
+		return "", 0
+	}
+	// Non-ESC single byte: plain character or control code.
+	if buf[0] != 27 {
+		r, size := utf8.DecodeRune(buf)
+		if r == utf8.RuneError && size <= 1 {
+			return "c:" + strconv.Itoa(int(buf[0])), 1
+		}
+		if unicode.IsPrint(r) {
+			return string(r), size
+		}
+		return "c:" + strconv.Itoa(int(buf[0])), 1
+	}
+	// ESC alone: need more bytes to decide (might be start of CSI/SS3).
+	if n < 2 {
+		return "", 0
+	}
+	// Lone ESC followed by something that's not [ or O: it's the Escape key
+	// (or Alt+key) — for orbiton's purposes return it as c:27 and keep the
+	// next byte for the following call.
+	if buf[1] != '[' && buf[1] != 'O' {
+		return "c:27", 1
+	}
+	// 3-byte sequences: ESC [ X   or   ESC O X
+	if n >= 3 {
+		seq3 := [3]byte{buf[0], buf[1], buf[2]}
+		if str, ok := keyStringLookup[seq3]; ok {
+			return str, 3
+		}
+	}
+	// 4-byte sequences: ESC [ N ~
+	if n >= 4 {
+		seq4 := [4]byte{buf[0], buf[1], buf[2], buf[3]}
+		if str, ok := pageStringLookup[seq4]; ok {
+			return str, 4
+		}
+	}
+	// 5-byte sequences: ESC [ N N ~
+	if n >= 5 {
+		seq5 := [5]byte{buf[0], buf[1], buf[2], buf[3], buf[4]}
+		if str, ok := fKeyStringLookup[seq5]; ok {
+			return str, 5
+		}
+	}
+	// 6-byte modifier sequences: ESC [ 1 ; M X
+	if n >= 6 {
+		seq6 := [6]byte{buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]}
+		if str, ok := modKeyStringLookup[seq6]; ok {
+			return str, 6
+		}
+	}
+	// Unknown CSI sequence. Consume up to the terminator so stray bytes don't
+	// get re-emitted as literal "^[[..." text. A CSI/SS3 final byte is in the
+	// range 0x40-0x7E (or '~' for page-type sequences).
+	if buf[1] == '[' || buf[1] == 'O' {
+		for i := 2; i < n; i++ {
+			b := buf[i]
+			if (b >= 0x40 && b <= 0x7E) || b == '~' {
+				return string(buf[:i+1]), i + 1
+			}
+		}
+		// Terminator not yet in buffer — wait for more bytes.
+		return "", 0
+	}
+	// Fallback: consume one byte.
+	return string(buf[:1]), 1
+}
+
+// ReadKey reads a key sequence (or printable character) from the TTY.
+// When multiple key sequences arrive in one read (for example a held-down
+// arrow key during a slow redraw), they are returned one by one on
+// successive calls via a pending byte buffer — this prevents queued arrow
+// escapes from leaking into the document as literal "^[[..." text.
+func (tty *TTY) ReadKey() string {
+	// Note: we deliberately do NOT restore the original terminal state or
+	// flush the input queue on exit. Restoring would re-enable echo between
+	// keystrokes (causing raw escape sequences like "\x1b[A" to be echoed
+	// onto the screen while the editor is busy redrawing — visible as
+	// literal "^[[A" and, in graphical book mode, as flicker/jumping).
+	// Flushing would discard keystrokes the user typed while a redraw was
+	// in progress. The outer editor loop restores the terminal on exit.
 	tty.RawMode()
 
-	savedTimeout, err := tty.SetTimeout(0) // block until data
+	// Try to return a key already sitting in the pending buffer first.
+	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
+		tty.pending = tty.pending[consumed:]
+		return key
+	}
+
+	// Need more bytes. Use a generous read buffer so bursts of queued input
+	// (e.g. every \x1b[C from a held Right-arrow) are not split across reads.
+	// Block until at least one byte arrives.
+	savedTimeout, err := tty.SetTimeout(0)
 	if err != nil {
 		return ""
 	}
 	defer tty.SetTimeout(savedTimeout)
 
-	numRead, err := unix.Read(tty.fd, bytes)
+	readBuf := make([]byte, 256)
+	numRead, err := unix.Read(tty.fd, readBuf)
 	if numRead < 0 {
 		numRead = 0
 	}
-	defer func() {
-		tty.Restore()
-		tty.Flush()
-	}()
-	if err != nil || numRead == 0 {
+	if err != nil && numRead == 0 {
 		return ""
 	}
-	switch {
-	case numRead == 1:
-		r := rune(bytes[0])
-		if unicode.IsPrint(r) {
-			return string(r)
-		}
-		return "c:" + strconv.Itoa(int(r))
-	case numRead == 3:
-		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
-		if str, found := keyStringLookup[seq]; found {
-			return str
-		}
-		return string(bytes[:numRead])
-	case numRead == 4:
-		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
-		if str, found := pageStringLookup[seq]; found {
-			return str
-		}
-		return string(bytes[:numRead])
-	case numRead == 5:
-		seq := [5]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]}
-		if str, found := fKeyStringLookup[seq]; found {
-			return str
-		}
-		return string(bytes[:numRead])
-	case numRead == 6:
-		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := modKeyStringLookup[seq]; found {
-			return str
-		}
-		fallthrough
-	default:
-		// Try to read any remaining bytes with a short timeout
-		tty.SetTimeout(defaultTimeout)
-		bytes2 := make([]byte, 256)
-		numRead2, err := unix.Read(tty.fd, bytes2)
-		if numRead2 < 0 {
-			numRead2 = 0
-		}
-		if err != nil || numRead2 == 0 {
-			return string(bytes[:numRead])
-		}
-		return string(append(bytes[:numRead], bytes2[:numRead2]...))
+	tty.pending = append(tty.pending, readBuf[:numRead]...)
+
+	// If the pending buffer currently holds only an incomplete escape
+	// sequence (e.g. lone ESC or ESC [ without a terminator), do one short
+	// follow-up read to let the rest arrive before classifying.
+	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
+		tty.pending = tty.pending[consumed:]
+		return key
 	}
+	// Incomplete: wait briefly for the tail of the escape sequence.
+	tty.SetTimeoutNoSave(defaultTimeout)
+	numRead2, _ := unix.Read(tty.fd, readBuf)
+	if numRead2 > 0 {
+		tty.pending = append(tty.pending, readBuf[:numRead2]...)
+	}
+	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
+		tty.pending = tty.pending[consumed:]
+		return key
+	}
+	// Still nothing parseable (shouldn't normally happen); flush the pending
+	// bytes as-is so we don't deadlock on them. A lone ESC byte that never
+	// got a continuation is the Escape key itself — return it as "c:27" so
+	// callers that compare against the canonical key string (e.g. menu
+	// dismissal) continue to work.
+	if len(tty.pending) == 1 && tty.pending[0] == 27 {
+		tty.pending = tty.pending[:0]
+		return "c:27"
+	}
+	s := string(tty.pending)
+	tty.pending = tty.pending[:0]
+	return s
 }
 
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.

@@ -484,8 +484,8 @@ func (tty *TTY) readWithTimeoutConsole(b []byte) (int, error) {
 	return int(n), err
 }
 
-// String reads a string
-func (tty *TTY) String() string {
+// ReadKey reads a key sequence (or printable character) from the TTY.
+func (tty *TTY) ReadKey() string {
 	bytes := make([]byte, 6)
 	tty.SetTimeout(0)
 	numRead, err := tty.readWithTimeout(bytes)

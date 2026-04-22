@@ -2,5 +2,5 @@
 
 package vt
 
-// KeyString is not supported on this platform, falls back to String.
-func (tty *TTY) KeyString() string { return tty.String() }
+// KeyString is not supported on this platform, falls back to ReadKey.
+func (tty *TTY) KeyString() string { return tty.ReadKey() }

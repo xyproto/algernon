@@ -46,11 +46,15 @@ func (tty *TTY) Close() {}
 // Poll checks if data is available (stub)
 func (tty *TTY) Poll(d time.Duration) (bool, error) { return true, nil }
 
+// HasPendingInput reports whether ReadKey would return another key without
+// blocking (stub: always reports false so frame skipping is inactive)
+func (tty *TTY) HasPendingInput() bool { return false }
+
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int { return 0 }
 
-// String reads a string from the TTY
-func (tty *TTY) String() string { return "" }
+// ReadKey reads a key sequence from the TTY.
+func (tty *TTY) ReadKey() string { return "" }
 
 // Rune reads a rune from the TTY
 func (tty *TTY) Rune() rune { return rune(0) }
