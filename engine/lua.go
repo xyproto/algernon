@@ -253,7 +253,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 	if withHandlerFunctions {
 		// Lua HTTP handlers
-		ac.LoadLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme)
+		ac.LoadLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme, true)
 	}
 
 	// Run the script
@@ -268,6 +268,111 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 	// Only put the Lua state back if there were no errors
 	ac.luapool.Put(L)
 
+	// Populate a pool of Lua states dedicated to serving handle() requests,
+	// so that concurrent requests can execute on different states in parallel.
+	if withHandlerFunctions {
+		if err := ac.buildHandlerPool(filename, mux); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// loadServerConfigNoopFunctions binds the server configuration functions as
+// no-ops. Used while populating the handler pool: the user's script will call
+// functions like SetAddr or AddReverseProxy during setup, but those effects
+// have already been applied on the main state and must not run again per
+// pool state.
+func (ac *Config) loadServerConfigNoopFunctions(L *lua.LState) {
+	noop := L.NewFunction(func(_ *lua.LState) int {
+		return 0
+	})
+	noopTrue := L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LBool(true))
+		return 1
+	})
+	cookieSecret := L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(ac.cookieSecret))
+		return 1
+	})
+	serverInfo := L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(ac.Info()))
+		return 1
+	})
+	for _, name := range []string{
+		"SetAddr", "SetCookieSecret", "ClearPermissions",
+		"AddUserPrefix", "AddAdminPrefix", "AddReverseProxy",
+		"DenyHandler", "OnReady",
+	} {
+		L.SetGlobal(name, noop)
+	}
+	for _, name := range []string{"LogTo", "ServerFile", "ServerDir"} {
+		L.SetGlobal(name, noopTrue)
+	}
+	L.SetGlobal("CookieSecret", cookieSecret)
+	L.SetGlobal("ServerInfo", serverInfo)
+}
+
+// loadPoolStateFunctions binds every function the user's script needs to run
+// inside a pool state. Request-scoped functions (LoadCommonFunctions) are
+// rebound on every request, so here we only cover what the setup phase uses.
+func (ac *Config) loadPoolStateFunctions(L *lua.LState, filename string, mux *http.ServeMux) {
+	ac.LoadBasicSystemFunctions(L)
+	ac.loadServerConfigNoopFunctions(L)
+
+	if ac.perm != nil {
+		userstate := ac.perm.UserState()
+		creator := userstate.Creator()
+		datastruct.LoadList(L, creator)
+		datastruct.LoadSet(L, creator)
+		datastruct.LoadHash(L, creator)
+		datastruct.LoadKeyValue(L, creator)
+		codelib.Load(L, creator)
+		pquery.Load(L)
+		mssql.Load(L)
+	}
+
+	jnode.LoadJSONFunctions(L)
+	ac.LoadJFile(L, filepath.Dir(filename))
+	jnode.Load(L)
+	pure.Load(L)
+	ac.LoadPluginFunctions(L, nil)
+	ac.LoadCacheFunctions(L)
+	onthefly.Load(L)
+	ollama.Load(L)
+	httpclient.Load(L, ac.serverHeaderName)
+
+	ac.LoadLuaHandlerFunctions(L, filename, mux, false, nil, ac.defaultTheme, false)
+}
+
+// buildHandlerPool creates ac.handlerPoolSize fresh Lua states, runs the
+// script in each, and enqueues them in ac.handlerPool. Every state ends up
+// with its own copy of each handle() function stored in its Lua registry.
+func (ac *Config) buildHandlerPool(filename string, mux *http.ServeMux) error {
+	size := ac.handlerPoolSize
+	if size < 1 {
+		size = 1
+	}
+	pool := newHandlerPool(size)
+	for i := 0; i < size; i++ {
+		L := lua.NewState()
+		ac.loadPoolStateFunctions(L, filename, mux)
+		if err := L.DoFile(filename); err != nil {
+			L.Close()
+			if len(pool.states) == 0 {
+				// Couldn't build any usable pool state
+				return err
+			}
+			logrus.Errorf("handler pool state %d failed to initialise: %v", i, err)
+			continue
+		}
+		pool.Add(L)
+	}
+	ac.handlerPool = pool
+	AtShutdown(func() {
+		pool.Close()
+	})
 	return nil
 }
 

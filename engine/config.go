@@ -50,6 +50,7 @@ type Config struct {
 	pongomutex                   *sync.RWMutex       // workaround for rendering pongo2 pages without concurrency issues
 	fs                           *datablock.FileStat // for checking if file exists, possibly in a cached way
 	luapool                      *pool.LStatePool    // a pool of Lua interpreters
+	handlerPool                  *handlerPool        // a pool of Lua states for handle() requests
 	cache                        *datablock.FileCache
 	reverseProxyConfig           *ReverseProxyConfig
 	redisAddr                    string
@@ -110,6 +111,7 @@ type Config struct {
 	defaultCacheMaxEntitySize    uint64        // 64 KiB
 	defaultLargeFileSize         uint64        // 42 MiB: the default size for when a static file is large enough to not be read into memory
 	limitRequests                int64         // rate limit to this many requests per client per second
+	handlerPoolSize              int           // number of Lua states available for handle() request parallelism
 	writeTimeout                 uint64        // timeout when writing data to a client, in seconds
 	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
 	defaultCacheSize             uint64        // 1 MiB
@@ -166,6 +168,9 @@ func New(versionString, description string) (*Config, error) {
 		curlSupport: true,
 
 		shutdownTimeout: 10 * time.Second,
+
+		// Pool size for parallel Lua handle() requests. One state per CPU by default.
+		handlerPoolSize: runtime.NumCPU(),
 
 		defaultWebColonPort:       ":3000",
 		defaultRedisColonPort:     ":6379",

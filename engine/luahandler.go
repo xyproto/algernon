@@ -3,7 +3,6 @@ package engine
 import (
 	"net/http"
 	"path/filepath"
-	"sync"
 
 	"github.com/didip/tollbooth"
 	"github.com/sirupsen/logrus"
@@ -11,27 +10,49 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 )
 
-// LoadLuaHandlerFunctions makes functions related to handling HTTP requests
-// available to Lua scripts
-func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string) {
-	luahandlermutex := &sync.RWMutex{}
+// handleRegistryPrefix keys a handler function in a Lua state's registry
+const handleRegistryPrefix = "algernon:handle:"
 
+// LoadLuaHandlerFunctions makes functions related to handling HTTP requests
+// available to Lua scripts.
+//
+// When registerRoutes is true, handle() registers the route on the mux. That
+// wrapped handler borrows a state from ac.handlerPool at request time, looks
+// up the handler function from the state's registry by path, and runs it.
+// When registerRoutes is false, handle() only stores the function in the
+// state's registry; this is the mode used while populating the pool.
+func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *http.ServeMux, addDomain bool, httpStatus *FutureStatus, theme string, registerRoutes bool) {
 	L.SetGlobal("handle", L.NewFunction(func(L *lua.LState) int {
 		handlePath := L.ToString(1)
 		handleFunc := L.ToFunction(2)
 
-		// TODO: Set up a channel and function for retrieving a lua "handleFunc" and running it,
-		//       using the common luapool as needed
+		// Store the function in this state's registry, keyed by path,
+		// so the request-time wrapper can fetch it from whichever pool
+		// state it happens to borrow.
+		L.G.Registry.RawSetString(handleRegistryPrefix+handlePath, handleFunc)
+
+		if !registerRoutes {
+			return 0 // number of results
+		}
 
 		wrappedHandleFunc := func(w http.ResponseWriter, req *http.Request) {
-			// Set up a new Lua state with the current http.ResponseWriter and *http.Request
-			luahandlermutex.Lock()
-			ac.LoadCommonFunctions(w, req, filename, L, nil, httpStatus)
-			luahandlermutex.Unlock()
+			if ac.handlerPool == nil {
+				logrus.Error("Handler for " + handlePath + " called before the handler pool was built")
+				return
+			}
+			poolL := ac.handlerPool.Get()
+			defer ac.handlerPool.Put(poolL)
 
-			// Then run the given Lua function
-			L.Push(handleFunc)
-			if err := L.PCall(0, lua.MultRet, nil); err != nil {
+			fn := poolL.G.Registry.RawGetString(handleRegistryPrefix + handlePath)
+			handlerFn, ok := fn.(*lua.LFunction)
+			if !ok {
+				logrus.Error("Handler for " + handlePath + " is missing from the pool state")
+				return
+			}
+
+			ac.LoadCommonFunctions(w, req, filename, poolL, nil, httpStatus)
+			poolL.Push(handlerFn)
+			if err := poolL.PCall(0, lua.MultRet, nil); err != nil {
 				// Non-fatal error
 				logrus.Error("Handler for "+handlePath+" failed:", err)
 			}
@@ -56,6 +77,11 @@ func (ac *Config) LoadLuaHandlerFunctions(L *lua.LState, filename string, mux *h
 	}))
 
 	L.SetGlobal("servedir", L.NewFunction(func(L *lua.LState) int {
+		// servedir only has an effect during the first pass; subsequent
+		// passes (pool build) must not re-register mux routes.
+		if !registerRoutes {
+			return 0 // number of results
+		}
 		handlePath := L.ToString(1) // serve as (ie. "/")
 		rootdir := L.ToString(2)    // filesystem directory (ie. "./public")
 		if handlePath == "" || rootdir == "" {
