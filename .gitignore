@@ -34,5 +34,6 @@ plugins/go/go
 regtest/issue13/large-file
 release/
 samples/getip/ip.md
+system/fedora/dist/
 test.json
 trace.out
