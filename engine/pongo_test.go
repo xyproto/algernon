@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xyproto/algernon/lua/pool"
+	"github.com/xyproto/algernon/lua/luastate"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
 )
@@ -44,7 +44,7 @@ func pongoPageTest(n int, t *testing.T) {
 	}
 
 	// Lua LState pool
-	ac.luapool = pool.New()
+	ac.luapool = luastate.New()
 	defer ac.luapool.Shutdown()
 
 	// Make functions from the given Lua data available

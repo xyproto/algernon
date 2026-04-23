@@ -241,7 +241,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 	}
 
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Borrow()
 	// Don't re-use the Lua state
 	defer L.Close()
 

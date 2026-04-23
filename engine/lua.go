@@ -112,8 +112,8 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 // script, otherwise nil.
 func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename string, flushFunc func(), fust *FutureStatus) error {
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
-	defer ac.luapool.Put(L)
+	L := ac.luapool.Borrow()
+	defer ac.luapool.Return(L)
 
 	// Warn if the connection is closed before the script has finished.
 	if ac.verboseMode {
@@ -196,7 +196,7 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 // luaHandler is a flag that lets Lua functions like "handle" and "servedir" be available or not.
 func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHandlerFunctions bool) error {
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
+	L := ac.luapool.Borrow()
 
 	// Basic system functions, like log()
 	ac.LoadBasicSystemFunctions(L)
@@ -266,7 +266,7 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 	}
 
 	// Only put the Lua state back if there were no errors
-	ac.luapool.Put(L)
+	ac.luapool.Return(L)
 
 	// Populate a pool of Lua states dedicated to serving handle() requests,
 	// so that concurrent requests can execute on different states in parallel.
@@ -387,8 +387,8 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 	defer ac.pongomutex.Unlock()
 
 	// Retrieve a Lua state
-	L := ac.luapool.Get()
-	defer ac.luapool.Put(L)
+	L := ac.luapool.Borrow()
+	defer ac.luapool.Return(L)
 
 	// Prepare an empty map of functions (and variables)
 	funcs := make(template.FuncMap)

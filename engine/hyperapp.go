@@ -15,5 +15,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 // From https://unpkg.com/hyperapp, version 0.15.1 (latest version is 2.0.22). TODO: Upgrade.
 //
-//go:embed hyperapp/hyperapp.js
+//go:embed assets/hyperapp/hyperapp.js
 var hyperAppJSBytes []byte

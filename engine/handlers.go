@@ -145,7 +145,12 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		ext = ".hyper.jsx"
 	}
 
-	// Serve the file in different ways based on the filename extension
+	// Serve the file in different ways based on the filename extension.
+	// Simple read+render cases are handled by the Renderer registry first.
+	if ac.dispatchRenderer(w, req, filename, ext) {
+		return
+	}
+
 	switch ext {
 
 	// HTML pages are handled differently, if auto-refresh has been enabled
@@ -173,12 +178,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 
 		return
 
-	case ".md", ".markdown":
-		w.Header().Add(contentType, htmlUTF8)
-		if markdownblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			// Render the markdown page
-			ac.MarkdownPage(w, req, markdownblock.Bytes(), filename)
-		}
+	case ".md", ".markdown", ".gcss", ".scss", ".jsx", ".happ", ".hyper", ".hyper.jsx", ".hyper.js":
+		// Handled by the Renderer registry; unreachable because dispatchRenderer already returned
 		return
 
 	case ".frm", ".form":
@@ -354,43 +355,6 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 					logrus.Error("Error in " + filename + ": " + err.Error())
 				}
 			}
-		}
-		return
-
-	case ".gcss":
-		if gcssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			w.Header().Add(contentType, "text/css;charset=utf-8")
-			// Render the GCSS page as CSS
-			ac.GCSSPage(w, req, filename, gcssblock.Bytes())
-		}
-		return
-
-	case ".scss":
-		if scssblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			// Render the SASS page (with .scss extension) as CSS
-			w.Header().Add(contentType, "text/css;charset=utf-8")
-			ac.SCSSPage(w, req, filename, scssblock.Bytes())
-		}
-		return
-
-	case ".happ", ".hyper", ".hyper.jsx", ".hyper.js": // hyperApp JSX -> JS, wrapped in HTML
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			// Render the JSX page as HTML with embedded JavaScript
-			w.Header().Add(contentType, htmlUTF8)
-			ac.HyperAppPage(w, req, filename, jsxblock.Bytes())
-		} else {
-			logrus.Error(filename + ":" + err.Error())
-		}
-		return
-
-	// This case must come after the .hyper.jsx case
-	case ".jsx":
-		if jsxblock, err := ac.ReadAndLogErrors(w, filename, ext); err == nil { // success
-			// Render the JSX page as JavaScript
-			w.Header().Add(contentType, "text/javascript;charset=utf-8")
-			ac.JSXPage(w, req, filename, jsxblock.Bytes())
-		} else {
-			logrus.Error(filename + ":" + err.Error())
 		}
 		return
 

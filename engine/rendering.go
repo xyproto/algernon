@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	//go:embed static/tex-svg.js
+	//go:embed assets/mathjax/tex-svg.js
 	mathJaxScript []byte
 
 	// For detecting mathematical formulas

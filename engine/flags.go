@@ -2,7 +2,6 @@ package engine
 
 import (
 	"flag"
-	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -298,62 +297,23 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// For backward compatibility with previous versions of Algernon.
 	// Classify positional arguments by content rather than by position,
 	// so that the directory and address can be given in any order.
-	args := flag.Args()
 	fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
-	looksLikeCertOrKey := func(arg string) bool {
-		switch strings.ToLower(filepath.Ext(arg)) {
-		case ".pem", ".crt", ".cer", ".key":
-			return true
-		default:
-			return false
-		}
+	classified := classifyPositionalArgs(flag.Args(), func(p string) bool {
+		return fs.IsDir(p) || fs.Exists(p)
+	})
+	if classified.ServerDirSet {
+		ac.serverDirOrFilename = classified.ServerDirOrFilename
 	}
-	looksLikeRedisAddr := func(arg string) bool {
-		return strings.HasSuffix(arg, ":6379") || strings.HasSuffix(arg, ":6380")
+	if classified.ServerAddr != "" {
+		ac.serverAddr = classified.ServerAddr
 	}
-	looksLikeWebPort := func(port string) bool {
-		return port == "80" || port == "8080" || strings.HasSuffix(port, "000")
+	if classified.RedisAddrFromArgs {
+		ac.redisAddr = classified.RedisAddr
+		ac.redisAddrSpecified = true
 	}
-	var remainingArgs []string
-	serverDirSet := false
-	redisAddrFromArgs := false
-	for _, arg := range args {
-		if looksLikeCertOrKey(arg) {
-			remainingArgs = append(remainingArgs, arg)
-			continue
-		}
-		if !serverDirSet && (fs.IsDir(arg) || fs.Exists(arg)) {
-			if strings.HasSuffix(arg, string(os.PathSeparator)) {
-				ac.serverDirOrFilename = arg[:len(arg)-1]
-			} else {
-				ac.serverDirOrFilename = arg
-			}
-			serverDirSet = true
-			continue
-		}
-		if looksLikeRedisAddr(arg) {
-			ac.redisAddr = arg
-			ac.redisAddrSpecified = true
-			redisAddrFromArgs = true
-			continue
-		}
-		// Check if this looks like a host:port address (handles IPv4, IPv6, and port-only)
-		if _, _, err := net.SplitHostPort(arg); err == nil {
-			// Valid host:port format, assume this is the web server address
-			ac.serverAddr = arg
-			continue
-		}
-		if _, err := strconv.Atoi(arg); err == nil { // no error
-			// If in doubt, assume this is the web server port.
-			if looksLikeWebPort(arg) || !redisAddrFromArgs {
-				ac.serverAddr = net.JoinHostPort("", arg)
-			} else {
-				remainingArgs = append(remainingArgs, arg)
-			}
-			continue
-		}
-		remainingArgs = append(remainingArgs, arg)
-	}
+	remainingArgs := classified.Remaining
+	redisAddrFromArgs := classified.RedisAddrFromArgs
+
 	// Clean up path in ac.serverDirOrFilename
 	// .Rel calls .Clean on the result.
 	if pwd, err := os.Getwd(); err == nil { // no error

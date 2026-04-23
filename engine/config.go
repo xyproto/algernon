@@ -20,7 +20,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
-	"github.com/xyproto/algernon/lua/pool"
+	"github.com/xyproto/algernon/lua/luastate"
 	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
@@ -49,7 +49,7 @@ type Config struct {
 	serverReadyFunctionLua       func()              // configuration that may only be set in the server configuration script(s)
 	pongomutex                   *sync.RWMutex       // workaround for rendering pongo2 pages without concurrency issues
 	fs                           *datablock.FileStat // for checking if file exists, possibly in a cached way
-	luapool                      *pool.LStatePool    // a pool of Lua interpreters
+	luapool                      *luastate.Pool      // a pool of Lua interpreters
 	handlerPool                  *handlerPool        // a pool of Lua states for handle() requests
 	cache                        *datablock.FileCache
 	reverseProxyConfig           *ReverseProxyConfig
@@ -530,7 +530,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	}
 
 	// Lua LState pool
-	ac.luapool = pool.New()
+	ac.luapool = luastate.New()
 	AtShutdown(func() {
 		ac.luapool.Shutdown()
 	})

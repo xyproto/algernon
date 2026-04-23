@@ -15,7 +15,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 )
 
-//go:embed reactrefresh/react-refresh-runtime.js
+//go:embed assets/reactrefresh/react-refresh-runtime.js
 var reactRefreshRuntimeJS []byte
 
 // hmrRefreshRuntimePath is the URL for the embedded react-refresh runtime
