@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -47,7 +46,6 @@ type Config struct {
 	perm                         pinterface.IPermissions // the user state, for the permissions system
 	mimereader                   *mime.Reader
 	serverReadyFunctionLua       func()              // configuration that may only be set in the server configuration script(s)
-	pongomutex                   *sync.RWMutex       // workaround for rendering pongo2 pages without concurrency issues
 	fs                           *datablock.FileStat // for checking if file exists, possibly in a cached way
 	luapool                      *luastate.Pool      // a pool of Lua interpreters
 	handlerPool                  *handlerPool        // a pool of Lua states for handle() requests
@@ -204,9 +202,6 @@ func New(versionString, description string) (*Config, error) {
 		// TODO: Make configurable
 		// Maximum given file size for caching, 7 MiB
 		cacheMaxGivenDataSize: 7 * utils.MiB,
-
-		// Mutex for rendering Pongo2 pages
-		pongomutex: &sync.RWMutex{},
 
 		// Program for opening URLs, keep empty for using the default in url.go
 		defaultOpenExecutable: "",

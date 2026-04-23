@@ -383,9 +383,6 @@ func (ac *Config) buildHandlerPool(filename string, mux *http.ServeMux) error {
 // and that only the first returned value will be accessible.
 // The Lua functions may take an optional number of arguments.
 func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luadata []byte, filename string) (template.FuncMap, error) {
-	ac.pongomutex.Lock()
-	defer ac.pongomutex.Unlock()
-
 	// Retrieve a Lua state
 	L := ac.luapool.Borrow()
 	defer ac.luapool.Return(L)

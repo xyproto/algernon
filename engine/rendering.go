@@ -566,18 +566,20 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		linkInGCSS = true
 	}
 
-	// Set the base directory for Pongo2 to the one where the given filename is
-	if err := pongo2.DefaultLoader.SetBaseDir(dirName); err != nil {
+	// Per-request Pongo2 template set: avoids global mutation (formerly guarded by pongomutex)
+	loader, err := pongo2.NewLocalFileSystemLoader(dirName)
+	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
 		} else {
-			logrus.Errorf("Could not set base directory for Pongo2 to %s:\n%s", dirName, err)
+			logrus.Errorf("Could not create Pongo2 loader for %s:\n%s", dirName, err)
 		}
 		return
 	}
+	pongoSet := pongo2.NewSet(filename, loader)
 
 	// Prepare a Pongo2 template
-	tpl, err := pongo2.DefaultSet.FromBytes(pongodata)
+	tpl, err := pongoSet.FromBytes(pongodata)
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, pongodata, err.Error(), "pongo2")
@@ -628,8 +630,8 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 		}
 	}
 
-	// Make the Lua functions available to Pongo
-	pongo2.Globals.Update(okfuncs)
+	// Make the Lua functions available to this request's Pongo2 set
+	pongoSet.Globals.Update(okfuncs)
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -643,7 +645,7 @@ func (ac *Config) PongoPage(w http.ResponseWriter, req *http.Request, filename s
 	}()
 
 	// Render the Pongo2 template to the buffer
-	err = tpl.ExecuteWriter(pongo2.Globals, &buf)
+	err = tpl.ExecuteWriter(pongoSet.Globals, &buf)
 	if err != nil {
 		// if err := tpl.ExecuteWriterUnbuffered(pongo2.Globals, &buf); err != nil {
 		if ac.debugMode {

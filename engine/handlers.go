@@ -35,8 +35,6 @@ const (
 	textUTF8    = "text/plain;charset=utf-8"
 )
 
-var oc *ollamaclient.Config
-
 // ClientCanGzip checks if the client supports gzip compressed responses
 func (ac *Config) ClientCanGzip(req *http.Request) bool {
 	// Curl does not use --compressed by default. This causes problems when
@@ -95,9 +93,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 		}
 
 		// Render the Pongo2 page, using functions from luaDataFilename, if available
-		ac.pongomutex.Lock()
 		ac.PongoPage(w, req, filename, pongoblock.Bytes(), funcs)
-		ac.pongomutex.Unlock()
 
 		return
 	}
@@ -109,10 +105,8 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	}
 
 	// Use the Pongo2 template without any Lua functions
-	ac.pongomutex.Lock()
 	funcs := make(template.FuncMap)
 	ac.PongoPage(w, req, filename, pongoblock.Bytes(), funcs)
-	ac.pongomutex.Unlock()
 }
 
 // ReadAndLogErrors tries to read a file, and logs an error if it could not be read
@@ -369,12 +363,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 				model := strings.TrimSpace(lines[1])
 				prompt := strings.TrimSpace(strings.Join(lines[3:], "\n"))
 				w.Header().Add(contentType, foundContentType)
-				if oc == nil {
-					oc = ollamaclient.New()
-				}
-				if oc.ModelName != model {
-					oc.ModelName = model
-				}
+				// Per-request client avoids races on the model/timeout fields
+				oc := ollamaclient.New(model)
 				oc.HTTPTimeout = time.Duration(ac.writeTimeout) * time.Second
 				const errFmt = "could not convert %s to content: %s"
 				if err := oc.PullIfNeeded(true); err == nil { // success
