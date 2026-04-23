@@ -39,9 +39,10 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 		Handler: handler, // Use the provided http.Handler (e.g. httprouter)
 		// The timeout values are also the maximum time it can take
 		// for a complete page of Server-Sent Events (SSE).
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   time.Duration(ac.writeTimeout) * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      time.Duration(ac.writeTimeout) * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
 	if http2support {
 		// Enable HTTP/2 support
