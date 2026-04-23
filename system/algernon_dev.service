@@ -1,16 +1,28 @@
 [Unit]
 Description=Algernon web server
-Requires=redis.service
-After=redis.service
+Wants=redis.service
+After=redis.service network-online.target
 
 [Service]
+Type=simple
 User=algernon
 Group=users
 ExecStart=/usr/bin/algernon -e -a --theme=dark --domain --server --log /var/log/algernon.log /srv/algernon
+Restart=on-failure
+RestartSec=5s
+
+# Sandboxing
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
 ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+SystemCallArchitectures=native
 NoNewPrivileges=true
 RuntimeDirectory=algernon
 RuntimeDirectoryMode=700
