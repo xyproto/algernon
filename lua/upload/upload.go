@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
@@ -96,8 +97,11 @@ func New(req *http.Request, scriptdir, formID string, uploadLimit int64) (*Uploa
 		}
 	}
 
+	// use only the base name to prevent path traversal
+	safeFilename := filepath.Base(handler.Filename)
+
 	// all ok
-	return &UploadedFile{req, handler.Header, buf, scriptdir, handler.Filename}, nil
+	return &UploadedFile{req, handler.Header, buf, scriptdir, safeFilename}, nil
 }
 
 // Get the first argument, "self", and cast it from userdata to
@@ -206,6 +210,15 @@ func uploadedFileSave(L *lua.LState) int {
 	// Get the full path
 	writeFilename := filepath.Join(ulf.scriptdir, filename)
 
+	// prevent path traversal
+	absBase, _ := filepath.Abs(ulf.scriptdir)
+	absTarget, _ := filepath.Abs(writeFilename)
+	if !strings.HasPrefix(absTarget, absBase+string(os.PathSeparator)) && absTarget != absBase {
+		logrus.Error("path traversal attempt blocked: ", writeFilename)
+		L.Push(lua.LBool(false))
+		return 1
+	}
+
 	// Write the file and return true if successful
 	L.Push(lua.LBool(ulf.write(writeFilename, givenPermissions) == nil))
 	return 1 // number of results
@@ -224,10 +237,22 @@ func uploadedFileSaveIn(L *lua.LState) int {
 
 	// Get the full path
 	var writeFilename string
+	var baseDir string
 	if filepath.IsAbs(givenDirectory) {
 		writeFilename = filepath.Join(givenDirectory, ulf.filename)
+		baseDir = givenDirectory
 	} else {
 		writeFilename = filepath.Join(ulf.scriptdir, givenDirectory, ulf.filename)
+		baseDir = filepath.Join(ulf.scriptdir, givenDirectory)
+	}
+
+	// prevent path traversal
+	absBase, _ := filepath.Abs(baseDir)
+	absTarget, _ := filepath.Abs(writeFilename)
+	if !strings.HasPrefix(absTarget, absBase+string(os.PathSeparator)) && absTarget != absBase {
+		logrus.Error("path traversal attempt blocked: ", writeFilename)
+		L.Push(lua.LBool(false))
+		return 1
 	}
 
 	// Write the file and return true if successful
