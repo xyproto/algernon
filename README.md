@@ -1387,7 +1387,7 @@ And then just run it with `algernon server.lua`.
 General information
 -------------------
 
-* Version: 1.17.5
+* Version: 1.17.6
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
