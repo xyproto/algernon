@@ -5,6 +5,7 @@ package vt
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 	"unicode"
@@ -29,6 +30,22 @@ type TTY struct {
 	// call returns them as separate keys instead of concatenating everything
 	// into one giant literal string.
 	pending []byte
+	// reader, when non-nil, replaces the terminal file descriptor as the
+	// source of input bytes. Set via NewTTYFromReader for scripted / test
+	// input. While non-nil, all termios-touching methods (RawMode, NoBlock,
+	// Restore, Flush, SetTimeout, Poll, Close, ...) become no-ops and byte
+	// reads go through readBytes instead of unix.Read.
+	reader io.Reader
+}
+
+// readBytes is the single byte-read entry point used by ReadKey, Rune and
+// asciiAndKeyCode. When a mock reader has been installed via
+// NewTTYFromReader it is used instead of the terminal file descriptor.
+func (tty *TTY) readBytes(buf []byte) (int, error) {
+	if tty.reader != nil {
+		return tty.reader.Read(buf)
+	}
+	return unix.Read(tty.fd, buf)
 }
 
 // clamp restricts v to the range [lo, hi]
@@ -135,6 +152,10 @@ func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
 		return d, nil
 	}
 	savedTimeout := tty.timeout
+	if tty.reader != nil {
+		tty.timeout = d
+		return savedTimeout, nil
+	}
 	if err := tty.SetTimeoutNoSave(d); err != nil {
 		return 0, err
 	}
@@ -144,6 +165,9 @@ func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
 
 // SetTimeoutNoSave sets the read timeout without saving the previous value
 func (tty *TTY) SetTimeoutNoSave(d time.Duration) error {
+	if tty.reader != nil {
+		return nil
+	}
 	a, err := tcgetattr(tty.fd)
 	if err != nil {
 		return err
@@ -155,6 +179,12 @@ func (tty *TTY) SetTimeoutNoSave(d time.Duration) error {
 
 // Close restores the terminal and closes the file descriptor
 func (tty *TTY) Close() {
+	if tty.reader != nil {
+		if c, ok := tty.reader.(io.Closer); ok {
+			_ = c.Close()
+		}
+		return
+	}
 	tty.Restore()
 	unix.Close(tty.fd)
 }
@@ -168,6 +198,9 @@ func (tty *TTY) HasPendingInput() bool {
 	if len(tty.pending) > 0 {
 		return true
 	}
+	if tty.reader != nil {
+		return false
+	}
 	ok, err := tty.Poll(0)
 	if err != nil {
 		return false
@@ -178,6 +211,11 @@ func (tty *TTY) HasPendingInput() bool {
 // Poll checks if there is data available to read from the TTY within the given timeout.
 // Returns true if data is available, false if the timeout was reached.
 func (tty *TTY) Poll(d time.Duration) (bool, error) {
+	if tty.reader != nil {
+		// No cross-platform way to peek an arbitrary io.Reader; assume data
+		// is available (the reader will block on its own if not).
+		return true, nil
+	}
 	var readfds unix.FdSet
 	readfds.Bits[tty.fd/64] |= 1 << (uint(tty.fd) % 64)
 
@@ -209,7 +247,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 	tty.SetTimeoutNoSave(tty.timeout)
 
 	// Read bytes from the terminal
-	numRead, err := unix.Read(tty.fd, bytes)
+	numRead, err := tty.readBytes(bytes)
 	if numRead < 0 {
 		numRead = 0
 	}
@@ -406,7 +444,7 @@ func (tty *TTY) ReadKey() string {
 	defer tty.SetTimeout(savedTimeout)
 
 	readBuf := make([]byte, 256)
-	numRead, err := unix.Read(tty.fd, readBuf)
+	numRead, err := tty.readBytes(readBuf)
 	if numRead < 0 {
 		numRead = 0
 	}
@@ -424,7 +462,7 @@ func (tty *TTY) ReadKey() string {
 	}
 	// Incomplete: wait briefly for the tail of the escape sequence.
 	tty.SetTimeoutNoSave(defaultTimeout)
-	numRead2, _ := unix.Read(tty.fd, readBuf)
+	numRead2, _ := tty.readBytes(readBuf)
 	if numRead2 > 0 {
 		tty.pending = append(tty.pending, readBuf[:numRead2]...)
 	}
@@ -457,7 +495,7 @@ func (tty *TTY) Rune() rune {
 	}
 	defer tty.SetTimeout(savedTimeout)
 
-	numRead, err := unix.Read(tty.fd, bytes)
+	numRead, err := tty.readBytes(bytes)
 	if numRead < 0 {
 		numRead = 0
 	}
@@ -507,6 +545,9 @@ func (tty *TTY) Rune() rune {
 
 // RawMode switches the terminal to raw mode
 func (tty *TTY) RawMode() {
+	if tty.reader != nil {
+		return
+	}
 	a, err := tcgetattr(tty.fd)
 	if err != nil {
 		return
@@ -517,6 +558,9 @@ func (tty *TTY) RawMode() {
 
 // NoBlock sets the terminal to cbreak mode
 func (tty *TTY) NoBlock() {
+	if tty.reader != nil {
+		return
+	}
 	a, err := tcgetattr(tty.fd)
 	if err != nil {
 		return
@@ -527,16 +571,25 @@ func (tty *TTY) NoBlock() {
 
 // Restore the terminal to its original state (flushes pending input)
 func (tty *TTY) Restore() {
+	if tty.reader != nil {
+		return
+	}
 	unix.IoctlSetTermios(tty.fd, ioctlFLUSHSET, &tty.orig)
 }
 
 // RestoreNoFlush restores the terminal to its original state without flushing pending input
 func (tty *TTY) RestoreNoFlush() {
+	if tty.reader != nil {
+		return
+	}
 	unix.IoctlSetTermios(tty.fd, ioctlSETATTR, &tty.orig)
 }
 
 // Flush discards pending input/output
 func (tty *TTY) Flush() {
+	if tty.reader != nil {
+		return
+	}
 	tcflush(tty.fd)
 }
 

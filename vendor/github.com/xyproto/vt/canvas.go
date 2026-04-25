@@ -377,8 +377,15 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 				continue
 			}
 
-			// Position cursor at start of this line
-			fmt.Fprintf(&sb, "\033[%d;1H", y+1)
+			// Position cursor at start of this line, then emit a full
+			// SGR reset (\033[0m) so attributes like Bold/Italic that
+			// were applied on a previous line do not bleed into this
+			// one. Without this, a palette fg combined with Bold (e.g.
+			// "\033[30;1m" for a heading) leaves the Bold bit set; the
+			// next line's true-colour SGR "\033[38;2;R;G;Bm" only
+			// overwrites the foreground, and subsequent body text
+			// remains bold until another bold-capable SGR is emitted.
+			fmt.Fprintf(&sb, "\033[%d;1H\033[0m", y+1)
 			lastfg = Default
 			lastbg = Default
 

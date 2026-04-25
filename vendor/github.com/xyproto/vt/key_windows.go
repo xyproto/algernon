@@ -5,6 +5,7 @@ package vt
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -29,6 +30,7 @@ type TTY struct {
 	conin           *os.File
 	pending         []byte
 	escArmed        bool
+	reader          io.Reader
 }
 
 // NewTTY opens the terminal
@@ -91,6 +93,7 @@ func NewTTY() (*TTY, error) {
 		useConsoleInput: useConsoleInput,
 		conin:           conin,
 		pending:         make([]byte, 0),
+		reader:          nil,
 	}, nil
 }
 
