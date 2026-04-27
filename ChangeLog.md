@@ -1,5 +1,49 @@
 # Changelog
 
+Changes from 1.17.5 to 1.17.6
+=============================
+
+* Add a `--testcert` flag, for using the Let's Encrypt staging CA when configuring a new domain, to avoid hitting rate limits.
+* Fix a Lua-related race condition, ref #172 (thanks @KatrielMoses).
+* Fix path traversal in connection with file uploads and Lua, ref #172 (thanks @KatrielMoses).
+* Update dependencies, including `golang/x/crypto`, ref #168.
+* Add a `ReadHeaderTimeout` to `engine/serve.go`.
+* Add support for npm-less React 19 with partial reload with the `-a` / `--autorefresh` flag.
+* Add IPv6 support.
+* Adjust how Pongo2 templates are applied.
+* Append concurrently to access logs.
+* Adjust CSS for the "formulas" example.
+* Update the typewriter example.
+* Update all React-related samples.
+* Update the Hyperaff gif example.
+* Update systemd example files + add an example Fedora .spec file.
+* Fix mimetype handling for `.prompt` files.
+* Update the default `Ollama` model.
+* Update the `ai` example.
+* Fix syntax highlighting in the help text for the REPL.
+* Add more checks in the code, to increase robustness.
+* Use an atomic bool in connection with shutting down the server.
+* Remove `GOEXPERIMENT=greenteagc` since this is now the default.
+* Build the release with Go 1.26.2.
+* Update CI configuration.
+* Update documentation
+
+Changes from 1.17.4 to 1.17.5
+=============================
+
+* Fix HTML detection, ref #164 (thanks @astynax).
+* Add an initial `Security.md` file.
+* Add extra sanitation / XXS protection (thanks @Bnyt7).
+* Add support for serving the QOI image format.
+* Simplify favicon / mimetype related code.
+* Remove some unused code.
+* Add more documentation, ref #163 (thanks @myselfghost).
+* Add an example for HTMX.
+* Build release executables with `GOEXPERIMENT=greenteagc`.
+* If a single file is given as an argument, don't output the server name and version (to make Algernon more suitable for being used as a "Lua runtime", ref #163).
+* Update CI configuration.
+* Update dependencies.
+
 Changes from 1.17.3 to 1.17.4
 =============================
 
