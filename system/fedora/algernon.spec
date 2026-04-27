@@ -36,12 +36,10 @@ users and permissions.
 %autosetup -n %{name}-%{version}
 
 %build
-# Build flags mirror the Arch PKGBUILD: PIE, trimpath, vendored deps, no VCS stamping
-export CGO_ENABLED=1
+# Settings mirror the Arch PKGBUILD: no CGO, PIE, trimpath, vendored deps, no VCS stamping.
+export CGO_ENABLED=0
 export GOFLAGS="-mod=vendor -trimpath -buildmode=pie -buildvcs=false"
-go build \
-    -ldflags="-s -w -linkmode=external -extldflags '%{__global_ldflags}'" \
-    -o %{name} .
+go build -ldflags="-s -w" -o %{name} .
 
 %install
 install -Dm0755 %{name}                                    %{buildroot}%{_bindir}/%{name}
