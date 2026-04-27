@@ -28,11 +28,14 @@ LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
 BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -buildvcs=false -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 else
 # Default settings
-BUILDFLAGS ?= -mod=vendor -trimpath -buildvcs=false -ldflags "-s -w"
+BUILDFLAGS ?= -mod=vendor -trimpath -ldflags "-s -w" -buildvcs=false
 endif
 
 algernon:
 	$(GOBUILD) $(BUILDFLAGS)
+
+algernon.1.gz: algernon.1
+	gzip -f -k -v algernon.1
 
 install: algernon desktop/mdview
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
@@ -51,4 +54,4 @@ install-doc: algernon.1.gz welcome.sh samples README.md
 	install -Dm644 README.md "$(DESTDIR)$(PREFIX)/usr/share/doc/algernon/README.md"
 
 clean:
-	rm -f algernon
+	rm -f algernon algernon.1.gz

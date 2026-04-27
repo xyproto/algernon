@@ -17,6 +17,7 @@
 _vendor-*/
 alg2docker/Dockerfile
 algernon
+algernon.1.gz
 algernon.debug
 algernon.log
 apps/first

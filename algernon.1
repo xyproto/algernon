@@ -1,0 +1,151 @@
+.\"             -*-Nroff-*-
+.\"
+.TH "algernon" 1 "25 Apr 2026" "" ""
+.SH NAME
+algernon \- web server
+.sp
+.SH SYNOPSIS
+.B algernon
+[\fBflags\fR]
+[\fBfile or directory\fR]
+[\fBhost\fR][\fB:port\fR]
+.sp
+.SH DESCRIPTION
+Serve the given file or directory, with an optional \fB:port\fP and \fBhostname\fP.
+.sp
+.SH OPTIONS
+.sp
+.TP
+.B \-a or \-\-autorefresh
+Inject JavaScript that refreshes the served web pages when they receive
+server-sent events (SSE), when a file or directory has changed.
+.TP
+.B \-v or \-\-version
+Display the current version number.
+.TP
+.B \-h or \-\-help
+Display usage information. Includes a few flags that are not listed here.
+.TP
+.B \-\-noheaders
+Don't use the security-related HTTP headers.
+.TP
+.B \-\-stricter
+Stricter HTTP headers (same origin policy).
+.TP
+.B \-n or \-\-nobanner
+Don't display a colorful banner at start.
+.TP
+.B \-\-cert=FILENAME
+Provide a TLS certificate, for using HTTPS.
+.TP
+.B \-\-key=FILENAME
+Provide a TLS key, for using HTTPS.
+.TP
+.B \-\-boltdb=FILENAME
+Provide a Bolt database filename, instead of using \fB/tmp/algernon.db\fP.
+.TP
+.B \-t or \-\-httponly
+Only serve regular HTTP.
+.TP
+.B \-\-http2only
+Only serve HTTP/2, without HTTPS.
+.TP
+.B \-u
+Serve QUIC aka HTTP/3.
+.TP
+.B \-\-limit=N
+Limit clients to N request per second (the default is 10).
+.TP
+.B \-\-nodb
+Don't use a database backend. Some Lua functions might not work.
+.TP
+.B \-\-timeout=N
+Timeout when serving files, in seconds.
+.TP
+.B \-\-largesize=N
+Threshold for not reading static files into memory, in bytes.
+.TP
+.B \-\-lua
+Don't serve anything, just present an interactive Lua prompt (REPL).
+.TP
+.B \-\-server
+Disable debug + interactive mode. Is unrelated to if anything is served or not.
+.TP
+.B \-q or \-\-quiet
+Don't output anything to stdout or stderr.
+.TP
+.B \-\-servername=NAME
+Custom HTTP header value for the \fBServer\fP field.
+.TP
+.B \-o or \-\-open=COMMAND
+Open the served URL with \fBxdg-open\fP, or with the given application.
+.TP
+.B \-z or \-\-quit
+Quit after the first request has been served.
+.TP
+.B \-m
+View the given Markdown file in the browser.
+Quit after the file has been served once.
+This is equivalent to \fB\-q \-o \-z\fP.
+.TP
+.B \-c or \-\-statcache
+Speed up responses by caching \fBos.Stat\fP.
+Only use if served files will never be removed!
+.TP
+.B \-\-accesslog=FILENAME
+Filename for where to log requests in the Combined Log Format (CLF).
+.TP
+.B \-\-ncsa=FILENAME
+Filename for where to log requests in the Common Log Format (NCSA).
+.TP
+.B \-\-letsencrypt
+Use certificates provided by Let's Encrypt for all served domains and serve
+over regular HTTPS by using CertMagic. Implies \fB\-\-domain\fP.
+.TP
+.B \-\-testcert
+Use the Let's Encrypt staging CA instead of the production CA, to avoid
+hitting rate limits while configuring a new domain. Use together with
+\fB\-\-letsencrypt\fP.
+.TP
+.B \-\-domain
+Serve files from the subdirectory with the same name as the requested domain,
+for instance \fB/srv/algernon/mydomain.com\fP and \fB/srv/algernon/otherweb.com\fP,
+depending on if HTTP requests are using \fBhttps://mydomain.com\fP or
+\fBhttps://otherweb.com\fP.
+.TP
+.B \-x or \-\-simple
+Simple mode. Serve the current directory over regular HTTP, disable debug mode,
+interactive mode, request limits and all features that require a database.
+.TP
+.PP
+.SH "ENV"
+.sp
+The \fBNO_COLOR\fP environment variable can be set to 1 to turn off all colors.
+.sp
+.SH "WHY"
+.sp
+Web development with few dependencies and a decent caching system.
+.SH "EXAMPLE USAGE"
+.sp
+.TP
+For auto-refreshing a webpage while developing:
+\fBalgernon --dev --httponly --debug --autorefresh --bolt --server . :4000\fP
+.TP
+Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
+\fBalgernon -c --domain --server --cachesize 67108864 --prod /srv\fP
+.TP
+Serve the current dir over QUIC, port 7000, no banner:
+\fBalgernon -s -u -n . :7000\fP
+.TP
+Serve the current directory over HTTP, port 3000. No limits, cache, permissions
+or database connections:
+\fBalgernon -x\fP
+.SH "SEE ALSO"
+.BR apache (1)
+.BR caddy (1)
+.BR nginx (1)
+.SH VERSION
+1.17.6
+.SH AUTHOR
+.B algernon
+was written by Alexander F. Rødseth <xyproto@archlinux.org>
