@@ -350,10 +350,7 @@ func (ac *Config) loadPoolStateFunctions(L *lua.LState, filename string, mux *ht
 // script in each, and enqueues them in ac.handlerPool. Every state ends up
 // with its own copy of each handle() function stored in its Lua registry.
 func (ac *Config) buildHandlerPool(filename string, mux *http.ServeMux) error {
-	size := ac.handlerPoolSize
-	if size < 1 {
-		size = 1
-	}
+	size := max(ac.handlerPoolSize, 1)
 	pool := newHandlerPool(size)
 	for i := 0; i < size; i++ {
 		L := lua.NewState()
