@@ -447,11 +447,6 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		}
 	}
 
-	// Restore cursor visibility if it should be shown after drawing
-	if !permanentlyHideCursor && cursorVisible {
-		sb.WriteString(showCursor)
-	}
-
 	// End synchronized update — terminal renders the buffered frame
 	sb.WriteString(endSyncUpdate)
 
@@ -460,13 +455,15 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	// Write the complete frame to stdout in a single call
 	writeAllToStdout([]byte(sb.String()))
 
-	// Update internal state to match what was emitted
+	// Update internal state to match what was emitted.
+	// Always treat termCursorVisible as false after drawing because the BSU block
+	// hides the cursor at the start and some terminals (e.g. Konsole) do not
+	// correctly apply cursor show/hide escapes emitted inside a BSU block.
+	// The explicit ShowCursor call below restores visibility outside BSU.
 	c.mut.Lock()
 	if permanentlyHideCursor {
 		c.cursorVisible = false
 		c.termCursorVisible = false
-	} else if cursorVisible {
-		c.termCursorVisible = true
 	} else {
 		c.termCursorVisible = false
 	}
@@ -475,6 +472,13 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	}
 	copy(c.oldchars, c.chars)
 	c.mut.Unlock()
+
+	// Restore cursor visibility OUTSIDE the BSU block so that all terminals
+	// (including Konsole, which doesn't reliably handle cursor escapes inside BSU)
+	// correctly show the cursor after drawing.
+	if !permanentlyHideCursor && cursorVisible {
+		c.flushCursor()
+	}
 }
 
 // Draw the entire canvas
