@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	sqlite "github.com/terminar/permissionsqlite/v2"
 	"github.com/xyproto/algernon/utils"
 	lua "github.com/xyproto/gopher-lua"
 	bolt "github.com/xyproto/permissionbolt/v2"
 	redis "github.com/xyproto/permissions"
 	mariadb "github.com/xyproto/permissionsql/v2"
-	sqlite "github.com/xyproto/permissionsqlite_noc"
 	"github.com/xyproto/pinterface"
 	postgres "github.com/xyproto/pstore"
 	"github.com/xyproto/simpleredis/v2"
