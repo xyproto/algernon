@@ -167,9 +167,6 @@ github.com/libdns/libdns
 # github.com/mattetti/filebuffer v1.0.1
 ## explicit
 github.com/mattetti/filebuffer
-# github.com/mattn/go-sqlite3 v1.14.42
-## explicit; go 1.21
-github.com/mattn/go-sqlite3
 # github.com/mholt/acmez/v3 v3.1.6
 ## explicit; go 1.24.0
 github.com/mholt/acmez/v3
@@ -190,6 +187,22 @@ github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 ## explicit
 github.com/natefinch/pie
+# github.com/ncruces/go-sqlite3 v0.34.0
+## explicit; go 1.25.0
+github.com/ncruces/go-sqlite3
+github.com/ncruces/go-sqlite3/driver
+github.com/ncruces/go-sqlite3/internal/dotlk
+github.com/ncruces/go-sqlite3/internal/errutil
+github.com/ncruces/go-sqlite3/internal/sqlite3_wrap
+github.com/ncruces/go-sqlite3/internal/testenv
+github.com/ncruces/go-sqlite3/internal/util
+github.com/ncruces/go-sqlite3/vfs
+# github.com/ncruces/go-sqlite3-wasm/v2 v2.1.35300
+## explicit; go 1.25.0
+github.com/ncruces/go-sqlite3-wasm/v2
+# github.com/ncruces/julianday v1.0.0
+## explicit; go 1.17
+github.com/ncruces/julianday
 # github.com/orsinium-labs/enum v1.5.0
 ## explicit; go 1.20
 github.com/orsinium-labs/enum
@@ -202,7 +215,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a
 ## explicit; go 1.16
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260428074816-f1901d836e96
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260428091725-a46bec425329
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -244,12 +257,6 @@ github.com/shopspring/decimal
 # github.com/sirupsen/logrus v1.9.4
 ## explicit; go 1.17
 github.com/sirupsen/logrus
-# github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
-## explicit; go 1.22
-github.com/terminar/permissionsqlite/v2
-# github.com/terminar/simplesqlite v0.0.0-20240811163019-f2a6c3cbea17
-## explicit; go 1.22
-github.com/terminar/simplesqlite
 # github.com/tylerb/graceful v1.2.15
 ## explicit
 github.com/tylerb/graceful
@@ -323,6 +330,9 @@ github.com/xyproto/permissions
 # github.com/xyproto/permissionsql/v2 v2.1.4
 ## explicit; go 1.24.0
 github.com/xyproto/permissionsql/v2
+# github.com/xyproto/permissionsqlite_noc v1.1.0
+## explicit; go 1.25.0
+github.com/xyproto/permissionsqlite_noc
 # github.com/xyproto/pinterface v1.5.4
 ## explicit; go 1.8
 github.com/xyproto/pinterface
@@ -356,6 +366,9 @@ github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis/v2 v2.8.1
 ## explicit; go 1.17
 github.com/xyproto/simpleredis/v2
+# github.com/xyproto/simplesqlite_noc v1.1.0
+## explicit; go 1.25.0
+github.com/xyproto/simplesqlite_noc
 # github.com/xyproto/splash v1.3.1
 ## explicit; go 1.23.0
 github.com/xyproto/splash

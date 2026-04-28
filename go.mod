@@ -23,7 +23,6 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/quic-go/quic-go v0.59.0
 	github.com/sirupsen/logrus v1.9.4
-	github.com/terminar/permissionsqlite/v2 v2.0.0-20240814235136-eff14bb4cea9
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
@@ -40,6 +39,7 @@ require (
 	github.com/xyproto/permissionbolt/v2 v2.6.5
 	github.com/xyproto/permissions v1.0.1
 	github.com/xyproto/permissionsql/v2 v2.1.4
+	github.com/xyproto/permissionsqlite_noc v1.1.0
 	github.com/xyproto/pinterface v1.5.4
 	github.com/xyproto/pstore v1.3.5
 	github.com/xyproto/recwatch v1.2.0
@@ -54,11 +54,6 @@ require (
 	github.com/xyproto/vt v1.9.8
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.53.0
-)
-
-require (
-	github.com/mattn/go-sqlite3 v1.14.42 // indirect
-	github.com/terminar/simplesqlite v0.0.0-20240811163019-f2a6c3cbea17 // indirect
 )
 
 require (
@@ -86,10 +81,13 @@ require (
 	github.com/mholt/acmez/v3 v3.1.6 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/ncruces/go-sqlite3 v0.34.0 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v2 v2.1.35300 // indirect
+	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
 	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260428074816-f1901d836e96 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260428091725-a46bec425329 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
@@ -100,6 +98,7 @@ require (
 	github.com/xyproto/randomstring v1.2.0 // indirect
 	github.com/xyproto/simplehstore v1.8.5 // indirect
 	github.com/xyproto/simplemaria v1.3.8 // indirect
+	github.com/xyproto/simplesqlite_noc v1.1.0 // indirect
 	github.com/xyproto/symwalk v1.1.1 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
