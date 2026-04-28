@@ -352,7 +352,7 @@ func (ac *Config) loadPoolStateFunctions(L *lua.LState, filename string, mux *ht
 func (ac *Config) buildHandlerPool(filename string, mux *http.ServeMux) error {
 	size := max(ac.handlerPoolSize, 1)
 	pool := newHandlerPool(size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		L := lua.NewState()
 		ac.loadPoolStateFunctions(L, filename, mux)
 		if err := L.DoFile(filename); err != nil {
