@@ -727,9 +727,9 @@ filterLoop:
 			return nil, err
 		}
 
-		// Check sandbox filter restriction
+		// Check banned-filter restriction
 		if _, isBanned := p.template.set.bannedFilters[filter.name]; isBanned {
-			return nil, p.Error(fmt.Sprintf("Usage of filter '%s' is not allowed (sandbox restriction active).", filter.name), nil)
+			return nil, p.Error(fmt.Sprintf("Usage of filter '%s' is not allowed (filter is banned for this template set).", filter.name), nil)
 		}
 
 		v.filterChain = append(v.filterChain, filter)

@@ -28,7 +28,17 @@ func (node *tagWidthratioNode) Execute(ctx *ExecutionContext, writer TemplateWri
 		return err
 	}
 
-	value := int(math.Ceil(current.Float()/max.Float()*width.Float() + 0.5))
+	maxF := max.Float()
+	if maxF == 0 {
+		// Django renders an empty string on division-by-zero rather than
+		// emitting NaN/Inf-derived garbage.
+		if node.ctxName != "" {
+			ctx.Private[node.ctxName] = ""
+		}
+		return nil
+	}
+
+	value := int(math.Ceil(current.Float()/maxF*width.Float() + 0.5))
 
 	if node.ctxName == "" {
 		writer.WriteString(fmt.Sprintf("%d", value))

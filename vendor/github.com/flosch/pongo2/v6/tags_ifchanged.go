@@ -4,15 +4,33 @@ import (
 	"bytes"
 )
 
-type tagIfchangedNode struct {
-	watchedExpr []IEvaluator
+// ifchangedState holds the per-execution mutable state for an {% ifchanged %} tag.
+type ifchangedState struct {
 	lastValues  []*Value
 	lastContent []byte
+}
+
+type tagIfchangedNode struct {
+	watchedExpr []IEvaluator
 	thenWrapper *NodeWrapper
 	elseWrapper *NodeWrapper
 }
 
+// getState returns the per-execution ifchanged state for this node,
+// creating it on first access. Each template execution gets its own
+// independent state via ctx.tagState.
+func (node *tagIfchangedNode) getState(ctx *ExecutionContext) *ifchangedState {
+	if s, ok := ctx.tagState[node].(*ifchangedState); ok {
+		return s
+	}
+	s := &ifchangedState{}
+	ctx.tagState[node] = s
+	return s
+}
+
 func (node *tagIfchangedNode) Execute(ctx *ExecutionContext, writer TemplateWriter) *Error {
+	state := node.getState(ctx)
+
 	if len(node.watchedExpr) == 0 {
 		// Check against own rendered body
 
@@ -23,10 +41,21 @@ func (node *tagIfchangedNode) Execute(ctx *ExecutionContext, writer TemplateWrit
 		}
 
 		bufBytes := buf.Bytes()
-		if !bytes.Equal(node.lastContent, bufBytes) {
+
+		changed := !bytes.Equal(state.lastContent, bufBytes)
+		if changed {
+			state.lastContent = bufBytes
+		}
+
+		if changed {
 			// Rendered content changed, output it
 			writer.Write(bufBytes)
-			node.lastContent = bufBytes
+		} else if node.elseWrapper != nil {
+			// Content hasn't changed, render else block if present
+			err := node.elseWrapper.Execute(ctx, writer)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		nowValues := make([]*Value, 0, len(node.watchedExpr))
@@ -39,16 +68,16 @@ func (node *tagIfchangedNode) Execute(ctx *ExecutionContext, writer TemplateWrit
 		}
 
 		// Compare old to new values now
-		changed := len(node.lastValues) == 0
+		changed := len(state.lastValues) == 0
 
-		for idx, oldVal := range node.lastValues {
+		for idx, oldVal := range state.lastValues {
 			if !oldVal.EqualValueTo(nowValues[idx]) {
 				changed = true
 				break // we can stop here because ONE value changed
 			}
 		}
 
-		node.lastValues = nowValues
+		state.lastValues = nowValues
 
 		if changed {
 			// Render thenWrapper
@@ -56,7 +85,7 @@ func (node *tagIfchangedNode) Execute(ctx *ExecutionContext, writer TemplateWrit
 			if err != nil {
 				return err
 			}
-		} else {
+		} else if node.elseWrapper != nil {
 			// Render elseWrapper
 			err := node.elseWrapper.Execute(ctx, writer)
 			if err != nil {

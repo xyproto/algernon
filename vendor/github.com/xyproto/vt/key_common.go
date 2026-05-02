@@ -52,6 +52,20 @@ const (
 	KeyShiftPageDown = 294 // Shift-Page Down
 	KeyCtrlDelete    = 295 // Ctrl-Delete
 	KeyShiftDelete   = 296 // Shift-Delete
+	KeyAltReturn     = 297 // Alt-Return / Alt-Enter
+	KeyShiftReturn   = 298 // Shift-Return / Shift-Enter (only reported when the terminal supports the kitty keyboard protocol or xterm modifyOtherKeys=2)
+)
+
+// Terminal sequences that ask the terminal to start, and stop, reporting
+// modified Return / Enter and similar key combinations. Writing these is
+// harmless on terminals that don't understand them — the bytes are silently
+// ignored.
+//
+//   - \x1b[>1u / \x1b[<u: kitty keyboard protocol (kitty, foot, wezterm, ghostty, recent alacritty)
+//   - \x1b[>4;2m / \x1b[>4m: xterm modifyOtherKeys=2 (xterm, vte/gnome-terminal, konsole, urxvt, mintty)
+const (
+	EnableShiftReturnSeq  = "\x1b[>1u\x1b[>4;2m"
+	DisableShiftReturnSeq = "\x1b[<u\x1b[>4m"
 )
 
 // Key codes for 3-byte sequences (arrows, Home, End, F1-F4, Shift-Tab)
@@ -188,4 +202,12 @@ var modKeyStringLookup = map[[6]byte]string{
 	{27, 91, 54, 59, 50, 126}: "shift⇟", // Shift-PgDn
 	{27, 91, 51, 59, 53, 126}: "ctrl⌦",  // Ctrl-Delete
 	{27, 91, 51, 59, 50, 126}: "shift⌦", // Shift-Delete
+}
+
+// String representations for long CSI sequences (kitty keyboard protocol and xterm modifyOtherKeys=2)
+var longCSILookup = map[string]string{
+	"\x1b[13;2u":    "shift⏎", // Shift-Return (kitty CSI-u)
+	"\x1b[13;3u":    "alt⏎",   // Alt-Return   (kitty CSI-u)
+	"\x1b[27;2;13~": "shift⏎", // Shift-Return (xterm modifyOtherKeys=2)
+	"\x1b[27;3;13~": "alt⏎",   // Alt-Return   (xterm modifyOtherKeys=2)
 }

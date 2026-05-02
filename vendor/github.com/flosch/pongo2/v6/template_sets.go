@@ -42,12 +42,23 @@ type TemplateSet struct {
 	// You can change the options before calling the Execute method.
 	Options *Options
 
-	// Sandbox features
-	// - Disallow access to specific tags and/or filters (using BanTag() and BanFilter())
+	// Banned tags/filters
+	// - Disallow specific tags and/or filters (using BanTag() and BanFilter())
+	//
+	// NOTE: This is not a real sandbox. It does not isolate Go execution,
+	// restrict filesystem access, or contain malicious templates. It only
+	// refuses to compile templates that reference banned tag/filter names.
 	//
 	// For efficiency reasons you can ban tags/filters only *before* you have
 	// added your first template to the set (restrictions are statically checked).
-	// After you added one, it's not possible anymore (for your personal security).
+	// After you added one, it's not possible anymore.
+	//
+	// banMu guards firstTemplateCreated and the bannedTags / bannedFilters
+	// maps. Once firstTemplateCreated is true, neither map is mutated, so
+	// reads from the parser do not need to acquire the lock — they're
+	// synchronized through the lock release in markFirstTemplateCreated()
+	// and the lock acquisition any successful Ban call performed earlier.
+	banMu                sync.Mutex
 	firstTemplateCreated bool
 	bannedTags           map[string]bool
 	bannedFilters        map[string]bool
@@ -98,38 +109,47 @@ func (set *TemplateSet) resolveFilenameForLoader(loader TemplateLoader, tpl *Tem
 
 // BanTag bans a specific tag for this template set. See more in the documentation for TemplateSet.
 func (set *TemplateSet) BanTag(name string) error {
-	_, has := tags[name]
-	if !has {
+	if _, has := tags[name]; !has {
 		return fmt.Errorf("tag '%s' not found", name)
 	}
+	set.banMu.Lock()
+	defer set.banMu.Unlock()
 	if set.firstTemplateCreated {
 		return errors.New("you cannot ban any tags after you've added your first template to your template set")
 	}
-	_, has = set.bannedTags[name]
-	if has {
+	if _, has := set.bannedTags[name]; has {
 		return fmt.Errorf("tag '%s' is already banned", name)
 	}
 	set.bannedTags[name] = true
-
 	return nil
 }
 
 // BanFilter bans a specific filter for this template set. See more in the documentation for TemplateSet.
 func (set *TemplateSet) BanFilter(name string) error {
-	_, has := filters[name]
-	if !has {
+	if _, has := filters[name]; !has {
 		return fmt.Errorf("filter '%s' not found", name)
 	}
+	set.banMu.Lock()
+	defer set.banMu.Unlock()
 	if set.firstTemplateCreated {
 		return errors.New("you cannot ban any filters after you've added your first template to your template set")
 	}
-	_, has = set.bannedFilters[name]
-	if has {
+	if _, has := set.bannedFilters[name]; has {
 		return fmt.Errorf("filter '%s' is already banned", name)
 	}
 	set.bannedFilters[name] = true
-
 	return nil
+}
+
+// markFirstTemplateCreated freezes the banned-tag/filter sets. After it
+// returns, BanTag and BanFilter will refuse further changes, so the
+// parser may read the maps without locking — the lock release here
+// happens-before any subsequent map read on this or any other goroutine
+// that acquires a Ban-related lock or observes firstTemplateCreated.
+func (set *TemplateSet) markFirstTemplateCreated() {
+	set.banMu.Lock()
+	set.firstTemplateCreated = true
+	set.banMu.Unlock()
 }
 
 func (set *TemplateSet) resolveTemplate(tpl *Template, path string) (name string, loader TemplateLoader, fd io.Reader, err error) {
@@ -195,21 +215,21 @@ func (set *TemplateSet) FromCache(filename string) (*Template, error) {
 
 // FromString loads a template from string and returns a Template instance.
 func (set *TemplateSet) FromString(tpl string) (*Template, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	return newTemplateString(set, []byte(tpl))
 }
 
 // FromBytes loads a template from bytes and returns a Template instance.
 func (set *TemplateSet) FromBytes(tpl []byte) (*Template, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	return newTemplateString(set, tpl)
 }
 
 // FromFile loads a template from a filename and returns a Template instance.
 func (set *TemplateSet) FromFile(filename string) (*Template, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	_, _, fd, err := set.resolveTemplate(nil, filename)
 	if err != nil {
@@ -233,7 +253,7 @@ func (set *TemplateSet) FromFile(filename string) (*Template, error) {
 
 // RenderTemplateString is a shortcut and renders a template string directly.
 func (set *TemplateSet) RenderTemplateString(s string, ctx Context) (string, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	tpl := Must(set.FromString(s))
 	result, err := tpl.Execute(ctx)
@@ -245,7 +265,7 @@ func (set *TemplateSet) RenderTemplateString(s string, ctx Context) (string, err
 
 // RenderTemplateBytes is a shortcut and renders template bytes directly.
 func (set *TemplateSet) RenderTemplateBytes(b []byte, ctx Context) (string, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	tpl := Must(set.FromBytes(b))
 	result, err := tpl.Execute(ctx)
@@ -257,7 +277,7 @@ func (set *TemplateSet) RenderTemplateBytes(b []byte, ctx Context) (string, erro
 
 // RenderTemplateFile is a shortcut and renders a template file directly.
 func (set *TemplateSet) RenderTemplateFile(fn string, ctx Context) (string, error) {
-	set.firstTemplateCreated = true
+	set.markFirstTemplateCreated()
 
 	tpl := Must(set.FromFile(fn))
 	result, err := tpl.Execute(ctx)
@@ -284,7 +304,7 @@ var (
 	debug  bool // internal debugging
 	logger = log.New(os.Stdout, "[pongo2] ", log.LstdFlags|log.Lshortfile)
 
-	// DefaultLoader allows the default un-sandboxed access to the local file
+	// DefaultLoader allows the default unrestricted access to the local file
 	// system and is being used by the DefaultSet.
 	DefaultLoader = MustNewLocalFileSystemLoader("")
 

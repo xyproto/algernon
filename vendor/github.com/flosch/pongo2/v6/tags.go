@@ -99,9 +99,9 @@ func (p *Parser) parseTagElement() (INodeTag, *Error) {
 		return nil, p.Error(fmt.Sprintf("Tag '%s' not found (or beginning tag not provided)", tokenName.Val), tokenName)
 	}
 
-	// Check sandbox tag restriction
+	// Check banned-tag restriction
 	if _, isBanned := p.template.set.bannedTags[tokenName.Val]; isBanned {
-		return nil, p.Error(fmt.Sprintf("Usage of tag '%s' is not allowed (sandbox restriction active).", tokenName.Val), tokenName)
+		return nil, p.Error(fmt.Sprintf("Usage of tag '%s' is not allowed (tag is banned for this template set).", tokenName.Val), tokenName)
 	}
 
 	var argsToken []*Token

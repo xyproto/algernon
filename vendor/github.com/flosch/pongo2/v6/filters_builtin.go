@@ -821,7 +821,7 @@ func filterRemovetags(in *Value, param *Value) (*Value, *Error) {
 
 	// Strip only specific tags
 	for _, tag := range tags {
-		re := regexp.MustCompile(fmt.Sprintf("</?%s/?>", tag))
+		re := regexp.MustCompile(fmt.Sprintf("</?%s/?>", regexp.QuoteMeta(tag)))
 		s = re.ReplaceAllString(s, "")
 	}
 

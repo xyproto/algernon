@@ -2,6 +2,7 @@ package pongo2
 
 import (
 	"bytes"
+	"fmt"
 )
 
 type nodeFilterCall struct {
@@ -63,6 +64,9 @@ func tagFilterParser(doc *Parser, start *Token, arguments *Parser) (INodeTag, *E
 		nameToken := arguments.MatchType(TokenIdentifier)
 		if nameToken == nil {
 			return nil, arguments.Error("Expected a filter name (identifier).", nil)
+		}
+		if _, isBanned := doc.template.set.bannedFilters[nameToken.Val]; isBanned {
+			return nil, arguments.Error(fmt.Sprintf("Usage of filter '%s' is not allowed (filter is banned for this template set).", nameToken.Val), nameToken)
 		}
 		filterCall.name = nameToken.Val
 

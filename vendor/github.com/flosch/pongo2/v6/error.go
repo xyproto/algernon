@@ -3,7 +3,7 @@ package pongo2
 import (
 	"bufio"
 	"fmt"
-	"os"
+	"io"
 )
 
 // The Error type is being used to address an error during lexing, parsing or
@@ -60,26 +60,24 @@ func (e *Error) Error() string {
 
 // RawLine returns the affected line from the original template, if available.
 func (e *Error) RawLine() (line string, available bool, outErr error) {
-	if e.Line <= 0 || e.Filename == "<string>" {
+	if e.Line <= 0 || e.Filename == "<string>" || e.Template == nil {
 		return "", false, nil
 	}
 
-	filename := e.Filename
-	if e.Template != nil {
-		filename = e.Template.set.resolveFilename(e.Template, e.Filename)
-	}
-	file, err := os.Open(filename)
+	_, _, fd, err := e.Template.set.resolveTemplate(e.Template, e.Filename)
 	if err != nil {
 		return "", false, err
 	}
-	defer func() {
-		err := file.Close()
-		if err != nil && outErr == nil {
-			outErr = err
-		}
-	}()
+	if closer, ok := fd.(io.Closer); ok {
+		defer func() {
+			err := closer.Close()
+			if err != nil && outErr == nil {
+				outErr = err
+			}
+		}()
+	}
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(fd)
 	l := 0
 	for scanner.Scan() {
 		l++

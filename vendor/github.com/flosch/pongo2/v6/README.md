@@ -69,7 +69,30 @@ Please use the [issue tracker](https://github.com/flosch/pongo2/issues) if you'r
 - [Easy API to create new filters and tags](http://godoc.org/github.com/flosch/pongo2#RegisterFilter) ([including parsing arguments](http://godoc.org/github.com/flosch/pongo2#Parser))
 - Additional features:
   - Macros including importing macros from other files (see [template_tests/macro.tpl](https://github.com/flosch/pongo2/blob/master/template_tests/macro.tpl))
-  - [Template sandboxing](https://godoc.org/github.com/flosch/pongo2#TemplateSet) ([directory patterns](http://golang.org/pkg/path/filepath/#Match), banned tags/filters)
+  - Restrict the template surface by banning specific tags and/or filters per [`TemplateSet`](https://godoc.org/github.com/flosch/pongo2#TemplateSet) (note: this is **not** a real sandbox — it does not isolate Go execution, restrict filesystem access, or contain malicious templates; it only refuses to compile templates that use the banned names)
+
+## Security
+
+### Template loaders do not clamp to a base directory
+
+`LocalFilesystemLoader` (and the `Default*` set built on it) treats the
+`baseDir` as a hint, not a jail. Absolute paths are honored verbatim and
+relative paths containing `..` are joined without normalization, so any
+filename that reaches a loader can read outside the configured directory.
+This affects every code path that resolves a filename — `FromFile`,
+`{% include %}`, `{% extends %}`, `{% import %}`, `{% ssi %}` — including
+the variants that take a runtime expression
+(e.g. `{% include user_chosen_template %}`).
+
+`HttpFilesystemLoader` and `FSLoader` likewise pass the resolved name
+straight to the underlying filesystem; whether `..` is rejected depends
+entirely on that filesystem (`http.Dir` does, many in-memory `fs.FS`
+implementations do not).
+
+**Treat template filenames as trusted input.** If your application
+cannot guarantee that, validate the filename before handing it to
+pongo2, or wrap the loader with a custom `TemplateLoader.Abs` that
+rejects absolute paths and `..` segments.
 
 ## Caveats
 

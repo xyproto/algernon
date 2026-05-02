@@ -366,6 +366,13 @@ func parseFirstKey(buf []byte) (string, int) {
 	// (or Alt+key) — for orbiton's purposes return it as c:27 and keep the
 	// next byte for the following call.
 	if buf[1] != '[' && buf[1] != 'O' {
+		// Alt-Return is reported as ESC + CR (or ESC + LF) on most terminals.
+		// When both bytes have already arrived in the same buffer the user
+		// pressed them together — a real Escape would have been consumed
+		// before the next key arrived — so treat the pair as a single key.
+		if buf[1] == 0x0D || buf[1] == 0x0A {
+			return "alt⏎", 2
+		}
 		return "c:27", 1
 	}
 	// 3-byte sequences: ESC [ X   or   ESC O X
@@ -403,7 +410,14 @@ func parseFirstKey(buf []byte) (string, int) {
 		for i := 2; i < n; i++ {
 			b := buf[i]
 			if (b >= 0x40 && b <= 0x7E) || b == '~' {
-				return string(buf[:i+1]), i + 1
+				seq := string(buf[:i+1])
+				// Recognise long CSI sequences (kitty CSI-u, xterm
+				// modifyOtherKeys=2) that report modified keys not
+				// covered by the fixed-size lookups above.
+				if str, ok := longCSILookup[seq]; ok {
+					return str, i + 1
+				}
+				return seq, i + 1
 			}
 		}
 		// Terminator not yet in buffer — wait for more bytes.
