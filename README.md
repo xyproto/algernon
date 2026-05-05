@@ -1275,7 +1275,7 @@ For instance, if `/srv/myhappydomain.com` exists, then `algernon --letsencrypt -
 
 When `--letsencrypt` is used, it will try to serve on port 443 and 80 (which redirects to 443).
 
-Use `--testcert` together with `--letsencrypt` to use the Let's Encrypt staging CA instead of the production CA. This is useful when first setting up a domain, to avoid hitting rate limits before the configuration is known to be correct.
+Use `--testcert` together with `--letsencrypt` to use the Let's Encrypt staging CA instead of the production CA. This is useful when first setting up a domain, to avoid hitting rate limits before the configuration is correct.
 
 Releases
 --------
@@ -1290,8 +1290,8 @@ Releases
 Requirements
 ------------
 
-* `go 1.21` or later is a requirement for building Algernon.
-* For `go 1.10`, `1.11`, `1.12`, `1.13`, `1.14`, '1.15`, `1.16` + `gcc-go <10` version `1.12.7` of Algernon is the last supported version.
+* Go >= 1.25.
+* For older versions of Go (`1.10` to `<= 1.16` + `gcc-go < 10`) version `1.12.7` of Algernon will build, but does not have the latest patches.
 
 Access logs
 -----------
