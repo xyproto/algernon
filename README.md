@@ -130,7 +130,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go >= 1.21 or a version of GCC/`gccgo` that supports Go 1.21.
+* Requires Go >= 1.25 or a version of GCC/`gccgo` that supports Go 1.25.
 * The Lua implementation used in Algernon (gopherlua) does not support `package.loadlib`.
 * Full support for IPv6.
 
