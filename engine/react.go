@@ -119,14 +119,14 @@ func reactRefreshPlugin() api.Plugin {
 	}
 }
 
-// reactProdScriptRE matches <script src> attributes that load React production builds
+// reactProdScriptRE matches <script src> attributes that load React production builds,
+// including those from /@algernon/react19/
 var reactProdScriptRE = regexp.MustCompile(
-	`(?i)(src=["'])([^"']*?)(react(?:-dom)?\.production\.min\.js)`,
+	`(?i)(src=["'])([^"']*?)(react(?:-dom)?\.production\.min\.js|/@algernon/react19/react(?:-dom)?\.min\.js)`,
 )
 
 // swapReactProdToDev replaces React production build <script src> values with
-// development equivalents when the page references .jsx files and the dev
-// build exists on disk
+// development equivalents when the page references .jsx files.
 func (ac *Config) swapReactProdToDev(htmldata []byte) []byte {
 	if !bytes.Contains(htmldata, []byte(".jsx")) {
 		return htmldata
@@ -142,9 +142,15 @@ func (ac *Config) swapReactProdToDev(htmldata []byte) []byte {
 		}
 		dir := string(subs[2])
 		prod := string(subs[3])
+
+		// Handle embedded paths for React 19
+		if strings.HasPrefix(prod, "/@algernon/react19/") {
+			return bytes.Replace(match, []byte(".min.js"), []byte(".js"), 1)
+		}
+
+		// Handle local paths
 		dev := strings.Replace(prod, ".production.min.js", ".development.js", 1)
-		rel := filepath.FromSlash(strings.TrimPrefix(dir+dev, "/"))
-		abs := filepath.Join(serverRoot, rel)
+		abs := filepath.Join(serverRoot, filepath.FromSlash(strings.TrimPrefix(dir+dev, "/")))
 		if _, err := os.Stat(abs); err != nil {
 			return match
 		}

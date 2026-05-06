@@ -617,6 +617,9 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.RegisterHandlers(mux, "/", ac.serverDirOrFilename, ac.serverAddDomain)
 	}
 
+	// Register the React 19 endpoints
+	registerReact19Handlers(mux)
+
 	// Register the HMR endpoints when auto-refresh is active
 	if ac.autoRefresh {
 		mux.HandleFunc(hmrUpdatePrefix, ac.HMRUpdateHandler)

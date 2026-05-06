@@ -2,8 +2,8 @@ doctype 5
 html
   head
     title React example
-    script[src="js/react.production.min.js"]
-    script[src="js/react-dom.production.min.js"]
+    script[src="/@algernon/react19/react.min.js"]
+    script[src="/@algernon/react19/react-dom.min.js"]
   body
     div[id="content"]
     script[src="hello.jsx"]

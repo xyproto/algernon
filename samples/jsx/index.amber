@@ -2,8 +2,8 @@ doctype 5
 html
   head
     title #{title}
-    script[src="js/react.production.min.js"]
-    script[src="js/react-dom.production.min.js"]
+    script[src="/@algernon/react19/react.min.js"]
+    script[src="/@algernon/react19/react-dom.min.js"]
   body
     div[id="example"]
     script[src="jsx.lua?msg=" + message]
