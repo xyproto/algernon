@@ -51,7 +51,7 @@ require (
 	github.com/xyproto/splash v1.3.1
 	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.0
-	github.com/xyproto/vt v1.9.10
+	github.com/xyproto/vt v1.9.11
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.53.0
 )
@@ -67,7 +67,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/go-mysql-org/go-mysql v1.14.0 // indirect
+	github.com/go-mysql-org/go-mysql v1.15.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.9.3 // indirect
@@ -85,9 +85,9 @@ require (
 	github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35300 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
-	github.com/pingcap/log v1.1.1-0.20241212030209-7e3ff8601a2a // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260505103030-bf7884d2ad97 // indirect
+	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
+	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260506101851-47eea3d2375a // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect

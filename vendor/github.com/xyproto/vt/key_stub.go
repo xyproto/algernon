@@ -35,9 +35,12 @@ func NewTTY() (*TTY, error) {
 	return nil, errors.New("TTY is not supported on this platform")
 }
 
-// SetTimeout sets a timeout for reading a key
-func (tty *TTY) SetTimeout(d time.Duration) {
+// SetTimeout sets a timeout for reading a key.
+// Returns the previous timeout.
+func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
+	saved := tty.timeout
 	tty.timeout = d
+	return saved, nil
 }
 
 // Close will restore and close the raw terminal

@@ -98,10 +98,11 @@ func NewTTY() (*TTY, error) {
 }
 
 // SetTimeout sets a timeout for reading a key.
-// Since Windows ReadFile blocks, we might need a workaround for timeouts.
-// For now, we store it.
-func (tty *TTY) SetTimeout(d time.Duration) {
+// Returns the previous timeout.
+func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
+	saved := tty.timeout
 	tty.timeout = d
+	return saved, nil
 }
 
 // Close restores the terminal

@@ -56,6 +56,12 @@ const (
 	KeyShiftReturn   = 298 // Shift-Return / Shift-Enter (only reported when the terminal supports the kitty keyboard protocol or xterm modifyOtherKeys=2)
 )
 
+// String representations returned by ReadKey for modifier+Return combos.
+const (
+	KeyAltReturnString   = "alt⏎"
+	KeyShiftReturnString = "shift⏎"
+)
+
 // Terminal sequences that ask the terminal to start, and stop, reporting
 // modified Return / Enter and similar key combinations. Writing these is
 // harmless on terminals that don't understand them — the bytes are silently

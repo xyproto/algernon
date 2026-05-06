@@ -38,6 +38,12 @@ type FileLogConfig struct {
 	// Compression function for rotated files.
 	// Currently only `gzip` and empty are supported, empty means compression disabled.
 	Compression string `toml:"compression" json:"compression"`
+	// IsBuffered is true means use buffered logger.
+	IsBuffered bool `toml:"is-buffered" json:"is-buffered"`
+	// BufferSize is the size of the buffer.
+	BufferSize int `toml:"buffer-size" json:"buffer-size"`
+	// BufferFlushInterval is the interval of buffer flush.
+	BufferFlushInterval time.Duration `toml:"buffer-flush-interval" json:"buffer-flush-interval"`
 }
 
 // Config serializes log related config in toml/json.
