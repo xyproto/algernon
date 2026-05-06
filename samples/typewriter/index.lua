@@ -2,9 +2,9 @@
 content("text/html")
 
 text_content1 = [[
-Hello, world.
+Hello, world!
 
-This is a server-side typewriter effect test that uses flush() and print_nonl().
+This is a server-side typewriter effect that uses flush() and print_nonl().
 
 It also needs a longer timeout. For a timeout of 60 seconds, the --timeout=60 flag can be used.
 
