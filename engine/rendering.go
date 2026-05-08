@@ -930,8 +930,12 @@ func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename s
 		htmlbuf.WriteString(`<script src="` + paths.reactDOMProd + `"></script>`)
 	}
 
-	// Inject the postForm helper function
-	htmlbuf.WriteString(`<script>function postForm(u,d){var b=[];for(var k in d)b.push(encodeURIComponent(k)+"="+encodeURIComponent(d[k]));return fetch(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:b.join("&")}).then(function(r){return r.json()})}</script>`)
+	// Inject the postForm and base64URL helper functions
+	htmlbuf.WriteString(`<script>` +
+		`function postForm(u,d){var b=[];for(var k in d)b.push(encodeURIComponent(k)+"="+encodeURIComponent(d[k]));return fetch(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:b.join("&")}).then(function(r){return r.json()})}` +
+		`function bufferToBase64URL(buf){var b=new Uint8Array(buf),s="";for(var i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}` +
+		`function base64URLToBuffer(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";var d=atob(s),b=new Uint8Array(d.length);for(var i=0;i<d.length;i++)b[i]=d.charCodeAt(i);return b.buffer}` +
+		`</script>`)
 
 	// Bundle the JSX source with esbuild
 	bundled, err := ac.bundleFile(filename, jsxdata)
