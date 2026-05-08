@@ -1,6 +1,6 @@
 package engine
 
-// React integration for Algernon's hot-module replacement (HMR) system
+// React integration: embedded runtime, HMR, and react-refresh support
 
 import (
 	"bytes"
@@ -13,13 +13,73 @@ import (
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
+	"github.com/sirupsen/logrus"
 )
+
+// Embedded React 19 runtime
+
+//go:embed assets/react19/react.development.js
+var react19DevJS []byte
+
+//go:embed assets/react19/react.production.min.js
+var react19ProdJS []byte
+
+//go:embed assets/react19/react-dom.development.js
+var reactDOM19DevJS []byte
+
+//go:embed assets/react19/react-dom.production.min.js
+var reactDOM19ProdJS []byte
 
 //go:embed assets/reactrefresh/react-refresh-runtime.js
 var reactRefreshRuntimeJS []byte
 
-// hmrRefreshRuntimePath is the URL for the embedded react-refresh runtime
-const hmrRefreshRuntimePath = "/@algernon/react-refresh.js"
+// defaultReactVersion is the React major version used by index.jsx
+const defaultReactVersion = 19
+
+// reactVersionPaths holds the URL paths for a React version's embedded scripts
+type reactVersionPaths struct {
+	reactDev     string
+	reactProd    string
+	reactDOMDev  string
+	reactDOMProd string
+}
+
+// reactPaths maps React major versions to their embedded script URL paths.
+// When adding a new React version, embed its assets and add an entry here.
+var reactPaths = map[int]reactVersionPaths{
+	19: {
+		reactDev:     react19Path,
+		reactProd:    react19ProdPath,
+		reactDOMDev:  reactDOM19Path,
+		reactDOMProd: reactDOM19ProdPath,
+	},
+}
+
+const (
+	react19Path        = "/@algernon/react19/react.js"
+	react19ProdPath    = "/@algernon/react19/react.min.js"
+	reactDOM19Path     = "/@algernon/react19/react-dom.js"
+	reactDOM19ProdPath = "/@algernon/react19/react-dom.min.js"
+
+	// hmrRefreshRuntimePath is the URL for the embedded react-refresh runtime
+	hmrRefreshRuntimePath = "/@algernon/react-refresh.js"
+)
+
+// registerReact19Handlers registers the embedded React 19 endpoints on mux
+func registerReact19Handlers(mux *http.ServeMux) {
+	serve := func(name string, data []byte) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "text/javascript;charset=utf-8")
+			if n, err := w.Write(data); err != nil || n == 0 {
+				logrus.Errorf("Could not serve %s", name)
+			}
+		}
+	}
+	mux.HandleFunc(react19Path, serve("react.development.js", react19DevJS))
+	mux.HandleFunc(react19ProdPath, serve("react.production.min.js", react19ProdJS))
+	mux.HandleFunc(reactDOM19Path, serve("react-dom.development.js", reactDOM19DevJS))
+	mux.HandleFunc(reactDOM19ProdPath, serve("react-dom.production.min.js", reactDOM19ProdJS))
+}
 
 // HMRRefreshRuntimeHandler serves the embedded react-refresh runtime
 func (ac *Config) HMRRefreshRuntimeHandler(w http.ResponseWriter, req *http.Request) {

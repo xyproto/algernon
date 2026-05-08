@@ -3,6 +3,9 @@ package engine
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
+
+	"github.com/xyproto/algernon/platformdep"
 )
 
 // Built-in renderers for FilePage, each delegating to an existing *Page method on *Config
@@ -52,8 +55,9 @@ func (scssRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request,
 	return nil
 }
 
-// jsxRenderer handles plain ".jsx". FilePage rewrites ext to ".hyper.js"/".hyper.jsx"
-// before dispatch, so those variants land on hyperAppRenderer instead.
+// jsxRenderer handles plain ".jsx". When the file is named "index.jsx", it is
+// served as a full React page. The React version is read from the .algernon file
+// in the same directory, defaulting to defaultReactVersion.
 type jsxRenderer struct{}
 
 func (jsxRenderer) Extensions() []string { return []string{".jsx"} }
@@ -63,6 +67,22 @@ func (jsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, 
 	if err != nil {
 		return fmt.Errorf("%s:%s", filename, err.Error())
 	}
+
+	// Serve index.jsx as a full React HTML page
+	if filepath.Base(filename) == "index.jsx" {
+		dir := filepath.Dir(filename)
+		confFile := filepath.Join(dir, platformdep.DirConfFilename)
+		ver := defaultReactVersion
+		if ac.fs.Exists(confFile) {
+			if v := ac.readDirConfig(confFile).Main.React; v > 0 {
+				ver = v
+			}
+		}
+		w.Header().Add(contentType, htmlUTF8)
+		ac.ReactPage(w, req, filename, jsxblock.Bytes(), ver)
+		return nil
+	}
+
 	w.Header().Add(contentType, "text/javascript;charset=utf-8")
 	ac.JSXPage(w, req, filename, jsxblock.Bytes())
 	return nil

@@ -877,6 +877,76 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	ac.DataToClient(w, req, filename, data)
 }
 
+// defaultReactCSS is a minimal CSS reset used when no style.css or style.gcss is present
+const defaultReactCSS = `*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6}`
+
+// ReactPage wraps a JSX source file in a full HTML page with React loaded,
+// a <div id="root"> mount point, and an optional stylesheet.
+func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte, ver int) {
+	var htmlbuf strings.Builder
+
+	htmlbuf.WriteString("<!doctype html><html><head><meta charset=\"utf-8\">")
+
+	// If style.css or style.gcss is present, use that in <head>
+	dir := filepath.Dir(filename)
+	CSSFilename := filepath.Join(dir, themes.DefaultCSSFilename)
+	GCSSFilename := filepath.Join(dir, themes.DefaultGCSSFilename)
+	switch {
+	case ac.fs.Exists(CSSFilename):
+		htmlbuf.WriteString(linkHref)
+		htmlbuf.WriteString(themes.DefaultCSSFilename)
+		htmlbuf.WriteString(stylesheetCSS)
+	case ac.fs.Exists(GCSSFilename):
+		htmlbuf.WriteString(linkHref)
+		htmlbuf.WriteString(themes.DefaultGCSSFilename)
+		htmlbuf.WriteString(stylesheetCSS)
+	default:
+		// Inject a minimal default style
+		htmlbuf.WriteString("<style>")
+		htmlbuf.WriteString(defaultReactCSS)
+		htmlbuf.WriteString("</style>")
+	}
+
+	htmlbuf.WriteString("</head><body><div id=\"root\"></div>")
+
+	// Load the React runtime for the requested version
+	paths, ok := reactPaths[ver]
+	if !ok {
+		paths = reactPaths[defaultReactVersion]
+	}
+	if ac.debugMode {
+		htmlbuf.WriteString(`<script src="` + paths.reactDev + `"></script>`)
+		htmlbuf.WriteString(`<script src="` + paths.reactDOMDev + `"></script>`)
+	} else {
+		htmlbuf.WriteString(`<script src="` + paths.reactProd + `"></script>`)
+		htmlbuf.WriteString(`<script src="` + paths.reactDOMProd + `"></script>`)
+	}
+
+	// Bundle the JSX source with esbuild
+	bundled, err := ac.bundleFile(filename, jsxdata)
+	if err != nil {
+		if ac.debugMode {
+			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
+		} else {
+			logrus.Error(err)
+		}
+		return
+	}
+
+	htmlbuf.WriteString("<script>")
+	htmlbuf.Write(bundled)
+	htmlbuf.WriteString("</script></body></html>")
+
+	htmldata := []byte(htmlbuf.String())
+
+	// If the auto-refresh feature has been enabled
+	if ac.autoRefresh {
+		htmldata = ac.InsertAutoRefresh(req, htmldata)
+	}
+
+	ac.DataToClient(w, req, filename, htmldata)
+}
+
 // HyperAppPage writes the given source bytes (in JSX for HyperApp) converted to JS, to a writer.
 // The filename is only used in the error message, if any.
 func (ac *Config) HyperAppPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte) {

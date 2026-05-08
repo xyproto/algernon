@@ -21,13 +21,14 @@ const (
 )
 
 // List of filenames that should be displayed instead of a directory listing
-var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
+var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.jsx", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
 
 // DirConfig keeps a directory listing configuration
 type DirConfig struct {
 	Main struct {
 		Title string
 		Theme string
+		React int // Desired major version of React, ie. 19 or 20
 	}
 }
 
@@ -88,14 +89,12 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 
 	// Read directory configuration, if present
 	if fullDirConfFilename := filepath.Join(dirname, platformdep.DirConfFilename); ac.fs.Exists(fullDirConfFilename) {
-		var dirConf DirConfig
-		if err := gcfg.ReadFileInto(&dirConf, fullDirConfFilename); err == nil { // if no error
-			if dirConf.Main.Title != "" {
-				title = dirConf.Main.Title
-			}
-			if dirConf.Main.Theme != "" {
-				theme = dirConf.Main.Theme
-			}
+		dirConf := ac.readDirConfig(fullDirConfFilename)
+		if dirConf.Main.Title != "" {
+			title = dirConf.Main.Title
+		}
+		if dirConf.Main.Theme != "" {
+			theme = dirConf.Main.Theme
 		}
 	} else {
 		// Strip the leading "./" from the current directory
@@ -170,4 +169,16 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 
 	// Serve a directory listing if no index file is found
 	ac.DirectoryListing(w, req, rootdir, dirname, theme)
+}
+
+// readDirConfig reads and parses the .algernon configuration file through the
+// file cache. Returns an empty DirConfig if the file cannot be read or parsed.
+func (ac *Config) readDirConfig(filename string) DirConfig {
+	var dirConf DirConfig
+	block, err := ac.cache.Read(filename, ac.shouldCache(".algernon"))
+	if err != nil {
+		return dirConf
+	}
+	gcfg.ReadStringInto(&dirConf, string(block.Bytes()))
+	return dirConf
 }
