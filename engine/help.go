@@ -41,6 +41,9 @@ list:remove() -> bool
 list:clear() -> bool
 // Return all list elements (expected to be JSON strings) as a JSON list
 list:json() -> string
+// Return the last N elements (expected to be JSON strings) as a JSON list.
+// Returns all elements if N exceeds list size.
+list:jsonlast(number) -> string
 
 // Get or create a database-backed HashMap
 // (takes a name, returns a hash map object)
@@ -152,6 +155,9 @@ jfile:delkey(string) -> bool
 // Convert a Lua table with strings or ints to JSON.
 // Takes an optional number of spaces to indent the JSON data.
 json(table[, number]) -> string
+// Embed a raw JSON value inside a JSON object with the given key.
+// Returns {"key":rawjson}.
+jsonembed(string, string) -> string
 // Create a JSON document node.
 JNode() -> userdata
 // Add JSON data to a node. The first argument is an optional JSON path.
@@ -304,6 +310,8 @@ unixnano() -> number
 markdown(string) -> string
 // Sanitize HTML
 sanhtml(string) -> string
+// Truncate a string to at most n bytes
+maxlen(string, number) -> string
 // Query a PostgreSQL database with a query and a connection string.
 // Default connection string: "host=localhost port=5432 user=postgres dbname=test sslmode=disable"
 PQ([string], [string]) -> table
@@ -494,6 +502,9 @@ Handling requests
 content(string)
 // Return the requested HTTP method (GET, POST etc).
 method() -> string
+// Return true if the request is POST (sets JSON content type).
+// Sends 405 for methods other than GET and POST.
+methodPOST() -> bool
 // Output text to the browser/client. Takes a variable number of strings.
 print(...)
 // Same as print, but does not add a newline at the end.

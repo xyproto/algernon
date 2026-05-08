@@ -159,6 +159,47 @@ func listClear(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// Return the last N elements as a JSON list (assumes elements are JSON strings).
+// Returns all elements if N exceeds list size.
+// list::jsonlast(number) -> string
+func listJSONLastN(L *lua.LState) int {
+	list := checkList(L)    // arg 1
+	n := int(L.ToNumber(2)) // arg 2
+
+	// Try LastN first — works when N <= list size
+	results, err := list.LastN(n)
+	if err == nil {
+		L.Push(lua.LString("[" + strings.Join(results, ",") + "]"))
+		return 1 // Number of returned values
+	}
+
+	// Use TailN if the underlying list supports it
+	type tailer interface {
+		TailN(n int) ([]string, error)
+	}
+	if t, ok := list.(tailer); ok {
+		results, err = t.TailN(n)
+		if err != nil {
+			L.Push(lua.LString("[]"))
+			return 1 // Number of returned values
+		}
+		L.Push(lua.LString("[" + strings.Join(results, ",") + "]"))
+		return 1 // Number of returned values
+	}
+
+	// Fallback: fetch all and return the last n
+	all, err := list.All()
+	if err != nil {
+		L.Push(lua.LString("[]"))
+		return 1 // Number of returned values
+	}
+	if len(all) > n {
+		all = all[len(all)-n:]
+	}
+	L.Push(lua.LString("[" + strings.Join(all, ",") + "]"))
+	return 1 // Number of returned values
+}
+
 // The list methods that are to be registered
 var listMethods = map[string]lua.LGFunction{
 	"__tostring": listToString,
@@ -166,6 +207,7 @@ var listMethods = map[string]lua.LGFunction{
 	"getall":     listAll,
 	"getlast":    listLast,
 	"getlastn":   listLastN,
+	"jsonlast":   listJSONLastN,
 	"remove":     listRemove,
 	"clear":      listClear,
 	"json":       listJSON,

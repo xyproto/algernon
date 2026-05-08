@@ -587,4 +587,49 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		return run3.ShellHelper(L, command, workingDir)
 	}))
 
+	// Truncate a string to at most n bytes
+	L.SetGlobal("maxlen", L.NewFunction(func(L *lua.LState) int {
+		s := L.ToString(1)
+		n := int(L.ToNumber(2))
+		if n < 0 {
+			n = 0
+		}
+		if len(s) > n {
+			s = s[:n]
+		}
+		L.Push(lua.LString(s))
+		return 1 // number of results
+	}))
+
+	// Return true if the request method is POST, set JSON content type,
+	// and send 405 Method Not Allowed for methods other than GET and POST.
+	L.SetGlobal("methodPOST", L.NewFunction(func(L *lua.LState) int {
+		switch req.Method {
+		case "POST":
+			w.Header().Set(contentType, "application/json; charset=utf-8")
+			L.Push(lua.LBool(true))
+		case "GET", "HEAD":
+			L.Push(lua.LBool(false))
+		default:
+			w.Header().Set("Allow", "GET, POST")
+			http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+			L.Push(lua.LBool(false))
+		}
+		return 1 // number of results
+	}))
+
+	// Embed a raw JSON value within a JSON object.
+	// jsonembed(key, rawjson) returns {"key":rawjson}
+	L.SetGlobal("jsonembed", L.NewFunction(func(L *lua.LState) int {
+		key := L.ToString(1)
+		raw := L.ToString(2)
+		keyJSON, err := json.Marshal(key)
+		if err != nil {
+			L.Push(lua.LString("{}"))
+			return 1 // number of results
+		}
+		L.Push(lua.LString("{" + string(keyJSON) + ":" + raw + "}"))
+		return 1 // number of results
+	}))
+
 }
