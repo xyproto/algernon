@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -466,6 +467,26 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		}
 		// Convert the map to a table and return it
 		L.Push(convert.Map2table(L, m))
+		return 1 // number of results
+	}))
+
+	// Read a JSON request body and return a table with the decoded fields
+	L.SetGlobal("formjson", L.NewFunction(func(L *lua.LState) int {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			L.Push(L.NewTable())
+			return 1 // number of results
+		}
+		m := make(map[string]interface{})
+		if err := json.Unmarshal(body, &m); err != nil {
+			L.Push(L.NewTable())
+			return 1 // number of results
+		}
+		table := L.NewTable()
+		for key, value := range m {
+			L.RawSet(table, lua.LString(key), lua.LString(fmt.Sprintf("%v", value)))
+		}
+		L.Push(table)
 		return 1 // number of results
 	}))
 
