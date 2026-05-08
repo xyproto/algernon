@@ -3,6 +3,8 @@
 General
 -------
 
+- [ ] Add TailN(n) to all packages that implement `pinterface`. Make them return the last N items of a list, or all items if N > the list length.
+      This gives getlastn/jsonlast an efficient path that avoids loading the entire list.
 - [ ] Consider keeping package level handles for the access logs open, instead of open+append, together with handling SIGHUP when logs are rotated.
 - [ ] Consider adding `; HttpOnly` by default to `Set-Cookie` headers.
 - [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
