@@ -877,8 +877,16 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	ac.DataToClient(w, req, filename, data)
 }
 
-// defaultReactCSS is a minimal CSS reset used when no style.css or style.gcss is present
-const defaultReactCSS = `*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6}`
+// defaultReactCSS is a minimal CSS used when no style.css or style.gcss is present
+const defaultReactCSS = `*{margin:0;padding:0;box-sizing:border-box}` +
+	`body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5}` +
+	`.card{background:#fff;padding:2em;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);width:320px;text-align:center}` +
+	`h1{margin-bottom:.5em}` +
+	`input{display:block;width:100%;padding:.5em;margin-bottom:.75em;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}` +
+	`button{width:100%;padding:.6em;background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}` +
+	`button:hover{background:#2563eb}` +
+	`.msg{color:#c00;font-size:.9em}` +
+	`a{color:#3b82f6}`
 
 // ReactPage wraps a JSX source file in a full HTML page with React loaded,
 // a <div id="root"> mount point, and an optional stylesheet.
@@ -921,6 +929,9 @@ func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename s
 		htmlbuf.WriteString(`<script src="` + paths.reactProd + `"></script>`)
 		htmlbuf.WriteString(`<script src="` + paths.reactDOMProd + `"></script>`)
 	}
+
+	// Inject the postForm helper function
+	htmlbuf.WriteString(`<script>function postForm(u,d){var b=[];for(var k in d)b.push(encodeURIComponent(k)+"="+encodeURIComponent(d[k]));return fetch(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:b.join("&")}).then(function(r){return r.json()})}</script>`)
 
 	// Bundle the JSX source with esbuild
 	bundled, err := ac.bundleFile(filename, jsxdata)
