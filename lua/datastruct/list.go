@@ -102,26 +102,9 @@ func listLast(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// getLastN retrieves the last N items from a list, using the most efficient
-// available method: TailN if supported, otherwise All() sliced to the last N.
+// getLastN retrieves the last N items from a list.
 func getLastN(list pinterface.IList, n int) ([]string, error) {
-	// Use TailN if the underlying list supports it
-	type tailer interface {
-		TailN(n int) ([]string, error)
-	}
-	if t, ok := list.(tailer); ok {
-		return t.TailN(n)
-	}
-
-	// Fallback: fetch all and return the last n
-	all, err := list.All()
-	if err != nil {
-		return nil, err
-	}
-	if len(all) > n {
-		all = all[len(all)-n:]
-	}
-	return all, nil
+	return list.LastUpToN(uint64(n))
 }
 
 // Get the N last elements of the list.
