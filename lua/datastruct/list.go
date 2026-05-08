@@ -5,7 +5,7 @@ import (
 
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // Identifier for the List class in Lua
@@ -102,6 +102,28 @@ func listLast(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
+// getLastN retrieves the last N items from a list, using the most efficient
+// available method: TailN if supported, otherwise All() sliced to the last N.
+func getLastN(list pinterface.IList, n int) ([]string, error) {
+	// Use TailN if the underlying list supports it
+	type tailer interface {
+		TailN(n int) ([]string, error)
+	}
+	if t, ok := list.(tailer); ok {
+		return t.TailN(n)
+	}
+
+	// Fallback: fetch all and return the last n
+	all, err := list.All()
+	if err != nil {
+		return nil, err
+	}
+	if len(all) > n {
+		all = all[len(all)-n:]
+	}
+	return all, nil
+}
+
 // Get the N last elements of the list.
 // Returns all elements if N exceeds list size.
 // list::getlastn(number) -> table
@@ -109,37 +131,12 @@ func listLastN(L *lua.LState) int {
 	list := checkList(L)    // arg 1
 	n := int(L.ToNumber(2)) // arg 2
 
-	// Try LastN first — works when N <= list size
-	results, err := list.LastN(n)
-	if err == nil {
-		L.Push(convert.Strings2table(L, results))
-		return 1 // Number of returned values
-	}
-
-	// Use TailN if the underlying list supports it
-	type tailer interface {
-		TailN(n int) ([]string, error)
-	}
-	if t, ok := list.(tailer); ok {
-		results, err = t.TailN(n)
-		if err != nil {
-			L.Push(L.NewTable())
-			return 1 // Number of returned values
-		}
-		L.Push(convert.Strings2table(L, results))
-		return 1 // Number of returned values
-	}
-
-	// Fallback: fetch all and return the last n
-	all, err := list.All()
+	results, err := getLastN(list, n)
 	if err != nil {
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
-	if len(all) > n {
-		all = all[len(all)-n:]
-	}
-	L.Push(convert.Strings2table(L, all))
+	L.Push(convert.Strings2table(L, results))
 	return 1 // Number of returned values
 }
 
@@ -166,37 +163,12 @@ func listJSONLastN(L *lua.LState) int {
 	list := checkList(L)    // arg 1
 	n := int(L.ToNumber(2)) // arg 2
 
-	// Try LastN first — works when N <= list size
-	results, err := list.LastN(n)
-	if err == nil {
-		L.Push(lua.LString("[" + strings.Join(results, ",") + "]"))
-		return 1 // Number of returned values
-	}
-
-	// Use TailN if the underlying list supports it
-	type tailer interface {
-		TailN(n int) ([]string, error)
-	}
-	if t, ok := list.(tailer); ok {
-		results, err = t.TailN(n)
-		if err != nil {
-			L.Push(lua.LString("[]"))
-			return 1 // Number of returned values
-		}
-		L.Push(lua.LString("[" + strings.Join(results, ",") + "]"))
-		return 1 // Number of returned values
-	}
-
-	// Fallback: fetch all and return the last n
-	all, err := list.All()
+	results, err := getLastN(list, n)
 	if err != nil {
 		L.Push(lua.LString("[]"))
 		return 1 // Number of returned values
 	}
-	if len(all) > n {
-		all = all[len(all)-n:]
-	}
-	L.Push(lua.LString("[" + strings.Join(all, ",") + "]"))
+	L.Push(lua.LString("[" + strings.Join(results, ",") + "]"))
 	return 1 // Number of returned values
 }
 

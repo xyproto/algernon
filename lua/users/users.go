@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 	"github.com/xyproto/simplejwt"
 )
 

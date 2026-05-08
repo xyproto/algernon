@@ -9,13 +9,9 @@ import (
 	"github.com/xyproto/algernon/engine"
 	"github.com/xyproto/permissionbolt/v2"
 	"github.com/xyproto/permissions"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 	"github.com/xyproto/simplebolt"
 	"github.com/xyproto/simpleredis/v2"
-	//"github.com/xyproto/permissionsql/v2"
-	//"github.com/xyproto/pstore"
-	//"github.com/xyproto/simplehstore"
-	//"github.com/xyproto/simplemaria"
 )
 
 // VersionInfo helps to keep track of package names and versions

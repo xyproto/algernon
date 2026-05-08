@@ -25,7 +25,7 @@ import (
 	"github.com/xyproto/datablock"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mime"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 	"github.com/xyproto/recwatch"
 	"github.com/xyproto/unzip"
 	"github.com/xyproto/vt"

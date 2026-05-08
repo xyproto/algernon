@@ -9,7 +9,7 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // user implements webauthn.User backed by the Algernon userstate and credential store

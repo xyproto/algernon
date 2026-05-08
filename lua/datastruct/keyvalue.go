@@ -3,7 +3,7 @@ package datastruct
 import (
 	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // Identifier for the Set class in Lua

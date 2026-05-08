@@ -4,7 +4,7 @@ package codelib
 import (
 	"github.com/sirupsen/logrus"
 	lua "github.com/xyproto/gopher-lua"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // Library class is for storing and loading Lua source code to and from a data structure.

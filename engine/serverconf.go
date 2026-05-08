@@ -16,7 +16,7 @@ import (
 	redis "github.com/xyproto/permissions"
 	mariadb "github.com/xyproto/permissionsql/v2"
 	sqlite "github.com/xyproto/permissionsqlite_noc"
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 	postgres "github.com/xyproto/pstore"
 	"github.com/xyproto/simpleredis/v2"
 )
