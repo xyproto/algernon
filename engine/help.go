@@ -448,6 +448,23 @@ SetMinimumConfirmationCodeLength(number)
 // Generates a unique confirmation code, or an empty string
 GenerateUniqueConfirmationCode() -> string
 
+WebAuthn (passwordless authentication)
+
+// Begin a WebAuthn registration ceremony. Takes a username, writes JSON
+// options to the HTTP response. Returns true if successful.
+WebAuthnBeginRegister(string) -> bool
+// Finish a WebAuthn registration ceremony. Takes a username, reads the
+// attestation response from the request body. Returns true if the credential
+// was stored.
+WebAuthnFinishRegister(string) -> bool
+// Begin a WebAuthn login ceremony. Takes a username, writes JSON options
+// to the HTTP response. Returns true if successful.
+WebAuthnBeginLogin(string) -> bool
+// Finish a WebAuthn login ceremony. Takes a username, reads the assertion
+// response from the request body. Returns true if authentication succeeded.
+// Also logs the user in via the standard session mechanism.
+WebAuthnFinishLogin(string) -> bool
+
 File uploads
 
 // Creates a file upload object. Takes a form ID (from a POST request) as the

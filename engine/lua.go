@@ -20,6 +20,7 @@ import (
 	"github.com/xyproto/algernon/lua/pure"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
+	"github.com/xyproto/algernon/lua/webauthn"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
@@ -57,6 +58,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 		// Make the functions related to userstate available to the Lua script
 		users.Load(w, req, L, userstate)
+
+		// Make WebAuthn functions available to the Lua script
+		webauthn.Load(w, req, L, userstate)
 
 		creator := userstate.Creator()
 
