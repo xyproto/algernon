@@ -81,7 +81,7 @@ The tests will create a file (sqlite.db) for `go test` to work.
 Version, license and author
 ---------------------------
 
-* Version: 1.1.0
+* Version: 1.2.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * Author: Björn Kalkbrenner &lt;terminar@cyberphoria.org&gt;

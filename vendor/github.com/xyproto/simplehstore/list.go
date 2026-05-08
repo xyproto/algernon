@@ -116,15 +116,14 @@ func (l *List) GetLast() (string, error) {
 	return l.Last()
 }
 
-// LastN retrieves the N last elements of a list. If there are too few
-// available elements, the values that were found are returned, together
-// with a TooFewElementsError.
+// LastN retrieves the N last elements of a list. If the list has fewer than N
+// elements, all available elements are returned without an error.
 func (l *List) LastN(n int) ([]string, error) {
 	var (
 		values []string
 		value  string
 	)
-	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM (SELECT * FROM %s ORDER BY id DESC limit %d)sub ORDER BY id ASC", listCol, l.table, n))
+	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM (SELECT * FROM %s ORDER BY id DESC LIMIT %d) sub ORDER BY id ASC", listCol, l.table, n))
 	if err != nil {
 		return values, err
 	}
@@ -145,8 +144,36 @@ func (l *List) LastN(n int) ([]string, error) {
 	if err := rows.Err(); err != nil {
 		return values, err
 	}
-	if len(values) < n {
-		return values, ErrTooFewResults
+	return values, nil
+}
+
+// LastUpToN retrieves up to N last elements of a list. If the list has fewer
+// than N elements, all available elements are returned without an error.
+func (l *List) LastUpToN(n uint64) ([]string, error) {
+	var (
+		values []string
+		value  string
+	)
+	rows, err := l.host.db.Query(fmt.Sprintf("SELECT %s FROM (SELECT * FROM %s ORDER BY id DESC LIMIT %d) sub ORDER BY id ASC", listCol, l.table, n))
+	if err != nil {
+		return values, err
+	}
+	if rows == nil {
+		return values, ErrNoAvailableValues
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&value)
+		if !l.host.rawUTF8 {
+			Decode(&value)
+		}
+		values = append(values, value)
+		if err != nil {
+			return values, err
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return values, err
 	}
 	return values, nil
 }

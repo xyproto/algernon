@@ -484,7 +484,7 @@ import (
     "time"
 
     "github.com/xyproto/pstore"
-    "github.com/xyproto/pinterface"
+    "github.com/xyproto/pinterface/v2"
 )
 
 type permissionHandler struct {
@@ -672,7 +672,7 @@ func main() {
 General information
 -------------------
 
-* Version: 1.3.5
-* API version: 3.2
+* Version: 1.4.0
+* API version: 4.0
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

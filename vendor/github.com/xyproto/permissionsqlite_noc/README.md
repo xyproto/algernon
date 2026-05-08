@@ -40,7 +40,7 @@ import (
     "time"
 
     "github.com/xyproto/permissionsqlite_noc"
-    "github.com/xyproto/pinterface"
+    "github.com/xyproto/pinterface/v2"
 )
 
 type permissionHandler struct {
@@ -211,7 +211,7 @@ Using the `*pinterface.IUserState` type (from the [pinterface](https://github.co
 
 ## General information
 
-* Version: 1.1.0
+* Version: 1.2.0
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * Björn Kalkbrenner &lt;xyproto@cyberphoria.org&gt;

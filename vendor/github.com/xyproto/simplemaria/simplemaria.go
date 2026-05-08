@@ -318,9 +318,9 @@ func (l *List) GetLast() (string, error) {
 	return l.Last()
 }
 
-// Get the last N elements of a list
+// Get the last N elements of a list. If the list has fewer than N elements, all elements are returned.
 func (l *List) LastN(n int) ([]string, error) {
-	rows, err := l.host.db.Query("SELECT " + listCol + " FROM (SELECT * FROM " + l.table + " ORDER BY id DESC limit " + strconv.Itoa(n) + ")sub ORDER BY id ASC")
+	rows, err := l.host.db.Query("SELECT " + listCol + " FROM (SELECT * FROM " + l.table + " ORDER BY id DESC LIMIT " + strconv.Itoa(n) + ") sub ORDER BY id ASC")
 	if err != nil {
 		return []string{}, err
 	}
@@ -344,8 +344,34 @@ func (l *List) LastN(n int) ([]string, error) {
 		// Unusual, worthy of panic
 		panic(err.Error())
 	}
-	if len(values) < n {
-		return []string{}, errors.New("Too few elements in table at GetLastN")
+	return values, nil
+}
+
+// Get up to N last elements of a list. If the list has fewer than N elements, all elements are returned.
+func (l *List) LastUpToN(n uint64) ([]string, error) {
+	rows, err := l.host.db.Query("SELECT " + listCol + " FROM (SELECT * FROM " + l.table + " ORDER BY id DESC LIMIT " + strconv.FormatUint(n, 10) + ") sub ORDER BY id ASC")
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var (
+		values []string
+		value  string
+	)
+	for rows.Next() {
+		err = rows.Scan(&value)
+		if !l.host.rawUTF8 {
+			Decode(&value)
+		}
+		values = append(values, value)
+		if err != nil {
+			// Unusual, worthy of panic
+			panic(err.Error())
+		}
+	}
+	if err := rows.Err(); err != nil {
+		// Unusual, worthy of panic
+		panic(err.Error())
 	}
 	return values, nil
 }

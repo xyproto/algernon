@@ -1,7 +1,7 @@
 package simplebolt
 
 import (
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // BoltCreator is used for implementing pinterface.ICreator. It contains a

@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 const (
 	// VersionString is the current version. The API is stable within major versions.
-	VersionString = "1.0.1"
+	VersionString = "1.1.0"
 )
 
 // Permissions is a structure that keeps track of the permissions for various path prefixes

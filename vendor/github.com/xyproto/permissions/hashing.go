@@ -3,9 +3,9 @@ package permissions
 import (
 	"crypto/sha256"
 	"crypto/subtle"
+	"io"
 
 	"golang.org/x/crypto/bcrypt"
-	"io"
 )
 
 // Hash the password with sha256 (the username is needed for salting)

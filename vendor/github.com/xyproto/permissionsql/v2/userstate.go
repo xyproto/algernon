@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/xyproto/cookie/v2"      // For cookies
-	"github.com/xyproto/pinterface"     // For interfaces
+	"github.com/xyproto/pinterface/v2"  // For interfaces
 	db "github.com/xyproto/simplemaria" // MariaDB/MySQL database wrapper
 )
 

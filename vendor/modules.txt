@@ -99,6 +99,9 @@ github.com/flosch/pongo2/v6
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
+# github.com/fxamacker/cbor/v2 v2.9.2
+## explicit; go 1.20
+github.com/fxamacker/cbor/v2
 # github.com/go-gcfg/gcfg v1.2.3
 ## explicit
 github.com/go-gcfg/gcfg
@@ -111,6 +114,24 @@ github.com/go-mysql-org/go-mysql/mysql
 github.com/go-mysql-org/go-mysql/packet
 github.com/go-mysql-org/go-mysql/stmt
 github.com/go-mysql-org/go-mysql/utils
+# github.com/go-viper/mapstructure/v2 v2.5.0
+## explicit; go 1.18
+github.com/go-viper/mapstructure/v2
+github.com/go-viper/mapstructure/v2/internal/errors
+# github.com/go-webauthn/webauthn v0.17.2
+## explicit; go 1.25.0
+github.com/go-webauthn/webauthn/metadata
+github.com/go-webauthn/webauthn/protocol
+github.com/go-webauthn/webauthn/protocol/webauthncbor
+github.com/go-webauthn/webauthn/protocol/webauthncose
+github.com/go-webauthn/webauthn/webauthn
+# github.com/go-webauthn/x v0.2.3
+## explicit; go 1.25.0
+github.com/go-webauthn/x/encoding/asn1
+github.com/go-webauthn/x/revoke
+# github.com/golang-jwt/jwt/v5 v5.3.1
+## explicit; go 1.21
+github.com/golang-jwt/jwt/v5
 # github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9
 ## explicit
 github.com/golang-sql/civil
@@ -128,6 +149,13 @@ github.com/gomarkdown/markdown/parser
 github.com/gomodule/redigo/redis
 # github.com/google/go-cmp v0.7.0
 ## explicit; go 1.21
+# github.com/google/go-tpm v0.9.8
+## explicit; go 1.22
+github.com/google/go-tpm/legacy/tpm2
+github.com/google/go-tpm/tpm2
+github.com/google/go-tpm/tpm2/transport
+github.com/google/go-tpm/tpmutil
+github.com/google/go-tpm/tpmutil/tbs
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -197,7 +225,7 @@ github.com/ncruces/go-sqlite3/internal/sqlite3_wrap
 github.com/ncruces/go-sqlite3/internal/testenv
 github.com/ncruces/go-sqlite3/internal/util
 github.com/ncruces/go-sqlite3/vfs
-# github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35300
+# github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35301
 ## explicit; go 1.25.0
 github.com/ncruces/go-sqlite3-wasm/v2
 # github.com/ncruces/julianday v1.0.0
@@ -209,6 +237,9 @@ github.com/orsinium-labs/enum
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 ## explicit
 github.com/patrickmn/go-cache
+# github.com/philhofer/fwd v1.2.0
+## explicit; go 1.20
+github.com/philhofer/fwd
 # github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2
 ## explicit; go 1.14
 github.com/pingcap/errors
@@ -257,6 +288,9 @@ github.com/shopspring/decimal
 # github.com/sirupsen/logrus v1.9.4
 ## explicit; go 1.17
 github.com/sirupsen/logrus
+# github.com/tinylib/msgp v1.6.4
+## explicit; go 1.24
+github.com/tinylib/msgp/msgp
 # github.com/tylerb/graceful v1.2.15
 ## explicit
 github.com/tylerb/graceful
@@ -276,6 +310,9 @@ github.com/wellington/sass/parser
 github.com/wellington/sass/scanner
 github.com/wellington/sass/strops
 github.com/wellington/sass/token
+# github.com/x448/float16 v0.8.4
+## explicit; go 1.11
+github.com/x448/float16
 # github.com/xyproto/ask v1.1.0
 ## explicit; go 1.17
 github.com/xyproto/ask
@@ -321,23 +358,23 @@ github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/onthefly v1.4.1
 ## explicit; go 1.21
 github.com/xyproto/onthefly
-# github.com/xyproto/permissionbolt/v2 v2.6.5
-## explicit; go 1.24.0
+# github.com/xyproto/permissionbolt/v2 v2.7.0
+## explicit; go 1.25.0
 github.com/xyproto/permissionbolt/v2
-# github.com/xyproto/permissions v1.0.1
-## explicit; go 1.24.0
+# github.com/xyproto/permissions v1.1.0
+## explicit; go 1.25.0
 github.com/xyproto/permissions
-# github.com/xyproto/permissionsql/v2 v2.1.4
-## explicit; go 1.24.0
+# github.com/xyproto/permissionsql/v2 v2.2.0
+## explicit; go 1.25.0
 github.com/xyproto/permissionsql/v2
-# github.com/xyproto/permissionsqlite_noc v1.1.0
+# github.com/xyproto/permissionsqlite_noc v1.2.0
 ## explicit; go 1.25.0
 github.com/xyproto/permissionsqlite_noc
-# github.com/xyproto/pinterface v1.5.4
+# github.com/xyproto/pinterface/v2 v2.1.2
 ## explicit; go 1.8
-github.com/xyproto/pinterface
-# github.com/xyproto/pstore v1.3.5
-## explicit; go 1.24.0
+github.com/xyproto/pinterface/v2
+# github.com/xyproto/pstore v1.4.0
+## explicit; go 1.25.0
 github.com/xyproto/pstore
 # github.com/xyproto/randomstring v1.2.0
 ## explicit; go 1.17
@@ -348,25 +385,25 @@ github.com/xyproto/recwatch
 # github.com/xyproto/sheepcounter v1.6.2
 ## explicit; go 1.18
 github.com/xyproto/sheepcounter
-# github.com/xyproto/simplebolt v1.5.4
-## explicit; go 1.24.0
+# github.com/xyproto/simplebolt v1.6.0
+## explicit; go 1.25.0
 github.com/xyproto/simplebolt
 # github.com/xyproto/simpleform v0.2.0
 ## explicit; go 1.15
 github.com/xyproto/simpleform
-# github.com/xyproto/simplehstore v1.8.5
+# github.com/xyproto/simplehstore v1.9.0
 ## explicit; go 1.24.0
 github.com/xyproto/simplehstore
 # github.com/xyproto/simplejwt v1.2.0
 ## explicit; go 1.20
 github.com/xyproto/simplejwt
-# github.com/xyproto/simplemaria v1.3.8
-## explicit; go 1.24.0
+# github.com/xyproto/simplemaria v1.4.0
+## explicit; go 1.25.0
 github.com/xyproto/simplemaria
-# github.com/xyproto/simpleredis/v2 v2.8.1
+# github.com/xyproto/simpleredis/v2 v2.9.0
 ## explicit; go 1.17
 github.com/xyproto/simpleredis/v2
-# github.com/xyproto/simplesqlite_noc v1.1.0
+# github.com/xyproto/simplesqlite_noc v1.2.0
 ## explicit; go 1.25.0
 github.com/xyproto/simplesqlite_noc
 # github.com/xyproto/splash v1.3.1
@@ -408,8 +445,6 @@ go.etcd.io/bbolt/internal/freelist
 # go.uber.org/atomic v1.11.0
 ## explicit; go 1.18
 go.uber.org/atomic
-# go.uber.org/mock v0.6.0
-## explicit; go 1.23.0
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -442,7 +477,7 @@ golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4
 golang.org/x/crypto/ocsp
-# golang.org/x/mod v0.35.0
+# golang.org/x/mod v0.36.0
 ## explicit; go 1.25.0
 golang.org/x/mod/semver
 # golang.org/x/net v0.53.0
@@ -469,10 +504,10 @@ golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.42.0
+# golang.org/x/term v0.43.0
 ## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.36.0
+# golang.org/x/text v0.37.0
 ## explicit; go 1.25.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap

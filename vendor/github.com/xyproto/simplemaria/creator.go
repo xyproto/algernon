@@ -1,7 +1,7 @@
 package simplemaria
 
 import (
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // For implementing pinterface.ICreator

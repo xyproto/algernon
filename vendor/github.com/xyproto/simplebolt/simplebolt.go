@@ -1,11 +1,12 @@
 // Package simplebolt provides a simple way to use the Bolt database.
 // The API design is similar to xyproto/simpleredis, and the database backends
-// are interchangeable, by using the xyproto/pinterface package.
+// are interchangeable, by using the xyproto/pinterface/v2 package.
 package simplebolt
 
 import (
 	"encoding/binary"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -163,7 +164,7 @@ func (l *List) Last() (string, error) {
 	return result, err
 }
 
-// LastN will return the last N elements of a list
+// LastN will return the last N elements of a list. If the list has fewer than N elements, all elements are returned.
 func (l *List) LastN(n int) ([]string, error) {
 	var results []string
 	if l.name == nil {
@@ -176,19 +177,47 @@ func (l *List) LastN(n int) ([]string, error) {
 		}
 		c := bucket.Cursor()
 		sizeBytes, _ := c.Last()
-		size := binary.BigEndian.Uint64(sizeBytes)
-		if size < uint64(n) {
-			return errors.New("Too few items in list")
+		if sizeBytes == nil {
+			return nil
 		}
-		// Ok, fetch the n last items. startPos is counting from (size - n)+1.
-		// +1 because Seek() moves to a specific key.
-		// e.g. if the size of the list is, say, 50, and we want the last 4
-		// elements, say, from 47 to 50 inclusive, then the calculation would be like this:
-		// size = 50
-		// n = 4
-		// startPos = size - n // startPos = 46
-		// startPos += 1 // startPos = 47
-		startPos := byteID(size - uint64(n) + 1)
+		size := binary.BigEndian.Uint64(sizeBytes)
+		var startPos []byte
+		if size < uint64(n) {
+			startPos = byteID(1)
+		} else {
+			startPos = byteID(size - uint64(n) + 1)
+		}
+		for key, value := c.Seek(startPos); key != nil; key, value = c.Next() {
+			results = append(results, string(value))
+		}
+		return nil // Return from View function
+	})
+	return results, err
+}
+
+// LastUpToN will return up to N last elements of a list. If the list has fewer than N elements, all elements are returned.
+func (l *List) LastUpToN(n uint64) ([]string, error) {
+	var results []string
+	if l.name == nil {
+		return nil, ErrDoesNotExist
+	}
+	err := (*bbolt.DB)(l.db).View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(l.name)
+		if bucket == nil {
+			return ErrBucketNotFound
+		}
+		c := bucket.Cursor()
+		sizeBytes, _ := c.Last()
+		if sizeBytes == nil {
+			return nil
+		}
+		size := binary.BigEndian.Uint64(sizeBytes)
+		var startPos []byte
+		if size < n {
+			startPos = byteID(1)
+		} else {
+			startPos = byteID(size - n + 1)
+		}
 		for key, value := c.Seek(startPos); key != nil; key, value = c.Next() {
 			results = append(results, string(value))
 		}
@@ -405,11 +434,9 @@ func (h *HashMap) All() ([]string, error) {
 			combinedKey := string(byteKey)
 			if strings.Contains(combinedKey, ":") {
 				fields := strings.SplitN(combinedKey, ":", 2)
-				for _, result := range results {
-					if result == fields[0] {
-						// Result already exists, continue
-						return nil // Continue ForEach
-					}
+				if slices.Contains(results, fields[0]) {
+					// Result already exists, continue
+					return nil // Continue ForEach
 				}
 				// Store the new result
 				results = append(results, string(fields[0]))

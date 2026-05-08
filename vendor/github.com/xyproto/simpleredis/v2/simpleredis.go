@@ -315,6 +315,20 @@ func (rl *List) LastN(n int) ([]string, error) {
 	return strs, err
 }
 
+// Get (up to) the last N (uint64) elements of a list
+func (rl *List) LastUpToN(n uint64) ([]string, error) {
+	if n == 0 {
+		return []string{}, nil
+	}
+	conn := rl.pool.Get(rl.dbindex)
+	result, err := redis.Values(conn.Do("LRANGE", rl.id, "-"+strconv.FormatUint(n, 10), "-1"))
+	strs := make([]string, len(result))
+	for i := 0; i < len(result); i++ {
+		strs[i] = getString(result, i)
+	}
+	return strs, err
+}
+
 // Deprecated
 func (rl *List) GetLastN(n int) ([]string, error) {
 	return rl.LastN(n)

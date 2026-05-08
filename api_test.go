@@ -51,7 +51,7 @@ func TestAPI(t *testing.T) {
 	if !strings.HasPrefix(permissions.VersionString, "1.") {
 		t.Error(fmt.Errorf("permissions is %q, requires %q", permissions.VersionString, "1.*"))
 	}
-	if err := New("pinterface", pinterface.Version, 5.3).Check(); err != nil {
+	if err := New("pinterface", pinterface.Version, 6.0).Check(); err != nil {
 		t.Error(err)
 	}
 	if err := New("engine", engine.Version, 2.0).Check(); err != nil {

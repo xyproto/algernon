@@ -215,7 +215,7 @@ func (host *Host) SelectDatabase(dbname string) error {
 // Will create the database if it does not already exist
 func (host *Host) createDatabase() error {
 	if _, err := host.db.Exec(fmt.Sprintf("CREATE DATABASE %s WITH ENCODING '%s'", host.dbname, encoding)); err != nil {
-		if !strings.HasSuffix(err.Error(), "already exists") {
+		if pqErr, ok := err.(*pq.Error); !ok || pqErr.Code != "42P04" {
 			return err
 		}
 	}

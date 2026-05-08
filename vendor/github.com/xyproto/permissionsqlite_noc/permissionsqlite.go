@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xyproto/pinterface"
+	"github.com/xyproto/pinterface/v2"
 )
 
 // The structure that keeps track of the permissions for various path prefixes

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/lib/pq"
@@ -136,7 +137,7 @@ func (hm2 *HashMap2) SetMap(owner string, m map[string]string) error {
 				transaction.Rollback()
 				return err
 			}
-			if !hasS(allProperties, k) {
+			if !slices.Contains(allProperties, k) {
 				if err := propset.Add(k); err != nil {
 					transaction.Rollback()
 					return err
@@ -155,7 +156,7 @@ func (hm2 *HashMap2) SetMap(owner string, m map[string]string) error {
 			transaction.Rollback()
 			return err
 		}
-		if !hasS(allProperties, k) {
+		if !slices.Contains(allProperties, k) {
 			if err := propset.Add(k); err != nil {
 				transaction.Rollback()
 				return err
@@ -193,7 +194,7 @@ func (hm2 *HashMap2) SetLargeMap(allProperties map[string]map[string]string) err
 	for owner := range allProperties {
 		// Find all unique properties
 		for k := range allProperties[owner] {
-			if !hasS(props, k) && !hasS(newProps, k) {
+			if !slices.Contains(props, k) && !slices.Contains(newProps, k) {
 				newProps = append(newProps, k)
 			}
 		}
@@ -435,8 +436,8 @@ func (hm2 *HashMap2) All() ([]string, error) {
 		return []string{}, err
 	}
 	for _, ownerAndKey := range allOwnersAndKeys {
-		if pos := strings.Index(ownerAndKey, fieldSep); pos != -1 {
-			owner := ownerAndKey[:pos]
+		if before, _, ok := strings.Cut(ownerAndKey, fieldSep); ok {
+			owner := before
 			if _, has := foundOwners[owner]; !has {
 				foundOwners[owner] = true
 			}
