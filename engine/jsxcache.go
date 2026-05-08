@@ -78,6 +78,11 @@ func (ac *Config) bundleFile(filename string, srcData []byte) ([]byte, error) {
 	}
 
 	dir := filepath.Dir(filename)
+	if !filepath.IsAbs(dir) {
+		if absDir, err := filepath.Abs(dir); err == nil {
+			dir = absDir
+		}
+	}
 	opts := api.BuildOptions{
 		Bundle:            true,
 		Platform:          api.PlatformBrowser,
