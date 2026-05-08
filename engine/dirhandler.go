@@ -5,8 +5,11 @@ package engine
 import (
 	"bytes"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/go-gcfg/gcfg"
 	"github.com/sirupsen/logrus"
@@ -30,6 +33,18 @@ type DirConfig struct {
 		Theme string
 		React int // Desired major version of React, ie. 19 or 20
 	}
+}
+
+// dirConfigEntry is a cached parsed .algernon configuration with mtime
+type dirConfigEntry struct {
+	config DirConfig
+	mtime  time.Time
+}
+
+// dirConfigCache caches parsed .algernon configurations by filename and mtime
+type dirConfigCache struct {
+	mu      sync.RWMutex
+	entries map[string]dirConfigEntry
 }
 
 // DirectoryListing serves the given directory as a web page with links the the contents
@@ -171,14 +186,42 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 	ac.DirectoryListing(w, req, rootdir, dirname, theme)
 }
 
-// readDirConfig reads and parses the .algernon configuration file through the
-// file cache. Returns an empty DirConfig if the file cannot be read or parsed.
+// readDirConfig reads and parses the .algernon configuration file, caching the
+// parsed result by filename and mtime. Returns an empty DirConfig if the file
+// cannot be read or parsed.
 func (ac *Config) readDirConfig(filename string) DirConfig {
+	// Check mtime
+	info, err := os.Stat(filename)
+	if err != nil {
+		return DirConfig{}
+	}
+	mtime := info.ModTime()
+
+	// Return cached entry if mtime has not changed
+	if ac.dirConfCache != nil {
+		ac.dirConfCache.mu.RLock()
+		if entry, ok := ac.dirConfCache.entries[filename]; ok && entry.mtime.Equal(mtime) {
+			ac.dirConfCache.mu.RUnlock()
+			return entry.config
+		}
+		ac.dirConfCache.mu.RUnlock()
+	}
+
+	// Read and parse
 	var dirConf DirConfig
 	block, err := ac.cache.Read(filename, ac.shouldCache(".algernon"))
 	if err != nil {
 		return dirConf
 	}
 	gcfg.ReadStringInto(&dirConf, string(block.Bytes()))
+
+	// Store in cache
+	if ac.dirConfCache == nil {
+		ac.dirConfCache = &dirConfigCache{entries: make(map[string]dirConfigEntry)}
+	}
+	ac.dirConfCache.mu.Lock()
+	ac.dirConfCache.entries[filename] = dirConfigEntry{config: dirConf, mtime: mtime}
+	ac.dirConfCache.mu.Unlock()
+
 	return dirConf
 }

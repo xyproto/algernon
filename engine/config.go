@@ -93,6 +93,7 @@ type Config struct {
 	postgresDatabase             string               // database name
 	dirBaseURL                   string               // optional Base URL, for the directory listings
 	bundleCache                  *bundleCache         // cache for on-the-fly esbuild bundles
+	dirConfCache                 *dirConfigCache      // cache for parsed .algernon configurations
 	jsxOptions                   api.TransformOptions // JSX rendering options
 	certMagicDomains             []string
 	serverConfigurationFilenames []string // list of configuration filenames to check
