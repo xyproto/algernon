@@ -102,18 +102,44 @@ func listLast(L *lua.LState) int {
 	return 1 // Number of returned values
 }
 
-// Get the N last elements of the list
+// Get the N last elements of the list.
+// Returns all elements if N exceeds list size.
 // list::getlastn(number) -> table
 func listLastN(L *lua.LState) int {
 	list := checkList(L)    // arg 1
 	n := int(L.ToNumber(2)) // arg 2
+
+	// Try LastN first — works when N <= list size
 	results, err := list.LastN(n)
+	if err == nil {
+		L.Push(convert.Strings2table(L, results))
+		return 1 // Number of returned values
+	}
+
+	// Use TailN if the underlying list supports it
+	type tailer interface {
+		TailN(n int) ([]string, error)
+	}
+	if t, ok := list.(tailer); ok {
+		results, err = t.TailN(n)
+		if err != nil {
+			L.Push(L.NewTable())
+			return 1 // Number of returned values
+		}
+		L.Push(convert.Strings2table(L, results))
+		return 1 // Number of returned values
+	}
+
+	// Fallback: fetch all and return the last n
+	all, err := list.All()
 	if err != nil {
-		// Return an empty table
 		L.Push(L.NewTable())
 		return 1 // Number of returned values
 	}
-	L.Push(convert.Strings2table(L, results))
+	if len(all) > n {
+		all = all[len(all)-n:]
+	}
+	L.Push(convert.Strings2table(L, all))
 	return 1 // Number of returned values
 }
 
