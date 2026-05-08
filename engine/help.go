@@ -518,6 +518,8 @@ render(string) -> string
 // Return a table with keys and values as given in a posted form, or as given
 // in the URL ("/some/page?x=7" makes "x" with the value "7" available).
 formdata() -> table
+// Read a JSON request body and return a table with the decoded fields.
+formjson() -> table
 // Redirect to an absolute or relative URL. Also takes a HTTP status code.
 // Returns false if the connection has been closed.
 redirect(string[, number]) -> bool
