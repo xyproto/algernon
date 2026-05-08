@@ -8,7 +8,7 @@ import (
 	"syscall"
 )
 
-func SetupSignals(clearCacheFunction func(), printFunction func(format string, args ...interface{})) {
+func SetupSignals(clearCacheFunction func(), printFunction func(format string, args ...any)) {
 	// Listen for SIGUSR1 to clear the cache
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR1)

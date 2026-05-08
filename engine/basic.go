@@ -477,7 +477,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 			L.Push(L.NewTable())
 			return 1 // number of results
 		}
-		m := make(map[string]interface{})
+		m := make(map[string]any)
 		if err := json.Unmarshal(body, &m); err != nil {
 			L.Push(L.NewTable())
 			return 1 // number of results
@@ -590,10 +590,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Truncate a string to at most n bytes
 	L.SetGlobal("maxlen", L.NewFunction(func(L *lua.LState) int {
 		s := L.ToString(1)
-		n := int(L.ToNumber(2))
-		if n < 0 {
-			n = 0
-		}
+		n := max(int(L.ToNumber(2)), 0)
 		if len(s) > n {
 			s = s[:n]
 		}

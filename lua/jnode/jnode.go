@@ -406,11 +406,11 @@ func LoadJSONFunctions(L *lua.LState) {
 		// If an optional argument is supplied, indent the given number of spaces
 		if L.GetTop() == 2 {
 			indentLevel := L.ToInt(2)
-			indentString := ""
-			for i := 0; i < indentLevel; i++ {
-				indentString += " "
+			var indentString strings.Builder
+			for range indentLevel {
+				indentString.WriteString(" ")
 			}
-			b, err = json.MarshalIndent(mapinterface, indentPrefix, indentString)
+			b, err = json.MarshalIndent(mapinterface, indentPrefix, indentString.String())
 		} else {
 			b, err = json.Marshal(mapinterface)
 		}

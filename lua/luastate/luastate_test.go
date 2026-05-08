@@ -80,7 +80,7 @@ func TestConcurrentWith(t *testing.T) {
 	const n = 32
 	var wg sync.WaitGroup
 	wg.Add(n)
-	for i := 0; i < n; i++ {
+	for range n {
 		go func() {
 			defer wg.Done()
 			_ = p.With(func(L *lua.LState) error {

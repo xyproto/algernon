@@ -18,7 +18,7 @@ func OneLevelOfIndentation(data *[]byte, keyword string) string {
 		var byteline []byte
 		found := false
 		// Try finding the line with keyword, using \n as the newline
-		for _, byteline = range bytes.Split(*data, []byte("\n")) {
+		for byteline = range bytes.SplitSeq(*data, []byte("\n")) {
 			if bytes.Contains(byteline, kwb) {
 				found = true
 				break

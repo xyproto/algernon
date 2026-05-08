@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 
@@ -381,13 +382,7 @@ func Table2interfaceMapGlua(luaTable *lua.LTable) (retmap map[any]any, isArray b
 	isAnArray := true
 	for i = 1; i <= length; i++ {
 		// The map must have this index in order to be an array
-		hasIt := false
-		for _, val := range indices {
-			if val == i {
-				hasIt = true
-				break
-			}
-		}
+		hasIt := slices.Contains(indices, i)
 		if !hasIt {
 			isAnArray = false
 			break

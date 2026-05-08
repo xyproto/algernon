@@ -3,6 +3,7 @@ package users
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
@@ -40,11 +41,8 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
-		for _, unconfirmedUsername := range unconfirmedUsernames {
-			if unconfirmedUsername == username {
-				found = true
-				break
-			}
+		if slices.Contains(unconfirmedUsernames, username) {
+			found = true
 		}
 		L.Push(lua.LBool(found))
 		return 1 // number of results
