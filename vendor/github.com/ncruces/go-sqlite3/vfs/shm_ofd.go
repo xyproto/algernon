@@ -1,11 +1,11 @@
-//go:build (linux || darwin) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le || loong64) && !(sqlite3_flock || sqlite3_dotlk)
+//go:build (linux || darwin) && !(sqlite3_flock || sqlite3_dotlk)
 
 package vfs
 
 import (
 	"io"
 	"os"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -21,7 +21,6 @@ type vfsShm struct {
 	readOnly bool
 	fileLock bool
 	blocking bool
-	sync.Mutex
 }
 
 var _ blockingSharedMemory = &vfsShm{}
@@ -74,8 +73,8 @@ func (s *vfsShm) shmOpen() error {
 }
 
 func (s *vfsShm) shmMap(wrp *sqlite3_wrap.Wrapper, id, size int32, extend bool) (ptr_t, error) {
-	// Ensure size is a multiple of the OS page size.
-	if int(size)&(unix.Getpagesize()-1) != 0 {
+	// Ensure pages are reasonably sized.
+	if unix.Getpagesize() > int(size)*2 {
 		return 0, _IOERR_SHMMAP
 	}
 
@@ -174,9 +173,8 @@ func (s *vfsShm) shmUnmap(delete bool) {
 }
 
 func (s *vfsShm) shmBarrier() {
-	s.Lock()
-	//lint:ignore SA2001 memory barrier.
-	s.Unlock()
+	var b atomic.Bool
+	b.Swap(true)
 }
 
 func (s *vfsShm) shmEnableBlocking(block bool) {

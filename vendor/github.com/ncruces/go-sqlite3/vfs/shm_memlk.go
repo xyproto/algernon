@@ -1,4 +1,4 @@
-//go:build ((freebsd || openbsd || netbsd || dragonfly || illumos) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le || loong64)) || sqlite3_flock || sqlite3_dotlk
+//go:build freebsd || openbsd || netbsd || dragonfly || illumos || sqlite3_flock || sqlite3_dotlk
 
 package vfs
 
