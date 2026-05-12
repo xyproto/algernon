@@ -2,7 +2,9 @@ package engine
 
 import (
 	"bytes"
+	"net"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
@@ -78,8 +80,27 @@ func errorPageTitle(lang string) string {
 	}
 }
 
+// isLoopback returns true if the request originates from a loopback address
+func isLoopback(req *http.Request) bool {
+	host, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		host = req.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 // PrettyError serves an informative error page to the user
 func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename string, filebytes []byte, errormessage, lang string) {
+	// Only show detailed error pages to loopback clients
+	if !isLoopback(req) {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Prevent caching of error pages
+	w.Header().Set("Cache-Control", "no-store")
+
 	// HTTP status
 	w.WriteHeader(http.StatusOK)
 
@@ -140,7 +161,7 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 		VersionString string
 	}{
 		Title:         title,
-		Filename:      filename,
+		Filename:      filepath.Base(filename),
 		Code:          code,
 		ErrorMessage:  strings.TrimSpace(errormessage),
 		VersionString: ac.versionString,

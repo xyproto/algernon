@@ -499,7 +499,6 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Make a few changes to the defaults if we are serving a single file
 	if ac.singleFileMode {
-		ac.debugMode = true
 		ac.serveJustHTTP = true
 	}
 
