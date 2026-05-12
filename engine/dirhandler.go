@@ -167,19 +167,34 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 		}
 	}
 
-	// Serve handler.lua, if found in parent directories
-	var ancestor string
-	ancestor = filepath.Dir(dirname)
-	for range 100 { // a maximum of 100 directories deep
+	// Serve handler.lua, if found in parent directories (within server root only)
+	rootAbs, err := filepath.Abs(rootdir)
+	if err != nil {
+		rootAbs = rootdir
+	}
+	ancestor, err := filepath.Abs(dirname)
+	if err != nil {
+		ancestor = dirname
+	}
+	for {
+		// Stop before leaving the configured server root
+		rel, relErr := filepath.Rel(rootAbs, ancestor)
+		if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			break
+		}
 		filename = filepath.Join(ancestor, "handler.lua")
 		if ac.fs.Exists(filename) {
 			ac.FilePage(w, req, filename, luaDataFilename)
 			return
 		}
-		if ancestor == "." {
+		if ancestor == rootAbs {
 			break
 		}
-		ancestor = filepath.Dir(ancestor)
+		parent := filepath.Dir(ancestor)
+		if parent == ancestor { // hit filesystem root
+			break
+		}
+		ancestor = parent
 	}
 
 	// Serve a directory listing if no index file is found
