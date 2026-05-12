@@ -151,6 +151,7 @@ type Config struct {
 	useCertMagicStaging          bool // use the Let's Encrypt staging CA instead of the production CA
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
+	separateEventServer          bool // use a dedicated port for the SSE event server
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
@@ -627,6 +628,9 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		mux.HandleFunc(hmrRefreshRuntimePath, ac.HMRRefreshRuntimeHandler)
 	}
 
+	// If --eventserver was explicitly provided, use a separate SSE server
+	ac.separateEventServer = ac.eventAddr != ""
+
 	// Set the values that has not been set by flags nor scripts
 	// (and can be set by both)
 	ranServerReadyFunction := ac.finalConfiguration(ac.serverHost)
@@ -684,20 +688,33 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		}
 		recwatch.FatalExit = ac.fatalExit
 		recwatch.Exists = ac.fs.Exists
+
+		watchDir := ac.serverDirOrFilename
 		if ac.autoRefreshDir != "" {
-			absdir, err := filepath.Abs(ac.autoRefreshDir)
-			if err != nil {
-				absdir = ac.autoRefreshDir
+			watchDir = ac.autoRefreshDir
+		}
+		absdir, err := filepath.Abs(watchDir)
+		if err != nil {
+			absdir = watchDir
+		}
+
+		// Mount the SSE handler on the main mux by default (same port, no
+		// CORS needed). If --eventserver was explicitly provided, start a
+		// dedicated SSE server on that address instead.
+		if ac.separateEventServer {
+			sseScheme := "https"
+			if ac.serveJustHTTP {
+				sseScheme = "http"
 			}
-			// Only watch the autoRefreshDir, recursively
-			recwatch.EventServer(absdir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
+			sseAllowed := sseScheme + "://" + ac.serverAddr
+			recwatch.EventServer(absdir, sseAllowed, ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		} else {
-			absdir, err := filepath.Abs(ac.serverDirOrFilename)
+			sseHandler, err := recwatch.EventServerHandler(absdir, "", ac.defaultEventPath, ac.refreshDuration)
 			if err != nil {
-				absdir = ac.serverDirOrFilename
+				logrus.Error("Could not set up SSE file watcher: ", err)
+			} else {
+				mux.Handle(ac.defaultEventPath, sseHandler)
 			}
-			// Watch everything in the server directory, recursively
-			recwatch.EventServer(absdir, "*", ac.eventAddr, ac.defaultEventPath, ac.refreshDuration)
 		}
 	}
 

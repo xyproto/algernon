@@ -116,14 +116,18 @@ func insertAfterStartTag(htmldata, js []byte, startTag string) []byte {
 // Assumes that the given htmldata is actually HTML
 // (looks for body/head/html tags when inserting a script tag)
 func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
-	fullHost := ac.eventAddr
+	// When using a separate event server, point EventSource at eventAddr;
+	// otherwise SSE is on the main mux, so use serverAddr.
+	fullHost := ac.serverAddr
+	if ac.separateEventServer {
+		fullHost = ac.eventAddr
+	}
 	// If the host+port is just a port, add the hostname in front
 	if host, _, err := net.SplitHostPort(fullHost); err == nil && host == "" {
-		// eventAddr is just a port like ":5553", add hostname
 		if ac.serverHost != "" {
-			fullHost = utils.JoinHostPort(ac.serverHost, ac.eventAddr)
+			fullHost = utils.JoinHostPort(ac.serverHost, fullHost)
 		} else {
-			fullHost = utils.JoinHostPort(utils.GetDomain(req), ac.eventAddr)
+			fullHost = utils.JoinHostPort(utils.GetDomain(req), fullHost)
 		}
 	}
 	// Wait 70% of an event duration before starting to listen for events

@@ -65,7 +65,11 @@ func (ac *Config) Info() string {
 		sb.WriteString("TLS key:\t\t" + ac.serverKey + "\n")
 	}
 	if ac.autoRefresh {
-		sb.WriteString("Event server:\t\t" + ac.eventAddr + "\n")
+		if ac.separateEventServer {
+			sb.WriteString("Event server:\t\t" + ac.eventAddr + "\n")
+		} else {
+			sb.WriteString("Event path:\t\t" + ac.defaultEventPath + " (on main server)\n")
+		}
 	}
 	if ac.autoRefreshDir != "" {
 		sb.WriteString("Only watching:\t\t" + ac.autoRefreshDir + "\n")
