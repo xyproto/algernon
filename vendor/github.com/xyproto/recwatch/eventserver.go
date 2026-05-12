@@ -150,7 +150,7 @@ func WriteEvent(w http.ResponseWriter, id *uint64, message string, flush bool) {
 	if id != nil {
 		buf.WriteString(fmt.Sprintf("id: %v\n", *id))
 	}
-	for _, msg := range strings.Split(message, "\n") {
+	for msg := range strings.SplitSeq(message, "\n") {
 		buf.WriteString(fmt.Sprintf("data: %s\n", msg))
 	}
 	buf.WriteString("\n")
