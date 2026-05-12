@@ -561,6 +561,22 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		}
 
 		filename := utils.URL2filename(servedir, urlpath)
+
+		// Block requests for dotfiles/dot-directories if --hide-dotfiles is set
+		if ac.hideDotfiles {
+			rel := strings.TrimPrefix(urlpath, "/")
+			for seg := range strings.SplitSeq(rel, "/") {
+				if seg == "" {
+					continue
+				}
+				if strings.HasPrefix(seg, ".") && seg != ".well-known" {
+					w.WriteHeader(http.StatusNotFound)
+					ac.LogAccess(req, http.StatusNotFound, 0)
+					return
+				}
+			}
+		}
+
 		// Remove the trailing slash from the filename, if any
 		noslash := filename
 		if strings.HasSuffix(filename, utils.Pathsep) {

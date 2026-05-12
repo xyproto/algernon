@@ -79,6 +79,11 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 			continue
 		}
 
+		// Skip dotfiles/dot-directories in listings if --hide-dotfiles is set
+		if ac.hideDotfiles && strings.HasPrefix(filename, ".") {
+			continue
+		}
+
 		// Check if the filename matches any of the ignore patterns
 		if ShouldIgnore(filename, ignorePatterns) {
 			continue

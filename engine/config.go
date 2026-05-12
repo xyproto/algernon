@@ -152,6 +152,7 @@ type Config struct {
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 	separateEventServer          bool // use a dedicated port for the SSE event server
+	hideDotfiles                 bool // hide files and directories starting with "."
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
