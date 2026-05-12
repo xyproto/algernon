@@ -1,5 +1,25 @@
 # Changelog
 
+Changes from 1.17.6 to 1.17.7
+=============================
+
+* Clamp `handler.lua` parent walk to server root (thanks @Dredsen).
+* Use the main mux when serving SSE for the auto-refresh feature (thanks @Dredsen).
+* Add a `--hide-dotfiles` for not serving hidden files (thanks @Dredsen).
+* Don't enable debug mode automatically when single-file mode is used (thanks @Dredsen).
+* Embed React 19 and support `index.jsx` files, for `npm`-less use of React.
+* Update the HyperApp example so that it does not use a token for downloading images.
+* Add an example project named Catbook here: https://github.com/xyproto/catbook
+* Update all database-related dependencies.
+* Fix an issue in the built-in Bolt database support, where retrieving the last N items from a list with less than N items could return an empty list.
+* Use an `sqlite` package that does not require `CGO`.
+* Cache the per-directory `.algernon` configuration.
+* Add a `formjson` Lua function for returning the posted form as JSON.
+* Add support for `WebAuthn` by adding 4 new Lua functions.
+* Add the `maxlen`,  `methodPOST` and `list:jsonlast` and `jsonembed` functions.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.17.5 to 1.17.6
 =============================
 
