@@ -2,10 +2,8 @@ package mssql
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
@@ -25,67 +23,6 @@ var (
 	reuseDB  = make(map[string]*sql.DB)
 	reuseMut = &sync.RWMutex{}
 )
-
-// LValueWrapper decorates lua.LValue to help retieve values from the database.
-type LValueWrapper struct {
-	LValue lua.LValue
-}
-
-// Scan implements the sql.Scanner interface for database deserialization.
-func (w *LValueWrapper) Scan(value any) error {
-	if value == nil {
-		*w = LValueWrapper{lua.LNil}
-		return nil
-	}
-
-	switch v := value.(type) {
-
-	case float32:
-		*w = LValueWrapper{lua.LNumber(float64(v))}
-
-	case float64:
-		*w = LValueWrapper{lua.LNumber(v)}
-
-	case int64:
-		*w = LValueWrapper{lua.LNumber(float64(v))}
-
-	case string:
-		*w = LValueWrapper{lua.LString(v)}
-
-	case []byte:
-		*w = LValueWrapper{lua.LString(string(v))}
-
-	case time.Time:
-		*w = LValueWrapper{lua.LNumber(float64(v.Unix()))}
-
-	default:
-		return fmt.Errorf("unable to scan type %T into lua value wrapper", value)
-
-	}
-
-	return nil
-}
-
-// LValueWrappers is a convenience type to easily map to a slice of lua.LValue
-type LValueWrappers []LValueWrapper
-
-// Unwrap produces a slice of lua.LValue from the given LValueWrappers
-func (w LValueWrappers) Unwrap() (s []lua.LValue) {
-	s = make([]lua.LValue, len(w))
-	for i, v := range w {
-		s[i] = v.LValue
-	}
-	return
-}
-
-// Interfaces returns a slice of any values from the given LValueWrappers
-func (w LValueWrappers) Interfaces() (s []any) {
-	s = make([]any, len(w))
-	for i := range w {
-		s[i] = &w[i]
-	}
-	return
-}
 
 // Load makes functions related to building a library of Lua code available
 func Load(L *lua.LState) {
@@ -188,11 +125,11 @@ func Load(L *lua.LState) {
 		var (
 			m      map[string]lua.LValue
 			maps   []map[string]lua.LValue
-			values LValueWrappers
+			values convert.LValueWrappers
 			cname  string
 		)
 		for rows.Next() {
-			values = make(LValueWrappers, len(cols))
+			values = make(convert.LValueWrappers, len(cols))
 			err = rows.Scan(values.Interfaces()...)
 			if err != nil {
 				logrus.Error("Failed to scan data: " + err.Error())
