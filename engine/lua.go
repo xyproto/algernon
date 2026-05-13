@@ -18,6 +18,7 @@ import (
 	"github.com/xyproto/algernon/lua/onthefly"
 	"github.com/xyproto/algernon/lua/pquery"
 	"github.com/xyproto/algernon/lua/pure"
+	"github.com/xyproto/algernon/lua/sqlite"
 	"github.com/xyproto/algernon/lua/upload"
 	"github.com/xyproto/algernon/lua/users"
 	"github.com/xyproto/algernon/lua/webauthn"
@@ -78,6 +79,9 @@ func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, 
 
 		// For executing MSSQL queries
 		mssql.Load(L)
+
+		// For executing SQLite queries
+		sqlite.Load(L)
 
 	}
 
@@ -230,6 +234,9 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 
 		// For executing MSSQL queries
 		mssql.Load(L)
+
+		// For executing SQLite queries
+		sqlite.Load(L)
 	}
 
 	// For handling JSON data
@@ -335,6 +342,7 @@ func (ac *Config) loadPoolStateFunctions(L *lua.LState, filename string, mux *ht
 		codelib.Load(L, creator)
 		pquery.Load(L)
 		mssql.Load(L)
+		sqlite.Load(L)
 	}
 
 	jnode.LoadJSONFunctions(L)

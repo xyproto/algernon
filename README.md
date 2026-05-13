@@ -1023,6 +1023,70 @@ kv:clear() -> bool
 Lua functions for external databases
 ------------------------------------
 
+##### SQLite
+
+~~~c
+// Query a SQLite database with a SQL query and an optional filename
+// The default filename is "sqlite.db" and the default query is "SELECT sqlite_version()"
+SQLite([string], [string]) -> table
+~~~
+
+Database connections are re-used if they still answer to `.Ping()`, for the same filename.
+
+~~~c
+// Open (or reuse) a SQLite database file and return a handle object
+// The default filename is "sqlite.db"
+SQLiteFile([string]) -> userdata
+
+// Execute a SQL query and return the results as a table of rows
+// Each row is a table with column names as keys
+db:query(string, [table]) -> table
+
+// Execute a SQL statement and return the number of affected rows and success
+db:exec(string, [table]) -> number, bool
+
+// Execute a function within a transaction (BEGIN/COMMIT/ROLLBACK)
+// All db:query, db:exec, and doc store operations inside the callback use the transaction
+db:transaction(function) -> bool
+
+// Add a JSON document to a named collection and return the row ID
+db:add(string, table) -> string
+
+// Retrieve a single document from a named collection by its row ID
+db:get(string, string) -> table
+
+// Retrieve documents from a named collection, with an optional filter table
+db:docs(string, [table]) -> table
+
+// Delete documents from a named collection matching the given filter
+db:del(string, table) -> bool
+
+// Update documents in a named collection matching the where-filter, setting fields from the set-table
+db:update(string, table, table) -> bool
+
+// Return the number of documents in a named collection
+db:len(string) -> number
+
+// Close the database connection
+db:close() -> bool
+~~~
+
+- The `db:query` and `db:exec` methods accept an optional parameter table for parameterized queries: `db:query("SELECT * FROM users WHERE name = ?", {"Alice"})`
+- The document store methods (`add`, `docs`, `del`, `update`, `len`) automatically create the collection table if it does not exist.
+- Collection names must be valid identifiers (letters, digits and underscores).
+- Filter tables match document fields by equality: `db:docs("users", {role = "admin"})` returns all documents where `role` is `"admin"`.
+- Example document store usage:
+
+~~~lua
+db = SQLiteFile("app.db")
+db:add("users", {name = "Alice", age = 30})
+db:add("users", {name = "Bob", age = 25})
+docs = db:docs("users", {name = "Alice"})  -- returns {{name = "Alice", age = 30}}
+db:update("users", {name = "Alice"}, {age = 31})
+db:del("users", {name = "Bob"})
+count = db:len("users")  -- returns 1
+~~~
+
 ~~~c
 // Query a PostgreSQL database with a SQL query and a connection string
 PQ([string], [string]) -> table

@@ -37,3 +37,4 @@ samples/getip/ip.md
 system/fedora/dist/
 test.json
 trace.out
+lua/sqlite/sqlite.db

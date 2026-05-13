@@ -318,6 +318,36 @@ PQ([string], [string]) -> table
 // Query a MSSQL database with a query and a connection string.
 // Default connection string: "server=localhost;user=user;password=password,port=1433"
 MSSQL([string], [string]) -> table
+// Query a SQLite database with a query and a filename.
+// Default filename: "sqlite.db"
+SQLite([string], [string]) -> table
+// Open a SQLite database file and return a handle for queries and document storage.
+// Default filename: "sqlite.db"
+SQLiteFile([string]) -> userdata
+// Execute a raw SQL query and return the results as a table of tables.
+// Takes an optional table of parameters for parameterized queries.
+db:query(string, [table]) -> table
+// Execute a raw SQL statement. Returns the number of affected rows and success.
+// Takes an optional table of parameters for parameterized queries.
+db:exec(string, [table]) -> number, bool
+// Execute a function within a transaction. Returns true if committed.
+db:transaction(function) -> bool
+// Add a Lua table as a JSON document to a named collection.
+// Auto-creates the collection if needed. Returns the row ID as a string.
+db:add(string, table) -> string
+// Retrieve a single document from a collection by its row ID.
+db:get(string, string) -> table
+// Retrieve documents from a collection. Optional filter table for field matching.
+db:docs(string, [table]) -> table
+// Delete documents from a collection matching the given filter. Returns true if successful.
+db:del(string, table) -> bool
+// Update documents in a collection matching the first table,
+// setting fields from the second table. Returns true if successful.
+db:update(string, table, table) -> bool
+// Return the number of documents in a collection.
+db:len(string) -> number
+// Close the database connection. Returns true if successful.
+db:close() -> bool
 
 REPL-only
 
