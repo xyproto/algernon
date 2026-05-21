@@ -40,13 +40,6 @@ var (
 	}
 )
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func generateColorizedProgressBar(progress float64, width int) string {
 	progressInt := int(progress / 100 * float64(width))
 	bar := colors["magenta"] + strings.Repeat("=", progressInt)

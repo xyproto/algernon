@@ -119,8 +119,8 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (ptr_t, error) {
 	c.wrp.Xsqlite3_progress_handler_go(int32(handle), 1000)
 	if flags|OPEN_URI != 0 && strings.HasPrefix(filename, "file:") {
 		var pragmas strings.Builder
-		if _, after, ok := strings.Cut(filename, "?"); ok {
-			query, _ := url.ParseQuery(after)
+		if u, err := url.Parse(filename); err == nil {
+			query := u.Query()
 			for _, p := range query["_pragma"] {
 				pragmas.WriteString(`PRAGMA `)
 				pragmas.WriteString(p)

@@ -6,6 +6,8 @@ import (
 	"iter"
 	"sync"
 	"sync/atomic"
+
+	"github.com/ncruces/go-sqlite3/internal/errutil"
 )
 
 // CollationNeeded registers a callback to be invoked
@@ -85,7 +87,7 @@ func (c *Conn) CreateAggregateFunction(name string, nArg int, flag FunctionFlag,
 	namePtr := c.arena.String(name)
 	if fn != nil {
 		funcPtr = c.wrp.AddHandle(AggregateConstructor(func() AggregateFunction {
-			var a aggregateFunc
+			a := aggregateFunc{fn: fn}
 			coro := func(yieldCoro func(struct{}) bool) {
 				seq := func(yieldSeq func([]Value) bool) {
 					for yieldSeq(a.arg) {
@@ -120,13 +122,7 @@ func (c *Conn) CreateWindowFunction(name string, nArg int, flag FunctionFlag, fn
 	defer c.arena.Mark()()
 	namePtr := c.arena.String(name)
 	if fn != nil {
-		funcPtr = c.wrp.AddHandle(AggregateConstructor(func() AggregateFunction {
-			agg := fn()
-			if win, ok := agg.(WindowFunction); ok {
-				return win
-			}
-			return agg
-		}))
+		funcPtr = c.wrp.AddHandle(fn)
 	}
 	rc := res_t(c.wrp.Xsqlite3_create_window_function_go(
 		int32(c.handle), int32(namePtr), int32(nArg),
@@ -231,7 +227,12 @@ func (e *env) Xgo_inverse(pCtx, pAgg, nArg, pArg int32) {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nArg, ptr_t(pArg))
 	defer returnArgs(args)
-	fn := db.wrp.GetHandle(ptr_t(pAgg)).(WindowFunction)
+	fn, ok := db.wrp.GetHandle(ptr_t(pAgg)).(WindowFunction)
+	if !ok {
+		Context{db, ptr_t(pCtx)}.ResultError(
+			errutil.ErrorString("may not be used as a window function"))
+		return // notest
+	}
 	fn.Inverse(Context{db, ptr_t(pCtx)}, *args...)
 }
 
@@ -281,11 +282,14 @@ func returnArgs(p *[]Value) {
 type aggregateFunc struct {
 	next func() (struct{}, bool)
 	stop func()
+	fn   AggregateSeqFunction
 	ctx  Context
 	arg  []Value
+	step bool
 }
 
 func (a *aggregateFunc) Step(ctx Context, arg ...Value) {
+	a.step = true
 	a.ctx = ctx
 	a.arg = append(a.arg[:0], arg...)
 	if _, more := a.next(); !more {
@@ -296,9 +300,14 @@ func (a *aggregateFunc) Step(ctx Context, arg ...Value) {
 func (a *aggregateFunc) Value(ctx Context) {
 	a.ctx = ctx
 	a.stop()
+	if !a.step {
+		a.fn(&a.ctx, noValuesSeq)
+	}
 }
 
 func (a *aggregateFunc) Close() error {
 	a.stop()
 	return nil
 }
+
+func noValuesSeq(func([]Value) bool) {}

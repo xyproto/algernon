@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -54,15 +55,15 @@ type VersionResponse struct {
 type Config struct {
 	ServerAddr                string
 	ModelName                 string
+	SystemPrompt              string
+	Tools                     []Tool
 	SeedOrNegative            int
 	TemperatureIfNegativeSeed float64
 	PullTimeout               time.Duration
 	HTTPTimeout               time.Duration
+	ContextLength             int64
 	TrimSpace                 bool
 	Verbose                   bool
-	ContextLength             int64
-	SystemPrompt              string
-	Tools                     []Tool
 }
 
 // Cache is used for caching reproducible results from Ollama (seed -1, temperature 0)
@@ -235,6 +236,9 @@ func (oc *Config) GetChatResponse(promptAndOptionalImages ...string) (OutputResp
 		if err := decoder.Decode(&genResp); err != nil {
 			break
 		}
+		if genResp.Error != "" {
+			return OutputResponse{}, fmt.Errorf("ollama: %s", genResp.Error)
+		}
 		sb.WriteString(genResp.Message.Content)
 		if genResp.Done {
 			res.Role = genResp.Message.Role
@@ -310,7 +314,6 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (string
 		return "", err
 	}
 	defer resp.Body.Close()
-	var res = ""
 	var sb strings.Builder
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -318,14 +321,15 @@ func (oc *Config) GetOutputChatVision(promptAndOptionalImages ...string) (string
 		if err := decoder.Decode(&genResp); err != nil {
 			break
 		}
+		if genResp.Error != "" {
+			return "", fmt.Errorf("ollama: %s", genResp.Error)
+		}
 		sb.WriteString(genResp.Message.Content)
 		if genResp.Done {
-			d, _ := json.Marshal(genResp.Message.ToolCalls)
-			res = string(d)
 			break
 		}
 	}
-	res = strings.TrimPrefix(sb.String(), "\n")
+	res := strings.TrimPrefix(sb.String(), "\n")
 	if oc.TrimSpace {
 		res = strings.TrimSpace(res)
 	}
@@ -353,8 +357,8 @@ func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse
 		temperature = 0 // Since temperature is set to 0 when seed >=0
 		// The cache is only used for fixed seeds and a temperature of 0
 		keyData := struct {
-			Prompts     []string
 			ModelName   string
+			Prompts     []string
 			Seed        int
 			Temperature float64
 		}{
@@ -431,6 +435,9 @@ func (oc *Config) GetResponse(promptAndOptionalImages ...string) (OutputResponse
 		var genResp GenerateResponse
 		if err := decoder.Decode(&genResp); err != nil {
 			break
+		}
+		if genResp.Error != "" {
+			return OutputResponse{}, fmt.Errorf("ollama: %s", genResp.Error)
 		}
 		sb.WriteString(genResp.Response)
 		if genResp.Done {
@@ -542,10 +549,8 @@ func (oc *Config) Has(model string) (bool, error) {
 		model += ":latest"
 	}
 	if names, _, _, err := oc.List(); err == nil { // success
-		for _, name := range names {
-			if name == model {
-				return true, nil
-			}
+		if slices.Contains(names, model) {
+			return true, nil
 		}
 	} else {
 		return false, err

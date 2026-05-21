@@ -174,15 +174,17 @@ func newConnector(name string, init, term func(*sqlite3.Conn) error) (*connector
 
 	var txlock, timefmt string
 	if strings.HasPrefix(name, "file:") {
-		if _, after, ok := strings.Cut(name, "?"); ok {
-			query, err := url.ParseQuery(after)
-			if err != nil {
-				return nil, err
-			}
-			txlock = query.Get("_txlock")
-			timefmt = query.Get("_timefmt")
-			c.pragmas = query.Has("_pragma")
+		u, err := url.Parse(name)
+		if err != nil {
+			return nil, err
 		}
+		query, err := url.ParseQuery(u.RawQuery)
+		if err != nil {
+			return nil, err
+		}
+		txlock = query.Get("_txlock")
+		timefmt = query.Get("_timefmt")
+		c.pragmas = query.Has("_pragma")
 	}
 
 	switch txlock {

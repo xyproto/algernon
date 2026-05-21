@@ -29,8 +29,8 @@ type ToolProperty struct {
 
 // ToolCallFunction represents the function call details within a tool call
 type ToolCallFunction struct {
-	Name      string         `json:"name"`
 	Arguments map[string]any `json:"arguments"`
+	Name      string         `json:"name"`
 }
 
 // ToolCall represents a call to a tool function

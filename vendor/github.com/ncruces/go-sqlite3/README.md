@@ -89,7 +89,8 @@ Every commit is tested on:
 * illumos: amd64
 * Solaris: amd64
 
-Certain operating system and CPU combinations have some limitations. See the [support matrix](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix) for a complete overview.
+Certain operating system and CPU combinations have some limitations.
+See the [support matrix](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix) for a complete overview.
 
 The Go VFS is tested by running SQLite's
 [mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c).
@@ -121,10 +122,3 @@ have an [idea](https://github.com/ncruces/go-sqlite3/discussions/categories/idea
 
 The [Issue](https://github.com/ncruces/go-sqlite3/issues) tracker is for bugs,
 and features we're working on, planning to work on, or asking for help with.
-
-### Alternatives
-
-- [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite)
-- [`crawshaw.io/sqlite`](https://pkg.go.dev/crawshaw.io/sqlite)
-- [`github.com/mattn/go-sqlite3`](https://pkg.go.dev/github.com/mattn/go-sqlite3)
-- [`github.com/zombiezen/go-sqlite`](https://pkg.go.dev/github.com/zombiezen/go-sqlite)
