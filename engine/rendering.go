@@ -825,7 +825,7 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	// If the source contains import/require statements, use the full bundler
 	// with on-the-fly caching rather than a single-file transform.
 	if needsBundling(jsxdata) {
-		data, err := ac.bundleFile(filename, jsxdata)
+		data, err := ac.bundleFile(filename, jsxdata, false)
 		if err != nil {
 			if ac.debugMode {
 				ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")
@@ -883,7 +883,7 @@ func (ac *Config) TSXPage(w http.ResponseWriter, req *http.Request, filename str
 	// If the source contains import/require statements, use the full bundler
 	// with on-the-fly caching rather than a single-file transform.
 	if needsBundling(tsxdata) {
-		data, err := ac.bundleFile(filename, tsxdata)
+		data, err := ac.bundleFile(filename, tsxdata, false)
 		if err != nil {
 			if ac.debugMode {
 				ac.PrettyError(w, req, filename, tsxdata, err.Error(), "tsx")
@@ -991,7 +991,7 @@ func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename s
 		`</script>`)
 
 	// Bundle the JSX/TSX source with esbuild, shimming react imports to globals
-	bundled, err := ac.bundleFile(filename, jsxdata, reactGlobalsPlugin())
+	bundled, err := ac.bundleFile(filename, jsxdata, true)
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")

@@ -176,15 +176,28 @@ func reactRefreshPlugin() api.Plugin {
 	}
 }
 
-// reactGlobalsPlugin returns an esbuild plugin that resolves "react" and
-// "react-dom/client" imports to shims re-exporting the window globals injected
-// by Algernon's embedded React runtime. This lets authors write idiomatic
-// ES module imports without requiring npm or node_modules.
+// reactGlobalsPlugin returns an esbuild plugin that resolves "react",
+// "react-dom", "react-dom/client" and the automatic-JSX runtime modules
+// ("react/jsx-runtime", "react/jsx-dev-runtime") to shims re-exporting the
+// window globals injected by Algernon's embedded React runtime. This lets
+// authors write idiomatic ES module imports without requiring npm or
+// node_modules, regardless of whether the classic or automatic JSX transform
+// is in use.
 func reactGlobalsPlugin() api.Plugin {
+	const jsxRuntimeShim = `var R = window.React;
+function _jsx(type, config, maybeKey) {
+  if (maybeKey === undefined) return R.createElement(type, config);
+  var p = {};
+  for (var k in config) p[k] = config[k];
+  p.key = maybeKey;
+  return R.createElement(type, p);
+}
+module.exports = { jsx: _jsx, jsxs: _jsx, jsxDEV: _jsx, Fragment: R.Fragment };`
+
 	return api.Plugin{
 		Name: "algernon-react-globals",
 		Setup: func(build api.PluginBuild) {
-			build.OnResolve(api.OnResolveOptions{Filter: `^react(-dom(/client)?)?$`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^react(-dom(/client)?|/jsx(-dev)?-runtime)?$`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
 				return api.OnResolveResult{
 					Path:      args.Path,
 					Namespace: "algernon-react-global",
@@ -197,6 +210,8 @@ func reactGlobalsPlugin() api.Plugin {
 					contents = "module.exports = window.React;"
 				case "react-dom", "react-dom/client":
 					contents = "module.exports = window.ReactDOM;"
+				case "react/jsx-runtime", "react/jsx-dev-runtime":
+					contents = jsxRuntimeShim
 				default:
 					contents = "module.exports = {};"
 				}

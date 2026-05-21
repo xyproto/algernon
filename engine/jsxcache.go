@@ -69,7 +69,11 @@ func loaderForFile(filename string) api.Loader {
 // second disk read when the caller has already loaded the source. The working
 // directory is always set to the file's parent directory so that esbuild can
 // resolve node_modules relative to the source file.
-func (ac *Config) bundleFile(filename string, srcData []byte, extraPlugins ...api.Plugin) ([]byte, error) {
+//
+// When reactEntry is true, the react/react-dom globals shim plugin is enabled
+// and the cache entry is kept separate from non-reactEntry builds of the same
+// file, since the two produce different output.
+func (ac *Config) bundleFile(filename string, srcData []byte, reactEntry bool) ([]byte, error) {
 	info, err := os.Stat(filename)
 	if err != nil {
 		return nil, err
@@ -78,14 +82,21 @@ func (ac *Config) bundleFile(filename string, srcData []byte, extraPlugins ...ap
 
 	useCache := !ac.noCache && ac.cacheMode != cachemode.Off
 
+	// Cache key must distinguish bundles produced with different plugin sets.
+	// The null byte cannot appear in a filesystem path, so it is a safe separator.
+	cacheKey := filename
+	if reactEntry {
+		cacheKey += "\x00reactEntry"
+	}
+
 	bc := ac.bundleCache
 	if useCache {
 		bc.mu.RLock()
-		entry, ok := bc.entries[filename]
+		entry, ok := bc.entries[cacheKey]
 		bc.mu.RUnlock()
 		if ok && entry.modTime.Equal(modTime) {
 			bc.mu.Lock()
-			bc.hits[filename]++
+			bc.hits[cacheKey]++
 			bc.mu.Unlock()
 			return entry.data, nil
 		}
@@ -128,7 +139,9 @@ func (ac *Config) bundleFile(filename string, srcData []byte, extraPlugins ...ap
 	if ac.autoRefresh {
 		opts.Plugins = []api.Plugin{reactRefreshPlugin()}
 	}
-	opts.Plugins = append(opts.Plugins, extraPlugins...)
+	if reactEntry {
+		opts.Plugins = append(opts.Plugins, reactGlobalsPlugin())
+	}
 
 	result := api.Build(opts)
 
@@ -150,8 +163,8 @@ func (ac *Config) bundleFile(filename string, srcData []byte, extraPlugins ...ap
 		bc.mu.Lock()
 		if ac.cacheMaxEntitySize == 0 || uint64(len(data)) <= ac.cacheMaxEntitySize {
 			if ac.bundleCacheMaxMemory == 0 || bc.BytesUsed()+uint64(len(data)) <= ac.bundleCacheMaxMemory {
-				bc.entries[filename] = bundleCacheEntry{modTime: modTime, data: data}
-				bc.hits[filename] = 0
+				bc.entries[cacheKey] = bundleCacheEntry{modTime: modTime, data: data}
+				bc.hits[cacheKey] = 0
 				logrus.Debugf("bundled and cached %s (%d bytes)", filepath.Base(filename), len(data))
 			} else {
 				for bc.BytesUsed()+uint64(len(data)) > ac.bundleCacheMaxMemory && bc.evictLocked() {
