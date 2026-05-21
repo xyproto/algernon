@@ -69,7 +69,7 @@ func loaderForFile(filename string) api.Loader {
 // second disk read when the caller has already loaded the source. The working
 // directory is always set to the file's parent directory so that esbuild can
 // resolve node_modules relative to the source file.
-func (ac *Config) bundleFile(filename string, srcData []byte) ([]byte, error) {
+func (ac *Config) bundleFile(filename string, srcData []byte, extraPlugins ...api.Plugin) ([]byte, error) {
 	info, err := os.Stat(filename)
 	if err != nil {
 		return nil, err
@@ -128,6 +128,7 @@ func (ac *Config) bundleFile(filename string, srcData []byte) ([]byte, error) {
 	if ac.autoRefresh {
 		opts.Plugins = []api.Plugin{reactRefreshPlugin()}
 	}
+	opts.Plugins = append(opts.Plugins, extraPlugins...)
 
 	result := api.Build(opts)
 

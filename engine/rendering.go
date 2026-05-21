@@ -990,8 +990,8 @@ func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename s
 		`function base64URLToBuffer(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";var d=atob(s),b=new Uint8Array(d.length);for(var i=0;i<d.length;i++)b[i]=d.charCodeAt(i);return b.buffer}` +
 		`</script>`)
 
-	// Bundle the JSX source with esbuild
-	bundled, err := ac.bundleFile(filename, jsxdata)
+	// Bundle the JSX/TSX source with esbuild, shimming react imports to globals
+	bundled, err := ac.bundleFile(filename, jsxdata, reactGlobalsPlugin())
 	if err != nil {
 		if ac.debugMode {
 			ac.PrettyError(w, req, filename, jsxdata, err.Error(), "jsx")

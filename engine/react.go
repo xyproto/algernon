@@ -176,6 +176,39 @@ func reactRefreshPlugin() api.Plugin {
 	}
 }
 
+// reactGlobalsPlugin returns an esbuild plugin that resolves "react" and
+// "react-dom/client" imports to shims re-exporting the window globals injected
+// by Algernon's embedded React runtime. This lets authors write idiomatic
+// ES module imports without requiring npm or node_modules.
+func reactGlobalsPlugin() api.Plugin {
+	return api.Plugin{
+		Name: "algernon-react-globals",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^react(-dom(/client)?)?$`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{
+					Path:      args.Path,
+					Namespace: "algernon-react-global",
+				}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "algernon-react-global"}, func(args api.OnLoadArgs) (api.OnLoadResult, error) {
+				var contents string
+				switch args.Path {
+				case "react":
+					contents = "module.exports = window.React;"
+				case "react-dom", "react-dom/client":
+					contents = "module.exports = window.ReactDOM;"
+				default:
+					contents = "module.exports = {};"
+				}
+				return api.OnLoadResult{
+					Contents: &contents,
+					Loader:   api.LoaderJS,
+				}, nil
+			})
+		},
+	}
+}
+
 // reactProdScriptRE matches <script src> attributes that load React production builds,
 // including those from /@algernon/react19/
 var reactProdScriptRE = regexp.MustCompile(
