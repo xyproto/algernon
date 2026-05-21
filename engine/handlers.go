@@ -528,7 +528,13 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 
 		// Look for the directory that is named the same as the host
 		if addDomain {
-			servedir = filepath.Join(servedir, utils.GetDomain(req))
+			domain := utils.GetDomain(req)
+			// Reject Host header values that could escape the document root via path traversal
+			if domain == "" || strings.ContainsAny(domain, "/\\") || strings.Contains(domain, "..") {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
+				return
+			}
+			servedir = filepath.Join(servedir, domain)
 		}
 
 		urlpath := req.URL.Path
