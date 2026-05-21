@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -35,6 +36,30 @@ var reactRefreshRuntimeJS []byte
 
 // defaultReactVersion is the React major version used by index.jsx and index.tsx
 const defaultReactVersion = 19
+
+// reactVersionRE matches a "// React: <N>" comment at the start of a line.
+// The "React" keyword is case-insensitive and surrounding whitespace is allowed.
+var reactVersionRE = regexp.MustCompile(`(?m)^\s*//\s*[Rr]eact\s*:\s*(\d+)`)
+
+// parseReactVersion scans the top of a JSX/TSX/TS source file for a
+// "// React: <N>" comment and returns N. Returns 0 if no such comment is found.
+// Only the first 1 KiB of the source is inspected so the directive must appear
+// near the top of the file.
+func parseReactVersion(src []byte) int {
+	head := src
+	if len(head) > 1024 {
+		head = head[:1024]
+	}
+	m := reactVersionRE.FindSubmatch(head)
+	if m == nil {
+		return 0
+	}
+	n, err := strconv.Atoi(string(m[1]))
+	if err != nil {
+		return 0
+	}
+	return n
+}
 
 // reactVersionPaths holds the URL paths for a React version's embedded scripts
 type reactVersionPaths struct {

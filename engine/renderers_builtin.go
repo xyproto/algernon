@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-
-	"github.com/xyproto/algernon/platformdep"
 )
 
 // Built-in renderers for FilePage, each delegating to an existing *Page method on *Config
@@ -56,8 +54,9 @@ func (scssRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request,
 }
 
 // jsxRenderer handles plain ".jsx". When the file is named "index.jsx", it is
-// served as a full React page. The React version is read from the .algernon file
-// in the same directory, defaulting to defaultReactVersion.
+// served as a full React page. The React version is read from an optional
+// "// React: <N>" comment at the top of the source file, defaulting to
+// defaultReactVersion.
 type jsxRenderer struct{}
 
 func (jsxRenderer) Extensions() []string { return []string{".jsx"} }
@@ -70,13 +69,9 @@ func (jsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, 
 
 	// Serve index.jsx as a full React HTML page
 	if filepath.Base(filename) == "index.jsx" {
-		dir := filepath.Dir(filename)
-		confFile := filepath.Join(dir, platformdep.DirConfFilename)
 		ver := defaultReactVersion
-		if ac.fs.Exists(confFile) {
-			if v := ac.readDirConfig(confFile).Main.React; v > 0 {
-				ver = v
-			}
+		if v := parseReactVersion(jsxblock.Bytes()); v > 0 {
+			ver = v
 		}
 		w.Header().Add(contentType, htmlUTF8)
 		ac.ReactPage(w, req, filename, jsxblock.Bytes(), ver)
@@ -90,6 +85,8 @@ func (jsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, 
 
 // tsxRenderer handles ".ts" and ".tsx" (TypeScript compiled to JavaScript).
 // When the file is named "index.tsx", it is served as a full React page.
+// The React version is read from an optional "// React: <N>" comment at the
+// top of the source file, defaulting to defaultReactVersion.
 type tsxRenderer struct{}
 
 func (tsxRenderer) Extensions() []string { return []string{".ts", ".tsx"} }
@@ -102,13 +99,9 @@ func (tsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, 
 
 	// Serve index.tsx as a full React HTML page
 	if filepath.Base(filename) == "index.tsx" {
-		dir := filepath.Dir(filename)
-		confFile := filepath.Join(dir, platformdep.DirConfFilename)
 		ver := defaultReactVersion
-		if ac.fs.Exists(confFile) {
-			if v := ac.readDirConfig(confFile).Main.React; v > 0 {
-				ver = v
-			}
+		if v := parseReactVersion(tsxblock.Bytes()); v > 0 {
+			ver = v
 		}
 		w.Header().Add(contentType, htmlUTF8)
 		ac.ReactPage(w, req, filename, tsxblock.Bytes(), ver)

@@ -31,7 +31,6 @@ type DirConfig struct {
 	Main struct {
 		Title string
 		Theme string
-		React int // Desired major version of React, ie. 19 or 20
 	}
 }
 
