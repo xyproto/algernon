@@ -141,10 +141,9 @@ React and JSX
 When a directory contains an `index.jsx` file, Algernon serves it as a complete React application. The JSX is bundled with esbuild, wrapped in an HTML page with the React runtime loaded, and served with the correct content type.
 
 * If `style.css` or `style.gcss` is present in the same directory, it is used. Otherwise, a built-in default stylesheet is applied.
-* The React version defaults to 19. A different major version (if it is available and built-in to Algernon) can be selected by placing a `.algernon` file in the same directory:
+* The React version defaults to 19. A different major version (if it is available and built-in to Algernon) can be selected by placing a `// React: <N>` comment at the top of `index.jsx` or `index.tsx`:
 
-        [main]
-        react = 19
+        // React: 19
 
 * Lua scripts in the same directory (e.g. `login.lua`, `data.lua`) can serve as API endpoints, making it possible to build full-stack applications with JSX for the frontend and Lua for the backend.
 
