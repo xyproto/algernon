@@ -1,0 +1,41 @@
+body {
+  font-family: Helvetica, sans-serif;
+  margin: 2em;
+}
+
+h1 {
+  font-size: 1.4em;
+  margin-bottom: 0.5em;
+}
+
+.card {
+  max-width: 500px;
+}
+
+p {
+  margin-bottom: 0.75em;
+}
+
+strong {
+  color: #369;
+}
+
+input {
+  padding: 0.4em;
+  margin-right: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+button {
+  padding: 0.4em 1em;
+  background: #369;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #258;
+}
