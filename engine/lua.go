@@ -126,11 +126,9 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 	// Warn if the connection is closed before the script has finished.
 	if ac.verboseMode {
 
-		done := make(chan bool)
+		done := make(chan bool, 1)
 
-		// Stop the background goroutine when this function returns
-		// There must be a receiver for the done channel,
-		// or else this will hang everything!
+		// Stop the background goroutine when this function returns.
 		defer func() {
 			done <- true
 		}()
@@ -138,15 +136,12 @@ func (ac *Config) RunLua(w http.ResponseWriter, req *http.Request, filename stri
 		// Set up a background notifier
 		go func() {
 			ctx := req.Context()
-			for {
-				select {
-				case <-ctx.Done():
-					// Client is done
-					logrus.Warn("Connection to client closed")
-				case <-done:
-					// We are done
-					return
-				}
+			select {
+			case <-ctx.Done():
+				// Client is done
+				logrus.Warn("Connection to client closed")
+			case <-done:
+				// We are done
 			}
 		}() // Call the goroutine
 	}

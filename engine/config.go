@@ -8,12 +8,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/rpc"
 	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -85,15 +87,17 @@ type Config struct {
 	combinedAccessLogFilename    string // CLF access log
 	commonAccessLogFilename      string // NCSA access log
 	boltFilename                 string
-	internalLogFilename          string               // exposed to the server configuration scripts(s)
-	mariadbDSN                   string               // connection string
-	mariaDatabase                string               // database name
-	sqliteConnectionString       string               // SQLite connection string
-	postgresDSN                  string               // connection string
-	postgresDatabase             string               // database name
-	dirBaseURL                   string               // optional Base URL, for the directory listings
-	bundleCache                  *bundleCache         // cache for on-the-fly esbuild bundles
-	dirConfCache                 *dirConfigCache      // cache for parsed .algernon configurations
+	internalLogFilename          string                 // exposed to the server configuration scripts(s)
+	mariadbDSN                   string                 // connection string
+	mariaDatabase                string                 // database name
+	sqliteConnectionString       string                 // SQLite connection string
+	postgresDSN                  string                 // connection string
+	postgresDatabase             string                 // database name
+	dirBaseURL                   string                 // optional Base URL, for the directory listings
+	bundleCache                  *bundleCache           // cache for on-the-fly esbuild bundles
+	dirConfCache                 *dirConfigCache        // cache for parsed .algernon configurations
+	pluginClients                map[string]*rpc.Client // cache of persistent plugin clients
+	pluginClientsMu              sync.Mutex
 	jsxOptions                   api.TransformOptions // JSX rendering options
 	certMagicDomains             []string
 	serverConfigurationFilenames []string // list of configuration filenames to check
@@ -531,6 +535,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	AtShutdown(func() {
 		ac.luapool.Shutdown()
 	})
+	AtShutdown(ac.closePluginClients)
 
 	// TODO: save repl history + close luapool + close logs ++ at shutdown
 
