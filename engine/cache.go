@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/xyproto/datablock"
 	lua "github.com/xyproto/gopher-lua"
@@ -24,11 +25,7 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 			return 1 // number of results
 		}
 		info := ac.cache.Stats()
-		// Return the string, but drop the final newline
-		if len(info) > 0 {
-			info = info[:len(info)-1]
-		}
-		L.Push(lua.LString(info))
+		L.Push(lua.LString(strings.TrimRight(info, "\n")))
 		return 1 // number of results
 	})
 
@@ -38,12 +35,11 @@ func (ac *Config) LoadCacheFunctions(L *lua.LState) {
 
 	// Clear the cache
 	L.SetGlobal("ClearCache", L.NewFunction(func(L *lua.LState) int {
-		ollamaclient.ClearCache()
+		ac.ClearCache()
 		if ac.cache == nil {
 			L.Push(lua.LString(disabledMessage))
 			return 1 // number of results
 		}
-		ac.cache.Clear()
 		L.Push(lua.LString(clearedMessage))
 		return 1 // number of results
 	}))

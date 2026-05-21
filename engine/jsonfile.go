@@ -149,7 +149,7 @@ func jfileGet(L *lua.LState) int {
 		retval = lua.LNumber(f)
 	} else {
 		logrus.Error("Unknown JSON node type")
-		return 0
+		retval = lua.LNil
 	}
 	// Return the LValue
 	L.Push(retval)
@@ -164,10 +164,9 @@ func jfileSet(L *lua.LState) int {
 	if jsonpath == "" {
 		L.ArgError(2, "JSON path expected")
 	}
-	sval := L.ToString(3)
-	if sval == "" {
-		L.ArgError(3, "String value expected")
-	}
+	// CheckString errors if arg 3 is missing or not a string-like value,
+	// but accepts "" — an empty string is a valid JSON value.
+	sval := L.CheckString(3)
 	err := jfile.SetString(jsonpath, sval)
 	if err != nil {
 		logrus.Error(err)
