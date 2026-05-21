@@ -1,5 +1,12 @@
 # Changelog
 
+Changes from 1.17.7 to 1.17.8
+=============================
+
+* Add support for TypeScript and `index.tsx` files.
+* Improve the plugin system wrt. concurrency.
+* Prevent reading Lua from parent directories when `--lua` is used (thanks @fg0x0).
+
 Changes from 1.17.6 to 1.17.7
 =============================
 
