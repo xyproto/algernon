@@ -23,11 +23,13 @@ algernon.log
 apps/first
 apps/withplugins
 bolt.db
+comments.db
 comments.json
 dump.rdb
 examples/a
 http2.log
 include.txt
+lua/sqlite/sqlite.db
 output.b64
 plugins/cpp/main
 plugins/go/go
@@ -37,4 +39,3 @@ samples/getip/ip.md
 system/fedora/dist/
 test.json
 trace.out
-lua/sqlite/sqlite.db
