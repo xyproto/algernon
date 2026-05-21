@@ -43,7 +43,7 @@ var (
 	formulaPattern = regexp.MustCompile(`(?s)\$\$.*?\$\$|\\\(.*?\\\)|\\\[.*?\\\]`)
 
 	// Available Markdown extensions: https://github.com/gomarkdown/markdown/blob/master/parser/parser.go#L20
-	enabledMarkdownExtensions = parser.NoIntraEmphasis | parser.Tables | parser.FencedCode | parser.Autolink | parser.Strikethrough | parser.SpaceHeadings | parser.HeadingIDs | parser.BackslashLineBreak | parser.DefinitionLists | parser.AutoHeadingIDs | parser.Mmark | parser.BackslashLineBreak | parser.MathJax
+	enabledMarkdownExtensions = parser.NoIntraEmphasis | parser.Tables | parser.FencedCode | parser.Autolink | parser.Strikethrough | parser.SpaceHeadings | parser.HeadingIDs | parser.BackslashLineBreak | parser.DefinitionLists | parser.AutoHeadingIDs | parser.Mmark | parser.MathJax
 )
 
 // containsFormula checks if the given Markdown content contains at least one mathematical formula (LaTeX style)
@@ -877,6 +877,59 @@ func (ac *Config) JSXPage(w http.ResponseWriter, req *http.Request, filename str
 	ac.DataToClient(w, req, filename, data)
 }
 
+// TSXPage writes the given source bytes (in TypeScript/TSX) converted to JS, to a writer.
+// The filename is only used in the error message, if any.
+func (ac *Config) TSXPage(w http.ResponseWriter, req *http.Request, filename string, tsxdata []byte) {
+	// If the source contains import/require statements, use the full bundler
+	// with on-the-fly caching rather than a single-file transform.
+	if needsBundling(tsxdata) {
+		data, err := ac.bundleFile(filename, tsxdata)
+		if err != nil {
+			if ac.debugMode {
+				ac.PrettyError(w, req, filename, tsxdata, err.Error(), "tsx")
+			} else {
+				logrus.Error(err)
+			}
+			return
+		}
+		ac.DataToClient(w, req, filename, data)
+		return
+	}
+
+	// When auto-refresh is active, inject react-refresh registrations
+	src := string(tsxdata)
+	if ac.autoRefresh {
+		src = injectRefreshRegistrations(src, filepath.Base(filename))
+	}
+
+	// Convert TS/TSX to JS using the appropriate loader
+	opts := ac.jsxOptions
+	opts.Loader = loaderForFile(filename)
+	result := api.Transform(src, opts)
+	if len(result.Errors) > 0 {
+		if ac.debugMode {
+			var sb strings.Builder
+			for _, errMsg := range result.Errors {
+				sb.WriteString(fmt.Sprintf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column))
+			}
+			for _, warnMsg := range result.Warnings {
+				sb.WriteString(fmt.Sprintf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column))
+			}
+			ac.PrettyError(w, req, filename, tsxdata, sb.String(), "tsx")
+		} else {
+			for _, errMsg := range result.Errors {
+				logrus.Errorf("error: %s %s:%d:%d\n", errMsg.Text, filename, errMsg.Location.Line, errMsg.Location.Column)
+			}
+			for _, warnMsg := range result.Warnings {
+				logrus.Errorf("warning: %s %s:%d:%d\n", warnMsg.Text, filename, warnMsg.Location.Line, warnMsg.Location.Column)
+			}
+		}
+		return
+	}
+
+	ac.DataToClient(w, req, filename, result.Code)
+}
+
 // defaultReactCSS is a minimal CSS used when no style.css or style.gcss is present
 const defaultReactCSS = `*{margin:0;padding:0;box-sizing:border-box}` +
 	`body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5}` +
@@ -888,7 +941,7 @@ const defaultReactCSS = `*{margin:0;padding:0;box-sizing:border-box}` +
 	`.msg{color:#c00;font-size:.9em}` +
 	`a{color:#3b82f6}`
 
-// ReactPage wraps a JSX source file in a full HTML page with React loaded,
+// ReactPage wraps a JSX/TSX source file in a full HTML page with React loaded,
 // a <div id="root"> mount point, and an optional stylesheet.
 func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename string, jsxdata []byte, ver int) {
 	var htmlbuf strings.Builder

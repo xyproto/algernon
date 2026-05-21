@@ -20,7 +20,7 @@ type bundleCacheEntry struct {
 	data    []byte
 }
 
-// bundleCache is an in-memory cache for esbuild-bundled JS/JSX files,
+// bundleCache is an in-memory cache for esbuild-bundled JS/JSX/TS/TSX files,
 // keyed by absolute file path. Results are invalidated when the file's
 // modification time changes.
 type bundleCache struct {
@@ -41,11 +41,25 @@ func (bc *bundleCache) Clear() {
 	bc.mu.Unlock()
 }
 
-// needsBundling reports whether the JS/JSX source requires full bundling,
+// needsBundling reports whether the JS/JSX/TS/TSX source requires full bundling,
 // i.e. it contains ES module import statements.
 func needsBundling(data []byte) bool {
 	return bytes.Contains(data, []byte("import ")) ||
 		bytes.Contains(data, []byte("import("))
+}
+
+// loaderForFile returns the appropriate esbuild loader based on file extension.
+func loaderForFile(filename string) api.Loader {
+	switch {
+	case strings.HasSuffix(strings.ToLower(filename), ".tsx"):
+		return api.LoaderTSX
+	case strings.HasSuffix(strings.ToLower(filename), ".ts"):
+		return api.LoaderTS
+	case strings.HasSuffix(strings.ToLower(filename), ".jsx"):
+		return api.LoaderJSX
+	default:
+		return api.LoaderJS
+	}
 }
 
 // minified) and caches the result in memory. Subsequent calls return the cached
@@ -96,11 +110,8 @@ func (ac *Config) bundleFile(filename string, srcData []byte) ([]byte, error) {
 		LogLevel:          api.LogLevelSilent,
 	}
 	if srcData != nil {
-		// Choose the loader based on file extension so JSX syntax is handled.
-		loader := api.LoaderJS
-		if strings.HasSuffix(strings.ToLower(filename), ".jsx") {
-			loader = api.LoaderJSX
-		}
+		// Choose the loader based on file extension so JSX/TSX syntax is handled.
+		loader := loaderForFile(filename)
 		contents := string(srcData)
 		if ac.autoRefresh {
 			contents = injectRefreshRegistrations(contents, filepath.Base(filename))

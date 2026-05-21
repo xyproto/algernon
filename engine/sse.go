@@ -31,7 +31,7 @@ if (!!window.EventSource) {
         });
         if (swapped) { return; }
       }
-      if (/\.jsx?$/i.test(basename)) {
+      if (/\.(jsx?|tsx?)$/i.test(basename)) {
         var oldEl = null;
         document.querySelectorAll('script[src]').forEach(function(s) {
           if (s.getAttribute('src').split('?')[0].replace(/.*[\/\\]/, '') === basename) { oldEl = s; }
@@ -52,7 +52,7 @@ if (!!window.EventSource) {
         if (window.__algernonHMRBegin) { window.__algernonHMRBegin(); }
         document.querySelectorAll('script[src]').forEach(function(s) {
           var raw = s.getAttribute('src').split('?')[0];
-          if (!/\.jsx$/i.test(raw)) { return; }
+          if (!/\.(jsx|tsx)$/i.test(raw)) { return; }
           var rel = raw.replace(/^\//, '').replace('{{.HMRUpdatePrefix}}', '');
           if (!rel) { return; }
           if (rel.indexOf('/') < 0 && pageDir) { rel = pageDir + rel; }

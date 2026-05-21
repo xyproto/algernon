@@ -13,6 +13,7 @@ func TestDefaultRenderersRegistered(t *testing.T) {
 		".md", ".markdown",
 		".gcss", ".scss",
 		".jsx",
+		".ts", ".tsx",
 		".happ", ".hyper", ".hyper.jsx", ".hyper.js",
 	}
 	for _, ext := range want {

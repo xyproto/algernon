@@ -380,7 +380,7 @@ func (ac *Config) shouldCache(ext string) bool {
 		fallthrough
 	default:
 		switch ext {
-		case ".amber", ".gcss", ".happ", ".js", ".jsx", ".lua", ".md", ".po2", ".pongo2", ".scss", ".tl", ".tpl":
+		case ".amber", ".gcss", ".happ", ".js", ".jsx", ".lua", ".md", ".po2", ".pongo2", ".scss", ".ts", ".tsx", ".tl", ".tpl":
 			return false
 		default:
 			return true

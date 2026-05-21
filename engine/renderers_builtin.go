@@ -88,6 +88,38 @@ func (jsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, 
 	return nil
 }
 
+// tsxRenderer handles ".ts" and ".tsx" (TypeScript compiled to JavaScript).
+// When the file is named "index.tsx", it is served as a full React page.
+type tsxRenderer struct{}
+
+func (tsxRenderer) Extensions() []string { return []string{".ts", ".tsx"} }
+
+func (tsxRenderer) Render(ac *Config, w http.ResponseWriter, req *http.Request, filename, ext string) error {
+	tsxblock, err := ac.ReadAndLogErrors(w, filename, ext)
+	if err != nil {
+		return fmt.Errorf("%s:%s", filename, err.Error())
+	}
+
+	// Serve index.tsx as a full React HTML page
+	if filepath.Base(filename) == "index.tsx" {
+		dir := filepath.Dir(filename)
+		confFile := filepath.Join(dir, platformdep.DirConfFilename)
+		ver := defaultReactVersion
+		if ac.fs.Exists(confFile) {
+			if v := ac.readDirConfig(confFile).Main.React; v > 0 {
+				ver = v
+			}
+		}
+		w.Header().Add(contentType, htmlUTF8)
+		ac.ReactPage(w, req, filename, tsxblock.Bytes(), ver)
+		return nil
+	}
+
+	w.Header().Add(contentType, "text/javascript;charset=utf-8")
+	ac.TSXPage(w, req, filename, tsxblock.Bytes())
+	return nil
+}
+
 // hyperAppRenderer handles HyperApp JSX/JS wrappers: .happ, .hyper, .hyper.jsx, .hyper.js
 type hyperAppRenderer struct{}
 
@@ -110,5 +142,6 @@ func init() {
 	defaultRenderers.register(gcssRenderer{})
 	defaultRenderers.register(scssRenderer{})
 	defaultRenderers.register(jsxRenderer{})
+	defaultRenderers.register(tsxRenderer{})
 	defaultRenderers.register(hyperAppRenderer{})
 }

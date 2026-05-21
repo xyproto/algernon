@@ -172,7 +172,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 
 		return
 
-	case ".md", ".markdown", ".gcss", ".scss", ".jsx", ".happ", ".hyper", ".hyper.jsx", ".hyper.js":
+	case ".md", ".markdown", ".gcss", ".scss", ".jsx", ".ts", ".tsx", ".happ", ".hyper", ".hyper.jsx", ".hyper.js":
 		// Handled by the Renderer registry; unreachable because dispatchRenderer already returned
 		return
 
@@ -415,7 +415,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		w.Header().Add(contentType, "application/json;charset=utf-8")
 
 	// Source code files for viewing
-	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".mk", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh", ".ts", ".tsx":
+	case ".S", ".ada", ".asm", ".bash", ".bat", ".c", ".c++", ".cc", ".cl", ".clj", ".cpp", ".cs", ".cxx", ".el", ".elm", ".erl", ".fish", ".go", ".h", ".h++", ".hpp", ".hs", ".java", ".kt", ".lisp", ".mk", ".ml", ".pas", ".pl", ".py", ".r", ".rb", ".rs", ".scm", ".sh":
 		// Set headers for displaying it in the browser.
 		w.Header().Set(contentType, textUTF8)
 

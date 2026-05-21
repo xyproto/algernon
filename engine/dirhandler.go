@@ -24,7 +24,7 @@ const (
 )
 
 // List of filenames that should be displayed instead of a directory listing
-var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.jsx", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
+var indexFilenames = []string{"index.lua", "index.html", "index.md", "index.txt", "index.pongo2", "index.tmpl", "index.po2", "index.amber", "index.jsx", "index.tsx", "index.happ", "index.hyper", "index.hyper.js", "index.hyper.jsx", "index.tl", "index.prompt"}
 
 // DirConfig keeps a directory listing configuration
 type DirConfig struct {

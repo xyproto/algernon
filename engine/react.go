@@ -33,7 +33,7 @@ var reactDOM19ProdJS []byte
 //go:embed assets/reactrefresh/react-refresh-runtime.js
 var reactRefreshRuntimeJS []byte
 
-// defaultReactVersion is the React major version used by index.jsx
+// defaultReactVersion is the React major version used by index.jsx and index.tsx
 const defaultReactVersion = 19
 
 // reactVersionPaths holds the URL paths for a React version's embedded scripts
@@ -151,12 +151,12 @@ func injectRefreshRegistrations(src, basename string) string {
 }
 
 // reactRefreshPlugin returns an esbuild plugin that injects react-refresh
-// registrations into every .js/.jsx file (excluding node_modules)
+// registrations into every .js/.jsx/.ts/.tsx file (excluding node_modules)
 func reactRefreshPlugin() api.Plugin {
 	return api.Plugin{
 		Name: "algernon-react-refresh",
 		Setup: func(build api.PluginBuild) {
-			build.OnLoad(api.OnLoadOptions{Filter: `\.(jsx?)$`}, func(args api.OnLoadArgs) (api.OnLoadResult, error) {
+			build.OnLoad(api.OnLoadOptions{Filter: `\.(jsx?|tsx?)$`}, func(args api.OnLoadArgs) (api.OnLoadResult, error) {
 				if strings.Contains(args.Path, "node_modules") {
 					return api.OnLoadResult{}, nil
 				}
@@ -166,10 +166,7 @@ func reactRefreshPlugin() api.Plugin {
 				}
 				basename := filepath.Base(args.Path)
 				wrapped := injectRefreshRegistrations(string(raw), basename)
-				loader := api.LoaderJS
-				if strings.HasSuffix(strings.ToLower(args.Path), ".jsx") {
-					loader = api.LoaderJSX
-				}
+				loader := loaderForFile(args.Path)
 				return api.OnLoadResult{
 					Contents: &wrapped,
 					Loader:   loader,
@@ -186,9 +183,9 @@ var reactProdScriptRE = regexp.MustCompile(
 )
 
 // swapReactProdToDev replaces React production build <script src> values with
-// development equivalents when the page references .jsx files.
+// development equivalents when the page references .jsx or .tsx files.
 func (ac *Config) swapReactProdToDev(htmldata []byte) []byte {
-	if !bytes.Contains(htmldata, []byte(".jsx")) {
+	if !bytes.Contains(htmldata, []byte(".jsx")) && !bytes.Contains(htmldata, []byte(".tsx")) {
 		return htmldata
 	}
 	serverRoot, err := filepath.Abs(ac.serverDirOrFilename)

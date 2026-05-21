@@ -204,7 +204,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		servingHTTP.Store(true)
 		go func() {
 			if ac.redirectHTTP {
-				// Redirect HTTPS to HTTP
+				// Redirect HTTP to HTTPS
 				redirectFunc := func(w http.ResponseWriter, req *http.Request) {
 					http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
 				}

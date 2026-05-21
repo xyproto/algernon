@@ -71,7 +71,9 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		if ac.autoRefresh {
 			srcStr = injectRefreshRegistrations(srcStr, filepath.Base(absPath))
 		}
-		result := api.Transform(srcStr, ac.jsxOptions)
+		opts := ac.jsxOptions
+		opts.Loader = loaderForFile(absPath)
+		result := api.Transform(srcStr, opts)
 		if len(result.Errors) > 0 {
 			msgs := make([]string, len(result.Errors))
 			for i, e := range result.Errors {
@@ -92,10 +94,7 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 func bundleUncached(filename string, srcData []byte, jsxOpts api.TransformOptions, withRefresh bool) ([]byte, error) {
 	dir := filepath.Dir(filename)
 
-	loader := api.LoaderJS
-	if strings.HasSuffix(strings.ToLower(filename), ".jsx") {
-		loader = api.LoaderJSX
-	}
+	loader := loaderForFile(filename)
 
 	contents := string(srcData)
 	if withRefresh {
