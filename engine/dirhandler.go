@@ -36,14 +36,14 @@ type DirConfig struct {
 
 // dirConfigEntry is a cached parsed .algernon configuration with mtime
 type dirConfigEntry struct {
-	config DirConfig
 	mtime  time.Time
+	config DirConfig
 }
 
 // dirConfigCache caches parsed .algernon configurations by filename and mtime
 type dirConfigCache struct {
-	mu      sync.RWMutex
 	entries map[string]dirConfigEntry
+	mu      sync.RWMutex
 }
 
 // DirectoryListing serves the given directory as a web page with links the the contents

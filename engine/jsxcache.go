@@ -24,9 +24,9 @@ type bundleCacheEntry struct {
 // keyed by absolute file path. Results are invalidated when the file's
 // modification time changes.
 type bundleCache struct {
-	mu      sync.RWMutex
 	entries map[string]bundleCacheEntry
 	hits    map[string]uint64
+	mu      sync.RWMutex
 }
 
 func newBundleCache() *bundleCache {

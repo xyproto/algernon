@@ -53,6 +53,9 @@ type Config struct {
 	handlerPool                  *handlerPool        // a pool of Lua states for handle() requests
 	cache                        *datablock.FileCache
 	reverseProxyConfig           *ReverseProxyConfig
+	bundleCache                  *bundleCache           // cache for on-the-fly esbuild bundles
+	dirConfCache                 *dirConfigCache        // cache for parsed .algernon configurations
+	pluginClients                map[string]*rpc.Client // cache of persistent plugin clients
 	redisAddr                    string
 	defaultEventPath             string
 	defaultEventRefresh          string
@@ -72,15 +75,14 @@ type Config struct {
 	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
 	defaultWebColonPort          string
-	serverLogFile                string        // exposed to the server configuration scripts(s)
-	serverTempDir                string        // temporary directory
-	cookieSecret                 string        // secret to be used when setting and getting user login cookies
-	defaultTheme                 string        // theme for Markdown and error pages
-	openExecutable               string        // open the URL after serving, with a specific executable
-	serverAddrLua                string        // configuration that may only be set in the server configuration script(s)
-	httpAddr                     string        // explicit HTTP listen address (from --http-addr or positional)
-	httpsAddr                    string        // explicit HTTPS listen address (from --https-addr or positional)
-	portSettings                 []PortSetting // explicit listener configuration (from SetPorts in Lua)
+	serverLogFile                string // exposed to the server configuration scripts(s)
+	serverTempDir                string // temporary directory
+	cookieSecret                 string // secret to be used when setting and getting user login cookies
+	defaultTheme                 string // theme for Markdown and error pages
+	openExecutable               string // open the URL after serving, with a specific executable
+	serverAddrLua                string // configuration that may only be set in the server configuration script(s)
+	httpAddr                     string // explicit HTTP listen address (from --http-addr or positional)
+	httpsAddr                    string // explicit HTTPS listen address (from --https-addr or positional)
 	dbName                       string
 	serverHeaderName             string // used in the HTTP headers as the "Server" name
 	eventAddr                    string // for the Server-Sent Event (SSE) server (host and port)
@@ -90,18 +92,15 @@ type Config struct {
 	combinedAccessLogFilename    string // CLF access log
 	commonAccessLogFilename      string // NCSA access log
 	boltFilename                 string
-	internalLogFilename          string                 // exposed to the server configuration scripts(s)
-	mariadbDSN                   string                 // connection string
-	mariaDatabase                string                 // database name
-	sqliteConnectionString       string                 // SQLite connection string
-	postgresDSN                  string                 // connection string
-	postgresDatabase             string                 // database name
-	dirBaseURL                   string                 // optional Base URL, for the directory listings
-	bundleCache                  *bundleCache           // cache for on-the-fly esbuild bundles
-	dirConfCache                 *dirConfigCache        // cache for parsed .algernon configurations
-	pluginClients                map[string]*rpc.Client // cache of persistent plugin clients
-	pluginClientsMu              sync.Mutex
+	internalLogFilename          string               // exposed to the server configuration scripts(s)
+	mariadbDSN                   string               // connection string
+	mariaDatabase                string               // database name
+	sqliteConnectionString       string               // SQLite connection string
+	postgresDSN                  string               // connection string
+	postgresDatabase             string               // database name
+	dirBaseURL                   string               // optional Base URL, for the directory listings
 	jsxOptions                   api.TransformOptions // JSX rendering options
+	portSettings                 []PortSetting        // explicit listener configuration (from SetPorts in Lua)
 	certMagicDomains             []string
 	serverConfigurationFilenames []string // list of configuration filenames to check
 	cacheMaxGivenDataSize        uint64
@@ -121,6 +120,7 @@ type Config struct {
 	writeTimeout                 uint64        // timeout when writing data to a client, in seconds
 	defaultStatCacheRefresh      time.Duration // refresh the stat cache, if the stat cache feature is enabled
 	defaultCacheSize             uint64        // 1 MiB
+	pluginClientsMu              sync.Mutex
 	defaultPermissions           os.FileMode
 	quietMode                    bool // no output to the command line
 	autoRefresh                  bool // enable the event server and inject JavaScript to reload pages when sources change

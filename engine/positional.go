@@ -12,7 +12,6 @@ import (
 type positionalArgs struct {
 	// ServerDirOrFilename is an existing directory or file given on the command line
 	ServerDirOrFilename string
-	ServerDirSet        bool
 
 	// ServerAddr is set from a "host:port", ":port" or bare web-port argument
 	ServerAddr string
@@ -21,11 +20,13 @@ type positionalArgs struct {
 	ServerAddr2 string
 
 	// RedisAddr is set when an argument looks like a Redis address (":6379" or ":6380")
-	RedisAddr         string
-	RedisAddrFromArgs bool
+	RedisAddr string
 
 	// Remaining holds unclassified arguments, in the legacy order: cert, key, redis address, redis db index
-	Remaining []string
+	Remaining    []string
+	ServerDirSet bool
+
+	RedisAddrFromArgs bool
 }
 
 // classifyPositionalArgs splits free-form positional arguments into the categories Algernon
