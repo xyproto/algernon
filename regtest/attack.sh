@@ -1,5 +1,5 @@
 #!/bin/sh
-./algernon --dev --conf serverconf.lua --dir ./samples/welcome --httponly --debug --autorefresh --bolt --server -n &
+./algernon --dev --conf serverconf.lua --dir ./samples/welcome --httponly --debug --autorefresh --bolt --noninteractive -n &
 PID=$!
 if ps -p $PID > /dev/null; then
   echo "$PID is running"

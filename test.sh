@@ -1,6 +1,6 @@
 #!/bin/bash
 echo -ne 'Launching Algernon...\t'
-./algernon --quiet --httponly --server --nodb --addr :45678 &
+./algernon --quiet --httponly --noninteractive --nodb --addr :45678 &
 PID=$!
 function finish {
   echo -ne "Stopping PID $PID...\t"

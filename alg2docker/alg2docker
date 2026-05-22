@@ -81,7 +81,7 @@ COPY --from=builder /go/bin/algernon /usr/bin/algernon
 EXPOSE 80 443
 
 # Serve over HTTPS using the custom cert and key
-CMD ["/usr/bin/algernon", "-c", "--cachesize", "67108864", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "-n", "--prod", "--server", "/srv/algernon/%BASEFILENAME%"]
+CMD ["/usr/bin/algernon", "-c", "--cachesize", "67108864", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "-n", "--prod", "--noninteractive", "/srv/algernon/%BASEFILENAME%"]
 
 EOF
 
