@@ -627,7 +627,7 @@ func generateUsageFunction(ac *Config) func() {
 		// Prepare and/or output a message, depending on if QUIC support is compiled in or not
 		if quicEnabled {
 			quicUsageOrMessage = "\n  -u                           Serve over QUIC / HTTP3."
-			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -s -u -n . :7000\n"
+			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -N -u -n . :7000\n"
 		} else {
 			quicFinalMessage = "\n\nThis Algernon executable was built without QUIC support."
 		}
@@ -662,10 +662,11 @@ Available flags:
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
-                               Enables server mode. Sets cache to "prod".
+                               Enables non-interactive mode. Sets cache to "prod".
   -q, --quiet                  Don't output anything to stdout or stderr.
   -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
-  -s, --server                 Server mode (disable debug + interactive mode).
+  -s, -N, --noninteractive    Non-interactive mode (disable debug +
+                               interactive mode).
   -t, --httponly               Serve regular HTTP.` + quicUsageOrMessage + `
   -v, --version                Application name and version
   -V, --verbose                Slightly more verbose logging.
@@ -727,16 +728,17 @@ Available flags:
                                material, neon, werc or setconf.
   --timeout=N                  Timeout when serving files, in seconds.
   --watchdir=DIRECTORY         Enables auto-refresh for only this directory.
-  -x, --simple                 Serve as regular HTTP, enable server mode and
-                               disable all features that requires a database.
+  -x, --simple                 Serve as regular HTTP, enable non-interactive
+                               mode and disable all features that requires
+                               a database.
 
 Example usage:
 
   For auto-refreshing a webpage while developing:
-    algernon --dev --httponly --debug --autorefresh --bolt --server . :4000
+    algernon --dev --httponly --debug --autorefresh --bolt --noninteractive . :4000
 
   Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
-    algernon -c --domain --server --cachesize 67108864 --prod /srv
+    algernon -c --domain --noninteractive --cachesize 67108864 --prod /srv
 ` + quicExample + `
   Serve the current directory over HTTP, port 3000. No limits, cache,
   permissions or database connections:

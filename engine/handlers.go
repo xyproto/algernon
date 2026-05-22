@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -562,9 +563,7 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 				// res.Header keys are already in canonical MIME form, so direct map
 				// assignment is safe and avoids the Set/Add accumulation footgun.
 				dst := w.Header()
-				for k, vals := range res.Header {
-					dst[k] = vals
-				}
+				maps.Copy(dst, res.Header)
 				w.WriteHeader(res.StatusCode)
 				w.Write(data)
 				return

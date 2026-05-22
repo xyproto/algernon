@@ -25,7 +25,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		debugModeShort, serverModeShort, useBoltShort, devModeShort,
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
-		serveJustQUICShort, onlyLuaModeShort, redirectShort bool
+		serveJustQUICShort, onlyLuaModeShort, redirectShort,
+		nonInteractive, nonInteractiveShort bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -68,7 +69,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
 	flag.StringVar(&ac.eventRefresh, "eventrefresh", ac.defaultEventRefresh, "Event refresh interval (ie \""+ac.defaultEventRefresh+"\")")
-	flag.BoolVar(&ac.serverMode, "server", false, "Server mode (disable interactive mode)")
+	flag.BoolVar(&ac.serverMode, "server", false, "Same as --noninteractive")
+	flag.BoolVar(&nonInteractive, "noninteractive", false, "Non-interactive mode (disable debug + interactive mode)")
 	flag.StringVar(&ac.mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
 	flag.StringVar(&ac.mariaDatabase, "mariadb", "", "MariaDB/MySQL database name")
 	flag.StringVar(&ac.postgresDSN, "postgres", "", "PostgreSQL connection string (DSN)")
@@ -114,7 +116,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
-	flag.BoolVar(&serverModeShort, "s", false, "Server mode (non-interactive)")
+	flag.BoolVar(&serverModeShort, "s", false, "Non-interactive mode (short for --noninteractive)")
+	flag.BoolVar(&nonInteractiveShort, "N", false, "Non-interactive mode")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
 	flag.BoolVar(&productionModeShort, "p", false, "Production mode (when running as a system service)")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
@@ -139,6 +142,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.autoRefresh = ac.autoRefresh || autoRefreshShort
 	ac.debugMode = ac.debugMode || debugModeShort
 	ac.serverMode = ac.serverMode || serverModeShort
+	// --noninteractive / -N / -s is the preferred way to enable server mode
+	if nonInteractive || nonInteractiveShort || serverModeShort {
+		ac.serverMode = true
+	}
 	ac.useBolt = ac.useBolt || useBoltShort
 	ac.productionMode = ac.productionMode || productionModeShort
 	ac.devMode = ac.devMode || devModeShort
