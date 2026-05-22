@@ -118,7 +118,7 @@ github.com/go-mysql-org/go-mysql/utils
 ## explicit; go 1.18
 github.com/go-viper/mapstructure/v2
 github.com/go-viper/mapstructure/v2/internal/errors
-# github.com/go-webauthn/webauthn v0.17.3
+# github.com/go-webauthn/webauthn v0.17.4
 ## explicit; go 1.25.0
 github.com/go-webauthn/webauthn/metadata
 github.com/go-webauthn/webauthn/protocol
@@ -246,7 +246,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260522052709-e53c50c1c5ae
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260522141115-a9267dbdcbbb
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
