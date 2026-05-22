@@ -68,7 +68,7 @@ Threshold for not reading static files into memory, in bytes.
 .B \-\-lua
 Don't serve anything, just present an interactive Lua prompt (REPL).
 .TP
-.B \-\-server
+.B \-s or \-N or \-\-noninteractive
 Disable debug + interactive mode. Is unrelated to if anything is served or not.
 .TP
 .B \-q or \-\-quiet
@@ -129,13 +129,13 @@ Web development with few dependencies and a decent caching system.
 .sp
 .TP
 For auto-refreshing a webpage while developing:
-\fBalgernon --dev --httponly --debug --autorefresh --bolt --server . :4000\fP
+\fBalgernon --dev --httponly --debug --autorefresh --bolt --noninteractive . :4000\fP
 .TP
 Serve /srv/mydomain.com and /srv/otherweb.com over HTTP and HTTPS + HTTP/2:
-\fBalgernon -c --domain --server --cachesize 67108864 --prod /srv\fP
+\fBalgernon -c --domain --noninteractive --cachesize 67108864 --prod /srv\fP
 .TP
 Serve the current dir over QUIC, port 7000, no banner:
-\fBalgernon -s -u -n . :7000\fP
+\fBalgernon -N -u -n . :7000\fP
 .TP
 Serve the current directory over HTTP, port 3000. No limits, cache, permissions
 or database connections:
