@@ -256,15 +256,17 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 			// Use the server temp dir (typically /tmp) instead of /dev/shm
 			webApplicationExtractionDir = ac.serverTempDir
 		}
-		if extractErr := unzip.Extract(filename, webApplicationExtractionDir); extractErr == nil { // no error
-			firstname := path.Base(filename)
-			if strings.HasSuffix(filename, ".alg") {
-				firstname = path.Base(filename[:len(filename)-4])
-			}
-			serveDir := path.Join(webApplicationExtractionDir, firstname)
-			logrus.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
-			ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme, luaDataFilename)
+		if extractErr := unzip.Extract(filename, webApplicationExtractionDir); extractErr != nil {
+			logrus.Errorf("Failed to extract %s: %s", filename, extractErr)
+			return
 		}
+		firstname := path.Base(filename)
+		if strings.HasSuffix(filename, ".alg") {
+			firstname = path.Base(filename[:len(filename)-4])
+		}
+		serveDir := path.Join(webApplicationExtractionDir, firstname)
+		logrus.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
+		ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme, luaDataFilename)
 		return
 
 	case ".lua", ".tl":
