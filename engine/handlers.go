@@ -558,10 +558,12 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 					return
 				}
 				res.Body.Close()
+				// Preserve all values for multi-valued headers (Set-Cookie, Vary, Link, ...).
+				// res.Header keys are already in canonical MIME form, so direct map
+				// assignment is safe and avoids the Set/Add accumulation footgun.
+				dst := w.Header()
 				for k, vals := range res.Header {
-					for _, v := range vals {
-						w.Header().Set(k, v)
-					}
+					dst[k] = vals
 				}
 				w.WriteHeader(res.StatusCode)
 				w.Write(data)
