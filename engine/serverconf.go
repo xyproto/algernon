@@ -239,14 +239,14 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 	}))
 
 	// Set the default cookie secret. This is for the server config, before
-	// the userstate has been instanciated.
+	// the userstate has been instantiated.
 	L.SetGlobal("SetCookieSecret", L.NewFunction(func(L *lua.LState) int {
 		ac.cookieSecret = L.ToString(1)
 		return 0 // number of results
 	}))
 
-	// Get the default cookie secret. THis is for the server config, before
-	// the userstate has been instanciated.
+	// Get the default cookie secret. This is for the server config, before
+	// the userstate has been instantiated.
 	L.SetGlobal("CookieSecret", L.NewFunction(func(L *lua.LState) int {
 		L.Push(lua.LString(ac.cookieSecret))
 		return 1 // number of results
