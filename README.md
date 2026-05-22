@@ -1,7 +1,7 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions, IPv6
-keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6
+description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions, IPv6
+keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, TSX, TypeScript, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6
 theme: material
 -->
 
@@ -10,7 +10,7 @@ theme: material
 
 [![Build](https://github.com/xyproto/algernon/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/algernon/actions/workflows/build.yml) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Web server with built-in support for QUIC, HTTP/2, Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for QUIC, HTTP/2, Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, TypeScript, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, rate limiting, graceful shutdown, plugins, users and permissions.
 
 All in one small self-contained executable.
 
@@ -79,7 +79,7 @@ Design decisions
     * index.pongo2, index.po2 or index.tmpl is Pongo2 code that is rendered as HTML.
     * index.amber is Amber code that is rendered as HTML.
     * index.hyper.js, index.hyper.jsx or index.happ is JSX+HyperApp code that is rendered as HTML.
-    * index.jsx is a React JSX file that is rendered as a full HTML page with the React runtime and bundled JSX.
+    * index.jsx or index.tsx is a React JSX/TSX file that is rendered as a full HTML page with the React runtime and bundled JavaScript.
     * index.tl is Teal code that is interpreted as a handler function for the current directory.
     * index.prompt is a content-type, an Ollama model, a blank line and a prompt, for generating content with LLMs.
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
@@ -92,6 +92,7 @@ Design decisions
     * Sass: .scss (rendered as CSS)
     * GCSS: .gcss (rendered as CSS)
     * JSX: .jsx (rendered as JavaScript/ECMAScript)
+    * TypeScript: .ts, .tsx (rendered as JavaScript/ECMAScript)
     * Lua: .lua (a script that provides its own output and content type)
     * Teal: .tl (same as .lua but with type safety)
     * HyperApp: .hyper.js or .hyper.jsx (rendered as HTML)
@@ -135,10 +136,10 @@ Features and limitations
 * The Lua implementation used in Algernon (gopherlua) does not support `package.loadlib`.
 * Full support for IPv6.
 
-React and JSX
--------------
+React, JSX and TypeScript
+-------------------------
 
-When a directory contains an `index.jsx` file, Algernon serves it as a complete React application. The JSX is bundled with esbuild, wrapped in an HTML page with the React runtime loaded, and served with the correct content type.
+When a directory contains an `index.jsx` or `index.tsx` file, Algernon serves it as a complete React application. The JSX/TSX is bundled with esbuild, wrapped in an HTML page with the React runtime loaded, and served with the correct content type.
 
 * If `style.css` or `style.gcss` is present in the same directory, it is used. Otherwise, a built-in default stylesheet is applied.
 * The React version defaults to 19. A different major version (if it is available and built-in to Algernon) can be selected by placing a `// React: <N>` comment at the top of `index.jsx` or `index.tsx`:
@@ -149,7 +150,7 @@ When a directory contains an `index.jsx` file, Algernon serves it as a complete 
 
 ### Injected JavaScript functions
 
-When serving `index.jsx`, the following helper functions are available in the browser:
+When serving `index.jsx` or `index.tsx`, the following helper functions are available in the browser:
 
 * `postForm(url, fields)` — POST form data to a Lua/Teal endpoint and return the parsed JSON response as a promise. The `fields` argument is an object whose keys and values are URL-encoded and sent as `application/x-www-form-urlencoded`.
 * `bufferToBase64URL(buffer)` — convert an `ArrayBuffer` to a base64url-encoded string. Useful for WebAuthn credential responses.
@@ -1277,6 +1278,27 @@ Lua functions that are available for server configuration files
 // Set the default address for the server on the form [host][:port].
 // May be useful in Algernon application bundles (.alg or .zip files).
 SetAddr(string)
+
+// Set the HTTP (non-TLS) listen address.
+SetHTTPAddr(string)
+
+// Set the HTTPS (TLS) listen address.
+SetHTTPSAddr(string)
+
+// Enable or disable HTTP to HTTPS redirect.
+SetRedirect(bool)
+
+// Enable or disable Let's Encrypt / CertMagic.
+SetLetsEncrypt(bool)
+
+// Enable or disable interactive mode (the REPL).
+SetInteractive(bool)
+
+// Configure listeners with full control over protocol, port and TLS.
+// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
+// Named keys are also supported: SetPorts{{addr=":8080", protocol="http", tls=false}}
+// Valid protocols: "http", "http2", "http3" (or "quic"), "event"
+SetPorts(table)
 
 // Reset the URL prefixes and make everything *public*.
 ClearPermissions()
