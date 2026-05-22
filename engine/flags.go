@@ -147,6 +147,16 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	if nonInteractive || serverModeShort {
 		ac.serverMode = true
 	}
+	// Track which settings were explicitly set from the command line
+	if ac.serverMode {
+		ac.serverModeFromCLI = true
+	}
+	if ac.redirectHTTP {
+		ac.redirectFromCLI = true
+	}
+	if ac.useCertMagic {
+		ac.certMagicFromCLI = true
+	}
 	ac.useBolt = ac.useBolt || useBoltShort
 	ac.productionMode = ac.productionMode || productionModeShort
 	ac.devMode = ac.devMode || devModeShort
@@ -316,11 +326,19 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	if classified.ServerAddr != "" {
 		ac.serverAddr = classified.ServerAddr
 	}
-	// Two positional addresses: first = HTTP, second = HTTPS
+	// Two positional addresses: first = HTTP, second = HTTPS (only if flags didn't set them)
 	if classified.ServerAddr2 != "" {
-		ac.httpAddr = classified.ServerAddr
-		ac.httpsAddr = classified.ServerAddr2
+		if ac.httpAddr == "" {
+			ac.httpAddr = classified.ServerAddr
+		}
+		if ac.httpsAddr == "" {
+			ac.httpsAddr = classified.ServerAddr2
+		}
 		ac.serverAddr = "" // will be derived from httpAddr/httpsAddr in serve.go
+	}
+	// Track that port configuration came from the command line
+	if ac.httpAddr != "" || ac.httpsAddr != "" {
+		ac.portConfigFromCLI = true
 	}
 	if classified.RedisAddrFromArgs {
 		ac.redisAddr = classified.RedisAddr

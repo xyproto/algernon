@@ -163,39 +163,53 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 		return 0 // number of results
 	}))
 
-	// Set the HTTP (non-TLS) listen address
+	// Set the HTTP (non-TLS) listen address (only if not already set by flags/positional)
 	L.SetGlobal("SetHTTPAddr", L.NewFunction(func(L *lua.LState) int {
-		ac.httpAddr = L.ToString(1)
+		if !ac.portConfigFromCLI {
+			ac.httpAddr = L.ToString(1)
+		}
 		return 0 // number of results
 	}))
 
-	// Set the HTTPS (TLS) listen address
+	// Set the HTTPS (TLS) listen address (only if not already set by flags/positional)
 	L.SetGlobal("SetHTTPSAddr", L.NewFunction(func(L *lua.LState) int {
-		ac.httpsAddr = L.ToString(1)
+		if !ac.portConfigFromCLI {
+			ac.httpsAddr = L.ToString(1)
+		}
 		return 0 // number of results
 	}))
 
-	// Enable or disable HTTP to HTTPS redirect
+	// Enable or disable HTTP to HTTPS redirect (only if not already set by flags)
 	L.SetGlobal("SetRedirect", L.NewFunction(func(L *lua.LState) int {
-		ac.redirectHTTP = bool(L.ToBool(1))
+		if !ac.redirectFromCLI {
+			ac.redirectHTTP = bool(L.ToBool(1))
+		}
 		return 0 // number of results
 	}))
 
-	// Enable or disable Let's Encrypt / CertMagic
+	// Enable or disable Let's Encrypt / CertMagic (only if not already set by flags)
 	L.SetGlobal("SetLetsEncrypt", L.NewFunction(func(L *lua.LState) int {
-		ac.useCertMagic = bool(L.ToBool(1))
+		if !ac.certMagicFromCLI {
+			ac.useCertMagic = bool(L.ToBool(1))
+		}
 		return 0 // number of results
 	}))
 
-	// Enable or disable interactive mode (the REPL)
+	// Enable or disable interactive mode (only if not already set by flags)
 	L.SetGlobal("SetInteractive", L.NewFunction(func(L *lua.LState) int {
-		ac.serverMode = !bool(L.ToBool(1))
+		if !ac.serverModeFromCLI {
+			ac.serverMode = !bool(L.ToBool(1))
+		}
 		return 0 // number of results
 	}))
 
 	// Configure listeners with full control over protocol, port and TLS.
 	// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
+	// Only applies if port configuration was not already set by flags or positional args.
 	L.SetGlobal("SetPorts", L.NewFunction(func(L *lua.LState) int {
+		if ac.portConfigFromCLI {
+			return 0
+		}
 		tbl := L.ToTable(1)
 		if tbl == nil {
 			logrus.Error("SetPorts: expected a table argument")

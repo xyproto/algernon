@@ -160,6 +160,10 @@ type Config struct {
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 	separateEventServer          bool // use a dedicated port for the SSE event server
 	hideDotfiles                 bool // hide files and directories starting with "."
+	portConfigFromCLI            bool // port configuration was set from flags or positional args
+	serverModeFromCLI            bool // --noninteractive / -s was set from the command line
+	redirectFromCLI              bool // --redirect was set from the command line
+	certMagicFromCLI             bool // --letsencrypt / -c was set from the command line
 }
 
 // PortSetting describes a single listener endpoint with a protocol and TLS preference
