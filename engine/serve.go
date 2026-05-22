@@ -112,6 +112,22 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		return nil // Done
 	}
 
+	// If explicit port settings are configured (from SetPorts in Lua), use them
+	if len(ac.portSettings) > 0 {
+		return ac.servePortSettings(handler, done, ready)
+	}
+
+	// If --http-addr and/or --https-addr are set, convert to portSettings and use them
+	if ac.httpAddr != "" || ac.httpsAddr != "" {
+		if ac.httpAddr != "" {
+			ac.portSettings = append(ac.portSettings, PortSetting{Addr: ac.httpAddr, Protocol: "http", TLS: false})
+		}
+		if ac.httpsAddr != "" {
+			ac.portSettings = append(ac.portSettings, PortSetting{Addr: ac.httpsAddr, Protocol: "http2", TLS: true})
+		}
+		return ac.servePortSettings(handler, done, ready)
+	}
+
 	// Channel to wait and see if we should just serve regular HTTP instead
 	justServeRegularHTTP := make(chan bool)
 
@@ -269,6 +285,102 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		}
 		// Open the https:// URL if both http:// and https:// are being served
 		ac.OpenURL(ac.serverHost, ac.serverAddr, servingHTTPS.Load())
+	}
+
+	<-done // Wait for a "done" message from the REPL (or just keep waiting)
+
+	return nil // Done serving
+}
+
+// servePortSettings starts listeners based on the explicit portSettings configuration.
+func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool) error {
+	for _, ps := range ac.portSettings {
+		switch ps.Protocol {
+		case "http":
+			if ps.TLS {
+				logrus.Infof("Serving HTTPS on https://%s/", utils.HostPortToURL(ps.Addr))
+				go func() {
+					srv := ac.NewGracefulServer(handler, false, ps.Addr)
+					if err := srv.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
+						logrus.Error(err)
+					}
+				}()
+			} else {
+				logrus.Infof("Serving HTTP on http://%s/", utils.HostPortToURL(ps.Addr))
+				go func() {
+					if ac.redirectHTTP && ac.httpsAddr != "" {
+						redirectFunc := func(w http.ResponseWriter, req *http.Request) {
+							http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
+						}
+						if err := http.ListenAndServe(ps.Addr, http.HandlerFunc(redirectFunc)); err != nil {
+							ac.fatalExit(err)
+						}
+					} else {
+						srv := ac.NewGracefulServer(handler, false, ps.Addr)
+						if err := srv.ListenAndServe(); err != nil {
+							ac.fatalExit(err)
+						}
+					}
+				}()
+			}
+		case "http2":
+			if ps.TLS {
+				logrus.Infof("Serving HTTP/2 on https://%s/", utils.HostPortToURL(ps.Addr))
+				go func() {
+					srv := ac.NewGracefulServer(handler, true, ps.Addr)
+					if err := srv.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
+						logrus.Error(err)
+					}
+				}()
+			} else {
+				logrus.Infof("Serving HTTP/2 (h2c) on http://%s/", utils.HostPortToURL(ps.Addr))
+				go func() {
+					srv := ac.NewGracefulServer(handler, true, ps.Addr)
+					if err := srv.ListenAndServe(); err != nil {
+						ac.fatalExit(err)
+					}
+				}()
+			}
+		case "http3":
+			if ps.TLS {
+				logrus.Infof("Serving HTTP/3 (QUIC) on https://%s/", utils.HostPortToURL(ps.Addr))
+			} else {
+				logrus.Infof("Serving HTTP/3 (QUIC, no TLS) on %s/", utils.HostPortToURL(ps.Addr))
+			}
+			go ac.serveQUICPortSetting(handler, ps)
+		case "event":
+			logrus.Infof("Event server (SSE) on %s", utils.HostPortToURL(ps.Addr))
+			ac.eventAddr = ps.Addr
+			ac.separateEventServer = true
+		default:
+			logrus.Errorf("SetPorts: unknown protocol %q for %s", ps.Protocol, ps.Addr)
+		}
+	}
+
+	// Wait just a tiny bit for listeners to start
+	time.Sleep(20 * time.Millisecond)
+
+	ready <- true // Send a "ready" message to the REPL
+
+	// Open the URL, if specified
+	if ac.openURLAfterServing {
+		hasTLS := false
+		firstAddr := ""
+		for _, ps := range ac.portSettings {
+			if ps.Protocol == "event" {
+				continue
+			}
+			if firstAddr == "" {
+				firstAddr = ps.Addr
+			}
+			if ps.TLS {
+				hasTLS = true
+				break
+			}
+		}
+		if firstAddr != "" {
+			ac.OpenURL(ac.serverHost, firstAddr, hasTLS)
+		}
 	}
 
 	<-done // Wait for a "done" message from the REPL (or just keep waiting)

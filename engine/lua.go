@@ -204,13 +204,16 @@ func (ac *Config) RunConfiguration(filename string, mux *http.ServeMux, withHand
 	// Basic system functions, like log()
 	ac.LoadBasicSystemFunctions(L)
 
+	// Server settings functions (available regardless of database backend)
+	ac.loadServerSettingsFunctions(L, filename)
+
 	// If there is a database backend
 	if ac.perm != nil {
 
 		// Retrieve the userstate
 		userstate := ac.perm.UserState()
 
-		// Server configuration functions
+		// Server configuration functions (permission-related)
 		ac.LoadServerConfigFunctions(L, filename)
 
 		creator := userstate.Creator()

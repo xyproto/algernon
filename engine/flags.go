@@ -52,6 +52,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// Commandline flag configuration
 	flag.StringVar(&ac.serverDirOrFilename, "dir", ".", "Server directory")
 	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\" or \"[::1]:443\")")
+	flag.StringVar(&ac.httpAddr, "http-addr", "", "HTTP (non-TLS) [host][:port]")
+	flag.StringVar(&ac.httpsAddr, "https-addr", "", "HTTPS (TLS) [host][:port]")
 	flag.StringVar(&ac.serverCert, "cert", "cert.pem", "Server certificate")
 	flag.StringVar(&ac.serverKey, "key", "key.pem", "Server key")
 	flag.StringVar(&ac.redisAddr, "redis", "", "Redis [host][:port] (ie \""+ac.defaultRedisColonPort+"\")")
@@ -313,6 +315,12 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	if classified.ServerAddr != "" {
 		ac.serverAddr = classified.ServerAddr
+	}
+	// Two positional addresses: first = HTTP, second = HTTPS
+	if classified.ServerAddr2 != "" {
+		ac.httpAddr = classified.ServerAddr
+		ac.httpsAddr = classified.ServerAddr2
+		ac.serverAddr = "" // will be derived from httpAddr/httpsAddr in serve.go
 	}
 	if classified.RedisAddrFromArgs {
 		ac.redisAddr = classified.RedisAddr

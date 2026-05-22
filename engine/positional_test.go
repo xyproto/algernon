@@ -121,6 +121,25 @@ func TestClassifyPositionalArgs(t *testing.T) {
 				Remaining: []string{"nonsense"},
 			},
 		},
+		{
+			name: "two addresses: first is HTTP, second is HTTPS",
+			args: []string{":8080", ":8443"},
+			want: positionalArgs{
+				ServerAddr:  ":8080",
+				ServerAddr2: ":8443",
+			},
+		},
+		{
+			name:     "two addresses with dir",
+			args:     []string{"mydir", ":9090", ":9443"},
+			existing: []string{"mydir"},
+			want: positionalArgs{
+				ServerDirOrFilename: "mydir",
+				ServerDirSet:        true,
+				ServerAddr:          ":9090",
+				ServerAddr2:         ":9443",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

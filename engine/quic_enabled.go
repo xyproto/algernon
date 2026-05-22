@@ -31,3 +31,12 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, justServeRegularHTTP chan
 		servingHTTPS.Store(false)
 	}
 }
+
+// serveQUICPortSetting serves HTTP/3 (QUIC) for an explicit PortSetting entry.
+func (ac *Config) serveQUICPortSetting(mux http.Handler, ps PortSetting) {
+	// QUIC inherently requires TLS at the transport layer.
+	// Even with tls=false in the config, we still need cert/key to establish QUIC connections.
+	if err := http3.ListenAndServeTLS(ps.Addr, ac.serverCert, ac.serverKey, mux); err != nil {
+		logrus.Errorf("HTTP/3 (QUIC) on %s failed: %v", ps.Addr, err)
+	}
+}

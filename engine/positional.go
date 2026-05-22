@@ -17,6 +17,9 @@ type positionalArgs struct {
 	// ServerAddr is set from a "host:port", ":port" or bare web-port argument
 	ServerAddr string
 
+	// ServerAddr2 is set when a second address-like argument is found
+	ServerAddr2 string
+
 	// RedisAddr is set when an argument looks like a Redis address (":6379" or ":6380")
 	RedisAddr         string
 	RedisAddrFromArgs bool
@@ -68,14 +71,27 @@ func classifyPositionalArgs(args []string, pathExists func(string) bool) positio
 		}
 		// Check if this looks like a host:port address (handles IPv4, IPv6, and port-only)
 		if _, _, err := net.SplitHostPort(arg); err == nil {
-			// Valid host:port format, assume this is the web server address
-			result.ServerAddr = arg
+			// Valid host:port format, assume this is a web server address
+			if result.ServerAddr == "" {
+				result.ServerAddr = arg
+			} else if result.ServerAddr2 == "" {
+				result.ServerAddr2 = arg
+			} else {
+				result.Remaining = append(result.Remaining, arg)
+			}
 			continue
 		}
 		if _, err := strconv.Atoi(arg); err == nil { // no error
 			// If in doubt, assume this is the web server port.
 			if looksLikeWebPort(arg) || !result.RedisAddrFromArgs {
-				result.ServerAddr = net.JoinHostPort("", arg)
+				addr := net.JoinHostPort("", arg)
+				if result.ServerAddr == "" {
+					result.ServerAddr = addr
+				} else if result.ServerAddr2 == "" {
+					result.ServerAddr2 = addr
+				} else {
+					result.Remaining = append(result.Remaining, arg)
+				}
 			} else {
 				result.Remaining = append(result.Remaining, arg)
 			}

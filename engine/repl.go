@@ -186,7 +186,10 @@ func addFunctionsFromHelptextToCompleter(helpText string, completer *readline.Pr
 
 // LoadLuaFunctionsForREPL exports the various Lua functions that might be needed in the REPL
 func (ac *Config) LoadLuaFunctionsForREPL(L *lua.LState, o *vt.TextOutput) {
-	// Server configuration functions
+	// Server settings functions (available regardless of database backend)
+	ac.loadServerSettingsFunctions(L, "")
+
+	// Server configuration functions (permission-related)
 	ac.LoadServerConfigFunctions(L, "")
 
 	// Other basic system functions, like log()

@@ -598,6 +598,20 @@ Only available when used in serverconf.lua
 // Set the default address for the server on the form [host][:port].
 // For IPv6, use brackets: [::1]:3000 or [2001:db8::1]:443
 SetAddr(string)
+// Set the HTTP (non-TLS) listen address.
+SetHTTPAddr(string)
+// Set the HTTPS (TLS) listen address.
+SetHTTPSAddr(string)
+// Enable or disable HTTP to HTTPS redirect.
+SetRedirect(bool)
+// Enable or disable Let's Encrypt / CertMagic.
+SetLetsEncrypt(bool)
+// Enable or disable interactive mode (the REPL).
+SetInteractive(bool)
+// Configure listeners with full control over protocol, port and TLS.
+// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
+// Valid protocols: "http", "http2", "http3" (or "quic"), "event"
+SetPorts(table)
 // Reset the URL prefixes and make everything *public*.
 ClearPermissions()
 // Add an URL prefix that will have *admin* rights.
@@ -627,7 +641,7 @@ func generateUsageFunction(ac *Config) func() {
 		// Prepare and/or output a message, depending on if QUIC support is compiled in or not
 		if quicEnabled {
 			quicUsageOrMessage = "\n  -u                           Serve over QUIC / HTTP3."
-			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -N -u -n . :7000\n"
+			quicExample = "\n  Serve the current dir over QUIC, port 7000, no banner:\n    algernon -s -u -n . :7000\n"
 		} else {
 			quicFinalMessage = "\n\nThis Algernon executable was built without QUIC support."
 		}
@@ -665,7 +679,7 @@ Available flags:
                                Enables non-interactive mode. Sets cache to "prod".
   -q, --quiet                  Don't output anything to stdout or stderr.
   -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
-  -s, -N, --noninteractive    Non-interactive mode (disable debug +
+  -s, --noninteractive       Non-interactive mode (disable debug +
                                interactive mode).
   -t, --httponly               Serve regular HTTP.` + quicUsageOrMessage + `
   -v, --version                Application name and version
@@ -698,6 +712,8 @@ Available flags:
                                (the default is "` + ac.defaultEventRefresh + `").
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --http2only                  Serve HTTP/2, without HTTPS.
+  --http-addr=[HOST][:PORT]    HTTP (non-TLS) listen address.
+  --https-addr=[HOST][:PORT]   HTTPS (TLS) listen address.
   --internal=FILENAME          Internal log file (can be a bit verbose).
   --key=FILENAME               TLS key, if using HTTPS.
   --largesize=N                Threshold for not reading static files into memory, in bytes.

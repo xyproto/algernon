@@ -107,26 +107,6 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		return errors.New("perm is nil when loading server config functions")
 	}
 
-	// Set a default host and port. Maybe useful for alg applications.
-	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
-		ac.serverAddrLua = L.ToString(1)
-		return 0 // number of results
-	}))
-
-	// Set the default cookie secret. This is for the server config, before
-	// the userstate has been instanciated.
-	L.SetGlobal("SetCookieSecret", L.NewFunction(func(L *lua.LState) int {
-		ac.cookieSecret = L.ToString(1)
-		return 0 // number of results
-	}))
-
-	// Get the default cookie secret. THis is for the server config, before
-	// the userstate has been instanciated.
-	L.SetGlobal("CookieSecret", L.NewFunction(func(L *lua.LState) int {
-		L.Push(lua.LString(ac.cookieSecret))
-		return 1 // number of results
-	}))
-
 	// Clear the default path prefixes. This makes everything public.
 	L.SetGlobal("ClearPermissions", L.NewFunction(func(_ *lua.LState) int {
 		ac.perm.Clear()
@@ -149,27 +129,6 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		return 0 // number of results
 	}))
 
-	// Add a new reverse proxy given a: path prefix, endpoint and endpoint URL
-	L.SetGlobal("AddReverseProxy", L.NewFunction(func(L *lua.LState) int {
-		var rp ReverseProxy
-
-		rp.PathPrefix = L.ToString(1)
-		endpointURLString := L.ToString(2)
-
-		parsedURL, err := url.Parse(endpointURLString)
-		if err != nil {
-			logrus.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
-		}
-		rp.Endpoint = *parsedURL
-
-		if ac.reverseProxyConfig == nil {
-			ac.reverseProxyConfig = NewReverseProxyConfig()
-		}
-		ac.reverseProxyConfig.Add(&rp)
-
-		return 0 // number of results
-	}))
-
 	// Sets a Lua function as a custom "permissions denied" page handler.
 	L.SetGlobal("DenyHandler", L.NewFunction(func(L *lua.LState) int {
 		luaDenyFunc := L.ToFunction(1)
@@ -189,6 +148,128 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 				ac.perm.DenyFunction()(w, req)
 			}
 		})
+		return 0 // number of results
+	}))
+
+	return nil
+}
+
+// loadServerSettingsFunctions registers Lua functions for server settings
+// that do not require a database backend or permissions.
+func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
+	// Set a default host and port. Maybe useful for alg applications.
+	L.SetGlobal("SetAddr", L.NewFunction(func(L *lua.LState) int {
+		ac.serverAddrLua = L.ToString(1)
+		return 0 // number of results
+	}))
+
+	// Set the HTTP (non-TLS) listen address
+	L.SetGlobal("SetHTTPAddr", L.NewFunction(func(L *lua.LState) int {
+		ac.httpAddr = L.ToString(1)
+		return 0 // number of results
+	}))
+
+	// Set the HTTPS (TLS) listen address
+	L.SetGlobal("SetHTTPSAddr", L.NewFunction(func(L *lua.LState) int {
+		ac.httpsAddr = L.ToString(1)
+		return 0 // number of results
+	}))
+
+	// Enable or disable HTTP to HTTPS redirect
+	L.SetGlobal("SetRedirect", L.NewFunction(func(L *lua.LState) int {
+		ac.redirectHTTP = bool(L.ToBool(1))
+		return 0 // number of results
+	}))
+
+	// Enable or disable Let's Encrypt / CertMagic
+	L.SetGlobal("SetLetsEncrypt", L.NewFunction(func(L *lua.LState) int {
+		ac.useCertMagic = bool(L.ToBool(1))
+		return 0 // number of results
+	}))
+
+	// Enable or disable interactive mode (the REPL)
+	L.SetGlobal("SetInteractive", L.NewFunction(func(L *lua.LState) int {
+		ac.serverMode = !bool(L.ToBool(1))
+		return 0 // number of results
+	}))
+
+	// Configure listeners with full control over protocol, port and TLS.
+	// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
+	L.SetGlobal("SetPorts", L.NewFunction(func(L *lua.LState) int {
+		tbl := L.ToTable(1)
+		if tbl == nil {
+			logrus.Error("SetPorts: expected a table argument")
+			return 0
+		}
+		var settings []PortSetting
+		tbl.ForEach(func(_ lua.LValue, value lua.LValue) {
+			entry, ok := value.(*lua.LTable)
+			if !ok {
+				return
+			}
+			var ps PortSetting
+			// Support both positional {addr, protocol, tls} and named {addr=, protocol=, tls=}
+			if addrVal := entry.RawGetString("addr"); addrVal != lua.LNil {
+				ps.Addr = addrVal.String()
+			} else if addrVal := entry.RawGetInt(1); addrVal != lua.LNil {
+				ps.Addr = addrVal.String()
+			}
+			if protoVal := entry.RawGetString("protocol"); protoVal != lua.LNil {
+				ps.Protocol = protoVal.String()
+			} else if protoVal := entry.RawGetInt(2); protoVal != lua.LNil {
+				ps.Protocol = protoVal.String()
+			}
+			if tlsVal := entry.RawGetString("tls"); tlsVal != lua.LNil {
+				ps.TLS = lua.LVAsBool(tlsVal)
+			} else if tlsVal := entry.RawGetInt(3); tlsVal != lua.LNil {
+				ps.TLS = lua.LVAsBool(tlsVal)
+			}
+			// Normalize "quic" to "http3"
+			if ps.Protocol == "quic" {
+				ps.Protocol = "http3"
+			}
+			// Warn about HTTP/3 without TLS
+			if ps.Protocol == "http3" && !ps.TLS {
+				logrus.Warn("HTTP/3 without TLS is non-standard and not supported by browsers")
+			}
+			settings = append(settings, ps)
+		})
+		ac.portSettings = settings
+		return 0 // number of results
+	}))
+
+	// Set the default cookie secret. This is for the server config, before
+	// the userstate has been instanciated.
+	L.SetGlobal("SetCookieSecret", L.NewFunction(func(L *lua.LState) int {
+		ac.cookieSecret = L.ToString(1)
+		return 0 // number of results
+	}))
+
+	// Get the default cookie secret. THis is for the server config, before
+	// the userstate has been instanciated.
+	L.SetGlobal("CookieSecret", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(ac.cookieSecret))
+		return 1 // number of results
+	}))
+
+	// Add a new reverse proxy given a: path prefix, endpoint and endpoint URL
+	L.SetGlobal("AddReverseProxy", L.NewFunction(func(L *lua.LState) int {
+		var rp ReverseProxy
+
+		rp.PathPrefix = L.ToString(1)
+		endpointURLString := L.ToString(2)
+
+		parsedURL, err := url.Parse(endpointURLString)
+		if err != nil {
+			logrus.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
+		}
+		rp.Endpoint = *parsedURL
+
+		if ac.reverseProxyConfig == nil {
+			ac.reverseProxyConfig = NewReverseProxyConfig()
+		}
+		ac.reverseProxyConfig.Add(&rp)
+
 		return 0 // number of results
 	}))
 
@@ -266,8 +347,6 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 		L.Push(lua.LString(ac.Info()))
 		return 1 // number of results
 	}))
-
-	return nil
 }
 
 // DatabaseBackend tries to retrieve a database backend, using one of the

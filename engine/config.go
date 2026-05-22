@@ -72,12 +72,15 @@ type Config struct {
 	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
 	defaultWebColonPort          string
-	serverLogFile                string // exposed to the server configuration scripts(s)
-	serverTempDir                string // temporary directory
-	cookieSecret                 string // secret to be used when setting and getting user login cookies
-	defaultTheme                 string // theme for Markdown and error pages
-	openExecutable               string // open the URL after serving, with a specific executable
-	serverAddrLua                string // configuration that may only be set in the server configuration script(s)
+	serverLogFile                string        // exposed to the server configuration scripts(s)
+	serverTempDir                string        // temporary directory
+	cookieSecret                 string        // secret to be used when setting and getting user login cookies
+	defaultTheme                 string        // theme for Markdown and error pages
+	openExecutable               string        // open the URL after serving, with a specific executable
+	serverAddrLua                string        // configuration that may only be set in the server configuration script(s)
+	httpAddr                     string        // explicit HTTP listen address (from --http-addr or positional)
+	httpsAddr                    string        // explicit HTTPS listen address (from --https-addr or positional)
+	portSettings                 []PortSetting // explicit listener configuration (from SetPorts in Lua)
 	dbName                       string
 	serverHeaderName             string // used in the HTTP headers as the "Server" name
 	eventAddr                    string // for the Server-Sent Event (SSE) server (host and port)
@@ -157,6 +160,13 @@ type Config struct {
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 	separateEventServer          bool // use a dedicated port for the SSE event server
 	hideDotfiles                 bool // hide files and directories starting with "."
+}
+
+// PortSetting describes a single listener endpoint with a protocol and TLS preference
+type PortSetting struct {
+	Addr     string // [host]:port
+	Protocol string // "http", "http2", "http3" (or "quic"), "event"
+	TLS      bool   // use TLS?
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
