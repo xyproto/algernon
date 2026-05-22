@@ -248,7 +248,8 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		// Assume this to be a compressed Algernon application
 		webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
 		testfile := filepath.Join(webApplicationExtractionDir, "canary")
-		if _, err := os.Create(testfile); err == nil { // success
+		if f, err := os.Create(testfile); err == nil {
+			f.Close()
 			os.Remove(testfile)
 		} else {
 			// Could not create the test file
