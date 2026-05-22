@@ -26,7 +26,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
 		serveJustQUICShort, onlyLuaModeShort, redirectShort,
-		nonInteractive, nonInteractiveShort bool
+		nonInteractive bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -69,7 +69,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
 	flag.StringVar(&ac.eventRefresh, "eventrefresh", ac.defaultEventRefresh, "Event refresh interval (ie \""+ac.defaultEventRefresh+"\")")
-	flag.BoolVar(&ac.serverMode, "server", false, "Same as --noninteractive")
+	flag.BoolVar(&ac.serverMode, "server", false, "Same as --noninteractive") // deprecated, use --noninteractive or -s
 	flag.BoolVar(&nonInteractive, "noninteractive", false, "Non-interactive mode (disable debug + interactive mode)")
 	flag.StringVar(&ac.mariadbDSN, "maria", "", "MariaDB/MySQL connection string (DSN)")
 	flag.StringVar(&ac.mariaDatabase, "mariadb", "", "MariaDB/MySQL database name")
@@ -117,7 +117,6 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
 	flag.BoolVar(&serverModeShort, "s", false, "Non-interactive mode (short for --noninteractive)")
-	flag.BoolVar(&nonInteractiveShort, "N", false, "Non-interactive mode")
 	flag.BoolVar(&useBoltShort, "b", false, "Use the default Bolt filename")
 	flag.BoolVar(&productionModeShort, "p", false, "Production mode (when running as a system service)")
 	flag.BoolVar(&debugModeShort, "d", false, "Debug mode")
@@ -142,8 +141,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.autoRefresh = ac.autoRefresh || autoRefreshShort
 	ac.debugMode = ac.debugMode || debugModeShort
 	ac.serverMode = ac.serverMode || serverModeShort
-	// --noninteractive / -N / -s is the preferred way to enable server mode
-	if nonInteractive || nonInteractiveShort || serverModeShort {
+	// --noninteractive / -s is the preferred way to enable server mode
+	if nonInteractive || serverModeShort {
 		ac.serverMode = true
 	}
 	ac.useBolt = ac.useBolt || useBoltShort
