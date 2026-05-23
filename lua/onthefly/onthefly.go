@@ -18,7 +18,7 @@ const (
 	TagClass = "Tag"
 )
 
-// Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
+// Get the first argument, "self", and cast it from userdata to a Tag.
 func checkTag(L *lua.LState) *onthefly.Tag {
 	ud := L.CheckUserData(1)
 	if tag, ok := ud.Value.(*onthefly.Tag); ok {
@@ -28,9 +28,39 @@ func checkTag(L *lua.LState) *onthefly.Tag {
 	return nil
 }
 
-// Create a new onthefly.Tag node. onthefly.Tag data as the first argument is optional.
-// Logs an error if the given onthefly.Tag can't be parsed.
-// Always returns a onthefly.Tag Node.
+// Get the first argument, "self", and cast it from userdata to a Page.
+func checkPage(L *lua.LState) *onthefly.Page {
+	ud := L.CheckUserData(1)
+	if page, ok := ud.Value.(*onthefly.Page); ok {
+		return page
+	}
+	L.ArgError(1, "Page expected")
+	return nil
+}
+
+// pushSelf re-pushes the first argument (self) so that setters can be chained.
+// Always returns 1, to be used as the return value of a Lua function.
+func pushSelf(L *lua.LState) int {
+	L.Push(L.Get(1))
+	return 1
+}
+
+// pushTag wraps the given Tag in a Lua userdata with the Tag metatable.
+// Pushes nil if the given Tag is nil.
+func pushTag(L *lua.LState, tag *onthefly.Tag) {
+	if tag == nil {
+		L.Push(lua.LNil)
+		return
+	}
+	ud := L.NewUserData()
+	ud.Value = tag
+	L.SetMetatable(ud, L.GetTypeMetatable(TagClass))
+	L.Push(ud)
+}
+
+// Create a new onthefly.Tag node.
+// Logs an error if the given tag name is empty.
+// Always returns a Tag userdata.
 func constructTag(L *lua.LState) (*lua.LUserData, error) {
 	// Use the first argument as the name of the tag
 	name := L.ToString(1)
@@ -49,53 +79,7 @@ func constructTag(L *lua.LState) (*lua.LUserData, error) {
 	return ud, nil
 }
 
-// Take a Tag and a onthefly.Tag path.
-// Remove a key from a map. Return true if successful.
-func tagAddNewTag(L *lua.LState) int {
-	tag := checkTag(L) // arg 1
-	name := L.ToString(2)
-	if name == "" {
-		L.ArgError(2, "tag name expected")
-		return 0 // no results
-	}
-
-	// Create a new Tag
-	newTag := tag.AddNewTag(name)
-
-	// Create a new userdata struct
-	ud := L.NewUserData()
-	ud.Value = newTag
-	L.SetMetatable(ud, L.GetTypeMetatable(TagClass))
-
-	// Return the newly created userdata
-	L.Push(ud)
-	return 1 // number of results
-}
-
-func tagString(L *lua.LState) int {
-	tag := checkTag(L) // arg 1
-
-	// Return the description as a Lua string
-	L.Push(lua.LString(tag.String()))
-	return 1 // number of results
-}
-
-// The hash map methods that are to be registered
-var tagMethods = map[string]lua.LGFunction{
-	"__tostring": tagString,
-	"addNewTag":  tagAddNewTag,
-}
-
-// Get the first argument, "self", and cast it from userdata to a library (which is really a hash map).
-func checkPage(L *lua.LState) *onthefly.Page {
-	ud := L.CheckUserData(1)
-	if page, ok := ud.Value.(*onthefly.Page); ok {
-		return page
-	}
-	L.ArgError(1, "Page expected")
-	return nil
-}
-
+// Create a new HTML5 onthefly.Page.
 func constructHTML5Page(L *lua.LState) (*lua.LUserData, error) {
 	// Use the first argument as the title of the page
 	title := L.ToString(1)
@@ -111,9 +95,11 @@ func constructHTML5Page(L *lua.LState) (*lua.LUserData, error) {
 	return ud, nil
 }
 
-// Construct an onthefly.Page that represents a TinySVG object
+// Construct a TinySVG document that is wrapped in a Page-compatible userdata.
+// NOTE: tinysvg.Document is a separate type from onthefly.Page, so only
+// __tostring works on the returned userdata. Use this for SVG generation only.
 func constructTinySVGPage(L *lua.LState) (*lua.LUserData, error) {
-	// Use the first argument as the title of the page
+	// Use the first arguments as the width and height of the SVG
 	w := L.ToInt(1)
 	h := L.ToInt(2)
 	description := L.ToString(3)
@@ -142,7 +128,7 @@ func constructPage(L *lua.LState) (*lua.LUserData, error) {
 	// Use the second argument as the name of the root tag
 	rootTagName := L.ToString(2)
 	if rootTagName == "" {
-		L.ArgError(1, "root tag name expected")
+		L.ArgError(2, "root tag name expected")
 		return nil, errors.New("root tag name expected")
 	}
 
@@ -157,20 +143,6 @@ func constructPage(L *lua.LState) (*lua.LUserData, error) {
 	return ud, nil
 }
 
-// Return the Page as a string
-func pageString(L *lua.LState) int {
-	page := checkPage(L) // arg 1
-
-	// Return the Page as a Lua string
-	L.Push(lua.LString(page.String()))
-	return 1 // number of results
-}
-
-// The hash map methods that are to be registered
-var pageMethods = map[string]lua.LGFunction{
-	"__tostring": pageString,
-}
-
 // Load makes functions related to onthefly.Page nodes available to the given Lua state
 func Load(L *lua.LState) {
 	// Register the Page class and the methods that belongs with it.
@@ -178,6 +150,7 @@ func Load(L *lua.LState) {
 	metaTablePage.RawSetH(lua.LString("__index"), metaTablePage)
 	L.SetFuncs(metaTablePage, pageMethods)
 
+	// Register the Tag class and the methods that belongs with it.
 	metaTableTag := L.NewTypeMetatable(TagClass)
 	metaTableTag.RawSetH(lua.LString("__index"), metaTableTag)
 	L.SetFuncs(metaTableTag, tagMethods)
@@ -241,4 +214,5 @@ func Load(L *lua.LState) {
 		L.Push(userdata)
 		return 1 // number of results
 	}))
+
 }
