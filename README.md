@@ -79,7 +79,8 @@ Design decisions
     * index.pongo2, index.po2 or index.tmpl is Pongo2 code that is rendered as HTML.
     * index.amber is Amber code that is rendered as HTML.
     * index.hyper.js, index.hyper.jsx or index.happ is JSX+HyperApp code that is rendered as HTML.
-    * index.jsx or index.tsx is a React JSX/TSX file that is rendered as a full HTML page with the React runtime and bundled JavaScript.
+    * index.jsx is a React JSX/JavaScript file that is rendered as HTML with bundled JavaScript.
+    * index.tsx is a React TSX/TypeScript file that is rendered as HTML with bundled JavaScript.
     * index.tl is Teal code that is interpreted as a handler function for the current directory.
     * index.prompt is a content-type, an Ollama model, a blank line and a prompt, for generating content with LLMs.
     * data.lua is Lua code, where the functions and variables are made available for Pongo2, Amber and Markdown pages in the same directory.
