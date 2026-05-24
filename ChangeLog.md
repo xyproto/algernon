@@ -3,9 +3,22 @@
 Changes from 1.17.7 to 1.17.8
 =============================
 
-* Add support for TypeScript and `index.tsx` files.
-* Improve the plugin system wrt. concurrency.
-* Prevent reading Lua from parent directories when `--lua` is used (thanks @fg0x0).
+* Fix path traversal when `--domain` is used (thanks @fg0x0).
+* Fix a possible file descriptor leak after trying to write to `/dev/shm`.
+* Fix an issue with setting header values when proxying.
+* Add new functions for using SQLite, ref #156 (thanks for the feature request, @judell).
+* Add support for compiling TypeScript and rendering `index.tsx` files, ref #166 (thanks for the feature request @fayakun-it-consulting).
+* Add multiple ways of specifying ports and protocols, ref #173 (thanks for the feature request @DaVyze).
+* Improve how JSX and TSX files are cached.
+* Improve the Lua plugin system wrt. oncurrency.
+* Improve error handling when extracting `.alg` files.
+* Add a `--noninteractive` flag as an alias for the less descriptive `--server` flag, and also deprecate the `--server` flag. The short `-s` flag remains unchanged, and the `--server` flag is still supported.
+* Let the desired React version be specified in a comment in `index.jsx`/`index.tsx` instead of in an `.algernon` file. Currently only React 19 is supported and can be specified like this: `// React: 19`.
+* Add additional Lua functions for building HTML output programmatically by using the `github.com/xyproto/onthefly` package.
+* Prioritize configuration values from command line flags first, then positional arguments and then `serverconf.lua`.
+* Add two new example projects under `samples/react_tsx` and `samples/onthefly`.
+* Update dependencies.
+* Update documentation.
 
 Changes from 1.17.6 to 1.17.7
 =============================
