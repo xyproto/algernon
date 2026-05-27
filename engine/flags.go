@@ -52,10 +52,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// Commandline flag configuration
 	flag.StringVar(&ac.serverDirOrFilename, "dir", ".", "Server directory")
 	flag.StringVar(&ac.serverAddr, "addr", "", "Server [host][:port] (ie \":443\" or \"[::1]:443\")")
-	flag.StringVar(&ac.httpAddr, "http-addr", "", "HTTP (non-TLS) [host][:port]")
-	flag.StringVar(&ac.httpsAddr, "https-addr", "", "HTTPS (TLS) [host][:port]")
-	flag.StringVar(&ac.serverCert, "cert", "cert.pem", "Server certificate")
-	flag.StringVar(&ac.serverKey, "key", "key.pem", "Server key")
+	flag.StringVar(&ac.serve.httpAddr, "http-addr", "", "HTTP (non-TLS) [host][:port]")
+	flag.StringVar(&ac.serve.httpsAddr, "https-addr", "", "HTTPS (TLS) [host][:port]")
+	flag.StringVar(&ac.serve.serverCert, "cert", "cert.pem", "Server certificate")
+	flag.StringVar(&ac.serve.serverKey, "key", "key.pem", "Server key")
 	flag.StringVar(&ac.redisAddr, "redis", "", "Redis [host][:port] (ie \""+ac.defaultRedisColonPort+"\")")
 	flag.IntVar(&ac.redisDBindex, "dbindex", 0, "Redis database index")
 	flag.StringVar(&ac.serverConfScript, "conf", "serverconf.lua", "Server configuration written in Lua")
@@ -66,7 +66,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.productionMode, "prod", false, "Production mode (when running as a system service)")
 	flag.BoolVar(&ac.debugMode, "debug", false, "Debug mode")
 	flag.BoolVar(&ac.verboseMode, "verbose", false, "Verbose logging")
-	flag.BoolVar(&ac.redirectHTTP, "redirect", false, "Redirect HTTP traffic to HTTPS if both are enabled")
+	flag.BoolVar(&ac.serve.redirectHTTP, "redirect", false, "Redirect HTTP traffic to HTTPS if both are enabled")
 	flag.BoolVar(&ac.autoRefresh, "autorefresh", false, "Enable the auto-refresh feature")
 	flag.StringVar(&ac.autoRefreshDir, "watchdir", "", "Directory to watch (also enables auto-refresh)")
 	flag.StringVar(&ac.eventAddr, "eventserver", "", "SSE [host][:port] (ie \""+ac.defaultEventColonPort+"\")")
@@ -111,8 +111,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.StringVar(&ac.commonAccessLogFilename, "ncsa", "", "NCSA access log filename")
 	flag.BoolVar(&ac.clearDefaultPathPrefixes, "clear", false, "Clear the default URI prefixes for handling permissions")
 	flag.StringVar(&ac.cookieSecret, "cookiesecret", "", "Secret to be used when setting and getting login cookies")
-	flag.BoolVar(&ac.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
-	flag.BoolVar(&ac.useCertMagicStaging, "testcert", false, "Use the Let's Encrypt staging CA instead of the production CA (for testing)")
+	flag.BoolVar(&ac.serve.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
+	flag.BoolVar(&ac.serve.useCertMagicStaging, "testcert", false, "Use the Let's Encrypt staging CA instead of the production CA (for testing)")
 	flag.BoolVar(&ac.hideDotfiles, "hide-dotfiles", false, "Hide files and directories starting with '.'")
 	flag.StringVar(&ac.dirBaseURL, "dirbaseurl", "", "Base URL for the directory listing (optional)")
 	// The short versions of some flags
@@ -151,11 +151,11 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	if ac.serverMode {
 		ac.serverModeFromCLI = true
 	}
-	if ac.redirectHTTP {
-		ac.redirectFromCLI = true
+	if ac.serve.redirectHTTP {
+		ac.serve.redirectFromCLI = true
 	}
-	if ac.useCertMagic {
-		ac.certMagicFromCLI = true
+	if ac.serve.useCertMagic {
+		ac.serve.certMagicFromCLI = true
 	}
 	ac.useBolt = ac.useBolt || useBoltShort
 	ac.productionMode = ac.productionMode || productionModeShort
@@ -172,7 +172,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		ac.serveJustQUIC = ac.serveJustQUIC || serveJustQUICShort
 	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
-	ac.redirectHTTP = ac.redirectHTTP || redirectShort
+	ac.serve.redirectHTTP = ac.serve.redirectHTTP || redirectShort
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {
@@ -224,8 +224,8 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	case ac.productionMode:
 		// Use system directories
 		ac.serverDirOrFilename = "/srv/algernon"
-		ac.serverCert = "/etc/algernon/cert.pem"
-		ac.serverKey = "/etc/algernon/key.pem"
+		ac.serve.serverCert = "/etc/algernon/cert.pem"
+		ac.serve.serverKey = "/etc/algernon/key.pem"
 		ac.cacheMode = cachemode.Production
 		ac.serverMode = true
 	case ac.devMode:
@@ -328,17 +328,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	// Two positional addresses: first = HTTP, second = HTTPS (only if flags didn't set them)
 	if classified.ServerAddr2 != "" {
-		if ac.httpAddr == "" {
-			ac.httpAddr = classified.ServerAddr
+		if ac.serve.httpAddr == "" {
+			ac.serve.httpAddr = classified.ServerAddr
 		}
-		if ac.httpsAddr == "" {
-			ac.httpsAddr = classified.ServerAddr2
+		if ac.serve.httpsAddr == "" {
+			ac.serve.httpsAddr = classified.ServerAddr2
 		}
 		ac.serverAddr = "" // will be derived from httpAddr/httpsAddr in serve.go
 	}
 	// Track that port configuration came from the command line
-	if ac.httpAddr != "" || ac.httpsAddr != "" {
-		ac.portConfigFromCLI = true
+	if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" {
+		ac.serve.portConfigFromCLI = true
 	}
 	if classified.RedisAddrFromArgs {
 		ac.redisAddr = classified.RedisAddr
@@ -357,10 +357,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// Handle remaining unclassified positional arguments for backward compatibility.
 	// Expected order: cert file, key file, redis address, redis db index.
 	if len(remainingArgs) > 0 {
-		ac.serverCert = remainingArgs[0]
+		ac.serve.serverCert = remainingArgs[0]
 	}
 	if len(remainingArgs) > 1 {
-		ac.serverKey = remainingArgs[1]
+		ac.serve.serverKey = remainingArgs[1]
 	}
 	if len(remainingArgs) > 2 && !redisAddrFromArgs {
 		ac.redisAddr = remainingArgs[2]
@@ -386,18 +386,18 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	ac.serverHost = host
 
 	// CertMagic and Let's Encrypt
-	if ac.useCertMagic {
+	if ac.serve.useCertMagic {
 		logrus.Info("Use Cert Magic")
 		if dirEntries, err := os.ReadDir(ac.serverDirOrFilename); err != nil {
 			logrus.Error("Could not use Cert Magic:" + err.Error())
-			ac.useCertMagic = false
+			ac.serve.useCertMagic = false
 		} else {
 			for _, dirEntry := range dirEntries {
 				basename := filepath.Base(dirEntry.Name())
 				dirOrSymlink := dirEntry.IsDir() || ((dirEntry.Type() & os.ModeSymlink) == os.ModeSymlink)
 				// TODO: Confirm that the symlink is a symlink to a directory, if it's a symlink
 				if dirOrSymlink && strings.Contains(basename, ".") && !strings.HasPrefix(basename, ".") && !strings.HasSuffix(basename, ".old") {
-					ac.certMagicDomains = append(ac.certMagicDomains, basename)
+					ac.serve.certMagicDomains = append(ac.serve.certMagicDomains, basename)
 				}
 			}
 			// Using Let's Encrypt implies --domain, to search for suitable directories in the directory to be served

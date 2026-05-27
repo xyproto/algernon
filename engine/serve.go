@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -100,6 +101,23 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 	}
 }
 
+// configureCertMagic sets CertMagic package-level defaults from ac.
+// If $XDG_CONFIG_DIR is not set, uses $HOME, then $TMPDIR, then /tmp for cert storage.
+func (ac *Config) configureCertMagic() {
+	certStorageDir := env.StrAlt("XDG_CONFIG_DIR", "HOME", env.Str("TMPDIR", "/tmp"))
+	defaultEmail := env.StrAlt("LOGNAME", "USER", "root") + "@localhost"
+	if len(ac.serve.certMagicDomains) > 0 {
+		defaultEmail = "webmaster@" + ac.serve.certMagicDomains[0]
+	}
+	certmagic.DefaultACME.Email = env.Str("EMAIL", defaultEmail)
+	// TODO: Find a way for Algernon users to agree on this manually
+	certmagic.DefaultACME.Agreed = true
+	certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
+	if ac.serve.useCertMagicStaging {
+		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+	}
+}
+
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
 func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 	// If we are not writing internal logs to a file, reduce the verbosity
@@ -113,17 +131,17 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 	}
 
 	// If explicit port settings are configured (from SetPorts in Lua), use them
-	if len(ac.portSettings) > 0 {
+	if len(ac.serve.portSettings) > 0 {
 		return ac.servePortSettings(handler, done, ready)
 	}
 
 	// If --http-addr and/or --https-addr are set, convert to portSettings and use them
-	if ac.httpAddr != "" || ac.httpsAddr != "" {
-		if ac.httpAddr != "" {
-			ac.portSettings = append(ac.portSettings, PortSetting{Addr: ac.httpAddr, Protocol: "http", TLS: false})
+	if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" {
+		if ac.serve.httpAddr != "" {
+			ac.serve.portSettings = append(ac.serve.portSettings, PortSetting{Addr: ac.serve.httpAddr, Protocol: "http", TLS: false})
 		}
-		if ac.httpsAddr != "" {
-			ac.portSettings = append(ac.portSettings, PortSetting{Addr: ac.httpsAddr, Protocol: "http2", TLS: true})
+		if ac.serve.httpsAddr != "" {
+			ac.serve.portSettings = append(ac.serve.portSettings, PortSetting{Addr: ac.serve.httpsAddr, Protocol: "http2", TLS: true})
 		}
 		return ac.servePortSettings(handler, done, ready)
 	}
@@ -161,36 +179,20 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 
 	// Decide which protocol to listen to
 	switch {
-	case ac.useCertMagic:
-		if len(ac.certMagicDomains) == 0 {
+	case ac.serve.useCertMagic:
+		if len(ac.serve.certMagicDomains) == 0 {
 			logrus.Warnln("Found no directories looking like domains in the given directory.")
-		} else if len(ac.certMagicDomains) == 1 {
-			logrus.Infof("Serving one domain with CertMagic: %s", ac.certMagicDomains[0])
+		} else if len(ac.serve.certMagicDomains) == 1 {
+			logrus.Infof("Serving one domain with CertMagic: %s", ac.serve.certMagicDomains[0])
 		} else {
-			logrus.Infof("Serving %d domains with CertMagic: %s", len(ac.certMagicDomains), strings.Join(ac.certMagicDomains, ", "))
+			logrus.Infof("Serving %d domains with CertMagic: %s", len(ac.serve.certMagicDomains), strings.Join(ac.serve.certMagicDomains, ", "))
 		}
 		servingHTTPS.Store(true)
 		// TODO: Look at "Advanced use" at https://github.com/caddyserver/certmagic#examples
 		// Listen for HTTP and HTTPS requests, for specific domain(s)
 		go func() {
-			// If $XDG_CONFIG_DIR is not set, use $HOME.
-			// If $HOME is not set, use $TMPDIR.
-			// If $TMPDIR is not set, use /tmp.
-			certStorageDir := env.StrAlt("XDG_CONFIG_DIR", "HOME", env.Str("TMPDIR", "/tmp"))
-
-			defaultEmail := env.StrAlt("LOGNAME", "USER", "root") + "@localhost"
-			if len(ac.certMagicDomains) > 0 {
-				defaultEmail = "webmaster@" + ac.certMagicDomains[0]
-			}
-
-			certmagic.DefaultACME.Email = env.Str("EMAIL", defaultEmail)
-			// TODO: Find a way for Algernon users to agree on this manually
-			certmagic.DefaultACME.Agreed = true
-			certmagic.Default.Storage = &certmagic.FileStorage{Path: certStorageDir}
-			if ac.useCertMagicStaging {
-				certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-			}
-			if err := certmagic.HTTPS(ac.certMagicDomains, handler); err != nil {
+			ac.configureCertMagic()
+			if err := certmagic.HTTPS(ac.serve.certMagicDomains, handler); err != nil {
 				servingHTTPS.Store(false)
 				logrus.Error(err)
 				// Don't serve HTTP if CertMagic fails, just quit
@@ -211,7 +213,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			// Listen for HTTPS + HTTP/2 requests
 			HTTPS2server := ac.NewGracefulServer(handler, true, utils.JoinHostPort(ac.serverHost, ":443"))
 			// Start serving. Shut down gracefully at exit.
-			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
+			if err := HTTPS2server.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
 				servingHTTPS.Store(false)
 				logrus.Error(err)
 			}
@@ -219,7 +221,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		logrus.Info("Serving HTTP on http://" + utils.HostPortToURL(utils.JoinHostPort(ac.serverHost, ":80")) + "/")
 		servingHTTP.Store(true)
 		go func() {
-			if ac.redirectHTTP {
+			if ac.serve.redirectHTTP {
 				// Redirect HTTP to HTTPS
 				redirectFunc := func(w http.ResponseWriter, req *http.Request) {
 					http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
@@ -259,7 +261,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		HTTPS2server := ac.NewGracefulServer(handler, true, ac.serverAddr)
 		// Start serving. Shut down gracefully at exit.
 		go func() {
-			if err := HTTPS2server.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
+			if err := HTTPS2server.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
 				logrus.Errorf("%s. Not serving HTTP/2.", err)
 				logrus.Info("Use the -t flag for serving regular HTTP.")
 				servingHTTPS.Store(false)
@@ -294,29 +296,66 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 
 // servePortSettings starts listeners based on the explicit portSettings configuration.
 func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool) error {
-	for _, ps := range ac.portSettings {
+	// When using CertMagic, set up managed TLS and the HTTP challenge handler.
+	var (
+		cmCfg      *certmagic.Config
+		acmeIssuer *certmagic.ACMEIssuer
+	)
+	if ac.serve.useCertMagic {
+		ac.configureCertMagic()
+		cmCfg = certmagic.NewDefault()
+		if err := cmCfg.ManageAsync(context.Background(), ac.serve.certMagicDomains); err != nil {
+			logrus.Errorf("CertMagic setup failed, falling back to cert/key files: %v", err)
+			cmCfg = nil
+		} else if len(cmCfg.Issuers) > 0 {
+			if am, ok := cmCfg.Issuers[0].(*certmagic.ACMEIssuer); ok {
+				acmeIssuer = am
+			}
+		}
+	}
+
+	for _, ps := range ac.serve.portSettings {
 		switch ps.Protocol {
 		case "http":
 			if ps.TLS {
 				logrus.Infof("Serving HTTPS on https://%s/", utils.HostPortToURL(ps.Addr))
-				go func() {
-					srv := ac.NewGracefulServer(handler, false, ps.Addr)
-					if err := srv.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
-						logrus.Error(err)
-					}
-				}()
+				if cmCfg != nil {
+					go func() {
+						tlsCfg := cmCfg.TLSConfig()
+						tlsCfg.NextProtos = append([]string{"h2", "http/1.1"}, tlsCfg.NextProtos...)
+						srv := ac.NewGracefulServer(handler, false, ps.Addr)
+						if err := srv.ListenAndServeTLSConfig(tlsCfg); err != nil {
+							logrus.Error(err)
+						}
+					}()
+				} else {
+					go func() {
+						srv := ac.NewGracefulServer(handler, false, ps.Addr)
+						if err := srv.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
+							logrus.Error(err)
+						}
+					}()
+				}
 			} else {
 				logrus.Infof("Serving HTTP on http://%s/", utils.HostPortToURL(ps.Addr))
 				go func() {
-					if ac.redirectHTTP && ac.httpsAddr != "" {
+					if ac.serve.redirectHTTP && ac.serve.httpsAddr != "" {
 						redirectFunc := func(w http.ResponseWriter, req *http.Request) {
 							http.Redirect(w, req, "https://"+req.Host+req.URL.String(), http.StatusMovedPermanently)
 						}
-						if err := http.ListenAndServe(ps.Addr, http.HandlerFunc(redirectFunc)); err != nil {
+						var h http.Handler = http.HandlerFunc(redirectFunc)
+						if acmeIssuer != nil {
+							h = acmeIssuer.HTTPChallengeHandler(h)
+						}
+						if err := http.ListenAndServe(ps.Addr, h); err != nil {
 							ac.fatalExit(err)
 						}
 					} else {
-						srv := ac.NewGracefulServer(handler, false, ps.Addr)
+						h := handler
+						if acmeIssuer != nil {
+							h = acmeIssuer.HTTPChallengeHandler(h)
+						}
+						srv := ac.NewGracefulServer(h, false, ps.Addr)
 						if err := srv.ListenAndServe(); err != nil {
 							ac.fatalExit(err)
 						}
@@ -326,12 +365,23 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 		case "http2":
 			if ps.TLS {
 				logrus.Infof("Serving HTTP/2 on https://%s/", utils.HostPortToURL(ps.Addr))
-				go func() {
-					srv := ac.NewGracefulServer(handler, true, ps.Addr)
-					if err := srv.ListenAndServeTLS(ac.serverCert, ac.serverKey); err != nil {
-						logrus.Error(err)
-					}
-				}()
+				if cmCfg != nil {
+					go func() {
+						tlsCfg := cmCfg.TLSConfig()
+						tlsCfg.NextProtos = append([]string{"h2", "http/1.1"}, tlsCfg.NextProtos...)
+						srv := ac.NewGracefulServer(handler, true, ps.Addr)
+						if err := srv.ListenAndServeTLSConfig(tlsCfg); err != nil {
+							logrus.Error(err)
+						}
+					}()
+				} else {
+					go func() {
+						srv := ac.NewGracefulServer(handler, true, ps.Addr)
+						if err := srv.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
+							logrus.Error(err)
+						}
+					}()
+				}
 			} else {
 				logrus.Infof("Serving HTTP/2 (h2c) on http://%s/", utils.HostPortToURL(ps.Addr))
 				go func() {
@@ -366,7 +416,7 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 	if ac.openURLAfterServing {
 		hasTLS := false
 		firstAddr := ""
-		for _, ps := range ac.portSettings {
+		for _, ps := range ac.serve.portSettings {
 			if ps.Protocol == "event" {
 				continue
 			}

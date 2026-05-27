@@ -61,8 +61,8 @@ func (ac *Config) Info() string {
 		sb.WriteString("Log file:\t\t" + ac.serverLogFile + "\n")
 	}
 	if !(ac.serveJustHTTP2 || ac.serveJustHTTP) {
-		sb.WriteString("TLS certificate:\t" + ac.serverCert + "\n")
-		sb.WriteString("TLS key:\t\t" + ac.serverKey + "\n")
+		sb.WriteString("TLS certificate:\t" + ac.serve.serverCert + "\n")
+		sb.WriteString("TLS key:\t\t" + ac.serve.serverKey + "\n")
 	}
 	if ac.autoRefresh {
 		if ac.separateEventServer {
@@ -165,32 +165,32 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 
 	// Set the HTTP (non-TLS) listen address (only if not already set by flags/positional)
 	L.SetGlobal("SetHTTPAddr", L.NewFunction(func(L *lua.LState) int {
-		if !ac.portConfigFromCLI {
-			ac.httpAddr = L.ToString(1)
+		if !ac.serve.portConfigFromCLI {
+			ac.serve.httpAddr = L.ToString(1)
 		}
 		return 0 // number of results
 	}))
 
 	// Set the HTTPS (TLS) listen address (only if not already set by flags/positional)
 	L.SetGlobal("SetHTTPSAddr", L.NewFunction(func(L *lua.LState) int {
-		if !ac.portConfigFromCLI {
-			ac.httpsAddr = L.ToString(1)
+		if !ac.serve.portConfigFromCLI {
+			ac.serve.httpsAddr = L.ToString(1)
 		}
 		return 0 // number of results
 	}))
 
 	// Enable or disable HTTP to HTTPS redirect (only if not already set by flags)
 	L.SetGlobal("SetRedirect", L.NewFunction(func(L *lua.LState) int {
-		if !ac.redirectFromCLI {
-			ac.redirectHTTP = bool(L.ToBool(1))
+		if !ac.serve.redirectFromCLI {
+			ac.serve.redirectHTTP = bool(L.ToBool(1))
 		}
 		return 0 // number of results
 	}))
 
 	// Enable or disable Let's Encrypt / CertMagic (only if not already set by flags)
 	L.SetGlobal("SetLetsEncrypt", L.NewFunction(func(L *lua.LState) int {
-		if !ac.certMagicFromCLI {
-			ac.useCertMagic = bool(L.ToBool(1))
+		if !ac.serve.certMagicFromCLI {
+			ac.serve.useCertMagic = bool(L.ToBool(1))
 		}
 		return 0 // number of results
 	}))
@@ -207,7 +207,7 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 	// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
 	// Only applies if port configuration was not already set by flags or positional args.
 	L.SetGlobal("SetPorts", L.NewFunction(func(L *lua.LState) int {
-		if ac.portConfigFromCLI {
+		if ac.serve.portConfigFromCLI {
 			return 0
 		}
 		tbl := L.ToTable(1)
@@ -248,7 +248,7 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 			}
 			settings = append(settings, ps)
 		})
-		ac.portSettings = settings
+		ac.serve.portSettings = settings
 		return 0 // number of results
 	}))
 

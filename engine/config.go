@@ -71,8 +71,6 @@ type Config struct {
 	defaultRedisColonPort        string
 	serverDirOrFilename          string // exposed to the server configuration scripts(s)
 	serverAddr                   string // exposed to the server configuration scripts(s)
-	serverCert                   string // exposed to the server configuration scripts(s)
-	serverKey                    string // exposed to the server configuration scripts(s)
 	serverConfScript             string // exposed to the server configuration scripts(s)
 	defaultWebColonPort          string
 	serverLogFile                string // exposed to the server configuration scripts(s)
@@ -81,8 +79,6 @@ type Config struct {
 	defaultTheme                 string // theme for Markdown and error pages
 	openExecutable               string // open the URL after serving, with a specific executable
 	serverAddrLua                string // configuration that may only be set in the server configuration script(s)
-	httpAddr                     string // explicit HTTP listen address (from --http-addr or positional)
-	httpsAddr                    string // explicit HTTPS listen address (from --https-addr or positional)
 	dbName                       string
 	serverHeaderName             string // used in the HTTP headers as the "Server" name
 	eventAddr                    string // for the Server-Sent Event (SSE) server (host and port)
@@ -100,8 +96,7 @@ type Config struct {
 	postgresDatabase             string               // database name
 	dirBaseURL                   string               // optional Base URL, for the directory listings
 	jsxOptions                   api.TransformOptions // JSX rendering options
-	portSettings                 []PortSetting        // explicit listener configuration (from SetPorts in Lua)
-	certMagicDomains             []string
+	serve                        ServeConfig
 	serverConfigurationFilenames []string // list of configuration filenames to check
 	cacheMaxGivenDataSize        uint64
 	largeFileSize                uint64        // threshold for not reading large files into memory
@@ -153,17 +148,11 @@ type Config struct {
 	devMode                      bool // server mode: aims to make it easy to get started
 	clearDefaultPathPrefixes     bool // clear default path prefixes like "/admin" from the permission system?
 	disableRateLimiting          bool
-	redirectHTTP                 bool // redirect HTTP traffic to HTTPS?
-	useCertMagic                 bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
-	useCertMagicStaging          bool // use the Let's Encrypt staging CA instead of the production CA
 	useBolt                      bool
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 	separateEventServer          bool // use a dedicated port for the SSE event server
 	hideDotfiles                 bool // hide files and directories starting with "."
-	portConfigFromCLI            bool // port configuration was set from flags or positional args
 	serverModeFromCLI            bool // --noninteractive / -s was set from the command line
-	redirectFromCLI              bool // --redirect was set from the command line
-	certMagicFromCLI             bool // --letsencrypt / -c was set from the command line
 }
 
 // PortSetting describes a single listener endpoint with a protocol and TLS preference
@@ -171,6 +160,23 @@ type PortSetting struct {
 	Addr     string // [host]:port
 	Protocol string // "http", "http2", "http3" (or "quic"), "event"
 	TLS      bool   // use TLS?
+}
+
+// ServeConfig groups all listener and TLS settings. It is the single source of
+// truth for how and on which addresses/ports Algernon serves traffic.
+type ServeConfig struct {
+	portSettings        []PortSetting // explicit listener configuration (from SetPorts in Lua)
+	certMagicDomains    []string
+	httpAddr            string // explicit HTTP listen address (from --http-addr or positional)
+	httpsAddr           string // explicit HTTPS listen address (from --https-addr or positional)
+	serverCert          string // exposed to the server configuration scripts(s)
+	serverKey           string // exposed to the server configuration scripts(s)
+	redirectHTTP        bool   // redirect HTTP traffic to HTTPS?
+	useCertMagic        bool   // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
+	useCertMagicStaging bool   // use the Let's Encrypt staging CA instead of the production CA
+	portConfigFromCLI   bool   // port configuration was set from flags or positional args
+	certMagicFromCLI    bool   // --letsencrypt / -c was set from the command line
+	redirectFromCLI     bool   // --redirect was set from the command line
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
