@@ -22,7 +22,7 @@ Distro Packages
 Quick installation
 ------------------
 
-Requires Go 1.25 or later.
+Requires Go 1.26 or later.
 
     go install github.com/xyproto/algernon@latest
 
@@ -133,7 +133,7 @@ Features and limitations
 * Files that are sent to the client are compressed with [gzip](https://golang.org/pkg/compress/gzip/#BestSpeed), unless they are under 4096 bytes.
 * When using PostgreSQL, the HSTORE key/value type is used (available in PostgreSQL version 9.1 or later).
 * No external dependencies, only pure Go.
-* Requires Go >= 1.25 or a version of GCC/`gccgo` that supports Go 1.25.
+* Requires Go >= 1.26 or a version of GCC/`gccgo` that supports Go 1.26.
 * The Lua implementation used in Algernon (gopherlua) does not support `package.loadlib`.
 * Full support for IPv6.
 
@@ -1456,7 +1456,7 @@ Releases
 Requirements
 ------------
 
-* Go >= 1.25.
+* Go >= 1.26.
 * For older versions of Go (`1.10` to `<= 1.16` + `gcc-go < 10`) version `1.12.7` of Algernon will build, but does not have the latest patches.
 
 Access logs
