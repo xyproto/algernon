@@ -968,7 +968,8 @@ func (ac *Config) ReactPage(w http.ResponseWriter, req *http.Request, filename s
 		htmlbuf.WriteString("</style>")
 	}
 
-	htmlbuf.WriteString("</head><body><div id=\"root\"></div>")
+	mountID := parseMountElementID(jsxdata)
+	htmlbuf.WriteString("</head><body><div id=\"" + mountID + "\"></div>")
 
 	// Load the React runtime for the requested version
 	paths, ok := reactPaths[ver]

@@ -61,6 +61,19 @@ func parseReactVersion(src []byte) int {
 	return n
 }
 
+// mountElementRE matches document.getElementById calls used to mount React apps.
+var mountElementRE = regexp.MustCompile(`getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)`)
+
+// parseMountElementID scans JSX/TSX source for a getElementById call and returns
+// the first matched element ID. Returns "root" if none is found.
+func parseMountElementID(src []byte) string {
+	m := mountElementRE.FindSubmatch(src)
+	if m == nil {
+		return "root"
+	}
+	return string(m[1])
+}
+
 // reactVersionPaths holds the URL paths for a React version's embedded scripts
 type reactVersionPaths struct {
 	reactDev     string
