@@ -31,7 +31,24 @@ func (ac *Config) Info() string {
 		sb.WriteString("Filename:\t\t" + ac.serverDirOrFilename + "\n")
 	}
 	if !ac.productionMode {
-		sb.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
+		if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" {
+			if ac.serve.httpAddr != "" {
+				sb.WriteString("HTTP address:\t\t" + ac.serve.httpAddr + "\n")
+			}
+			if ac.serve.httpsAddr != "" {
+				sb.WriteString("HTTPS address:\t\t" + ac.serve.httpsAddr + "\n")
+			}
+		} else if len(ac.serve.portSettings) > 0 {
+			for _, ps := range ac.serve.portSettings {
+				label := strings.ToUpper(ps.Protocol)
+				if ps.TLS {
+					label += " (TLS)"
+				}
+				sb.WriteString(label + " address:\t" + ps.Addr + "\n")
+			}
+		} else {
+			sb.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
+		}
 	} // else port 80 and 443
 	if ac.dbName == "" {
 		sb.WriteString("Database:\t\tDisabled\n")
