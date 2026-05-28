@@ -231,8 +231,8 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 				logrus.Error(err)
 			}
 		}()
-	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
-		logrus.Info("Serving QUIC on https://" + utils.HostPortToURL(ac.serverAddr) + "/")
+	case ac.serveJustQUIC: // Just serve HTTP/3 (QUIC), but fallback to HTTP
+		logrus.Info("Serving HTTP/3 (QUIC) on https://" + utils.HostPortToURL(ac.serverAddr) + "/")
 		servingHTTPS.Store(true)
 		// Start serving over QUIC
 		go ac.ListenAndServeQUIC(handler, justServeRegularHTTP, &servingHTTPS)
