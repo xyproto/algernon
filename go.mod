@@ -1,6 +1,6 @@
 module github.com/xyproto/algernon
 
-go 1.25.1
+go 1.26
 
 require (
 	github.com/caddyserver/certmagic v0.25.3
@@ -57,12 +57,12 @@ require (
 	golang.org/x/net v0.55.0
 )
 
-require github.com/dlclark/regexp2 v1.12.0 // indirect
+require github.com/dlclark/regexp2/v2 v2.1.0 // indirect
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.24.1 // indirect
+	github.com/alecthomas/chroma/v2 v2.26.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240229143509-9455da01a1ae // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/caddyserver/zerossl v0.1.5 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260528073033-a92976deca24 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260528103006-11b814992610 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
