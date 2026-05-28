@@ -1,7 +1,7 @@
 <!--
 title: Algernon
 description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions, IPv6
-keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, go, golang, algernon, JSX, TSX, TypeScript, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6
+keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, HTTP/3, go, golang, algernon, JSX, TSX, TypeScript, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6
 theme: material
 -->
 
@@ -10,7 +10,7 @@ theme: material
 
 [![Build](https://github.com/xyproto/algernon/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/algernon/actions/workflows/build.yml) [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/algernon)](https://goreportcard.com/report/github.com/xyproto/algernon) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Web server with built-in support for QUIC, HTTP/2, Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, TypeScript, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, rate limiting, graceful shutdown, plugins, users and permissions.
+Web server with built-in support for HTTP/2, HTTP/3 (QUIC), Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, TypeScript, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, rate limiting, graceful shutdown, plugins, users and permissions.
 
 All in one small self-contained executable.
 
@@ -62,14 +62,14 @@ And then visiting `http://localhost:4000` in a browser.
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/), SQLite or Valkey/[Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [QUIC](https://github.com/xyproto/quic) for serving over QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/), SQLite or Valkey/[Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [quic-go](https://github.com/quic-go/quic-go) for serving QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [goja-babel](github.com/jvatic/goja-babel) for converting from JSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
 
 Design decisions
 ----------------
 
 * HTTP/2 over SSL/TLS (https) is used by default, if a certificate and key is given.
   * If not, regular HTTP is used.
-* QUIC ("HTTP over UDP", HTTP/3) can be enabled with a flag.
+* HTTP/3 (QUIC) can be enabled with a flag.
 * /data and /repos have user permissions, /admin has admin permissions and / is public, by default. This is configurable.
 * The following filenames are special, in prioritized order:
     * index.lua is Lua code that is interpreted as a handler function for the current directory.
@@ -106,7 +106,7 @@ Features and limitations
 ------------------------
 
 * Supports HTTP/2, with or without HTTPS (browsers may require HTTPS when using HTTP/2).
-* Also supports QUIC and regular HTTP.
+* Also supports HTTP/3 (QUIC) and regular HTTP.
 * Can use Lua scripts as handlers for HTTP requests.
 * The Algernon executable is compiled to native and is reasonably fast.
 * Works on Linux, macOS and 64-bit Windows.
