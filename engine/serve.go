@@ -130,6 +130,26 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		return nil // Done
 	}
 
+	// When --domain is specified, refuse to start if TLS is required but no certificates
+	// are available and Let's Encrypt is not enabled.
+	if ac.serverAddDomain && !ac.serve.useCertMagic {
+		needsTLS := ac.serve.httpsAddr != ""
+		for _, ps := range ac.serve.portSettings {
+			if ps.TLS {
+				needsTLS = true
+				break
+			}
+		}
+		if needsTLS {
+			if _, err := os.Stat(ac.serve.serverCert); err != nil {
+				ac.fatalExit(errors.New("TLS certificate not found: " + ac.serve.serverCert + " (use --cert, --letsencrypt, or remove --https-addr)"))
+			}
+			if _, err := os.Stat(ac.serve.serverKey); err != nil {
+				ac.fatalExit(errors.New("TLS key not found: " + ac.serve.serverKey + " (use --key, --letsencrypt, or remove --https-addr)"))
+			}
+		}
+	}
+
 	// If explicit port settings are configured (from SetPorts in Lua), use them
 	if len(ac.serve.portSettings) > 0 {
 		return ac.servePortSettings(handler, done, ready)
