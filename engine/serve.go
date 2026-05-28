@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +18,16 @@ import (
 	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
 )
+
+// isBindError returns true if the error is a fatal port binding error
+// (permission denied, address already in use, etc).
+func isBindError(err error) bool {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return opErr.Op == "listen"
+	}
+	return false
+}
 
 // List of functions to run at shutdown
 var (
@@ -214,9 +225,10 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			ac.configureCertMagic()
 			if err := certmagic.HTTPS(ac.serve.certMagicDomains, handler); err != nil {
 				servingHTTPS.Store(false)
+				if isBindError(err) {
+					ac.fatalExit(err)
+				}
 				logrus.Error(err)
-				// Don't serve HTTP if CertMagic fails, just quit
-				// justServeRegularHTTP <- true
 			}
 		}()
 	case ac.serveJustQUIC: // Just serve QUIC, but fallback to HTTP
@@ -235,6 +247,9 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTPS2server.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
 				servingHTTPS.Store(false)
+				if isBindError(err) {
+					ac.fatalExit(err)
+				}
 				logrus.Error(err)
 			}
 		}()
@@ -270,8 +285,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 			// Start serving. Shut down gracefully at exit.
 			if err := HTTP2server.ListenAndServe(); err != nil {
 				servingHTTPS.Store(false)
-				justServeRegularHTTP <- true
-				logrus.Error(err)
+				ac.fatalExit(err)
 			}
 		}()
 	case !ac.serveJustHTTP2 && !ac.serveJustHTTP:
@@ -282,9 +296,12 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		// Start serving. Shut down gracefully at exit.
 		go func() {
 			if err := HTTPS2server.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
+				servingHTTPS.Store(false)
+				if isBindError(err) {
+					ac.fatalExit(err)
+				}
 				logrus.Errorf("%s. Not serving HTTP/2.", err)
 				logrus.Info("Use the -t flag for serving regular HTTP.")
-				servingHTTPS.Store(false)
 				// If HTTPS failed (perhaps the key + cert are missing),
 				// serve plain HTTP instead
 				justServeRegularHTTP <- true
@@ -345,6 +362,9 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 						tlsCfg.NextProtos = append([]string{"h2", "http/1.1"}, tlsCfg.NextProtos...)
 						srv := ac.NewGracefulServer(handler, false, ps.Addr)
 						if err := srv.ListenAndServeTLSConfig(tlsCfg); err != nil {
+							if isBindError(err) {
+								ac.fatalExit(err)
+							}
 							logrus.Error(err)
 						}
 					}()
@@ -352,6 +372,9 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 					go func() {
 						srv := ac.NewGracefulServer(handler, false, ps.Addr)
 						if err := srv.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
+							if isBindError(err) {
+								ac.fatalExit(err)
+							}
 							logrus.Error(err)
 						}
 					}()
@@ -391,6 +414,9 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 						tlsCfg.NextProtos = append([]string{"h2", "http/1.1"}, tlsCfg.NextProtos...)
 						srv := ac.NewGracefulServer(handler, true, ps.Addr)
 						if err := srv.ListenAndServeTLSConfig(tlsCfg); err != nil {
+							if isBindError(err) {
+								ac.fatalExit(err)
+							}
 							logrus.Error(err)
 						}
 					}()
@@ -398,6 +424,9 @@ func (ac *Config) servePortSettings(handler http.Handler, done, ready chan bool)
 					go func() {
 						srv := ac.NewGracefulServer(handler, true, ps.Addr)
 						if err := srv.ListenAndServeTLS(ac.serve.serverCert, ac.serve.serverKey); err != nil {
+							if isBindError(err) {
+								ac.fatalExit(err)
+							}
 							logrus.Error(err)
 						}
 					}()

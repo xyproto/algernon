@@ -23,12 +23,15 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, justServeRegularHTTP chan
 	//
 	// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
 	if err := http3.ListenAndServeTLS(ac.serverAddr, ac.serve.serverCert, ac.serve.serverKey, mux); err != nil {
+		servingHTTPS.Store(false)
+		if isBindError(err) {
+			ac.fatalExit(err)
+		}
 		logrus.Error("Not serving QUIC after all. Error: ", err)
 		logrus.Info("Use the -t flag for serving regular HTTP instead")
 		// If QUIC failed (perhaps the key + cert are missing),
 		// serve plain HTTP instead
 		justServeRegularHTTP <- true
-		servingHTTPS.Store(false)
 	}
 }
 
@@ -37,6 +40,9 @@ func (ac *Config) serveQUICPortSetting(mux http.Handler, ps PortSetting) {
 	// QUIC inherently requires TLS at the transport layer.
 	// Even with tls=false in the config, we still need cert/key to establish QUIC connections.
 	if err := http3.ListenAndServeTLS(ps.Addr, ac.serve.serverCert, ac.serve.serverKey, mux); err != nil {
+		if isBindError(err) {
+			ac.fatalExit(err)
+		}
 		logrus.Errorf("HTTP/3 (QUIC) on %s failed: %v", ps.Addr, err)
 	}
 }
