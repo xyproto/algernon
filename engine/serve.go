@@ -19,6 +19,18 @@ import (
 	"golang.org/x/net/http2"
 )
 
+// limitBodyMiddleware wraps req.Body in http.MaxBytesReader, sharing the
+// largeFileSize cap so no handler can allocate unbounded memory.
+func (ac *Config) limitBodyMiddleware(next http.Handler) http.Handler {
+	limit := int64(ac.largeFileSize)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Body != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, limit)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // isBindError returns true if the error is a fatal port binding error
 // (permission denied, address already in use, etc).
 func isBindError(err error) bool {
@@ -45,6 +57,10 @@ func AtShutdown(shutdownFunction func()) {
 
 // NewGracefulServer creates a new graceful server configuration
 func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *graceful.Server {
+	// Cap request bodies before any handler reads them. 0 means unlimited.
+	if ac.largeFileSize > 0 {
+		handler = ac.limitBodyMiddleware(handler)
+	}
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,
