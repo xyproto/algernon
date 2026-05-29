@@ -165,18 +165,18 @@ type PortSetting struct {
 // ServeConfig groups all listener and TLS settings. It is the single source of
 // truth for how and on which addresses/ports Algernon serves traffic.
 type ServeConfig struct {
+	httpAddr            string        // explicit HTTP listen address (from --http-addr or positional)
+	httpsAddr           string        // explicit HTTPS listen address (from --https-addr or positional)
+	serverCert          string        // exposed to the server configuration scripts(s)
+	serverKey           string        // exposed to the server configuration scripts(s)
 	portSettings        []PortSetting // explicit listener configuration (from SetPorts in Lua)
 	certMagicDomains    []string
-	httpAddr            string // explicit HTTP listen address (from --http-addr or positional)
-	httpsAddr           string // explicit HTTPS listen address (from --https-addr or positional)
-	serverCert          string // exposed to the server configuration scripts(s)
-	serverKey           string // exposed to the server configuration scripts(s)
-	redirectHTTP        bool   // redirect HTTP traffic to HTTPS?
-	useCertMagic        bool   // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
-	useCertMagicStaging bool   // use the Let's Encrypt staging CA instead of the production CA
-	portConfigFromCLI   bool   // port configuration was set from flags or positional args
-	certMagicFromCLI    bool   // --letsencrypt / -c was set from the command line
-	redirectFromCLI     bool   // --redirect was set from the command line
+	redirectHTTP        bool // redirect HTTP traffic to HTTPS?
+	useCertMagic        bool // use CertMagic and Let's Encrypt for all directories in the given directory that contains a "."
+	useCertMagicStaging bool // use the Let's Encrypt staging CA instead of the production CA
+	portConfigFromCLI   bool // port configuration was set from flags or positional args
+	certMagicFromCLI    bool // --letsencrypt / -c was set from the command line
+	redirectFromCLI     bool // --redirect was set from the command line
 }
 
 // ErrVersion is returned when the initialization quits because all that is done
