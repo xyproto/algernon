@@ -48,7 +48,7 @@ func TestWithPropagatesError(t *testing.T) {
 	defer p.Shutdown()
 
 	sentinel := errors.New("boom")
-	err := p.With(func(L *lua.LState) error { return sentinel })
+	err := p.With(func(_ *lua.LState) error { return sentinel })
 	if !errors.Is(err, sentinel) {
 		t.Fatalf("expected sentinel error, got %v", err)
 	}
@@ -73,7 +73,7 @@ func TestWithNewIsolated(t *testing.T) {
 	}
 }
 
-func TestConcurrentWith(t *testing.T) {
+func TestConcurrentWith(_ *testing.T) {
 	p := New()
 	defer p.Shutdown()
 

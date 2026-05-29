@@ -68,7 +68,7 @@ func ExtractParams(L *lua.LState, idx int) []any {
 	if table == nil {
 		return params
 	}
-	table.ForEach(func(k lua.LValue, v lua.LValue) {
+	table.ForEach(func(_ lua.LValue, v lua.LValue) {
 		switch val := v.(type) {
 		case lua.LNumber:
 			params = append(params, float64(val))
@@ -86,7 +86,7 @@ func ExtractParams(L *lua.LState, idx int) []any {
 }
 
 // Table2JSON converts a Lua table to a JSON string
-func Table2JSON(L *lua.LState, table *lua.LTable) (string, error) {
+func Table2JSON(_ *lua.LState, table *lua.LTable) (string, error) {
 	m := make(map[string]any)
 	table.ForEach(func(k lua.LValue, v lua.LValue) {
 		key := k.String()

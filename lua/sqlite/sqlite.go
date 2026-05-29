@@ -142,7 +142,7 @@ func ensureCollection(qe queryExecer, collection string) error {
 // buildWhereClause builds a WHERE clause from a Lua table of field=value pairs,
 // using json_extract for matching against JSON document fields.
 // Returns the clause string and the parameter values.
-func buildWhereClause(L *lua.LState, table *lua.LTable) (string, []any) {
+func buildWhereClause(_ *lua.LState, table *lua.LTable) (string, []any) {
 	var conditions []string
 	var params []any
 	table.ForEach(func(k lua.LValue, v lua.LValue) {

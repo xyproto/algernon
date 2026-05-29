@@ -106,7 +106,7 @@ const (
 // registerReact19Handlers registers the embedded React 19 endpoints on mux
 func registerReact19Handlers(mux *http.ServeMux) {
 	serve := func(name string, data []byte) http.HandlerFunc {
-		return func(w http.ResponseWriter, req *http.Request) {
+		return func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "text/javascript;charset=utf-8")
 			if n, err := w.Write(data); err != nil || n == 0 {
 				logrus.Errorf("Could not serve %s", name)
@@ -120,7 +120,7 @@ func registerReact19Handlers(mux *http.ServeMux) {
 }
 
 // HMRRefreshRuntimeHandler serves the embedded react-refresh runtime
-func (ac *Config) HMRRefreshRuntimeHandler(w http.ResponseWriter, req *http.Request) {
+func (ac *Config) HMRRefreshRuntimeHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript;charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Write(reactRefreshRuntimeJS)
