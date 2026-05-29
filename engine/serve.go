@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -143,6 +144,31 @@ func (ac *Config) configureCertMagic() {
 	if ac.serve.useCertMagicStaging {
 		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 	}
+	// Point the ACME challenge solvers at the configured listen ports, so an
+	// external 80->httpAddr and 443->httpsAddr redirect (firewall, reverse proxy)
+	// can deliver the challenge without needing privileged-port binds locally.
+	if p := portFromAddr(ac.serve.httpAddr); p != 0 {
+		certmagic.DefaultACME.AltHTTPPort = p
+	}
+	if p := portFromAddr(ac.serve.httpsAddr); p != 0 {
+		certmagic.DefaultACME.AltTLSALPNPort = p
+	}
+}
+
+// portFromAddr returns the port number from a [host][:port] address, or 0.
+func portFromAddr(addr string) int {
+	if addr == "" {
+		return 0
+	}
+	_, portStr, err := net.SplitHostPort(addr)
+	if err != nil {
+		return 0
+	}
+	p, err := strconv.Atoi(portStr)
+	if err != nil {
+		return 0
+	}
+	return p
 }
 
 // Serve HTTP, HTTP/2 and/or HTTPS. Returns an error if unable to serve, or nil when done serving.
