@@ -3,10 +3,10 @@
 Changes from 1.17.8 to 1.17.9
 =============================
 
-* If HTTP and HTTPS ports are specified, then also use those for ACME / Let's Encrypt.
-* Use io.Copy in the reverse proxyr to bound memory usage.
+* If HTTP and HTTPS ports are specified, then also use those for ACME / Let's Encrypt. Fixes #173, thanks for the feature request + testing @DaVyze.
+* Use `io.Copy` in the reverse proxy to bound memory usage.
 * Limit the request body buffer size.
-* Add a max size check for the `--largesize` flag.
+* Add a max size check (int64) for the `--largesize` flag.
 * Add a check for special Windows/NTFS filenames, thanks @Dredsen.
 * Make the React support a bit smarter with top level element detection.
 * Require Go 1.26 in connection with a dependency update.
@@ -14,6 +14,8 @@ Changes from 1.17.8 to 1.17.9
 * Improve the configuration overview and info messages at start.
 * Add a check for if `--domain` is given, without any certificates/keys being given.
 * Restructure how addresses, ports, certificates and protocols can be configured, while still supporting the same flags and arguments.
+* Update Dockerfiles.
+* Improve the `ServerInfo()` output.
 * Update documentation.
 * Update dependencies.
 
