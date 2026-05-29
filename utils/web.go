@@ -42,7 +42,7 @@ func HostPortToURL(addr string) string {
 	if err != nil {
 		// No port, check if it's an IPv6 that needs brackets
 		if IsIPv6(addr) {
-			return net.JoinHostPort(addr, "")
+			return "[" + addr + "]"
 		}
 		return addr
 	}
