@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bufio"
 	"fmt"
 	"html/template"
 	"io"
@@ -561,19 +562,27 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 					w.Write([]byte("reverse proxy error, please check your server config for AddReverseProxy calls\n"))
 					return
 				}
-				data, err := io.ReadAll(res.Body)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
+				defer res.Body.Close()
+				// Peek one byte before sending the status: if upstream fails
+				// before any body arrives, send 502 instead of a partial 200.
+				// io.EOF is the legitimate empty-body case.
+				br := bufio.NewReader(res.Body)
+				if _, err := br.Peek(1); err != nil && err != io.EOF {
+					logrus.Warnf("reverse proxy: upstream body read failed before any bytes: %s", err)
+					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
-				res.Body.Close()
 				// Preserve all values for multi-valued headers (Set-Cookie, Vary, Link, ...).
 				// res.Header keys are already in canonical MIME form, so direct map
 				// assignment is safe and avoids the Set/Add accumulation footgun.
 				dst := w.Header()
 				maps.Copy(dst, res.Header)
 				w.WriteHeader(res.StatusCode)
-				w.Write(data)
+				// Stream the upstream body instead of buffering. Errors here
+				// can only be logged: the status is already on the wire.
+				if _, err := io.Copy(w, br); err != nil {
+					logrus.Warnf("reverse proxy: error streaming response body: %s", err)
+				}
 				return
 			}
 		}
