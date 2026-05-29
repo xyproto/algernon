@@ -2,6 +2,7 @@ package engine
 
 import (
 	"flag"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -173,6 +174,12 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	ac.onlyLuaMode = ac.onlyLuaMode || onlyLuaModeShort
 	ac.serve.redirectHTTP = ac.serve.redirectHTTP || redirectShort
+
+	// --largesize is passed to http.MaxBytesReader as int64; reject
+	// values that would wrap to negative rather than silently truncate.
+	if ac.largeFileSize > math.MaxInt64 {
+		logrus.Fatalf("--largesize is too large: %d exceeds the maximum supported value of %d bytes", ac.largeFileSize, int64(math.MaxInt64))
+	}
 
 	// Serve a single Markdown file once, and open it in the browser
 	if ac.markdownMode {
