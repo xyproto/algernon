@@ -27,7 +27,7 @@ text
 		t.Errorf("Expected 'beard' key to be absent, but it exists.")
 	}
 
-	if kwMap["beard"] != nil && len(kwMap["beard"]) != 0 {
+	if len(kwMap["beard"]) != 0 {
 		t.Errorf("Expected empty byte slice, got '%s'", kwMap["beard"])
 	}
 }
@@ -68,7 +68,7 @@ func TestExtractKW2(t *testing.T) {
 		t.Errorf("Expected 'horse' key to be absent, but it exists.")
 	}
 
-	if kwMap["horse"] != nil && len(kwMap["horse"]) != 0 {
+	if len(kwMap["horse"]) != 0 {
 		t.Errorf("Expected empty byte slice, got '%s'", kwMap["horse"])
 	}
 }
