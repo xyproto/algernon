@@ -1,3 +1,4 @@
+// Package run3 runs a command and returns its stdout, stderr and exit error.
 package run3
 
 import (

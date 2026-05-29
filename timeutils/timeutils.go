@@ -1,3 +1,4 @@
+// Package timeutils contains small time-related helpers.
 package timeutils
 
 import (

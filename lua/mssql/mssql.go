@@ -1,3 +1,4 @@
+// Package mssql exposes Microsoft SQL Server access to Lua scripts.
 package mssql
 
 import (

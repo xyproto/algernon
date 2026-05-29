@@ -1,3 +1,4 @@
+// Package pquery provides Lua-friendly helpers for parameterized SQL queries.
 package pquery
 
 import (

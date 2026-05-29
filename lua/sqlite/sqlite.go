@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/driver" // register the sqlite3 database/sql driver
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/convert"
 	lua "github.com/xyproto/gopher-lua"

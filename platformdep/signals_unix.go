@@ -8,6 +8,8 @@ import (
 	"syscall"
 )
 
+// SetupSignals installs a SIGUSR1 handler that invokes clearCacheFunction in
+// a goroutine. printFunction is used to log the received signal.
 func SetupSignals(clearCacheFunction func(), printFunction func(format string, args ...any)) {
 	// Listen for SIGUSR1 to clear the cache
 	signals := make(chan os.Signal, 1)

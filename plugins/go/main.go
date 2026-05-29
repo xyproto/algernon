@@ -1,3 +1,4 @@
+// Example Algernon plugin written in Go, using the pie RPC framework.
 package main
 
 import (

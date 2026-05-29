@@ -1,18 +1,19 @@
-/*
- * a data structure to test a string against a set of prefixes
- */
-
+// Package utils provides a data structure for testing a string against a set
+// of prefixes, along with other small helpers.
 package utils
 
+// Node is a trie node used by PrefixMatch.
 type Node struct {
 	Children   map[rune]*Node
 	IsTerminal bool
 }
 
+// PrefixMatch tests whether a string starts with any of a set of prefixes.
 type PrefixMatch struct {
 	root Node
 }
 
+// Build constructs the prefix trie from the given list of prefixes.
 func (pm *PrefixMatch) Build(prefixes []string) {
 
 	//pm.root.Value = ""
@@ -34,6 +35,7 @@ func (pm *PrefixMatch) Build(prefixes []string) {
 	}
 }
 
+// Match returns the prefixes from the trie that match the start of str.
 func (pm *PrefixMatch) Match(str string) []string {
 	result := make([]string, 0)
 	pm.match(str, &pm.root, "", &result)
