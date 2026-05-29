@@ -167,7 +167,10 @@ func (ac *Config) bundleFile(filename string, srcData []byte, reactEntry bool) (
 				bc.hits[cacheKey] = 0
 				logrus.Debugf("bundled and cached %s (%d bytes)", filepath.Base(filename), len(data))
 			} else {
-				for bc.BytesUsed()+uint64(len(data)) > ac.bundleCacheMaxMemory && bc.evictLocked() {
+				for bc.BytesUsed()+uint64(len(data)) > ac.bundleCacheMaxMemory {
+					if !bc.evictLocked() {
+						break
+					}
 				}
 				if bc.BytesUsed()+uint64(len(data)) <= ac.bundleCacheMaxMemory {
 					bc.entries[filename] = bundleCacheEntry{modTime: modTime, data: data}
@@ -198,7 +201,7 @@ func (bc *bundleCache) evictLocked() bool {
 	}
 
 	var targetKey string
-	var minHits uint64 = ^uint64(0)
+	var minHits = ^uint64(0)
 	var maxSize uint64
 
 	for key, entry := range bc.entries {
