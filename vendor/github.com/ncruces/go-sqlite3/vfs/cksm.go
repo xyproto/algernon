@@ -56,7 +56,7 @@ func (c *cksmFile) WriteAt(p []byte, off int64) (n int, err error) {
 	return c.File.WriteAt(p, off)
 }
 
-func (c *cksmFile) Pragma(name string, value string) (string, error) {
+func (c *cksmFile) Pragma(name, value string) (string, error) {
 	switch name {
 	case "checksum_verification":
 		b, ok := util.ParseBool(value)

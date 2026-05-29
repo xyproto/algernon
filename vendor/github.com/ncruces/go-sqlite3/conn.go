@@ -259,7 +259,7 @@ func (c *Conn) Filename(schema string) *vfs.Filename {
 // ReadOnly determines if a database is read-only.
 //
 // https://sqlite.org/c3ref/db_readonly.html
-func (c *Conn) ReadOnly(schema string) (ro bool, ok bool) {
+func (c *Conn) ReadOnly(schema string) (ro, ok bool) {
 	var ptr ptr_t
 	if schema != "" {
 		defer c.arena.Mark()()

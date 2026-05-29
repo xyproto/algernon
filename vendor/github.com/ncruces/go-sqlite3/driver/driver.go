@@ -784,17 +784,23 @@ func (r *rows) ColumnTypeScanType(index int) (typ reflect.Type) {
 	}
 }
 
-func (r *rows) Next(dest []driver.Value) error {
+func (r *rows) NextRow() error {
 	c := r.Stmt.Conn()
 	if old := c.SetInterrupt(r.ctx); old != r.ctx {
 		defer c.SetInterrupt(old)
 	}
+	if r.Stmt.Step() {
+		return nil
+	}
+	if err := r.Stmt.Err(); err != nil {
+		return err
+	}
+	return io.EOF
+}
 
-	if !r.Stmt.Step() {
-		if err := r.Stmt.Err(); err != nil {
-			return err
-		}
-		return io.EOF
+func (r *rows) Next(dest []driver.Value) error {
+	if err := r.NextRow(); err != nil {
+		return err
 	}
 
 	data := unsafe.Slice((*any)(unsafe.SliceData(dest)), len(dest))
@@ -802,37 +808,38 @@ func (r *rows) Next(dest []driver.Value) error {
 		return err
 	}
 	for i := range dest {
-		scan := r.scanType(i)
-		if v, ok := dest[i].([]byte); ok {
-			if len(v) == cap(v) { // a BLOB
-				continue
-			}
-			if scan != _TEXT {
-				switch r.tmWrite {
-				case "", time.RFC3339, time.RFC3339Nano:
-					t, ok := maybeTime(v)
-					if ok {
-						dest[i] = t
-						continue
-					}
-				}
-			}
-			dest[i] = string(v)
-		}
-		switch scan {
-		case _TIME:
-			t, err := r.tmRead.Decode(dest[i])
-			if err == nil {
-				dest[i] = t
-			}
-		case _BOOL:
-			switch dest[i] {
-			case int64(0):
-				dest[i] = false
-			case int64(1):
-				dest[i] = true
-			}
-		}
+		dest[i] = r.convert(i, dest[i])
 	}
 	return nil
+}
+
+func (r *rows) convert(i int, val driver.Value) driver.Value {
+	scan := r.scanType(i)
+	if v, ok := val.([]byte); ok {
+		if len(v) == cap(v) { // a BLOB
+			return val
+		}
+		if scan != _TEXT {
+			t, ok := r.maybeTime(v)
+			if ok {
+				return t
+			}
+		}
+		val = string(v)
+	}
+	switch scan {
+	case _TIME:
+		t, err := r.tmRead.Decode(val)
+		if err == nil {
+			return t
+		}
+	case _BOOL:
+		switch val {
+		case int64(0):
+			return false
+		case int64(1):
+			return true
+		}
+	}
+	return val
 }

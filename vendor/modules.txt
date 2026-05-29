@@ -5,8 +5,8 @@ filippo.io/edwards25519/field
 # github.com/DataDog/gostackparse v0.7.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
-# github.com/alecthomas/chroma/v2 v2.26.0
-## explicit; go 1.26
+# github.com/alecthomas/chroma/v2 v2.26.1
+## explicit; go 1.25
 github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
 github.com/alecthomas/chroma/v2/lexers
@@ -50,8 +50,8 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2/v2 v2.1.0
-## explicit; go 1.26
+# github.com/dlclark/regexp2/v2 v2.1.1
+## explicit; go 1.25
 github.com/dlclark/regexp2/v2
 github.com/dlclark/regexp2/v2/helpers
 github.com/dlclark/regexp2/v2/syntax
@@ -216,7 +216,7 @@ github.com/mitchellh/mapstructure
 # github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 ## explicit
 github.com/natefinch/pie
-# github.com/ncruces/go-sqlite3 v0.34.2
+# github.com/ncruces/go-sqlite3 v0.34.3
 ## explicit; go 1.25.0
 github.com/ncruces/go-sqlite3
 github.com/ncruces/go-sqlite3/driver
@@ -226,7 +226,7 @@ github.com/ncruces/go-sqlite3/internal/sqlite3_wrap
 github.com/ncruces/go-sqlite3/internal/testenv
 github.com/ncruces/go-sqlite3/internal/util
 github.com/ncruces/go-sqlite3/vfs
-# github.com/ncruces/go-sqlite3-wasm/v2 v2.4.35301
+# github.com/ncruces/go-sqlite3-wasm/v2 v2.5.35301
 ## explicit; go 1.25.0
 github.com/ncruces/go-sqlite3-wasm/v2
 # github.com/ncruces/julianday v1.0.0
@@ -247,7 +247,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260528103006-11b814992610
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260529063824-1c3f9eb211a3
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format

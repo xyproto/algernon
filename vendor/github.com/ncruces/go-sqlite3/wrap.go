@@ -147,7 +147,7 @@ func (e *env) Xgo_file_size(v0, v1 int32) int32 {
 //go:linkname vfsLock github.com/ncruces/go-sqlite3/vfs.vfsLock
 func vfsLock(_ *sqlite3_wrap.Wrapper, v0, v1 int32) int32
 
-func (e *env) Xgo_lock(v0 int32, v1 int32) int32 {
+func (e *env) Xgo_lock(v0, v1 int32) int32 {
 	return vfsLock(e.Wrapper, v0, v1)
 }
 
