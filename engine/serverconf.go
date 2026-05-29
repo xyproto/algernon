@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,32 +25,11 @@ import (
 // Info returns a string with various info about the current configuration
 func (ac *Config) Info() string {
 	var sb strings.Builder
-
 	if !ac.singleFileMode {
 		sb.WriteString("Server directory:\t" + ac.serverDirOrFilename + "\n")
 	} else {
 		sb.WriteString("Filename:\t\t" + ac.serverDirOrFilename + "\n")
 	}
-	if !ac.productionMode {
-		if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" {
-			if ac.serve.httpAddr != "" {
-				sb.WriteString("HTTP address:\t\t" + ac.serve.httpAddr + "\n")
-			}
-			if ac.serve.httpsAddr != "" {
-				sb.WriteString("HTTPS address:\t\t" + ac.serve.httpsAddr + "\n")
-			}
-		} else if len(ac.serve.portSettings) > 0 {
-			for _, ps := range ac.serve.portSettings {
-				label := strings.ToUpper(ps.Protocol)
-				if ps.TLS {
-					label += " (TLS)"
-				}
-				sb.WriteString(label + " address:\t" + ps.Addr + "\n")
-			}
-		} else {
-			sb.WriteString("Server address:\t\t" + ac.serverAddr + "\n")
-		}
-	} // else port 80 and 443
 	if ac.dbName == "" {
 		sb.WriteString("Database:\t\tDisabled\n")
 	} else {
@@ -114,7 +94,88 @@ func (ac *Config) Info() string {
 	if ac.internalLogFilename != os.DevNull {
 		sb.WriteString("Internal log file:\t" + ac.internalLogFilename + "\n")
 	}
+	sb.WriteString("Listening for:\t\t" + ac.listeningSummary())
 	return strings.TrimSpace(sb.String())
+}
+
+// listeningSummary returns all configured servers/listeners as a table
+func (ac *Config) listeningSummary() string {
+	type row struct{ proto, host, port, tls string }
+	var rows []row
+	add := func(protocol, addr string, tls bool) {
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			host, port = addr, ""
+		}
+		if host == "" {
+			host = "localhost"
+		}
+		tlsStr := "plain"
+		if tls {
+			tlsStr = "TLS"
+		}
+		rows = append(rows, row{protocolName(protocol), host, port, tlsStr})
+	}
+	switch {
+	case len(ac.serve.portSettings) > 0:
+		for _, ps := range ac.serve.portSettings {
+			add(ps.Protocol, ps.Addr, ps.TLS)
+		}
+	case ac.serve.httpAddr != "" || ac.serve.httpsAddr != "":
+		if ac.serve.httpAddr != "" {
+			add("http", ac.serve.httpAddr, false)
+		}
+		if ac.serve.httpsAddr != "" {
+			add("http2", ac.serve.httpsAddr, true)
+		}
+	case ac.productionMode:
+		add("http", utils.JoinHostPort(ac.serverHost, ":80"), false)
+		add("http2", utils.JoinHostPort(ac.serverHost, ":443"), true)
+	case ac.serveJustHTTP:
+		add("http", ac.serverAddr, false)
+	case ac.serveJustHTTP2:
+		add("http2", ac.serverAddr, false)
+	default:
+		add("http2", ac.serverAddr, true)
+	}
+	if len(rows) == 0 {
+		return "nothing"
+	}
+	var pW, hW, portW int
+	for _, r := range rows {
+		if n := len(r.proto); n > pW {
+			pW = n
+		}
+		if n := len(r.host); n > hW {
+			hW = n
+		}
+		if n := len(r.port); n > portW {
+			portW = n
+		}
+	}
+	var sb strings.Builder
+	for i, r := range rows {
+		if i > 0 {
+			sb.WriteString("\t\t\t")
+		}
+		fmt.Fprintf(&sb, "%-*s  %-*s  %*s  %s\n", pW, r.proto, hW, r.host, portW, r.port, r.tls)
+	}
+	return sb.String()
+}
+
+// protocolName returns the short name used in the listener table.
+func protocolName(protocol string) string {
+	switch protocol {
+	case "http":
+		return "HTTP"
+	case "http2":
+		return "HTTP/2"
+	case "http3", "quic":
+		return "HTTP/3"
+	case "event":
+		return "SSE"
+	}
+	return strings.ToUpper(protocol)
 }
 
 // LoadServerConfigFunctions makes functions related to server configuration and
