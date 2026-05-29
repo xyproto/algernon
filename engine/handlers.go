@@ -125,6 +125,14 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 
 // FilePage tries to serve a single file. The file must exist. Must be given a full filename.
 func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, luaDataFilename string) {
+	// Reject specially crafted Windows filenames that alias a different file
+	// than filepath.Ext sees, for example "x.lua::$DATA", "x.lua." or "x.lua ".
+	if base := filepath.Base(filename); strings.ContainsRune(base, ':') ||
+		strings.HasSuffix(base, ".") || strings.HasSuffix(base, " ") {
+		http.NotFound(w, req)
+		return
+	}
+
 	if ac.quitAfterFirstRequest {
 		go ac.quitSoon("Quit after first request", defaultSoonDuration)
 	}
