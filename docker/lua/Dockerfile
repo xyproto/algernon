@@ -1,5 +1,5 @@
 # Dockerfile for only using the Lua interpreter in Algernon
-FROM golang:alpine as gobuilder
+FROM golang:1.26-alpine as gobuilder
 LABEL maintainer="Alexander F. Rødseth <xyproto@archlinux.org>"
 
 # Prepare the needed files
