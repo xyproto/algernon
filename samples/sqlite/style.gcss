@@ -1,0 +1,59 @@
+@import url(//fonts.googleapis.com/css?family=Cabin)
+
+body
+  color: black
+  background-color: white
+  margin: 6em 0 0 7em
+  font-family: 'Cabin', sans-serif
+  font-size: 1.5em
+
+h3
+  font-size: 2em
+
+div
+  width: 50%
+
+ul
+  list-style-type: none
+  padding: 0
+  margin-bottom: 1em
+
+li
+  display: flex
+  align-items: center
+  gap: 0.5em
+  border-bottom: 1px solid #ccc
+  padding: 0.2em 0
+  transition: background-color 0.25s ease
+
+li:last-child
+  border: none
+
+li:hover
+  background: #f8f8f8
+
+li.done span
+  text-decoration: line-through
+  color: #aaa
+
+span
+  flex: 1
+
+.del
+  background: none
+  border: none
+  color: #ccc
+  cursor: pointer
+  font-size: 0.9em
+  padding: 0 0.3em
+
+.del:hover
+  color: #c00
+
+.text-input
+  width: 22em
+  margin-right: 1em
+
+form
+  button
+    float: right

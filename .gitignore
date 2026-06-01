@@ -38,4 +38,5 @@ release/
 samples/getip/ip.md
 system/fedora/dist/
 test.json
+todo.db
 trace.out
