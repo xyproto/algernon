@@ -2,7 +2,6 @@
 package jpath
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,7 +18,7 @@ const Version = 1.0
 type (
 	// Node is a JSON document, or a part of a JSON document
 	Node struct {
-		data interface{}
+		data any
 	}
 	// NodeList is a list of nodes
 	NodeList []*Node
@@ -51,12 +50,12 @@ func New(body []byte) (*Node, error) {
 // NewNode returns a pointer to a new, empty `Node` object
 func NewNode() *Node {
 	return &Node{
-		data: make(map[string]interface{}),
+		data: make(map[string]any),
 	}
 }
 
 // Interface returns the underlying data
-func (j *Node) Interface() interface{} {
+func (j *Node) Interface() any {
 	return j.data
 }
 
@@ -90,7 +89,7 @@ func (j *Node) MarshalJSON() ([]byte, error) {
 
 // Set modifies `Node` map by `key` and `value`
 // Useful for changing single key/value in a `Node` object easily.
-func (j *Node) Set(key string, val interface{}) {
+func (j *Node) Set(key string, val any) {
 	m, ok := j.CheckMap()
 	if !ok {
 		return
@@ -98,39 +97,52 @@ func (j *Node) Set(key string, val interface{}) {
 	m[key] = val
 }
 
+// SetPath sets a value by traversing a dotted path like "user.name".
+// "x.user.name", ".user.name" and "user.name" are equivalent.
+func (j *Node) SetPath(path string, val any) {
+	parts := strings.Split(path, ".")
+	if len(parts) > 0 && (parts[0] == "" || parts[0] == "x") {
+		parts = parts[1:]
+	}
+	if len(parts) == 0 {
+		return
+	}
+	j.SetBranch(parts, val)
+}
+
 // SetBranch modifies `Node`, recursively checking/creating map keys for the supplied path,
 // and then finally writing in the value.
-func (j *Node) SetBranch(branch []string, val interface{}) {
+func (j *Node) SetBranch(branch []string, val any) {
 	if len(branch) == 0 {
 		j.data = val
 		return
 	}
 
 	// in order to insert our branch, we need map[string]interface{}
-	if _, ok := (j.data).(map[string]interface{}); !ok {
+	if _, ok := (j.data).(map[string]any); !ok {
 		// have to replace with something suitable
-		j.data = make(map[string]interface{})
+		j.data = make(map[string]any)
 	}
-	curr := j.data.(map[string]interface{})
+	curr := j.data.(map[string]any)
 
 	for i := 0; i < len(branch)-1; i++ {
 		b := branch[i]
 		// key exists?
 		if _, ok := curr[b]; !ok {
-			n := make(map[string]interface{})
+			n := make(map[string]any)
 			curr[b] = n
 			curr = n
 			continue
 		}
 
 		// make sure the value is the right sort of thing
-		if _, ok := curr[b].(map[string]interface{}); !ok {
+		if _, ok := curr[b].(map[string]any); !ok {
 			// have to replace with something suitable
-			n := make(map[string]interface{})
+			n := make(map[string]any)
 			curr[b] = n
 		}
 
-		curr = curr[b].(map[string]interface{})
+		curr = curr[b].(map[string]any)
 	}
 
 	// add remaining k/v
@@ -156,7 +168,7 @@ func (j *Node) GetKey(key string) (*Node, bool) {
 func (j *Node) GetIndex(index int) (*Node, bool) {
 	a, ok := j.CheckList()
 	if ok {
-		if len(a) > index {
+		if index >= 0 && index < len(a) {
 			return &Node{a[index]}, true
 		}
 	}
@@ -168,7 +180,7 @@ func (j *Node) GetIndex(index int) (*Node, bool) {
 // the pointer is always a valid Node, allowing for chained operations
 //
 //	newJs := js.Get("top_level", "entries", 3, "dict")
-func (j *Node) Get(branch ...interface{}) *Node {
+func (j *Node) Get(branch ...any) *Node {
 	jin, ok := j.CheckGet(branch...)
 	if !ok {
 		return NilNode
@@ -181,7 +193,7 @@ func (j *Node) Get(branch ...interface{}) *Node {
 // the Node pointer may be nil
 //
 //	newJs, ok := js.Get("top_level", "entries", 3, "dict")
-func (j *Node) CheckGet(branch ...interface{}) (*Node, bool) {
+func (j *Node) CheckGet(branch ...any) (*Node, bool) {
 	jin := j
 	var ok bool
 	for _, p := range branch {
@@ -227,16 +239,16 @@ func (j *Node) CheckNodeList() ([]*Node, bool) {
 }
 
 // CheckMap type asserts to `map`
-func (j *Node) CheckMap() (map[string]interface{}, bool) {
-	if m, ok := (j.data).(map[string]interface{}); ok {
+func (j *Node) CheckMap() (map[string]any, bool) {
+	if m, ok := (j.data).(map[string]any); ok {
 		return m, true
 	}
 	return nil, false
 }
 
 // CheckList type asserts to a slice
-func (j *Node) CheckList() ([]interface{}, bool) {
-	if a, ok := (j.data).([]interface{}); ok {
+func (j *Node) CheckList() ([]any, bool) {
+	if a, ok := (j.data).([]any); ok {
 		return a, true
 	}
 	return nil, false
@@ -298,13 +310,13 @@ func (j *Node) NodeMap(args ...NodeMap) NodeMap {
 
 // List guarantees the return of a `[]interface{}` (with optional default)
 //
-// useful when you want to interate over array values in a succinct manner:
+// useful when you want to iterate over array values in a succinct manner:
 //
 //	for i, v := range js.Get("results").List() {
 //		fmt.Println(i, v)
 //	}
-func (j *Node) List(args ...[]interface{}) []interface{} {
-	var def []interface{}
+func (j *Node) List(args ...[]any) []any {
+	var def []any
 
 	switch len(args) {
 	case 0:
@@ -323,13 +335,13 @@ func (j *Node) List(args ...[]interface{}) []interface{} {
 
 // Map guarantees the return of a `map[string]interface{}` (with optional default)
 //
-// useful when you want to interate over map values in a succinct manner:
+// useful when you want to iterate over map values in a succinct manner:
 //
 //	for k, v := range js.Get("dictionary").Map() {
 //		fmt.Println(k, v)
 //	}
-func (j *Node) Map(args ...map[string]interface{}) map[string]interface{} {
-	var def map[string]interface{}
+func (j *Node) Map(args ...map[string]any) map[string]any {
+	var def map[string]any
 
 	switch len(args) {
 	case 0:
@@ -369,6 +381,22 @@ func (j *Node) String(args ...string) string {
 	}
 
 	return def
+}
+
+// StringValue returns the raw string for string nodes,
+// or the compact JSON representation for other types.
+func (j *Node) StringValue() string {
+	if j == nil || j == NilNode || j.data == nil {
+		return ""
+	}
+	if s, ok := j.CheckString(); ok {
+		return s
+	}
+	b, err := json.Marshal(j.data)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 // Int guarantees the return of an `int` (with optional default)
@@ -558,59 +586,48 @@ func (j *Node) CheckUint64() (uint64, bool) {
 
 // GetNodes will find the JSON node (and parent node) that corresponds to the given JSON path
 func (j *Node) GetNodes(JSONpath string) (*Node, *Node, error) {
-	parent := j
 	if JSONpath == "x" || JSONpath == "" {
-		// If the root node is a map or list with one element or less, use that as the node
-		if m, ok := j.CheckNodeMap(); ok && len(m) <= 1 {
-			return parent, NilNode, nil
-		} else if l, ok := j.CheckNodeList(); ok && len(l) <= 1 {
-			return parent, NilNode, nil
-		}
-		// We may have encountered a list with more than one item, for example
-		return parent, NilNode, nil
+		return j, NilNode, nil
 	}
-	// JSON path starting with x[ is a special case.
-	if strings.HasPrefix(JSONpath, "x[") {
-		// Add a "." between "x" and "[".
-		JSONpath = "x." + JSONpath[1:]
+
+	// Normalize: strip leading "x." or "." prefix, or "x" when followed by "["
+	if strings.HasPrefix(JSONpath, "x.") {
+		JSONpath = JSONpath[2:]
+	} else if strings.HasPrefix(JSONpath, ".") {
+		JSONpath = JSONpath[1:]
+	} else if strings.HasPrefix(JSONpath, "x[") {
+		JSONpath = JSONpath[1:]
 	}
-	// The "current node" starts out with being the root node
+
+	// Split the path into components on "." and process each one
+	parts := strings.Split(JSONpath, ".")
 	n := j
-	if strings.Contains(JSONpath, ".") {
-		for i, part := range strings.Split(JSONpath, ".") {
-			if i == 0 && (part == "" || part == "x") {
-				// If the current node is a map or list with one element or less, use that as the next node
-				if m, ok := n.CheckNodeMap(); ok && len(m) <= 1 {
-					n = parent
-				} else if l, ok := n.CheckNodeList(); ok && len(l) <= 1 {
-					n = parent
-				}
-			} else if strings.Contains(part, "[") {
-				fields := strings.SplitN(part, "[", 2)
-				name := fields[0]
-				secondpart := fields[1]
-				fields = strings.SplitN(secondpart, "]", 2)
-				stringIndex := fields[0]
-				index, err := strconv.Atoi(stringIndex)
-				if err != nil {
-					return NilNode, NilNode, errors.New("Invalid index: " + stringIndex)
-				}
-				parent = n
-				if name == "" {
-					n = n.Get(index)
-				} else {
-					parent = n.Get(name)
-					n = parent.Get(index)
-				}
-			} else {
-				parent = n
-				n = n.Get(part)
-			}
+	parent := j
+	for _, part := range parts {
+		if part == "" {
+			continue
 		}
-	} else {
-		parent = n
-		part := JSONpath
-		n = n.Get(part)
+		if strings.Contains(part, "[") {
+			fields := strings.SplitN(part, "[", 2)
+			name := fields[0]
+			secondpart := fields[1]
+			fields = strings.SplitN(secondpart, "]", 2)
+			stringIndex := fields[0]
+			index, err := strconv.Atoi(stringIndex)
+			if err != nil {
+				return NilNode, NilNode, errors.New("Invalid index: " + stringIndex)
+			}
+			parent = n
+			if name == "" {
+				n = n.Get(index)
+			} else {
+				parent = n.Get(name)
+				n = parent.Get(index)
+			}
+		} else {
+			parent = n
+			n = n.Get(part)
+		}
 	}
 	return n, parent, nil
 }
@@ -635,7 +652,7 @@ func (j *Node) AddJSON(JSONpath string, JSONdata []byte) error {
 	if err != nil {
 		return err
 	}
-	node.data = append(l, newNode)
+	node.data = append(l, newNode.data)
 	return nil
 }
 
@@ -650,7 +667,7 @@ func (j *Node) DelKey(JSONpath string) error {
 	if !ok {
 		return errors.New("Can only remove a key from a map. Not a map: " + mapnode.Info())
 	}
-	keyToRemove := lastpart(JSONpath)
+	keyToRemove := LastPart(JSONpath)
 	foundKey := false
 	for k := range m {
 		if k == keyToRemove {
@@ -661,33 +678,29 @@ func (j *Node) DelKey(JSONpath string) error {
 	if !foundKey {
 		return ErrKeyNotFound
 	}
-	delete(m, lastpart(JSONpath))
+	delete(m, LastPart(JSONpath))
 	return nil
 }
 
 // Info returns a description of the node
 func (j *Node) Info() string {
-	var buf bytes.Buffer
 	if j == NilNode {
-		buf.WriteString("Nil Node")
-	} else if m, ok := j.CheckMap(); ok {
-		buf.WriteString(fmt.Sprintf("Map with %d elements.", len(m)))
-	} else if l, ok := j.CheckList(); ok {
-		buf.WriteString(fmt.Sprintf("List with %d elements.", len(l)))
-	} else if s, ok := j.CheckString(); ok {
-		buf.WriteString(fmt.Sprintf("String: %s", s))
-	} else if s, ok := j.CheckInt(); ok {
-		buf.WriteString(fmt.Sprintf("Int: %d", s))
-	} else if b, ok := j.CheckBool(); ok {
-		buf.WriteString(fmt.Sprintf("Bool: %v", b))
-	} else if i, ok := j.CheckInt64(); ok {
-		buf.WriteString(fmt.Sprintf("Int64: %v", i))
-	} else if u, ok := j.CheckUint64(); ok {
-		buf.WriteString(fmt.Sprintf("Uint64: %v", u))
-	} else if f, ok := j.CheckFloat64(); ok {
-		buf.WriteString(fmt.Sprintf("Float64: %v", f))
-	} else {
-		buf.WriteString("Unknown node type")
+		return "Nil Node"
 	}
-	return buf.String()
+	switch v := j.data.(type) {
+	case map[string]any:
+		return fmt.Sprintf("Map with %d elements.", len(v))
+	case []any:
+		return fmt.Sprintf("List with %d elements.", len(v))
+	case string:
+		return fmt.Sprintf("String: %s", v)
+	case bool:
+		return fmt.Sprintf("Bool: %v", v)
+	case float64:
+		return fmt.Sprintf("Float64: %v", v)
+	case nil:
+		return "Nil Node"
+	default:
+		return fmt.Sprintf("Unknown node type: %T", j.data)
+	}
 }

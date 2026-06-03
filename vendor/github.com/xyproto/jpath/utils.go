@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// lastpart returns the last part of a given JSON path
-func lastpart(JSONpath string) string {
+// LastPart returns the last part of a given JSON path
+func LastPart(JSONpath string) string {
 	if !strings.Contains(JSONpath, ".") {
 		return JSONpath
 	}

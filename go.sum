@@ -153,8 +153,8 @@ github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 h1:cLgCk5mwDG9lD
 github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2/go.mod h1:ktAJCA9lxrHHjVyVl2pKJFvzBnq2eZbb+CUOjBRPlXo=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 h1:A2bEfgSb7hLwR9mxDszgGKweF+xY9YoTDG+8RjdFjDE=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1/go.mod h1:pxfz2oJfAuhwrb3/rcLqD//GS/5gRP4gD022iP3cEO0=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260603112128-0c62aa51fbf6 h1:vMmRNq4UniCToJTP3E3Fe8/HbtEh1nCDAOma5q9ERmA=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260603112128-0c62aa51fbf6/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260603153034-e70762ebf8bc h1:ifJV/9U8RLIAw+fAfVSsRVV5YO+VWEXXkEk5zWsiVNE=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260603153034-e70762ebf8bc/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
@@ -216,8 +216,8 @@ github.com/xyproto/gopher-lua v1.0.2 h1:tOtkVygD46OWICSEov9Yf9XheBy8bCSnmhVzLGVA
 github.com/xyproto/gopher-lua v1.0.2/go.mod h1:aoM62BSDxywYkGaMufChYLqnYEmp0PKcPcw0jtxU/x0=
 github.com/xyproto/huldra v0.0.3 h1:txu5Rao3gNW4k6AQGwpAGJYoLvxc+DV/+ALnQJJ+eBE=
 github.com/xyproto/huldra v0.0.3/go.mod h1:gxAKCuvoGk/d2NVjm4NDXMGxk8Qw0devRWUunRaDAXc=
-github.com/xyproto/jpath v0.6.1 h1:CmpbtuRgHZKW5fM9tYgdH6wIMpvnSOhnt4UwAYSacpM=
-github.com/xyproto/jpath v0.6.1/go.mod h1:bm5t4NVGsu+09lxa0qgsyjpd3kd9Sy2uBpszwAbgeB4=
+github.com/xyproto/jpath v0.7.0 h1:adqrXyPfHREzit2idoI74DJ9vuzDbaGG7TPeOL/rJAo=
+github.com/xyproto/jpath v0.7.0/go.mod h1:bm5t4NVGsu+09lxa0qgsyjpd3kd9Sy2uBpszwAbgeB4=
 github.com/xyproto/mime v0.3.0 h1:UazaQeK2jEsBc8SkzSqZUV6wBvmEJtd7bIGPma7g8f4=
 github.com/xyproto/mime v0.3.0/go.mod h1:Vb1NBbNUHAKQGBERkD/s0+W/wW7ZygautwBonIxchuk=
 github.com/xyproto/ollamaclient/v2 v2.8.1 h1:58dPXTE9DxKokadkqWY0u48zDI1ndAx20WB7MphVw8c=
