@@ -165,3 +165,75 @@ func TestJNodeAdd(t *testing.T) {
 		t.Errorf("after add, compact output should contain the item, got %q", compact)
 	}
 }
+
+// TestJNodeSetPath tests setting nested values via dotted paths
+func TestJNodeSetPath(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+	Load(L)
+
+	code := `
+		node = JNode('{"user":{"name":"Alice"}}')
+		node:set("user.name", "Bob")
+		result = node:getstring("user.name")
+	`
+	if err := L.DoString(code); err != nil {
+		t.Fatal(err)
+	}
+
+	result := L.GetGlobal("result").String()
+	if result != "Bob" {
+		t.Errorf("set with dotted path: got %q, want %q", result, "Bob")
+	}
+}
+
+// TestJNodeGetValue tests getvalue for non-string types
+func TestJNodeGetValue(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+	Load(L)
+
+	code := `
+		node = JNode('{"count":42,"items":[1,2,3],"name":"test"}')
+		num_val = node:getvalue("count")
+		list_val = node:getvalue("items")
+		str_val = node:getvalue("name")
+	`
+	if err := L.DoString(code); err != nil {
+		t.Fatal(err)
+	}
+
+	numVal := L.GetGlobal("num_val").String()
+	if numVal != "42" {
+		t.Errorf("getvalue(count) = %q, want %q", numVal, "42")
+	}
+	listVal := L.GetGlobal("list_val").String()
+	if listVal != "[1,2,3]" {
+		t.Errorf("getvalue(items) = %q, want %q", listVal, "[1,2,3]")
+	}
+	strVal := L.GetGlobal("str_val").String()
+	if strVal != "test" {
+		t.Errorf("getvalue(name) = %q, want %q", strVal, "test")
+	}
+}
+
+// TestJNodeSetPathBackwardCompat verifies that set still works for root-level keys
+func TestJNodeSetPathBackwardCompat(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+	Load(L)
+
+	code := `
+		node = JNode('{"greeting":"hello"}')
+		node:set("greeting", "world")
+		result = node:getstring("greeting")
+	`
+	if err := L.DoString(code); err != nil {
+		t.Fatal(err)
+	}
+
+	result := L.GetGlobal("result").String()
+	if result != "world" {
+		t.Errorf("set root key: got %q, want %q", result, "world")
+	}
+}
