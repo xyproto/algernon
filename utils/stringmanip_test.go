@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -70,6 +71,60 @@ func TestExtractKW2(t *testing.T) {
 
 	if len(kwMap["horse"]) != 0 {
 		t.Errorf("Expected empty byte slice, got '%s'", kwMap["horse"])
+	}
+}
+
+func TestInfostring(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"foo", nil, "foo()"},
+		{"bar", []string{"a"}, `bar("a")`},
+		{"baz", []string{"x", "y"}, `baz("x", "y")`},
+	}
+	for _, tt := range tests {
+		got := Infostring(tt.name, tt.args)
+		if got != tt.want {
+			t.Errorf("Infostring(%q, %v) = %q, want %q", tt.name, tt.args, got, tt.want)
+		}
+	}
+}
+
+func TestWriteStatus(t *testing.T) {
+	var sb strings.Builder
+	// All false: nothing written
+	WriteStatus(&sb, "Test", map[string]bool{"a": false, "b": false})
+	if sb.Len() != 0 {
+		t.Errorf("WriteStatus with all-false should write nothing, got %q", sb.String())
+	}
+
+	// One enabled
+	WriteStatus(&sb, "Cache", map[string]bool{"gzip": true, "lz4": false})
+	got := sb.String()
+	if !strings.Contains(got, "Cache") {
+		t.Error("WriteStatus should contain the title")
+	}
+	if !strings.Contains(got, "gzip") {
+		t.Error("WriteStatus should contain enabled flag name")
+	}
+	if strings.Contains(got, "lz4") {
+		t.Error("WriteStatus should not contain disabled flag name")
+	}
+}
+
+func TestFilterIntoGroups(t *testing.T) {
+	lines := [][]byte{[]byte("hello"), []byte("WORLD"), []byte("foo"), []byte("BAR")}
+	upper := func(b []byte) bool {
+		return bytes.Equal(b, bytes.ToUpper(b))
+	}
+	special, regular := FilterIntoGroups(lines, upper)
+	if len(special) != 2 {
+		t.Errorf("expected 2 special, got %d", len(special))
+	}
+	if len(regular) != 2 {
+		t.Errorf("expected 2 regular, got %d", len(regular))
 	}
 }
 
