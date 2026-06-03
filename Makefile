@@ -1,4 +1,4 @@
-.PHONY: clean install install-doc
+.PHONY: clean install install-doc cover
 
 PROJECT ?= algernon
 
@@ -53,5 +53,9 @@ install-doc: algernon.1.gz welcome.sh samples README.md
 	mkdir -p "$(DESTDIR)$(PREFIX)/usr/share/doc/algernon"
 	install -Dm644 README.md "$(DESTDIR)$(PREFIX)/usr/share/doc/algernon/README.md"
 
+cover:
+	go test -mod=vendor -coverprofile=coverage.out -coverpkg=./... ./...
+	go tool cover -func=coverage.out
+
 clean:
-	rm -f algernon algernon.1.gz
+	rm -f algernon algernon.1.gz coverage.out
