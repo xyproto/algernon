@@ -139,8 +139,8 @@ github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007 h1:Ohgj9L0EYOgXxkDp+
 github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007/go.mod h1:wKCOWMb6iNlvKiOToY2cNuaovSXvIiv1zDi9QDR7aGQ=
 github.com/ncruces/go-sqlite3 v0.34.3 h1:DYN5fylZd9C28Rgmo6ie8vbv1SB9/Ddy0kVBTEzM9nk=
 github.com/ncruces/go-sqlite3 v0.34.3/go.mod h1:+NodfP7QTkYGFUAlAcPVcStvlfVTiqMC3OLKTaYiQCM=
-github.com/ncruces/go-sqlite3-wasm/v2 v2.5.35301 h1:txZKZ0qUSPe63pzv6x0afpE4xUaqRbErCLd9gXvll+A=
-github.com/ncruces/go-sqlite3-wasm/v2 v2.5.35301/go.mod h1:PtJrZyZ+fUnI9yIcFxnUBFt2avGojqWeUkSrk10hh0I=
+github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35301 h1:AaRg2q4Cl7iQ4HjDpN24pfZT4Nvaq739eUBjpHmcNVU=
+github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35301/go.mod h1:KONJCOH3+oHW5QSxKC0THTFHBj4wPFeqyHvTqFW5R8E=
 github.com/ncruces/julianday v1.0.0 h1:fH0OKwa7NWvniGQtxdJRxAgkBMolni2BjDHaWTxqt7M=
 github.com/ncruces/julianday v1.0.0/go.mod h1:Dusn2KvZrrovOMJuOt0TNXL6tB7U2E8kvza5fFc9G7g=
 github.com/orsinium-labs/enum v1.5.0 h1:kr7dETN9FkmcwEdXydJOdJuP6MBtI7uSDJZQ2BbXJ7g=
@@ -153,8 +153,8 @@ github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 h1:cLgCk5mwDG9lD
 github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2/go.mod h1:ktAJCA9lxrHHjVyVl2pKJFvzBnq2eZbb+CUOjBRPlXo=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 h1:A2bEfgSb7hLwR9mxDszgGKweF+xY9YoTDG+8RjdFjDE=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1/go.mod h1:pxfz2oJfAuhwrb3/rcLqD//GS/5gRP4gD022iP3cEO0=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260601120142-a9add5cc8556 h1:j8YzMMOypcXBg6Ia9cZeRPBErj1vcheo1GmowP9l22c=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260601120142-a9add5cc8556/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260603093948-5b87f83bfbe5 h1:7k8tNQ1n6cN2ELsZKxI136kN5gZffvhBeh2vAeEXIt0=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260603093948-5b87f83bfbe5/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
