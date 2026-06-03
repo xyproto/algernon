@@ -84,7 +84,7 @@ func jnodeGetNode(L *lua.LState) int {
 }
 
 // Takes a JNode and a JSON path.
-// Returns a value or an empty string.
+// Returns the value as a string, or an empty string.
 func jnodeGetString(L *lua.LState) int {
 	jnode := checkJNode(L) // arg 1
 	jsonpath := L.ToString(2)
@@ -92,12 +92,12 @@ func jnodeGetString(L *lua.LState) int {
 		L.ArgError(2, "JSON path expected")
 	}
 	node := jnode.GetNode(jsonpath)
-	L.Push(lua.LString(node.String()))
+	L.Push(lua.LString(node.StringValue()))
 	return 1 // number of results
 }
 
 // Take a JNode, a JSON path and a string.
-// Returns nothing
+// Sets the value at the given path. Supports dotted paths like "user.name".
 func jnodeSet(L *lua.LState) int {
 	jnode := checkJNode(L) // arg 1
 	jsonpath := L.ToString(2)
@@ -108,7 +108,7 @@ func jnodeSet(L *lua.LState) int {
 	if sval == "" {
 		L.ArgError(3, "String value expected")
 	}
-	jnode.Set(jsonpath, sval)
+	jnode.SetPath(jsonpath, sval)
 	return 0 // number of results
 }
 

@@ -187,17 +187,17 @@ func TestJNodeSetPath(t *testing.T) {
 	}
 }
 
-// TestJNodeGetValue tests getvalue for non-string types
-func TestJNodeGetValue(t *testing.T) {
+// TestJNodeGetStringNonString verifies getstring works for non-string types
+func TestJNodeGetStringNonString(t *testing.T) {
 	L := lua.NewState()
 	defer L.Close()
 	Load(L)
 
 	code := `
-		node = JNode('{"count":42,"items":[1,2,3],"name":"test"}')
-		num_val = node:getvalue("count")
-		list_val = node:getvalue("items")
-		str_val = node:getvalue("name")
+		node = JNode('{"count":42,"active":true,"items":[1,2,3]}')
+		num_val = node:getstring("count")
+		bool_val = node:getstring("active")
+		list_val = node:getstring("items")
 	`
 	if err := L.DoString(code); err != nil {
 		t.Fatal(err)
@@ -205,15 +205,15 @@ func TestJNodeGetValue(t *testing.T) {
 
 	numVal := L.GetGlobal("num_val").String()
 	if numVal != "42" {
-		t.Errorf("getvalue(count) = %q, want %q", numVal, "42")
+		t.Errorf("getstring(count) = %q, want %q", numVal, "42")
+	}
+	boolVal := L.GetGlobal("bool_val").String()
+	if boolVal != "true" {
+		t.Errorf("getstring(active) = %q, want %q", boolVal, "true")
 	}
 	listVal := L.GetGlobal("list_val").String()
 	if listVal != "[1,2,3]" {
-		t.Errorf("getvalue(items) = %q, want %q", listVal, "[1,2,3]")
-	}
-	strVal := L.GetGlobal("str_val").String()
-	if strVal != "test" {
-		t.Errorf("getvalue(name) = %q, want %q", strVal, "test")
+		t.Errorf("getstring(items) = %q, want %q", listVal, "[1,2,3]")
 	}
 }
 

@@ -65,19 +65,20 @@ func jfileAdd(L *lua.LState) int {
 }
 
 // Takes a JFile and a JSON path.
-// Returns a string value or an empty string.
+// Returns the value as a string, or an empty string.
 func jfileGetString(L *lua.LState) int {
 	jfile := checkJFile(L) // arg 1
 	jsonpath := L.ToString(2)
 	if jsonpath == "" {
 		L.ArgError(2, "JSON path expected")
 	}
-	val, err := jfile.GetString(jsonpath)
+	node, err := jfile.GetNode(jsonpath)
 	if err != nil {
 		logrus.Error(err)
-		val = ""
+		L.Push(lua.LString(""))
+		return 1 // number of results
 	}
-	L.Push(lua.LString(val))
+	L.Push(lua.LString(node.StringValue()))
 	return 1 // number of results
 }
 
