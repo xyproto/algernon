@@ -677,10 +677,11 @@ Available flags:
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
                                Enables non-interactive mode. Sets cache to "prod".
+  -D, --domain                 Serve files from the subdirectory with the same
+                               name as the requested domain.
   -q, --quiet                  Don't output anything to stdout or stderr.
   -r, --redirect               Redirect HTTP traffic to HTTPS, if both are enabled.
-  -s, --noninteractive       Non-interactive mode (disable debug +
-                               interactive mode).
+  -s, --noninteractive         Non-interactive (disable debug + interactive mode).
   -t, --httponly               Serve regular HTTP.` + quicUsageOrMessage + `
   -v, --version                Application name and version
   -V, --verbose                Slightly more verbose logging.
@@ -706,8 +707,6 @@ Available flags:
   --ctrld                      Press ctrl-d twice to exit the REPL.
   --dbindex=INDEX              Redis database index (0 is default).
   --dir=DIRECTORY              Set the server directory
-  --domain                     Serve files from the subdirectory with the same
-                               name as the requested domain.
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + ac.defaultEventRefresh + `").
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).

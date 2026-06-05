@@ -49,7 +49,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		showVersionShort, quietModeShort, cacheFileStatShort, simpleModeShort,
 		noBannerShort, quitAfterFirstRequestShort, verboseModeShort,
 		serveJustQUICShort, onlyLuaModeShort, redirectShort,
-		nonInteractive bool
+		serverAddDomainShort, nonInteractive bool
 		// Used when setting the cache mode
 		cacheModeString string
 		// Used if disabling cache compression
@@ -160,12 +160,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	}
 	flag.BoolVar(&onlyLuaModeShort, "l", false, "Only present the Lua REPL")
 	flag.BoolVar(&redirectShort, "r", false, "Redirect HTTP traffic to HTTPS, if both are enabled")
+	flag.BoolVar(&serverAddDomainShort, "D", false, "Look for files in the directory named the same as the hostname")
+
 	flag.Parse()
+
 	// Accept both long and short versions of some flags
 	ac.serveJustHTTP = ac.serveJustHTTP || serveJustHTTPShort
 	ac.autoRefresh = ac.autoRefresh || autoRefreshShort
 	ac.debugMode = ac.debugMode || debugModeShort
 	ac.serverMode = ac.serverMode || serverModeShort
+	ac.serverAddDomain = ac.serverAddDomain || serverAddDomainShort
+
 	// --noninteractive / -s is the preferred way to enable server mode
 	if nonInteractive || serverModeShort {
 		ac.serverMode = true
