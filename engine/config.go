@@ -527,7 +527,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		ac.serveJustHTTP = true
 	}
 
-	to := vt.NewTextOutput(runtime.GOOS != "windows", !ac.quietMode)
+	to := vt.NewTextOutput(!platformdep.IsWindows, !ac.quietMode)
 
 	// Console output
 	if !ac.quietMode && !ac.singleFileMode && !ac.simpleMode && !ac.noBanner {

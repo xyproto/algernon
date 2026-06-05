@@ -6,12 +6,12 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/cachemode"
+	"github.com/xyproto/algernon/platformdep"
 	"github.com/xyproto/algernon/themes"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/datablock"
@@ -61,7 +61,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// The default for running the redis server on Windows is to listen
 	// to "localhost:port", but not just ":port".
 	host := ""
-	if runtime.GOOS == "windows" {
+	if platformdep.IsWindows {
 		host = "localhost"
 		// Default Bolt database file
 		ac.defaultBoltFilename = filepath.Join(serverTempDir, "algernon.db")
