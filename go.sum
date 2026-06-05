@@ -44,8 +44,8 @@ github.com/denisenkom/go-mssqldb v0.12.3 h1:pBSGx9Tq67pBOTLmxNuirNTeB8Vjmf886Kx+
 github.com/denisenkom/go-mssqldb v0.12.3/go.mod h1:k0mtMFOnU+AihqFxPMiF05rtiDrorD1Vrm1KEz5hxDo=
 github.com/didip/tollbooth v4.0.2+incompatible h1:fVSa33JzSz0hoh2NxpwZtksAzAgd7zjmGO20HCZtF4M=
 github.com/didip/tollbooth v4.0.2+incompatible/go.mod h1:A9b0665CE6l1KmzpDws2++elm/CsuWBMa5Jv4WY0PEY=
-github.com/dlclark/regexp2/v2 v2.1.1 h1:LCUGyd9Wf+r+VVOl8Ny38JTpWJcAsdVnCIuhhtthmKw=
-github.com/dlclark/regexp2/v2 v2.1.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
+github.com/dlclark/regexp2/v2 v2.1.2 h1:RJjAeD/h91npDhTG4rMD4+gzGVnLT32qQy/q/ECbyUs=
+github.com/dlclark/regexp2/v2 v2.1.2/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
 github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
@@ -137,10 +137,10 @@ github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RR
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007 h1:Ohgj9L0EYOgXxkDp+bczlMBiulwmqYzQpvQNUdtt3oc=
 github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007/go.mod h1:wKCOWMb6iNlvKiOToY2cNuaovSXvIiv1zDi9QDR7aGQ=
-github.com/ncruces/go-sqlite3 v0.34.3 h1:DYN5fylZd9C28Rgmo6ie8vbv1SB9/Ddy0kVBTEzM9nk=
-github.com/ncruces/go-sqlite3 v0.34.3/go.mod h1:+NodfP7QTkYGFUAlAcPVcStvlfVTiqMC3OLKTaYiQCM=
-github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35301 h1:AaRg2q4Cl7iQ4HjDpN24pfZT4Nvaq739eUBjpHmcNVU=
-github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35301/go.mod h1:KONJCOH3+oHW5QSxKC0THTFHBj4wPFeqyHvTqFW5R8E=
+github.com/ncruces/go-sqlite3 v0.34.4 h1:bp8jd1o2CMvjkrrp1lOtHDu1TdzExNWACt+piQeMwzg=
+github.com/ncruces/go-sqlite3 v0.34.4/go.mod h1:tOyhDWnzlrzflKIGw177imjuO4ZEbfOS1NJ67B1BanQ=
+github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35302 h1:IZCiInPIp6OhOc1skMDGOBMwMQuE1TK+QqVe35vd/ro=
+github.com/ncruces/go-sqlite3-wasm/v2 v2.6.35302/go.mod h1:ELHF6yqC51E0DiitfabHXl/aKKouCihugbhNT5a+yEY=
 github.com/ncruces/julianday v1.0.0 h1:fH0OKwa7NWvniGQtxdJRxAgkBMolni2BjDHaWTxqt7M=
 github.com/ncruces/julianday v1.0.0/go.mod h1:Dusn2KvZrrovOMJuOt0TNXL6tB7U2E8kvza5fFc9G7g=
 github.com/orsinium-labs/enum v1.5.0 h1:kr7dETN9FkmcwEdXydJOdJuP6MBtI7uSDJZQ2BbXJ7g=
@@ -153,8 +153,8 @@ github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 h1:cLgCk5mwDG9lD
 github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2/go.mod h1:ktAJCA9lxrHHjVyVl2pKJFvzBnq2eZbb+CUOjBRPlXo=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 h1:A2bEfgSb7hLwR9mxDszgGKweF+xY9YoTDG+8RjdFjDE=
 github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1/go.mod h1:pxfz2oJfAuhwrb3/rcLqD//GS/5gRP4gD022iP3cEO0=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260603153034-e70762ebf8bc h1:ifJV/9U8RLIAw+fAfVSsRVV5YO+VWEXXkEk5zWsiVNE=
-github.com/pingcap/tidb/pkg/parser v0.0.0-20260603153034-e70762ebf8bc/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260605060506-9197c8bb9abd h1:0tnKOqPnGtUEHSaUork3yYupILe4fOGAt9FsHaPBFLQ=
+github.com/pingcap/tidb/pkg/parser v0.0.0-20260605060506-9197c8bb9abd/go.mod h1:zDLDsfNBU5+L6T4J9/OgWAHc/WZvMUjbpgHqQ/t3yKo=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=

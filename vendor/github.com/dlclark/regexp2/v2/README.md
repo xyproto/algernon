@@ -16,7 +16,7 @@ This is a go-gettable library, so install is easy:
 Version 2 includes changes that may affect compatibility with existing v1 users:
 
 * The module path is now `github.com/dlclark/regexp2/v2`, so imports need to use the `/v2` suffix.
-* The minimum supported Go version is now Go 1.26.
+* The minimum supported Go version is now Go 1.25.
 * Changes to support https://github.com/dlclark/regexp2cg are merged in to support generated regex engines.
 * `Regexp.Split` is now available for splitting strings with regexp matches.
 * The new `compat` sub-package provides a [`regexp` compatibility adapter](#regexp-compatibility-adapter) with the same `Find*` and `Match*` method signatures as `regexp.Regexp`, plus a `compat.Matcher` interface that is implemented by both `*regexp.Regexp` and the adapter.
