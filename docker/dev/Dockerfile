@@ -53,4 +53,3 @@ EXPOSE 3000
 # For "--domain" to work, there should be at least a /srv/algernon/localhost directory.
 #
 ENTRYPOINT ["/bin/algernon", "--domain", "--noninteractive", "--dev", "--autorefresh", "/srv/algernon", ":3000"]
-CMD ["/bin/algernon"]

@@ -48,4 +48,3 @@ EXPOSE 80 443
 # The final parameter is the directory to serve, for instance /srv/algernon
 #
 ENTRYPOINT ["/bin/algernon", "-c", "--domain", "--noninteractive", "--cachesize", "67108864", "--prod", "--cert", "/etc/algernon/cert.pem", "--key", "/etc/algernon/key.pem", "/srv/algernon"]
-CMD ["/bin/algernon"]
