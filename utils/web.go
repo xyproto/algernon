@@ -5,12 +5,17 @@ import (
 	"net/http"
 )
 
-// GetDomain returns the host/domain of a request, handling both IPv4 and IPv6
+// GetDomain returns the host/domain of a request, handling both IPv4 and IPv6.
+// The loopback hosts 127.0.0.1 and ::1 are collapsed to "localhost", so that
+// a single localhost/ document root serves all three.
 func GetDomain(req *http.Request) string {
 	host, _, err := net.SplitHostPort(req.Host)
 	if err != nil {
-		// No port in host, return as-is
-		return req.Host
+		// No port in host, use as-is
+		host = req.Host
+	}
+	if host == "127.0.0.1" || host == "::1" {
+		return "localhost"
 	}
 	return host
 }

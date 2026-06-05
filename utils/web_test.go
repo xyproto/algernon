@@ -12,7 +12,10 @@ func TestGetDomain(t *testing.T) {
 	}{
 		{"example.com:8080", "example.com"},
 		{"example.com", "example.com"},
-		{"[::1]:443", "::1"},
+		{"[::1]:443", "localhost"},
+		{"::1", "localhost"},
+		{"127.0.0.1:3000", "localhost"},
+		{"127.0.0.1", "localhost"},
 		{"localhost:3000", "localhost"},
 	}
 	for _, tt := range tests {
