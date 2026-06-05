@@ -1,0 +1,24 @@
+# Containerfile for only using the Lua interpreter in Algernon
+FROM golang:1.26-alpine as gobuilder
+LABEL maintainer="Alexander F. Rødseth <xyproto@archlinux.org>"
+
+COPY . /algernon
+WORKDIR /algernon
+
+RUN GOOS=linux \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -a \
+      -trimpath \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
+
+RUN apk add upx && upx /bin/algernon
+
+FROM scratch
+COPY --from=gobuilder /bin/algernon /bin/algernon
+COPY --from=gobuilder /tmp /tmp
+
+ENTRYPOINT ["/bin/algernon", "--lua"]

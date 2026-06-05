@@ -1,0 +1,29 @@
+# Containerfile for making Algernon serve HTTP on port 4000, in development mode
+FROM golang:1.26-alpine as gobuilder
+LABEL maintainer="Alexander F. Rødseth <xyproto@archlinux.org>"
+
+COPY . /algernon
+WORKDIR /algernon
+
+RUN GOOS=linux \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -a \
+      -trimpath \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
+
+RUN apk add upx && upx /bin/algernon
+
+FROM scratch
+COPY --from=gobuilder /bin/algernon /bin/algernon
+COPY --from=gobuilder /tmp /tmp
+VOLUME /srv/algernon
+VOLUME /etc/algernon
+WORKDIR /srv/algernon
+
+EXPOSE 4000
+
+ENTRYPOINT ["/bin/algernon", "--domain", "--dev", "--autorefresh", "/srv/algernon", ":4000"]

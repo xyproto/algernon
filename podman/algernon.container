@@ -1,0 +1,35 @@
+# Quadlet unit for running the Algernon prod image under systemd.
+#
+# Install:
+#   rootless: cp algernon.container ~/.config/containers/systemd/
+#            systemctl --user daemon-reload
+#            systemctl --user start algernon.service
+#   rootful:  sudo cp algernon.container /etc/containers/systemd/
+#            sudo systemctl daemon-reload
+#            sudo systemctl start algernon.service
+#
+# Quadlet generates algernon.service from this file at daemon-reload time.
+
+[Unit]
+Description=Algernon web server
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=quay.io/xyproto/algernon:prod
+ContainerName=algernon
+
+# Adjust host paths to where your cert/key and site live.
+Volume=%h/algernon/serve:/srv/algernon:Z
+Volume=%h/algernon/config:/etc/algernon:Z
+
+# Rootless-safe ports. Change to 80/443 when running rootful.
+PublishPort=8080:80
+PublishPort=8443:443
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

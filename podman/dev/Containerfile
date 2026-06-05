@@ -1,0 +1,31 @@
+# Containerfile for making Algernon serve HTTP on port 3000, in development mode
+FROM golang:1.26-alpine as gobuilder
+LABEL maintainer="Alexander F. Rødseth <xyproto@archlinux.org>"
+
+COPY . /algernon
+WORKDIR /algernon
+
+# Build Algernon. GOARCH is inherited from the build platform so this Containerfile
+# works natively on amd64 and aarch64 alike (no qemu emulation needed).
+RUN GOOS=linux \
+    CGO_ENABLED=0 \
+    go build \
+      -mod=vendor \
+      -trimpath \
+      -a \
+      -installsuffix cgo \
+      -ldflags="-w -s" \
+      -o /bin/algernon
+
+RUN apk add upx && upx /bin/algernon
+
+FROM scratch
+COPY --from=gobuilder /bin/algernon /bin/algernon
+COPY --from=gobuilder /tmp /tmp
+VOLUME /srv/algernon
+VOLUME /etc/algernon
+WORKDIR /srv/algernon
+
+EXPOSE 3000
+
+ENTRYPOINT ["/bin/algernon", "--domain", "--noninteractive", "--dev", "--autorefresh", "/srv/algernon", ":3000"]

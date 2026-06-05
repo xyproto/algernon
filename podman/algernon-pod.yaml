@@ -1,0 +1,31 @@
+# Kubernetes-style pod manifest for `podman kube play algernon-pod.yaml`.
+# Edit hostPath entries to point at your cert/key and site directory.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: algernon
+  labels:
+    app: algernon
+spec:
+  containers:
+    - name: algernon
+      image: quay.io/xyproto/algernon:prod
+      ports:
+        - containerPort: 80
+          hostPort: 8080
+        - containerPort: 443
+          hostPort: 8443
+      volumeMounts:
+        - name: serve
+          mountPath: /srv/algernon
+        - name: config
+          mountPath: /etc/algernon
+  volumes:
+    - name: serve
+      hostPath:
+        path: ./serve
+        type: Directory
+    - name: config
+      hostPath:
+        path: ./config
+        type: Directory
