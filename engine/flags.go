@@ -3,6 +3,7 @@ package engine
 import (
 	"flag"
 	"math"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,6 +18,27 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 )
+
+// positionalArgs is the result of classifying Algernon's free-form positional arguments
+type positionalArgs struct {
+	// ServerDirOrFilename is an existing directory or file given on the command line
+	ServerDirOrFilename string
+
+	// ServerAddr is set from a "host:port", ":port" or bare web-port argument
+	ServerAddr string
+
+	// ServerAddr2 is set when a second address-like argument is found
+	ServerAddr2 string
+
+	// RedisAddr is set when an argument looks like a Redis address (":6379" or ":6380")
+	RedisAddr string
+
+	// Remaining holds unclassified arguments, in the legacy order: cert, key, redis address, redis db index
+	Remaining    []string
+	ServerDirSet bool
+
+	RedisAddrFromArgs bool
+}
 
 // Parse the flags, return the default hostname
 func (ac *Config) handleFlags(serverTempDir string) {
@@ -324,7 +346,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	// Classify positional arguments by content rather than by position,
 	// so that the directory and address can be given in any order.
 	fs := datablock.NewFileStat(ac.cacheFileStat, ac.defaultStatCacheRefresh)
-	classified := classifyPositionalArgs(flag.Args(), func(p string) bool {
+	classified := classifyPositionalArgs(dropSelfArg(flag.Args()), func(p string) bool {
 		return fs.IsDir(p) || fs.Exists(p)
 	})
 	if classified.ServerDirSet {
@@ -446,4 +468,126 @@ func (ac *Config) finalConfiguration(host string) bool {
 	}
 
 	return hasReadyFunction
+}
+
+// dropSelfArg returns args with any entry that refers to the running executable removed.
+// This guards against Docker images whose ENTRYPOINT is paired with a redundant
+// CMD ["/bin/algernon"], which Docker appends as a positional argument, causing the
+// executable path to be picked up as the server directory.
+func dropSelfArg(args []string) []string {
+	candidates := map[string]struct{}{}
+	add := func(p string) {
+		if p == "" {
+			return
+		}
+		candidates[p] = struct{}{}
+		if abs, err := filepath.Abs(p); err == nil {
+			candidates[abs] = struct{}{}
+		}
+	}
+	if len(os.Args) > 0 {
+		add(os.Args[0])
+	}
+	if exe, err := os.Executable(); err == nil {
+		add(exe)
+		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+			add(resolved)
+		}
+	}
+	if len(candidates) == 0 {
+		return args
+	}
+	isSelf := func(arg string) bool {
+		if _, ok := candidates[arg]; ok {
+			return true
+		}
+		if abs, err := filepath.Abs(arg); err == nil {
+			if _, ok := candidates[abs]; ok {
+				return true
+			}
+		}
+		return false
+	}
+	out := args[:0:0]
+	for _, a := range args {
+		if isSelf(a) {
+			continue
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+// classifyPositionalArgs splits free-form positional arguments into the categories Algernon
+// historically supported. If pathExists is nil, the serverDir check is skipped.
+func classifyPositionalArgs(args []string, pathExists func(string) bool) positionalArgs {
+	if pathExists == nil {
+		pathExists = func(string) bool { return false }
+	}
+	looksLikeCertOrKey := func(arg string) bool {
+		switch strings.ToLower(filepath.Ext(arg)) {
+		case ".pem", ".crt", ".cer", ".key":
+			return true
+		default:
+			return false
+		}
+	}
+	looksLikeRedisAddr := func(arg string) bool {
+		return strings.HasSuffix(arg, ":6379") || strings.HasSuffix(arg, ":6380")
+	}
+	looksLikeWebPort := func(port string) bool {
+		return port == "80" || port == "8080" || strings.HasSuffix(port, "000")
+	}
+
+	var result positionalArgs
+	for _, arg := range args {
+		if looksLikeCertOrKey(arg) {
+			result.Remaining = append(result.Remaining, arg)
+			continue
+		}
+		if !result.ServerDirSet && pathExists(arg) {
+			if strings.HasSuffix(arg, string(os.PathSeparator)) {
+				result.ServerDirOrFilename = arg[:len(arg)-1]
+			} else {
+				result.ServerDirOrFilename = arg
+			}
+			result.ServerDirSet = true
+			continue
+		}
+		if looksLikeRedisAddr(arg) {
+			result.RedisAddr = arg
+			result.RedisAddrFromArgs = true
+			continue
+		}
+		// Check if this looks like a host:port address (handles IPv4, IPv6, and port-only)
+		if _, _, err := net.SplitHostPort(arg); err == nil {
+			// Valid host:port format, assume this is a web server address
+			if result.ServerAddr == "" {
+				result.ServerAddr = arg
+			} else if result.ServerAddr2 == "" {
+				result.ServerAddr2 = arg
+			} else {
+				result.Remaining = append(result.Remaining, arg)
+			}
+			continue
+		}
+		if _, err := strconv.Atoi(arg); err == nil { // no error
+			// If in doubt, assume this is the web server port.
+			if looksLikeWebPort(arg) || !result.RedisAddrFromArgs {
+				addr := net.JoinHostPort("", arg)
+				if result.ServerAddr == "" {
+					result.ServerAddr = addr
+				} else if result.ServerAddr2 == "" {
+					result.ServerAddr2 = addr
+				} else {
+					result.Remaining = append(result.Remaining, arg)
+				}
+			} else {
+				result.Remaining = append(result.Remaining, arg)
+			}
+			continue
+		}
+		result.Remaining = append(result.Remaining, arg)
+	}
+	return result
 }
