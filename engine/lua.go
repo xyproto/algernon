@@ -383,6 +383,20 @@ func (ac *Config) buildHandlerPool(filename string, mux *http.ServeMux) error {
 	return nil
 }
 
+// isArrayLikeTable reports whether the table has sequential integer keys 1..N.
+func isArrayLikeTable(t *lua.LTable) bool {
+	n := t.Len()
+	if n == 0 {
+		return false
+	}
+	for i := 1; i <= n; i++ {
+		if t.RawGetInt(i) == lua.LNil {
+			return false
+		}
+	}
+	return true
+}
+
 // LuaFunctionMap returns the functions available in the given Lua code as
 // functions in a map that can be used by templates.
 //
@@ -431,6 +445,15 @@ func (ac *Config) LuaFunctionMap(w http.ResponseWriter, req *http.Request, luada
 				funcs[key.String()] = map[int]string(m)
 			case map[int]int:
 				funcs[key.String()] = map[int]int(m)
+			default:
+				// Recurse only for array-like tables, see issue #119.
+				// Library globals (string, math, _G, ...) use string keys
+				// and may contain cycles, so they are skipped here.
+				if isArrayLikeTable(luaTable) {
+					funcs[key.String()] = gluamapper.ToGoValue(luaTable, gluamapper.Option{
+						NameFunc: func(s string) string { return s },
+					})
+				}
 			}
 
 			// Check if the current value is a function
