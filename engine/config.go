@@ -435,6 +435,18 @@ func unique(sl []string) []string {
 	return nl
 }
 
+// globalsLuaPath returns the expected location of an optional globals.lua next
+// to the served root, or "" if a path cannot be derived.
+func globalsLuaPath(serverDirOrFilename string, singleFileMode bool) string {
+	if serverDirOrFilename == "" {
+		return ""
+	}
+	if singleFileMode {
+		return filepath.Join(filepath.Dir(serverDirOrFilename), "globals.lua")
+	}
+	return filepath.Join(serverDirOrFilename, "globals.lua")
+}
+
 // MustServe sets up a server with handlers
 func (ac *Config) MustServe(mux *http.ServeMux) error {
 	var err error
@@ -556,6 +568,20 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 	AtShutdown(func() {
 		ac.luapool.Shutdown()
 	})
+
+	// Auto-detect globals.lua next to the served root and apply it to every
+	// new pool state. See issue #103.
+	globalsPath := globalsLuaPath(ac.serverDirOrFilename, ac.singleFileMode)
+	if globalsPath != "" {
+		if data, err := os.ReadFile(globalsPath); err == nil {
+			ac.luapool.SetGlobalsScript(data)
+			if ac.verboseMode {
+				logrus.Info("Loaded globals.lua from ", globalsPath)
+			}
+		} else if !os.IsNotExist(err) {
+			logrus.Errorf("globals.lua: %s", err)
+		}
+	}
 	AtShutdown(ac.closePluginClients)
 
 	// TODO: save repl history + close luapool + close logs ++ at shutdown

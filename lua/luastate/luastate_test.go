@@ -8,6 +8,23 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 )
 
+// A script set via SetGlobalsScript must run on every freshly-created state, see issue #103.
+func TestGlobalsScriptAppliedToNewStates(t *testing.T) {
+	p := New()
+	defer p.Shutdown()
+
+	p.SetGlobalsScript([]byte(`function greet() return "hi from globals" end`))
+
+	L := p.Borrow()
+	defer p.Return(L)
+	if err := L.DoString(`result = greet()`); err != nil {
+		t.Fatalf("greet() call failed: %v", err)
+	}
+	if got := L.GetGlobal("result").String(); got != "hi from globals" {
+		t.Errorf("greet() = %q, want %q", got, "hi from globals")
+	}
+}
+
 func TestBorrowReturn(t *testing.T) {
 	p := New()
 	defer p.Shutdown()

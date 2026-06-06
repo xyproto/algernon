@@ -5,6 +5,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/lua/teal"
 	lua "github.com/xyproto/gopher-lua"
 )
@@ -14,13 +15,21 @@ import (
 
 // LStatePool is a pool of Lua states, with a mutex
 type LStatePool struct {
-	saved []*lua.LState
-	m     sync.Mutex
+	saved      []*lua.LState
+	globalsLua []byte
+	m          sync.Mutex
 }
 
 // New returns a new Lua pool structure
 func New() *LStatePool {
 	return &LStatePool{saved: make([]*lua.LState, 0, 4)}
+}
+
+// SetGlobalsScript stores Lua code to run on every freshly-created state in
+// the pool. Used to share globals.lua across the request handlers. Must be
+// called before the pool is used concurrently.
+func (pl *LStatePool) SetGlobalsScript(code []byte) {
+	pl.globalsLua = code
 }
 
 // New returns a new Lua state, and sets the context
@@ -31,6 +40,13 @@ func (pl *LStatePool) New() *lua.LState {
 
 	// Teal
 	teal.Load(L)
+
+	// Apply globals.lua, if configured
+	if len(pl.globalsLua) > 0 {
+		if err := L.DoString(string(pl.globalsLua)); err != nil {
+			logrus.Errorf("globals.lua: %s", err)
+		}
+	}
 
 	return L
 }

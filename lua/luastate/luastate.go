@@ -37,6 +37,12 @@ func (p *Pool) New() *lua.LState {
 	return p.lp.New()
 }
 
+// SetGlobalsScript stores Lua code to run on every freshly-created state.
+// Must be called before the pool is used concurrently.
+func (p *Pool) SetGlobalsScript(code []byte) {
+	p.lp.SetGlobalsScript(code)
+}
+
 // With borrows a Lua state, runs fn, and returns the state to the pool even on panic
 func (p *Pool) With(fn func(L *lua.LState) error) (err error) {
 	L := p.lp.Get()
