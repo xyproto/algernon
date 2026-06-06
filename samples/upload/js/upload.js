@@ -9,9 +9,9 @@ function fileSelected(fieldID) {
     } else {
       fileSize = (Math.round(file.size * 100 / KiB) / 100).toString() + 'KiB';
     }
-    document.getElementById('fileName').innerHTML = 'Name: ' + file.name;
-    document.getElementById('fileSize').innerHTML = 'Size: ' + fileSize;
-    document.getElementById('fileType').innerHTML = 'Type: ' + file.type;
+    document.getElementById('fileName').textContent = 'Name: ' + file.name;
+    document.getElementById('fileSize').textContent = 'Size: ' + fileSize;
+    document.getElementById('fileType').textContent = 'Type: ' + file.type;
   }
 }
 
