@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -18,6 +17,15 @@ import (
 // hmrUpdatePrefix is the URL prefix for the HMR update endpoint
 const hmrUpdatePrefix = "/@algernon/hmr/"
 
+// pathContains reports whether p is the same as or a descendant of root.
+func pathContains(root, p string) bool {
+	rel, err := filepath.Rel(root, p)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
 // HMRUpdateHandler serves a freshly compiled (never cached) version of a
 // JSX or JS file so the browser can hot-swap it without reloading the page.
 func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
@@ -26,42 +34,35 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "missing path", http.StatusBadRequest)
 		return
 	}
-
-	// Reject path components that are exactly ".."
-	if slices.Contains(strings.FieldsFunc(relPath, func(r rune) bool { return r == '/' || r == '\\' }), "..") {
+	relPath = filepath.FromSlash(relPath)
+	if filepath.IsAbs(relPath) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 
+	// Canonicalize the server root.
 	serverRoot, err := filepath.Abs(ac.serverDirOrFilename)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	// Strip the server root prefix if the client sent an absolute path
-	relPath = filepath.FromSlash(relPath)
-	if filepath.IsAbs(relPath) {
-		if rel, err2 := filepath.Rel(serverRoot, relPath); err2 == nil && !strings.HasPrefix(rel, "..") {
-			relPath = rel
-		}
+	if resolved, err := filepath.EvalSymlinks(serverRoot); err == nil {
+		serverRoot = resolved
 	}
-	absPath := filepath.Join(serverRoot, relPath)
-	if !strings.HasPrefix(absPath+string(filepath.Separator), serverRoot+string(filepath.Separator)) {
+
+	// Containment check via filepath.Rel after normalization.
+	absPath := filepath.Clean(filepath.Join(serverRoot, relPath))
+	if !pathContains(serverRoot, absPath) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-
-	// Resolve symlinks and re-check containment so that a symlink inside the
-	// server root cannot be used to read files outside of it
-	if resolvedRoot, err := filepath.EvalSymlinks(serverRoot); err == nil {
-		serverRoot = resolvedRoot
-	}
-	if resolvedPath, err := filepath.EvalSymlinks(absPath); err == nil {
-		if !strings.HasPrefix(resolvedPath+string(filepath.Separator), serverRoot+string(filepath.Separator)) {
+	// Re-check after resolving symlinks inside the root.
+	if resolved, err := filepath.EvalSymlinks(absPath); err == nil {
+		if !pathContains(serverRoot, resolved) {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
-		absPath = resolvedPath
+		absPath = resolved
 	}
 
 	src, err := os.ReadFile(absPath)
