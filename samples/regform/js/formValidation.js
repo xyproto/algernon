@@ -170,7 +170,7 @@ if (registerButton != null) {
     if (currentScript != null && currentScript.getAttribute('registrationURL') != null) {
       registrationURL = currentScript.getAttribute('registrationURL');
     }
-    document.registerForm.setAttribute('action', registrationURL + '?username=' + usernameField.value);
+    document.registerForm.setAttribute('action', registrationURL + '?username=' + encodeURIComponent(usernameField.value));
     // Focus fields that are invalid and return false to not submit the form,
     // or return true to submit the form. "false" is because it's a register form validation.
     return !focusError(false);
@@ -186,7 +186,7 @@ if (loginButton != null) {
     if (currentScript != null && currentScript.getAttribute('loginURL') != null) {
       loginURL = currentScript.getAttribute('loginURL');
     }
-    document.loginForm.setAttribute('action', loginURL + '?username=' + usernameField.value);
+    document.loginForm.setAttribute('action', loginURL + '?username=' + encodeURIComponent(usernameField.value));
     //
     // Focus fields that are invalid and return false to not submit the form,
     // or return true to submit the form. "true" is because it's only a login form validation.
