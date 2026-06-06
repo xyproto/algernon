@@ -96,8 +96,8 @@ type Config struct {
 	postgresDatabase             string               // database name
 	dirBaseURL                   string               // optional Base URL, for the directory listings
 	jsxOptions                   api.TransformOptions // JSX rendering options
+	serverConfigurationFilenames []string             // list of configuration filenames to check
 	serve                        ServeConfig
-	serverConfigurationFilenames []string // list of configuration filenames to check
 	cacheMaxGivenDataSize        uint64
 	largeFileSize                uint64        // threshold for not reading large files into memory
 	bundleCacheMaxMemory         uint64        // max memory for bundle cache (0 = unlimited)
