@@ -310,6 +310,12 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 		return 1 // number of results
 	}))
 
+	// Return the remote address ("host:port") of the connected client, see issue #114
+	L.SetGlobal("remoteaddr", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(req.RemoteAddr))
+		return 1 // number of results
+	}))
+
 	// Return the HTTP headers as a table
 	L.SetGlobal("headers", L.NewFunction(func(L *lua.LState) int {
 		luaTable := L.NewTable()

@@ -92,6 +92,29 @@ func TestRun3System(t *testing.T) {
 	})
 }
 
+// The remoteaddr Lua function must return req.RemoteAddr, see issue #114.
+func TestRemoteAddrLua(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "http://example.com/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.RemoteAddr = "192.0.2.1:54321"
+
+	L := lua.NewState()
+	defer L.Close()
+
+	cfg := &Config{}
+	cfg.LoadBasicWeb(rec, req, L, "script.lua", func() {}, &FutureStatus{})
+
+	if err := L.DoString(`result = remoteaddr()`); err != nil {
+		t.Fatalf("remoteaddr() call failed: %v", err)
+	}
+	if got := L.GetGlobal("result").String(); got != "192.0.2.1:54321" {
+		t.Errorf("remoteaddr() = %q, want %q", got, "192.0.2.1:54321")
+	}
+}
+
 // TestRun3Web tests the run3 function loaded by LoadBasicWeb.
 func TestRun3Web(t *testing.T) {
 	// Create a temporary directory to act as the script's directory.

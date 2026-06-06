@@ -118,6 +118,14 @@ Simple mode. Serve the current directory over regular HTTP, disable debug mode,
 interactive mode, request limits and all features that require a database.
 .TP
 .PP
+.SH "LUA REQUEST API"
+.sp
+A selection of Lua functions available inside served pages. Type \fBhelp web\fP
+in the interactive Lua prompt for the full list.
+.TP
+.B remoteaddr() -> string
+Return the remote address ("host:port") of the connected client.
+.PP
 .SH "ENV"
 .sp
 The \fBNO_COLOR\fP environment variable can be set to 1 to turn off all colors.

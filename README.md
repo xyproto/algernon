@@ -533,6 +533,9 @@ print_nonl(...)
 // Return the requested URL path.
 urlpath() -> string
 
+// Return the remote address ("host:port") of the connected client.
+remoteaddr() -> string
+
 // Return the HTTP header in the request, for a given key, or an empty string.
 header(string) -> string
 
