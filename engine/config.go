@@ -680,8 +680,10 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		to.Tags(dashLineColor + strings.Repeat("-", 49) + "<off>")
 	}
 
-	// Direct internal logging elsewhere
-	internalLogFile, err := os.Open(ac.internalLogFilename)
+	// Direct internal logging elsewhere. Open for writing so that a newly
+	// specified filename is created rather than falling through to the
+	// hard-coded "internal.log" fallback.
+	internalLogFile, err := os.OpenFile(ac.internalLogFilename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, ac.defaultPermissions)
 	if err != nil {
 		// Could not open the internalLogFilename filename, try using another filename
 		internalLogFile, err = os.OpenFile("internal.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, ac.defaultPermissions)
