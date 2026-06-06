@@ -3,6 +3,7 @@ package engine
 import (
 	"bufio"
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"maps"
@@ -55,7 +56,7 @@ func (ac *Config) PongoHandler(w http.ResponseWriter, req *http.Request, filenam
 	pongoblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
 		if ac.debugMode {
-			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			fmt.Fprintf(w, "Unable to read %s: %s", html.EscapeString(filename), html.EscapeString(err.Error()))
 		} else {
 			logrus.Errorf("Unable to read %s: %s", filename, err)
 		}
@@ -116,7 +117,7 @@ func (ac *Config) ReadAndLogErrors(w http.ResponseWriter, filename, ext string) 
 	byteblock, err := ac.cache.Read(filename, ac.shouldCache(ext))
 	if err != nil {
 		if ac.debugMode {
-			fmt.Fprintf(w, "Unable to read %s: %s", filename, err)
+			fmt.Fprintf(w, "Unable to read %s: %s", html.EscapeString(filename), html.EscapeString(err.Error()))
 		} else {
 			logrus.Errorf("Unable to read %s: %s", filename, err)
 		}
