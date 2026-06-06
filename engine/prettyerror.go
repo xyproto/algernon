@@ -2,12 +2,13 @@ package engine
 
 import (
 	"bytes"
+	"html"
+	"html/template"
 	"net"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"text/template"
 )
 
 const (
@@ -143,12 +144,14 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 			}
 		}
 
-		filebytes = bytes.ReplaceAll(filebytes, []byte("<"), []byte("&lt;"))
-		bytelines := bytes.Split(filebytes, []byte("\n"))
-		if (linenr >= 0) && (linenr < len(bytelines)) {
-			bytelines[linenr] = []byte(preHighlight + string(bytelines[linenr]) + postHighlight)
+		lines := strings.Split(string(filebytes), "\n")
+		for i, line := range lines {
+			lines[i] = html.EscapeString(line)
 		}
-		code = string(bytes.Join(bytelines, []byte("\n")))
+		if (linenr >= 0) && (linenr < len(lines)) {
+			lines[linenr] = preHighlight + lines[linenr] + postHighlight
+		}
+		code = strings.Join(lines, "\n")
 	}
 
 	title := errorPageTitle(lang)
@@ -156,13 +159,13 @@ func (ac *Config) PrettyError(w http.ResponseWriter, req *http.Request, filename
 	data := struct {
 		Title         string
 		Filename      string
-		Code          string
+		Code          template.HTML
 		ErrorMessage  string
 		VersionString string
 	}{
 		Title:         title,
 		Filename:      filepath.Base(filename),
-		Code:          code,
+		Code:          template.HTML(code),
 		ErrorMessage:  strings.TrimSpace(errormessage),
 		VersionString: ac.versionString,
 	}
