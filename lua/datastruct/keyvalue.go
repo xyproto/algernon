@@ -1,13 +1,53 @@
 package datastruct
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/sirupsen/logrus"
+	"github.com/xyproto/gluamapper"
 	lua "github.com/xyproto/gopher-lua"
 	"github.com/xyproto/pinterface/v2"
 )
 
 // Identifier for the Set class in Lua
 const lKeyValueClass = "KEYVALUE"
+
+// Prefix used to mark KeyValue entries that hold a JSON-encoded Lua table.
+// Starts with a NUL byte so plain strings cannot collide. See issue #113.
+const kvTableMarker = "\x00alg-json:"
+
+// kvGluamapperOption keeps the original key names when converting Lua tables.
+var kvGluamapperOption = gluamapper.Option{
+	NameFunc: func(s string) string { return s },
+}
+
+// anyToLua converts a JSON-decoded Go value back into a Lua value.
+func anyToLua(L *lua.LState, v any) lua.LValue {
+	switch val := v.(type) {
+	case nil:
+		return lua.LNil
+	case bool:
+		return lua.LBool(val)
+	case float64:
+		return lua.LNumber(val)
+	case string:
+		return lua.LString(val)
+	case []any:
+		t := L.NewTable()
+		for i, item := range val {
+			t.RawSetInt(i+1, anyToLua(L, item))
+		}
+		return t
+	case map[string]any:
+		t := L.NewTable()
+		for k, item := range val {
+			t.RawSetString(k, anyToLua(L, item))
+		}
+		return t
+	}
+	return lua.LNil
+}
 
 // Get the first argument, "self", and cast it from userdata to a key/value
 func checkKeyValue(L *lua.LState) pinterface.IKeyValue {
@@ -44,23 +84,43 @@ func kvToString(L *lua.LState) int {
 }
 
 // Set a key and value. Returns true if successful.
-// kv:set(string, string) -> bool
+// Tables are JSON-encoded and reconstructed on get, see issue #113.
+// kv:set(string, string|table) -> bool
 func kvSet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
 	key := L.CheckString(2)
-	value := L.ToString(3)
+	var value string
+	if tbl, ok := L.Get(3).(*lua.LTable); ok {
+		data, err := json.Marshal(gluamapper.ToGoValue(tbl, kvGluamapperOption))
+		if err != nil {
+			logrus.Error(err)
+			L.Push(lua.LBool(false))
+			return 1
+		}
+		value = kvTableMarker + string(data)
+	} else {
+		value = L.ToString(3)
+	}
 	L.Push(lua.LBool(nil == kv.Set(key, value)))
 	return 1 // Number of returned values
 }
 
 // Takes a key, returns a value. May return an empty string.
-// kv:get(string) -> string
+// If the stored value was a table, returns a table instead of a string.
+// kv:get(string) -> string|table
 func kvGet(L *lua.LState) int {
 	kv := checkKeyValue(L) // arg 1
 	key := L.CheckString(2)
 	retval, err := kv.Get(key)
 	if err != nil {
 		retval = ""
+	}
+	if strings.HasPrefix(retval, kvTableMarker) {
+		var decoded any
+		if err := json.Unmarshal([]byte(retval[len(kvTableMarker):]), &decoded); err == nil {
+			L.Push(anyToLua(L, decoded))
+			return 1
+		}
 	}
 	L.Push(lua.LString(retval))
 	return 1 // Number of returned values
