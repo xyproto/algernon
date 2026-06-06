@@ -5,6 +5,8 @@ package themes
 import (
 	"bytes"
 	"fmt"
+	"html"
+	"net/url"
 	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -111,18 +113,21 @@ func SimpleHTMLPage(title, headline, inhead, body, language []byte) []byte {
 
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory
 // and a boolean that is true if the given URL is to a directory.
-func HTMLLink(text, url string, isDirectory bool) string {
+func HTMLLink(text, urlPath string, isDirectory bool) string {
 
-	// Sanitize the link text and the link URL
+	// Sanitize the link text
 	text = policy.Sanitize(text)
-	url = policy.Sanitize(url)
 
 	// Add a final slash, if needed
 	if isDirectory {
 		text += "/"
-		url += "/"
+		urlPath += "/"
 	}
-	return "<a href=\"/" + url + "\">" + text + "</a><br>"
+
+	// Percent-encode the URL path so filenames with newlines, spaces or
+	// other special bytes produce a valid href. See issue #144.
+	href := (&url.URL{Path: "/" + urlPath}).EscapedPath()
+	return "<a href=\"" + html.EscapeString(href) + "\">" + text + "</a><br>"
 }
 
 // StyleAmber modifies Amber source code so that a link to the given stylesheet URL is added

@@ -104,6 +104,24 @@ func TestHTMLLink(t *testing.T) {
 	}
 }
 
+// Filenames with newlines or spaces must produce a valid percent-encoded href, see issue #144.
+func TestHTMLLinkEncodesSpecialBytes(t *testing.T) {
+	got := HTMLLink("file\nname.txt", "file\nname.txt", false)
+	if !strings.Contains(got, `href="/file%0Aname.txt"`) {
+		t.Errorf("Expected newline to be percent-encoded in href, got: %s", got)
+	}
+
+	got = HTMLLink("a b.txt", "a b.txt", false)
+	if !strings.Contains(got, `href="/a%20b.txt"`) {
+		t.Errorf("Expected space to be percent-encoded in href, got: %s", got)
+	}
+
+	got = HTMLLink("sub/file.txt", "sub/file.txt", false)
+	if !strings.Contains(got, `href="/sub/file.txt"`) {
+		t.Errorf("Expected forward slashes to be preserved, got: %s", got)
+	}
+}
+
 func TestStyleHTML(t *testing.T) {
 	html := []byte("<html><head></head><body><p>hi</p></body></html>")
 	got := StyleHTML(html, "style.css")
