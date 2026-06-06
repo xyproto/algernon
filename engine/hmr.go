@@ -51,6 +51,19 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Resolve symlinks and re-check containment so that a symlink inside the
+	// server root cannot be used to read files outside of it
+	if resolvedRoot, err := filepath.EvalSymlinks(serverRoot); err == nil {
+		serverRoot = resolvedRoot
+	}
+	if resolvedPath, err := filepath.EvalSymlinks(absPath); err == nil {
+		if !strings.HasPrefix(resolvedPath+string(filepath.Separator), serverRoot+string(filepath.Separator)) {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		absPath = resolvedPath
+	}
+
 	src, err := os.ReadFile(absPath)
 	if err != nil {
 		logrus.Errorf("hmr: cannot read %s: %s", absPath, err)
