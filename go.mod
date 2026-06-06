@@ -22,7 +22,7 @@ require (
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.5.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/quic-go/quic-go v0.59.1
+	github.com/quic-go/quic-go v0.60.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -95,7 +95,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260605110946-5e0c63080383 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260606125118-d568a8528e9c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
@@ -109,7 +109,7 @@ require (
 	github.com/xyproto/simplehstore v1.9.0 // indirect
 	github.com/xyproto/simplemaria v1.4.0 // indirect
 	github.com/xyproto/simplesqlite_noc v1.2.0 // indirect
-	github.com/xyproto/symwalk v1.1.1 // indirect
+	github.com/xyproto/symwalk v1.2.0 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

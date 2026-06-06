@@ -247,7 +247,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260605110946-5e0c63080383
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260606125118-d568a8528e9c
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -261,8 +261,8 @@ github.com/pkg/browser
 # github.com/quic-go/qpack v0.6.0
 ## explicit; go 1.24
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.59.1
-## explicit; go 1.24
+# github.com/quic-go/quic-go v0.60.0
+## explicit; go 1.25.0
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
 github.com/quic-go/quic-go/http3/qlog
@@ -410,7 +410,7 @@ github.com/xyproto/simplesqlite_noc
 # github.com/xyproto/splash v1.3.1
 ## explicit; go 1.23.0
 github.com/xyproto/splash
-# github.com/xyproto/symwalk v1.1.1
+# github.com/xyproto/symwalk v1.2.0
 ## explicit; go 1.9
 github.com/xyproto/symwalk
 # github.com/xyproto/tinysvg v1.2.1
@@ -473,7 +473,6 @@ golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/cryptobyte
 golang.org/x/crypto/cryptobyte/asn1
-golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/md4

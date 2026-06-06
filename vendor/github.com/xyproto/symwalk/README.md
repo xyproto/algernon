@@ -1,4 +1,4 @@
-# symwalk [![Build Status](https://travis-ci.com/xyproto/symwalk.svg?branch=master)](https://travis-ci.com/xyproto/symwalk) [![GoDoc](https://godoc.org/github.com/xyproto/symwalk?status.svg)](http://godoc.org/github.com/xyproto/symwalk)
+# SymWalk [![GoDoc](https://godoc.org/github.com/xyproto/symwalk?status.svg)](http://godoc.org/github.com/xyproto/symwalk)
 
 Concurrently search directories while also following symlinks.
 
@@ -10,7 +10,7 @@ Concurrently search directories while also following symlinks.
 
 ## Requirements
 
-* Go 1.10 or later.
+* Go 1.25 or later.
 
 ## Example use
 
@@ -18,30 +18,30 @@ This passes in a function to `symwalk.Walk`, which is called for every encounter
 
 ```go
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"sync"
+    "fmt"
+    "os"
+    "path/filepath"
+    "sync"
 
-	"github.com/xyproto/symwalk"
+    "github.com/xyproto/symwalk"
 )
 
 func main() {
-	var mut sync.Mutex
-	symwalk.Walk(".", func(p string, info os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			return nil
-		}
-		filename := filepath.Base(p)
-		mut.Lock()
-		fmt.Printf("%s\n", filename)
-		mut.Unlock()
-		return nil
-	})
+    var mut sync.Mutex
+    symwalk.Walk(".", func(p string, info os.FileInfo, err error) error {
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "%v\n", err)
+            return nil
+        }
+        filename := filepath.Base(p)
+        mut.Lock()
+        fmt.Printf("%s\n", filename)
+        mut.Unlock()
+        return nil
+    })
 }
 ```
 
 ## General info
 
-* Version: 1.1.0
+* Version: 1.2.0

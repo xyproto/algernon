@@ -35,93 +35,84 @@ func Walk(root string, walkFn filepath.WalkFunc) error {
 // allowing you to handle each item concurrently.  A maximum of limit walkFns will
 // be called at any one time.
 func WalkLimit(root string, walkFn filepath.WalkFunc, limit int) error {
-
-	// make sure limit is sensible
 	if limit < 1 {
 		panic("powerwalk: limit must be greater than zero.")
 	}
 
-	// filesMg is a wait group that waits for all files to
-	// be processed before finishing.
-	var filesWg sync.WaitGroup
-
-	// files is a channel that receives lists of channels
-	files := make(chan *walkArgs)
-	kill := make(chan struct{})
-	errs := make(chan error)
-
-	for i := 0; i < limit; i++ {
-		go func(i int) {
-			for {
-				select {
-				case file, ok := <-files:
-					if !ok {
-						continue
-					}
-					if err := walkFn(file.path, file.info, file.err); err != nil {
-						errs <- err
-					}
-					filesWg.Done()
-				case <-kill:
-					return
-				}
-			}
-		}(i)
+	var (
+		files    = make(chan *walkArgs)
+		done     = make(chan struct{})
+		doneOnce sync.Once
+		errMu    sync.Mutex
+		walkErr  error
+	)
+	// setErr records the first error from a walkFn invocation and signals
+	// every goroutine to stop. close(done) is guarded by sync.Once so that
+	// concurrent errors cannot panic the program.
+	setErr := func(err error) {
+		errMu.Lock()
+		if walkErr == nil {
+			walkErr = err
+		}
+		errMu.Unlock()
+		doneOnce.Do(func() { close(done) })
+	}
+	getErr := func() error {
+		errMu.Lock()
+		defer errMu.Unlock()
+		return walkErr
 	}
 
-	var walkErr error
+	// Workers consume files until the channel is closed (normal completion)
+	// or until done is closed (an error was recorded by some other worker).
+	var workersWg sync.WaitGroup
+	for i := 0; i < limit; i++ {
+		workersWg.Add(1)
+		go func() {
+			defer workersWg.Done()
+			for {
+				select {
+				case <-done:
+					return
+				case file, ok := <-files:
+					if !ok {
+						return
+					}
+					if err := walkFn(file.path, file.info, file.err); err != nil {
+						setErr(err)
+						return
+					}
+				}
+			}
+		}()
+	}
 
-	// check for errors
-	go func() {
-		select {
-		case walkErr = <-errs:
-			close(kill)
-		case <-kill:
-			return
-		}
-	}()
-
-	// setup a waitgroup and wait for everything to
-	// be done
+	// Walker drives filepathWalk. Each visited entry is either dispatched to
+	// a worker or, if an error has already been observed, the walk aborts.
 	var walkerWg sync.WaitGroup
 	walkerWg.Add(1)
-
 	go func() {
-
+		defer walkerWg.Done()
+		defer close(files)
 		filepathWalk(root, func(p string, info os.FileInfo, err error) error {
 			select {
-			case <-kill:
-				close(files)
+			case <-done:
 				return errors.New("kill received while walking")
-			default:
-				filesWg.Add(1)
-				select {
-				case files <- &walkArgs{path: p, info: info, err: err}:
-				}
+			case files <- &walkArgs{path: p, info: info, err: err}:
 				return nil
 			}
 		})
-
-		// everything is done
-		walkerWg.Done()
-
 	}()
 
-	// wait for all walker calls
 	walkerWg.Wait()
-
-	if walkErr == nil {
-		filesWg.Wait()
-		close(kill)
-	}
-
-	return walkErr
+	workersWg.Wait()
+	return getErr()
 }
 
 // walkArgs holds the arguments that were passed to the Walk or WalkLimit
 // functions.
 type walkArgs struct {
-	path string
 	info os.FileInfo
 	err  error
+	path string
 }
