@@ -278,7 +278,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		servingHTTPS.Store(true)
 		// Start serving over QUIC
 		go ac.ListenAndServeQUIC(handler, justServeRegularHTTP, &servingHTTPS)
-	case ac.productionMode:
+	case ac.productionMode && !ac.serve.portConfigFromCLI:
 		// Listen for both HTTPS+HTTP/2 and HTTP requests, on different ports
 		logrus.Info("Serving HTTP/2 on https://" + utils.HostPortToURL(utils.JoinHostPort(ac.serverHost, ":443")) + "/")
 		servingHTTPS.Store(true)

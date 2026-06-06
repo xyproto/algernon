@@ -370,8 +370,10 @@ func (ac *Config) handleFlags(serverTempDir string) {
 		}
 		ac.serverAddr = "" // will be derived from httpAddr/httpsAddr in serve.go
 	}
-	// Track that port configuration came from the command line
-	if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" {
+	// Track that port configuration came from the command line. This includes
+	// a single positional "host:port" (classified into ac.serverAddr), so that
+	// flag-driven modes like -p do not silently override the user's choice.
+	if ac.serve.httpAddr != "" || ac.serve.httpsAddr != "" || ac.serverAddr != "" {
 		ac.serve.portConfigFromCLI = true
 	}
 	if classified.RedisAddrFromArgs {
