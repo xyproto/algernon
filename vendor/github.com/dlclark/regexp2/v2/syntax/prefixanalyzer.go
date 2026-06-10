@@ -1379,7 +1379,7 @@ func extractRequiredLandmarkAlternative(node *RegexNode) (RequiredLandmarkAltern
 	i := 0
 	if i < len(children) {
 		if whitespaceSet, min, ok := whitespaceLoop(children[i]); ok {
-			alt.WhitespaceSet = whitespaceSet
+			alt.LeadingWhitespaceSet = whitespaceSet
 			alt.RequireWhitespaceBefore = min > 0
 			i++
 		}
@@ -1394,11 +1394,11 @@ func extractRequiredLandmarkAlternative(node *RegexNode) (RequiredLandmarkAltern
 	core := unwrapTransparentNodes(children[i])
 	switch core.T {
 	case NtOne:
-		alt.Literal = string(core.Ch)
+		alt.Literal = []rune{core.Ch}
 		alt.MinRepeat = 1
 		alt.MaxRepeat = 1
 	case NtMulti:
-		alt.Literal = string(core.Str)
+		alt.Literal = core.Str
 		alt.MinRepeat = 1
 		alt.MaxRepeat = 1
 	case NtSet, NtSetloop, NtSetloopatomic, NtSetlazy:
@@ -1419,7 +1419,6 @@ func extractRequiredLandmarkAlternative(node *RegexNode) (RequiredLandmarkAltern
 			return RequiredLandmarkAlternative{}, false
 		}
 		alt.Set = core.Set
-		alt.Chars = chars
 	default:
 		return RequiredLandmarkAlternative{}, false
 	}
@@ -1427,9 +1426,7 @@ func extractRequiredLandmarkAlternative(node *RegexNode) (RequiredLandmarkAltern
 
 	if i < len(children) {
 		if whitespaceSet, min, ok := whitespaceLoop(children[i]); ok {
-			if alt.WhitespaceSet == nil {
-				alt.WhitespaceSet = whitespaceSet
-			}
+			alt.TrailingWhitespaceSet = whitespaceSet
 			alt.RequireWhitespaceAfter = min > 0
 			i++
 		}

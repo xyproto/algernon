@@ -11,13 +11,14 @@ type FindOptimizations struct {
 	rightToLeft  bool
 	asciiLookups [][]uint
 
-	FindMode          FindNextStartingPositionMode
-	LeadingAnchor     NodeType
-	TrailingAnchor    NodeType
-	MinRequiredLength int
-	MaxPossibleLength int
-	LeadingPrefix     string
-	LeadingPrefixes   []string
+	FindMode             FindNextStartingPositionMode
+	LeadingAnchor        NodeType
+	TrailingAnchor       NodeType
+	MinRequiredLength    int
+	MaxPossibleLength    int
+	LeadingPrefix        string
+	LeadingPrefixes      []string
+	LeadingPrefixesRunes [][]rune
 	//LeadingStrings    *helpers.StringSearchValues
 
 	FixedDistanceLiteral FixedDistanceLiteral
@@ -50,21 +51,56 @@ type FixedDistanceLiteral struct {
 }
 
 type RequiredLandmarkChain struct {
+	// LeadingLoopSet is the unbounded leading set loop that precedes every
+	// landmark in the original concatenation. At run time, after the first
+	// landmark alternative is found, the scanner walks backward over this set
+	// to recover the earliest plausible regex start position.
 	LeadingLoopSet *CharSet
-	Landmarks      []RequiredLandmark
+
+	// Landmarks must all be found, in slice order, for the chain prefilter to
+	// produce a candidate. Each landmark is satisfied by exactly one matching
+	// alternative; alternatives are tried independently by the runner.
+	Landmarks []RequiredLandmark
 }
 
 type RequiredLandmark struct {
+	// Alternatives describes the mutually exclusive shapes that can satisfy
+	// this single required landmark. A landmark matches when any one alternative
+	// matches at a position in the input.
 	Alternatives []RequiredLandmarkAlternative
 }
 
 type RequiredLandmarkAlternative struct {
-	Literal                 string
-	Chars                   []rune
-	Set                     *CharSet
-	WhitespaceSet           *CharSet
-	MinRepeat               int
-	MaxRepeat               int
+	// Literal is the core token for literal alternatives. When non-empty, it
+	// must match exactly at the candidate core position, and Set must be nil.
+	Literal []rune
+
+	// Set is the core token for character-class alternatives. When non-nil, it
+	// must match between MinRepeat and MaxRepeat runes at the candidate core
+	// position, and Literal must be empty. The analyzer only builds set
+	// alternatives for non-negated sets that can be cheaply enumerated, but the
+	// runner uses Set for membership checks.
+	Set *CharSet
+
+	// LeadingWhitespaceSet is the optional or required whitespace immediately
+	// before the core token. If RequireWhitespaceBefore is true, at least one
+	// rune from this set must precede the core. When this alternative is the
+	// first matched landmark, the runner may rewind over additional contiguous
+	// leading whitespace from this set before rewinding over LeadingLoopSet.
+	LeadingWhitespaceSet *CharSet
+
+	// TrailingWhitespaceSet is the optional or required whitespace immediately
+	// after the core token. If RequireWhitespaceAfter is true, at least one rune
+	// from this set must follow the core. The runner validates the requirement,
+	// but does not consume optional trailing whitespace into the landmark end.
+	TrailingWhitespaceSet *CharSet
+
+	// MinRepeat and MaxRepeat describe the core token width. Literal alternatives
+	// use 1..1 regardless of literal length because the literal is matched as one
+	// fixed core token; Set alternatives use the source set repetition.
+	MinRepeat int
+	MaxRepeat int
+
 	RequireWhitespaceBefore bool
 	RequireWhitespaceAfter  bool
 }
@@ -288,17 +324,18 @@ func landmarkChainDescription(chain *RequiredLandmarkChain) string {
 func requiredLandmarkAlternativeDescription(alt RequiredLandmarkAlternative) string {
 	core := ""
 	switch {
-	case alt.Literal != "":
-		core = fmt.Sprintf("literal=%q", alt.Literal)
-	case len(alt.Chars) > 0:
-		core = fmt.Sprintf("chars=%q repeat=%d..%d", string(alt.Chars), alt.MinRepeat, alt.MaxRepeat)
+	case len(alt.Literal) > 0:
+		core = fmt.Sprintf("literal=%q", string(alt.Literal))
 	case alt.Set != nil:
 		core = fmt.Sprintf("set=%s repeat=%d..%d", alt.Set.String(), alt.MinRepeat, alt.MaxRepeat)
 	default:
 		core = "<empty>"
 	}
-	if alt.WhitespaceSet != nil {
-		core += fmt.Sprintf(" whitespace=%s before=%t after=%t", alt.WhitespaceSet.String(), alt.RequireWhitespaceBefore, alt.RequireWhitespaceAfter)
+	if alt.LeadingWhitespaceSet != nil {
+		core += fmt.Sprintf(" leadingWhitespace=%s required=%t", alt.LeadingWhitespaceSet.String(), alt.RequireWhitespaceBefore)
+	}
+	if alt.TrailingWhitespaceSet != nil {
+		core += fmt.Sprintf(" trailingWhitespace=%s required=%t", alt.TrailingWhitespaceSet.String(), alt.RequireWhitespaceAfter)
 	}
 	return core
 }
@@ -430,6 +467,7 @@ func newFindOptimizationsForNode(root *RegexNode, opt ParseOptions, isLeadingPar
 		ciPrefixes := findPrefixes(root, true)
 		if len(ciPrefixes) > 1 {
 			f.LeadingPrefixes = ciPrefixes
+			f.LeadingPrefixesRunes = toRunePrefixes(ciPrefixes)
 			f.FindMode = LeadingStrings_OrdinalIgnoreCase_LeftToRight
 			/*SYSTEM_TEXT_REGULAREXPRESSIONS
 			if usesRfoTryFind {
@@ -484,6 +522,7 @@ func newFindOptimizationsForNode(root *RegexNode, opt ParseOptions, isLeadingPar
 			caseSensitivePrefixes := findPrefixes(root, false)
 			if len(caseSensitivePrefixes) > 1 {
 				f.LeadingPrefixes = caseSensitivePrefixes
+				f.LeadingPrefixesRunes = toRunePrefixes(caseSensitivePrefixes)
 				f.FindMode = LeadingStrings_LeftToRight
 				return f
 			}
@@ -535,6 +574,17 @@ func newFindOptimizationsForNode(root *RegexNode, opt ParseOptions, isLeadingPar
 
 func (f *FindOptimizations) isUseful() bool {
 	return f.FindMode != NoSearch || f.LeadingAnchor == NtBol
+}
+
+func toRunePrefixes(prefixes []string) [][]rune {
+	if len(prefixes) == 0 {
+		return nil
+	}
+	runes := make([][]rune, len(prefixes))
+	for i, prefix := range prefixes {
+		runes[i] = []rune(prefix)
+	}
+	return runes
 }
 
 func getFindMode(rtl bool, t NodeType) FindNextStartingPositionMode {
