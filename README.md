@@ -254,7 +254,7 @@ If neeed, add `~/go/bin` to the path. For example: `export PATH=$PATH:$HOME/go/b
 
 Utilities
 ---------
-* Comes with the `alg2docker` utility, for creating Docker images from Algernon web applications (`.alg` files).
+* Comes with the `alg2docker` utility (in `containers/alg2docker`), for creating Docker images from Algernon web applications (`.alg` files).
 * [http2check](https://github.com/xyproto/http2check) can be used for checking if a web server is offering [HTTP/2](https://tools.ietf.org/html/rfc7540).
 
 Overview

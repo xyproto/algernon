@@ -8,8 +8,17 @@ if [ -z "$RUN_TYPE" ]; then
     exit 1
 fi
 
-VOLUME_ARGS="-v `pwd`/serve:/srv/algernon -v `pwd`/config:/etc/algernon"
-PUBLISH_ARGS="--publish 3000:3000"  # default to dev settings
+if command -v podman >/dev/null 2>&1; then
+    RUNTIME=podman
+elif command -v docker >/dev/null 2>&1; then
+    RUNTIME=docker
+else
+    echo 'Error: neither podman nor docker found in PATH'
+    exit 1
+fi
+
+VOLUME_ARGS="-v $(pwd)/serve:/srv/algernon -v $(pwd)/config:/etc/algernon"
+PUBLISH_ARGS="--publish 3000:3000"
 
 case $RUN_TYPE in
   "dev")
@@ -23,7 +32,7 @@ case $RUN_TYPE in
     PUBLISH_ARGS="-i -t"
     ;;
   "prod")
-    PUBLISH_ARGS="--publish 80:80 --publish 443:443"
+    PUBLISH_ARGS="--publish 8080:80 --publish 8443:443"
     ;;
   *)
     echo "Invalid run type: $RUN_TYPE"
@@ -31,4 +40,4 @@ case $RUN_TYPE in
     ;;
 esac
 
-docker run $VOLUME_ARGS --rm $PUBLISH_ARGS algernon_$RUN_TYPE
+$RUNTIME run $VOLUME_ARGS --rm $PUBLISH_ARGS algernon_$RUN_TYPE

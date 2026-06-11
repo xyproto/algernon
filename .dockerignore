@@ -1,6 +1,6 @@
 .git
 .gitignore
-alg2docker
+containers/alg2docker
 apps
 editors
 img
