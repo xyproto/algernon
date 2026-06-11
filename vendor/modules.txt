@@ -247,7 +247,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260610084633-e3706840585e
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260611075045-a1b3ea96841d
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -480,7 +480,7 @@ golang.org/x/crypto/ocsp
 # golang.org/x/mod v0.37.0
 ## explicit; go 1.25.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.55.0
+# golang.org/x/net v0.56.0
 ## explicit; go 1.25.0
 golang.org/x/net/bpf
 golang.org/x/net/html
