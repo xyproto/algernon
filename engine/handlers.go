@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -23,7 +22,6 @@ import (
 	"github.com/xyproto/ollamaclient/v2"
 	"github.com/xyproto/sheepcounter"
 	"github.com/xyproto/simpleform"
-	"github.com/xyproto/unzip"
 )
 
 const (
@@ -256,26 +254,18 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		return
 
 	case ".alg":
-		// Assume this to be a compressed Algernon application
-		webApplicationExtractionDir := "/dev/shm" // extract to memory, if possible
-		testfile := filepath.Join(webApplicationExtractionDir, "canary")
-		if f, err := os.Create(testfile); err == nil {
-			f.Close()
-			os.Remove(testfile)
-		} else {
-			// Could not create the test file
-			// Use the server temp dir (typically /tmp) instead of /dev/shm
-			webApplicationExtractionDir = ac.serverTempDir
-		}
-		if extractErr := unzip.Extract(filename, webApplicationExtractionDir); extractErr != nil {
-			logrus.Errorf("Failed to extract %s: %s", filename, extractErr)
+		// Assume this to be a compressed Algernon application.
+		// The cache extracts each .alg at most once per (mtime, size)
+		// and serializes concurrent requests for the same archive.
+		// The release call drops our reference so an evicted entry's
+		// directory can be reclaimed once all in-flight requests finish.
+		serveDir, release, err := ac.extractAlg(filename)
+		if err != nil {
+			logrus.Errorf("Failed to extract %s: %s", filename, err)
+			http.Error(w, "Could not extract .alg archive", http.StatusInternalServerError)
 			return
 		}
-		firstname := path.Base(filename)
-		if strings.HasSuffix(filename, ".alg") {
-			firstname = path.Base(filename[:len(filename)-4])
-		}
-		serveDir := path.Join(webApplicationExtractionDir, firstname)
+		defer release()
 		logrus.Warn(".alg web applications must be given as an argument to algernon to be served correctly")
 		ac.DirPage(w, req, serveDir, serveDir, ac.defaultTheme, luaDataFilename)
 		return

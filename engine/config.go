@@ -55,6 +55,7 @@ type Config struct {
 	reverseProxyConfig           *ReverseProxyConfig
 	bundleCache                  *bundleCache           // cache for on-the-fly esbuild bundles
 	dirConfCache                 *dirConfigCache        // cache for parsed .algernon configurations
+	algCache                     *algExtractionCache    // cache for extracted .alg web applications
 	pluginClients                map[string]*rpc.Client // cache of persistent plugin clients
 	redisAddr                    string
 	defaultEventPath             string
@@ -240,6 +241,9 @@ func New(versionString, description string) (*Config, error) {
 
 		// Cache for on-the-fly esbuild bundles
 		bundleCache: newBundleCache(),
+
+		// Cache for extracted .alg web applications
+		algCache: newAlgExtractionCache(),
 
 		// JSX rendering options
 		jsxOptions: api.TransformOptions{
