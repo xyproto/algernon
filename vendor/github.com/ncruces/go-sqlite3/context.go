@@ -217,6 +217,6 @@ func (ctx Context) ResultSubtype(t uint) {
 //
 // https://sqlite.org/c3ref/vtab_nochange.html
 func (ctx Context) VTabNoChange() bool {
-	b := int32(ctx.c.wrp.Xsqlite3_vtab_nochange(int32(ctx.handle)))
+	b := ctx.c.wrp.Xsqlite3_vtab_nochange(int32(ctx.handle))
 	return b != 0
 }

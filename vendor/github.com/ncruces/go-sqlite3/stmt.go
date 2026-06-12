@@ -72,7 +72,7 @@ func (s *Stmt) ExpandedSQL() string {
 //
 // https://sqlite.org/c3ref/stmt_readonly.html
 func (s *Stmt) ReadOnly() bool {
-	b := int32(s.c.wrp.Xsqlite3_stmt_readonly(int32(s.handle)))
+	b := s.c.wrp.Xsqlite3_stmt_readonly(int32(s.handle))
 	return b != 0
 }
 
@@ -151,9 +151,7 @@ func (s *Stmt) Status(op StmtStatus, reset bool) int {
 	if reset {
 		i = 1
 	}
-	n := int32(s.c.wrp.Xsqlite3_stmt_status(int32(s.handle),
-		int32(op), i))
-	return int(n)
+	return int(s.c.wrp.Xsqlite3_stmt_status(int32(s.handle), int32(op), i))
 }
 
 // ClearBindings resets all bindings on the prepared statement.
@@ -168,9 +166,7 @@ func (s *Stmt) ClearBindings() error {
 //
 // https://sqlite.org/c3ref/bind_parameter_count.html
 func (s *Stmt) BindCount() int {
-	n := int32(s.c.wrp.Xsqlite3_bind_parameter_count(
-		int32(s.handle)))
-	return int(n)
+	return int(s.c.wrp.Xsqlite3_bind_parameter_count(int32(s.handle)))
 }
 
 // BindIndex returns the index of a parameter in the prepared statement
@@ -180,9 +176,7 @@ func (s *Stmt) BindCount() int {
 func (s *Stmt) BindIndex(name string) int {
 	defer s.c.arena.Mark()()
 	namePtr := s.c.arena.String(name)
-	i := int32(s.c.wrp.Xsqlite3_bind_parameter_index(
-		int32(s.handle), int32(namePtr)))
-	return int(i)
+	return int(s.c.wrp.Xsqlite3_bind_parameter_index(int32(s.handle), int32(namePtr)))
 }
 
 // BindName returns the name of a parameter in the prepared statement.
@@ -365,18 +359,14 @@ func (s *Stmt) BindValue(param int, value Value) error {
 //
 // https://sqlite.org/c3ref/data_count.html
 func (s *Stmt) DataCount() int {
-	n := int32(s.c.wrp.Xsqlite3_data_count(
-		int32(s.handle)))
-	return int(n)
+	return int(s.c.wrp.Xsqlite3_data_count(int32(s.handle)))
 }
 
 // ColumnCount returns the number of columns in a result set.
 //
 // https://sqlite.org/c3ref/column_count.html
 func (s *Stmt) ColumnCount() int {
-	n := int32(s.c.wrp.Xsqlite3_column_count(
-		int32(s.handle)))
-	return int(n)
+	return int(s.c.wrp.Xsqlite3_column_count(int32(s.handle)))
 }
 
 // ColumnName returns the name of the result column.
@@ -568,8 +558,7 @@ func (s *Stmt) columnRawBytes(col int, ptr ptr_t, nul int32) []byte {
 		return nil
 	}
 
-	n := int32(s.c.wrp.Xsqlite3_column_bytes(
-		int32(s.handle), int32(col)))
+	n := s.c.wrp.Xsqlite3_column_bytes(int32(s.handle), int32(col))
 	return s.c.wrp.Bytes(ptr, int64(n+nul))[:n]
 }
 

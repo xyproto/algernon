@@ -299,17 +299,7 @@ type IndexConstraintUsage struct {
 //
 // https://sqlite.org/c3ref/vtab_rhs_value.html
 func (idx *IndexInfo) RHSValue(column int) (Value, error) {
-	defer idx.c.arena.Mark()()
-	valPtr := idx.c.arena.New(ptrlen)
-	rc := res_t(idx.c.wrp.Xsqlite3_vtab_rhs_value(int32(idx.handle),
-		int32(column), int32(valPtr)))
-	if err := idx.c.error(rc); err != nil {
-		return Value{}, err
-	}
-	return Value{
-		c:      idx.c,
-		handle: ptr_t(idx.c.wrp.Read32(valPtr)),
-	}, nil
+	return idx.c.columnValue(idx.c.wrp.Xsqlite3_vtab_rhs_value, idx.handle, column)
 }
 
 // Collation returns the name of the collation for a virtual table constraint.
@@ -325,16 +315,15 @@ func (idx *IndexInfo) Collation(column int) string {
 //
 // https://sqlite.org/c3ref/vtab_distinct.html
 func (idx *IndexInfo) Distinct() int {
-	i := int32(idx.c.wrp.Xsqlite3_vtab_distinct(int32(idx.handle)))
-	return int(i)
+	return int(idx.c.wrp.Xsqlite3_vtab_distinct(int32(idx.handle)))
 }
 
 // In identifies and handles IN constraints.
 //
 // https://sqlite.org/c3ref/vtab_in.html
 func (idx *IndexInfo) In(column, handle int) bool {
-	b := int32(idx.c.wrp.Xsqlite3_vtab_in(int32(idx.handle),
-		int32(column), int32(handle)))
+	b := idx.c.wrp.Xsqlite3_vtab_in(int32(idx.handle),
+		int32(column), int32(handle))
 	return b != 0
 }
 

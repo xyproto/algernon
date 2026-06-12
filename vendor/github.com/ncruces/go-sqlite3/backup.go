@@ -120,8 +120,7 @@ func (b *Backup) Step(nPage int) (done bool, err error) {
 //
 // https://sqlite.org/c3ref/backup_finish.html#sqlite3backupremaining
 func (b *Backup) Remaining() int {
-	n := int32(b.c.wrp.Xsqlite3_backup_remaining(int32(b.handle)))
-	return int(n)
+	return int(b.c.wrp.Xsqlite3_backup_remaining(int32(b.handle)))
 }
 
 // PageCount returns the total number of pages in the source database
@@ -129,6 +128,5 @@ func (b *Backup) Remaining() int {
 //
 // https://sqlite.org/c3ref/backup_finish.html#sqlite3backuppagecount
 func (b *Backup) PageCount() int {
-	n := int32(b.c.wrp.Xsqlite3_backup_pagecount(int32(b.handle)))
-	return int(n)
+	return int(b.c.wrp.Xsqlite3_backup_pagecount(int32(b.handle)))
 }

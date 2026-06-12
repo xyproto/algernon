@@ -34,6 +34,7 @@ type Conn struct {
 	update     func(AuthorizerActionCode, string, string, int64)
 	commit     func() bool
 	rollback   func()
+	preupdate  func(PreUpdateData)
 
 	busy1st time.Time
 	busylst time.Time
@@ -506,7 +507,7 @@ func (c *Conn) errorFor(handle ptr_t, rc res_t, sql ...string) error {
 		}
 
 		if len(sql) != 0 {
-			if i := int32(c.wrp.Xsqlite3_error_offset(int32(handle))); i != -1 {
+			if i := c.wrp.Xsqlite3_error_offset(int32(handle)); i != -1 {
 				query = sql[0][i:]
 			}
 		}

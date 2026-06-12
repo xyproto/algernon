@@ -1,4 +1,4 @@
-//go:build !goexperiment.jsonv2
+//go:build !(go1.27 || goexperiment.jsonv2)
 
 package sqlite3
 

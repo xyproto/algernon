@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Max zip file filename length
@@ -32,8 +33,30 @@ func FilterExtract(zipFilename, destPath string, filterFunc func(string) bool) e
 	}
 	defer zipReader.Close()
 
+	// Resolve the destination once so we can verify each entry stays within it.
+	absDest, err := filepath.Abs(destPath)
+	if err != nil {
+		return err
+	}
+	destPrefix := filepath.Clean(absDest) + string(os.PathSeparator)
+
 	// For each file in the archive
 	for _, archiveReader := range zipReader.File {
+
+		// Reject entries whose names would escape the destination (Zip Slip).
+		// Check the raw name first to catch absolute paths and traversal segments
+		// before filepath.Join silently normalizes them away.
+		if filepath.IsAbs(archiveReader.Name) || strings.Contains(archiveReader.Name, `\`) {
+			return errors.New("illegal file path in archive: " + archiveReader.Name)
+		}
+		finalPath := filepath.Join(destPath, archiveReader.Name)
+		absFinal, err := filepath.Abs(finalPath)
+		if err != nil {
+			return err
+		}
+		if absFinal != filepath.Clean(absDest) && !strings.HasPrefix(absFinal+string(os.PathSeparator), destPrefix) {
+			return errors.New("illegal file path in archive: " + archiveReader.Name)
+		}
 
 		// Open the file in the archive
 		archiveFile, err := archiveReader.Open()
@@ -41,9 +64,6 @@ func FilterExtract(zipFilename, destPath string, filterFunc func(string) bool) e
 			return err
 		}
 		defer archiveFile.Close()
-
-		// Prepare to write the file
-		finalPath := filepath.Join(destPath, archiveReader.Name)
 
 		// Check if the file to extract is just a directory
 		if archiveReader.FileInfo().IsDir() {

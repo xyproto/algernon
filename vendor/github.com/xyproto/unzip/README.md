@@ -4,5 +4,5 @@
 
 Can extract ZIP files.
 
-* Version: 1.0.0
-* License: MIT
+* Version: 1.0.1
+* License: BSD-3

@@ -147,7 +147,7 @@ func (v Value) rawBytes(ptr ptr_t, nul int32) []byte {
 		return nil
 	}
 
-	n := int32(v.c.wrp.Xsqlite3_value_bytes(int32(v.handle)))
+	n := v.c.wrp.Xsqlite3_value_bytes(int32(v.handle))
 	return v.c.wrp.Bytes(ptr, int64(n+nul))[:n]
 }
 
@@ -163,7 +163,7 @@ func (v Value) Pointer() any {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) NoChange() bool {
-	b := int32(v.c.wrp.Xsqlite3_value_nochange(int32(v.handle)))
+	b := v.c.wrp.Xsqlite3_value_nochange(int32(v.handle))
 	return b != 0
 }
 
@@ -171,7 +171,7 @@ func (v Value) NoChange() bool {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) FromBind() bool {
-	b := int32(v.c.wrp.Xsqlite3_value_frombind(int32(v.handle)))
+	b := v.c.wrp.Xsqlite3_value_frombind(int32(v.handle))
 	return b != 0
 }
 
@@ -180,16 +180,7 @@ func (v Value) FromBind() bool {
 //
 // https://sqlite.org/c3ref/vtab_in_first.html
 func (v Value) InFirst() (Value, error) {
-	defer v.c.arena.Mark()()
-	valPtr := v.c.arena.New(ptrlen)
-	rc := res_t(v.c.wrp.Xsqlite3_vtab_in_first(int32(v.handle), int32(valPtr)))
-	if err := v.c.error(rc); err != nil {
-		return Value{}, err
-	}
-	return Value{
-		c:      v.c,
-		handle: ptr_t(v.c.wrp.Read32(valPtr)),
-	}, nil
+	return v.c.returnValue(v.c.wrp.Xsqlite3_vtab_in_first, v.handle)
 }
 
 // InNext returns the next element
@@ -197,14 +188,25 @@ func (v Value) InFirst() (Value, error) {
 //
 // https://sqlite.org/c3ref/vtab_in_first.html
 func (v Value) InNext() (Value, error) {
-	defer v.c.arena.Mark()()
-	valPtr := v.c.arena.New(ptrlen)
-	rc := res_t(v.c.wrp.Xsqlite3_vtab_in_next(int32(v.handle), int32(valPtr)))
-	if err := v.c.error(rc); err != nil {
+	return v.c.returnValue(v.c.wrp.Xsqlite3_vtab_in_next, v.handle)
+}
+
+func (c *Conn) returnValue(fn func(_, _ int32) int32, handle ptr_t) (Value, error) {
+	defer c.arena.Mark()()
+	valPtr := c.arena.New(ptrlen)
+	rc := res_t(fn(int32(handle), int32(valPtr)))
+	if err := c.error(rc); err != nil {
 		return Value{}, err
 	}
-	return Value{
-		c:      v.c,
-		handle: ptr_t(v.c.wrp.Read32(valPtr)),
-	}, nil
+	return Value{c: c, handle: ptr_t(c.wrp.Read32(valPtr))}, nil
+}
+
+func (c *Conn) columnValue(fn func(_, _, _ int32) int32, handle ptr_t, column int) (Value, error) {
+	defer c.arena.Mark()()
+	valPtr := c.arena.New(ptrlen)
+	rc := res_t(fn(int32(handle), int32(column), int32(valPtr)))
+	if err := c.error(rc); err != nil {
+		return Value{}, err
+	}
+	return Value{c: c, handle: ptr_t(c.wrp.Read32(valPtr))}, nil
 }

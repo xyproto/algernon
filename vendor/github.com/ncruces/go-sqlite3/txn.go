@@ -255,13 +255,26 @@ func (c *Conn) RollbackHook(cb func()) {
 // whenever a row is updated, inserted or deleted in a rowid table.
 //
 // https://sqlite.org/c3ref/update_hook.html
-func (c *Conn) UpdateHook(cb func(action AuthorizerActionCode, schema, table string, rowid int64)) {
+func (c *Conn) UpdateHook(cb func(op AuthorizerActionCode, schema, table string, rowid int64)) {
 	var enable int32
 	if cb != nil {
 		enable = 1
 	}
 	c.wrp.Xsqlite3_update_hook_go(int32(c.handle), enable)
 	c.update = cb
+}
+
+// PreUpdateHook registers a callback function that is invoked prior
+// to each INSERT, UPDATE, and DELETE operation on a database table.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (c *Conn) PreUpdateHook(cb func(PreUpdateData)) {
+	var enable int32
+	if cb != nil {
+		enable = 1
+	}
+	c.wrp.Xsqlite3_preupdate_hook_go(int32(c.handle), enable)
+	c.preupdate = cb
 }
 
 func (e *env) Xgo_commit_hook(pDB int32) (rollback int32) {
@@ -279,11 +292,24 @@ func (e *env) Xgo_rollback_hook(pDB int32) {
 	}
 }
 
-func (e *env) Xgo_update_hook(pDB, action, zSchema, zTabName int32, rowid int64) {
+func (e *env) Xgo_update_hook(pDB, op, zSchema, zTabName int32, rowid int64) {
 	if c, ok := e.DB.(*Conn); ok && c.handle == ptr_t(pDB) && c.update != nil {
 		schema := e.ReadString(ptr_t(zSchema), _MAX_NAME)
 		table := e.ReadString(ptr_t(zTabName), _MAX_NAME)
-		c.update(AuthorizerActionCode(action), schema, table, rowid)
+		c.update(AuthorizerActionCode(op), schema, table, rowid)
+	}
+}
+
+func (e *env) Xgo_preupdate_hook(_, pDB, op, zSchema, zTabName int32, oldRowID, newRowID int64) {
+	if c, ok := e.DB.(*Conn); ok && c.handle == ptr_t(pDB) && c.preupdate != nil {
+		c.preupdate(PreUpdateData{
+			c:        c,
+			Op:       AuthorizerActionCode(op),
+			Schema:   e.ReadString(ptr_t(zSchema), _MAX_NAME),
+			Table:    e.ReadString(ptr_t(zTabName), _MAX_NAME),
+			OldRowID: oldRowID,
+			NewRowID: newRowID,
+		})
 	}
 }
 
@@ -293,4 +319,56 @@ func (e *env) Xgo_update_hook(pDB, action, zSchema, zTabName int32, rowid int64)
 func (c *Conn) CacheFlush() error {
 	rc := res_t(c.wrp.Xsqlite3_db_cacheflush(int32(c.handle)))
 	return c.error(rc)
+}
+
+// PreUpdateData provides information about a preupdate event.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+type PreUpdateData struct {
+	c        *Conn
+	Op       AuthorizerActionCode
+	Schema   string
+	Table    string
+	OldRowID int64
+	NewRowID int64
+}
+
+// Conn returns the database connection associated with the preupdate event.
+func (pud *PreUpdateData) Conn() *Conn {
+	return pud.c
+}
+
+// Count returns the number of columns in the row that is being inserted, updated, or deleted.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (pud *PreUpdateData) Count() int {
+	return int(pud.c.wrp.Xsqlite3_preupdate_count(int32(pud.c.handle)))
+}
+
+// Depth returns the trigger depth of the insert, update, or delete operation.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (pud *PreUpdateData) Depth() int {
+	return int(pud.c.wrp.Xsqlite3_preupdate_depth(int32(pud.c.handle)))
+}
+
+// BlobWrite returns the index of the column being written to using [Blob].
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (pud *PreUpdateData) BlobWrite() int {
+	return int(pud.c.wrp.Xsqlite3_preupdate_blobwrite(int32(pud.c.handle)))
+}
+
+// Old returns the value of a column of the table row before it is updated.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (pud *PreUpdateData) Old(column int) (Value, error) {
+	return pud.c.columnValue(pud.c.wrp.Xsqlite3_preupdate_old, pud.c.handle, column)
+}
+
+// New returns the value of a column of the table row after it is updated.
+//
+// https://sqlite.org/c3ref/preupdate_blobwrite.html
+func (pud *PreUpdateData) New(column int) (Value, error) {
+	return pud.c.columnValue(pud.c.wrp.Xsqlite3_preupdate_new, pud.c.handle, column)
 }
