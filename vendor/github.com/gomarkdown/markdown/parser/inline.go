@@ -382,7 +382,7 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 				brace--
 				i++
 
-			case c == '\'' || c == '"':
+			case brace == 0 && (c == '\'' || c == '"') && i > linkB && IsSpace(data[i-1]):
 				break findlinkend
 
 			default:

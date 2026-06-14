@@ -79,6 +79,11 @@ var (
 		"svg":        {},
 		"video":      {},
 	}
+
+	markdownHTMLBlockTags = map[string]struct{}{
+		"details": {},
+		"div":     {},
+	}
 )
 
 // sanitizeHeadingID returns a sanitized anchor name for the given text.
@@ -608,6 +613,12 @@ func (p *Parser) html(data []byte, doRender bool) int {
 		return 0
 	}
 
+	if _, ok := markdownHTMLBlockTags[curtag]; ok {
+		if size := p.htmlMarkdownBlock(data, curtag, doRender); size > 0 {
+			return size
+		}
+	}
+
 	// look for an unindented matching closing tag
 	// followed by a blank line
 	found := false
@@ -678,6 +689,84 @@ func (p *Parser) html(data []byte, doRender bool) int {
 	}
 
 	return i
+}
+
+func (p *Parser) htmlMarkdownBlock(data []byte, tag string, doRender bool) int {
+	openEnd := bytes.IndexByte(data, '>')
+	if openEnd < 0 {
+		return 0
+	}
+	openEnd++
+
+	closeStart, consumed := p.findHTMLCloseTag(data, tag, openEnd)
+	if consumed == 0 {
+		return 0
+	}
+	if !hasBlankLineAfter(data, openEnd) || !hasBlankLineBefore(data, closeStart) {
+		return 0
+	}
+
+	closeEnd := closeStart + len("</"+tag+">")
+	if doRender {
+		open := bytes.TrimRight(data[:openEnd], "\n")
+		p.AddBlock(&ast.HTMLBlock{Leaf: ast.Leaf{Literal: open}})
+
+		innerStart := openEnd
+		if innerStart < len(data) && data[innerStart] == '\n' {
+			innerStart++
+		}
+		inner := data[innerStart:closeStart]
+		if len(inner) > 0 {
+			p.Block(inner)
+		}
+
+		close := bytes.TrimRight(data[closeStart:closeEnd], "\n")
+		p.AddBlock(&ast.HTMLBlock{Leaf: ast.Leaf{Literal: close}})
+	}
+
+	return consumed
+}
+
+func hasBlankLineAfter(data []byte, pos int) bool {
+	first := IsEmpty(data[pos:])
+	if first == 0 {
+		return false
+	}
+	return IsEmpty(data[pos+first:]) > 0
+}
+
+func hasBlankLineBefore(data []byte, pos int) bool {
+	if pos < 2 || data[pos-1] != '\n' {
+		return false
+	}
+	lineEnd := pos - 1
+	lineStart := lineEnd
+	for lineStart > 0 && data[lineStart-1] != '\n' {
+		lineStart--
+	}
+	for _, b := range data[lineStart:lineEnd] {
+		if b != ' ' && b != '\t' {
+			return false
+		}
+	}
+	return true
+}
+
+func (p *Parser) findHTMLCloseTag(data []byte, tag string, start int) (closeStart int, consumed int) {
+	for i := start; i < len(data); i++ {
+		for i < len(data) && !(data[i-1] == '<' && data[i] == '/') {
+			i++
+		}
+		if i+2+len(tag) >= len(data) {
+			return 0, 0
+		}
+
+		j := p.htmlFindEnd(tag, data[i-1:])
+		if j > 0 {
+			return i - 1, i + j - 1
+		}
+	}
+	return 0, 0
 }
 
 func finalizeHTMLBlock(block *ast.HTMLBlock) {
@@ -1071,30 +1160,34 @@ func (p *Parser) terminateBlockquote(data []byte, beg, end int) bool {
 func (p *Parser) quote(data []byte) int {
 	var raw bytes.Buffer
 	beg, end := 0, 0
+	fenceMarker := ""
 	for beg < len(data) {
 		end = beg
-		// Step over whole lines, collecting them. While doing that, check for
-		// fenced code and if one's found, incorporate it altogether,
-		// irregardless of any contents inside it
 		for end < len(data) && data[end] != '\n' {
-			if p.extensions&FencedCode != 0 {
-				if i := p.fencedCodeBlock(data[end:], false); i > 0 {
-					// -1 to compensate for the extra end++ after the loop:
-					end += i - 1
-					break
-				}
-			}
 			end++
 		}
 		end = skipCharN(data, end, '\n', 1)
+		contentBeg := beg
 		if pre := p.quotePrefix(data[beg:]); pre > 0 {
 			// skip the prefix
-			beg += pre
+			contentBeg += pre
+		} else if fenceMarker != "" {
+			// Lines inside a quoted fenced code block may omit the quote
+			// prefix. Keep them in the quote until the fence closes.
 		} else if p.terminateBlockquote(data, beg, end) {
 			break
 		}
 		// this line is part of the blockquote
-		raw.Write(data[beg:end])
+		raw.Write(data[contentBeg:end])
+		if p.extensions&FencedCode != 0 {
+			if _, marker := isFenceLine(data[contentBeg:end], nil, fenceMarker); marker != "" {
+				if fenceMarker == "" {
+					fenceMarker = marker
+				} else {
+					fenceMarker = ""
+				}
+			}
+		}
 		beg = end
 	}
 
@@ -1324,7 +1417,7 @@ func endsWithBlankLine(block ast.Node) bool {
 }
 
 func finalizeList(list *ast.List) {
-	items := list.Parent.GetChildren()
+	items := list.GetChildren()
 	lastItemIdx := len(items) - 1
 	for i, item := range items {
 		isLastItem := i == lastItemIdx
@@ -1335,7 +1428,7 @@ func finalizeList(list *ast.List) {
 		}
 		// recurse into children of list item, to see if there are spaces
 		// between any of them:
-		subItems := item.GetParent().GetChildren()
+		subItems := item.GetChildren()
 		lastSubItemIdx := len(subItems) - 1
 		for j, subItem := range subItems {
 			isLastSubItem := j == lastSubItemIdx
@@ -1543,6 +1636,10 @@ gatherlines:
 				break gatherlines
 			}
 			*flags |= ast.ListItemContainsBlock
+
+		case p.quotePrefix(chunk) > 0 && indent < 4:
+			*flags |= ast.ListItemEndOfList
+			break gatherlines
 
 		// anything following an empty line is only part
 		// of this item if it is indented 4 spaces

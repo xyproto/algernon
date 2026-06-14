@@ -68,7 +68,7 @@ func main() {
 }
 ```
 
-Try it online: https://onlinetool.io/goplayground/#txO7hJ-ibeU
+Example source: [examples/basic.go](examples/basic.go)
 
 For more documentation read [this guide](https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html)
 

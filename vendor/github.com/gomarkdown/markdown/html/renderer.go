@@ -252,6 +252,15 @@ func isRelativeLink(link []byte) (yes bool) {
 	return false
 }
 
+func isBareRelativePath(link []byte) bool {
+	return len(link) > 0 &&
+		link[0] != '#' &&
+		link[0] != '/' &&
+		!bytes.HasPrefix(link, []byte("./")) &&
+		!bytes.HasPrefix(link, []byte("../")) &&
+		!bytes.ContainsAny(link, ":")
+}
+
 func AddAbsPrefix(link []byte, prefix string) []byte {
 	if len(link) == 0 || len(prefix) == 0 {
 		return link
@@ -265,6 +274,21 @@ func AddAbsPrefix(link []byte, prefix string) []byte {
 		return []byte(newDest)
 	}
 	return link
+}
+
+func AddAbsPrefixToImage(link []byte, prefix string) []byte {
+	if len(link) == 0 || len(prefix) == 0 {
+		return link
+	}
+	if isBareRelativePath(link) {
+		newDest := prefix
+		if newDest[len(newDest)-1] != '/' {
+			newDest += "/"
+		}
+		newDest += string(link)
+		return []byte(newDest)
+	}
+	return AddAbsPrefix(link, prefix)
 }
 
 func appendLinkAttrs(attrs []string, flags Flags, link []byte) []string {
@@ -518,7 +542,7 @@ func (r *Renderer) imageEnter(w io.Writer, image *ast.Image) {
 		return
 	}
 	src := image.Destination
-	src = AddAbsPrefix(src, r.Opts.AbsolutePrefix)
+	src = AddAbsPrefixToImage(src, r.Opts.AbsolutePrefix)
 	attrs := BlockAttrs(image)
 	if r.Opts.Flags&LazyLoadImages != 0 {
 		attrs = append(attrs, `loading="lazy"`)
