@@ -85,6 +85,8 @@ type Node interface {
 type Container struct {
 	Parent   Node
 	Children []Node
+	Prev     Node
+	Next     Node
 
 	Literal []byte // Text contents of the leaf nodes
 	Content []byte // Markdown content of the block nodes
@@ -126,11 +128,14 @@ func (c *Container) GetChildren() []Node {
 // SetChildren sets children node
 func (c *Container) SetChildren(newChildren []Node) {
 	c.Children = newChildren
+	linkSiblings(newChildren)
 }
 
 // Leaf is a type of node that cannot have children
 type Leaf struct {
 	Parent Node
+	Prev   Node
+	Next   Node
 
 	Literal []byte // Text contents of the leaf nodes
 	Content []byte // Markdown content of the block nodes
@@ -442,8 +447,19 @@ func removeNodeFromArray(a []Node, node Node) []Node {
 func AppendChild(parent Node, child Node) {
 	RemoveFromTree(child)
 	child.SetParent(parent)
-	newChildren := append(parent.GetChildren(), child)
-	parent.SetChildren(newChildren)
+	children := parent.GetChildren()
+	prev := Node(nil)
+	if len(children) > 0 {
+		prev = children[len(children)-1]
+	}
+	setPrevNode(child, prev)
+	setNextNode(child, nil)
+	setNextNode(prev, child)
+	if container := parent.AsContainer(); container != nil {
+		container.Children = append(container.Children, child)
+		return
+	}
+	parent.SetChildren(append(children, child))
 }
 
 // RemoveFromTree removes this node from tree
@@ -456,6 +472,12 @@ func RemoveFromTree(n Node) {
 	// that accumulated Children but hasn't been inserted into the tree
 	n.SetChildren(nil)
 	p := n.GetParent()
+	prev := GetPrevNode(n)
+	next := GetNextNode(n)
+	setNextNode(prev, next)
+	setPrevNode(next, prev)
+	setPrevNode(n, nil)
+	setNextNode(n, nil)
 	newChildren := removeNodeFromArray(p.GetChildren(), n)
 	if newChildren != nil {
 		p.SetChildren(newChildren)
@@ -485,6 +507,9 @@ func GetFirstChild(n Node) Node {
 // GetNextNode returns next sibling of node n (node after n)
 // We can't make it part of Container or Leaf because we loose Node identity
 func GetNextNode(n Node) Node {
+	if next, ok := linkedNextNode(n); ok {
+		return next
+	}
 	parent := n.GetParent()
 	if parent == nil {
 		return nil
@@ -502,6 +527,9 @@ func GetNextNode(n Node) Node {
 // GetPrevNode returns previous sibling of node n (node before n)
 // We can't make it part of Container or Leaf because we loose Node identity
 func GetPrevNode(n Node) Node {
+	if prev, ok := linkedPrevNode(n); ok {
+		return prev
+	}
 	parent := n.GetParent()
 	if parent == nil {
 		return nil
@@ -514,6 +542,66 @@ func GetPrevNode(n Node) Node {
 		}
 	}
 	return nil
+}
+
+func linkSiblings(children []Node) {
+	for i, child := range children {
+		var prev, next Node
+		if i > 0 {
+			prev = children[i-1]
+		}
+		if i+1 < len(children) {
+			next = children[i+1]
+		}
+		setPrevNode(child, prev)
+		setNextNode(child, next)
+	}
+}
+
+func linkedPrevNode(n Node) (Node, bool) {
+	if c := n.AsContainer(); c != nil {
+		return c.Prev, true
+	}
+	if l := n.AsLeaf(); l != nil {
+		return l.Prev, true
+	}
+	return nil, false
+}
+
+func linkedNextNode(n Node) (Node, bool) {
+	if c := n.AsContainer(); c != nil {
+		return c.Next, true
+	}
+	if l := n.AsLeaf(); l != nil {
+		return l.Next, true
+	}
+	return nil, false
+}
+
+func setPrevNode(n Node, prev Node) {
+	if n == nil {
+		return
+	}
+	if c := n.AsContainer(); c != nil {
+		c.Prev = prev
+		return
+	}
+	if l := n.AsLeaf(); l != nil {
+		l.Prev = prev
+	}
+}
+
+func setNextNode(n Node, next Node) {
+	if n == nil {
+		return
+	}
+	if c := n.AsContainer(); c != nil {
+		c.Next = next
+		return
+	}
+	if l := n.AsLeaf(); l != nil {
+		l.Next = next
+	}
 }
 
 // WalkStatus allows NodeVisitor to have some control over the tree traversal.

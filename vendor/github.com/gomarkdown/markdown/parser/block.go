@@ -3,7 +3,6 @@ package parser
 import (
 	"bytes"
 	"html"
-	"regexp"
 	"strconv"
 	"unicode"
 
@@ -13,20 +12,12 @@ import (
 // Parsing block-level elements.
 
 const (
-	charEntity = "&(?:#x[a-f0-9]{1,8}|#[0-9]{1,8}|[a-z][a-z0-9]{1,31});"
-	escapable  = "[!\"#$%&'()*+,./:;<=>?@[\\\\\\]^_`{|}~-]"
-)
-
-const (
 	captionTable  = "Table: "
 	captionFigure = "Figure: "
 	captionQuote  = "Quote: "
 )
 
 var (
-	reBackslashOrAmp      = regexp.MustCompile(`[\&]`)
-	reEntityOrEscapedChar = regexp.MustCompile(`(?i)\\` + escapable + "|" + charEntity)
-
 	// blockTags is a set of tags that are recognized as HTML block tags.
 	// Any of these can be included in markdown text without special escaping.
 	blockTags = map[string]struct{}{
@@ -417,12 +408,13 @@ func (p *Parser) isPrefixHeading(data []byte) bool {
 	return true
 }
 
-func (p *Parser) prefixHeading(data []byte) int {
-	level := skipCharN(data, 0, '#', 6)
-	i := skipChar(data, level, ' ')
-	end := skipUntilChar(data, i, '\n')
-	skip := end
-	id := ""
+// parseHeadingContent extracts the text range and optional {#id} for a heading
+// whose content starts at i and whose line ends just before the newline at end.
+// It returns the heading id ("" if none), the index where the heading text ends
+// (after trimming a trailing {#id} and any closing '#' markers and spaces), and
+// the number of bytes the whole heading line occupies.
+func (p *Parser) parseHeadingContent(data []byte, i, end int) (id string, contentEnd, skip int) {
+	skip = end
 	if p.extensions&HeadingIDs != 0 {
 		j, k := 0, 0
 		// find start/end of heading id
@@ -435,29 +427,40 @@ func (p *Parser) prefixHeading(data []byte) int {
 			id = string(data[j+2 : k])
 			end = j
 			skip = k + 1
-			for end > 0 && data[end-1] == ' ' {
-				end--
-			}
+			end = backChar(data, end, ' ')
 		}
 	}
+	// strip trailing closing '#' markers and surrounding spaces
 	for end > 0 && data[end-1] == '#' {
 		if isBackslashEscaped(data, end-1) {
 			break
 		}
 		end--
 	}
-	for end > 0 && data[end-1] == ' ' {
-		end--
+	end = backChar(data, end, ' ')
+	return id, end, skip
+}
+
+// setHeadingID assigns block's id, auto-generating one from text when id is
+// empty and AutoHeadingIDs is enabled (recording it for later uniquification).
+func (p *Parser) setHeadingID(block *ast.Heading, id string, text []byte) {
+	block.HeadingID = id
+	if id == "" && p.extensions&AutoHeadingIDs != 0 {
+		block.HeadingID = sanitizeHeadingID(string(text))
+		p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
 	}
+}
+
+func (p *Parser) prefixHeading(data []byte) int {
+	level := skipCharN(data, 0, '#', 6)
+	i := skipChar(data, level, ' ')
+	end := skipUntilChar(data, i, '\n')
+	id, end, skip := p.parseHeadingContent(data, i, end)
 	if end > i {
 		block := &ast.Heading{
-			HeadingID: id,
-			Level:     level,
+			Level: level,
 		}
-		if id == "" && p.extensions&AutoHeadingIDs != 0 {
-			block.HeadingID = sanitizeHeadingID(string(data[i:end]))
-			p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
-		}
+		p.setHeadingID(block, id, data[i:end])
 		block.Content = data[i:end]
 		p.AddBlock(block)
 	}
@@ -492,44 +495,13 @@ func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
 func (p *Parser) prefixSpecialHeading(data []byte) int {
 	i := skipChar(data, 2, ' ') // ".#" skipped
 	end := skipUntilChar(data, i, '\n')
-	skip := end
-	id := ""
-	if p.extensions&HeadingIDs != 0 {
-		j, k := 0, 0
-		// find start/end of heading id
-		for j = i; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
-		}
-		for k = j + 1; k < end && data[k] != '}'; k++ {
-		}
-		// extract heading id iff found
-		if j < end && k < end {
-			id = string(data[j+2 : k])
-			end = j
-			skip = k + 1
-			for end > 0 && data[end-1] == ' ' {
-				end--
-			}
-		}
-	}
-	for end > 0 && data[end-1] == '#' {
-		if isBackslashEscaped(data, end-1) {
-			break
-		}
-		end--
-	}
-	for end > 0 && data[end-1] == ' ' {
-		end--
-	}
+	id, end, skip := p.parseHeadingContent(data, i, end)
 	if end > i {
 		block := &ast.Heading{
-			HeadingID: id,
 			IsSpecial: true,
 			Level:     1, // always level 1.
 		}
-		if id == "" && p.extensions&AutoHeadingIDs != 0 {
-			block.HeadingID = sanitizeHeadingID(string(data[i:end]))
-			p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
-		}
+		p.setHeadingID(block, id, data[i:end])
 		block.Literal = data[i:end]
 		block.Content = data[i:end]
 		p.AddBlock(block)
@@ -1100,18 +1072,110 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 	return beg
 }
 
-func unescapeChar(str []byte) []byte {
-	if str[0] == '\\' {
-		return []byte{str[1]}
-	}
-	return []byte(html.UnescapeString(string(str)))
-}
-
 func unescapeString(str []byte) []byte {
-	if reBackslashOrAmp.Match(str) {
-		return reEntityOrEscapedChar.ReplaceAllFunc(str, unescapeChar)
+	var out []byte
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case '\\':
+			if i+1 < len(str) && isEscapable(str[i+1]) {
+				if out == nil {
+					out = make([]byte, 0, len(str))
+					out = append(out, str[:i]...)
+				}
+				out = append(out, str[i+1])
+				i++
+				continue
+			}
+		case '&':
+			entityEnd := findEntityEnd(str, i)
+			if entityEnd > i {
+				replacement := html.UnescapeString(string(str[i:entityEnd]))
+				if replacement != string(str[i:entityEnd]) {
+					if out == nil {
+						out = make([]byte, 0, len(str))
+						out = append(out, str[:i]...)
+					}
+					out = append(out, replacement...)
+					i = entityEnd - 1
+					continue
+				}
+			}
+		}
+		if out != nil {
+			out = append(out, str[i])
+		}
+	}
+	if out != nil {
+		return out
 	}
 	return str
+}
+
+func isEscapable(c byte) bool {
+	switch c {
+	case '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '.', '/', ':',
+		';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~', '-':
+		return true
+	default:
+		return false
+	}
+}
+
+func findEntityEnd(str []byte, start int) int {
+	i := start + 1
+	if i >= len(str) {
+		return 0
+	}
+	if str[i] == '#' {
+		i++
+		if i >= len(str) {
+			return 0
+		}
+		if str[i] == 'x' || str[i] == 'X' {
+			i++
+			digits := 0
+			for i < len(str) && digits < 8 && isHexDigit(str[i]) {
+				i++
+				digits++
+			}
+			if digits == 0 || i >= len(str) || str[i] != ';' {
+				return 0
+			}
+			return i + 1
+		}
+		digits := 0
+		for i < len(str) && digits < 8 && str[i] >= '0' && str[i] <= '9' {
+			i++
+			digits++
+		}
+		if digits == 0 || i >= len(str) || str[i] != ';' {
+			return 0
+		}
+		return i + 1
+	}
+	if !isAlpha(str[i]) {
+		return 0
+	}
+	i++
+	for i < len(str) && i-start <= 32 && isAlnum(str[i]) {
+		i++
+	}
+	if i >= len(str) || str[i] != ';' {
+		return 0
+	}
+	return i + 1
+}
+
+func isAlpha(c byte) bool {
+	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+}
+
+func isAlnum(c byte) bool {
+	return isAlpha(c) || c >= '0' && c <= '9'
+}
+
+func isHexDigit(c byte) bool {
+	return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
 }
 
 func finalizeCodeBlock(code *ast.CodeBlock) {
@@ -1819,10 +1883,7 @@ func (p *Parser) paragraph(data []byte) int {
 				block := &ast.Heading{
 					Level: level,
 				}
-				if p.extensions&AutoHeadingIDs != 0 {
-					block.HeadingID = sanitizeHeadingID(string(data[prev:eol]))
-					p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
-				}
+				p.setHeadingID(block, "", data[prev:eol])
 
 				block.Content = data[prev:eol]
 				p.AddBlock(block)
