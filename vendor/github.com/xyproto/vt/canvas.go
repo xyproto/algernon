@@ -338,7 +338,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 				if r == 0 {
 					r = ' '
 				}
-				fmt.Fprintf(&sb, "\033[%d;%dH", y+1, x+1)
+				fmt.Fprintf(&sb, "\033[%d;%dH\033[22;23;24m", y+1, x+1)
 				if uint32(cr.fg) < 256 && uint32(cr.bg) < 256 {
 					sb.WriteString(cr.fg.Combine(cr.bg).String())
 				} else {
@@ -395,6 +395,12 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 					continue
 				}
 				if x == 0 || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
+					if x > 0 {
+						// Reset bold/italic/underline so they don't bleed
+						// into the next cell. Cells that want them re-emit
+						// via their own SGR.
+						sb.WriteString("\033[22;23;24m")
+					}
 					if uint32(cr.fg) < 256 && uint32(cr.bg) < 256 {
 						sb.WriteString(cr.fg.Combine(cr.bg).String())
 					} else {

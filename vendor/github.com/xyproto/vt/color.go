@@ -95,6 +95,9 @@ const (
 	extendedFlag  = uint32(1 << 31)
 	bgFlag        = uint32(1 << 30)
 	trueColorFlag = uint32(1 << 29)
+	boldFlag      = uint32(1 << 28)
+	italicFlag    = uint32(1 << 27)
+	underlineFlag = uint32(1 << 26)
 )
 
 // DarkColorMap maps color names to AttributeColor values for dark terminals
@@ -289,6 +292,18 @@ func (ac AttributeColor) String() string {
 		result = fmt.Sprintf(attributeTemplate, strconv.FormatUint(uint64(val), 10))
 	}
 
+	// Prepend SGR attributes for any attribute flags set on an extended color.
+	if val&extendedFlag != 0 {
+		if val&boldFlag != 0 {
+			result = "\033[1m" + result
+		}
+		if val&italicFlag != 0 {
+			result = "\033[3m" + result
+		}
+		if val&underlineFlag != 0 {
+			result = "\033[4m" + result
+		}
+	}
 	extCache.Store(val, result)
 	return result
 }
@@ -349,6 +364,29 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	}
 	if other == 0 {
 		return ac
+	}
+
+	// When combining an extended (256-color or true-color) value with the
+	// Bold or Italic attribute, set the corresponding flag bit on the
+	// extended color so the color encoding survives. Plain truncation via
+	// & 0xFFFF would strip extendedFlag and produce a meaningless SGR.
+	if uint32(ac)&extendedFlag != 0 && other == Bold {
+		return AttributeColor(uint32(ac) | boldFlag)
+	}
+	if uint32(other)&extendedFlag != 0 && ac == Bold {
+		return AttributeColor(uint32(other) | boldFlag)
+	}
+	if uint32(ac)&extendedFlag != 0 && other == Italic {
+		return AttributeColor(uint32(ac) | italicFlag)
+	}
+	if uint32(other)&extendedFlag != 0 && ac == Italic {
+		return AttributeColor(uint32(other) | italicFlag)
+	}
+	if uint32(ac)&extendedFlag != 0 && other == Underscore {
+		return AttributeColor(uint32(ac) | underlineFlag)
+	}
+	if uint32(other)&extendedFlag != 0 && ac == Underscore {
+		return AttributeColor(uint32(other) | underlineFlag)
 	}
 
 	val1 := uint32(ac) & 0xFFFF

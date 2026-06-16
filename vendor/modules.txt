@@ -50,7 +50,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2/v2 v2.2.1
+# github.com/dlclark/regexp2/v2 v2.2.2
 ## explicit; go 1.25
 github.com/dlclark/regexp2/v2
 github.com/dlclark/regexp2/v2/helpers
@@ -247,7 +247,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260615100721-f4471e607df5
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260616104916-f4ecc9f5b850
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -419,7 +419,7 @@ github.com/xyproto/tinysvg
 # github.com/xyproto/unzip v1.0.1
 ## explicit; go 1.25.0
 github.com/xyproto/unzip
-# github.com/xyproto/vt v1.9.11
+# github.com/xyproto/vt v1.9.12
 ## explicit; go 1.25.1
 github.com/xyproto/vt
 # github.com/yosssi/gcss v0.1.0
