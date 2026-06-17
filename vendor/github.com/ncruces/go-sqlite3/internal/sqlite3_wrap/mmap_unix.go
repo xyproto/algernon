@@ -16,7 +16,7 @@ type mmapState struct {
 
 func (w *Wrapper) MapRegion(f *os.File, offset int64, size int32, readOnly bool) (*MappedRegion, error) {
 	pageSize := int64(unix.Getpagesize())
-	align := offset &^ (pageSize - 1)
+	align := offset & (pageSize - 1)
 	offset -= align
 
 	size += int32(align + pageSize - 1)
