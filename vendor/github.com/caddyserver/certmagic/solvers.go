@@ -22,13 +22,16 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/caddyserver/certmagic/internal/filedescriptor"
 	"github.com/libdns/libdns"
 	"github.com/mholt/acmez/v3"
 	"github.com/mholt/acmez/v3/acme"
@@ -407,7 +410,7 @@ func (m *DNSManager) createRecord(ctx context.Context, dnsName, recordType, reco
 		return zoneRecord{}, fmt.Errorf("expected one record, got %d: %v", len(results), results)
 	}
 
-	return zoneRecord{zone, results[0].RR()}, nil
+	return zoneRecord{zone, results[0]}, nil
 }
 
 // wait blocks until the TXT record created in Present() appears in
@@ -442,12 +445,13 @@ func (m *DNSManager) wait(ctx context.Context, zrec zoneRecord) error {
 	checkAuthoritativeServers := len(m.Resolvers) == 0
 	resolvers := RecursiveNameservers(m.Resolvers)
 
+	rr := zrec.record.RR()
 	recType := dns.TypeTXT
-	if zrec.record.RR().Type == "CNAME" {
+	if rr.Type == "CNAME" {
 		recType = dns.TypeCNAME
 	}
 
-	absName := libdns.AbsoluteName(zrec.record.Name, zrec.zone)
+	absName := libdns.AbsoluteName(rr.Name, zrec.zone)
 
 	var err error
 	start := time.Now()
@@ -460,14 +464,14 @@ func (m *DNSManager) wait(ctx context.Context, zrec zoneRecord) error {
 
 		logger.Debug("checking DNS propagation",
 			zap.String("fqdn", absName),
-			zap.String("record_type", zrec.record.Type),
-			zap.String("expected_data", zrec.record.Data),
+			zap.String("record_type", rr.Type),
+			zap.String("expected_data", rr.Data),
 			zap.Strings("resolvers", resolvers))
 
 		var ready bool
-		ready, err = checkDNSPropagation(ctx, logger, absName, recType, zrec.record.Data, checkAuthoritativeServers, resolvers)
+		ready, err = checkDNSPropagation(ctx, logger, absName, recType, rr.Data, checkAuthoritativeServers, resolvers)
 		if err != nil {
-			return fmt.Errorf("checking DNS propagation of %q (relative=%s zone=%s resolvers=%v): %w", absName, zrec.record.Name, zrec.zone, resolvers, err)
+			return fmt.Errorf("checking DNS propagation of %q (relative=%s zone=%s resolvers=%v): %w", absName, rr.Name, zrec.zone, resolvers, err)
 		}
 		if ready {
 			return nil
@@ -479,7 +483,7 @@ func (m *DNSManager) wait(ctx context.Context, zrec zoneRecord) error {
 
 type zoneRecord struct {
 	zone   string
-	record libdns.RR
+	record libdns.Record
 }
 
 // CleanUp deletes the DNS TXT record created in Present().
@@ -503,11 +507,12 @@ func (m *DNSManager) cleanUpRecord(_ context.Context, zrec zoneRecord) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	rr := zrec.record.RR()
 	logger.Debug("deleting DNS record",
 		zap.String("zone", zrec.zone),
-		zap.String("record_name", zrec.record.Name),
-		zap.String("record_type", zrec.record.Type),
-		zap.String("record_data", zrec.record.Data))
+		zap.String("record_name", rr.Name),
+		zap.String("record_type", rr.Type),
+		zap.String("record_data", rr.Data))
 
 	_, err := m.DNSProvider.DeleteRecords(ctx, zrec.zone, []libdns.Record{zrec.record})
 	if err != nil {
@@ -549,7 +554,8 @@ func (s *DNSManager) getDNSPresentMemory(dnsName, recType, value string) (dnsPre
 	var memory dnsPresentMemory
 	var found bool
 	for _, mem := range s.records[dnsName] {
-		if mem.zoneRec.record.Type == recType && mem.zoneRec.record.Data == value {
+		rr := mem.zoneRec.record.RR()
+		if rr.Type == recType && rr.Data == value {
 			memory = mem
 			found = true
 			break
@@ -567,7 +573,7 @@ func (s *DNSManager) deleteDNSPresentMemory(dnsName, keyAuth string) {
 	defer s.recordsMu.Unlock()
 
 	for i, mem := range s.records[dnsName] {
-		if mem.zoneRec.record.Data == keyAuth {
+		if mem.zoneRec.record.RR().Data == keyAuth {
 			s.records[dnsName] = append(s.records[dnsName][:i], s.records[dnsName][i+1:]...)
 			return
 		}
@@ -708,6 +714,7 @@ func getSolverInfo(address string) *solverInfo {
 // which is useful for our challenge servers, where we assume
 // that whatever is already listening can solve the challenges.
 func robustTryListen(addr string) (net.Listener, error) {
+
 	var listenErr error
 	for i := 0; i < 2; i++ {
 		// doesn't hurt to sleep briefly before the second
@@ -718,17 +725,56 @@ func robustTryListen(addr string) (net.Listener, error) {
 
 		// if we can bind the socket right away, great!
 		var ln net.Listener
-		ln, listenErr = net.Listen("tcp", addr)
-		if listenErr == nil {
-			return ln, nil
-		}
 
-		// if it failed just because the socket is already in use, we
-		// have no choice but to assume that whatever is using the socket
-		// can answer the challenge already, so we ignore the error
-		connectErr := dialTCPSocket(addr)
-		if connectErr == nil {
-			return nil, nil
+		// First, try to parse the address as a file descriptor. When testing
+		// with Caddy, the address contains a port number (even though that
+		// doesn't really make sense for a file descriptor), so remove that too.
+		fd, err := strconv.ParseUint(strings.Split(strings.TrimPrefix(addr, "fd/"), ":")[0], 0, strconv.IntSize)
+		if err == nil {
+			// os.NewFile takes ownership of the file descriptor, so if
+			// something else is using the file descriptor, this would be bad
+			// since it means that closing the os.File would also close the
+			// underlying file descriptor out from under the other user. So
+			// instead we'll duplicate the file descriptor here, then we can
+			// safely do whatever we want with it.
+			fd, listenErr := filedescriptor.Dup(int(fd))
+			if listenErr != nil {
+				continue
+			}
+
+			// net.FileListener internally duplicates the file descriptor, so we
+			// can unconditionally close the "file" after creating the listener.
+			file := os.NewFile(uintptr(fd), addr)
+			defer file.Close()
+
+			// net.FileListener will return an error if the file descriptor is
+			// not a stream socket, so we don't need to check ourselves. But the
+			// socket could be a Unix socket, so we still need to check for that
+			// and raise an error if so.
+			ln, listenErr = net.FileListener(file)
+			if listenErr == nil {
+				return ln, nil
+			}
+
+			if ln.Addr().Network() != "tcp" {
+				ln.Close()
+				return nil, fmt.Errorf("file descriptor %d is not a TCP socket", fd)
+			}
+
+			return ln, nil
+		} else {
+			ln, listenErr = net.Listen("tcp", addr)
+			if listenErr == nil {
+				return ln, nil
+			}
+
+			// if it failed just because the socket is already in use, we
+			// have no choice but to assume that whatever is using the socket
+			// can answer the challenge already, so we ignore the error
+			connectErr := dialTCPSocket(addr)
+			if connectErr == nil {
+				return nil, nil
+			}
 		}
 
 		// Hmm, we couldn't connect to the socket, so something else must

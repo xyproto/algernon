@@ -58,26 +58,40 @@ func (jm *jobManager) worker() {
 			buf = buf[:runtime.Stack(buf, false)]
 			log.Printf("panic: certificate worker: %v\n%s", err, buf)
 		}
+		// Decrement activeWorkers here (rather than inline at the
+		// queue-empty branch) so that the counter is correctly released
+		// even when the worker exits via a recovered panic. Otherwise the
+		// counter drifts upward and eventually no new workers ever spawn.
+		jm.mu.Lock()
+		jm.activeWorkers--
+		jm.mu.Unlock()
 	}()
 
 	for {
 		jm.mu.Lock()
 		if len(jm.queue) == 0 {
-			jm.activeWorkers--
 			jm.mu.Unlock()
 			return
 		}
 		next := jm.queue[0]
 		jm.queue = jm.queue[1:]
 		jm.mu.Unlock()
-		if err := next.job(); err != nil {
-			next.logger.Error("job failed", zap.Error(err))
-		}
-		if next.name != "" {
-			jm.mu.Lock()
-			delete(jm.names, next.name)
-			jm.mu.Unlock()
-		}
+		// Run the job inside a closure so that the name is always removed
+		// from jm.names, even if the job panics. Otherwise the name would
+		// stay in the in-flight set and future Submit() calls for the same
+		// name would be silently dropped until process restart.
+		func() {
+			defer func() {
+				if next.name != "" {
+					jm.mu.Lock()
+					delete(jm.names, next.name)
+					jm.mu.Unlock()
+				}
+			}()
+			if err := next.job(); err != nil {
+				next.logger.Error("job failed", zap.Error(err))
+			}
+		}()
 	}
 }
 
