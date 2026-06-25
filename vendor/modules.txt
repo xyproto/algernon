@@ -248,7 +248,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260624121850-42edcdf89492
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260626103852-aa350698e212
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -528,7 +528,7 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.15.0
 ## explicit; go 1.25.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.46.0
+# golang.org/x/tools v0.47.0
 ## explicit; go 1.25.0
 golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector
