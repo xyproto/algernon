@@ -433,6 +433,18 @@ func parseFirstKey(buf []byte) (string, int) {
 // successive calls via a pending byte buffer — this prevents queued arrow
 // escapes from leaking into the document as literal "^[[..." text.
 func (tty *TTY) ReadKey() string {
+	// Try to return a key already sitting in the pending buffer first. This is
+	// done before touching the terminal: RawMode below performs two ioctl
+	// syscalls, and calling it once per key while draining a large burst of
+	// buffered input (such as a paste) makes pasting noticeably slow,
+	// especially on macOS where those ioctls are expensive. Parsing from the
+	// pending buffer does not read from the file descriptor, so the terminal
+	// mode does not need to be re-applied here.
+	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
+		tty.pending = tty.pending[consumed:]
+		return key
+	}
+
 	// Note: we deliberately do NOT restore the original terminal state or
 	// flush the input queue on exit. Restoring would re-enable echo between
 	// keystrokes (causing raw escape sequences like "\x1b[A" to be echoed
@@ -441,12 +453,6 @@ func (tty *TTY) ReadKey() string {
 	// Flushing would discard keystrokes the user typed while a redraw was
 	// in progress. The outer editor loop restores the terminal on exit.
 	tty.RawMode()
-
-	// Try to return a key already sitting in the pending buffer first.
-	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
-		tty.pending = tty.pending[consumed:]
-		return key
-	}
 
 	// Need more bytes. Use a generous read buffer so bursts of queued input
 	// (e.g. every \x1b[C from a held Right-arrow) are not split across reads.
