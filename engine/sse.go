@@ -18,7 +18,7 @@ import (
 const autoloadTemplate = `
 if (!!window.EventSource) {
   window.setTimeout(function() {
-    var source = new EventSource(window.location.protocol + '//{{.FullHost}}{{.EventPath}}');
+    var source = new EventSource(window.location.protocol + '//{{js .FullHost}}{{js .EventPath}}');
     source.addEventListener('message', function(e) {
       var changed = e.data;
       var basename = changed.replace(/.*[\/\\]/, '');
@@ -80,6 +80,25 @@ type templateData struct {
 	HMRUpdatePrefix string // URL path without leading slash, for JS string replace
 }
 
+// hostPortSymbols are the non-alphanumeric characters that may appear in a
+// host and port, like "localhost:3000" or "[::1]:3000"
+const hostPortSymbols = ".-:[]_"
+
+// validHostPort checks that a string only contains characters that may appear
+// in a host and port
+func validHostPort(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		alphanumeric := r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9'
+		if !alphanumeric && !strings.ContainsRune(hostPortSymbols, r) {
+			return false
+		}
+	}
+	return true
+}
+
 // insertBeforeEndTag inserts js immediately before endTag in htmldata
 func insertBeforeEndTag(htmldata, js []byte, endTag string) []byte {
 	tag := []byte(endTag)
@@ -130,6 +149,10 @@ func (ac *Config) InsertAutoRefresh(req *http.Request, htmldata []byte) []byte {
 			// Use the raw request host
 			fullHost = utils.JoinHostPort(utils.GetHost(req), fullHost)
 		}
+	}
+	// The host can come from the request, and ends up in a JavaScript string
+	if !validHostPort(fullHost) {
+		fullHost = utils.HostPortToURL(ac.serverAddr)
 	}
 	// Wait 70% of an event duration before starting to listen for events
 	multiplier := 0.7

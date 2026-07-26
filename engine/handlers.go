@@ -520,23 +520,9 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		theme = "gray"
 	}
 
-	// Handle all requests with this function
+	// Handle all requests with this function.
+	// Requests are rejected by permissionMiddleware, which wraps the mux.
 	allRequests := func(w http.ResponseWriter, req *http.Request) {
-		// Rejecting requests is handled by the permission system, which
-		// in turn requires a database backend.
-		if ac.perm != nil {
-			if ac.perm.Rejected(w, req) {
-				// Prepare to count bytes written
-				sc := sheepcounter.New(w)
-				// Get and call the Permission Denied function
-				ac.perm.DenyFunction()(sc, req)
-				// Log the response
-				ac.LogAccess(req, http.StatusForbidden, sc.Counter())
-				// Reject the request by just returning
-				return
-			}
-		}
-
 		// Local to this function
 		servedir := servedir
 

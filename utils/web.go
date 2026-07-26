@@ -3,7 +3,25 @@ package utils
 import (
 	"net"
 	"net/http"
+	"path"
+	"runtime"
+	"strings"
 )
+
+// CanonicalURLPath resolves ".." and "." elements, collapses repeated slashes
+// and adds a leading slash. A trailing slash is kept, since it tells
+// directories and files apart.
+func CanonicalURLPath(p string) string {
+	if runtime.GOOS == "windows" {
+		// Backslash is a path separator here, and must not survive cleaning
+		p = strings.ReplaceAll(p, "\\", "/")
+	}
+	cleaned := path.Clean("/" + p)
+	if cleaned != "/" && strings.HasSuffix(p, "/") {
+		cleaned += "/"
+	}
+	return cleaned
+}
 
 // GetHost returns the host of a request, handling both IPv4 and IPv6.
 // Unlike GetDomain, it does not collapse loopback addresses, so URLs built

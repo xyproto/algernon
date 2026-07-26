@@ -8,22 +8,24 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
 	"github.com/sirupsen/logrus"
+	"github.com/xyproto/algernon/utils"
 )
 
 // hmrUpdatePrefix is the URL prefix for the HMR update endpoint
 const hmrUpdatePrefix = "/@algernon/hmr/"
 
-// pathContains reports whether p is the same as or a descendant of root.
-func pathContains(root, p string) bool {
-	rel, err := filepath.Rel(root, p)
-	if err != nil {
-		return false
-	}
-	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+// hmrExtensions are the file extensions that the HMR endpoint may serve
+var hmrExtensions = []string{".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
+
+// servableByHMR reports whether the given file can be served by the HMR endpoint
+func servableByHMR(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	return slices.Contains(hmrExtensions, ext)
 }
 
 // HMRUpdateHandler serves a freshly compiled (never cached) version of a
@@ -52,17 +54,24 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Containment check via filepath.Rel after normalization.
 	absPath := filepath.Clean(filepath.Join(serverRoot, relPath))
-	if !pathContains(serverRoot, absPath) {
+	if !utils.WithinDir(serverRoot, absPath) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 	// Re-check after resolving symlinks inside the root.
 	if resolved, err := filepath.EvalSymlinks(absPath); err == nil {
-		if !pathContains(serverRoot, resolved) {
+		if !utils.WithinDir(serverRoot, resolved) {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
 		absPath = resolved
+	}
+
+	// Only script files can be hot-swapped. Serving anything else, like .env
+	// or .lua, would just be a way to read files.
+	if !servableByHMR(absPath) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
 	}
 
 	src, err := os.ReadFile(absPath)

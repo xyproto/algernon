@@ -21,19 +21,35 @@ const (
 	MiB = 1024 * 1024
 )
 
-// URL2filename translates a given URL path to a probable full filename
+// WithinDir reports whether p is the same as, or a descendant of, root.
+// The comparison is lexical, so resolve symlinks first, if that matters.
+func WithinDir(root, p string) bool {
+	rel, err := filepath.Rel(root, p)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+Pathsep)
+}
+
+// URL2filename translates a given URL path to a probable full filename.
+// URL paths that lead outside of dirname result in dirname itself.
 func URL2filename(dirname, urlpath string) string {
 	if strings.Contains(urlpath, "..") {
 		logrus.Warn("Someone was trying to access a directory with .. in the URL")
 		return dirname + Pathsep
 	}
-	if strings.HasPrefix(urlpath, "/") {
-		if strings.HasSuffix(dirname, Pathsep) {
-			return dirname + urlpath[1:]
-		}
-		return dirname + Pathsep + urlpath[1:]
+	// Canonicalize first, so that the result can only be within dirname
+	cleaned := CanonicalURLPath(urlpath)
+	filename := filepath.Join(dirname, filepath.FromSlash(cleaned))
+	if !WithinDir(dirname, filename) {
+		logrus.Warn("Refusing to serve a filename outside of " + dirname)
+		return dirname + Pathsep
 	}
-	return dirname + "/" + urlpath
+	// filepath.Join drops the trailing slash that tells a directory from a file
+	if strings.HasSuffix(cleaned, "/") && !strings.HasSuffix(filename, Pathsep) {
+		filename += Pathsep
+	}
+	return filename
 }
 
 // GetFilenames retrieves a list of filenames from a given directory name (that must exist)

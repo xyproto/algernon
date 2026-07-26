@@ -62,6 +62,10 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 	if ac.largeFileSize > 0 {
 		handler = ac.limitBodyMiddleware(handler)
 	}
+	// Check permissions for every route, not just the ones in RegisterHandlers
+	handler = ac.permissionMiddleware(handler)
+	// Canonicalize the request path before anything else looks at it
+	handler = canonicalPathMiddleware(handler)
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,
