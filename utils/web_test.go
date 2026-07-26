@@ -5,6 +5,26 @@ import (
 	"testing"
 )
 
+func TestCanonicalURLPath(t *testing.T) {
+	tests := []struct {
+		urlpath string
+		want    string
+	}{
+		{"/index.html", "/index.html"},
+		{"//admin/secret.lua", "/admin/secret.lua"},
+		{"/../etc/passwd", "/etc/passwd"},
+		{"/a/./b//c", "/a/b/c"},
+		{"/sub/", "/sub/"},
+		{"/", "/"},
+		{"relative.txt", "/relative.txt"},
+	}
+	for _, tt := range tests {
+		if got := CanonicalURLPath(tt.urlpath); got != tt.want {
+			t.Errorf("CanonicalURLPath(%q) = %q, want %q", tt.urlpath, got, tt.want)
+		}
+	}
+}
+
 func TestGetDomain(t *testing.T) {
 	tests := []struct {
 		host string

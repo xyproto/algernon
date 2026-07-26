@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -16,11 +17,36 @@ func TestURL2filename(t *testing.T) {
 		{"/srv", "/sub/page.md", "/srv" + Pathsep + "sub/page.md"},
 		{"/srv", "relative.txt", "/srv/relative.txt"},
 		{"/srv", "/../etc/passwd", "/srv" + Pathsep},
+		{"/srv", "//admin/secret.lua", "/srv" + Pathsep + "admin" + Pathsep + "secret.lua"},
+		{"/srv", "/a/./b//c", "/srv" + Pathsep + "a" + Pathsep + "b" + Pathsep + "c"},
+		{"/srv", "/sub/", "/srv" + Pathsep + "sub" + Pathsep},
+		{"/srv", "/", "/srv" + Pathsep},
 	}
 	for _, tt := range tests {
 		got := URL2filename(tt.dirname, tt.urlpath)
 		if got != tt.want {
 			t.Errorf("URL2filename(%q, %q) = %q, want %q", tt.dirname, tt.urlpath, got, tt.want)
+		}
+	}
+}
+
+// Containment helper: only descendants of root should pass.
+func TestWithinDir(t *testing.T) {
+	root := t.TempDir()
+	cases := []struct {
+		name string
+		path string
+		want bool
+	}{
+		{"root itself", root, true},
+		{"direct child", filepath.Join(root, "a.js"), true},
+		{"nested child", filepath.Join(root, "sub", "a.js"), true},
+		{"sibling", filepath.Join(root, "..", "other"), false},
+		{"ancestor", filepath.Dir(root), false},
+	}
+	for _, c := range cases {
+		if got := WithinDir(root, c.path); got != c.want {
+			t.Errorf("%s: WithinDir(%q,%q) = %v, want %v", c.name, root, c.path, got, c.want)
 		}
 	}
 }

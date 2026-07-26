@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -77,23 +78,24 @@ func TestHMRUpdateHandlerRejectsAbsolutePath(t *testing.T) {
 	}
 }
 
-// Containment helper: only descendants of root should pass.
-func TestPathContains(t *testing.T) {
+// Files that can not be hot-swapped must not be readable through this endpoint.
+func TestHMRUpdateHandlerRejectsNonScriptFiles(t *testing.T) {
 	root := t.TempDir()
-	cases := []struct {
-		name string
-		path string
-		want bool
-	}{
-		{"root itself", root, true},
-		{"direct child", filepath.Join(root, "a.js"), true},
-		{"nested child", filepath.Join(root, "sub", "a.js"), true},
-		{"sibling", filepath.Join(root, "..", "other"), false},
-		{"ancestor", filepath.Dir(root), false},
-	}
-	for _, c := range cases {
-		if got := pathContains(root, c.path); got != c.want {
-			t.Errorf("%s: pathContains(%q,%q) = %v, want %v", c.name, root, c.path, got, c.want)
+	ac := &Config{serverDirOrFilename: root}
+
+	for _, filename := range []string{".env", "secret.lua", "notes.txt"} {
+		if err := os.WriteFile(filepath.Join(root, filename), []byte("SECRET=1"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest("GET", hmrUpdatePrefix+filename, nil)
+		w := httptest.NewRecorder()
+		ac.HMRUpdateHandler(w, req)
+
+		if w.Code != 403 {
+			t.Errorf("Expected 403 for %s, got %d", filename, w.Code)
+		}
+		if strings.Contains(w.Body.String(), "SECRET") {
+			t.Errorf("The contents of %s were served", filename)
 		}
 	}
 }
