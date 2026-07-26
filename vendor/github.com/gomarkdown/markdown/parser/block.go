@@ -129,13 +129,23 @@ func (p *Parser) Block(data []byte) {
 			if consumed > 0 {
 				included := f(p.includeStack.Last(), path, address)
 
-				// if we find a caption below this, we need to include it in 'included', so
-				// that the caption will be part of the include text. (+1 to skip newline)
-				for _, caption := range []string{captionFigure, captionTable, captionQuote} {
-					if _, _, capcon := p.caption(data[consumed+1:], []byte(caption)); capcon > 0 {
-						included = append(included, data[consumed+1:consumed+1+capcon]...)
-						consumed += 1 + capcon
-						break // there can only be 1 caption.
+				// Optional caption on the line after the include. Skip a following
+				// newline when present; do not assume data[consumed+1] exists (EOF
+				// after {{file}} used to panic with slice bounds out of range).
+				if consumed < len(data) {
+					rest := data[consumed:]
+					captionOff := 0
+					if rest[0] == '\n' {
+						captionOff = 1
+					}
+					if captionOff < len(rest) {
+						for _, caption := range []string{captionFigure, captionTable, captionQuote} {
+							if _, _, capcon := p.caption(rest[captionOff:], []byte(caption)); capcon > 0 {
+								included = append(included, rest[captionOff:captionOff+capcon]...)
+								consumed += captionOff + capcon
+								break // there can only be 1 caption.
+							}
+						}
 					}
 				}
 				p.includeStack.Push(path)

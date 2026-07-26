@@ -339,8 +339,13 @@ func appendLanguageAttr(attrs []string, info []byte) []string {
 	if endOfLang < 0 {
 		endOfLang = len(info)
 	}
-	s := `class="language-` + string(info[:endOfLang]) + `"`
-	return append(attrs, s)
+	// Escape so untrusted fence info cannot break out of the class attribute
+	// (GHSA-gc99-qr5c-98ff).
+	var b bytes.Buffer
+	b.WriteString(`class="language-`)
+	EscapeHTML(&b, info[:endOfLang])
+	b.WriteByte('"')
+	return append(attrs, b.String())
 }
 
 func (r *Renderer) OutTag(w io.Writer, name string, attrs []string) {
@@ -699,8 +704,13 @@ func (r *Renderer) HeadingEnter(w io.Writer, hdr *ast.Heading) {
 
 	if hdr.HeadingID != "" {
 		id := r.MakeUniqueHeadingID(hdr)
-		attrID := `id="` + id + `"`
-		attrs = append(attrs, attrID)
+		// Escape so untrusted {#id} values cannot break out of the attribute
+		// (GHSA-gc99-qr5c-98ff).
+		var idBuf bytes.Buffer
+		idBuf.WriteString(`id="`)
+		EscapeHTML(&idBuf, []byte(id))
+		idBuf.WriteByte('"')
+		attrs = append(attrs, idBuf.String())
 	}
 	attrs = append(attrs, BlockAttrs(hdr)...)
 	attrs = coalesceClassAttrs(attrs)

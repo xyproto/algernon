@@ -15,14 +15,14 @@ require (
 	github.com/flosch/pongo2/v6 v6.1.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-webauthn/webauthn v0.17.4
-	github.com/gomarkdown/markdown v0.0.0-20260614204949-e08cff860f76
+	github.com/gomarkdown/markdown v0.0.0-20260725000948-8435af3f5984
 	github.com/lib/pq v1.12.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007
 	github.com/orsinium-labs/enum v1.5.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/quic-go/quic-go v0.60.0
+	github.com/quic-go/quic-go v0.61.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/tylerb/graceful v1.2.15
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
@@ -97,7 +97,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260722123738-e35ad93664b3 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260725000935-05b396fb6636 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
