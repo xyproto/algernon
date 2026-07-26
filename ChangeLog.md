@@ -1,5 +1,13 @@
 # Changelog
 
+Changes from 1.17.10 to 1.17.11
+===============================
+
+* Fix empty responses when served by reverse proxies, ref #175.
+* Fix a security issues related to paths like `/%2fadmin/`.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.17.9 to 1.17.10
 ==============================
 
