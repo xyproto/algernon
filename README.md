@@ -53,7 +53,7 @@ See [TUTORIAL.md](TUTORIAL.md).
 Docker
 ------
 
-The [Docker image](https://hub.docker.com/r/xyproto/algernon/tags) is less than 17MB and can be tried out (on x86_64) with:
+The [Docker image](https://hub.docker.com/r/xyproto/algernon/tags) is less than 17MB and can be tried out (on `x86_64`) with:
 
 ```
 mkdir localhost
