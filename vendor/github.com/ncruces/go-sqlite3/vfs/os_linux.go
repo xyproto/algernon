@@ -55,8 +55,16 @@ func osAllocate(file *os.File, size int64) error {
 	if size == 0 {
 		return nil
 	}
+	end, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+	if end >= size {
+		return nil
+	}
+
 	for {
-		err := unix.Fallocate(int(file.Fd()), 0, 0, size)
+		err := unix.Fallocate(int(file.Fd()), 0, end, size-end)
 		if err == unix.EOPNOTSUPP {
 			break
 		}
@@ -64,15 +72,7 @@ func osAllocate(file *os.File, size int64) error {
 			return err
 		}
 	}
-	off, err := file.Seek(0, io.SeekEnd)
-	if err != nil {
-		return err
-	}
-	if size <= off {
-		return nil
-	}
 	return file.Truncate(size)
-
 }
 
 func osReadLock(file *os.File, start, len int64, timeout time.Duration) error {

@@ -20,12 +20,11 @@ func (m *Memory) Grow(delta, max int64) int64 {
 		return old
 	}
 	new := old + delta
-	add := new<<16 - len
 	max = min(max, m.Max, int64(math.MaxInt)>>16)
-	if new > max || new < old || add < 0 {
+	if new > max || new < old {
 		return -1
 	}
-	m.Buf = append(m.Buf, make([]byte, add)...)
+	m.Buf = append(m.Buf, make([]byte, new<<16-len)...)
 	return old
 }
 

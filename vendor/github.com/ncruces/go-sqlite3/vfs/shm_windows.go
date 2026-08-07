@@ -5,35 +5,19 @@ package vfs
 import (
 	"io"
 	"os"
-	"sync"
-
-	"golang.org/x/sys/windows"
+	"sync/atomic"
 
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
 )
 
+const _WALINDEX_PGSZ = 32768
+
 type vfsShm struct {
 	*os.File
-	wrp      *sqlite3_wrap.Wrapper
 	path     string
 	regions  []*sqlite3_wrap.MappedRegion
-	shared   [][]byte
-	shadow   [][_WALINDEX_PGSZ]byte
-	ptrs     []ptr_t
 	fileLock bool
-	sync.Mutex
-}
-
-func (s *vfsShm) Close() error {
-	// Unmap regions.
-	for _, r := range s.regions {
-		r.Unmap()
-	}
-	s.regions = nil
-
-	// Close the file.
-	return s.File.Close()
 }
 
 func (s *vfsShm) shmOpen() error {
@@ -63,20 +47,14 @@ func (s *vfsShm) shmOpen() error {
 }
 
 func (s *vfsShm) shmMap(wrp *sqlite3_wrap.Wrapper, id, size int32, extend bool) (_ ptr_t, err error) {
-	// Ensure pages are reasonably sized.
-	if size != _WALINDEX_PGSZ || (windows.Getpagesize() > int(size)*2) {
+	// Ensure pages are the expected size, and that we can map files.
+	if size != _WALINDEX_PGSZ || !wrp.CanMapFiles() {
 		return 0, _IOERR_SHMMAP
 	}
-	if s.wrp == nil {
-		s.wrp = wrp
-	}
+
 	if err := s.shmOpen(); err != nil {
 		return 0, err
 	}
-
-	s.Lock()
-	defer s.Unlock()
-	defer s.shmAcquire(&err)
 
 	// Check if file is big enough.
 	o, err := s.Seek(0, io.SeekEnd)
@@ -92,48 +70,17 @@ func (s *vfsShm) shmMap(wrp *sqlite3_wrap.Wrapper, id, size int32, extend bool) 
 		}
 	}
 
-	// Maps regions into memory.
-	for int(id) >= len(s.shared) {
-		r, err := sqlite3_wrap.MapRegion(s.File, int64(id)*int64(size), size)
-		if err != nil {
-			return 0, err
-		}
-		s.regions = append(s.regions, r)
-		s.shared = append(s.shared, r.Data)
+	r, err := wrp.MapRegion(s.File, int64(id)*int64(size), size, false)
+	if err != nil {
+		return 0, err
 	}
-
-	// Allocate shadow memory.
-	if int(id) >= len(s.shadow) {
-		s.shadow = append(s.shadow, make([][_WALINDEX_PGSZ]byte, int(id)-len(s.shadow)+1)...)
-	}
-
-	// Allocate local memory.
-	for int(id) >= len(s.ptrs) {
-		ptr := wrp.Xsqlite3_malloc64(int64(size))
-		if ptr == 0 {
-			panic(errutil.OOMErr)
-		}
-		clear(wrp.Bytes(ptr_t(ptr), _WALINDEX_PGSZ))
-		s.ptrs = append(s.ptrs, ptr_t(ptr))
-	}
-
-	s.shadow[0][4] = 1
-	return s.ptrs[id], nil
+	s.regions = append(s.regions, r)
+	return r.Ptr, nil
 }
 
 func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) (err error) {
 	if s.File == nil {
 		return _IOERR_SHMLOCK
-	}
-
-	s.Lock()
-	defer s.Unlock()
-
-	switch {
-	case flags&_SHM_LOCK != 0:
-		defer s.shmAcquire(&err)
-	case flags&_SHM_EXCLUSIVE != 0:
-		s.shmRelease()
 	}
 
 	switch {
@@ -153,17 +100,11 @@ func (s *vfsShm) shmUnmap(delete bool) {
 		return
 	}
 
-	s.Lock()
-	s.shmRelease()
-	defer s.Unlock()
-
-	// Free local memory.
-	for _, p := range s.ptrs {
-		s.wrp.Xsqlite3_free(int32(p))
+	// Unmap regions.
+	for _, r := range s.regions {
+		r.Unmap()
 	}
-	s.ptrs = nil
-	s.shadow = nil
-	s.shared = nil
+	s.regions = nil
 
 	// Close the file.
 	s.Close()
@@ -172,4 +113,9 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	if delete {
 		os.Remove(s.path)
 	}
+}
+
+func (s *vfsShm) shmBarrier() {
+	var b atomic.Bool
+	b.Swap(true)
 }

@@ -1,4 +1,4 @@
-//go:build windows || sqlite3_dotlk
+//go:build sqlite3_dotlk
 
 package vfs
 

@@ -13,7 +13,6 @@ type Wrapper struct {
 	DB       any
 	SysError error
 
-	mmapState
 	handles []any
 	deleted int
 }

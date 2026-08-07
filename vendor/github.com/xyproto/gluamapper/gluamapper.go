@@ -76,8 +76,14 @@ func ToUpperCamelCase(s string) string {
 	return strings.ToUpper(string(s[0])) + camelre.ReplaceAllStringFunc(s[1:], func(s string) string { return strings.ToUpper(s[1:]) })
 }
 
-// ToGoValue converts the given LValue to a Go object.
+// ToGoValue converts the given LValue to a Go object. Tables that contain
+// themselves, directly or indirectly, are converted to nil where they repeat,
+// instead of causing endless recursion.
 func ToGoValue(lv lua.LValue, opt Option) interface{} {
+	return toGoValue(lv, opt, make(map[*lua.LTable]bool))
+}
+
+func toGoValue(lv lua.LValue, opt Option, visited map[*lua.LTable]bool) interface{} {
 	switch v := lv.(type) {
 	case *lua.LNilType:
 		return nil
@@ -91,19 +97,25 @@ func ToGoValue(lv lua.LValue, opt Option) interface{} {
 		}
 		return float64(v)
 	case *lua.LTable:
+		if visited[v] {
+			return nil
+		}
+		visited[v] = true
+		defer delete(visited, v)
+
 		maxn := v.MaxN()
 		if maxn == 0 { // table
 			ret := make(map[string]interface{})
 			v.ForEach(func(key, value lua.LValue) {
-				keystr := fmt.Sprint(ToGoValue(key, opt))
-				ret[opt.NameFunc(keystr)] = ToGoValue(value, opt)
+				keystr := fmt.Sprint(toGoValue(key, opt, visited))
+				ret[opt.NameFunc(keystr)] = toGoValue(value, opt, visited)
 			})
 			return ret
 		}
 		// else: array
 		ret := make([]interface{}, 0, maxn)
 		for i := 1; i <= maxn; i++ {
-			ret = append(ret, ToGoValue(v.RawGetInt(i), opt))
+			ret = append(ret, toGoValue(v.RawGetInt(i), opt, visited))
 		}
 		return ret
 	default:

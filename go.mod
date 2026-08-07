@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/datablock v1.2.1
 	github.com/xyproto/env/v2 v2.5.6
 	github.com/xyproto/files v1.10.8
-	github.com/xyproto/gluamapper v1.2.1
+	github.com/xyproto/gluamapper v1.2.2
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/huldra v0.0.3
 	github.com/xyproto/jpath v0.7.0
@@ -84,20 +84,20 @@ require (
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mholt/acmez/v3 v3.1.6 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/ncruces/go-sqlite3 v0.35.2
+	github.com/ncruces/go-sqlite3 v0.35.3
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260803165535-a45a797289f5 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260807111431-8b62b76214af // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
