@@ -5,6 +5,7 @@ package vt
 import (
 	"errors"
 	"fmt"
+	"io"
 	"time"
 )
 
@@ -27,6 +28,8 @@ func (s *StubTerm) Read(p []byte) (int, error) {
 
 // TTY represents a terminal device
 type TTY struct {
+	reader  io.Reader // set by NewTTYFromReader, the only input source on this platform
+	pending []byte
 	timeout time.Duration
 }
 
@@ -43,8 +46,27 @@ func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
 	return saved, nil
 }
 
+// SetTimeoutNoSave sets the read timeout without saving the previous value
+func (tty *TTY) SetTimeoutNoSave(d time.Duration) error {
+	tty.timeout = d
+	return nil
+}
+
+// readBytes is the single byte-read entry point. Only a reader installed via
+// NewTTYFromReader can supply input on this platform.
+func (tty *TTY) readBytes(buf []byte) (int, error) {
+	if tty.reader != nil {
+		return tty.reader.Read(buf)
+	}
+	return 0, errors.New("TTY is not supported on this platform")
+}
+
 // Close will restore and close the raw terminal
-func (tty *TTY) Close() {}
+func (tty *TTY) Close() {
+	if c, ok := tty.reader.(io.Closer); ok {
+		_ = c.Close()
+	}
+}
 
 // Poll checks if data is available (stub)
 func (tty *TTY) Poll(d time.Duration) (bool, error) { return true, nil }
@@ -55,9 +77,6 @@ func (tty *TTY) HasPendingInput() bool { return false }
 
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int { return 0 }
-
-// ReadKey reads a key sequence from the TTY.
-func (tty *TTY) ReadKey() string { return "" }
 
 // Rune reads a rune from the TTY
 func (tty *TTY) Rune() rune { return rune(0) }
