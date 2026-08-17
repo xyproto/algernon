@@ -87,6 +87,9 @@ type Config struct {
 	autoRefreshDir               string // if only watching a single directory recursively
 	combinedAccessLogFilename    string // CLF access log
 	commonAccessLogFilename      string // NCSA access log
+	combinedAccessLog            *logWriter
+	commonAccessLog              *logWriter
+	serverLog                    *logWriter // the --log file, if any
 	boltFilename                 string
 	internalLogFilename          string               // exposed to the server configuration scripts(s)
 	mariadbDSN                   string               // connection string
@@ -292,23 +295,24 @@ func (ac *Config) initFilesAndCache() error {
 	// flags are provided (+ a filename): -cpuprofile, -memprofile, -fgtrace or -trace
 	traceStart()
 
-	// Touch the common access log, if specified
+	// Open the common access log, if specified
 	if ac.commonAccessLogFilename != "" {
-		// Create if missing
-		f, err := os.OpenFile(ac.commonAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		lw, err := openLogWriter(ac.commonAccessLogFilename, 0o644)
 		if err != nil {
 			return err
 		}
-		f.Close()
+		ac.commonAccessLog = lw
 	}
-	// Touch the combined access log, if specified
+	// Open the combined access log, if specified
 	if ac.combinedAccessLogFilename != "" {
-		// Create if missing
-		f, err := os.OpenFile(ac.combinedAccessLogFilename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		lw, err := openLogWriter(ac.combinedAccessLogFilename, 0o644)
 		if err != nil {
 			return err
 		}
-		f.Close()
+		ac.combinedAccessLog = lw
+	}
+	if ac.commonAccessLog != nil || ac.combinedAccessLog != nil {
+		AtShutdown(ac.closeLogs)
 	}
 
 	// Create a cache struct for reading files (contains functions that can
@@ -321,13 +325,14 @@ func (ac *Config) initFilesAndCache() error {
 func (ac *Config) setupLogging() {
 	// Log to a file as JSON, if a log file has been specified
 	if ac.serverLogFile != "" {
-		f, errJSONLog := os.OpenFile(ac.serverLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
+		lw, errJSONLog := openLogWriter(ac.serverLogFile, ac.defaultPermissions)
 		if errJSONLog != nil {
 			logrus.Warnf("Could not log to %s: %s", ac.serverLogFile, errJSONLog)
 		} else {
 			// Log to the given log filename
+			ac.serverLog = lw
 			logrus.SetFormatter(&logrus.JSONFormatter{})
-			logrus.SetOutput(f)
+			logrus.SetOutput(lw)
 		}
 	} else if ac.quietMode {
 		// If quiet mode is enabled and no log file has been specified, disable logging
@@ -787,6 +792,9 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 
 	// Setup a signal handler for clearing the cache when USR1 is received, for some platforms
 	platformdep.SetupSignals(ac.ClearCache, logrus.Infof)
+
+	// Re-open the log files when HUP is received, for log rotation
+	platformdep.SetupLogRotationSignal(ac.ReopenLogs, logrus.Infof)
 
 	// Run the shutdown functions if graceful does not
 	defer ac.GenerateShutdownFunction(nil)()

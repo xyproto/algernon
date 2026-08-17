@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // CommonLogFormat returns a line with the data that is available at the start
@@ -66,33 +63,12 @@ func (ac *Config) CombinedLogFormat(req *http.Request, statusCode int, byteSize 
 
 // LogAccess creates one entry in the access log, given a http.Request,
 // a HTTP status code and the amount of bytes that have been transferred.
+// The line is formatted while the request is still valid, then written.
 func (ac *Config) LogAccess(req *http.Request, statusCode int, byteSize int64) {
-	if ac.commonAccessLogFilename != "" {
-		go func(filename string) {
-			f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-			if err == nil { // success
-				defer f.Close()
-				_, err = f.WriteString(ac.CommonLogFormat(req, statusCode, byteSize) + "\n")
-				if err != nil {
-					logrus.Warnf("Can not write to %s: %s", filename, err)
-				}
-			} else {
-				logrus.Warnf("Can not open %s: %s", filename, err)
-			}
-		}(ac.commonAccessLogFilename)
+	if ac.commonAccessLog != nil {
+		ac.commonAccessLog.WriteLine(ac.CommonLogFormat(req, statusCode, byteSize))
 	}
-	if ac.combinedAccessLogFilename != "" {
-		go func(filename string) {
-			f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-			if err == nil { // success
-				defer f.Close()
-				_, err = f.WriteString(ac.CombinedLogFormat(req, statusCode, byteSize) + "\n")
-				if err != nil {
-					logrus.Warnf("Can not write to %s: %s", filename, err)
-				}
-			} else {
-				logrus.Warnf("Can not open %s: %s", filename, err)
-			}
-		}(ac.combinedAccessLogFilename)
+	if ac.combinedAccessLog != nil {
+		ac.combinedAccessLog.WriteLine(ac.CombinedLogFormat(req, statusCode, byteSize))
 	}
 }

@@ -134,9 +134,14 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 }
 
 // configureCertMagic sets CertMagic package-level defaults from ac.
-// If $XDG_CONFIG_DIR is not set, uses $HOME, then $TMPDIR, then /tmp for cert storage.
+// See certStorageDir for where the certificates are placed.
 func (ac *Config) configureCertMagic() {
-	certStorageDir := env.StrAlt("XDG_CONFIG_DIR", "HOME", env.Str("TMPDIR", "/tmp"))
+	certStorageDir := certStorageDir()
+	if volatileCertStorage(certStorageDir) {
+		logrus.Warnf("Storing certificates in %s, which may be cleared at boot. New certificates would then be requested for every boot, which counts against the Let's Encrypt rate limits. Set %s to a directory that persists.", certStorageDir, certStorageEnvVar)
+	} else if ac.verboseMode {
+		logrus.Info("Storing certificates in " + certStorageDir)
+	}
 	defaultEmail := env.StrAlt("LOGNAME", "USER", "root") + "@localhost"
 	if len(ac.serve.certMagicDomains) > 0 {
 		defaultEmail = "webmaster@" + ac.serve.certMagicDomains[0]

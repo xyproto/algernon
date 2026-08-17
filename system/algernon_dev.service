@@ -8,6 +8,7 @@ Type=simple
 User=algernon
 Group=users
 ExecStart=/usr/bin/algernon -e -a --theme=dark --domain --noninteractive --log /var/log/algernon.log /srv/algernon
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s
 

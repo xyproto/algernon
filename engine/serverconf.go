@@ -354,6 +354,11 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 		parsedURL, err := url.Parse(endpointURLString)
 		if err != nil {
 			logrus.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
+			return 0 // number of results
+		}
+		if parsedURL.Scheme == "" || parsedURL.Host == "" {
+			logrus.Errorf("endpoint URL needs a scheme and a host: %s", endpointURLString)
+			return 0 // number of results
 		}
 		rp.Endpoint = *parsedURL
 
@@ -395,14 +400,18 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 			return 1 // number of results
 		}
 		// Try opening/creating the given filename, for appending
-		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, ac.defaultPermissions)
+		lw, err := openLogWriter(filename, ac.defaultPermissions)
 		if err != nil {
 			logrus.Error(err)
 			L.Push(lua.LBool(false))
 			return 1 // number of results
 		}
 		// Set the file to log to and return
-		logrus.SetOutput(f)
+		if ac.serverLog != nil {
+			ac.serverLog.Close()
+		}
+		ac.serverLog = lw
+		logrus.SetOutput(lw)
 		L.Push(lua.LBool(true))
 		return 1 // number of results
 	}))

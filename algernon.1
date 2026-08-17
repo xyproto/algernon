@@ -126,9 +126,27 @@ in the interactive Lua prompt for the full list.
 .B remoteaddr() -> string
 Return the remote address ("host:port") of the connected client.
 .PP
+.SH "SIGNALS"
+.sp
+On UNIX-like platforms, Algernon responds to the following signals:
+.TP
+.B SIGUSR1, SIGUSR2
+Clear the file cache.
+.TP
+.B SIGHUP
+Re-open the server log and the access logs, for use with log rotation tools
+like \fBlogrotate\fP(8) or \fBnewsyslog\fP(8). Rotate by moving the files aside
+and then sending SIGHUP, instead of truncating them.
+.PP
 .SH "ENV"
 .sp
 The \fBNO_COLOR\fP environment variable can be set to 1 to turn off all colors.
+.sp
+\fBALGERNON_CERT_DIR\fP sets where the Let's Encrypt certificates are stored.
+If it is not set, \fB$XDG_DATA_HOME/certmagic\fP is used, then
+\fB$HOME/.local/share/certmagic\fP, then \fB/var/lib/algernon\fP. The directory
+must persist across reboots, since requesting new certificates for every boot
+counts against the Let's Encrypt rate limits.
 .sp
 .SH "WHY"
 .sp

@@ -3,20 +3,12 @@
 General
 -------
 
-- [ ] Add TailN(n) to all packages that implement `pinterface`. Make them return the last N items of a list, or all items if N > the list length.
-      This gives getlastn/jsonlast an efficient path that avoids loading the entire list.
-- [ ] Consider keeping package level handles for the access logs open, instead of open+append, together with handling SIGHUP when logs are rotated.
 - [ ] Consider adding `; HttpOnly` by default to `Set-Cookie` headers.
 - [ ] Create an example application for people that are learning to create HTML, where they can log in and then drag and drop to upload files.
 - [ ] Fix the issue in the splash package so that both MathJax and applying syntax highlighting to code can be used at the same time (engine/rendering.go).
-- [ ] When the -m flag is used, if the file is not found, exit with an error.
 - [ ] Add a built-in SSH3 server that can be configured with a flag.
-- [ ] Let USR1 or USR2 signals clear the cache.
 - [ ] Add a Go function for adding a Lua function that can handle websocket requests to `/ws`.
-- [ ] Add a flag for redirecting all `http://` traffic to `https://`.
-- [ ] Add a smoother way than `CodeLib()` to define site-wide Lua values.
 - [ ] Create a video like the one at [vim-livedown](https://github.com/shime/vim-livedown), that demonstrates live editing of Markdown.
-- [ ] When `-m` is given, scan the given Markdown file for images that will also need to be served, then wait until those are served before exiting.
 - [ ] Add support for [metatar](https://github.com/xyproto/metatar) in Lua, to be able to offer a whole Arch Linux package repository from just a single `.lua` file, and a collection of `PKGBUILD` files.
 - [ ] Integrate [boltBrowser](https://github.com/ShoshinNikita/boltBrowser).
 - [ ] Make it possible to send the access log to the database.
@@ -57,7 +49,6 @@ Styles and themes
 - [ ] Port the layout and concept of [werc](http://werc.cat-v.org/) to Algernon. See also [gowerc](https://bitbucket.org/mischief/gowerc/src).
 - [ ] Add a flag for dumping the currently used Markdown theme to a CSS file and exit.
 - [ ] Add a Markdown style similar to this one: [style.css](https://hyperapp.glitch.me/style.css)
-- [ ] Add a Markdown style similar to this one: [setconf](http://setconf.roboticoverlords.org/)
 - [ ] Add support for [Ghost](https://ghost.org) and/or [Hugo](https://github.com/gohugoio/hugoThemes) themes.
 
 Documentation/tutorials
@@ -116,10 +107,8 @@ Various
 - [ ] Create a site generator for Algernon. Draw inspiration from http://nanoc.ws/doc/tutorial/
 - [ ] Draw inspiration from https://lwan.ws/
 - [ ] Check out https://github.com/peterh/liner
-- [ ] Support SASS and HAML. Maybe.
 - [ ] Port Pastecat to Algernon (https://github.com/mvdan/pastecat)
 - [ ] Argon2 hashing algorithm support (https://godoc.org/github.com/magical/argon2)
-- [ ] Add config Function for adding a directory listing title to a certain path regex (and/or a title.txt or common.md file).
 - [ ] Add a lua function for presenting an executable as a web application, like gotty does. Create a password protected example application.
 - [ ] Web application for browsing the database.
 - [ ] Document the case sensitivity or add case insensitivity support.
@@ -127,10 +116,8 @@ Various
       (Content-Length), but continues to stream data. Test with Algernon.
 - [ ] Lua plugin that is not via the database
 - [ ] File upload while handling gzip
-- [ ] Cache os.Stat also when serving directory listings
 - [ ] Implement https://github.com/labstack/echo/tree/master/examples as Algernon applications
 - [ ] Look into github.com/jessevdk/go-flags/
-- [ ] pprint should output text to the browser when not running in the repl (or be disabled)
 - [ ] Graph of visitors over time
 - [ ] See if the HTTP headers from the client + country of origin + mouse
       movement patterns can become some sort of pseudo ID. Combine with a
@@ -168,12 +155,6 @@ Routing
 - [ ] RewritePrefix("www.", "")
 - [ ] RewritePort("host", 443, 80)
 
-REPL
-----
-
-- [/] Make `help` work a bit like in Python.
-- [/] Make `dir` work a bit like in Python.
-
 Plugins
 -------
 
@@ -186,12 +167,10 @@ Security-related
 
 - [ ] Consider using [secure](https://github.com/unrolled/secure).
 - [ ] HTTP Basic Auth using the permissions2 usernames and passwords, for selected URL prefixes. Use code from "scoreserver".
-- [ ] Check that HTTP reads not only times out, but has a deadline.
 - [ ] Flag for disabling directory listings entirely.
 - [ ] OAuth 1
 - [ ] OAuth 2
 - [ ] The ability to set headers and do HTTP Basic Auth manually.
-- [ ] Check if `*` or the server host should be used as parameter to the EventServer function.
 - [ ] Implement a warning when using cookies over regular HTTP.
 
 Console output
@@ -203,13 +182,9 @@ Lua
 - [ ] Add a function named "sort" for quickly sorting tables by key or by value, numerical or lexical.
 - [ ] Add a Lua function ForEach that takes a data structure and a function
       that takes a key and a value.
-- [ ] Wrap JNode in the same way as JFile.
 - [ ] Change the "JSON" function and create some sort of JSON object that returns the string by default.
-- [ ] Add a function for sanitizing HTML, possibly with bluemonday.
 - [ ] Create an import function for importing online lua libraries.
       (Like `require`, but over http). (possibly luarocks packages).
-- [ ] In runLuaString, check if L.Close() really is needed instead of
-      luapool.Put(L)
 - [ ] Way to load parts of a page asynchronously (with gopher-lua channels?)
 - [ ] Way to use Lua libraries for adding ie. SQLite support.
 
@@ -238,7 +213,6 @@ Maybe
 - [ ] Add configurable log hooks for the systems logrus supports.
       See: https://github.com/Sirupsen/logrus
 - [ ] When searching files and directories, do it in parallel, like [wallutils](https://github.com/xyproto/wallutils).
-- [ ] Add a Lua function for outputting Lua tables to the client.
 - [ ] Add a Lua function for fetching a value from a table, or a blank string.
 - [ ] Add a Lua function for checking if a file exists.
 - [ ] Mention the `jpath` package in the README.
@@ -246,8 +220,6 @@ Maybe
 - [ ] A flag to store the Bolt database inside the given zip file?
 - [ ] Keep all configuration settings in Redis. Use an external package for
       handling configuration.
-- [ ] Support for the [onthefly](https://github.com/xyproto/onthefly) package,
-      as a virtual DOM.
 - [ ] WebRTC? Three.js? Web components?
 - [ ] Use the goroutine functionality provided by gopher-lua to provide
       "trigger functions" that sends 1 on a channel when the function
@@ -265,7 +237,6 @@ Maybe
       together with the sourcecode, in a pretty way.
 - [ ] Add a flag for specifying a different default set of URL prefixes with
       admin, user or public rights.
-- [ ] Add a flag for detailed debug information at errors, or not.
 - [ ] If a symbolic link to a directory is made, for instance /chat -> /data,
       then algernon should also apply user permissions to the symbolic link.
 - [ ] Add a function for calling EVAL on the redis server, while sending Lua
