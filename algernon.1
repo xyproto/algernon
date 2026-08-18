@@ -117,6 +117,124 @@ depending on if HTTP requests are using \fBhttps://mydomain.com\fP or
 Simple mode. Serve the current directory over regular HTTP, disable debug mode,
 interactive mode, request limits and all features that require a database.
 .TP
+.B \-\-dir=DIRECTORY
+The directory to serve. Can also be given as a positional argument.
+.TP
+.B \-\-addr=[HOST][:PORT]
+The host and port to serve on, like \fB:4000\fP or \fB[::1]:443\fP.
+Can also be given as a positional argument.
+.TP
+.B \-\-http-addr=[HOST][:PORT]
+Serve regular HTTP on this address. Can be combined with \fB\-\-https\-addr\fP,
+to serve both at the same time, on different ports.
+.TP
+.B \-\-https\-addr=[HOST][:PORT]
+Serve HTTPS + HTTP/2 on this address. Can be combined with \fB\-\-http\-addr\fP.
+.TP
+.B \-r or \-\-redirect
+Redirect HTTP traffic to HTTPS, if both are being served.
+.TP
+.B \-\-conf=FILENAME
+Server configuration, written in Lua. The default is \fBserverconf.lua\fP.
+.TP
+.B \-e or \-\-dev
+Development mode. Serve regular HTTP, enable debug mode, raise the request
+limit and use a cache setting that is suitable while developing.
+.TP
+.B \-p or \-\-prod
+Production mode. Serve \fB/srv/algernon\fP, use the certificate and key in
+\fB/etc/algernon\fP, cache aggressively and disable interactive mode.
+.TP
+.B \-d or \-\-debug
+Debug mode. Show detailed error messages in the browser.
+.TP
+.B \-V or \-\-verbose
+Verbose logging.
+.TP
+.B \-\-server
+Deprecated alias for \fB\-\-noninteractive\fP. Still supported.
+.TP
+.B \-\-log=FILENAME
+Server log file, written as JSON. Send SIGHUP after moving it aside, to make
+Algernon re-open it.
+.TP
+.B \-\-internal=FILENAME
+Internal log file, for HTTP/2 debug output. The default is \fB/dev/null\fP.
+.TP
+.B \-\-watchdir=DIRECTORY
+Directory to watch for changes. Also enables \fB\-\-autorefresh\fP.
+.TP
+.B \-\-eventserver=[HOST][:PORT]
+Address for the server-sent events (SSE) server that \fB\-\-autorefresh\fP uses.
+The default is \fB:5553\fP.
+.TP
+.B \-\-eventrefresh=DURATION
+How often to check for changes, like \fB350ms\fP.
+.TP
+.B \-\-theme=NAME
+Theme for Markdown pages, directory listings and error pages.
+.TP
+.B \-\-dirbaseurl=URL
+Base URL in front of the links in the directory listing, like \fB/files\fP or
+\fBhttps://example.com/pub\fP. Useful when Algernon is behind a reverse proxy
+that serves it on a sub-path.
+.TP
+.B \-\-hide\-dotfiles
+Hide files and directories that start with a dot, both in directory listings
+and when serving. \fB.well\-known\fP is still served, for ACME challenges.
+.TP
+.B \-\-redis=[HOST][:PORT]
+Address of the Redis or Valkey server. The default is \fB:6379\fP.
+.TP
+.B \-\-dbindex=N
+Redis database index.
+.TP
+.B \-b or \-\-bolt
+Use the default Bolt database filename.
+.TP
+.B \-\-maria=DSN
+MariaDB/MySQL connection string.
+.TP
+.B \-\-mariadb=NAME
+MariaDB/MySQL database name.
+.TP
+.B \-\-postgres=DSN
+PostgreSQL connection string.
+.TP
+.B \-\-postgresdb=NAME
+PostgreSQL database name.
+.TP
+.B \-\-sqlite=FILENAME
+SQLite filename, or connection string.
+.TP
+.B \-\-cache=MODE
+What to cache. One of \fBon\fP, \fBprod\fP, \fBdev\fP, \fBimages\fP, \fBsmall\fP
+or \fBoff\fP.
+.TP
+.B \-\-cachesize=N
+Cache size, in bytes.
+.TP
+.B \-\-nocache
+Disable caching.
+.TP
+.B \-\-rawcache
+Disable cache compression.
+.TP
+.B \-\-nolimit
+Disable rate limiting.
+.TP
+.B \-\-clear
+Clear the default URL prefixes that are used for handling permissions.
+.TP
+.B \-\-cookiesecret=STRING
+Secret to use when setting and getting login cookies.
+.TP
+.B \-\-ctrld
+Press ctrl\-d twice to exit the interactive Lua prompt (REPL).
+.TP
+.B \-\-quic
+Serve just QUIC aka HTTP/3, if Algernon was built with QUIC support.
+.TP
 .PP
 .SH "LUA REQUEST API"
 .sp
@@ -126,15 +244,27 @@ in the interactive Lua prompt for the full list.
 .B remoteaddr() -> string
 Return the remote address ("host:port") of the connected client.
 .PP
+.SH "SIGNALS"
+.sp
+On UNIX-like platforms, Algernon responds to the following signals:
+.TP
+.B SIGUSR1, SIGUSR2
+Clear the file cache.
+.TP
+.B SIGHUP
+Re-open the server log and the access logs, for use with log rotation tools
+like \fBlogrotate\fP(8) or \fBnewsyslog\fP(8). Rotate by moving the files aside
+and then sending SIGHUP, instead of truncating them.
+.PP
 .SH "ENV"
 .sp
 The \fBNO_COLOR\fP environment variable can be set to 1 to turn off all colors.
 .sp
-\fBXDG_DATA_HOME\fP sets where the Let's Encrypt certificates are stored, in a
-\fBcertmagic\fP subdirectory. If it is not set, \fB$HOME/.local/share/certmagic\fP
-is used, then \fB/var/lib/algernon\fP. The directory must persist across reboots,
-since requesting new certificates for every boot counts against the Let's
-Encrypt rate limits.
+\fBALGERNON_CERT_DIR\fP sets where the Let's Encrypt certificates are stored.
+If it is not set, \fB$XDG_DATA_HOME/certmagic\fP is used, then
+\fB$HOME/.local/share/certmagic\fP, then \fB/var/lib/algernon\fP. The directory
+must persist across reboots, since requesting new certificates for every boot
+counts against the Let's Encrypt rate limits.
 .sp
 .SH "WHY"
 .sp

@@ -1,5 +1,23 @@
 # Changelog
 
+Changes from 1.17.11 to 1.17.12
+===============================
+
+* Keep the server log and the access logs open, instead of opening and closing them for every line + improve log rotation abilities.
+* Rewrite the reverse proxy to use `httputil.ReverseProxy`.
+* Only look ahead at proxied responses that have a `Content-Length`.
+* Also log requests that are handled by a reverse proxy.
+* Store Let's Encrypt certificates in `$XDG_DATA_HOME/certmagic`, `$HOME/.local/share/certmagic` or `/var/lib/algernon`.
+* When using `--domain`, also serve the `localhost` directory for the current IP addresses.
+* Add the `--dirbaseurl` flag, for placing a base URL in front of the links in the directory listing, ref #90.
+* Add the `SetDirBaseURL` Lua function that can be used from `serverconf.lua`, for the same purpose as `--dirbaseurl`.
+* Replace the `graceful` package with `http.Server.Shutdown` from the standard library.
+* Set new log files to mode `0640`.
+* Reject `AddReverseProxy` endpoint URLs that have no scheme or host.
+* Improve how certmagic-related events are logged.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.17.10 to 1.17.11
 ===============================
 

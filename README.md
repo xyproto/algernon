@@ -1,6 +1,6 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Graceful, Permissions2, users and permissions, IPv6, React19
+description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Permissions2, users and permissions, IPv6, React19
 keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, HTTP/3, go, golang, algernon, JSX, TSX, TypeScript, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6, react19
 theme: material
 -->
@@ -66,7 +66,7 @@ And then visiting `http://localhost:4000` in a browser.
 Technologies
 ------------
 
-Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/), SQLite or Valkey/[Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [quic-go](https://github.com/quic-go/quic-go) for serving QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [esbuild](https://github.com/evanw/esbuild) for bundling and converting JSX/TSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting, [pie](https://github.com/natefinch/pie) for plugins and [graceful](https://github.com/tylerb/graceful) for graceful shutdowns.
+Written in [Go](https://golang.org). Uses [Bolt](https://github.com/coreos/bbolt) (built-in), [MySQL](https://github.com/go-sql-driver/mysql), [PostgreSQL](https://www.postgresql.org/), SQLite or Valkey/[Redis](https://redis.io) (recommended) for the database backend, [permissions2](https://github.com/xyproto/permissions2) for handling users and permissions, [gopher-lua](https://github.com/yuin/gopher-lua) for interpreting and running Lua, optional [Teal](https://github.com/teal-language/tl) for type-safe Lua scripting, [http2](https://github.com/bradfitz/http2) for serving HTTP/2, [quic-go](https://github.com/quic-go/quic-go) for serving QUIC, [gomarkdown/markdown](https://github.com/gomarkdown/markdown) for Markdown rendering, [amber](https://github.com/eknkc/amber) for Amber templates, [Pongo2](https://github.com/flosch/pongo2) for Pongo2 templates, [Sass](https://github.com/wellington/sass)(SCSS) and [GCSS](https://github.com/yosssi/gcss) for CSS preprocessing. [logrus](https://github.com/Sirupsen/logrus) is used for logging, [esbuild](https://github.com/evanw/esbuild) for bundling and converting JSX/TSX to JavaScript, [tollbooth](https://github.com/didip/tollbooth) for rate limiting and [pie](https://github.com/natefinch/pie) for plugins.
 
 Design decisions
 ----------------
@@ -510,7 +510,7 @@ sanhtml(string) -> string
 // Return the directory where the REPL or script is running. If a filename (optional) is given, then the path to where the script is running, joined with a path separator and the given filename, is returned.
 scriptdir([string]) -> string
 
-// Read a glob, ie. "*.md" in the current script directory, or the given directory (optional). The contents of all found files are reeturned as a table.
+// Read a glob, ie. "*.md" in the current script directory, or the given directory (optional). The contents of all found files are returned as a table.
 readglob(string[, string]) -> table
 
 // Return the directory where the server is running. If a filename (optional) is given, then the path to where the server is running, joined with a path separator and the given filename, is returned.
@@ -1432,6 +1432,15 @@ The theme can be `light`, `dark`, `redbox`, `bw`, `github`, `wing`, `material`, 
 
 An overview of available syntax highlighting styles can be found at the [Chroma Style Gallery](https://xyproto.github.io/splash/docs/).
 
+
+Serving several domains
+-----------------------
+
+With the `--domain` flag (or `-D`), the directory that is served is chosen from the `Host` header of each request. If `/srv` is served, then a request for `myhappydomain.com` is served from `/srv/myhappydomain.com`, while a request for `otherweb.com` is served from `/srv/otherweb.com`.
+
+Requests that are addressed to this machine, instead of to one of the domains, are served from the `localhost` directory. This covers `localhost`, `127.0.0.1`, `::1` and the IP addresses of the network interfaces of this machine, so that `/srv/localhost` can be used while developing, no matter if the browser is on the same machine or on the same network.
+
+Requests for a domain that has no directory result in a "Not found" page.
 
 HTTPS certificates with Let's Encrypt and Algernon
 --------------------------------------------------
