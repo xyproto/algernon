@@ -1,5 +1,10 @@
-/var/log/algernon.log {
+/var/log/algernon.log /var/log/access.log {
    notifempty
-   copytruncate
    missingok
+   create 640 root root
+   sharedscripts
+   postrotate
+      # Algernon re-opens its log files on SIGHUP
+      systemctl reload algernon.service 2>/dev/null || true
+   endscript
 }
