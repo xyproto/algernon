@@ -130,6 +130,12 @@ Return the remote address ("host:port") of the connected client.
 .sp
 The \fBNO_COLOR\fP environment variable can be set to 1 to turn off all colors.
 .sp
+\fBXDG_DATA_HOME\fP sets where the Let's Encrypt certificates are stored, in a
+\fBcertmagic\fP subdirectory. If it is not set, \fB$HOME/.local/share/certmagic\fP
+is used, then \fB/var/lib/algernon\fP. The directory must persist across reboots,
+since requesting new certificates for every boot counts against the Let's
+Encrypt rate limits.
+.sp
 .SH "WHY"
 .sp
 Web development with few dependencies and a decent caching system.

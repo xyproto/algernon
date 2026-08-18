@@ -142,7 +142,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 func (ac *Config) configureCertMagic() {
 	certStorageDir := certStorageDir()
 	if volatileCertStorage(certStorageDir) {
-		logrus.Warnf("Storing certificates in %s, which may be cleared at boot. New certificates would then be requested for every boot, which counts against the Let's Encrypt rate limits. Set %s to a directory that persists.", certStorageDir, certStorageEnvVar)
+		logrus.Warnf("Storing certificates in %s, which may be cleared at boot. New certificates would then be requested for every boot, which counts against the Let's Encrypt rate limits. Set XDG_DATA_HOME to a directory that persists.", certStorageDir)
 	} else if ac.verboseMode {
 		logrus.Info("Storing certificates in " + certStorageDir)
 	}

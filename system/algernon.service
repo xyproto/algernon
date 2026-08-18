@@ -11,12 +11,12 @@ ExecStart=/usr/bin/algernon --letsencrypt --accesslog=/var/log/access.log -c --d
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s
-# /run is cleared at boot, so the Let's Encrypt certificates go in /var/lib
-# instead. Requesting new certificates for every boot would count against the
-# Let's Encrypt rate limits.
+# /run is cleared at boot, so the Let's Encrypt certificates go in
+# /var/lib/algernon/certmagic instead. Requesting new certificates for every
+# boot would count against the Let's Encrypt rate limits.
 StateDirectory=algernon
 StateDirectoryMode=700
-Environment=ALGERNON_CERT_DIR=/var/lib/algernon
+Environment=XDG_DATA_HOME=/var/lib/algernon
 Environment=HOME=/run/algernon
 
 # Sandboxing
