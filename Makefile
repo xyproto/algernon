@@ -20,9 +20,10 @@ else
 endif
 
 MANDIR ?= $(PREFIX)/share/man/man1
+DATADIR ?= $(PREFIX)/share
+DOCDIR ?= $(PREFIX)/share/doc
 
-UNAME_R ?= $(shell uname -r)
-ifneq (,$(findstring arch,$(UNAME_R)))
+ifneq (,$(wildcard /etc/arch-release))
 # Arch Linux
 LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
 BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -buildvcs=false -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
@@ -45,13 +46,13 @@ install: algernon desktop/mdview
 install-doc: algernon.1.gz welcome.sh samples README.md
 	mkdir -p "$(DESTDIR)$(MANDIR)"
 	install -m644 algernon.1.gz "$(DESTDIR)$(MANDIR)/algernon.1.gz"
-	mkdir -p "$(DESTDIR)$(PREFIX)/usr/share/algernon"
-	cp -r samples "$(DESTDIR)$(PREFIX)/usr/share/algernon"
+	mkdir -p "$(DESTDIR)$(DATADIR)/algernon"
+	cp -r samples "$(DESTDIR)$(DATADIR)/algernon"
 	sed 's/\.\/algernon/algernon/g' welcome.sh > welcome_install.sh
-	install -m755 welcome_install.sh "$(DESTDIR)$(PREFIX)/usr/share/algernon/welcome.sh"
+	install -m755 welcome_install.sh "$(DESTDIR)$(DATADIR)/algernon/welcome.sh"
 	rm -f welcome_install.sh
-	mkdir -p "$(DESTDIR)$(PREFIX)/usr/share/doc/algernon"
-	install -Dm644 README.md "$(DESTDIR)$(PREFIX)/usr/share/doc/algernon/README.md"
+	mkdir -p "$(DESTDIR)$(DOCDIR)/algernon"
+	install -Dm644 README.md "$(DESTDIR)$(DOCDIR)/algernon/README.md"
 
 cover:
 	go test -mod=vendor -coverprofile=coverage.out -coverpkg=./... ./...
