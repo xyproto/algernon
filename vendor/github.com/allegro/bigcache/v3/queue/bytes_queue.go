@@ -17,6 +17,7 @@ var (
 	errEmptyQueue       = &queueError{"Empty queue"}
 	errInvalidIndex     = &queueError{"Index must be greater than zero. Invalid index."}
 	errIndexOutOfBounds = &queueError{"Index out of range"}
+	errFullQueue        = &queueError{"Full queue. Maximum size limit reached."}
 )
 
 // BytesQueue is a non-thread safe queue type of fifo based on bytes array.
@@ -92,7 +93,7 @@ func (q *BytesQueue) Push(data []byte) (int, error) {
 		if q.canInsertBeforeHead(neededSize) {
 			q.tail = leftMarginIndex
 		} else if q.capacity+neededSize >= q.maxCapacity && q.maxCapacity > 0 {
-			return -1, &queueError{"Full queue. Maximum size limit reached."}
+			return -1, errFullQueue
 		} else {
 			q.allocateAdditionalMemory(neededSize)
 		}
@@ -239,6 +240,13 @@ func (q *BytesQueue) peek(index int) ([]byte, int, error) {
 	}
 
 	blockSize, n := binary.Uvarint(q.array[index:])
+	if n <= 0 {
+		return nil, 0, errIndexOutOfBounds
+	}
+
+	if blockSize < uint64(n) || blockSize > uint64(len(q.array)-index) {
+		return nil, 0, errIndexOutOfBounds
+	}
 	return q.array[index+n : index+int(blockSize)], int(blockSize), nil
 }
 

@@ -51,5 +51,5 @@ See `cmd/move` for a more advanced example, where a character can be moved aroun
 ### General info
 
 * License: BSD-3
-* Version: 1.9.16
+* Version: 1.9.17
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

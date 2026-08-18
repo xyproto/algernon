@@ -33,6 +33,8 @@ const (
 	KeyF11 = 285 // F11
 	KeyF12 = 286 // F12
 
+	KeyInsert        = 256 // Insert
+	KeyShiftInsert   = 257 // Shift-Insert
 	KeyCtrlInsert    = 258 // Ctrl-Insert
 	KeyAltUp         = 259 // Alt-Up
 	KeyAltDown       = 260 // Alt-Down
@@ -86,13 +88,28 @@ var keyCodeLookup = map[[3]byte]int{
 	{27, 91, 66}:  KeyDown,     // Down Arrow
 	{27, 91, 67}:  KeyRight,    // Right Arrow
 	{27, 91, 68}:  KeyLeft,     // Left Arrow
+	{27, 79, 65}:  KeyUp,       // Up Arrow    (SS3, application cursor keys)
+	{27, 79, 66}:  KeyDown,     // Down Arrow  (SS3)
+	{27, 79, 67}:  KeyRight,    // Right Arrow (SS3)
+	{27, 79, 68}:  KeyLeft,     // Left Arrow  (SS3)
 	{27, 91, 'H'}: 1,           // Home (mapped to Ctrl-A)
 	{27, 91, 'F'}: 5,           // End (mapped to Ctrl-E)
+	{27, 79, 'H'}: 1,           // Home (SS3)
+	{27, 79, 'F'}: 5,           // End (SS3)
 	{27, 91, 90}:  KeyShiftTab, // Shift-Tab / Backtab (ESC [Z)
 	{27, 79, 80}:  KeyF1,       // F1  (ESC O P)
 	{27, 79, 81}:  KeyF2,       // F2  (ESC O Q)
 	{27, 79, 82}:  KeyF3,       // F3  (ESC O R)
 	{27, 79, 83}:  KeyF4,       // F4  (ESC O S)
+	// rxvt / urxvt report modified arrows with lowercase finals
+	{27, 91, 'a'}: KeyShiftUp,    // Shift-Up    (ESC [a)
+	{27, 91, 'b'}: KeyShiftDown,  // Shift-Down  (ESC [b)
+	{27, 91, 'c'}: KeyShiftRight, // Shift-Right (ESC [c)
+	{27, 91, 'd'}: KeyShiftLeft,  // Shift-Left  (ESC [d)
+	{27, 79, 'a'}: KeyCtrlUp,     // Ctrl-Up     (ESC Oa)
+	{27, 79, 'b'}: KeyCtrlDown,   // Ctrl-Down   (ESC Ob)
+	{27, 79, 'c'}: KeyCtrlRight,  // Ctrl-Right  (ESC Oc)
+	{27, 79, 'd'}: KeyCtrlLeft,   // Ctrl-Left   (ESC Od)
 }
 
 // Key codes for 4-byte sequences (Page Up, Page Down, Home, End, Delete)
@@ -104,10 +121,35 @@ var pageNavLookup = map[[4]byte]int{
 	{27, 91, 54, 126}: KeyPageDown, // Page Down
 	{27, 91, 55, 126}: 1,           // Home (ESC [7~)
 	{27, 91, 56, 126}: 5,           // End (ESC [8~)
+	{27, 91, 50, 126}: KeyInsert,   // Insert (ESC [2~)
+	{27, 91, 91, 65}:  KeyF1,       // F1 (ESC [[A, Linux console)
+	{27, 91, 91, 66}:  KeyF2,       // F2 (ESC [[B, Linux console)
+	{27, 91, 91, 67}:  KeyF3,       // F3 (ESC [[C, Linux console)
+	{27, 91, 91, 68}:  KeyF4,       // F4 (ESC [[D, Linux console)
+	{27, 91, 91, 69}:  KeyF5,       // F5 (ESC [[E, Linux console)
+	// rxvt / urxvt encode the modifier in the final byte: '$' is Shift, '^' is Ctrl
+	{27, 91, 49, '$'}: KeyShiftHome,     // Shift-Home   (ESC [1$)
+	{27, 91, 50, '$'}: KeyShiftInsert,   // Shift-Insert (ESC [2$)
+	{27, 91, 51, '$'}: KeyShiftDelete,   // Shift-Delete (ESC [3$)
+	{27, 91, 53, '$'}: KeyShiftPageUp,   // Shift-PgUp   (ESC [5$)
+	{27, 91, 54, '$'}: KeyShiftPageDown, // Shift-PgDn   (ESC [6$)
+	{27, 91, 55, '$'}: KeyShiftHome,     // Shift-Home   (ESC [7$)
+	{27, 91, 56, '$'}: KeyShiftEnd,      // Shift-End    (ESC [8$)
+	{27, 91, 49, '^'}: KeyCtrlHome,      // Ctrl-Home    (ESC [1^)
+	{27, 91, 50, '^'}: KeyCtrlInsert,    // Ctrl-Insert  (ESC [2^)
+	{27, 91, 51, '^'}: KeyCtrlDelete,    // Ctrl-Delete  (ESC [3^)
+	{27, 91, 53, '^'}: KeyCtrlPageUp,    // Ctrl-PgUp    (ESC [5^)
+	{27, 91, 54, '^'}: KeyCtrlPageDown,  // Ctrl-PgDn    (ESC [6^)
+	{27, 91, 55, '^'}: KeyCtrlHome,      // Ctrl-Home    (ESC [7^)
+	{27, 91, 56, '^'}: KeyCtrlEnd,       // Ctrl-End     (ESC [8^)
 }
 
 // Key codes for 5-byte sequences (F5-F12)
 var fKeyLookup = map[[5]byte]int{
+	{27, 91, 49, 49, 126}: KeyF1,  // F1  (ESC [11~, rxvt/PuTTY)
+	{27, 91, 49, 50, 126}: KeyF2,  // F2  (ESC [12~, rxvt/PuTTY)
+	{27, 91, 49, 51, 126}: KeyF3,  // F3  (ESC [13~, rxvt/PuTTY)
+	{27, 91, 49, 52, 126}: KeyF4,  // F4  (ESC [14~, rxvt/PuTTY)
 	{27, 91, 49, 53, 126}: KeyF5,  // F5  (ESC [15~)
 	{27, 91, 49, 55, 126}: KeyF6,  // F6  (ESC [17~)
 	{27, 91, 49, 56, 126}: KeyF7,  // F7  (ESC [18~)
@@ -145,6 +187,7 @@ var modKeyLookup = map[[6]byte]int{
 	{27, 91, 54, 59, 50, 126}: KeyShiftPageDown, // Shift-PgDn   (ESC [6;2~)
 	{27, 91, 51, 59, 53, 126}: KeyCtrlDelete,    // Ctrl-Delete   (ESC [3;5~)
 	{27, 91, 51, 59, 50, 126}: KeyShiftDelete,   // Shift-Delete  (ESC [3;2~)
+	{27, 91, 50, 59, 50, 126}: KeyShiftInsert,   // Shift-Insert  (ESC [2;2~)
 }
 
 // String representations for 3-byte sequences
@@ -153,6 +196,10 @@ var keyStringLookup = map[[3]byte]string{
 	{27, 91, 66}:  "↓",       // Down Arrow
 	{27, 91, 67}:  "→",       // Right Arrow
 	{27, 91, 68}:  "←",       // Left Arrow
+	{27, 79, 65}:  "↑",       // Up Arrow    (SS3, application cursor keys)
+	{27, 79, 66}:  "↓",       // Down Arrow  (SS3)
+	{27, 79, 67}:  "→",       // Right Arrow (SS3)
+	{27, 79, 68}:  "←",       // Left Arrow  (SS3)
 	{27, 91, 'H'}: "⇱",       // Home
 	{27, 91, 'F'}: "⇲",       // End
 	{27, 79, 'H'}: "⇱",       // Home (SS3 sequence)
@@ -162,6 +209,15 @@ var keyStringLookup = map[[3]byte]string{
 	{27, 79, 81}:  "F2",      // F2  (ESC O Q)
 	{27, 79, 82}:  "F3",      // F3  (ESC O R)
 	{27, 79, 83}:  "F4",      // F4  (ESC O S)
+	// rxvt / urxvt report modified arrows with lowercase finals
+	{27, 91, 'a'}: "shift↑", // Shift-Up    (ESC [a)
+	{27, 91, 'b'}: "shift↓", // Shift-Down  (ESC [b)
+	{27, 91, 'c'}: "shift→", // Shift-Right (ESC [c)
+	{27, 91, 'd'}: "shift←", // Shift-Left  (ESC [d)
+	{27, 79, 'a'}: "ctrl↑",  // Ctrl-Up     (ESC Oa)
+	{27, 79, 'b'}: "ctrl↓",  // Ctrl-Down   (ESC Ob)
+	{27, 79, 'c'}: "ctrl→",  // Ctrl-Right  (ESC Oc)
+	{27, 79, 'd'}: "ctrl←",  // Ctrl-Left   (ESC Od)
 }
 
 // String representations for 4-byte sequences
@@ -178,10 +234,30 @@ var pageStringLookup = map[[4]byte]string{
 	{27, 91, 91, 67}:  "F3", // F3 (ESC [[C, Linux console)
 	{27, 91, 91, 68}:  "F4", // F4 (ESC [[D, Linux console)
 	{27, 91, 91, 69}:  "F5", // F5 (ESC [[E, Linux console)
+	{27, 91, 50, 126}: "⎀",  // Insert (ESC [2~)
+	// rxvt / urxvt encode the modifier in the final byte: '$' is Shift, '^' is Ctrl
+	{27, 91, 49, '$'}: "shift⇱", // Shift-Home   (ESC [1$)
+	{27, 91, 50, '$'}: "shift⎀", // Shift-Insert (ESC [2$)
+	{27, 91, 51, '$'}: "shift⌦", // Shift-Delete (ESC [3$)
+	{27, 91, 53, '$'}: "shift⇞", // Shift-PgUp   (ESC [5$)
+	{27, 91, 54, '$'}: "shift⇟", // Shift-PgDn   (ESC [6$)
+	{27, 91, 55, '$'}: "shift⇱", // Shift-Home   (ESC [7$)
+	{27, 91, 56, '$'}: "shift⇲", // Shift-End    (ESC [8$)
+	{27, 91, 49, '^'}: "ctrl⇱",  // Ctrl-Home    (ESC [1^)
+	{27, 91, 50, '^'}: "ctrl⎀",  // Ctrl-Insert  (ESC [2^)
+	{27, 91, 51, '^'}: "ctrl⌦",  // Ctrl-Delete  (ESC [3^)
+	{27, 91, 53, '^'}: "ctrl⇞",  // Ctrl-PgUp    (ESC [5^)
+	{27, 91, 54, '^'}: "ctrl⇟",  // Ctrl-PgDn    (ESC [6^)
+	{27, 91, 55, '^'}: "ctrl⇱",  // Ctrl-Home    (ESC [7^)
+	{27, 91, 56, '^'}: "ctrl⇲",  // Ctrl-End     (ESC [8^)
 }
 
 // String representations for 5-byte sequences (F5-F12)
 var fKeyStringLookup = map[[5]byte]string{
+	{27, 91, 49, 49, 126}: "F1",  // F1  (ESC [11~, rxvt/PuTTY)
+	{27, 91, 49, 50, 126}: "F2",  // F2  (ESC [12~, rxvt/PuTTY)
+	{27, 91, 49, 51, 126}: "F3",  // F3  (ESC [13~, rxvt/PuTTY)
+	{27, 91, 49, 52, 126}: "F4",  // F4  (ESC [14~, rxvt/PuTTY)
 	{27, 91, 49, 53, 126}: "F5",  // F5  (ESC [15~)
 	{27, 91, 49, 55, 126}: "F6",  // F6  (ESC [17~)
 	{27, 91, 49, 56, 126}: "F7",  // F7  (ESC [18~)
@@ -194,7 +270,7 @@ var fKeyStringLookup = map[[5]byte]string{
 
 // String representations for 6-byte modifier-key sequences (CSI with modifier parameter)
 var modKeyStringLookup = map[[6]byte]string{
-	{27, 91, 50, 59, 53, 126}: "⎘",      // Ctrl-Insert
+	{27, 91, 50, 59, 53, 126}: "ctrl⎀",  // Ctrl-Insert
 	{27, 91, 49, 59, 51, 65}:  "alt↑",   // Alt-Up
 	{27, 91, 49, 59, 51, 66}:  "alt↓",   // Alt-Down
 	{27, 91, 49, 59, 51, 67}:  "alt→",   // Alt-Right
@@ -219,6 +295,7 @@ var modKeyStringLookup = map[[6]byte]string{
 	{27, 91, 54, 59, 50, 126}: "shift⇟", // Shift-PgDn
 	{27, 91, 51, 59, 53, 126}: "ctrl⌦",  // Ctrl-Delete
 	{27, 91, 51, 59, 50, 126}: "shift⌦", // Shift-Delete
+	{27, 91, 50, 59, 50, 126}: "shift⎀", // Shift-Insert
 }
 
 // String representations for long CSI sequences (kitty keyboard protocol and xterm modifyOtherKeys=2)
@@ -303,11 +380,12 @@ func parseFirstKey(buf []byte) (string, int) {
 	}
 	// Unknown CSI sequence. Consume up to the terminator so stray bytes don't
 	// get re-emitted as literal "^[[..." text. A CSI/SS3 final byte is in the
-	// range 0x40-0x7E (or '~' for page-type sequences).
+	// range 0x40-0x7E (or '~' for page-type sequences). rxvt also terminates
+	// its Shift-modified sequences with '$', which is outside that range.
 	if buf[1] == '[' || buf[1] == 'O' {
 		for i := 2; i < n; i++ {
 			b := buf[i]
-			if (b >= 0x40 && b <= 0x7E) || b == '~' {
+			if (b >= 0x40 && b <= 0x7E) || b == '~' || b == '$' {
 				seq := string(buf[:i+1])
 				// Recognise long CSI sequences (kitty CSI-u, xterm
 				// modifyOtherKeys=2) that report modified keys not
