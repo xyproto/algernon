@@ -24,3 +24,19 @@ func SetupSignals(clearCacheFunction func(), printFunction func(format string, a
 		}
 	}()
 }
+
+// SetupLogRotationSignal installs a SIGHUP handler that invokes reopenLogsFunction,
+// so that log files can be moved aside and re-opened instead of being truncated.
+func SetupLogRotationSignal(reopenLogsFunction func(), printFunction func(format string, args ...any)) {
+	// Listen for SIGHUP to re-open the log files
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP)
+	go func() {
+		for {
+			sig := <-signals
+			// Re-open before logging, so that the message lands in the new file
+			reopenLogsFunction()
+			printFunction("Received %v, re-opened the log files", sig)
+		}
+	}()
+}

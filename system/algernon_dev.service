@@ -7,10 +7,15 @@ After=redis.service network-online.target
 Type=simple
 User=algernon
 Group=users
-ExecStart=/usr/bin/algernon -e -a --theme=dark --domain --noninteractive --log /var/log/algernon.log /srv/algernon
+ExecStart=/usr/bin/algernon -e -a --theme=dark --domain --noninteractive --log /var/log/algernon/dev.log /srv/algernon
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s
+# This service does not run as root, so let systemd create a log directory
+# that the service user owns. Log rotation must then also create the files
+# as that user, see the logrotate configuration.
+LogsDirectory=algernon
+LogsDirectoryMode=750
 
 # Sandboxing
 PrivateTmp=true

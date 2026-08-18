@@ -1,3 +1,24 @@
+# Log rotation for Algernon, install as /etc/logrotate.d/algernon.
+#
+# Algernon re-opens its log files when it receives SIGHUP, so the files are
+# moved aside and then re-created, instead of being truncated. The rotation
+# interval and the number of kept files are inherited from /etc/logrotate.conf.
+#
+# This matches system/algernon.service, which runs as root. For an instance
+# that runs as another user, like system/algernon_dev.service, use the paths
+# and the user of that instance instead:
+#
+#   /var/log/algernon/*.log {
+#      notifempty
+#      missingok
+#      su algernon users
+#      create 640 algernon users
+#      sharedscripts
+#      postrotate
+#         systemctl reload algernon_dev.service 2>/dev/null || true
+#      endscript
+#   }
+#
 /var/log/algernon.log /var/log/access.log {
    notifempty
    missingok
