@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net"
 	"net/http"
 	"testing"
 )
@@ -65,6 +66,45 @@ func TestGetHost(t *testing.T) {
 		got := GetHost(req)
 		if got != tt.want {
 			t.Errorf("GetHost(Host=%q) = %q, want %q", tt.host, got, tt.want)
+		}
+	}
+}
+
+func TestIsLocalIP(t *testing.T) {
+	tests := []struct {
+		host string
+		want bool
+	}{
+		{"127.0.0.1", true},
+		{"127.0.1.1", true},
+		{"::1", true},
+		{"8.8.8.8", false},
+		{"localhost", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		got := IsLocalIP(tt.host)
+		if got != tt.want {
+			t.Errorf("IsLocalIP(%q) = %v, want %v", tt.host, got, tt.want)
+		}
+	}
+	// The IP addresses of this machine are also local
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		t.Skip("could not list the interface addresses")
+	}
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		host := ipNet.IP.String()
+		if !IsLocalIP(host) {
+			t.Errorf("IsLocalIP(%q) = false, want true", host)
+		}
+		req := &http.Request{Host: JoinHostPort(host, ":3000")}
+		if got := GetDomain(req); got != "localhost" {
+			t.Errorf("GetDomain(Host=%q) = %q, want %q", req.Host, got, "localhost")
 		}
 	}
 }

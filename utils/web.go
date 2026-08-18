@@ -6,6 +6,18 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
+)
+
+// The IP addresses of this machine are cached for this long, since looking
+// them up for every request is wasteful, but they may change over time
+const localIPCacheDuration = time.Minute
+
+var (
+	localIPMut     sync.Mutex
+	localIP        map[string]bool
+	localIPUpdated time.Time
 )
 
 // CanonicalURLPath resolves ".." and "." elements, collapses repeated slashes
@@ -35,12 +47,40 @@ func GetHost(req *http.Request) string {
 	return host
 }
 
+// IsLocalIP checks if the given host is a loopback address or one of the IP
+// addresses of this machine
+func IsLocalIP(host string) bool {
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() {
+		return true
+	}
+	localIPMut.Lock()
+	defer localIPMut.Unlock()
+	if localIP == nil || time.Since(localIPUpdated) > localIPCacheDuration {
+		// If the addresses can not be listed, cache an empty set, so that
+		// a persistent failure does not mean one lookup per request
+		addrs, _ := net.InterfaceAddrs()
+		localIP = make(map[string]bool, len(addrs))
+		for _, addr := range addrs {
+			if ipNet, ok := addr.(*net.IPNet); ok {
+				localIP[ipNet.IP.String()] = true
+			}
+		}
+		localIPUpdated = time.Now()
+	}
+	return localIP[ip.String()]
+}
+
 // GetDomain returns the host/domain of a request, handling both IPv4 and IPv6.
-// The loopback hosts 127.0.0.1 and ::1 are collapsed to "localhost", so that
-// a single localhost/ document root serves all three.
+// The loopback hosts 127.0.0.1 and ::1, and also the IP addresses of this
+// machine, are collapsed to "localhost", so that a single localhost/ document
+// root serves them all.
 func GetDomain(req *http.Request) string {
 	host := GetHost(req)
-	if host == "127.0.0.1" || host == "::1" {
+	if IsLocalIP(host) {
 		return "localhost"
 	}
 	return host
