@@ -610,6 +610,8 @@ SetRedirect(bool)
 SetLetsEncrypt(bool)
 // Enable or disable interactive mode (the REPL).
 SetInteractive(bool)
+// Set a base URL for the links in the directory listing, like "/files".
+SetDirBaseURL(string)
 // Configure listeners with full control over protocol, port and TLS.
 // Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
 // Valid protocols: "http", "http2", "http3" (or "quic"), "event"

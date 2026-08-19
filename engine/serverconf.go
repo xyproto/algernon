@@ -281,6 +281,15 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 		return 0 // number of results
 	}))
 
+	// Set a base URL for the links in the directory listing, unless it was
+	// already set with --dirbaseurl
+	L.SetGlobal("SetDirBaseURL", L.NewFunction(func(L *lua.LState) int {
+		if ac.dirBaseURL == "" {
+			ac.dirBaseURL = L.ToString(1)
+		}
+		return 0 // number of results
+	}))
+
 	// Configure listeners with full control over protocol, port and TLS.
 	// Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
 	// Only applies if port configuration was not already set by flags or positional args.

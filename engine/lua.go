@@ -310,7 +310,9 @@ func (ac *Config) loadServerConfigNoopFunctions(L *lua.LState) {
 		return 1
 	})
 	for _, name := range []string{
-		"SetAddr", "SetCookieSecret", "ClearPermissions",
+		"SetAddr", "SetHTTPAddr", "SetHTTPSAddr", "SetPorts",
+		"SetRedirect", "SetLetsEncrypt", "SetInteractive",
+		"SetDirBaseURL", "SetCookieSecret", "ClearPermissions",
 		"AddUserPrefix", "AddAdminPrefix", "AddReverseProxy",
 		"DenyHandler", "OnReady",
 	} {

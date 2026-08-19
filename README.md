@@ -1302,6 +1302,10 @@ SetLetsEncrypt(bool)
 // Enable or disable interactive mode (the REPL).
 SetInteractive(bool)
 
+// Set a base URL for the links in the directory listing, like "/files".
+// Useful when Algernon is behind a proxy that serves it from a sub-path.
+SetDirBaseURL(string)
+
 // Configure listeners with full control over protocol, port and TLS.
 // Takes a table of tables: SetPorts{{":8080","http",false},{":8443","http2",true}}
 // Named keys are also supported: SetPorts{{addr=":8080", protocol="http", tls=false}}
