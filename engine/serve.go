@@ -148,6 +148,10 @@ func (ac *Config) configureCertMagic() {
 	if len(ac.serve.certMagicDomains) > 0 {
 		defaultEmail = "webmaster@" + ac.serve.certMagicDomains[0]
 	}
+	// Let CertMagic log with logrus instead of with the default zap logger,
+	// which logs the time as a floating point number of seconds
+	certmagic.Default.Logger = certMagicLogger()
+	certmagic.DefaultACME.Logger = certmagic.Default.Logger
 	certmagic.DefaultACME.Email = env.Str("EMAIL", defaultEmail)
 	// TODO: Find a way for Algernon users to agree on this manually
 	certmagic.DefaultACME.Agreed = true
