@@ -103,7 +103,7 @@ func (ac *Config) DirectoryListing(w http.ResponseWriter, req *http.Request, roo
 		URLpath = fullFilename[len(rootdir)+1:]
 
 		// Output different entries for files and directories
-		buf.WriteString(themes.HTMLLink(filename, URLpath, ac.fs.IsDir(fullFilename)))
+		buf.WriteString(themes.HTMLLinkWithBase(filename, ac.dirBaseURL, URLpath, ac.fs.IsDir(fullFilename)))
 	}
 
 	// Read directory configuration, if present

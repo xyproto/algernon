@@ -105,6 +105,32 @@ func TestHTMLLink(t *testing.T) {
 }
 
 // Filenames with newlines or spaces must produce a valid percent-encoded href, see issue #144.
+func TestHTMLLinkWithBase(t *testing.T) {
+	tests := []struct {
+		baseURL string
+		urlPath string
+		want    string
+	}{
+		{"", "file.txt", "/file.txt"},
+		{"/files", "file.txt", "/files/file.txt"},
+		{"/files/", "file.txt", "/files/file.txt"},
+		{"https://example.com/pub", "file.txt", "https://example.com/pub/file.txt"},
+		{"https://example.com/", "sub/a b.txt", "https://example.com/sub/a%20b.txt"},
+		{"/", "file.txt", "/file.txt"},
+	}
+	for _, tt := range tests {
+		got := HTMLLinkWithBase("file.txt", tt.baseURL, tt.urlPath, false)
+		want := "href=\"" + tt.want + "\""
+		if !strings.Contains(got, want) {
+			t.Errorf("HTMLLinkWithBase(baseURL=%q, urlPath=%q) = %q, want it to contain %q", tt.baseURL, tt.urlPath, got, want)
+		}
+	}
+	// A base URL must not change the trailing slash for directories
+	if got := HTMLLinkWithBase("docs", "/files", "docs", true); !strings.Contains(got, "href=\"/files/docs/\"") {
+		t.Errorf("HTMLLinkWithBase for a directory = %q, want it to end the URL with a slash", got)
+	}
+}
+
 func TestHTMLLinkEncodesSpecialBytes(t *testing.T) {
 	got := HTMLLink("file\nname.txt", "file\nname.txt", false)
 	if !strings.Contains(got, `href="/file%0Aname.txt"`) {

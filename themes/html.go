@@ -114,6 +114,13 @@ func SimpleHTMLPage(title, headline, inhead, body, language []byte) []byte {
 // HTMLLink builds an HTML link given the link text, the URL to a file/directory
 // and a boolean that is true if the given URL is to a directory.
 func HTMLLink(text, urlPath string, isDirectory bool) string {
+	return HTMLLinkWithBase(text, "", urlPath, isDirectory)
+}
+
+// HTMLLinkWithBase builds an HTML link, just like HTMLLink, but with the given
+// base URL in front of the URL path. The base URL can be a path, like "/files",
+// or an absolute URL. An empty base URL links relative to the server root.
+func HTMLLinkWithBase(text, baseURL, urlPath string, isDirectory bool) string {
 
 	// Sanitize the link text
 	text = policy.Sanitize(text)
@@ -126,7 +133,7 @@ func HTMLLink(text, urlPath string, isDirectory bool) string {
 
 	// Percent-encode the URL path so filenames with newlines, spaces or
 	// other special bytes produce a valid href. See issue #144.
-	href := (&url.URL{Path: "/" + urlPath}).EscapedPath()
+	href := strings.TrimSuffix(baseURL, "/") + (&url.URL{Path: "/" + urlPath}).EscapedPath()
 	return "<a href=\"" + html.EscapeString(href) + "\">" + text + "</a><br>"
 }
 
