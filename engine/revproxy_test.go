@@ -254,6 +254,57 @@ func TestReverseProxyEventStreamNotPeeked(t *testing.T) {
 	}
 }
 
+// A response of unknown length may be a stream or a long poll, so it must not
+// be peeked at either, even when it is not an event stream.
+func TestReverseProxyChunkedResponseNotPeeked(t *testing.T) {
+	release := make(chan struct{})
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		// No Content-Length, so the response is chunked
+		w.Header().Set(contentType, "application/x-ndjson")
+		w.WriteHeader(http.StatusOK)
+		http.NewResponseController(w).Flush()
+		<-release // no body until the test says so
+		io.WriteString(w, "{\"hello\":1}\n")
+	}))
+	defer backend.Close()
+
+	rp := newTestProxyConfig(t, "/api", backend.URL).FindMatchingReverseProxy("/api/poll")
+	if rp == nil {
+		t.Fatal("expected a matching reverse proxy")
+	}
+	front := httptest.NewServer(http.HandlerFunc(rp.ServeHTTP))
+	defer front.Close()
+
+	type result struct {
+		resp *http.Response
+		err  error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		resp, err := http.Get(front.URL + "/api/poll")
+		ch <- result{resp, err}
+	}()
+
+	select {
+	case <-time.After(3 * time.Second):
+		close(release)
+		t.Fatal("proxying a long poll blocked waiting for the first byte")
+	case got := <-ch:
+		close(release)
+		if got.err != nil {
+			t.Fatal(got.err)
+		}
+		defer got.resp.Body.Close()
+		if got.resp.StatusCode != http.StatusOK {
+			t.Errorf("status = %d, want %d", got.resp.StatusCode, http.StatusOK)
+		}
+		body, _ := io.ReadAll(got.resp.Body)
+		if !strings.Contains(string(body), "hello") {
+			t.Errorf("body = %q, want it to contain the response", string(body))
+		}
+	}
+}
+
 // The query string survives proxying.
 func TestReverseProxyKeepsQueryString(t *testing.T) {
 	var gotQuery string

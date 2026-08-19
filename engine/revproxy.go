@@ -65,6 +65,16 @@ func (pr *proxyRecorder) Write(p []byte) (int, error) {
 
 func (pr *proxyRecorder) Unwrap() http.ResponseWriter { return pr.ResponseWriter }
 
+// Hijack passes WebSocket upgrades through, while recording that the
+// connection was upgraded, so that the access log gets a status code
+func (pr *proxyRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	conn, brw, err := http.NewResponseController(pr.ResponseWriter).Hijack()
+	if err == nil && pr.status == 0 {
+		pr.status = http.StatusSwitchingProtocols
+	}
+	return conn, brw, err
+}
+
 // ReverseProxy holds which path prefix (like "/api") should be sent where (like "http://localhost:8080")
 type ReverseProxy struct {
 	proxy      *httputil.ReverseProxy
@@ -114,15 +124,18 @@ func newProxyHandler(pathPrefix string, endpoint url.URL) *httputil.ReverseProxy
 			r.Out.URL.RawPath = ""
 		},
 		ModifyResponse: func(res *http.Response) error {
-			// Upgrades and event streams must not be read ahead of time:
-			// the next bytes may only arrive once the client has spoken
-			if res.StatusCode == http.StatusSwitchingProtocols ||
-				strings.Contains(res.Header.Get(contentType), "text/event-stream") {
-				return nil
-			}
 			// Peek one byte before sending the status: if upstream fails
 			// before any body arrives, send 502 instead of a partial 200.
 			// io.EOF is the legitimate empty-body case.
+			//
+			// Only responses that promised a body of a given length are
+			// peeked at. A response of unknown length may be a stream, an
+			// upgrade or a long poll, where the next bytes may only arrive
+			// once the client has spoken, and waiting for them here would
+			// keep the headers from ever reaching the client.
+			if res.ContentLength <= 0 {
+				return nil
+			}
 			br := bufio.NewReader(res.Body)
 			if _, err := br.Peek(1); err != nil && err != io.EOF {
 				return err
@@ -141,10 +154,12 @@ func newProxyHandler(pathPrefix string, endpoint url.URL) *httputil.ReverseProxy
 // ServeHTTP proxies the given request to where the ReverseProxy points.
 // Redirects, streaming responses and WebSocket upgrades are passed through.
 func (rp *ReverseProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if rp.proxy == nil {
-		rp.proxy = newProxyHandler(rp.PathPrefix, rp.Endpoint)
+	proxy := rp.proxy
+	if proxy == nil {
+		// Not added with Add, which prepares the proxy handler
+		proxy = newProxyHandler(rp.PathPrefix, rp.Endpoint)
 	}
-	rp.proxy.ServeHTTP(w, req)
+	proxy.ServeHTTP(w, req)
 }
 
 // DoProxyPass tries to proxy the given http.Request to where the ReverseProxy points
