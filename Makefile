@@ -1,4 +1,4 @@
-.PHONY: clean install install-doc cover
+.PHONY: clean install install-doc cover test
 
 PROJECT ?= algernon
 
@@ -57,6 +57,9 @@ install-doc: algernon.1.gz welcome.sh samples README.md
 cover:
 	go test -mod=vendor -coverprofile=coverage.out -coverpkg=./... ./...
 	go tool cover -func=coverage.out
+
+test:
+	go test -mod=vendor -v
 
 clean:
 	rm -f algernon algernon.1.gz coverage.out
