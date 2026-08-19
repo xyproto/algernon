@@ -14,7 +14,6 @@ import (
 
 	"github.com/caddyserver/certmagic"
 	"github.com/sirupsen/logrus"
-	"github.com/tylerb/graceful"
 	"github.com/xyproto/algernon/utils"
 	"github.com/xyproto/env/v2"
 	"golang.org/x/net/http2"
@@ -57,7 +56,7 @@ func AtShutdown(shutdownFunction func()) {
 }
 
 // NewGracefulServer creates a new graceful server configuration
-func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *graceful.Server {
+func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *GracefulServer {
 	// Cap request bodies before any handler reads them. 0 means unlimited.
 	if ac.largeFileSize > 0 {
 		handler = ac.limitBodyMiddleware(handler)
@@ -81,7 +80,7 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 		// Enable HTTP/2 support
 		http2.ConfigureServer(s, nil)
 	}
-	gracefulServer := &graceful.Server{
+	gracefulServer := &GracefulServer{
 		Server:  s,
 		Timeout: ac.shutdownTimeout,
 	}
@@ -93,7 +92,7 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 // GenerateShutdownFunction generates a function that will run the postponed
 // shutdown functions.  Note that gracefulServer can be nil. It's only used for
 // finding out if the server was interrupted (ctrl-c or killed, SIGINT/SIGTERM)
-func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func() {
+func (ac *Config) GenerateShutdownFunction(gracefulServer *GracefulServer) func() {
 	return func() {
 		if completed.Load() {
 			// The shutdown functions have already been called
@@ -122,8 +121,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 
 		// Forced shutdown
 		if gracefulServer != nil {
-			if gracefulServer.Interrupted {
-				// gracefulServer.Stop(forcedShutdownTimeout)
+			if gracefulServer.Interrupted() {
 				ac.fatalExit(errors.New("Interrupted"))
 			}
 		}
@@ -142,7 +140,7 @@ func (ac *Config) GenerateShutdownFunction(gracefulServer *graceful.Server) func
 func (ac *Config) configureCertMagic() {
 	certStorageDir := certStorageDir()
 	if volatileCertStorage(certStorageDir) {
-		logrus.Warnf("Storing certificates in %s, which may be cleared at boot. New certificates would then be requested for every boot, which counts against the Let's Encrypt rate limits. Set XDG_DATA_HOME to a directory that persists.", certStorageDir)
+		logrus.Warnf("Storing certificates in %s, which may be cleared at boot. New certificates would then be requested for every boot, which counts against the Let's Encrypt rate limits. Set %s to a directory that persists.", certStorageDir, xdgDataHomeEnvVar)
 	} else if ac.verboseMode {
 		logrus.Info("Storing certificates in " + certStorageDir)
 	}
