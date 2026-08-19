@@ -59,7 +59,7 @@ cover:
 	go tool cover -func=coverage.out
 
 test:
-	go test -mod=vendor -v
+	go test ./... -mod=vendor -v
 
 clean:
 	rm -f algernon algernon.1.gz coverage.out
