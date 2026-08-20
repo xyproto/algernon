@@ -223,8 +223,8 @@ github.com/ncruces/go-sqlite3/internal/sqlite3_wrap
 github.com/ncruces/go-sqlite3/internal/testenv
 github.com/ncruces/go-sqlite3/internal/util
 github.com/ncruces/go-sqlite3/vfs
-# github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35304
-## explicit; go 1.25.0
+# github.com/ncruces/go-sqlite3-wasm/v3 v3.3.35304
+## explicit; go 1.26.0
 github.com/ncruces/go-sqlite3-wasm/v3
 # github.com/ncruces/julianday v1.0.0
 ## explicit; go 1.17
@@ -244,7 +244,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260819134517-65c2a6cd2dba
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20260820100658-17b780783925
 ## explicit; go 1.25
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
