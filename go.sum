@@ -134,8 +134,8 @@ github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007 h1:Ohgj9L0EYOgXxkDp+
 github.com/natefinch/pie v0.0.0-20170715172608-9a0d72014007/go.mod h1:wKCOWMb6iNlvKiOToY2cNuaovSXvIiv1zDi9QDR7aGQ=
 github.com/ncruces/go-sqlite3 v0.35.3 h1:Ei07Zv1qfV/vyXzelhFsyS5Oh9TArBZHsmFk14Xv3GY=
 github.com/ncruces/go-sqlite3 v0.35.3/go.mod h1:i1rhym/NIiB5xeEfzbN+e24Y+i7NGUpf7C2xZ3Dpwks=
-github.com/ncruces/go-sqlite3-wasm/v3 v3.3.35304 h1:srKLZoZrUQNMhGTP09uqYIgw4rS0u0SBUeV/O9Z0xmI=
-github.com/ncruces/go-sqlite3-wasm/v3 v3.3.35304/go.mod h1:IhET4qV0FPwIEBLNmsMWnK+283q0I1abLAenswsQIBE=
+github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35304 h1:5NoQAewtgKNK3G4bjNPxVoGXu6F6NzLXWCTdD5FFAEY=
+github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35304/go.mod h1:o8gr9w/50fXA5TDskg6bNUjvqmFfw4KaXth4q+yDSjg=
 github.com/ncruces/julianday v1.0.0 h1:fH0OKwa7NWvniGQtxdJRxAgkBMolni2BjDHaWTxqt7M=
 github.com/ncruces/julianday v1.0.0/go.mod h1:Dusn2KvZrrovOMJuOt0TNXL6tB7U2E8kvza5fFc9G7g=
 github.com/orsinium-labs/enum v1.5.0 h1:kr7dETN9FkmcwEdXydJOdJuP6MBtI7uSDJZQ2BbXJ7g=

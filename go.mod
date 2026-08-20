@@ -58,7 +58,7 @@ require (
 
 require (
 	github.com/dlclark/regexp2/v2 v2.7.1 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v3 v3.3.35304 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35304 // indirect
 )
 
 require (

@@ -223,8 +223,8 @@ github.com/ncruces/go-sqlite3/internal/sqlite3_wrap
 github.com/ncruces/go-sqlite3/internal/testenv
 github.com/ncruces/go-sqlite3/internal/util
 github.com/ncruces/go-sqlite3/vfs
-# github.com/ncruces/go-sqlite3-wasm/v3 v3.3.35304
-## explicit; go 1.26.0
+# github.com/ncruces/go-sqlite3-wasm/v3 v3.2.35304
+## explicit; go 1.25.0
 github.com/ncruces/go-sqlite3-wasm/v3
 # github.com/ncruces/julianday v1.0.0
 ## explicit; go 1.17
