@@ -311,7 +311,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	sb.Grow(int(w * h * 2))
 
 	// Begin synchronized update so the terminal renders atomically
-	sb.WriteString(beginSyncUpdate)
+	sb.WriteString(beginSyncUpdateSeq())
 	// Hide cursor while drawing to prevent flicker
 	sb.WriteString(hideCursor)
 
@@ -459,7 +459,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	}
 
 	// End synchronized update — terminal renders the buffered frame
-	sb.WriteString(endSyncUpdate)
+	sb.WriteString(endSyncUpdateSeq())
 
 	c.mut.RUnlock()
 

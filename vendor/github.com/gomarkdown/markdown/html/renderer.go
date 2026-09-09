@@ -886,8 +886,9 @@ func (r *Renderer) EscapeHTMLCallouts(w io.Writer, d []byte) {
 Parse:
 	for i := 0; i < ld; i++ {
 		for _, comment := range r.Opts.Comments {
+			// try every configured marker, not just the first
 			if !bytes.HasPrefix(d[i:], comment) {
-				break
+				continue
 			}
 
 			lc := len(comment)

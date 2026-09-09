@@ -95,6 +95,14 @@ var underDvtm = env.Has("DVTM")
 // underAbduco is true if running inside abduco
 var underAbduco = env.Has("ABDUCO")
 
+// underZutty is true if running inside the Zutty terminal emulator
+var underZutty = env.Has("ZUTTY_VERSION")
+
+// syncUpdateSupported is false for terminal emulators that are known to not
+// implement DEC private mode 2026 (synchronized output). Zutty logs a warning
+// for every attempt to set or reset that mode.
+var syncUpdateSupported = !underZutty
+
 // multiplexed is true when running inside any known terminal multiplexer
 var multiplexed = underTMUX || underScreen || underDvtm || underAbduco
 
@@ -109,6 +117,35 @@ var safeReset = xtermLike && !multiplexed
 // Multiplexed returns true when running inside a terminal multiplexer
 func Multiplexed() bool {
 	return multiplexed
+}
+
+// Zutty returns true when running inside the Zutty terminal emulator
+func Zutty() bool {
+	return underZutty
+}
+
+// SyncUpdateSupported returns true when the terminal emulator is expected to
+// understand DEC private mode 2026 (synchronized output)
+func SyncUpdateSupported() bool {
+	return syncUpdateSupported
+}
+
+// beginSyncUpdateSeq returns the begin synchronized update escape sequence,
+// or an empty string if the terminal emulator does not support it
+func beginSyncUpdateSeq() string {
+	if syncUpdateSupported {
+		return beginSyncUpdate
+	}
+	return ""
+}
+
+// endSyncUpdateSeq returns the end synchronized update escape sequence,
+// or an empty string if the terminal emulator does not support it
+func endSyncUpdateSeq() string {
+	if syncUpdateSupported {
+		return endSyncUpdate
+	}
+	return ""
 }
 
 // xtermLike returns true when $TERM looks like an xterm-class emulator
@@ -245,10 +282,10 @@ func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 
 // BeginSyncUpdate sends the terminal's begin synchronized update escape sequence
 func BeginSyncUpdate() {
-	fmt.Print(beginSyncUpdate)
+	fmt.Print(beginSyncUpdateSeq())
 }
 
 // EndSyncUpdate sends the terminal's end synchronized update escape sequence
 func EndSyncUpdate() {
-	fmt.Print(endSyncUpdate)
+	fmt.Print(endSyncUpdateSeq())
 }

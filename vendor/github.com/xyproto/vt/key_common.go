@@ -2,6 +2,7 @@ package vt
 
 import (
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -298,12 +299,116 @@ var modKeyStringLookup = map[[6]byte]string{
 	{27, 91, 50, 59, 50, 126}: "shift⎀", // Shift-Insert
 }
 
-// String representations for long CSI sequences (kitty keyboard protocol and xterm modifyOtherKeys=2)
-var longCSILookup = map[string]string{
-	"\x1b[13;2u":    "shift⏎", // Shift-Return (kitty CSI-u)
-	"\x1b[13;3u":    "alt⏎",   // Alt-Return   (kitty CSI-u)
-	"\x1b[27;2;13~": "shift⏎", // Shift-Return (xterm modifyOtherKeys=2)
-	"\x1b[27;3;13~": "alt⏎",   // Alt-Return   (xterm modifyOtherKeys=2)
+// csiParam returns the given CSI parameter as an integer, or the given default
+// value if the parameter is missing or not a number. Kitty sub-parameters
+// (separated by ":") are ignored.
+func csiParam(params []string, index, defaultValue int) int {
+	if index >= len(params) {
+		return defaultValue
+	}
+	param := params[index]
+	if colonPos := strings.IndexByte(param, ':'); colonPos != -1 {
+		param = param[:colonPos]
+	}
+	if param == "" {
+		return defaultValue
+	}
+	n, err := strconv.Atoi(param)
+	if err != nil {
+		return defaultValue
+	}
+	return n
+}
+
+// modifiedKeyString maps a key code and an xterm/kitty modifier value to the
+// key string that the very same keypress would have produced if neither the
+// kitty keyboard protocol nor xterm modifyOtherKeys had been enabled.
+// The modifier value is 1 + a bit mask where 1 is Shift, 2 is Alt, 4 is Ctrl
+// and 8 is Super.
+func modifiedKeyString(code, modifier int) (string, bool) {
+	if code < 0 {
+		return "", false
+	}
+	if modifier < 1 {
+		modifier = 1
+	}
+	bits := modifier - 1
+	shift := bits&1 != 0
+	alt := bits&2 != 0
+	ctrl := bits&4 != 0
+	switch code {
+	case 13, 10: // Return / Enter
+		if shift && !alt && !ctrl {
+			return KeyShiftReturnString, true
+		}
+		if alt && !shift && !ctrl {
+			return KeyAltReturnString, true
+		}
+		return "c:13", true
+	case 9: // Tab
+		if shift {
+			return "backtab", true
+		}
+		return "c:9", true
+	case 8, 127: // Backspace
+		return "c:" + strconv.Itoa(code), true
+	case 27: // Escape
+		return "c:27", true
+	}
+	if ctrl {
+		// Ctrl + key is reported as the corresponding control code
+		switch {
+		case code >= 'a' && code <= 'z':
+			return "c:" + strconv.Itoa(code-'a'+1), true
+		case code >= 'A' && code <= 'Z':
+			return "c:" + strconv.Itoa(code-'A'+1), true
+		case code == ' ', code == '2', code == '@':
+			return "c:0", true
+		case code == '[':
+			return "c:27", true
+		case code == '\\', code == '4':
+			return "c:28", true
+		case code == ']', code == '5':
+			return "c:29", true
+		case code == '^', code == '6':
+			return "c:30", true
+		case code == '_', code == '7':
+			return "c:31", true
+		case code == '?', code == '8':
+			return "c:127", true
+		case code == '3':
+			return "c:27", true
+		}
+	}
+	if r := rune(code); unicode.IsPrint(r) {
+		return string(r), true
+	}
+	return "", false
+}
+
+// parseLongCSI recognizes the modified-key reports that terminals send when
+// the kitty keyboard protocol (ESC [ code ; modifier u) or xterm
+// modifyOtherKeys=2 (ESC [ 27 ; modifier ; code ~) is enabled, and returns the
+// key string for the key that was pressed.
+func parseLongCSI(seq string) (string, bool) {
+	if len(seq) < 4 || seq[0] != 27 || seq[1] != '[' {
+		return "", false
+	}
+	final := seq[len(seq)-1]
+	params := strings.Split(seq[2:len(seq)-1], ";")
+	switch final {
+	case 'u': // kitty keyboard protocol
+		if len(params) > 3 {
+			return "", false
+		}
+		return modifiedKeyString(csiParam(params, 0, -1), csiParam(params, 1, 1))
+	case '~': // xterm modifyOtherKeys=2
+		if len(params) != 3 || csiParam(params, 0, -1) != 27 {
+			return "", false
+		}
+		return modifiedKeyString(csiParam(params, 2, -1), csiParam(params, 1, 1))
+	}
+	return "", false
 }
 
 // parseFirstKey parses the first key sequence from buf and returns its string
@@ -390,7 +495,7 @@ func parseFirstKey(buf []byte) (string, int) {
 				// Recognise long CSI sequences (kitty CSI-u, xterm
 				// modifyOtherKeys=2) that report modified keys not
 				// covered by the fixed-size lookups above.
-				if str, ok := longCSILookup[seq]; ok {
+				if str, ok := parseLongCSI(seq); ok {
 					return str, i + 1
 				}
 				return seq, i + 1
