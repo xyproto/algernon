@@ -4,6 +4,7 @@ package webauthncose
 
 import (
 	"crypto/x509"
+	"encoding/asn1"
 )
 
 const (
@@ -33,7 +34,8 @@ const (
 //
 // The hash in each detail is the zero value: ML-DSA signs the message rather than a digest of it, so there is no
 // pre-hash to register. [HasherFromCOSEAlg] reports this as no hash rather than returning one which cannot be
-// constructed. The x509 signature algorithms are what let the attestation formats verify an ML-DSA x5c chain.
+// constructed. The x509 signature algorithms are what let the attestation formats verify an ML-DSA x5c chain, and the
+// object identifiers are how an X.509 AlgorithmIdentifier states those same signature algorithms.
 func init() {
 	coseAlgorithmNames[AlgMLDSA44] = "ML-DSA-44"
 	coseAlgorithmNames[AlgMLDSA65] = "ML-DSA-65"
@@ -42,4 +44,21 @@ func init() {
 	COSESignatureAlgorithmDetails[AlgMLDSA44] = COSESignatureAlgorithmDetail{name: "ML-DSA-44", sigAlg: x509.MLDSA44}
 	COSESignatureAlgorithmDetails[AlgMLDSA65] = COSESignatureAlgorithmDetail{name: "ML-DSA-65", sigAlg: x509.MLDSA65}
 	COSESignatureAlgorithmDetails[AlgMLDSA87] = COSESignatureAlgorithmDetail{name: "ML-DSA-87", sigAlg: x509.MLDSA87}
+
+	coseAlgorithmObjectIdentifiers[AlgMLDSA44] = oidASN1SignatureAlgorithmMLDSA44
+	coseAlgorithmObjectIdentifiers[AlgMLDSA65] = oidASN1SignatureAlgorithmMLDSA65
+	coseAlgorithmObjectIdentifiers[AlgMLDSA87] = oidASN1SignatureAlgorithmMLDSA87
 }
+
+// The ASN.1 object identifiers of the ML-DSA parameter sets, registered by NIST in the Computer Security Objects
+// Register under the nistAlgorithms arc. Unlike the classical algorithms, each parameter set has an identifier of
+// its own and the AlgorithmIdentifier carries absent parameters, so the identifier settles which parameter set a
+// signature uses on its own. The same identifier names the algorithm of a subjectPublicKeyInfo carrying a key of
+// that parameter set.
+//
+// Registry: https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration
+var (
+	oidASN1SignatureAlgorithmMLDSA44 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 17}
+	oidASN1SignatureAlgorithmMLDSA65 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 18}
+	oidASN1SignatureAlgorithmMLDSA87 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 19}
+)

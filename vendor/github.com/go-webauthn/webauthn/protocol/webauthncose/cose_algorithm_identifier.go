@@ -3,6 +3,8 @@ package webauthncose
 import (
 	"crypto"
 	"crypto/x509"
+	"encoding/asn1"
+	"slices"
 	"strconv"
 )
 
@@ -107,6 +109,72 @@ var coseAlgorithmNames = map[COSEAlgorithmIdentifier]string{
 	AlgRS512:   "RS512",
 	AlgRS1:     "RS1",
 }
+
+// ObjectIdentifier returns the ASN.1 object identifier of the signature algorithm this COSE algorithm names, and
+// whether this library has one registered for it. An algorithm it does not model, or one which names no signature
+// algorithm an X.509 certificate can be signed with, yields no identifier rather than a substituted one.
+//
+// The mapping is many to one in three places, because an object identifier names a signature algorithm and nothing
+// else. ESP256, ESP384 and ESP512 share theirs with ES256, ES384 and ES512, as what separates them is whether the
+// Relying Party hands the algorithm a message or a digest of one rather than anything the signature itself records.
+// ES256K shares the ECDSA with SHA-256 identifier, as the curve is stated by the key and not by the signature
+// algorithm. PS256, PS384 and PS512 share id-RSASSA-PSS, as a PSS AlgorithmIdentifier states its digest in the
+// parameters which follow the object identifier: a caller which must tell one from another has to read those
+// parameters, and cannot settle it from what this returns.
+//
+// A caller comparing what this returns against an identifier read from a certificate should also note that RS1 has a
+// second identifier, the ISO 1.3.14.3.2.29 alias, which names the same algorithm. This returns the PKCS #1 one, as
+// that is what an encoder writes.
+//
+// The returned identifier is a copy. [asn1.ObjectIdentifier] is a slice, and the table backing this is shared by
+// every caller.
+//
+// Registry: https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+func (a COSEAlgorithmIdentifier) ObjectIdentifier() (oid asn1.ObjectIdentifier, ok bool) {
+	if oid, ok = coseAlgorithmObjectIdentifiers[a]; !ok {
+		return nil, false
+	}
+
+	return slices.Clone(oid), true
+}
+
+// coseAlgorithmObjectIdentifiers maps each algorithm this library models to the ASN.1 object identifier of the
+// signature algorithm it names, backing [COSEAlgorithmIdentifier.ObjectIdentifier]. The ML-DSA parameter sets are
+// registered by the file which declares them.
+//
+// See [COSEAlgorithmIdentifier.ObjectIdentifier] for why several algorithms share an identifier.
+var coseAlgorithmObjectIdentifiers = map[COSEAlgorithmIdentifier]asn1.ObjectIdentifier{
+	AlgRS1:     oidASN1SignatureAlgorithmSHA1WithRSA,
+	AlgRS256:   oidASN1SignatureAlgorithmSHA256WithRSA,
+	AlgRS384:   oidASN1SignatureAlgorithmSHA384WithRSA,
+	AlgRS512:   oidASN1SignatureAlgorithmSHA512WithRSA,
+	AlgPS256:   oidASN1SignatureAlgorithmRSAPSS,
+	AlgPS384:   oidASN1SignatureAlgorithmRSAPSS,
+	AlgPS512:   oidASN1SignatureAlgorithmRSAPSS,
+	AlgES256:   oidASN1SignatureAlgorithmSHA256WithECDSA,
+	AlgESP256:  oidASN1SignatureAlgorithmSHA256WithECDSA,
+	AlgES256K:  oidASN1SignatureAlgorithmSHA256WithECDSA,
+	AlgES384:   oidASN1SignatureAlgorithmSHA384WithECDSA,
+	AlgESP384:  oidASN1SignatureAlgorithmSHA384WithECDSA,
+	AlgES512:   oidASN1SignatureAlgorithmSHA512WithECDSA,
+	AlgESP512:  oidASN1SignatureAlgorithmSHA512WithECDSA,
+	AlgEdDSA:   oidASN1SignatureAlgorithmEd25519,
+	AlgEd25519: oidASN1SignatureAlgorithmEd25519,
+}
+
+// The ASN.1 object identifiers of the signature algorithms the modelled COSE algorithms name. The RSA identifiers are
+// from RFC8017 Appendix A, the ECDSA identifiers from RFC5758 §3.2, and the Ed25519 identifier from RFC8410 §3.
+var (
+	oidASN1SignatureAlgorithmSHA1WithRSA     = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 5}
+	oidASN1SignatureAlgorithmRSAPSS          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 10}
+	oidASN1SignatureAlgorithmSHA256WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 11}
+	oidASN1SignatureAlgorithmSHA384WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 12}
+	oidASN1SignatureAlgorithmSHA512WithRSA   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 13}
+	oidASN1SignatureAlgorithmSHA256WithECDSA = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 2}
+	oidASN1SignatureAlgorithmSHA384WithECDSA = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
+	oidASN1SignatureAlgorithmSHA512WithECDSA = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
+	oidASN1SignatureAlgorithmEd25519         = asn1.ObjectIdentifier{1, 3, 101, 112}
+)
 
 // COSESignatureAlgorithmDetail describes the primitives a COSE signature algorithm composes.
 //
