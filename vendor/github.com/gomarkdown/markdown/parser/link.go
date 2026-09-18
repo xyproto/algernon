@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 type linkType int
@@ -22,6 +23,25 @@ func isReferenceStyleLink(data []byte, pos int, t linkType) bool {
 		return false
 	}
 	return pos < len(data)-1 && data[pos] == '[' && data[pos+1] != '^'
+}
+
+func referenceID(data []byte, end int, multiline, trimFootnoteMarker bool) []byte {
+	if !multiline {
+		start := 1
+		if trimFootnoteMarker {
+			start++
+		}
+		return data[start:end]
+	}
+	var id bytes.Buffer
+	for i := 1; i < end; i++ {
+		if data[i] != '\n' {
+			id.WriteByte(data[i])
+		} else if data[i-1] != ' ' {
+			id.WriteByte(' ')
+		}
+	}
+	return id.Bytes()
 }
 
 func link(p *Parser, data []byte, offset int) (int, ast.Node) {
@@ -92,110 +112,11 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	// inline style link
 	switch {
 	case i < len(data) && data[i] == '(':
-		// skip initial whitespace
-		i++
-
-		i = skipSpace(data, i)
-
-		linkB := i
-		brace := 0
-
-		var c byte
-		// look for link end: ' " )
-	findlinkend:
-		for i < len(data) {
-			c = data[i]
-			switch {
-			case c == '\\':
-				i += 2
-
-			case c == '(':
-				brace++
-				i++
-
-			case c == ')':
-				if brace <= 0 {
-					break findlinkend
-				}
-				brace--
-				i++
-
-			case brace == 0 && (c == '\'' || c == '"') && i > linkB && IsSpace(data[i-1]):
-				break findlinkend
-
-			default:
-				i++
-			}
-		}
-
-		if i >= len(data) {
+		var ok bool
+		i, link, title, ok = parseInlineLink(data, i)
+		if !ok {
 			return 0, nil
 		}
-		linkE := i
-
-		// look for title end if present
-		titleB, titleE := 0, 0
-		if data[i] == '\'' || data[i] == '"' {
-			i++
-			titleB = i
-			titleEndCharFound := false
-
-		findtitleend:
-			for i < len(data) {
-				c = data[i]
-				switch {
-				case c == '\\':
-					i++
-
-				case c == data[titleB-1]: // matching title delimiter
-					titleEndCharFound = true
-
-				case titleEndCharFound && c == ')':
-					break findtitleend
-				}
-				i++
-			}
-
-			if i >= len(data) {
-				return 0, nil
-			}
-
-			// skip whitespace after title
-			titleE = i - 1
-			for titleE > titleB && IsSpace(data[titleE]) {
-				titleE--
-			}
-
-			// check for closing quote presence
-			if data[titleE] != '\'' && data[titleE] != '"' {
-				titleB, titleE = 0, 0
-				linkE = i
-			}
-		}
-
-		// remove whitespace at the end of the link
-		for linkE > linkB && IsSpace(data[linkE-1]) {
-			linkE--
-		}
-
-		// remove optional angle brackets around the link
-		if data[linkB] == '<' {
-			linkB++
-		}
-		if data[linkE-1] == '>' {
-			linkE--
-		}
-
-		// build escaped link and title
-		if linkE > linkB {
-			link = data[linkB:linkE]
-		}
-
-		if titleE > titleB {
-			title = data[titleB:titleE]
-		}
-
-		i++
 
 	// reference style link
 	case isReferenceStyleLink(data, i, t):
@@ -214,21 +135,8 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 		// find the reference
 		if linkB == linkE {
-			if textHasNl {
-				var b bytes.Buffer
-
-				for j := 1; j < txtE; j++ {
-					switch {
-					case data[j] != '\n':
-						b.WriteByte(data[j])
-					case data[j-1] != ' ':
-						b.WriteByte(' ')
-					}
-				}
-
-				id = b.Bytes()
-			} else {
-				id = data[1:txtE]
+			id = referenceID(data, txtE, textHasNl, false)
+			if !textHasNl {
 				altContentConsidered = true
 			}
 		} else {
@@ -252,50 +160,29 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 	// shortcut reference style link or reference or inline footnote
 	default:
-		var id []byte
+		id := referenceID(data, txtE, textHasNl, t == linkDeferredFootnote)
 
-		// craft the id
-		if textHasNl {
-			var b bytes.Buffer
-
-			for j := 1; j < txtE; j++ {
-				switch {
-				case data[j] != '\n':
-					b.WriteByte(data[j])
-				case data[j-1] != ' ':
-					b.WriteByte(' ')
-				}
-			}
-
-			id = b.Bytes()
-		} else {
-			if t == linkDeferredFootnote {
-				id = data[2:txtE] // get rid of the ^
-			} else {
-				id = data[1:txtE]
-			}
+		if t == linkInlineFootnote || t == linkDeferredFootnote {
+			footnoteNode = &ast.ListItem{}
 		}
-
-		footnoteNode = &ast.ListItem{}
 		if t == linkInlineFootnote {
 			// create a new reference
 			noteID = len(p.notes) + 1
 
 			var fragment []byte
 			if len(id) > 0 {
-				if len(id) < 16 {
-					fragment = make([]byte, len(id))
-				} else {
-					fragment = make([]byte, 16)
+				length := len(id)
+				if length > 16 {
+					length = 16
 				}
-				copy(fragment, slugify(id))
+				fragment = make([]byte, length)
+				copy(fragment, textutil.Slugify(id))
 			} else {
 				fragment = append([]byte("footnote-"), []byte(strconv.Itoa(noteID))...)
 			}
 
 			ref := &reference{
 				noteID:   noteID,
-				hasBlock: false,
 				link:     fragment,
 				title:    id,
 				footnote: footnoteNode,
@@ -345,16 +232,8 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	}
 
 	var uLink []byte
-	if t == linkNormal || t == linkImg {
-		if len(link) > 0 {
-			var uLinkBuf bytes.Buffer
-			unescapeText(&uLinkBuf, link)
-			uLink = uLinkBuf.Bytes()
-		}
-
-		// links need something to click on and somewhere to go
-		// [](http://bla) is legal in CommonMark, so allow txtE <=1 for linkNormal
-		// [bla]() is also legal in CommonMark, so allow empty uLink
+	if (t == linkNormal || t == linkImg) && len(link) > 0 {
+		uLink = unescapeBytes(link)
 	}
 
 	var inlineAttr *ast.Attribute
@@ -369,7 +248,7 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	switch t {
 	case linkNormal:
 		link := &ast.Link{
-			Destination: normalizeURI(uLink),
+			Destination: uLink,
 			Title:       title,
 			DeferredID:  linkID,
 		}
@@ -413,41 +292,4 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	default:
 		return 0, nil
 	}
-}
-
-func normalizeURI(s []byte) []byte {
-	return s // TODO: implement
-}
-
-func slugify(in []byte) []byte {
-	if len(in) == 0 {
-		return in
-	}
-	out := make([]byte, 0, len(in))
-	sym := false
-
-	for _, ch := range in {
-		if IsAlnum(ch) {
-			sym = false
-			out = append(out, ch)
-		} else if sym {
-			continue
-		} else {
-			out = append(out, '-')
-			sym = true
-		}
-	}
-	var a, b int
-	var ch byte
-	for a, ch = range out {
-		if ch != '-' {
-			break
-		}
-	}
-	for b = len(out) - 1; b > 0; b-- {
-		if out[b] != '-' {
-			break
-		}
-	}
-	return out[a : b+1]
 }

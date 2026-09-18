@@ -8,14 +8,14 @@ require (
 	github.com/ddliu/go-httpclient v0.7.1
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/evanw/esbuild v0.28.2
 	github.com/felixge/fgtrace v0.2.0
 	github.com/flosch/pongo2/v6 v6.1.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-webauthn/webauthn v0.18.1
-	github.com/gomarkdown/markdown v0.0.0-20260907091611-16791ada75cf
+	github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05
 	github.com/lib/pq v1.12.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -58,7 +58,7 @@ require (
 
 require (
 	github.com/dlclark/regexp2/v2 v2.8.0 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v5 v5.0.35304 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v6 v6.2.35304 // indirect
 )
 
 require (
@@ -70,7 +70,7 @@ require (
 	github.com/caddyserver/zerossl v0.1.5 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/go-mysql-org/go-mysql v1.16.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/go-webauthn/x v0.3.1 // indirect
@@ -88,13 +88,13 @@ require (
 	github.com/mholt/acmez/v3 v3.1.6 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/ncruces/go-sqlite3 v0.35.4
+	github.com/ncruces/go-sqlite3 v0.35.5
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260911144649-419f965c678d // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260918060201-dc52119f4a54 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
@@ -110,7 +110,7 @@ require (
 	github.com/xyproto/symwalk v1.2.0 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
+	go.uber.org/atomic v1.12.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0
 	go.uber.org/zap/exp v0.3.0 // indirect

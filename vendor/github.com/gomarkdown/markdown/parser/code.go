@@ -8,35 +8,19 @@ import (
 )
 
 func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker string) {
-	i, size := 0, 0
-
-	n := len(data)
-	// skip up to three spaces
-	for i < n && i < 3 && data[i] == ' ' {
-		i++
-	}
-
-	// check for the marker characters: ~ or `
-	if i >= n {
-		return 0, ""
-	}
-	if data[i] != '~' && data[i] != '`' {
+	i := skipCharN(data, 0, ' ', 3)
+	if i >= len(data) || data[i] != '~' && data[i] != '`' {
 		return 0, ""
 	}
 
 	c := data[i]
-
-	// the whole line must be the same char or whitespace
-	for i < n && data[i] == c {
-		size++
-		i++
-	}
-
-	// the marker char must occur at least 3 times
+	start := i
+	i = skipChar(data, i, c)
+	size := i - start
 	if size < 3 {
 		return 0, ""
 	}
-	marker = string(data[i-size : i])
+	marker = string(data[start:i])
 
 	// if this is the end marker, it must match the beginning marker
 	if oldmarker != "" && marker != oldmarker {
@@ -46,11 +30,8 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 	// if just read the beginning marker, read the syntax
 	if oldmarker == "" {
 		i = skipChar(data, i, ' ')
-		if i >= n {
-			if i == n {
-				return i, marker
-			}
-			return 0, ""
+		if i >= len(data) {
+			return i, marker
 		}
 
 		syntaxStart, syntaxLen := syntaxRange(data, &i)
@@ -65,10 +46,10 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 	}
 
 	i = skipChar(data, i, ' ')
-	if i >= n || data[i] != '\n' {
-		if i == n {
-			return i, marker
-		}
+	if i >= len(data) {
+		return i, marker
+	}
+	if data[i] != '\n' {
 		return 0, ""
 	}
 	return i + 1, marker // Take newline into account.
@@ -126,8 +107,6 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 	}
 
 	var work bytes.Buffer
-	work.WriteString(syntax)
-	work.WriteByte('\n')
 
 	for {
 		// check for the end of the code block
@@ -154,39 +133,27 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 		return beg
 	}
 	codeBlock := &ast.CodeBlock{
+		Leaf:     ast.Leaf{Literal: work.Bytes()},
 		IsFenced: true,
-	}
-	codeBlock.Content = work.Bytes() // TODO: get rid of temp buffer
-
-	if p.extensions&Mmark == 0 {
-		p.AddBlock(codeBlock)
-		finalizeCodeBlock(codeBlock)
-		return beg
+		Info:     unescapeString([]byte(syntax)),
 	}
 
-	// Check for caption and if found make it a figure.
-	if captionContent, id, consumed := p.caption(data[beg:], []byte(captionFigure)); consumed > 0 {
-		figure := &ast.CaptionFigure{}
-		caption := &ast.Caption{}
-		figure.HeadingID = id
-		p.Inline(caption, captionContent)
+	if p.extensions&Mmark != 0 {
+		if captionContent, id, consumed := parseCaption(data[beg:], []byte(captionFigure)); consumed > 0 {
+			figure := &ast.CaptionFigure{HeadingID: id}
+			caption := &ast.Caption{}
+			p.Inline(caption, captionContent)
 
-		p.AddBlock(figure)
-		codeBlock.AsLeaf().Attribute = figure.AsContainer().Attribute
-		p.addChild(codeBlock)
-		finalizeCodeBlock(codeBlock)
-		p.addChild(caption)
-		p.Finalize(figure)
-
-		beg += consumed
-
-		return beg
+			p.AddBlock(figure)
+			codeBlock.Attribute = figure.Attribute
+			p.addChild(codeBlock)
+			p.addChild(caption)
+			p.Finalize(figure)
+			return beg + consumed
+		}
 	}
 
-	// Still here, normal block
 	p.AddBlock(codeBlock)
-	finalizeCodeBlock(codeBlock)
-
 	return beg
 }
 
@@ -249,33 +216,24 @@ func findEntityEnd(str []byte, start int) int {
 		if i >= len(str) {
 			return 0
 		}
-		if str[i] == 'x' || str[i] == 'X' {
+		hex := str[i] == 'x' || str[i] == 'X'
+		if hex {
 			i++
-			digits := 0
-			for i < len(str) && digits < 8 && isHexDigit(str[i]) {
-				i++
-				digits++
-			}
-			if digits == 0 || i >= len(str) || str[i] != ';' {
-				return 0
-			}
-			return i + 1
 		}
-		digits := 0
-		for i < len(str) && digits < 8 && str[i] >= '0' && str[i] <= '9' {
+		digitStart := i
+		for i < len(str) && i-digitStart < 8 && (str[i] >= '0' && str[i] <= '9' || hex && isHexDigit(str[i])) {
 			i++
-			digits++
 		}
-		if digits == 0 || i >= len(str) || str[i] != ';' {
+		if i == digitStart || i >= len(str) || str[i] != ';' {
 			return 0
 		}
 		return i + 1
 	}
-	if !isAlpha(str[i]) {
+	if !IsLetter(str[i]) {
 		return 0
 	}
 	i++
-	for i < len(str) && i-start <= 32 && isAlnum(str[i]) {
+	for i < len(str) && i-start <= 32 && IsAlnum(str[i]) {
 		i++
 	}
 	if i >= len(str) || str[i] != ';' {
@@ -284,33 +242,11 @@ func findEntityEnd(str []byte, start int) int {
 	return i + 1
 }
 
-func isAlpha(c byte) bool {
-	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
-}
-
-func isAlnum(c byte) bool {
-	return isAlpha(c) || c >= '0' && c <= '9'
-}
-
 func isHexDigit(c byte) bool {
 	return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
 }
 
-func finalizeCodeBlock(code *ast.CodeBlock) {
-	c := code.Content
-	if code.IsFenced {
-		newlinePos := bytes.IndexByte(c, '\n')
-		firstLine := c[:newlinePos]
-		rest := c[newlinePos+1:]
-		code.Info = unescapeString(bytes.Trim(firstLine, "\n"))
-		code.Literal = rest
-	} else {
-		code.Literal = c
-	}
-	code.Content = nil
-}
-
-func (p *Parser) codePrefix(data []byte) int {
+func codePrefix(data []byte) int {
 	n := len(data)
 	if n >= 1 && data[0] == '\t' {
 		return 1
@@ -332,7 +268,7 @@ func (p *Parser) code(data []byte) int {
 		i = skipCharN(data, i, '\n', 1)
 
 		blankline := IsEmpty(data[beg:i]) > 0
-		if pre := p.codePrefix(data[beg:i]); pre > 0 {
+		if pre := codePrefix(data[beg:i]); pre > 0 {
 			beg += pre
 		} else if !blankline {
 			// non-empty, non-prefixed line breaks the pre
@@ -359,16 +295,8 @@ func (p *Parser) code(data []byte) int {
 
 	work.WriteByte('\n')
 
-	codeBlock := &ast.CodeBlock{
-		IsFenced: false,
-	}
-	// TODO: get rid of temp buffer
-	codeBlock.Content = work.Bytes()
+	codeBlock := &ast.CodeBlock{Leaf: ast.Leaf{Literal: work.Bytes()}}
 	p.AddBlock(codeBlock)
-	finalizeCodeBlock(codeBlock)
 
 	return i
 }
-
-// returns unordered list item prefix
-// blockMath handle block surround with $$

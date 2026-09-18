@@ -25,7 +25,7 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 	}
 	if requireEOL {
 		end := skipUntilChar(data, 1, '\n')
-		if end == 0 || data[end-1] != '}' {
+		if data[end-1] != '}' {
 			return nil, 0
 		}
 	}
@@ -42,8 +42,6 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 	esc := false
 	quote := false
 	trail := i - 1
-	found := false
-Loop:
 	for ; i < len(data); i++ {
 		switch data[i] {
 		case '\n', '\r':
@@ -53,11 +51,7 @@ Loop:
 				continue
 			}
 			chunk := data[trail+1 : i]
-			if len(chunk) == 0 {
-				trail = i
-				continue
-			}
-			if !addAttrChunk(b, chunk) {
+			if len(chunk) > 0 && !addAttrChunk(b, chunk) {
 				return nil, 0
 			}
 			trail = i
@@ -79,16 +73,12 @@ Loop:
 				return nil, 0
 			}
 			i++
-			found = true
-			break Loop
+			return b, i
 		default:
 			esc = false
 		}
 	}
-	if !found {
-		return nil, 0
-	}
-	return b, i
+	return nil, 0
 }
 
 func addAttrChunk(b *ast.Attribute, chunk []byte) bool {
@@ -140,28 +130,6 @@ func applyAttribute(n ast.Node, attr *ast.Attribute) {
 	}
 }
 
-// promoteParagraphImageAttrs moves block attributes from a paragraph onto
-// the image it wraps. `{align="left"}\n![x](y)` would otherwise put the
-// attributes on the <p> instead of the <img> (issue #278).
-func promoteParagraphImageAttrs(doc ast.Node) {
-	ast.WalkFunc(doc, func(node ast.Node, entering bool) ast.WalkStatus {
-		if !entering {
-			return ast.GoToNext
-		}
-		para, ok := node.(*ast.Paragraph)
-		if !ok || para.Attribute == nil {
-			return ast.GoToNext
-		}
-		img := firstImageChild(para)
-		if img == nil {
-			return ast.GoToNext
-		}
-		applyAttribute(img, para.Attribute)
-		para.Attribute = nil
-		return ast.GoToNext
-	})
-}
-
 // applyAfterBlockAttribute parses a kramdown-style IAL on the line after
 // a block (`{: key="value"}`) and merges it onto the preceding block.
 // `{#id}` without a colon is left for prefix attributes so existing
@@ -171,36 +139,37 @@ func (p *Parser) applyAfterBlockAttribute(data []byte) int {
 	if prev == nil {
 		return 0
 	}
+	attr, consumed := parseAfterBlockAttribute(data)
+	if consumed == 0 {
+		return 0
+	}
+	applyAttribute(prev, attr)
+	return consumed
+}
+
+func parseAfterBlockAttribute(data []byte) (*ast.Attribute, int) {
 	i := 0
-	if i < len(data) && data[i] == '\n' {
+	if len(data) > 0 && data[0] == '\n' {
 		i++
 	}
 	i = skipCharN(data, i, ' ', 3)
-	if i >= len(data) || data[i] != '{' {
-		return 0
-	}
-	if i+1 >= len(data) || data[i+1] != ':' {
-		return 0
+	if i+1 >= len(data) || data[i] != '{' || data[i+1] != ':' {
+		return nil, 0
 	}
 	attr, n := parseAttributeList(data[i:], true)
 	if n == 0 {
-		return 0
+		return nil, 0
 	}
-	j := i + n
-	if j < len(data) && data[j] == '\n' {
-		j++
+	consumed := i + n
+	if consumed < len(data) && data[consumed] == '\n' {
+		consumed++
 	}
-	applyAttribute(prev, attr)
-	return j
+	return attr, consumed
 }
 
 func isAfterBlockIAL(data []byte) bool {
-	i := skipCharN(data, 0, ' ', 3)
-	if i+1 >= len(data) || data[i] != '{' || data[i+1] != ':' {
-		return false
-	}
-	_, n := parseAttributeList(data[i:], true)
-	return n > 0
+	_, consumed := parseAfterBlockAttribute(data)
+	return consumed > 0
 }
 
 func (p *Parser) lastBlock() ast.Node {
@@ -209,41 +178,20 @@ func (p *Parser) lastBlock() ast.Node {
 		return nil
 	}
 	if _, ok := n.(*ast.Document); ok {
-		ch := n.GetChildren()
-		if len(ch) == 0 {
-			return nil
-		}
-		return ch[len(ch)-1]
+		return ast.GetLastChild(n)
 	}
 	return n
 }
 
-func firstImageChild(n ast.Node) *ast.Image {
-	for _, c := range n.GetChildren() {
-		if t, ok := c.(*ast.Text); ok && len(bytes.TrimSpace(t.Literal)) == 0 {
-			continue
-		}
-		if img, ok := c.(*ast.Image); ok {
-			return img
-		}
-		return nil
-	}
-	return nil
-}
-
 // key="value" quotes are mandatory.
 func keyValue(data []byte) ([]byte, []byte) {
-	chunk := bytes.SplitN(data, []byte{'='}, 2)
-	if len(chunk) != 2 {
+	separator := bytes.IndexByte(data, '=')
+	if separator <= 0 {
 		return nil, nil
 	}
-	key := chunk[0]
-	value := chunk[1]
+	key, value := data[:separator], data[separator+1:]
 
-	if len(value) < 3 || len(key) == 0 {
-		return nil, nil
-	}
-	if value[0] != '"' || value[len(value)-1] != '"' {
+	if len(value) < 3 || value[0] != '"' || value[len(value)-1] != '"' {
 		return key, nil
 	}
 	return key, value[1 : len(value)-1]

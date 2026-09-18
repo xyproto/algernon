@@ -32,7 +32,9 @@ func (t *bracketTable) ensure() {
 	}
 	stack := make([]int, 0, 16)
 	for i := 0; i < n; i++ {
-		if i > 0 && t.data[i-1] == '\\' {
+		// an odd run of backslashes escapes the bracket; an even run is
+		// escaped backslashes and leaves the bracket live
+		if isEscape(t.data, i) {
 			continue
 		}
 		switch t.data[i] {

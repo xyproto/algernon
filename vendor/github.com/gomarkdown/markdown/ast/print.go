@@ -30,7 +30,7 @@ func PrintWithPrefix(w io.Writer, doc Node, prefix string) {
 	}
 }
 
-// ToString is like Dump but returns result as a string
+// ToString is like Print but returns the result as a string.
 func ToString(doc Node) string {
 	var buf bytes.Buffer
 	Print(&buf, doc)
@@ -41,10 +41,7 @@ func contentToString(d1 []byte, d2 []byte) string {
 	if d1 != nil {
 		return string(d1)
 	}
-	if d2 != nil {
-		return string(d2)
-	}
-	return ""
+	return string(d2)
 }
 
 func getContent(node Node) string {
@@ -84,35 +81,45 @@ func getNodeType(node Node) string {
 
 func printDefault(w io.Writer, indent string, typeName string, content string) {
 	content = strings.TrimSpace(content)
-	if len(content) > 0 {
+	if content != "" {
 		fmt.Fprintf(w, "%s%s '%s'\n", indent, typeName, content)
 	} else {
 		fmt.Fprintf(w, "%s%s\n", indent, typeName)
 	}
 }
 
-func getListFlags(f ListType) string {
-	var s string
-	if f&ListTypeOrdered != 0 {
-		s += "ordered "
+var listFlagNames = []struct {
+	flag ListType
+	name string
+}{
+	{ListTypeOrdered, "ordered"},
+	{ListTypeDefinition, "definition"},
+	{ListTypeTerm, "term"},
+	{ListItemContainsBlock, "has_block"},
+	{ListItemBeginningOfList, "start"},
+	{ListItemEndOfList, "end"},
+}
+
+func listDetails(content string, flags ListType, start int, tight, footnotes bool) string {
+	if start > 1 {
+		content += fmt.Sprintf("start=%d ", start)
 	}
-	if f&ListTypeDefinition != 0 {
-		s += "definition "
+	if tight {
+		content += "tight "
 	}
-	if f&ListTypeTerm != 0 {
-		s += "term "
+	if footnotes {
+		content += "footnotes "
 	}
-	if f&ListItemContainsBlock != 0 {
-		s += "has_block "
+	var names []string
+	for _, entry := range listFlagNames {
+		if flags&entry.flag != 0 {
+			names = append(names, entry.name)
+		}
 	}
-	if f&ListItemBeginningOfList != 0 {
-		s += "start "
+	if len(names) > 0 {
+		content += "flags=" + strings.Join(names, " ") + " "
 	}
-	if f&ListItemEndOfList != 0 {
-		s += "end "
-	}
-	s = strings.TrimSpace(s)
-	return s
+	return content
 }
 
 func printRecur(w io.Writer, node Node, prefix string, depth int) {
@@ -131,34 +138,13 @@ func printRecur(w io.Writer, node Node, prefix string, depth int) {
 		content := "url=" + string(v.Destination)
 		printDefault(w, indent, typeName, content)
 	case *List:
-		if v.Start > 1 {
-			content += fmt.Sprintf("start=%d ", v.Start)
-		}
-		if v.Tight {
-			content += "tight "
-		}
-		if v.IsFootnotesList {
-			content += "footnotes "
-		}
-		flags := getListFlags(v.ListFlags)
-		if len(flags) > 0 {
-			content += "flags=" + flags + " "
-		}
+		content = listDetails(content, v.ListFlags, v.Start, v.Tight, v.IsFootnotesList)
 		printDefault(w, indent, typeName, content)
 	case *ListItem:
-		if v.Tight {
-			content += "tight "
-		}
-		if v.IsFootnotesList {
-			content += "footnotes "
-		}
-		flags := getListFlags(v.ListFlags)
-		if len(flags) > 0 {
-			content += "flags=" + flags + " "
-		}
+		content = listDetails(content, v.ListFlags, 0, v.Tight, v.IsFootnotesList)
 		printDefault(w, indent, typeName, content)
 	case *CodeBlock:
-		printDefault(w, indent, typeName + ":" + string(v.Info), content)
+		printDefault(w, indent, typeName+":"+string(v.Info), content)
 	default:
 		printDefault(w, indent, typeName, content)
 	}

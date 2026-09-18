@@ -6,7 +6,7 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 )
 
-func (p *Parser) uliPrefix(data []byte) int {
+func uliPrefix(data []byte) int {
 	// start with up to 3 spaces
 	i := skipCharN(data, 0, ' ', 3)
 
@@ -22,7 +22,7 @@ func (p *Parser) uliPrefix(data []byte) int {
 }
 
 // returns ordered list item prefix
-func (p *Parser) oliPrefix(data []byte) int {
+func oliPrefix(data []byte) int {
 	// start with up to 3 spaces
 	i := skipCharN(data, 0, ' ', 3)
 
@@ -43,7 +43,7 @@ func (p *Parser) oliPrefix(data []byte) int {
 }
 
 // returns definition list item prefix
-func (p *Parser) dliPrefix(data []byte) int {
+func dliPrefix(data []byte) int {
 	if len(data) < 2 {
 		return 0
 	}
@@ -51,6 +51,17 @@ func (p *Parser) dliPrefix(data []byte) int {
 		return 0
 	}
 	return 2
+}
+
+func listIndent(data []byte, max int) (width, bytes int) {
+	if len(data) > 0 && data[0] == '\t' {
+		return 4, 1
+	}
+	for bytes < len(data) && width < max && data[bytes] == ' ' {
+		width++
+		bytes++
+	}
+	return
 }
 
 // parse ordered or unordered list block
@@ -78,86 +89,51 @@ func (p *Parser) list(data []byte, flags ast.ListType, start int, delim byte) in
 	}
 
 	above := block.GetParent()
-	finalizeList(list)
 	p.tip = above
 	return i
 }
 
 // Returns true if the list item is not the same type as its parent list
-func (p *Parser) listTypeChanged(data []byte, flags *ast.ListType) bool {
-	if p.dliPrefix(data) > 0 && *flags&ast.ListTypeDefinition == 0 {
-		return true
-	} else if p.oliPrefix(data) > 0 && *flags&ast.ListTypeOrdered == 0 {
-		return true
-	} else if p.uliPrefix(data) > 0 && (*flags&ast.ListTypeOrdered != 0 || *flags&ast.ListTypeDefinition != 0) {
-		return true
-	}
-	return false
+func listTypeChanged(data []byte, flags ast.ListType) bool {
+	return dliPrefix(data) > 0 && flags&ast.ListTypeDefinition == 0 ||
+		oliPrefix(data) > 0 && flags&ast.ListTypeOrdered == 0 ||
+		uliPrefix(data) > 0 && flags&(ast.ListTypeOrdered|ast.ListTypeDefinition) != 0
 }
 
-// Returns true if block ends with a blank line, descending if needed
-// into lists and sublists.
-func endsWithBlankLine(block ast.Node) bool {
-	// TODO: figure this out. Always false now.
-	for block != nil {
-		//if block.lastLineBlank {
-		//return true
-		//}
-		switch block.(type) {
-		case *ast.List, *ast.ListItem:
-			block = ast.GetLastChild(block)
-		default:
-			return false
+// trackListFence updates marker and reports whether this line belongs to an
+// indented fence or starts an unindented fence that ends the list.
+func trackListFence(line []byte, indent int, marker *string) (verbatim, endList bool) {
+	if *marker != "" && indent > 0 {
+		if _, closing := isFenceLine(line, nil, *marker); closing != "" {
+			*marker = ""
 		}
+		return true, false
 	}
-	return false
-}
-
-func finalizeList(list *ast.List) {
-	items := list.GetChildren()
-	lastItemIdx := len(items) - 1
-	for i, item := range items {
-		isLastItem := i == lastItemIdx
-		// check for non-final list item ending with blank line:
-		if !isLastItem && endsWithBlankLine(item) {
-			list.Tight = false
-			break
-		}
-		// recurse into children of list item, to see if there are spaces
-		// between any of them:
-		subItems := item.GetChildren()
-		lastSubItemIdx := len(subItems) - 1
-		for j, subItem := range subItems {
-			isLastSubItem := j == lastSubItemIdx
-			if (!isLastItem || !isLastSubItem) && endsWithBlankLine(subItem) {
-				list.Tight = false
-				break
-			}
-		}
+	*marker = ""
+	_, opening := isFenceLine(line, nil, "")
+	if opening == "" {
+		return false, false
 	}
+	if indent == 0 {
+		return false, true
+	}
+	*marker = opening
+	return false, false
 }
 
 // Parse a single list item.
 // Assumes initial prefix is already removed if this is a sublist.
 func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 	isDefinitionList := *flags&ast.ListTypeDefinition != 0
-	// keep track of the indentation of the first line
-	itemIndent := 0
-	if data[0] == '\t' {
-		itemIndent += 4
-	} else {
-		for itemIndent < 3 && data[itemIndent] == ' ' {
-			itemIndent++
-		}
-	}
+	itemIndent, _ := listIndent(data, 3)
 
 	var (
 		bulletChar byte = '*'
 		delimiter  byte = '.'
 	)
-	i := p.uliPrefix(data)
+	i := uliPrefix(data)
 	if i == 0 {
-		i = p.oliPrefix(data)
+		i = oliPrefix(data)
 		if i > 0 {
 			delimiter = data[i-2]
 		}
@@ -165,7 +141,7 @@ func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 		bulletChar = data[i-2]
 	}
 	if i == 0 {
-		i = p.dliPrefix(data)
+		i = dliPrefix(data)
 		// reset definition term flag
 		if i > 0 {
 			*flags &= ^ast.ListTypeTerm
@@ -221,78 +197,35 @@ gatherlines:
 		}
 
 		// calculate the indentation
-		indent := 0
-		indentIndex := 0
-		if data[line] == '\t' {
-			indentIndex++
-			indent += 4
-		} else {
-			for indent < 4 && line+indent < i && data[line+indent] == ' ' {
-				indent++
-				indentIndex++
-			}
-		}
+		indent, indentIndex := listIndent(data[line:i], 4)
 
 		chunk := data[line+indentIndex : i]
 
-		// track fenced code blocks inside list items;
-		// only track fences that are indented (part of the list item content),
-		// a fence at indent 0 ends the list (handled below)
 		if !isDefinitionList && p.extensions&FencedCode != 0 {
-			if fenceMarker != "" {
-				if indent == 0 {
-					// non-indented line while inside a fence means we
-					// left the list item content -- abandon the fence
-					fenceMarker = ""
-				} else {
-					// inside a fence: check for closing fence
-					_, marker := isFenceLine(chunk, nil, fenceMarker)
-					if marker != "" {
-						fenceMarker = ""
-					}
-					// gather the line verbatim, skip structure detection
-					if containsBlankLine {
-						containsBlankLine = false
-						raw.WriteByte('\n')
-					}
-					raw.Write(chunk)
-					line = i
-					continue
-				}
-			} else if indent > 0 {
-				// not inside a fence: check for opening fence (indented only)
-				_, marker := isFenceLine(chunk, nil, "")
-				if marker != "" {
-					fenceMarker = marker
-				}
-			}
-		}
-
-		// If there is a fence line (marking starting of a code block)
-		// without indent do not process it as part of the list.
-		//
-		// does not apply for definition lists because it causes infinite
-		// loop if text before defintion term is fenced code block start
-		// marker but not part of actual fenced code block
-		// for defnition lists we're called after parsing fence code blocks
-		// so we kno this cannot be a fenced block
-		// https://github.com/gomarkdown/markdown/issues/326
-		if !isDefinitionList && p.extensions&FencedCode != 0 {
-			fenceLineEnd, _ := isFenceLine(chunk, nil, "")
-			if fenceLineEnd > 0 && indent == 0 {
+			verbatim, endList := trackListFence(chunk, indent, &fenceMarker)
+			if endList {
 				*flags |= ast.ListItemEndOfList
 				break gatherlines
+			}
+			if verbatim {
+				if containsBlankLine {
+					containsBlankLine = false
+					raw.WriteByte('\n')
+				}
+				raw.Write(chunk)
+				line = i
+				continue
 			}
 		}
 
 		// evaluate how this line fits in
 		switch {
 		// is this a nested list item?
-		case (p.uliPrefix(chunk) > 0 && !isHRule(chunk)) || p.oliPrefix(chunk) > 0 || p.dliPrefix(chunk) > 0:
+		case (uliPrefix(chunk) > 0 && !isHRule(chunk)) || oliPrefix(chunk) > 0 || dliPrefix(chunk) > 0:
 
 			// if indent is 4 or more spaces on unordered or ordered lists
 			// we need to add leadingWhiteSpaces + 1 spaces in the beginning of the chunk
-			if indentIndex >= 4 && p.dliPrefix(chunk) <= 0 {
+			if indentIndex >= 4 && dliPrefix(chunk) <= 0 {
 				leadingWhiteSpaces := skipChar(chunk, 0, ' ')
 				chunk = data[line+indentIndex-(leadingWhiteSpaces+1) : i]
 			}
@@ -301,7 +234,7 @@ gatherlines:
 			// if not, it is either a different kind of list
 			// or the next item in the same list
 			if indent <= itemIndent {
-				if p.listTypeChanged(chunk, flags) {
+				if listTypeChanged(chunk, *flags) {
 					*flags |= ast.ListItemEndOfList
 				} else if containsBlankLine {
 					*flags |= ast.ListItemContainsBlock
@@ -319,7 +252,7 @@ gatherlines:
 				sublist = raw.Len()
 				// in the case of dliPrefix we are too late and need to search back for the definition item, which
 				// should be on the previous line, we then adjust sublist to start there.
-				if p.dliPrefix(chunk) > 0 {
+				if dliPrefix(chunk) > 0 {
 					sublist = backUntilChar(raw.Bytes(), raw.Len()-1, '\n')
 				}
 			}
@@ -334,7 +267,7 @@ gatherlines:
 			}
 			*flags |= ast.ListItemContainsBlock
 
-		case p.quotePrefix(chunk) > 0 && indent < 4:
+		case quotePrefix(chunk) > 0 && indent < 4:
 			*flags |= ast.ListItemEndOfList
 			break gatherlines
 
@@ -376,10 +309,13 @@ gatherlines:
 	}
 
 	rawBytes := raw.Bytes()
+	itemEnd := len(rawBytes)
+	if sublist > 0 {
+		itemEnd = sublist
+	}
 
 	listItem := &ast.ListItem{
 		ListFlags:  *flags,
-		Tight:      false,
 		BulletChar: bulletChar,
 		Delimiter:  delimiter,
 	}
@@ -387,27 +323,13 @@ gatherlines:
 
 	// render the contents of the list item
 	if *flags&ast.ListItemContainsBlock != 0 && *flags&ast.ListTypeTerm == 0 {
-		// intermediate render of block item, except for definition term
-		if sublist > 0 {
-			p.Block(rawBytes[:sublist])
-			p.Block(rawBytes[sublist:])
-		} else {
-			p.Block(rawBytes)
-		}
+		p.Block(rawBytes[:itemEnd])
 	} else {
-		// intermediate render of inline item
-		para := &ast.Paragraph{}
-		if sublist > 0 {
-			para.Content = rawBytes[:sublist]
-		} else {
-			para.Content = rawBytes
-		}
+		para := &ast.Paragraph{Container: ast.Container{Content: rawBytes[:itemEnd]}}
 		p.addChild(para)
-		if sublist > 0 {
-			p.Block(rawBytes[sublist:])
-		}
+	}
+	if sublist > 0 {
+		p.Block(rawBytes[sublist:])
 	}
 	return line
 }
-
-// render a single paragraph that has already been parsed out

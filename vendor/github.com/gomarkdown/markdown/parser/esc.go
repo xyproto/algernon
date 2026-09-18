@@ -1,20 +1,10 @@
 package parser
 
-// isEscape returns true if byte i is prefixed by an odd number of backslahses.
+// isEscape reports whether byte i follows an odd-length backslash run.
 func isEscape(data []byte, i int) bool {
-	if i == 0 {
-		return false
+	start := i
+	for start > 0 && data[start-1] == '\\' {
+		start--
 	}
-	if i == 1 {
-		return data[0] == '\\'
-	}
-	j := i - 1
-	for ; j >= 0; j-- {
-		if data[j] != '\\' {
-			break
-		}
-	}
-	j++
-	// odd number of backslahes means escape
-	return (i-j)%2 != 0
+	return (i-start)%2 != 0
 }

@@ -3,7 +3,7 @@ package sqlite3_wrap
 import (
 	"io"
 
-	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v5"
+	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v6"
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 )
 

@@ -5,11 +5,11 @@ import (
 )
 
 // caption checks for a caption, it returns the caption data and a potential "headingID".
-func (p *Parser) caption(data, caption []byte) ([]byte, string, int) {
-	if !bytes.HasPrefix(data, caption) {
+func parseCaption(data, prefix []byte) ([]byte, string, int) {
+	if !bytes.HasPrefix(data, prefix) {
 		return nil, "", 0
 	}
-	j := len(caption)
+	j := len(prefix)
 	data = data[j:]
 	end := LinesUntilEmpty(data)
 

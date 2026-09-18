@@ -11,7 +11,6 @@ import (
 
 var (
 	isSpace       = parser.IsSpace
-	isAlnum       = parser.IsAlnum
 	isPunctuation = parser.IsPunctuation
 )
 
@@ -22,9 +21,7 @@ type SPRenderer struct {
 	callbacks     [256]smartCallback
 }
 
-func wordBoundary(c byte) bool {
-	return c == 0 || isSpace(c) || isPunctuation(c)
-}
+func wordBoundary(c byte) bool { return c == 0 || isSpace(c) || isPunctuation(c) }
 
 func tolower(c byte) byte {
 	if c >= 'A' && c <= 'Z' {
@@ -33,65 +30,38 @@ func tolower(c byte) byte {
 	return c
 }
 
-func isdigit(c byte) bool {
-	return c >= '0' && c <= '9'
+func isdigit(c byte) bool { return c >= '0' && c <= '9' }
+
+func quoteContext(c byte) int {
+	switch {
+	case c == 0:
+		return 0
+	case isSpace(c):
+		return 1
+	case isPunctuation(c):
+		return 2
+	default:
+		return 3
+	}
 }
 
-func smartQuoteHelper(out *bytes.Buffer, previousChar byte, nextChar byte, quote byte, isOpen *bool, addNBSP bool) bool {
-	// edge of the buffer is likely to be a tag that we don't get to see,
-	// so we treat it like text sometimes
+// quoteState maps {edge, space, punctuation, text} context pairs to
+// {-1: close, 0: toggle, 1: open}.
+var quoteState = [4][4]int8{
+	{0, -1, -1, 1},
+	{1, 0, 1, 1},
+	{-1, -1, 0, 1},
+	{-1, -1, -1, -1},
+}
 
-	// enumerate all sixteen possibilities for (previousChar, nextChar)
-	// each can be one of {0, space, punct, other}
-	switch {
-	case previousChar == 0 && nextChar == 0:
-		// context is not any help here, so toggle
+func smartQuote(out *bytes.Buffer, previous, next, quote byte, isOpen *bool, addNBSP bool) {
+	switch quoteState[quoteContext(previous)][quoteContext(next)] {
+	case -1:
+		*isOpen = false
+	case 0:
 		*isOpen = !*isOpen
-	case isSpace(previousChar) && nextChar == 0:
-		// [ "] might be [ "<code>foo...]
+	case 1:
 		*isOpen = true
-	case isPunctuation(previousChar) && nextChar == 0:
-		// [!"] hmm... could be [Run!"] or [("<code>...]
-		*isOpen = false
-	case /* isnormal(previousChar) && */ nextChar == 0:
-		// [a"] is probably a close
-		*isOpen = false
-	case previousChar == 0 && isSpace(nextChar):
-		// [" ] might be [...foo</code>" ]
-		*isOpen = false
-	case isSpace(previousChar) && isSpace(nextChar):
-		// [ " ] context is not any help here, so toggle
-		*isOpen = !*isOpen
-	case isPunctuation(previousChar) && isSpace(nextChar):
-		// [!" ] is probably a close
-		*isOpen = false
-	case /* isnormal(previousChar) && */ isSpace(nextChar):
-		// [a" ] this is one of the easy cases
-		*isOpen = false
-	case previousChar == 0 && isPunctuation(nextChar):
-		// ["!] hmm... could be ["$1.95] or [</code>"!...]
-		*isOpen = false
-	case isSpace(previousChar) && isPunctuation(nextChar):
-		// [ "!] looks more like [ "$1.95]
-		*isOpen = true
-	case isPunctuation(previousChar) && isPunctuation(nextChar):
-		// [!"!] context is not any help here, so toggle
-		*isOpen = !*isOpen
-	case /* isnormal(previousChar) && */ isPunctuation(nextChar):
-		// [a"!] is probably a close
-		*isOpen = false
-	case previousChar == 0 /* && isnormal(nextChar) */ :
-		// ["a] is probably an open
-		*isOpen = true
-	case isSpace(previousChar) /* && isnormal(nextChar) */ :
-		// [ "a] this is one of the easy cases
-		*isOpen = true
-	case isPunctuation(previousChar) /* && isnormal(nextChar) */ :
-		// [!"a] is probably an open
-		*isOpen = true
-	default:
-		// [a'b] maybe a contraction?
-		*isOpen = false
 	}
 
 	// Note that with the limited lookahead, this non-breaking
@@ -113,7 +83,6 @@ func smartQuoteHelper(out *bytes.Buffer, previousChar byte, nextChar byte, quote
 		out.WriteString("&nbsp;")
 	}
 
-	return true
 }
 
 func (r *SPRenderer) smartSingleQuote(out *bytes.Buffer, previousChar byte, text []byte) int {
@@ -125,21 +94,14 @@ func (r *SPRenderer) smartSingleQuote(out *bytes.Buffer, previousChar byte, text
 			if len(text) >= 3 {
 				nextChar = text[2]
 			}
-			if smartQuoteHelper(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false) {
-				return 1
-			}
+			smartQuote(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false)
+			return 1
 		}
 
-		if (t1 == 's' || t1 == 't' || t1 == 'm' || t1 == 'd') && (len(text) < 3 || wordBoundary(text[2])) {
-			out.WriteString("&rsquo;")
-			return 0
-		}
-
-		if len(text) >= 3 {
-			t2 := tolower(text[2])
-
-			if ((t1 == 'r' && t2 == 'e') || (t1 == 'l' && t2 == 'l') || (t1 == 'v' && t2 == 'e')) &&
-				(len(text) < 4 || wordBoundary(text[3])) {
+		for _, suffix := range [...]string{"s", "t", "m", "d", "re", "ll", "ve"} {
+			end := 1 + len(suffix)
+			if len(text) >= end && bytes.EqualFold(text[1:end], []byte(suffix)) &&
+				(len(text) == end || wordBoundary(text[end])) {
 				out.WriteString("&rsquo;")
 				return 0
 			}
@@ -150,32 +112,19 @@ func (r *SPRenderer) smartSingleQuote(out *bytes.Buffer, previousChar byte, text
 	if len(text) > 1 {
 		nextChar = text[1]
 	}
-	if smartQuoteHelper(out, previousChar, nextChar, 's', &r.inSingleQuote, false) {
-		return 0
-	}
-
-	out.WriteByte(text[0])
+	smartQuote(out, previousChar, nextChar, 's', &r.inSingleQuote, false)
 	return 0
 }
 
 func (r *SPRenderer) smartParens(out *bytes.Buffer, previousChar byte, text []byte) int {
-	if len(text) >= 3 {
-		t1 := tolower(text[1])
-		t2 := tolower(text[2])
-
-		if t1 == 'c' && t2 == ')' {
-			out.WriteString("&copy;")
-			return 2
-		}
-
-		if t1 == 'r' && t2 == ')' {
-			out.WriteString("&reg;")
-			return 2
-		}
-
-		if len(text) >= 4 && t1 == 't' && t2 == 'm' && text[3] == ')' {
-			out.WriteString("&trade;")
-			return 3
+	for _, replacement := range [...]struct{ token, entity string }{
+		{"(c)", "&copy;"},
+		{"(r)", "&reg;"},
+		{"(tm)", "&trade;"},
+	} {
+		if len(text) >= len(replacement.token) && bytes.EqualFold(text[:len(replacement.token)], []byte(replacement.token)) {
+			out.WriteString(replacement.entity)
+			return len(replacement.token) - 1
 		}
 	}
 
@@ -220,9 +169,8 @@ func (r *SPRenderer) smartAmpVariant(out *bytes.Buffer, previousChar byte, text 
 		if len(text) >= 7 {
 			nextChar = text[6]
 		}
-		if smartQuoteHelper(out, previousChar, nextChar, quote, &r.inDoubleQuote, addNBSP) {
-			return 5
-		}
+		smartQuote(out, previousChar, nextChar, quote, &r.inDoubleQuote, addNBSP)
+		return 5
 	}
 
 	if bytes.HasPrefix(text, []byte("&#0;")) {
@@ -231,17 +179,6 @@ func (r *SPRenderer) smartAmpVariant(out *bytes.Buffer, previousChar byte, text 
 
 	out.WriteByte('&')
 	return 0
-}
-
-func (r *SPRenderer) smartAmp(angledQuotes, addNBSP bool) func(*bytes.Buffer, byte, []byte) int {
-	var quote byte = 'd'
-	if angledQuotes {
-		quote = 'a'
-	}
-
-	return func(out *bytes.Buffer, previousChar byte, text []byte) int {
-		return r.smartAmpVariant(out, previousChar, text, quote, addNBSP)
-	}
 }
 
 func (r *SPRenderer) smartPeriod(out *bytes.Buffer, previousChar byte, text []byte) int {
@@ -265,9 +202,8 @@ func (r *SPRenderer) smartBacktick(out *bytes.Buffer, previousChar byte, text []
 		if len(text) >= 3 {
 			nextChar = text[2]
 		}
-		if smartQuoteHelper(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false) {
-			return 1
-		}
+		smartQuote(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false)
+		return 1
 	}
 
 	out.WriteByte(text[0])
@@ -318,23 +254,18 @@ func (r *SPRenderer) smartNumberGeneric(out *bytes.Buffer, previousChar byte, te
 
 func (r *SPRenderer) smartNumber(out *bytes.Buffer, previousChar byte, text []byte) int {
 	if wordBoundary(previousChar) && previousChar != '/' && len(text) >= 3 {
-		if text[0] == '1' && text[1] == '/' && text[2] == '2' {
-			if len(text) < 4 || wordBoundary(text[3]) && text[3] != '/' {
-				out.WriteString("&frac12;")
-				return 2
+		for _, fraction := range [...]struct{ token, suffix, entity string }{
+			{"1/2", "", "&frac12;"},
+			{"1/4", "th", "&frac14;"},
+			{"3/4", "ths", "&frac34;"},
+		} {
+			if string(text[:3]) != fraction.token {
+				continue
 			}
-		}
-
-		if text[0] == '1' && text[1] == '/' && text[2] == '4' {
-			if len(text) < 4 || wordBoundary(text[3]) && text[3] != '/' || (len(text) >= 5 && tolower(text[3]) == 't' && tolower(text[4]) == 'h') {
-				out.WriteString("&frac14;")
-				return 2
-			}
-		}
-
-		if text[0] == '3' && text[1] == '/' && text[2] == '4' {
-			if len(text) < 4 || wordBoundary(text[3]) && text[3] != '/' || (len(text) >= 6 && tolower(text[3]) == 't' && tolower(text[4]) == 'h' && tolower(text[5]) == 's') {
-				out.WriteString("&frac34;")
+			boundary := len(text) == 3 || wordBoundary(text[3]) && text[3] != '/'
+			suffix := text[3:]
+			if boundary || fraction.suffix != "" && len(suffix) >= len(fraction.suffix) && bytes.EqualFold(suffix[:len(fraction.suffix)], []byte(fraction.suffix)) {
+				out.WriteString(fraction.entity)
 				return 2
 			}
 		}
@@ -344,37 +275,12 @@ func (r *SPRenderer) smartNumber(out *bytes.Buffer, previousChar byte, text []by
 	return 0
 }
 
-func (r *SPRenderer) smartDoubleQuoteVariant(out *bytes.Buffer, previousChar byte, text []byte, quote byte) int {
-	nextChar := byte(0)
-	if len(text) > 1 {
-		nextChar = text[1]
-	}
-	if !smartQuoteHelper(out, previousChar, nextChar, quote, &r.inDoubleQuote, false) {
-		out.WriteString("&quot;")
-	}
-
-	return 0
-}
-
-func (r *SPRenderer) smartDoubleQuote(out *bytes.Buffer, previousChar byte, text []byte) int {
-	return r.smartDoubleQuoteVariant(out, previousChar, text, 'd')
-}
-
-func (r *SPRenderer) smartAngledDoubleQuote(out *bytes.Buffer, previousChar byte, text []byte) int {
-	return r.smartDoubleQuoteVariant(out, previousChar, text, 'a')
-}
-
 func (r *SPRenderer) smartLeftAngle(out *bytes.Buffer, previousChar byte, text []byte) int {
-	i := 0
-
-	for i < len(text) && text[i] != '>' {
-		i++
+	i := bytes.IndexByte(text, '>')
+	if i < 0 {
+		return len(text)
 	}
-
-	if i == len(text) { // No > found until the end of the text
-		return i
-	}
-	out.Write(text[:i+1]) // include the '>'
+	out.Write(text[:i+1])
 	return i
 }
 
@@ -382,31 +288,23 @@ type smartCallback func(out *bytes.Buffer, previousChar byte, text []byte) int
 
 // NewSmartypantsRenderer constructs a Smartypants renderer object.
 func NewSmartypantsRenderer(flags Flags) *SPRenderer {
-	var (
-		r SPRenderer
-
-		smartAmpAngled      = r.smartAmp(true, false)
-		smartAmpAngledNBSP  = r.smartAmp(true, true)
-		smartAmpRegular     = r.smartAmp(false, false)
-		smartAmpRegularNBSP = r.smartAmp(false, true)
-
-		addNBSP = flags&SmartypantsQuotesNBSP != 0
-	)
-
-	if flags&SmartypantsAngledQuotes == 0 {
-		r.callbacks['"'] = r.smartDoubleQuote
-		if !addNBSP {
-			r.callbacks['&'] = smartAmpRegular
-		} else {
-			r.callbacks['&'] = smartAmpRegularNBSP
+	var r SPRenderer
+	angled := flags&SmartypantsAngledQuotes != 0
+	quote := byte('d')
+	if angled {
+		quote = 'a'
+	}
+	r.callbacks['"'] = func(out *bytes.Buffer, previous byte, text []byte) int {
+		next := byte(0)
+		if len(text) > 1 {
+			next = text[1]
 		}
-	} else {
-		r.callbacks['"'] = r.smartAngledDoubleQuote
-		if !addNBSP {
-			r.callbacks['&'] = smartAmpAngled
-		} else {
-			r.callbacks['&'] = smartAmpAngledNBSP
-		}
+		smartQuote(out, previous, next, quote, &r.inDoubleQuote, false)
+		return 0
+	}
+	addNBSP := flags&SmartypantsQuotesNBSP != 0
+	r.callbacks['&'] = func(out *bytes.Buffer, previous byte, text []byte) int {
+		return r.smartAmpVariant(out, previous, text, quote, addNBSP)
 	}
 	r.callbacks['\''] = r.smartSingleQuote
 	r.callbacks['('] = r.smartParens

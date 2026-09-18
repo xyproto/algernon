@@ -5,7 +5,7 @@ import (
 	"context"
 	"math/bits"
 
-	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v5"
+	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v6"
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
 	"github.com/ncruces/go-sqlite3/vfs"

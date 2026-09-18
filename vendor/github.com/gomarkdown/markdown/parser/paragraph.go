@@ -29,6 +29,27 @@ func (p *Parser) renderParagraph(data []byte) {
 	p.AddBlock(para)
 }
 
+func (p *Parser) interruptsParagraph(data []byte) bool {
+	if p.extensions&LaxHTMLBlocks != 0 && data[0] == '<' && p.html(data, false) > 0 {
+		return true
+	}
+	if p.isPrefixHeading(data) || p.isPrefixSpecialHeading(data) ||
+		isHRule(data) || quotePrefix(data) > 0 {
+		return true
+	}
+	if p.extensions&FencedCode != 0 && p.fencedCodeBlock(data, false) > 0 {
+		return true
+	}
+	if p.extensions&Mmark != 0 && p.figureBlock(data, false) > 0 {
+		return true
+	}
+	if p.extensions&Tables != 0 {
+		size, _, _ := p.tableHeader(data, false)
+		return size > 0
+	}
+	return false
+}
+
 func (p *Parser) paragraph(data []byte) int {
 	// prev: index of 1st char of previous line
 	// line: index of 1st char of current line
@@ -80,7 +101,7 @@ func (p *Parser) paragraph(data []byte) int {
 
 		// an underline under some text marks a heading, so our paragraph ended on prev line
 		if i > 0 {
-			if level := p.isUnderlinedHeading(current); level > 0 {
+			if level := isUnderlinedHeading(current); level > 0 {
 				// render the paragraph
 				p.renderParagraph(data[:prev])
 
@@ -106,68 +127,21 @@ func (p *Parser) paragraph(data []byte) int {
 			}
 		}
 
-		// if the next line starts a block of HTML, then the paragraph ends here
-		if p.extensions&LaxHTMLBlocks != 0 {
-			if data[i] == '<' && p.html(current, false) > 0 {
-				// rewind to before the HTML block
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a prefixed heading or a horizontal rule after this, paragraph is over
-		if p.isPrefixHeading(current) || p.isPrefixSpecialHeading(current) || isHRule(current) {
+		if p.interruptsParagraph(current) {
 			p.renderParagraph(data[:i])
 			return i
-		}
-
-		// if there's a block quote, paragraph is over
-		if p.quotePrefix(current) > 0 {
-			p.renderParagraph(data[:i])
-			return i
-		}
-
-		// if there's a fenced code block, paragraph is over
-		if p.extensions&FencedCode != 0 {
-			if p.fencedCodeBlock(current, false) > 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a figure block, paragraph is over
-		if p.extensions&Mmark != 0 {
-			if p.figureBlock(current, false) > 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a table, paragraph is over
-		if p.extensions&Tables != 0 {
-			if j, _, _ := p.tableHeader(current, false); j > 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
 		}
 
 		// if there's a definition list item, prev line is a definition term
-		if p.extensions&DefinitionLists != 0 {
-			if p.dliPrefix(current) != 0 {
-				ret := p.list(data[prev:], ast.ListTypeDefinition, 0, '.')
-				return ret + prev
-			}
+		if p.extensions&DefinitionLists != 0 && dliPrefix(current) != 0 {
+			return prev + p.list(data[prev:], ast.ListTypeDefinition, 0, '.')
 		}
 
 		// if there's a list after this, paragraph is over
-		if p.extensions&NoEmptyLineBeforeBlock != 0 {
-			if p.uliPrefix(current) != 0 ||
-				p.oliPrefix(current) != 0 ||
-				p.quotePrefix(current) != 0 ||
-				p.codePrefix(current) != 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
+		if p.extensions&NoEmptyLineBeforeBlock != 0 &&
+			(uliPrefix(current) != 0 || oliPrefix(current) != 0 || codePrefix(current) != 0) {
+			p.renderParagraph(data[:i])
+			return i
 		}
 
 		// otherwise, scan to the beginning of the next line

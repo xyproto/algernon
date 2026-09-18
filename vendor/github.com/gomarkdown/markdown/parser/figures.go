@@ -103,7 +103,7 @@ func (p *Parser) figureBlock(data []byte, doRender bool) int {
 
 	defer p.Finalize(figure)
 
-	if captionContent, id, consumed := p.caption(data[beg:], []byte("Figure: ")); consumed > 0 {
+	if captionContent, id, consumed := parseCaption(data[beg:], []byte("Figure: ")); consumed > 0 {
 		caption := &ast.Caption{}
 		p.Inline(caption, captionContent)
 

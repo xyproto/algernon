@@ -10,60 +10,6 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 )
 
-// Extensions is a bitmask of enabled parser extensions.
-type Extensions int
-
-// Bit flags representing markdown parsing extensions.
-// Use | (or) to specify multiple extensions.
-const (
-	NoExtensions           Extensions = 0
-	NoIntraEmphasis        Extensions = 1 << iota // Ignore emphasis markers inside words
-	Tables                                        // Parse tables
-	FencedCode                                    // Parse fenced code blocks
-	Autolink                                      // Detect embedded URLs that are not explicitly marked
-	Strikethrough                                 // Strikethrough text using ~~test~~
-	LaxHTMLBlocks                                 // Loosen up HTML block parsing rules
-	SpaceHeadings                                 // Be strict about prefix heading rules
-	HardLineBreak                                 // Translate newlines into line breaks
-	NonBlockingSpace                              // Translate backslash-space into a non-breaking space
-	TabSizeEight                                  // Expand tabs to eight spaces instead of four
-	Footnotes                                     // Pandoc-style footnotes
-	NoEmptyLineBeforeBlock                        // No need to insert an empty line to start a (code, quote, ordered list, unordered list) block
-	HeadingIDs                                    // Specify heading IDs with {#id}
-	Titleblock                                    // Titleblock ala pandoc
-	AutoHeadingIDs                                // Create the heading ID from the text
-	BackslashLineBreak                            // Translate trailing backslashes into line breaks
-	DefinitionLists                               // Parse definition lists
-	MathJax                                       // Parse MathJax
-	OrderedListStart                              // Keep track of the first number used when starting an ordered list.
-	Attributes                                    // Block Attributes
-	SuperSubscript                                // Super- and subscript support: 2^10^, H~2~O.
-	EmptyLinesBreakList                           // 2 empty lines break out of list
-	Includes                                      // Support including other files.
-	Mmark                                         // Support Mmark syntax, see https://mmark.miek.nl/post/syntax/
-	InlineAttributes                              // Parse {: key="value"} after links and images
-	MarkdownInHTML                                // Parse markdown inside HTML table cells and similar tags
-
-	CommonExtensions Extensions = NoIntraEmphasis | Tables | FencedCode |
-		Autolink | Strikethrough | SpaceHeadings | HeadingIDs |
-		BackslashLineBreak | DefinitionLists | MathJax
-)
-
-// The size of a tab stop.
-const (
-	tabSizeDefault = 4
-	tabSizeDouble  = 8
-)
-
-// for each character that triggers a response when parsing inline data.
-type InlineParser func(p *Parser, data []byte, offset int) (int, ast.Node)
-
-// ReferenceOverrideFunc is expected to be called with a reference string and
-// return either a valid Reference type that the reference string maps to or
-// nil. If overridden is false, the default reference logic will be executed.
-// See the documentation in Options for more details on use-case.
-type ReferenceOverrideFunc func(reference string) (ref *Reference, overridden bool)
-
 // Parser is a type that holds extensions and the runtime state used by
 // Parse. You cannot use it directly; construct it with New.
 type Parser struct {
@@ -117,6 +63,24 @@ type Parser struct {
 	// Attributes are attached to block level elements.
 	attr *ast.Attribute
 
+	// codeSpans remembers where the backtick run under the inline cursor
+	// closes, so retrying it from each of its bytes does not rescan the
+	// rest of the input each time.
+	codeSpans codeSpanCache
+
+	// spaces remembers the space run under the inline cursor, since the
+	// line-break callback fires for every space in it.
+	spaces runCache
+
+	// angles remembers the last '<' before the inline cursor, which the
+	// autolink callback needs for every URL it considers.
+	angles lastByteCache
+
+	// nextGt and nextCommentEnd remember where the next '>' and "-->" lie,
+	// so a '<' that nothing closes does not scan to the end of the buffer.
+	nextGt         nextMatchCache
+	nextCommentEnd nextMatchCache
+
 	// pendingRefDef is a reference definition detected at the start of a
 	// paragraph line. It is added after the preceding paragraph so source
 	// order is preserved.
@@ -134,69 +98,6 @@ type Parser struct {
 	brackets bracketTable
 }
 
-// New creates a markdown parser with CommonExtensions.
-//
-// You can then call `doc := p.Parse(markdown)` to parse a markdown document
-// and `markdown.Render(doc, renderer)` to convert it to another format with
-// a renderer.
-func New() *Parser {
-	return NewWithExtensions(CommonExtensions)
-}
-
-// NewWithExtensions creates a markdown parser with given extensions.
-func NewWithExtensions(extension Extensions) *Parser {
-	p := Parser{
-		refs:         make(map[string]*reference),
-		refsRecord:   make(map[string]struct{}),
-		maxNesting:   64,
-		InsideLink:   false,
-		Doc:          &ast.Document{},
-		extensions:   extension,
-		allClosed:    true,
-		includeStack: newIncStack(),
-	}
-	p.tip = p.Doc
-	p.oldTip = p.Doc
-	p.lastMatchedContainer = p.Doc
-
-	p.inlineCallback[' '] = maybeLineBreak
-	p.inlineCallback['*'] = emphasis
-	p.inlineCallback['_'] = emphasis
-	if p.extensions&Strikethrough != 0 {
-		p.inlineCallback['~'] = emphasis
-	}
-	p.inlineCallback['`'] = codeSpan
-	p.inlineCallback['\n'] = lineBreak
-	p.inlineCallback['['] = link
-	p.inlineCallback['<'] = leftAngle
-	p.inlineCallback['\\'] = escape
-	p.inlineCallback['&'] = entity
-	p.inlineCallback['!'] = maybeImage
-	if p.extensions&Mmark != 0 {
-		p.inlineCallback['('] = maybeShortRefOrIndex
-	}
-	p.inlineCallback['^'] = maybeInlineFootnoteOrSuper
-	if p.extensions&Autolink != 0 {
-		p.inlineCallback['h'] = maybeAutoLink
-		p.inlineCallback['m'] = maybeAutoLink
-		p.inlineCallback['f'] = maybeAutoLink
-		p.inlineCallback['H'] = maybeAutoLink
-		p.inlineCallback['M'] = maybeAutoLink
-		p.inlineCallback['F'] = maybeAutoLink
-	}
-	if p.extensions&MathJax != 0 {
-		p.inlineCallback['$'] = math
-	}
-
-	return &p
-}
-
-func (p *Parser) RegisterInline(n byte, fn InlineParser) InlineParser {
-	prev := p.inlineCallback[n]
-	p.inlineCallback[n] = fn
-	return prev
-}
-
 func (p *Parser) getRef(refid string) (ref *reference, found bool) {
 	if p.ReferenceOverride != nil {
 		r, overridden := p.ReferenceOverride(refid)
@@ -205,11 +106,9 @@ func (p *Parser) getRef(refid string) (ref *reference, found bool) {
 				return nil, false
 			}
 			return &reference{
-				link:     []byte(r.Link),
-				title:    []byte(r.Title),
-				noteID:   0,
-				hasBlock: false,
-				text:     []byte(r.Text)}, true
+				link:  []byte(r.Link),
+				title: []byte(r.Title),
+				text:  []byte(r.Text)}, true
 		}
 	}
 	// refs are case insensitive
@@ -316,19 +215,8 @@ func (p *Parser) Parse(input []byte) ast.Node {
 	for p.tip != nil {
 		p.Finalize(p.tip)
 	}
-	// Walk the tree again and process inline markdown in each block
-	ast.WalkFunc(p.Doc, func(node ast.Node, entering bool) ast.WalkStatus {
-		switch node.(type) {
-		case *ast.Paragraph, *ast.Heading, *ast.TableCell:
-			p.Inline(node, node.AsContainer().Content)
-			node.AsContainer().Content = nil
-		}
-		return ast.GoToNext
-	})
-
-	if p.extensions&Attributes != 0 {
-		promoteParagraphImageAttrs(p.Doc)
-	}
+	// Walk the tree again and process inline markdown in each block.
+	p.parseInlineContainers(p.Doc, true)
 
 	if p.Opts.Flags&SkipFootnoteList == 0 {
 		p.parseRefsToAST()
@@ -374,28 +262,37 @@ func (p *Parser) parseRefsToAST() {
 	for i := 0; i < len(p.notes); i++ {
 		ref := p.notes[i]
 		p.addChild(ref.footnote)
-		block := ref.footnote
-		listItem := block.(*ast.ListItem)
-		listItem.ListFlags = flags | ast.ListTypeOrdered
-		listItem.RefLink = ref.link
+		item := ref.footnote.(*ast.ListItem)
+		item.ListFlags = flags | ast.ListTypeOrdered
+		item.RefLink = ref.link
 		if ref.hasBlock {
 			flags |= ast.ListItemContainsBlock
 			p.Block(ref.title)
 		} else {
-			p.Inline(block, ref.title)
+			p.Inline(item, ref.title)
 		}
 		flags &^= ast.ListItemBeginningOfList | ast.ListItemContainsBlock
 	}
 	above := list.Parent
-	finalizeList(list)
 	p.tip = above
 
-	ast.WalkFunc(block, func(node ast.Node, entering bool) ast.WalkStatus {
+	p.parseInlineContainers(block, false)
+}
+
+func (p *Parser) parseInlineContainers(root ast.Node, includeTableCells bool) {
+	ast.WalkFunc(root, func(node ast.Node, entering bool) ast.WalkStatus {
 		switch node.(type) {
 		case *ast.Paragraph, *ast.Heading:
-			p.Inline(node, node.AsContainer().Content)
-			node.AsContainer().Content = nil
+		case *ast.TableCell:
+			if !includeTableCells {
+				return ast.GoToNext
+			}
+		default:
+			return ast.GoToNext
 		}
+		container := node.AsContainer()
+		p.Inline(node, container.Content)
+		container.Content = nil
 		return ast.GoToNext
 	})
 }

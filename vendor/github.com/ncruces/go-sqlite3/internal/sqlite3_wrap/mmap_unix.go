@@ -35,7 +35,7 @@ func (w *Wrapper) newRegion(size int32) *MappedRegion {
 	}
 
 	// Allocate page aligned memmory.
-	ptr := Ptr_t(w.Xaligned_alloc(int32(unix.Getpagesize()), size))
+	ptr := Ptr_t(w.Xmemalign(int32(unix.Getpagesize()), size))
 	if ptr == 0 {
 		return nil
 	}

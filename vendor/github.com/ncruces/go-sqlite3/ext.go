@@ -118,7 +118,7 @@ func ExtensionInit[Env any, Mod ExtensionLibrary](db *Conn, init func(env Env) M
 
 	var memBase int32
 	if memSize > 0 {
-		memBase = db.wrp.Xaligned_alloc(int32(memAlign), int32(memSize))
+		memBase = db.wrp.Xmemalign(int32(memAlign), int32(memSize))
 		if memBase == 0 {
 			panic(errutil.OOMErr)
 		}
