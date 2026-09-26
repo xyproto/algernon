@@ -70,8 +70,12 @@ func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 	return 0, nil
 }
 
-func helperFindEmphChar(data []byte, c byte) int {
+func helperFindEmphChar(p *Parser, data []byte, c byte) int {
 	i := 0
+	// data is always a suffix of the buffer for the current Inline call.
+	// bracketTable indexes that whole buffer, so translate local offsets before
+	// looking up a closing bracket.
+	base := len(p.brackets.data) - len(data)
 
 	for i < len(data) {
 		for i < len(data) && data[i] != c && data[i] != '`' && data[i] != '[' {
@@ -107,14 +111,20 @@ func helperFindEmphChar(data []byte, c byte) int {
 		} else if data[i] == '[' {
 			// skip a link
 			tmpI := 0
-			i++
-			for i < len(data) && data[i] != ']' {
-				if tmpI == 0 && data[i] == c {
-					tmpI = i
-				}
-				i++
+			open := i
+			closeAt, _, found := p.brackets.lookup(base + open)
+			end := len(p.brackets.data)
+			if found {
+				end = closeAt
 			}
-			i++
+			if emphAt, ok := p.brackets.firstEmphasis(base+open+1, end, c); ok {
+				tmpI = emphAt - base
+			}
+			if !found {
+				return tmpI
+			}
+			close := closeAt - base
+			i = close + 1
 			for i < len(data) && (data[i] == ' ' || data[i] == '\n') {
 				i++
 			}
@@ -153,7 +163,7 @@ func helperEmphasis(p *Parser, data []byte, c byte) (int, ast.Node) {
 	}
 
 	for i < len(data) {
-		length := helperFindEmphChar(data[i:], c)
+		length := helperFindEmphChar(p, data[i:], c)
 		i += length
 		if i >= len(data) {
 			return 0, nil
@@ -193,7 +203,7 @@ func helperDoubleEmphasis(p *Parser, data []byte, c byte) (int, ast.Node) {
 	i := 0
 
 	for i < len(data) {
-		length := helperFindEmphChar(data[i:], c)
+		length := helperFindEmphChar(p, data[i:], c)
 		if length == 0 {
 			return 0, nil
 		}
@@ -238,7 +248,7 @@ func helperTripleEmphasis(p *Parser, data []byte, offset int, c byte) (int, ast.
 	data = data[offset:]
 
 	for i < len(data) {
-		length := helperFindEmphChar(data[i:], c)
+		length := helperFindEmphChar(p, data[i:], c)
 		if length == 0 {
 			return 0, nil
 		}

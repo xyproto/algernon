@@ -240,17 +240,18 @@ func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) e
 		return fmt.Errorf("number of identifiers in Order %v (%d) does not match the number of identifiers extracted from CSR %v (%d)", order.Identifiers, len(order.Identifiers), csrIdentifiers, len(csrIdentifiers))
 	}
 
-	identifiers := make([]acme.Identifier, 0, len(order.Identifiers))
-	for _, identifier := range order.Identifiers {
-		for _, csrIdentifier := range csrIdentifiers {
-			if csrIdentifier.Value == identifier.Value && csrIdentifier.Type == identifier.Type {
-				identifiers = append(identifiers, identifier)
-			}
-		}
+	// compare the two sets as multisets: counting matches instead would let a
+	// single CSR identifier satisfy the same Order identifier more than once,
+	// which hides a genuine mismatch elsewhere in the list
+	unmatched := make(map[acme.Identifier]int, len(csrIdentifiers))
+	for _, csrIdentifier := range csrIdentifiers {
+		unmatched[csrIdentifier]++
 	}
-
-	if len(identifiers) != len(csrIdentifiers) {
-		return fmt.Errorf("identifiers in Order %v do not match the identifiers extracted from CSR %v", order.Identifiers, csrIdentifiers)
+	for _, identifier := range order.Identifiers {
+		if unmatched[identifier] == 0 {
+			return fmt.Errorf("identifiers in Order %v do not match the identifiers extracted from CSR %v", order.Identifiers, csrIdentifiers)
+		}
+		unmatched[identifier]--
 	}
 
 	return nil

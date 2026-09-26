@@ -291,7 +291,14 @@ func (c *Client) doHTTPRequest(req *http.Request, buf *bytes.Buffer) (resp *http
 	//
 	// So basically, we need to remember the nonces we get
 	// and use them at the next opportunity.
-	c.nonces.push(resp.Header.Get(replayNonce))
+	//
+	// The exception is a newNonce request: Client.nonce() returns that response's
+	// nonce to its caller, so keeping a copy here would hand the same nonce to two
+	// callers, and the second one to use it gets a badNonce error. (x/crypto/acme
+	// draws the same line: its fetchNonce never adds to the pool.)
+	if req.Method != http.MethodHead || req.URL.String() != c.dir.NewNonce {
+		c.nonces.push(resp.Header.Get(replayNonce))
+	}
 
 	// drain the response body, even if we aren't keeping it
 	// (this allows us to reuse the connection and also read

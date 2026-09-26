@@ -212,43 +212,13 @@ func autoLink(p *Parser, data []byte, offset int) (int, ast.Node) {
 		linkEnd--
 	}
 
-	// See if the link finishes with a punctuation sign that can be closed.
-	var copen byte
+	// See if the link finishes with a punctuation sign that has an opener on
+	// this line. The balance cache advances with the inline cursor, so repeated
+	// URLs do not each scan back to the beginning of the line.
 	switch data[linkEnd-1] {
-	case '"':
-		copen = '"'
-	case '\'':
-		copen = '\''
-	case ')':
-		copen = '('
-	case ']':
-		copen = '['
-	case '}':
-		copen = '{'
-	default:
-		copen = 0
-	}
-
-	if copen != 0 {
-		bufEnd := offset - rewind + linkEnd - 2
-
-		openDelim := 1
-
-		// Exclude the final closer only when its matching opener lies outside
-		// the URL. A balanced pair within the URL remains part of it.
-		for bufEnd >= 0 && origData[bufEnd] != '\n' && openDelim != 0 {
-			if origData[bufEnd] == data[linkEnd-1] {
-				openDelim++
-			}
-
-			if origData[bufEnd] == copen {
-				openDelim--
-			}
-
-			bufEnd--
-		}
-
-		if openDelim == 0 {
+	case ')', ']', '}':
+		closeAt := offset - rewind + linkEnd - 1
+		if p.closerBalance.hasOpener(origData, closeAt) {
 			linkEnd--
 		}
 	}

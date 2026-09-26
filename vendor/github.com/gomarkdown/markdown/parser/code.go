@@ -105,6 +105,9 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 	if beg == 0 || beg >= len(data) {
 		return 0
 	}
+	if !p.blockIndex.hasFenceCloser(data, beg, marker) {
+		return 0
+	}
 
 	var work bytes.Buffer
 

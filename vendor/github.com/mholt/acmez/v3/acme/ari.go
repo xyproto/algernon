@@ -139,9 +139,12 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 		return RenewalInfo{}, err
 	}
 
+	const maxAttempts = 3
+
 	var ari RenewalInfo
 	var resp *http.Response
-	for i := 0; i < 3; i++ {
+	var haveWindow bool
+	for i := 0; i < maxAttempts; i++ {
 		// backoff between retries; the if is probably not needed, but just for "properness"...
 		if i > 0 {
 			select {
@@ -184,10 +187,21 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 
 		// valid ARI window
 		ari.UniqueIdentifier = certID
+		haveWindow = true
 		break
 	}
 	if err != nil || resp == nil {
 		return RenewalInfo{}, fmt.Errorf("could not get a valid ARI response; last error: %v", err)
+	}
+	// Every attempt answered, but none with a window this client will use.
+	// Returning the last one would hand the caller the very window the loop
+	// above spent all its attempts rejecting, and without a UniqueIdentifier,
+	// since only the accepting path stamps one. Per §4.2 the remedy for a
+	// malformed window is for the client to fall back to its own schedule,
+	// which is what an error lets the caller do.
+	if !haveWindow {
+		return RenewalInfo{}, fmt.Errorf("server did not return a usable ARI window in %d attempts; last window: %s to %s",
+			maxAttempts, ari.SuggestedWindow.Start, ari.SuggestedWindow.End)
 	}
 
 	// "The server SHOULD include a Retry-After header indicating the polling

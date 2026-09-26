@@ -2,10 +2,9 @@ package parser
 
 // parseInlineLink parses the parenthesized destination and optional title
 // following link text. open is the index of the opening parenthesis.
-func parseInlineLink(data []byte, open int) (end int, destination, title []byte, ok bool) {
+func parseInlineLink(p *Parser, data []byte, open int) (end int, destination, title []byte, ok bool) {
 	i := skipSpace(data, open+1)
 	destinationStart := i
-	depth := 0
 
 	for i < len(data) {
 		char := data[i]
@@ -13,15 +12,17 @@ func parseInlineLink(data []byte, open int) (end int, destination, title []byte,
 		case char == '\\':
 			i += 2
 		case char == '(':
-			depth++
-			i++
-		case char == ')':
-			if depth == 0 {
-				goto destinationEnd
+			// A nested destination must itself be balanced. Jumping over it via
+			// the shared delimiter table avoids rescanning an unclosed suffix
+			// from every link opener.
+			closeAt, _, found := lookupDelimiter(&p.parens, data, i, '(', ')')
+			if !found {
+				return 0, nil, nil, false
 			}
-			depth--
-			i++
-		case depth == 0 && (char == '\'' || char == '"') && i > destinationStart && IsSpace(data[i-1]):
+			i = closeAt + 1
+		case char == ')':
+			goto destinationEnd
+		case (char == '\'' || char == '"') && i > destinationStart && IsSpace(data[i-1]):
 			goto destinationEnd
 		default:
 			i++
@@ -34,25 +35,14 @@ destinationEnd:
 	if data[i] == '\'' || data[i] == '"' {
 		delimiter := data[i]
 		titleStart := i + 1
-		i = titleStart
-		closed := false
-		for i < len(data) {
-			switch data[i] {
-			case '\\':
-				i += 2
-				continue
-			case delimiter:
-				closed = true
-			case ')':
-				if closed {
-					goto titleEnd
-				}
-			}
-			i++
+		quoteEnd, found := p.linkStops.next(data, titleStart, delimiter)
+		if !found {
+			return 0, nil, nil, false
 		}
-		return 0, nil, nil, false
-
-	titleEnd:
+		i, found = p.linkStops.next(data, quoteEnd+1, ')')
+		if !found {
+			return 0, nil, nil, false
+		}
 		end := i - 1
 		for end > titleStart && IsSpace(data[end]) {
 			end--

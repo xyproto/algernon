@@ -96,6 +96,20 @@ type Parser struct {
 
 	// Matching ']' for each '[' in the current Inline() buffer.
 	brackets bracketTable
+	// Citation brackets preserve Mmark's immediate-backslash escape rule.
+	citationBrackets delimiterTable
+	// Matching ')' for each '(' in the current Inline() buffer.
+	parens delimiterTable
+	// Unescaped quote and ')' positions used while parsing inline links.
+	linkStops byteIndex
+	// Plain parenthesis matching for Mmark index syntax, whose grammar does not
+	// treat quoted content specially.
+	plainParens delimiterTable
+	// Opening-delimiter balance before autolink closing punctuation.
+	closerBalance closerBalanceCache
+
+	// Line-oriented indexes for the current Block() buffer.
+	blockIndex blockIndex
 }
 
 func (p *Parser) getRef(refid string) (ref *reference, found bool) {
@@ -226,16 +240,22 @@ func (p *Parser) Parse(input []byte) ast.Node {
 	// this is delayed here (as opposed to done when we create the id)
 	// so that we can preserve more original ids when there are conflicts
 	taken := map[string]bool{}
+	nextSuffix := map[string]int{}
 	for _, h := range p.allHeadingsWithAutoID {
-		id := h.HeadingID
-		if id == "" {
+		base := h.HeadingID
+		if base == "" {
 			continue
 		}
-		n := 0
-		for taken[id] {
-			n++
-			id = h.HeadingID + "-" + strconv.Itoa(n)
+		id := base
+		n := nextSuffix[base]
+		if n == 0 {
+			n = 1
 		}
+		for taken[id] {
+			id = base + "-" + strconv.Itoa(n)
+			n++
+		}
+		nextSuffix[base] = n
 		h.HeadingID = id
 		taken[id] = true
 	}

@@ -66,6 +66,9 @@ func maybeShortRefOrIndex(p *Parser, data []byte, offset int) (int, ast.Node) {
 	case '!': // index
 		i++
 		start := i
+		if _, _, found := lookupDelimiter(&p.plainParens, data, 0, '(', ')'); !found {
+			return 0, nil
+		}
 		i = skipUntilChar(data, start, ')')
 
 		// did we reach the end of the buffer without a closing marker?

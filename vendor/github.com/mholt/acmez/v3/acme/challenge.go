@@ -97,6 +97,13 @@ type Challenge struct {
 	// and indicates the type of Authority token that will be used
 	// to validate the challenge.
 	TkAuthType string `json:"tkauth-type,omitempty"`
+
+	// IssuerDomainNames is a list of Issuer Domain Names provided by the CA
+	// in a dns-persist-01 challenge. The client selects one to use when
+	// constructing the persistent TXT record value.
+	// Each name is in A-label format, lowercase, without trailing dot.
+	// draft-ietf-acme-dns-persist-00 §4.1
+	IssuerDomainNames []string `json:"issuer-domain-names,omitempty"`
 }
 
 // HTTP01ResourcePath returns the URI path for solving the http-01 challenge.
@@ -171,6 +178,32 @@ func (c Challenge) MailReply00KeyAuthorization(mailSubject string) (string, erro
 	return base64.RawURLEncoding.EncodeToString(h[:]), nil
 }
 
+// DNSPersist01TXTRecordName returns the name of the TXT record to create
+// for the dns-persist-01 challenge.
+//
+// "The Authorization Domain Name is formed by prepending the label
+// '_validation-persist' to the domain name being validated."
+// draft-ietf-acme-dns-persist-00 §4.1
+func (c Challenge) DNSPersist01TXTRecordName() string {
+	return "_validation-persist." + c.Identifier.Value
+}
+
+// DNSPersist01TXTRecordValue constructs the TXT record RDATA for the
+// dns-persist-01 challenge using RFC 8659 issue-value syntax.
+//
+// issuerDomainName should be selected from the challenge's IssuerDomainNames
+// field. The account Location (URI) is used as the accounturi parameter.
+// When wildcard is true, "policy=wildcard" is appended, which authorizes
+// issuance of wildcard certificates and certificates for subdomains.
+// draft-ietf-acme-dns-persist-00 §4.1
+func (c Challenge) DNSPersist01TXTRecordValue(a Account, issuerDomainName string, wildcard bool) string {
+	value := issuerDomainName + "; accounturi=" + a.Location
+	if wildcard {
+		value += "; policy=wildcard"
+	}
+	return value
+}
+
 // InitiateChallenge "indicates to the server that it is ready for the challenge
 // validation by sending an empty JSON body ('{}') carried in a POST request to
 // the challenge URL (not the authorization URL)." §7.5.1
@@ -194,4 +227,5 @@ const (
 	ChallengeTypeEmailReply00   = "email-reply-00"   // RFC 8823 §5.2
 	ChallengeTypeAuthorityToken = "tkauth-01"        // RFC 9447 §3 - ACME Authority Token challenge type
 	ChallengeTypeDNSAccount01   = "dns-account-01"   // draft-ietf-acme-dns-account-label-01 §5
+	ChallengeTypeDNSPersist01   = "dns-persist-01"   // draft-ietf-acme-dns-persist-00
 )

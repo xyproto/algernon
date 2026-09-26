@@ -113,7 +113,7 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	switch {
 	case i < len(data) && data[i] == '(':
 		var ok bool
-		i, link, title, ok = parseInlineLink(data, i)
+		i, link, title, ok = parseInlineLink(p, data, i)
 		if !ok {
 			return 0, nil
 		}

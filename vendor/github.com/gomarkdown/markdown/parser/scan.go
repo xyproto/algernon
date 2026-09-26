@@ -6,6 +6,16 @@ import (
 	"unicode/utf8"
 )
 
+// sliceOffset reports where part starts in whole when part is a suffix backed
+// by the same byte slice.
+func sliceOffset(whole, part []byte) (int, bool) {
+	if len(part) == 0 {
+		return len(whole), len(whole) == 0
+	}
+	base := len(whole) - len(part)
+	return base, base >= 0 && &whole[base] == &part[0]
+}
+
 // IsEmpty returns the length of a blank line at the start of data,
 // or 0 if the line is not blank. It is okay to call on an empty buffer.
 func IsEmpty(data []byte) int {

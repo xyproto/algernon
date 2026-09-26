@@ -24,10 +24,25 @@ func (p *Parser) Inline(currBlock ast.Node, data []byte) {
 		p.resetInlineCaches()
 	}
 	p.nesting++
-	prev := p.brackets
+	prevBrackets := p.brackets
+	prevCitationBrackets := p.citationBrackets
+	prevParens := p.parens
+	prevLinkStops := p.linkStops
+	prevPlainParens := p.plainParens
+	prevCloserBalance := p.closerBalance
 	p.brackets = bracketTable{data: data}
+	p.citationBrackets = delimiterTable{data: data, open: '[', close: ']', escapePrevious: true}
+	p.parens = delimiterTable{data: data, open: '(', close: ')', honorEscapes: true}
+	p.linkStops = byteIndex{data: data, chars: "'\")", honorEscapes: true}
+	p.plainParens = delimiterTable{data: data, open: '(', close: ')'}
+	p.closerBalance = closerBalanceCache{scanned: -1}
 	defer func() {
-		p.brackets = prev
+		p.brackets = prevBrackets
+		p.citationBrackets = prevCitationBrackets
+		p.parens = prevParens
+		p.linkStops = prevLinkStops
+		p.plainParens = prevPlainParens
+		p.closerBalance = prevCloserBalance
 		p.nesting--
 	}()
 	beg, end := 0, 0

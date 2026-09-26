@@ -17,29 +17,10 @@ import (
 // The suffix starts after a comma, we strip any whitespace before and after. If the output
 // allows for it, this can be rendered.
 func citation(p *Parser, data []byte, offset int) (int, ast.Node) {
-	// look for the matching closing bracket
-	i := offset + 1
-	for level := 1; level > 0 && i < len(data); i++ {
-		switch {
-		case data[i] == '\n':
-			// no newlines allowed.
-			return 0, nil
-
-		case data[i-1] == '\\':
-			continue
-
-		case data[i] == '[':
-			level++
-
-		case data[i] == ']':
-			level--
-			if level <= 0 {
-				i-- // compensate for extra i++ in for loop
-			}
-		}
-	}
-
-	if i >= len(data) {
+	// Use the Inline-scoped bracket table so unmatched citation openers do not
+	// each rescan the remainder of the buffer.
+	i, _, found := lookupDelimiter(&p.citationBrackets, data, offset, '[', ']')
+	if !found || bytes.IndexByte(data[offset+1:i], '\n') >= 0 {
 		return 0, nil
 	}
 

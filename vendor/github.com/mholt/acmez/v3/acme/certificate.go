@@ -161,9 +161,15 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 	// heuristics to decide which is optimal." §7.4.2
 	alternates := extractLinks(resp, "alternate")
 	for _, altURL := range alternates {
-		_, err = addChain(altURL)
-		if err != nil {
-			return nil, fmt.Errorf("retrieving alternate certificate chain at %s: %w", altURL, err)
+		lenBefore := len(chains)
+		if _, err := addChain(altURL); err != nil {
+			chains = chains[:lenBefore]
+			if c.Logger != nil {
+				c.Logger.LogAttrs(ctx, slog.LevelWarn, "skipping unavailable alternate certificate chain",
+					slog.String("url", altURL),
+					slog.Any("error", err))
+			}
+			continue
 		}
 	}
 
@@ -183,6 +189,15 @@ func (c *Client) RevokeCertificate(ctx context.Context, account Account, cert *x
 	}{
 		Certificate: base64.RawURLEncoding.EncodeToString(cert.Raw),
 		Reason:      reason,
+	}
+
+	// The account key is the documented default. Without this the nil signer
+	// reaches jwsEncodeJSON, which calls key.Public() on it and panics.
+	if certKey == nil {
+		certKey = account.PrivateKey
+	}
+	if certKey == nil {
+		return fmt.Errorf("no key to sign the revocation request with: neither a certificate key nor an account key was provided")
 	}
 
 	// "Revocation requests are different from other ACME requests in that

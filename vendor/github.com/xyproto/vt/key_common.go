@@ -3,6 +3,7 @@ package vt
 import (
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -511,12 +512,32 @@ func parseFirstKey(buf []byte) (string, int) {
 	return string(buf[:1]), 1
 }
 
-// ReadKey reads a key sequence (or printable character) from the TTY.
+// readBufSize is the size of the buffer used for each read from the
+// terminal. It is large enough that a pasted chunk is normally collected in
+// one or two reads instead of hundreds.
+const readBufSize = 4096
+
+// ReadKey reads a key sequence (or printable character) from the TTY,
+// blocking until input arrives.
 // When multiple key sequences arrive in one read (for example a held-down
 // arrow key during a slow redraw), they are returned one by one on
 // successive calls via a pending byte buffer — this prevents queued arrow
 // escapes from leaking into the document as literal "^[[..." text.
 func (tty *TTY) ReadKey() string {
+	return tty.readKey(0)
+}
+
+// ReadKeyTimeout reads a key like ReadKey, but waits at most d for input to
+// arrive and returns "" if none does. A d of zero or less blocks, exactly
+// like ReadKey. A key already sitting in the pending buffer is returned
+// right away, without waiting.
+func (tty *TTY) ReadKeyTimeout(d time.Duration) string {
+	return tty.readKey(d)
+}
+
+// readKey implements ReadKey and ReadKeyTimeout. blockTimeout is the timeout
+// used when waiting for input; zero or less blocks until a byte arrives.
+func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	// Try to return a key already sitting in the pending buffer first. This is
 	// done before touching the terminal: RawMode below performs two ioctl
 	// syscalls, and calling it once per key while draining a large burst of
@@ -539,15 +560,16 @@ func (tty *TTY) ReadKey() string {
 	tty.RawMode()
 
 	// Need more bytes. Use a generous read buffer so bursts of queued input
-	// (e.g. every \x1b[C from a held Right-arrow) are not split across reads.
-	// Block until at least one byte arrives.
-	savedTimeout, err := tty.SetTimeout(0)
+	// (a held-down Right-arrow, or a large paste) are not split across many
+	// reads: each read costs a syscall, and on some platforms the terminal
+	// drops input that is not collected quickly enough.
+	savedTimeout, err := tty.SetTimeout(blockTimeout)
 	if err != nil {
 		return ""
 	}
 	defer tty.SetTimeout(savedTimeout)
 
-	readBuf := make([]byte, 256)
+	readBuf := make([]byte, readBufSize)
 	numRead, err := tty.readBytes(readBuf)
 	if numRead < 0 {
 		numRead = 0
@@ -573,6 +595,12 @@ func (tty *TTY) ReadKey() string {
 	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
 		tty.pending = tty.pending[consumed:]
 		return key
+	}
+	// No bytes arrived at all: either the timeout expired or the input ended.
+	// There is nothing to flush, and indexing into the empty buffer below
+	// would panic.
+	if len(tty.pending) == 0 {
+		return ""
 	}
 	// Still nothing parseable (shouldn't normally happen); flush the pending
 	// bytes as-is so we don't deadlock on them. A lone ESC byte that never

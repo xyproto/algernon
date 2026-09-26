@@ -18,6 +18,11 @@ func (p *Parser) Block(data []byte) {
 		return
 	}
 	p.nesting++
+	prevBlockIndex := p.blockIndex
+	p.blockIndex = blockIndex{data: data}
+	defer func() {
+		p.blockIndex = prevBlockIndex
+	}()
 
 	// parse out one block-level construct at a time
 	for len(data) > 0 {

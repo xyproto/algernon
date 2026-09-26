@@ -283,6 +283,14 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 			Value: email,
 		})
 	}
+	for _, uri := range csr.URIs {
+		// there's no registered ACME identifier type for URIs, but NewCSR() can put
+		// SANs here, so they need to be accounted for rather than silently dropped
+		ids = append(ids, acme.Identifier{
+			Type:  "uri",
+			Value: uri.String(),
+		})
+	}
 
 	// Extract TNAuthList, permanent identifiers and hardware module values.
 	// This block will ignore errors.
@@ -327,7 +335,6 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 			if err != nil {
 				return nil, err
 			}
-			break
 		}
 	}
 

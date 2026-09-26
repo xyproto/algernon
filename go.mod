@@ -15,7 +15,7 @@ require (
 	github.com/flosch/pongo2/v6 v6.1.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-webauthn/webauthn v0.18.2
-	github.com/gomarkdown/markdown v0.0.0-20260921172736-e177decc3c2f
+	github.com/gomarkdown/markdown v0.0.0-20260923180740-94fc73f6b1a3
 	github.com/lib/pq v1.12.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -51,14 +51,14 @@ require (
 	github.com/xyproto/splash v1.3.1
 	github.com/xyproto/tinysvg v1.2.1
 	github.com/xyproto/unzip v1.0.1
-	github.com/xyproto/vt v1.9.19
+	github.com/xyproto/vt v1.9.20
 	github.com/yosssi/gcss v0.1.0
 	golang.org/x/net v0.59.0
 )
 
 require (
 	github.com/dlclark/regexp2/v2 v2.8.0 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v6 v6.2.35304 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v6 v6.3.35304 // indirect
 )
 
 require (
@@ -81,20 +81,20 @@ require (
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/klauspost/compress v1.20.0 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
-	github.com/mholt/acmez/v3 v3.1.6 // indirect
+	github.com/mholt/acmez/v3 v3.1.7 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/ncruces/go-sqlite3 v0.35.5
+	github.com/ncruces/go-sqlite3 v0.35.6
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260922094951-64e8c4c05ecb // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260926012342-8936d7bdcb13 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
