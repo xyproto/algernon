@@ -94,7 +94,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20260928150819-4b2221cddfd8 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20260929091504-12b639a1161c // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
