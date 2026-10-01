@@ -52,6 +52,10 @@ func (c Client) httpRequest(ctx context.Context, method, reqURL string, reqBody 
 		r.Header.Set("Content-Type", "application/json")
 	}
 
+	// in August 2026, ZeroSSL started using the Authorization header for
+	// the API key instead of access_key in the query string
+	r.Header.Set("Authorization", "ApiKey "+c.AccessKey)
+
 	resp, err := c.httpClient().Do(r)
 	if err != nil {
 		return err
@@ -82,7 +86,6 @@ func (c Client) httpRequest(ctx context.Context, method, reqURL string, reqBody 
 		if u != nil {
 			q, err := url.ParseQuery(u.RawQuery)
 			if err == nil {
-				q.Set(accessKeyParam, "redacted")
 				u.RawQuery = q.Encode()
 				reqURL = u.String()
 			}
@@ -113,11 +116,6 @@ func (c Client) url(endpoint string, qs url.Values) string {
 		endpoint = "/" + endpoint
 	}
 	baseURL = strings.TrimSuffix(baseURL, "/")
-
-	if qs == nil {
-		qs = url.Values{}
-	}
-	qs.Set(accessKeyParam, c.AccessKey)
 
 	return fmt.Sprintf("%s%s?%s", baseURL, endpoint, qs.Encode())
 }
@@ -160,5 +158,3 @@ func (ab *anyBool) MarshalJSON() ([]byte, error) {
 	}
 	return []byte("false"), nil
 }
-
-const accessKeyParam = "access_key"

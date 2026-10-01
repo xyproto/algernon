@@ -48,23 +48,28 @@ type HTTPValidationError struct {
 }
 
 type CertificateObject struct {
-	ID                string  `json:"id"` // "certificate hash"
-	Type              string  `json:"type"`
-	CommonName        string  `json:"common_name"`
-	AdditionalDomains string  `json:"additional_domains"`
-	Created           string  `json:"created"`
-	Expires           string  `json:"expires"`
-	Status            string  `json:"status"`
-	ValidationType    *string `json:"validation_type,omitempty"`
-	ValidationEmails  *string `json:"validation_emails,omitempty"`
-	ReplacementFor    string  `json:"replacement_for,omitempty"`
-	FingerprintSHA1   *string `json:"fingerprint_sha1"`
-	BrandValidation   any     `json:"brand_validation"`
-	Validation        *struct {
+	ID                string `json:"id"` // "certificate hash"
+	Type              string `json:"type"`
+	CommonName        string `json:"common_name"`
+	AdditionalDomains string `json:"additional_domains"`
+
+	// these date fields are in "Y-m-d H:i:s" format
+	Created     string `json:"created"`
+	Expires     string `json:"expires"`
+	LastUpdated string `json:"last_updated,omitempty"`
+
+	Status           string  `json:"status"`
+	ValidationType   *string `json:"validation_type,omitempty"`
+	ValidationEmails *string `json:"validation_emails,omitempty"`
+	ReplacementFor   string  `json:"replacement_for,omitempty"`
+	FingerprintSHA1  *string `json:"fingerprint_sha1"`
+	BrandValidation  any     `json:"brand_validation"`
+	Validation       *struct {
 		EmailValidation map[string][]string         `json:"email_validation,omitempty"`
 		OtherMethods    map[string]ValidationObject `json:"other_methods,omitempty"`
 	} `json:"validation,omitempty"`
 	SignatureAlgorithmProperties any `json:"signature_algorithm_properties,omitempty"` // unsure what this is, but fixes #3
+	CACertificateID              int `json:"ca_certificate_id,omitempty"`
 }
 
 type ValidationObject struct {
@@ -96,4 +101,14 @@ type ValidationStatus struct {
 		Method string `json:"method"`
 		Status string `json:"status"`
 	} `json:"details"`
+}
+
+// EXPERIMENTAL: Not yet final
+type CACertificate struct {
+	ID                  int    `json:"id"`
+	SHA1Hash            string `json:"sha1_hash"`
+	CertificateCrt      string `json:"certificate.crt"`
+	CABundleCrt         string `json:"ca_bundle.crt"`
+	EncryptionAlgorithm string `json:"encryption_algorithm"`
+	Created             string `json:"created"` // "Y-m-d H:i:s"
 }

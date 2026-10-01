@@ -264,3 +264,23 @@ func (c Client) GenerateEABCredentials(ctx context.Context) (keyID, hmacKey stri
 	}
 	return result.EABKID, result.EABHMACKey, err
 }
+
+// EXPERIMENTAL: Not yet final
+func (c Client) CACertificates(ctx context.Context, params ListCertificatesParameters) ([]CACertificate, error) {
+	var result []CACertificate
+	if err := c.httpGet(ctx, "/ca_certificates", nil, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// EXPERIMENTAL: Not yet final
+func (c Client) CACertificate(ctx context.Context, caCertID int, caCertHash string, format CertFormat) ([]byte, error) {
+	if caCertID == 0 && caCertHash == "" {
+		return nil, fmt.Errorf("exactly one of certificate ID or hash required")
+	}
+	if caCertID != 0 && caCertHash != "" {
+		return nil, fmt.Errorf("cannot request CA certificate by both ID and hash; pick one")
+	}
+	return nil, fmt.Errorf("TODO: not yet implemented")
+}

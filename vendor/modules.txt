@@ -19,12 +19,12 @@ github.com/allegro/bigcache/v3/queue
 ## explicit
 github.com/aymerick/douceur/css
 github.com/aymerick/douceur/parser
-# github.com/caddyserver/certmagic v0.25.4
-## explicit; go 1.25.0
+# github.com/caddyserver/certmagic v0.25.6
+## explicit; go 1.26.0
 github.com/caddyserver/certmagic
 github.com/caddyserver/certmagic/internal/atomicfile
 github.com/caddyserver/certmagic/internal/filedescriptor
-# github.com/caddyserver/zerossl v0.1.5
+# github.com/caddyserver/zerossl v0.1.6
 ## explicit; go 1.21.0
 github.com/caddyserver/zerossl
 # github.com/chzyer/readline v1.5.1
@@ -49,7 +49,7 @@ github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
 github.com/didip/tollbooth/libstring
 github.com/didip/tollbooth/limiter
-# github.com/dlclark/regexp2/v2 v2.8.0
+# github.com/dlclark/regexp2/v2 v2.8.1
 ## explicit; go 1.25
 github.com/dlclark/regexp2/v2
 github.com/dlclark/regexp2/v2/helpers
@@ -248,7 +248,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20260929091504-12b639a1161c
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20261001035437-93a01d31f6da
 ## explicit; go 1.25.14
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -288,7 +288,7 @@ github.com/shopspring/decimal
 # github.com/sirupsen/logrus v1.10.2
 ## explicit; go 1.23
 github.com/sirupsen/logrus
-# github.com/tinylib/msgp v1.6.4
+# github.com/tinylib/msgp v1.6.5
 ## explicit; go 1.24
 github.com/tinylib/msgp/msgp
 # github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6

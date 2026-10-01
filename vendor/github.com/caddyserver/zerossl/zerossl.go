@@ -62,3 +62,14 @@ const (
 	Superseded           RevocationReason = "Superseded"           // certificate replaced -- do not revoke for this reason, however
 	CessationOfOperation RevocationReason = "cessationOfOperation" // domains are no longer in use
 )
+
+// EXPERIMENTAL: Not yet final
+type CertFormat string
+
+const (
+	FormatZip   CertFormat = "zip"
+	FormatJSON  CertFormat = "json"
+	FormatXML   CertFormat = "xml"
+	FormatPEM   CertFormat = "pem"
+	FormatChain CertFormat = "chain"
+)
