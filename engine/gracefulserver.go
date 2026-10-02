@@ -18,7 +18,8 @@ import (
 // to finish before the remaining connections are closed.
 type GracefulServer struct {
 	*http.Server
-	// ShutdownInitiated is called when a shutdown has been initiated, if set
+	// ShutdownInitiated is called after the server has stopped, if set.
+	// It may exit the process, so the ongoing requests are finished first.
 	ShutdownInitiated func()
 	// Timeout is how long the ongoing requests are given to finish
 	Timeout     time.Duration
@@ -44,8 +45,8 @@ func (gs *GracefulServer) watchSignals() {
 	})
 }
 
-// interrupt marks the server as interrupted, calls ShutdownInitiated and then
-// stops the server
+// interrupt marks the server as interrupted, stops the server and then
+// calls ShutdownInitiated
 func (gs *GracefulServer) interrupt() {
 	gs.interrupted.Store(true)
 	if gs.ShutdownInitiated != nil {
