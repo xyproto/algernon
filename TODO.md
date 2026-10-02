@@ -1,5 +1,20 @@
 # Plans
 
+Next patch release
+------------------
+
+- [ ] Quote table names in `NewKeyValue` (and the other table constructors) in `simplesqlite_noc` and `simplemaria`, like `simplehstore` does. Then release and re-vendor. WebAuthn fails with `--sqlite` (`near ":creds": syntax error`) and likely with `--maria`.
+- [ ] Check that WebAuthn works with `--sqlite` and `--maria`.
+- [ ] Doublecheck that `/admin/x`, `/%2fadmin/x` and `/ADMIN/x` are denied over HTTP/1.1, HTTP/2 and HTTP/3, also with `--postgres` on a case-insensitive filesystem.
+- [ ] Check if `ncruces/go-sqlite3-wasm` can be upgraded from `3ccbf3ea`.
+- [ ] Publish a new advisory for the permission bypass over HTTP/3 in 1.17.11 (and the case-sensitive `pstore` check), patched in 1.17.12.
+- [ ] Add a test that starts every server type (HTTP, HTTPS, HTTP/2, HTTP/3) and checks that a protected path is denied, so that new entry points can't skip `guardHandler`.
+
+Security
+--------
+
+- [ ] Split GHSA-[...]-mfwf into three advisories (path normalization, HMR route, Host header in JS) and request one CVE each.
+
 General
 -------
 
