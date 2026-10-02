@@ -179,6 +179,13 @@ Base URL in front of the links in the directory listing, like \fB/files\fP or
 \fBhttps://example.com/pub\fP. Useful when Algernon is behind a reverse proxy
 that serves it on a sub-path.
 .TP
+.B \-\-proxy=[/PREFIX=]ENDPOINT
+Reverse proxy requests to \fIENDPOINT\fP, which can be a URL like
+\fBhttp://localhost:3000\fP, \fBhost:port\fP or just a port number.
+Everything is proxied unless a path prefix is given, like
+\fB\-\-proxy /api=3000\fP. Can be given several times; the longest matching
+prefix wins.
+.TP
 .B \-\-hide\-dotfiles
 Hide files and directories that start with a dot, both in directory listings
 and when serving. \fB.well\-known\fP is still served, for ACME challenges.
