@@ -36,3 +36,31 @@ func RecorderToString(recorder *httptest.ResponseRecorder) (string, error) {
 	}
 	return buf.String(), err
 }
+
+// forbiddenWriter sends 403 Forbidden instead of 200 OK, unless a status code
+// has been set explicitly before the body is written
+type forbiddenWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (fw *forbiddenWriter) WriteHeader(status int) {
+	fw.wroteHeader = true
+	fw.ResponseWriter.WriteHeader(status)
+}
+
+func (fw *forbiddenWriter) Write(p []byte) (int, error) {
+	if !fw.wroteHeader {
+		fw.WriteHeader(http.StatusForbidden)
+	}
+	return fw.ResponseWriter.Write(p)
+}
+
+func (fw *forbiddenWriter) Unwrap() http.ResponseWriter { return fw.ResponseWriter }
+
+// finish sends 403 Forbidden if nothing has been written
+func (fw *forbiddenWriter) finish() {
+	if !fw.wroteHeader {
+		fw.WriteHeader(http.StatusForbidden)
+	}
+}
