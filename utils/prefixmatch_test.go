@@ -44,3 +44,23 @@ func sliceEqual(a, b []string) bool {
 	}
 	return true
 }
+
+func TestPrefixMatchLongerPrefixFirst(t *testing.T) {
+	pm := PrefixMatch{}
+	pm.Build([]string{"/api/auth", "/api"})
+	expected := []string{"/api", "/api/auth"}
+	if res := pm.Match("/api/auth/x"); !sliceEqual(res, expected) {
+		t.Errorf("Expected %v, got %v", expected, res)
+	}
+}
+
+func TestPrefixMatchMultibyte(t *testing.T) {
+	pm := PrefixMatch{}
+	pm.Build([]string{"/blåbær", "/æ"})
+	if res := pm.Match("/blåbær/syltetøy"); !sliceEqual(res, []string{"/blåbær"}) {
+		t.Errorf("Expected [/blåbær], got %v", res)
+	}
+	if res := pm.Match("/æ"); !sliceEqual(res, []string{"/æ"}) {
+		t.Errorf("Expected [/æ], got %v", res)
+	}
+}
