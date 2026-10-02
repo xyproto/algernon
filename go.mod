@@ -41,7 +41,7 @@ require (
 	github.com/xyproto/permissionsql/v2 v2.2.1
 	github.com/xyproto/permissionsqlite_noc v1.2.1
 	github.com/xyproto/pinterface/v2 v2.1.2
-	github.com/xyproto/pstore v1.4.0
+	github.com/xyproto/pstore v1.4.1
 	github.com/xyproto/recwatch v1.2.1
 	github.com/xyproto/sheepcounter v1.6.2
 	github.com/xyproto/simplebolt v1.6.0

@@ -227,8 +227,8 @@ github.com/xyproto/permissionsqlite_noc v1.2.1 h1:npyswd7RsWiS8qNf95iXrxGOGAmZJb
 github.com/xyproto/permissionsqlite_noc v1.2.1/go.mod h1:PqwX3wdRLK0bULvZkP4kw1sCwax0oA1R87FACnICLgI=
 github.com/xyproto/pinterface/v2 v2.1.2 h1:PhCqZpwknL0w0o1FNv9XsCk54ArgK7fogwvvBzLKw9c=
 github.com/xyproto/pinterface/v2 v2.1.2/go.mod h1:JEnbIgxF7qfkASFr8EXLhd2ymhd6xLG0Eq5xkFHqyXw=
-github.com/xyproto/pstore v1.4.0 h1:3bv0kOBJUTHofR8oAfB0aEWv0HmUyIb7YzyivL6f1V0=
-github.com/xyproto/pstore v1.4.0/go.mod h1:T0FwzFiID5hDK4qMPCfRYq5b5nCOUQzcvBOyf33iuJc=
+github.com/xyproto/pstore v1.4.1 h1:zJhswpyJEsJ1OhAUYxp6EunEagv5BLmJIkAS6XLstmU=
+github.com/xyproto/pstore v1.4.1/go.mod h1:ZQwAB2JnyWKl483Qra1LquRDVYED0VhBltNOGhO72lg=
 github.com/xyproto/randomstring v1.2.0 h1:y7PXAEBM3XlwJjPG2JQg4voxBYZ4+hPgRdGKCfU8wik=
 github.com/xyproto/randomstring v1.2.0/go.mod h1:rgmS5DeNXLivK7YprL0pY+lTuhNQW3iGxZ18UQApw/E=
 github.com/xyproto/recwatch v1.2.1 h1:rxrUTyMRg3oNheDvuyqd7CX6OSf8C04zRJUKaAB/ryk=

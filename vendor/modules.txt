@@ -370,8 +370,8 @@ github.com/xyproto/permissionsqlite_noc
 # github.com/xyproto/pinterface/v2 v2.1.2
 ## explicit; go 1.8
 github.com/xyproto/pinterface/v2
-# github.com/xyproto/pstore v1.4.0
-## explicit; go 1.25.0
+# github.com/xyproto/pstore v1.4.1
+## explicit; go 1.26.0
 github.com/xyproto/pstore
 # github.com/xyproto/randomstring v1.2.0
 ## explicit; go 1.17

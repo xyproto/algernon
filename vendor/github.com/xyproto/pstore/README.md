@@ -672,7 +672,7 @@ func main() {
 General information
 -------------------
 
-* Version: 1.4.0
+* Version: 1.4.1
 * API version: 4.0
 * License: BSD-3
 * Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
