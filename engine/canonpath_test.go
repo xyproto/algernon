@@ -128,4 +128,18 @@ func TestForbiddenWriterDefaultsTo403(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
+	fw.finish()
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("status after finish = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
+// A Lua DenyHandler that writes nothing must still send 403 Forbidden.
+func TestForbiddenWriterEmptyBody(t *testing.T) {
+	rec := httptest.NewRecorder()
+	fw := &forbiddenWriter{ResponseWriter: rec}
+	fw.finish()
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
 }
