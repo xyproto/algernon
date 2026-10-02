@@ -138,6 +138,17 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.serve.useCertMagicStaging, "testcert", false, "Use the Let's Encrypt staging CA instead of the production CA (for testing)")
 	flag.BoolVar(&ac.hideDotfiles, "hide-dotfiles", false, "Hide files and directories starting with '.'")
 	flag.StringVar(&ac.dirBaseURL, "dirbaseurl", "", "Base URL for the directory listing (optional)")
+	flag.Func("proxy", "Reverse proxy to ENDPOINT, or /PREFIX=ENDPOINT (can be given several times)", func(value string) error {
+		rp, err := ParseReverseProxyFlag(value)
+		if err != nil {
+			return err
+		}
+		if ac.reverseProxyConfig == nil {
+			ac.reverseProxyConfig = NewReverseProxyConfig()
+		}
+		ac.reverseProxyConfig.Add(rp)
+		return nil
+	})
 	// The short versions of some flags
 	flag.BoolVar(&serveJustHTTPShort, "t", false, "Serve plain old HTTP")
 	flag.BoolVar(&autoRefreshShort, "a", false, "Enable the auto-refresh feature")
