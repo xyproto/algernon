@@ -2,11 +2,13 @@ package engine
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -144,9 +146,9 @@ func newProxyHandler(pathPrefix string, endpoint url.URL) *httputil.ReverseProxy
 			return nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, _ *http.Request, err error) {
-			logrus.Errorf("reverse proxy %s -> %s: %v\nPlease check your server config for AddReverseProxy calls.", pathPrefix, endpointString, err)
+			logrus.Errorf("reverse proxy %s -> %s: %v", pathPrefix, endpointString, err)
 			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte("reverse proxy error, please check your server config for AddReverseProxy calls\n"))
+			w.Write([]byte("reverse proxy error\n"))
 		},
 	}
 }
@@ -196,22 +198,59 @@ func (rc *ReverseProxyConfig) Init() {
 	rc.proxyMatcher.Build(keys)
 }
 
-// FindMatchingReverseProxy checks if the given URL path should be proxied
+// FindMatchingReverseProxy checks if the given URL path should be proxied.
+// A prefix like "/api" matches "/api" and "/api/x", but not "/apiary".
+// If several prefixes match, the longest one wins.
 func (rc *ReverseProxyConfig) FindMatchingReverseProxy(path string) *ReverseProxy {
-	matches := rc.proxyMatcher.Match(path)
-	if len(matches) == 0 {
-		return nil
-	}
-	if len(matches) > 1 {
-		logrus.Warnf("found more than one reverse proxy for `%s`: %+v. returning the longest", matches, path)
-	}
 	var match *ReverseProxy
-	maxlen := 0
-	for _, prefix := range matches {
+	maxlen := -1
+	for _, prefix := range rc.proxyMatcher.Match(path) {
+		if len(path) > len(prefix) && !strings.HasSuffix(prefix, "/") && path[len(prefix)] != '/' {
+			continue
+		}
 		if len(prefix) > maxlen {
 			maxlen = len(prefix)
 			match = &rc.ReverseProxies[rc.prefix2rproxy[prefix]]
 		}
 	}
 	return match
+}
+
+// NewReverseProxy creates a ReverseProxy that sends requests for the given
+// path prefix to the given endpoint. The endpoint can be a full URL, or just
+// "host:port", ":port" or "port", in which case http and localhost are assumed.
+func NewReverseProxy(pathPrefix, endpoint string) (*ReverseProxy, error) {
+	if !strings.HasPrefix(pathPrefix, "/") {
+		pathPrefix = "/" + pathPrefix
+	}
+	if !strings.Contains(endpoint, "://") {
+		if _, err := strconv.Atoi(endpoint); err == nil {
+			endpoint = ":" + endpoint
+		}
+		if strings.HasPrefix(endpoint, ":") {
+			endpoint = "localhost" + endpoint
+		}
+		endpoint = "http://" + endpoint
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse endpoint URL %s: %w", endpoint, err)
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("endpoint URL needs a scheme and a host: %s", endpoint)
+	}
+	return &ReverseProxy{PathPrefix: pathPrefix, Endpoint: *u}, nil
+}
+
+// ParseReverseProxyFlag parses a --proxy value, which is either "ENDPOINT"
+// (proxy everything) or "/PREFIX=ENDPOINT".
+func ParseReverseProxyFlag(value string) (*ReverseProxy, error) {
+	if strings.HasPrefix(value, "/") {
+		prefix, endpoint, found := strings.Cut(value, "=")
+		if !found || endpoint == "" {
+			return nil, fmt.Errorf("expected /PREFIX=ENDPOINT, got %q", value)
+		}
+		return NewReverseProxy(prefix, endpoint)
+	}
+	return NewReverseProxy("/", value)
 }

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xyproto/algernon/utils"
@@ -210,9 +210,16 @@ func (ac *Config) LoadServerConfigFunctions(L *lua.LState, filename string) erro
 	// Sets a Lua function as a custom "permissions denied" page handler.
 	L.SetGlobal("DenyHandler", L.NewFunction(func(L *lua.LState) int {
 		luaDenyFunc := L.ToFunction(1)
+		// L is shared by all requests, and a Lua state is not goroutine-safe
+		var denyMut sync.Mutex
 
 		// Custom handler for when permissions are denied
 		ac.perm.SetDenyFunction(func(w http.ResponseWriter, req *http.Request) {
+			denyMut.Lock()
+			defer denyMut.Unlock()
+			fw := &forbiddenWriter{ResponseWriter: w}
+			defer fw.finish()
+			w = fw
 			// Set up a new Lua state with the current http.ResponseWriter and *http.Request, without caching
 			ac.LoadCommonFunctions(w, req, filename, L, nil, nil)
 
@@ -355,26 +362,16 @@ func (ac *Config) loadServerSettingsFunctions(L *lua.LState, filename string) {
 
 	// Add a new reverse proxy given a: path prefix, endpoint and endpoint URL
 	L.SetGlobal("AddReverseProxy", L.NewFunction(func(L *lua.LState) int {
-		var rp ReverseProxy
-
-		rp.PathPrefix = L.ToString(1)
-		endpointURLString := L.ToString(2)
-
-		parsedURL, err := url.Parse(endpointURLString)
+		rp, err := NewReverseProxy(L.ToString(1), L.ToString(2))
 		if err != nil {
-			logrus.Errorf("could not parse endpoint URL: %s: %v", endpointURLString, err)
+			logrus.Errorf("AddReverseProxy: %v", err)
 			return 0 // number of results
 		}
-		if parsedURL.Scheme == "" || parsedURL.Host == "" {
-			logrus.Errorf("endpoint URL needs a scheme and a host: %s", endpointURLString)
-			return 0 // number of results
-		}
-		rp.Endpoint = *parsedURL
 
 		if ac.reverseProxyConfig == nil {
 			ac.reverseProxyConfig = NewReverseProxyConfig()
 		}
-		ac.reverseProxyConfig.Add(&rp)
+		ac.reverseProxyConfig.Add(rp)
 
 		return 0 // number of results
 	}))
