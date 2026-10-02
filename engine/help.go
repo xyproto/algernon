@@ -676,7 +676,7 @@ Available flags:
                                ("-m" is equivalent to "-q -o -z").
   -n, --nobanner               Don't display a colorful banner at start.
   -o, --open=EXECUTABLE        Open the served URL in a browser with a standard
-                               methodor or with the given (optional) executable.
+                               method or with the given (optional) executable.
   -p, --prod                   Serve HTTP/2+HTTPS on port 443. Serve regular
                                HTTP on port 80. Uses /srv/algernon for files.
                                Disables debug mode. Disables auto-refresh.
@@ -711,9 +711,11 @@ Available flags:
   --ctrld                      Press ctrl-d twice to exit the REPL.
   --dbindex=INDEX              Redis database index (0 is default).
   --dir=DIRECTORY              Set the server directory
+  --dirbaseurl=URL             Base URL in front of the links in directory listings.
   --eventrefresh=DURATION      How often the event server should refresh
                                (the default is "` + ac.defaultEventRefresh + `").
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
+  --hide-dotfiles              Hide files and directories starting with ".".
   --http2only                  Serve HTTP/2, without HTTPS.
   --http-addr=[HOST][:PORT]    HTTP (non-TLS) listen address.
   --https-addr=[HOST][:PORT]   HTTPS (TLS) listen address.
@@ -738,6 +740,10 @@ Available flags:
   --postgresdb=NAME            Use the given PostgreSQL database name.
   --sqlite=FILENAME            Use the given SQLite file (ie. "sqlite.db&cache=shared&mode=memory").
   --redis=[HOST][:PORT]        Use "` + ac.defaultRedisColonPort + `" for the Redis database.
+  --proxy=[/PREFIX=]ENDPOINT   Reverse proxy requests to ENDPOINT, like "3000" or
+                               "http://localhost:3000". Everything is proxied,
+                               unless a path prefix like "/api=" is given.
+                               Can be given several times.
   --rawcache                   Disable cache compression.
   --servername=STRING          Custom HTTP header value for the Server field.
   --stricter                   Stricter HTTP headers (same origin policy).
