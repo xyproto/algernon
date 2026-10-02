@@ -134,3 +134,41 @@ func TestGracefulServerClosesSlowRequests(t *testing.T) {
 		t.Error("ListenAndServe did not return after the shutdown")
 	}
 }
+
+// TestGracefulServerShutdownAfterRequests checks that ShutdownInitiated, which
+// may exit the process, is only called once the ongoing requests are done.
+func TestGracefulServerShutdownAfterRequests(t *testing.T) {
+	addr := findFreePort(t)
+
+	handling := make(chan struct{})
+	var finished atomic.Bool
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		close(handling)
+		time.Sleep(200 * time.Millisecond)
+		w.Write([]byte("done"))
+		finished.Store(true)
+	})
+
+	var finishedFirst atomic.Bool
+	gs := &GracefulServer{
+		Server:            &http.Server{Addr: addr, Handler: mux},
+		ShutdownInitiated: func() { finishedFirst.Store(finished.Load()) },
+		Timeout:           5 * time.Second,
+	}
+	go gs.ListenAndServe()
+	waitForPort(t, addr)
+
+	go func() {
+		if resp, err := http.Get("http://" + addr + "/"); err == nil {
+			resp.Body.Close()
+		}
+	}()
+
+	<-handling
+	gs.interrupt()
+
+	if !finishedFirst.Load() {
+		t.Error("ShutdownInitiated was called before the ongoing request was done")
+	}
+}

@@ -42,8 +42,8 @@ func (p *prefixPerm) SetPublicPath([]string)                                    
 func (p *prefixPerm) SetUserPath([]string)                                           {}
 func (p *prefixPerm) UserState() pinterface.IUserState                               { return nil }
 
-// serveWithGuards builds the same middleware chain as NewGracefulServer, on
-// top of a mux that records the path that the handlers saw.
+// serveWithGuards wraps a mux that records the path that the handlers saw
+// with the middleware chain that every server uses.
 func serveWithGuards(ac *Config, seen *string) http.Handler {
 	mux := http.NewServeMux()
 	record := func(w http.ResponseWriter, req *http.Request) {
@@ -52,7 +52,7 @@ func serveWithGuards(ac *Config, seen *string) http.Handler {
 	}
 	mux.HandleFunc("/", record)
 	mux.HandleFunc(hmrUpdatePrefix, record)
-	return canonicalPathMiddleware(ac.permissionMiddleware(mux))
+	return ac.guardHandler(mux)
 }
 
 // A percent-encoded slash must not be able to sneak past the permission check.
@@ -110,5 +110,22 @@ func TestCanonicalPathMiddlewareControlCharacters(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Path with a NUL byte gave status %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// A Lua DenyHandler that only writes a body must still send 403 Forbidden.
+func TestForbiddenWriterDefaultsTo403(t *testing.T) {
+	rec := httptest.NewRecorder()
+	fw := &forbiddenWriter{ResponseWriter: rec}
+	fw.Write([]byte("denied"))
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+	rec = httptest.NewRecorder()
+	fw = &forbiddenWriter{ResponseWriter: rec}
+	fw.WriteHeader(http.StatusUnauthorized)
+	fw.Write([]byte("log in first"))
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 }

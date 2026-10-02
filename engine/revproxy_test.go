@@ -342,3 +342,63 @@ func TestReverseProxyLongestPrefixWins(t *testing.T) {
 		t.Errorf("PathPrefix = %q, want %q", rp.PathPrefix, "/api/inner")
 	}
 }
+
+// A prefix only matches whole path segments, and a root prefix is the fallback.
+func TestReverseProxyPrefixSegmentBoundary(t *testing.T) {
+	rc := NewReverseProxyConfig()
+	for _, pair := range [][2]string{{"/", "http://root.invalid"}, {"/api", "http://api.invalid"}, {"/files/", "http://files.invalid"}} {
+		rp, err := NewReverseProxy(pair[0], pair[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		rc.Add(rp)
+	}
+	for path, want := range map[string]string{
+		"/api":         "/api",
+		"/api/":        "/api",
+		"/api/x":       "/api",
+		"/apiary":      "/",
+		"/files/a.txt": "/files/",
+		"/files":       "/",
+		"/":            "/",
+	} {
+		rp := rc.FindMatchingReverseProxy(path)
+		if rp == nil {
+			t.Errorf("%s: expected a match", path)
+			continue
+		}
+		if rp.PathPrefix != want {
+			t.Errorf("%s: PathPrefix = %q, want %q", path, rp.PathPrefix, want)
+		}
+	}
+	rc = newTestProxyConfig(t, "/api", "http://api.invalid")
+	if rp := rc.FindMatchingReverseProxy("/apiary"); rp != nil {
+		t.Errorf("/apiary: expected no match, got %q", rp.PathPrefix)
+	}
+}
+
+func TestParseReverseProxyFlag(t *testing.T) {
+	for value, want := range map[string][2]string{
+		"3000":                       {"/", "http://localhost:3000"},
+		":3000":                      {"/", "http://localhost:3000"},
+		"example.com:8080":           {"/", "http://example.com:8080"},
+		"https://example.com/v2":     {"/", "https://example.com/v2"},
+		"/api=3000":                  {"/api", "http://localhost:3000"},
+		"/api=http://127.0.0.1:9000": {"/api", "http://127.0.0.1:9000"},
+		"/q=http://h:1/?a=b":         {"/q", "http://h:1/?a=b"},
+	} {
+		rp, err := ParseReverseProxyFlag(value)
+		if err != nil {
+			t.Errorf("%s: %v", value, err)
+			continue
+		}
+		if rp.PathPrefix != want[0] || rp.Endpoint.String() != want[1] {
+			t.Errorf("%s: got %s -> %s, want %s -> %s", value, rp.PathPrefix, rp.Endpoint.String(), want[0], want[1])
+		}
+	}
+	for _, value := range []string{"/api", "/api=", "", "http://"} {
+		if _, err := ParseReverseProxyFlag(value); err == nil {
+			t.Errorf("%q: expected an error", value)
+		}
+	}
+}
