@@ -34,8 +34,7 @@ func (ac *Config) limitBodyMiddleware(next http.Handler) http.Handler {
 // isBindError returns true if the error is a fatal port binding error
 // (permission denied, address already in use, etc).
 func isBindError(err error) bool {
-	var opErr *net.OpError
-	if errors.As(err, &opErr) {
+	if opErr, ok := errors.AsType[*net.OpError](err); ok {
 		return opErr.Op == "listen"
 	}
 	return false
@@ -55,8 +54,9 @@ func AtShutdown(shutdownFunction func()) {
 	shutdownFunctions = append(shutdownFunctions, shutdownFunction)
 }
 
-// NewGracefulServer creates a new graceful server configuration
-func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *GracefulServer {
+// guardHandler wraps the given handler with the middleware that every
+// server must use, including the HTTP/3 (QUIC) servers
+func (ac *Config) guardHandler(handler http.Handler) http.Handler {
 	// Cap request bodies before any handler reads them. 0 means unlimited.
 	if ac.largeFileSize > 0 {
 		handler = ac.limitBodyMiddleware(handler)
@@ -64,7 +64,12 @@ func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, add
 	// Check permissions for every route, not just the ones in RegisterHandlers
 	handler = ac.permissionMiddleware(handler)
 	// Canonicalize the request path before anything else looks at it
-	handler = canonicalPathMiddleware(handler)
+	return canonicalPathMiddleware(handler)
+}
+
+// NewGracefulServer creates a new graceful server configuration
+func (ac *Config) NewGracefulServer(handler http.Handler, http2support bool, addr string) *GracefulServer {
+	handler = ac.guardHandler(handler)
 	// Server configuration
 	s := &http.Server{
 		Addr:    addr,

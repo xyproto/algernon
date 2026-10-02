@@ -22,7 +22,7 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, justServeRegularHTTP chan
 	//       * See also: https://github.com/quic-go/quic-go/blob/3cb5f3e104d269768415cce79ddcc5018c79ea92/integrationtests/self/http_shutdown_test.go#L36
 	//
 	// gracefulServer.ShutdownInitiated = ac.GenerateShutdownFunction(nil, quicServer)
-	if err := http3.ListenAndServeTLS(ac.serverAddr, ac.serve.serverCert, ac.serve.serverKey, mux); err != nil {
+	if err := http3.ListenAndServeTLS(ac.serverAddr, ac.serve.serverCert, ac.serve.serverKey, ac.guardHandler(mux)); err != nil {
 		servingHTTPS.Store(false)
 		if isBindError(err) {
 			ac.fatalExit(err)
@@ -39,7 +39,7 @@ func (ac *Config) ListenAndServeQUIC(mux http.Handler, justServeRegularHTTP chan
 func (ac *Config) serveQUICPortSetting(mux http.Handler, ps PortSetting) {
 	// QUIC inherently requires TLS at the transport layer.
 	// Even with tls=false in the config, we still need cert/key to establish QUIC connections.
-	if err := http3.ListenAndServeTLS(ps.Addr, ac.serve.serverCert, ac.serve.serverKey, mux); err != nil {
+	if err := http3.ListenAndServeTLS(ps.Addr, ac.serve.serverCert, ac.serve.serverKey, ac.guardHandler(mux)); err != nil {
 		if isBindError(err) {
 			ac.fatalExit(err)
 		}
