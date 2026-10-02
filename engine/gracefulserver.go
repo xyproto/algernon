@@ -49,10 +49,10 @@ func (gs *GracefulServer) watchSignals() {
 // calls ShutdownInitiated
 func (gs *GracefulServer) interrupt() {
 	gs.interrupted.Store(true)
+	gs.stop()
 	if gs.ShutdownInitiated != nil {
 		gs.ShutdownInitiated()
 	}
-	gs.stop()
 }
 
 // stop lets the ongoing requests finish, for up to Timeout, then closes the
