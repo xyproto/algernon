@@ -16,6 +16,10 @@ var (
 // Inline parses text within a block.
 // Each function returns the number of consumed chars.
 func (p *Parser) Inline(currBlock ast.Node, data []byte) {
+	if p.Opts.Flags&CommonMark != 0 {
+		p.commonMarkInline(currBlock, data)
+		return
+	}
 	// handlers might call us recursively: enforce a maximum depth
 	if p.nesting >= p.maxNesting || len(data) == 0 {
 		return

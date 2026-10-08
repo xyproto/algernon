@@ -11,16 +11,6 @@ func quotePrefix(data []byte) int {
 	return prefixedBlock(data, ">")
 }
 
-// quoteTerminated reports whether the line at begin ends the open block quote.
-// A blank line ends it. CommonMark treats that as enough. Otherwise the next
-// line must not be another quote line.
-func (p *Parser) quoteTerminated(data []byte, begin, end int) bool {
-	if p.Opts.Flags&CommonMark != 0 {
-		return IsEmpty(data[begin:]) > 0
-	}
-	return terminatesPrefixedBlock(data, begin, end, quotePrefix)
-}
-
 // parse a blockquote fragment
 func (p *Parser) quote(data []byte) int {
 	var raw bytes.Buffer
@@ -39,7 +29,7 @@ func (p *Parser) quote(data []byte) int {
 		} else if fenceMarker != "" {
 			// Lines inside a quoted fenced code block may omit the quote
 			// prefix. Keep them in the quote until the fence closes.
-		} else if p.quoteTerminated(data, beg, end) {
+		} else if terminatesPrefixedBlock(data, beg, end, quotePrefix) {
 			break
 		}
 		// this line is part of the blockquote

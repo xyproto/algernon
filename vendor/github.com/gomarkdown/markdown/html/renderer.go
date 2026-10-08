@@ -95,7 +95,7 @@ func (r *Renderer) Text(w io.Writer, text *ast.Text) {
 		r.sr.Process(w, tmp.Bytes())
 	} else {
 		_, parentIsLink := text.Parent.(*ast.Link)
-		if parentIsLink {
+		if parentIsLink && !r.commonMark {
 			EscLink(w, text.Literal)
 		} else {
 			EscapeHTML(w, text.Literal)
@@ -147,7 +147,11 @@ func (r *Renderer) linkEnter(w io.Writer, link *ast.Link) {
 	dest = AddAbsPrefix(dest, r.Opts.AbsolutePrefix)
 	var hrefBuf bytes.Buffer
 	hrefBuf.WriteString("href=\"")
-	EscLink(&hrefBuf, dest)
+	if r.commonMark {
+		EscapeHTML(&hrefBuf, dest)
+	} else {
+		EscLink(&hrefBuf, dest)
+	}
 	hrefBuf.WriteByte('"')
 	attrs = append(attrs, hrefBuf.String())
 	if link.NoteID != 0 {
@@ -156,7 +160,7 @@ func (r *Renderer) linkEnter(w io.Writer, link *ast.Link) {
 	}
 
 	attrs = appendLinkAttrs(attrs, r.Opts.Flags, dest)
-	if len(link.Title) > 0 {
+	if len(link.Title) > 0 || (r.commonMark && link.Title != nil) {
 		var titleBuff bytes.Buffer
 		titleBuff.WriteString("title=\"")
 		EscapeHTML(&titleBuff, link.Title)
@@ -231,9 +235,17 @@ func (r *Renderer) Image(w io.Writer, node *ast.Image, entering bool) {
 // reference definitions, so inter-block spacing stays stable.
 // RenderNode renders a markdown node to HTML
 func (r *Renderer) RenderNode(w io.Writer, node ast.Node, entering bool) ast.WalkStatus {
+	if doc, ok := node.(*ast.Document); ok && entering {
+		r.commonMark = doc.CommonMark
+	}
 	if r.Opts.RenderNodeHook != nil {
 		status, didHandle := r.Opts.RenderNodeHook(w, node, entering)
 		if didHandle {
+			return status
+		}
+	}
+	if r.commonMark {
+		if status, handled := r.renderCommonMarkNode(w, node, entering); handled {
 			return status
 		}
 	}

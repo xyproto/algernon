@@ -10,6 +10,8 @@ import (
 
 // RenderHeader writes HTML document preamble and TOC if requested.
 func (r *Renderer) RenderHeader(w io.Writer, doc ast.Node) {
+	root, ok := doc.(*ast.Document)
+	r.commonMark = ok && root.CommonMark
 	r.writeDocumentHeader(w)
 	if r.Opts.Flags&TOC != 0 {
 		r.writeTOC(w, doc)

@@ -72,27 +72,16 @@ Example source: [examples/basic.go](examples/basic.go)
 
 ## CommonMark
 
-`parser.CommonMark` parses closer to the [CommonMark](https://spec.commonmark.org/) spec. The flag is off by default. It was added so existing documents keep their current parsing.
+`parser.CommonMark` selects the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) grammar. All 652 official examples are tested against exact HTML output. The flag is off by default, preserving existing parsing and rendering behavior.
 
-With the flag on, a blank line ends a block quote:
+CommonMark mode uses this library's parser and usual `ast` nodes, so AST traversal, transformation, custom renderers, and HTML rendering hooks remain available. It uses strict CommonMark syntax regardless of the parser's `Extensions` setting; extensions and custom block/inline parsers apply only when the flag is off. Reference destination and title overrides remain available.
 
-```markdown
-> a
-
-> b
-```
-
-That is two quotes. The same input is one quote with two paragraphs when the flag is off, which is the original Markdown behavior. To keep both paragraphs in one quote with the flag on, put `>` on the blank line:
-
-```markdown
-> a
->
-> b
-```
+When `markdown.ToHTML` receives no renderer, CommonMark documents use XHTML tags and no smart punctuation, matching the official examples. To customize rendering, supply an `html.Renderer` with your own flags.
 
 ```go
 p := parser.New()
 p.Opts.Flags |= parser.CommonMark
+output := markdown.ToHTML([]byte("# Hello\n"), p, nil)
 ```
 
 For more documentation, read [this guide](https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html)

@@ -19,17 +19,10 @@ type Options struct {
 const (
 	FlagsNone        Flags = 0
 	SkipFootnoteList Flags = 1 << iota // Skip adding the footnote list (regardless of whether they are parsed)
-	// CommonMark parses closer to the CommonMark spec.
-	// A blank line ends a block quote, so
-	//
-	//	> a
-	//
-	//	> b
-	//
-	// is two quotes. The flag is off by default. It was added so existing
-	// documents keep the original behavior: those lines are one quote with
-	// two paragraphs. Put '>' on the blank line to keep one quote when the
-	// flag is on.
+	// CommonMark selects the CommonMark 0.31.2 grammar for Parse, independent
+	// of Extensions. The resulting document uses the usual ast node types.
+	// The flag is off by default to preserve historical parsing behavior.
+	// Custom block and inline parsers are only used by the historical parser.
 	CommonMark
 )
 

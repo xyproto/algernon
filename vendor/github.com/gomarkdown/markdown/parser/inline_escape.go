@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html"
 	"strconv"
+	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 )
@@ -76,12 +77,30 @@ func entity(p *Parser, data []byte, offset int) (int, ast.Node) {
 	}
 
 	ent := data[:end]
+	if p == nil || p.Opts.Flags&CommonMark != 0 {
+		if ent[1] == '#' {
+			digits, max := ent[2:len(ent)-1], 7
+			if len(digits) > 0 && (digits[0] == 'x' || digits[0] == 'X') {
+				digits, max = digits[1:], 6
+			}
+			if len(digits) > max {
+				return 0, nil
+			}
+		}
+	}
 	if ent[1] != '#' {
 		// A named entity becomes the character it names, so the renderer
 		// escapes the result rather than the ampersand of the reference
 		// (&amp; round-trips as &amp; instead of &amp;amp;). A name the
 		// HTML5 table does not know stays literal text.
 		if s := html.UnescapeString(string(ent)); s != string(ent) {
+			// HTML permits legacy names without semicolons, so UnescapeString
+			// may consume a prefix of an unknown name (such as &notit;).
+			// The leftover name ends in ';'; the only HTML entity expansion
+			// that itself ends in an ASCII semicolon is &semi;.
+			if (p == nil || p.Opts.Flags&CommonMark != 0) && strings.HasSuffix(s, ";") && s != ";" {
+				return end, newTextNode(ent)
+			}
 			return end, newTextNode([]byte(s))
 		}
 		return end, newTextNode(ent)

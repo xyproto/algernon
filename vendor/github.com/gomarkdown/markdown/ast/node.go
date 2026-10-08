@@ -157,7 +157,13 @@ func (l *Leaf) SetChildren(newChildren []Node) {
 }
 
 // Document represents markdown document node, a root of ast
-type Document struct{ Container }
+type Document struct {
+	Container
+
+	// CommonMark records that the document uses CommonMark parsing semantics.
+	// Renderers can use this to preserve CommonMark escaping and block spacing.
+	CommonMark bool
+}
 
 // DocumentMatter represents markdown node that signals a document
 // division: frontmatter, mainmatter or backmatter.

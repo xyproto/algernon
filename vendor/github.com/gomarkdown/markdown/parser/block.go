@@ -13,6 +13,10 @@ const (
 )
 
 func (p *Parser) Block(data []byte) {
+	if p.Opts.Flags&CommonMark != 0 {
+		p.commonMarkBlocks(data)
+		return
+	}
 	// this is called recursively: enforce a maximum depth
 	if p.nesting >= p.maxNesting {
 		return

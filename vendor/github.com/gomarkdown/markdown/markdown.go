@@ -73,11 +73,16 @@ func Render(doc ast.Node, renderer Renderer) []byte {
 //
 // If you pass nil for both, we use a parser configured with parser.CommonExtensions
 // and an html.Renderer configured with html.CommonFlags.
+// With parser.CommonMark set and a nil renderer, rendering instead uses
+// html.UseXHTML without smart punctuation to match the CommonMark examples.
 func ToHTML(markdown []byte, p *parser.Parser, renderer Renderer) []byte {
 	doc := Parse(markdown, p)
 	if renderer == nil {
 		opts := html.RendererOptions{
 			Flags: html.CommonFlags,
+		}
+		if root, ok := doc.(*ast.Document); ok && root.CommonMark {
+			opts.Flags = html.UseXHTML
 		}
 		renderer = html.NewRenderer(opts)
 	}

@@ -66,6 +66,7 @@ type Renderer struct {
 	closeTag          string
 	headingIDs        map[string]int
 	lastOutputLen     int
+	commonMark        bool
 	DisableTags       int               // Strip tags from Out and Outs when positive.
 	IsSafeURLOverride func([]byte) bool // Optional safe-URL predicate.
 	sr                *SPRenderer
