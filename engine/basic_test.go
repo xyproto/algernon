@@ -193,3 +193,17 @@ func TestRun3Web(t *testing.T) {
 		}
 	})
 }
+
+func TestHTMLEscape(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+	cfg := &Config{versionString: "1.0"}
+	cfg.LoadBasicSystemFunctions(L)
+	if err := L.DoString(`result = htmlescape("/admin/<img src=x onerror=alert(1)>&'\"")`); err != nil {
+		t.Fatal(err)
+	}
+	want := "/admin/&lt;img src=x onerror=alert(1)&gt;&amp;&#39;&#34;"
+	if got := L.GetGlobal("result").String(); got != want {
+		t.Errorf("htmlescape = %q, want %q", got, want)
+	}
+}
