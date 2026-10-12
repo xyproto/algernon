@@ -27,7 +27,6 @@ func (u *user) WebAuthnCredentials() []webauthn.Credential { return u.credential
 const (
 	credentialsField = "webauthn_creds"
 	sessionField     = "webauthn_session"
-	// Algernon 1.17.10 and 1.17.11 kept the credentials in this KeyValue
 	legacyCredStore = "webauthn:creds"
 )
 

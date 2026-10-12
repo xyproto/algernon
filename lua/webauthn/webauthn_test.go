@@ -303,7 +303,7 @@ func TestPasskeyUnknownUser(t *testing.T) {
 	})
 }
 
-// Credentials stored by Algernon 1.17.10 and 1.17.11 must still work.
+// Credentials stored by older versions of Algernon
 func TestPasskeyLegacyCredentials(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, us pinterface.IUserState) {
 		a := newAuthenticator(t)
