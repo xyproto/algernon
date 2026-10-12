@@ -24,24 +24,26 @@ func (u *user) WebAuthnName() string                       { return u.name }
 func (u *user) WebAuthnDisplayName() string                { return u.name }
 func (u *user) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
-// credStore persists WebAuthn credentials as JSON in a KeyValue collection
-type credStore struct {
-	kv pinterface.IKeyValue
-}
+const (
+	credentialsField = "webauthn_creds"
+	sessionField     = "webauthn_session"
+	// Algernon 1.17.10 and 1.17.11 kept the credentials in this KeyValue
+	legacyCredStore = "webauthn:creds"
+)
 
-func newCredStore(creator pinterface.ICreator) (*credStore, error) {
-	kv, err := creator.NewKeyValue("webauthn:creds")
-	if err != nil {
-		return nil, err
-	}
-	return &credStore{kv: kv}, nil
+// credStore persists WebAuthn credentials as JSON, in a field of each user
+type credStore struct {
+	userstate pinterface.IUserState
 }
 
 // loadUser returns a user with stored credentials, or a new user if none exist
 func (cs *credStore) loadUser(username string) *user {
 	u := &user{id: []byte(username), name: username}
-	raw, err := cs.kv.Get(username)
+	raw, err := cs.userstate.Users().Get(username, credentialsField)
 	if err != nil || raw == "" {
+		raw = cs.migrateLegacy(username)
+	}
+	if raw == "" {
 		return u
 	}
 	var creds []webauthn.Credential
@@ -52,6 +54,23 @@ func (cs *credStore) loadUser(username string) *user {
 	return u
 }
 
+// migrateLegacy moves the credentials of the given user from the legacy store
+// to the user, and returns them
+func (cs *credStore) migrateLegacy(username string) string {
+	kv, err := cs.userstate.Creator().NewKeyValue(legacyCredStore)
+	if err != nil {
+		return ""
+	}
+	raw, err := kv.Get(username)
+	if err != nil || raw == "" {
+		return ""
+	}
+	if err := cs.userstate.Users().Set(username, credentialsField, raw); err == nil {
+		kv.Del(username)
+	}
+	return raw
+}
+
 // addCredential appends a credential and persists the updated list
 func (cs *credStore) addCredential(username string, cred *webauthn.Credential) error {
 	u := cs.loadUser(username)
@@ -60,20 +79,12 @@ func (cs *credStore) addCredential(username string, cred *webauthn.Credential) e
 	if err != nil {
 		return err
 	}
-	return cs.kv.Set(username, string(b))
+	return cs.userstate.Users().Set(username, credentialsField, string(b))
 }
 
 // sessionStore persists WebAuthn challenge session data between begin/finish calls
 type sessionStore struct {
-	kv pinterface.IKeyValue
-}
-
-func newSessionStore(creator pinterface.ICreator) (*sessionStore, error) {
-	kv, err := creator.NewKeyValue("webauthn:sessions")
-	if err != nil {
-		return nil, err
-	}
-	return &sessionStore{kv: kv}, nil
+	userstate pinterface.IUserState
 }
 
 func (ss *sessionStore) save(username string, session *webauthn.SessionData) error {
@@ -81,11 +92,11 @@ func (ss *sessionStore) save(username string, session *webauthn.SessionData) err
 	if err != nil {
 		return err
 	}
-	return ss.kv.Set(username, string(b))
+	return ss.userstate.Users().Set(username, sessionField, string(b))
 }
 
 func (ss *sessionStore) load(username string) (*webauthn.SessionData, error) {
-	raw, err := ss.kv.Get(username)
+	raw, err := ss.userstate.Users().Get(username, sessionField)
 	if err != nil {
 		return nil, err
 	}
@@ -97,23 +108,22 @@ func (ss *sessionStore) load(username string) (*webauthn.SessionData, error) {
 }
 
 func (ss *sessionStore) delete(username string) {
-	ss.kv.Del(username)
+	ss.userstate.Users().DelKey(username, sessionField)
 }
 
 // Load makes WebAuthn functions available to Lua scripts.
 // The rpID and rpOrigin are derived from the current request if not configured.
 func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pinterface.IUserState) {
-	creator := userstate.Creator()
+	cs := &credStore{userstate: userstate}
+	ss := &sessionStore{userstate: userstate}
 
-	cs, err := newCredStore(creator)
-	if err != nil {
-		logrus.Error("WebAuthn credential store: ", err)
-		return
-	}
-	ss, err := newSessionStore(creator)
-	if err != nil {
-		logrus.Error("WebAuthn session store: ", err)
-		return
+	// Passkeys may only be added to an existing account, by that logged in user
+	isAccountOwner := func(username string) bool {
+		if username == "" || !userstate.HasUser(username) {
+			return false
+		}
+		cookieUser, err := userstate.UsernameCookie(req)
+		return err == nil && cookieUser == username && userstate.IsLoggedIn(username)
 	}
 
 	// Derive the relying party config from the request
@@ -139,6 +149,11 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	// Takes a username, writes JSON options to the response.
 	L.SetGlobal("WebAuthnBeginRegister", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
+		if !isAccountOwner(username) {
+			logrus.Warn("WebAuthn: only a logged in user can register a passkey for their own account, not for ", username)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
 		wa, err := newWebAuthn()
 		if err != nil {
 			logrus.Error("WebAuthn config: ", err)
@@ -172,6 +187,11 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	// Returns true if the credential was stored.
 	L.SetGlobal("WebAuthnFinishRegister", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
+		if !isAccountOwner(username) {
+			logrus.Warn("WebAuthn: only a logged in user can register a passkey for their own account, not for ", username)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
 		wa, err := newWebAuthn()
 		if err != nil {
 			logrus.Error("WebAuthn config: ", err)
@@ -205,6 +225,11 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	// Takes a username, writes JSON options to the response.
 	L.SetGlobal("WebAuthnBeginLogin", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
+		if !userstate.HasUser(username) {
+			logrus.Warn("WebAuthn: no such user: ", username)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
 		wa, err := newWebAuthn()
 		if err != nil {
 			logrus.Error("WebAuthn config: ", err)
@@ -243,6 +268,11 @@ func Load(w http.ResponseWriter, req *http.Request, L *lua.LState, userstate pin
 	// Returns true if authentication succeeded. Also logs the user in.
 	L.SetGlobal("WebAuthnFinishLogin", L.NewFunction(func(L *lua.LState) int {
 		username := L.ToString(1)
+		if !userstate.HasUser(username) {
+			logrus.Warn("WebAuthn: no such user: ", username)
+			L.Push(lua.LBool(false))
+			return 1 // number of results
+		}
 		wa, err := newWebAuthn()
 		if err != nil {
 			logrus.Error("WebAuthn config: ", err)

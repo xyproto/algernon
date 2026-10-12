@@ -568,6 +568,13 @@ func (ac *Config) RegisterHandlers(mux *http.ServeMux, handlePath, servedir stri
 		if strings.HasSuffix(filename, utils.Pathsep) {
 			noslash = filename[:len(filename)-1]
 		}
+
+		if !utils.ResolvesWithinDir(servedir, noslash) {
+			logrus.Warnf("Refusing to follow a symlink out of %s: %s", servedir, noslash)
+			w.WriteHeader(http.StatusNotFound)
+			ac.LogAccess(req, http.StatusNotFound, 0)
+			return
+		}
 		hasdir := ac.fs.Exists(filename) && ac.fs.IsDir(filename)
 		dirname := filename
 		hasfile := ac.fs.Exists(noslash)
