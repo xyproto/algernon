@@ -96,3 +96,50 @@ func TestDescribeBytes(t *testing.T) {
 		}
 	}
 }
+
+func TestResolvesWithinDir(t *testing.T) {
+	outside := t.TempDir()
+	secret := filepath.Join(outside, "secret.txt")
+	if err := os.WriteFile(secret, []byte("secret"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	inside := filepath.Join(root, "inside.txt")
+	if err := os.WriteFile(inside, []byte("ok"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	links := map[string]string{
+		"leak":       secret,
+		"leakdir":    outside,
+		"insidelink": inside,
+	}
+	for name, target := range links {
+		if err := os.Symlink(target, filepath.Join(root, name)); err != nil {
+			t.Skip("symlinks are not supported here:", err)
+		}
+	}
+	for p, want := range map[string]bool{
+		inside:                                       true,
+		filepath.Join(root, "insidelink"):            true,
+		filepath.Join(root, "missing.txt"):           true,
+		filepath.Join(root, "leak"):                  false,
+		filepath.Join(root, "leakdir"):               false,
+		filepath.Join(root, "leakdir", "secret.txt"): false,
+	} {
+		if got := ResolvesWithinDir(root, p); got != want {
+			t.Errorf("ResolvesWithinDir(root, %s) = %v, want %v", p, got, want)
+		}
+	}
+
+	// The root itself may be a symlink, like /srv/www -> /data/www
+	rootLink := filepath.Join(t.TempDir(), "rootlink")
+	if err := os.Symlink(root, rootLink); err != nil {
+		t.Fatal(err)
+	}
+	if !ResolvesWithinDir(rootLink, filepath.Join(rootLink, "inside.txt")) {
+		t.Error("a file in a symlinked root should be within the root")
+	}
+	if ResolvesWithinDir(rootLink, filepath.Join(rootLink, "leak")) {
+		t.Error("a symlink out of a symlinked root should not be within the root")
+	}
+}

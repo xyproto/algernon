@@ -31,6 +31,28 @@ func WithinDir(root, p string) bool {
 	return rel != ".." && !strings.HasPrefix(rel, ".."+Pathsep)
 }
 
+// ResolvesWithinDir reports whether p, after following any symlinks, is
+// still within root. Paths that do not exist are reported as within root,
+// since there is nothing there to be served.
+func ResolvesWithinDir(root, p string) bool {
+	resolved, err := filepath.EvalSymlinks(p)
+	if err != nil {
+		return true
+	}
+	if r, err := filepath.EvalSymlinks(root); err == nil {
+		root = r
+	}
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	resolvedAbs, err := filepath.Abs(resolved)
+	if err != nil {
+		return false
+	}
+	return WithinDir(rootAbs, resolvedAbs)
+}
+
 // URL2filename translates a given URL path to a probable full filename.
 // URL paths that lead outside of dirname result in dirname itself.
 func URL2filename(dirname, urlpath string) string {
