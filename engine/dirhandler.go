@@ -165,7 +165,7 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 	var filename string
 	for _, indexfile := range indexFilenames {
 		filename = filepath.Join(dirname, indexfile)
-		if ac.fs.Exists(filename) && utils.ResolvesWithinDir(rootdir, filename) {
+		if ac.fs.Exists(filename) && (!ac.strictSymlinks || utils.ResolvesWithinDir(rootdir, filename)) {
 			ac.FilePage(w, req, filename, luaDataFilename)
 			return
 		}
@@ -187,7 +187,7 @@ func (ac *Config) DirPage(w http.ResponseWriter, req *http.Request, rootdir, dir
 			break
 		}
 		filename = filepath.Join(ancestor, "handler.lua")
-		if ac.fs.Exists(filename) && utils.ResolvesWithinDir(rootAbs, filename) {
+		if ac.fs.Exists(filename) && (!ac.strictSymlinks || utils.ResolvesWithinDir(rootAbs, filename)) {
 			ac.FilePage(w, req, filename, luaDataFilename)
 			return
 		}

@@ -137,6 +137,7 @@ func (ac *Config) handleFlags(serverTempDir string) {
 	flag.BoolVar(&ac.serve.useCertMagic, "letsencrypt", false, "Use Let's Encrypt for all served domains and serve regular HTTPS")
 	flag.BoolVar(&ac.serve.useCertMagicStaging, "testcert", false, "Use the Let's Encrypt staging CA instead of the production CA (for testing)")
 	flag.BoolVar(&ac.hideDotfiles, "hide-dotfiles", false, "Hide files and directories starting with '.'")
+	flag.BoolVar(&ac.strictSymlinks, "strict-symlinks", false, "Don't follow symlinks that lead out of the served directory")
 	flag.StringVar(&ac.dirBaseURL, "dirbaseurl", "", "Base URL for the directory listing (optional)")
 	flag.Func("proxy", "Reverse proxy to ENDPOINT, or /PREFIX=ENDPOINT (can be given several times)", func(value string) error {
 		rp, err := ParseReverseProxyFlag(value)

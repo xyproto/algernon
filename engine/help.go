@@ -718,6 +718,8 @@ Available flags:
                                (the default is "` + ac.defaultEventRefresh + `").
   --eventserver=[HOST][:PORT]  SSE server address (for filesystem changes).
   --hide-dotfiles              Hide files and directories starting with ".".
+  --strict-symlinks            Don't follow symlinks that lead out of the
+                               served directory (or the domain directory).
   --http2only                  Serve HTTP/2, without HTTPS.
   --http-addr=[HOST][:PORT]    HTTP (non-TLS) listen address.
   --https-addr=[HOST][:PORT]   HTTPS (TLS) listen address.

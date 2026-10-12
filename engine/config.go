@@ -155,6 +155,7 @@ type Config struct {
 	useNoDatabase                bool // don't use a database. There will be a loss of functionality.
 	separateEventServer          bool // use a dedicated port for the SSE event server
 	hideDotfiles                 bool // hide files and directories starting with "."
+	strictSymlinks               bool // don't follow symlinks that lead out of the served directory
 	serverModeFromCLI            bool // --noninteractive / -s was set from the command line
 }
 

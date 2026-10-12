@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"errors"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -36,8 +38,10 @@ func WithinDir(root, p string) bool {
 // since there is nothing there to be served.
 func ResolvesWithinDir(root, p string) bool {
 	resolved, err := filepath.EvalSymlinks(p)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
 		return true
+	} else if err != nil {
+		return false
 	}
 	if r, err := filepath.EvalSymlinks(root); err == nil {
 		root = r

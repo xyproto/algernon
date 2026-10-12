@@ -4,7 +4,7 @@ Changes from 1.17.11 to 1.17.12
 ===============================
 
 * Improve the experimental WebAuthn support.
-* Fix link resolution when serving directories.
+* Add the `--strict-symlinks` flag, for not following symlinks that lead out of the served directory.
 * Add `htmlescape` and use it in `serverconf.lua`.
 * Keep the server log and the access logs open, instead of opening and closing them for every line + improve log rotation abilities.
 * Rewrite the reverse proxy to use `httputil.ReverseProxy`.
