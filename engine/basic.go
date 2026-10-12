@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -116,6 +117,12 @@ func (ac *Config) LoadBasicSystemFunctions(L *lua.LState) {
 		sanitizedHTML := policy.Sanitize(htmlContent)
 		// Return the sanitized HTML
 		L.Push(lua.LString(sanitizedHTML))
+		return 1 // number of results
+	}))
+
+	// Escape HTML special characters, for including text in an HTML page
+	L.SetGlobal("htmlescape", L.NewFunction(func(L *lua.LState) int {
+		L.Push(lua.LString(html.EscapeString(L.ToString(1))))
 		return 1 // number of results
 	}))
 

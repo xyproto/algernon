@@ -310,6 +310,8 @@ unixnano() -> number
 markdown(string) -> string
 // Sanitize HTML
 sanhtml(string) -> string
+// Escape HTML special characters
+htmlescape(string) -> string
 // Truncate a string to at most n bytes
 maxlen(string, number) -> string
 // Query a PostgreSQL database with a query and a connection string.
