@@ -8,6 +8,14 @@ import (
 
 // single and double emphasis parsing
 func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
+	// Registering '~' for subscript must not enable double-tilde syntax or
+	// reinterpret the suffix of a double-tilde opener as a single opener.
+	if data[offset] == '~' && p.extensions&Strikethrough == 0 {
+		if offset+1 < len(data) && data[offset+1] == '~' ||
+			offset > 0 && data[offset-1] == '~' && !isEscape(data, offset-1) {
+			return 0, nil
+		}
+	}
 	data = data[offset:]
 	c := data[0]
 
@@ -34,6 +42,9 @@ func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 			}
 			sub := &ast.Subscript{Leaf: ast.Leaf{Literal: data[1:ret]}}
 			return ret + 1, sub
+		}
+		if c == '~' {
+			return 0, nil
 		}
 		ret, node := helperEmphasis(p, data[1:], c)
 		if ret == 0 {

@@ -107,7 +107,7 @@ func (p *Parser) prefixHeading(data []byte) int {
 }
 
 func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
-	if p.extensions|Mmark == 0 {
+	if p.extensions&Mmark == 0 {
 		return false
 	}
 	if len(data) < 4 {

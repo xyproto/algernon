@@ -30,11 +30,14 @@ const (
 	OrderedListStart                              // Keep track of the first number used when starting an ordered list.
 	Attributes                                    // Block Attributes
 	SuperSubscript                                // Super- and subscript support: 2^10^, H~2~O.
-	EmptyLinesBreakList                           // 2 empty lines break out of list
-	Includes                                      // Support including other files.
-	Mmark                                         // Support Mmark syntax, see https://mmark.miek.nl/post/syntax/
-	InlineAttributes                              // Parse {: key="value"} after links and images
-	MarkdownInHTML                                // Parse markdown inside HTML table cells and similar tags
+	// EmptyLinesBreakList is retained for source compatibility and has no effect.
+	//
+	// Deprecated: this option is ignored.
+	EmptyLinesBreakList
+	Includes         // Support including other files.
+	Mmark            // Support Mmark syntax, see https://mmark.miek.nl/post/syntax/
+	InlineAttributes // Parse {: key="value"} after links and images
+	MarkdownInHTML   // Parse markdown inside HTML table cells and similar tags
 
 	CommonExtensions Extensions = NoIntraEmphasis | Tables | FencedCode |
 		Autolink | Strikethrough | SpaceHeadings | HeadingIDs |
@@ -76,7 +79,7 @@ func NewWithExtensions(extension Extensions) *Parser {
 
 	p.registerInline(" ", maybeLineBreak)
 	p.registerInline("*_", emphasis)
-	if extension&Strikethrough != 0 {
+	if extension&(Strikethrough|SuperSubscript) != 0 {
 		p.registerInline("~", emphasis)
 	}
 	p.registerInline("`", codeSpan)

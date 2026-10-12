@@ -304,6 +304,7 @@ implements the following extensions:
   Will convert into `<h1 id="id3" class="myclass" fontsize="tiny">Header 1</h1>`.
 
 - **Mmark support**, see <https://mmark.miek.nl/post/syntax/> for all new syntax elements this adds.
+  Table captions (`Table: ...`) require both `Tables` and `Mmark`.
 
 ## Users
 

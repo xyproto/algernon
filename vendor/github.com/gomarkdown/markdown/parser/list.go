@@ -94,8 +94,8 @@ func (p *Parser) list(data []byte, flags ast.ListType, start int, delim byte) in
 }
 
 // Returns true if the list item is not the same type as its parent list
-func listTypeChanged(data []byte, flags ast.ListType) bool {
-	return dliPrefix(data) > 0 && flags&ast.ListTypeDefinition == 0 ||
+func listTypeChanged(data []byte, flags ast.ListType, definitionItem bool) bool {
+	return definitionItem && flags&ast.ListTypeDefinition == 0 ||
 		oliPrefix(data) > 0 && flags&ast.ListTypeOrdered == 0 ||
 		uliPrefix(data) > 0 && flags&(ast.ListTypeOrdered|ast.ListTypeDefinition) != 0
 }
@@ -140,7 +140,7 @@ func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 	} else {
 		bulletChar = data[i-2]
 	}
-	if i == 0 {
+	if i == 0 && p.extensions&DefinitionLists != 0 {
 		i = dliPrefix(data)
 		// reset definition term flag
 		if i > 0 {
@@ -218,14 +218,15 @@ gatherlines:
 			}
 		}
 
+		definitionItem := p.extensions&DefinitionLists != 0 && dliPrefix(chunk) > 0
 		// evaluate how this line fits in
 		switch {
 		// is this a nested list item?
-		case (uliPrefix(chunk) > 0 && !isHRule(chunk)) || oliPrefix(chunk) > 0 || dliPrefix(chunk) > 0:
+		case (uliPrefix(chunk) > 0 && !isHRule(chunk)) || oliPrefix(chunk) > 0 || definitionItem:
 
 			// if indent is 4 or more spaces on unordered or ordered lists
 			// we need to add leadingWhiteSpaces + 1 spaces in the beginning of the chunk
-			if indentIndex >= 4 && dliPrefix(chunk) <= 0 {
+			if indentIndex >= 4 && !definitionItem {
 				leadingWhiteSpaces := skipChar(chunk, 0, ' ')
 				chunk = data[line+indentIndex-(leadingWhiteSpaces+1) : i]
 			}
@@ -234,7 +235,7 @@ gatherlines:
 			// if not, it is either a different kind of list
 			// or the next item in the same list
 			if indent <= itemIndent {
-				if listTypeChanged(chunk, *flags) {
+				if listTypeChanged(chunk, *flags, definitionItem) {
 					*flags |= ast.ListItemEndOfList
 				} else if containsBlankLine {
 					*flags |= ast.ListItemContainsBlock
@@ -252,7 +253,7 @@ gatherlines:
 				sublist = raw.Len()
 				// in the case of dliPrefix we are too late and need to search back for the definition item, which
 				// should be on the previous line, we then adjust sublist to start there.
-				if dliPrefix(chunk) > 0 {
+				if definitionItem {
 					sublist = backUntilChar(raw.Bytes(), raw.Len()-1, '\n')
 				}
 			}
