@@ -27,7 +27,7 @@ func (u *user) WebAuthnCredentials() []webauthn.Credential { return u.credential
 const (
 	credentialsField = "webauthn_creds"
 	sessionField     = "webauthn_session"
-	legacyCredStore = "webauthn:creds"
+	legacyCredStore  = "webauthn:creds"
 )
 
 // credStore persists WebAuthn credentials as JSON, in a field of each user
