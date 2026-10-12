@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net"
 	"net/http"
@@ -285,7 +286,7 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 		// Listen for HTTP and HTTPS requests, for specific domain(s)
 		go func() {
 			ac.configureCertMagic()
-			if err := certmagic.HTTPS(ac.serve.certMagicDomains, handler); err != nil {
+			if err := ac.serveCertMagic(handler); err != nil {
 				servingHTTPS.Store(false)
 				if isBindError(err) {
 					ac.fatalExit(err)
@@ -391,6 +392,67 @@ func (ac *Config) Serve(handler http.Handler, done, ready chan bool) error {
 	<-done // Wait for a "done" message from the REPL (or just keep waiting)
 
 	return nil // Done serving
+}
+
+// serveCertMagic serves HTTPS on port 443 and redirects HTTP on port 80 to
+// HTTPS, for all CertMagic domains. Unlike certmagic.HTTPS, it starts serving
+// right away and obtains the certificates in the background, so that a domain
+// that fails to get a certificate does not stop the other domains from being
+// served. CertMagic keeps retrying the failed domains.
+func (ac *Config) serveCertMagic(handler http.Handler) error {
+	cfg := certmagic.NewDefault()
+	if err := cfg.ManageAsync(context.Background(), ac.serve.certMagicDomains); err != nil {
+		return err
+	}
+
+	tlsConfig := cfg.TLSConfig()
+	tlsConfig.NextProtos = append([]string{"h2", "http/1.1"}, tlsConfig.NextProtos...)
+	httpsLn, err := tls.Listen("tcp", ":"+strconv.Itoa(certmagic.HTTPSPort), tlsConfig)
+	if err != nil {
+		return err
+	}
+	httpLn, err := net.Listen("tcp", ":"+strconv.Itoa(certmagic.HTTPPort))
+	if err != nil {
+		httpsLn.Close()
+		return err
+	}
+
+	// Answer the HTTP challenge, and redirect everything else to HTTPS
+	var redirectHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		host := req.Host
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		w.Header().Set("Connection", "close")
+		http.Redirect(w, req, "https://"+host+req.URL.RequestURI(), http.StatusMovedPermanently)
+	})
+	if len(cfg.Issuers) > 0 {
+		if am, ok := cfg.Issuers[0].(*certmagic.ACMEIssuer); ok {
+			redirectHandler = am.HTTPChallengeHandler(redirectHandler)
+		}
+	}
+
+	// The same timeouts as certmagic.HTTPS uses
+	httpServer := &http.Server{
+		Handler:           redirectHandler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+		IdleTimeout:       5 * time.Second,
+	}
+	httpsServer := &http.Server{
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      2 * time.Minute,
+		IdleTimeout:       5 * time.Minute,
+	}
+	go func() {
+		if err := httpServer.Serve(httpLn); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logrus.Error(err)
+		}
+	}()
+	return httpsServer.Serve(httpsLn)
 }
 
 // servePortSettings starts listeners based on the explicit portSettings configuration.

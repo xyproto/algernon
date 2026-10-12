@@ -18,6 +18,7 @@ Changes from 1.17.11 to 1.17.12
 * Set new log files to mode `0640`.
 * Reject `AddReverseProxy` endpoint URLs that have no scheme or host.
 * Improve how certmagic-related events are logged.
+* Improve how `--letsencrypt` starts and retries.
 * Update dependencies.
 * Update documentation.
 
