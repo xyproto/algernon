@@ -1,22 +1,3 @@
-### Lua functions for JSON endpoints
-
-* `formjson()` — Read a JSON request body and return a Lua table with the decoded fields. Useful when the client sends `application/json` instead of form data.
-* `formdata()` — Read form-encoded or URL query data and return a Lua table.
-* `json(table)` — Convert a Lua table to a JSON string.
-
-Example Lua endpoint:
-
-```lua
-content("application/json")
-local fields = formdata()
-local username = sanhtml(fields["username"] or "")
-if username == "" then
-  print(json({error = "Missing username"}))
-  return
-end
-print(json({ok = true}))
-```
-
 ## React, JSX and TypeScript
 
 When a directory contains an `index.jsx` or `index.tsx` file, Algernon serves it as a complete React application. The JSX/TSX is bundled with esbuild, wrapped in an HTML page with the React runtime loaded, and served with the correct content type.
@@ -27,26 +8,6 @@ When a directory contains an `index.jsx` or `index.tsx` file, Algernon serves it
         // React: 19
 
 * Lua scripts in the same directory (e.g. `login.lua`, `data.lua`) can serve as API endpoints, making it possible to build full-stack applications with JSX for the frontend and Lua for the backend.
-
-### Injected JavaScript functions
-
-When serving `index.jsx` or `index.tsx`, the following helper functions are available in the browser:
-
-* `postForm(url, fields)` — POST form data to a Lua/Teal endpoint and return the parsed JSON response as a promise. The `fields` argument is an object whose keys and values are URL-encoded and sent as `application/x-www-form-urlencoded`.
-* `bufferToBase64URL(buffer)` — convert an `ArrayBuffer` to a base64url-encoded string. Useful for WebAuthn credential responses.
-* `base64URLToBuffer(str)` — convert a base64url-encoded string to an `ArrayBuffer`. Useful for WebAuthn challenge and credential ID fields.
-
-Example usage in JSX:
-
-```jsx
-postForm("login.lua", { username, password }).then((data) => {
-  if (data.ok) {
-    console.log("Logged in");
-  } else {
-    console.log(data.error);
-  }
-});
-```
 
 ## WebAuthn
 

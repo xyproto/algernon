@@ -1299,6 +1299,48 @@ handle(string, function)
 servedir(string, string)
 ~~~
 
+
+Functions related to HTTP requests and JSON
+-------------------------------------------
+
+* `formjson()` return the JSON from the current request as a Lua table.
+* `formdata()` return the given URL or form data as a Lua table.
+* `json(table)` convert a Lua table to a JSON string.
+
+Example use:
+
+```lua
+content("application/json")
+local fields = formdata()
+local username = sanhtml(fields["username"] or "")
+if username == "" then
+  print(json({error = "Missing username"}))
+  return
+end
+print(json({ok = true}))
+```
+
+Injected JS functions
+---------------------
+
+When serving `index.jsx` or `index.ts`, these functions become available in the browser:
+
+* `postForm(url, fields)` POST form data to a Lua/Teal endpoint and return the response as a promise. The `fields` argument is an object where the keys and values are URL-encoded and sent as `application/x-www-form-urlencoded`.
+* `bufferToBase64URL(buffer)` convert an `ArrayBuffer` to a base64url encoded string.
+* `base64URLToBuffer(str)` convert a base64url encoded string to an `ArrayBuffer`.
+
+Example use in JSX:
+
+```jsx
+postForm("login.lua", { username, password }).then((data) => {
+  if (data.ok) {
+    console.log("Logged in");
+  } else {
+    console.log(data.error);
+  }
+});
+```
+
 Commands that are only available in the REPL
 --------------------------------------------
 
