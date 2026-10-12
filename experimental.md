@@ -52,7 +52,7 @@ postForm("login.lua", { username, password }).then((data) => {
 
 [WebAuthn/FIDO2](https://webauthn.io/) can be used for passwordless authentication. Credentials are stored in the database alongside regular user data. Four Lua/Teal functions are available:
 
-* `WebAuthnBeginRegister(username)` — Begin a registration ceremony. Writes JSON options to the response. Returns `true` if successful.
+* `WebAuthnBeginRegister(username)` — Begin a registration ceremony. Writes JSON options to the response. Returns `true` if successful. Passkeys can only be registered for an existing user, by that user while logged in.
 * `WebAuthnFinishRegister(username)` — Finish registration. Reads the attestation response from the request body and stores the credential. Returns `true` if successful.
 * `WebAuthnBeginLogin(username)` — Begin a login ceremony. Writes JSON options to the response. Returns `true` if successful.
 * `WebAuthnFinishLogin(username)` — Finish login. Reads the assertion response from the request body. On success, also logs the user in via the standard session mechanism. Returns `true` if successful.
@@ -61,7 +61,7 @@ The relying party ID and origin are automatically derived from the request. Exam
 
 ```lua
 -- webauthn_register_begin.tl
-local username: string = sanhtml(formdata()["username"] or "")
+local username: string = Username()
 if not WebAuthnBeginRegister(username) then
   content("application/json")
   print(json({error = "Registration failed"}))
@@ -70,7 +70,7 @@ end
 
 ```lua
 -- webauthn_register_finish.tl
-local username: string = sanhtml(formdata()["username"] or "")
+local username: string = Username()
 content("application/json")
 print(json({ok = WebAuthnFinishRegister(username)}))
 ```
