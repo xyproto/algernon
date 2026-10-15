@@ -1499,7 +1499,7 @@ print("The number is " .. x)
 os.exit()
 ```
 
-And then run it as:
+And then run it with:
 
 ```sh
 algernon -lua main.lua
