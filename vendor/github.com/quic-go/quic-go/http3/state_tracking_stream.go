@@ -25,9 +25,9 @@ type stateTrackingStream struct {
 	hasData      chan struct{}
 	queue        [][]byte // TODO: use a ring buffer
 
-	mx      sync.Mutex
-	sendErr error
-	recvErr error
+	mx             sync.Mutex
+	sendStreamDone bool
+	recvErr        error
 
 	clearer streamClearer
 }
@@ -46,24 +46,22 @@ func newStateTrackingStream(s *quic.Stream, clearer streamClearer, sendDatagram 
 		hasData:      make(chan struct{}, 1),
 	}
 
-	context.AfterFunc(s.Context(), func() {
-		t.closeSend(context.Cause(s.Context()))
-	})
+	context.AfterFunc(s.Context(), t.closeSend)
 
 	return t
 }
 
-func (s *stateTrackingStream) closeSend(e error) {
+func (s *stateTrackingStream) closeSend() {
 	s.mx.Lock()
 	defer s.mx.Unlock()
 
 	// clear the stream the first time both the send
 	// and receive are finished
-	if s.sendErr == nil {
+	if !s.sendStreamDone {
 		if s.recvErr != nil {
 			s.clearer.clearStream(s.StreamID())
 		}
-		s.sendErr = e
+		s.sendStreamDone = true
 	}
 }
 
@@ -74,7 +72,7 @@ func (s *stateTrackingStream) closeReceive(e error) {
 	// clear the stream the first time both the send
 	// and receive are finished
 	if s.recvErr == nil {
-		if s.sendErr != nil {
+		if s.sendStreamDone {
 			s.clearer.clearStream(s.StreamID())
 		}
 		s.recvErr = e
@@ -83,19 +81,19 @@ func (s *stateTrackingStream) closeReceive(e error) {
 }
 
 func (s *stateTrackingStream) Close() error {
-	s.closeSend(errors.New("write on closed stream"))
+	s.closeSend()
 	return s.Stream.Close()
 }
 
 func (s *stateTrackingStream) CancelWrite(e quic.StreamErrorCode) {
-	s.closeSend(&quic.StreamError{StreamID: s.StreamID(), ErrorCode: e})
+	s.closeSend()
 	s.Stream.CancelWrite(e)
 }
 
 func (s *stateTrackingStream) Write(b []byte) (int, error) {
 	n, err := s.Stream.Write(b)
 	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
-		s.closeSend(err)
+		s.closeSend()
 	}
 	return n, err
 }
@@ -103,7 +101,7 @@ func (s *stateTrackingStream) Write(b []byte) (int, error) {
 func (s *stateTrackingStream) TryWriteAll(b []byte) error {
 	err := s.Stream.TryWriteAll(b)
 	if err != nil && !errors.Is(err, quic.ErrWouldBlock) {
-		s.closeSend(err)
+		s.closeSend()
 	}
 	return err
 }
@@ -122,13 +120,9 @@ func (s *stateTrackingStream) Read(b []byte) (int, error) {
 }
 
 func (s *stateTrackingStream) SendDatagram(b []byte) error {
-	s.mx.Lock()
-	sendErr := s.sendErr
-	s.mx.Unlock()
-	if sendErr != nil {
-		return sendErr
+	if err := context.Cause(s.Context()); err != nil {
+		return err
 	}
-
 	return s.sendDatagram(b)
 }
 
@@ -154,6 +148,9 @@ func (s *stateTrackingStream) enqueueDatagram(data []byte) {
 }
 
 func (s *stateTrackingStream) ReceiveDatagram(ctx context.Context) ([]byte, error) {
+	if err := context.Cause(ctx); err != nil {
+		return nil, err
+	}
 start:
 	s.mx.Lock()
 	if len(s.queue) > 0 {

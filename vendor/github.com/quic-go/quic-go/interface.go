@@ -64,6 +64,10 @@ var ErrWouldBlock = errors.New("operation would block")
 // ErrWriteLimitReached is returned by [SendStream.WriteWithLimit] when its limiter prevents accepting the entire slice.
 var ErrWriteLimitReached = errors.New("write limit reached")
 
+// ErrStreamClosed is returned when writing to a stream after [SendStream.Close] was called.
+// Closing a stream also cancels its context with this error as the cause.
+var ErrStreamClosed = errors.New("stream closed")
+
 // QUICVersionContextKey can be used to find out the QUIC version of a TLS handshake from the
 // context returned by [tls.ClientHelloInfo.Context].
 var QUICVersionContextKey = handshake.QUICVersionContextKey
@@ -167,6 +171,9 @@ type Config struct {
 	// Under most circumstances, it is not necessary to manually set this value,
 	// since path MTU discovery quickly finds the path's MTU.
 	// If set too high, the path might not support packets of that size, leading to a timeout of the QUIC handshake.
+	// If set to 0, it defaults to 1280 bytes and falls back to 1200 bytes if the first write at that size
+	// returns a "message too long" error. An explicitly set value is kept as the lower limit;
+	// a "message too long" error at that size fails the handshake instead.
 	// Values below 1200 are invalid.
 	InitialPacketSize uint16
 	// DisablePathMTUDiscovery disables Path MTU Discovery (RFC 8899).

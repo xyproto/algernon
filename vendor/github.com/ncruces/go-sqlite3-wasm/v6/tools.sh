@@ -30,8 +30,8 @@ BINARYEN="https://github.com/WebAssembly/binaryen/releases/download/version_133/
 # Download tools
 rm -rf "tools/"
 mkdir -p "tools/"
-curl -#L "$WASI_SDK" | tar xzC "tools/" &
-curl -#L "$BINARYEN" | tar xzC "tools/" &
+curl -#fL "$WASI_SDK" | tar xzC "tools/" &
+curl -#fL "$BINARYEN" | tar xzC "tools/" &
 wait
 
 mv "tools/wasi-sdk"* "tools/wasi-sdk"

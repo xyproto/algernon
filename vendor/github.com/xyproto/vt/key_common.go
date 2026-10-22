@@ -512,9 +512,7 @@ func parseFirstKey(buf []byte) (string, int) {
 	return string(buf[:1]), 1
 }
 
-// readBufSize is the size of the buffer used for each read from the
-// terminal. It is large enough that a pasted chunk is normally collected in
-// one or two reads instead of hundreds.
+// readBufSize is large enough that a pasted chunk usually arrives in one read
 const readBufSize = 4096
 
 // ReadKey reads a key sequence (or printable character) from the TTY,
@@ -527,16 +525,14 @@ func (tty *TTY) ReadKey() string {
 	return tty.readKey(0)
 }
 
-// ReadKeyTimeout reads a key like ReadKey, but waits at most d for input to
-// arrive and returns "" if none does. A d of zero or less blocks, exactly
-// like ReadKey. A key already sitting in the pending buffer is returned
-// right away, without waiting.
+// ReadKeyTimeout reads a key like ReadKey, but waits at most d for input and
+// returns "" if none arrives. A d of zero or less blocks, like ReadKey.
 func (tty *TTY) ReadKeyTimeout(d time.Duration) string {
 	return tty.readKey(d)
 }
 
-// readKey implements ReadKey and ReadKeyTimeout. blockTimeout is the timeout
-// used when waiting for input; zero or less blocks until a byte arrives.
+// readKey implements ReadKey and ReadKeyTimeout. A blockTimeout of zero or
+// less blocks until a byte arrives.
 func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	// Try to return a key already sitting in the pending buffer first. This is
 	// done before touching the terminal: RawMode below performs two ioctl
@@ -559,10 +555,8 @@ func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	// in progress. The outer editor loop restores the terminal on exit.
 	tty.RawMode()
 
-	// Need more bytes. Use a generous read buffer so bursts of queued input
-	// (a held-down Right-arrow, or a large paste) are not split across many
-	// reads: each read costs a syscall, and on some platforms the terminal
-	// drops input that is not collected quickly enough.
+	// Need more bytes. A generous read buffer keeps bursts of queued input (a
+	// held-down arrow key, or a large paste) from being split across many reads.
 	savedTimeout, err := tty.SetTimeout(blockTimeout)
 	if err != nil {
 		return ""
@@ -596,9 +590,7 @@ func (tty *TTY) readKey(blockTimeout time.Duration) string {
 		tty.pending = tty.pending[consumed:]
 		return key
 	}
-	// No bytes arrived at all: either the timeout expired or the input ended.
-	// There is nothing to flush, and indexing into the empty buffer below
-	// would panic.
+	// Nothing arrived: the timeout expired or the input ended
 	if len(tty.pending) == 0 {
 		return ""
 	}

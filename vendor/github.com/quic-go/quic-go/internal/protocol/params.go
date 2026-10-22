@@ -42,13 +42,6 @@ const MaxServerUnprocessedPackets = 1024
 // MaxConnUnprocessedPackets is the max number of packets stored in each connection that are not yet processed.
 const MaxConnUnprocessedPackets = 256
 
-// SkipPacketInitialPeriod is the initial period length used for packet number skipping to prevent an Optimistic ACK attack.
-// Every time a packet number is skipped, the period is doubled, up to SkipPacketMaxPeriod.
-const SkipPacketInitialPeriod PacketNumber = 256
-
-// SkipPacketMaxPeriod is the maximum period length used for packet number skipping.
-const SkipPacketMaxPeriod PacketNumber = 128 * 1024
-
 // MaxAcceptQueueSize is the maximum number of connections that the server queues for accepting.
 // If the queue is full, new connection attempts will be rejected.
 const MaxAcceptQueueSize = 32
@@ -102,10 +95,6 @@ const DefaultHandshakeIdleTimeout = 5 * time.Second
 // 2. it reduces the head-of-line blocking, when a packet is lost
 const MinStreamFrameSize ByteCount = 128
 
-// MaxPostHandshakeCryptoFrameSize is the maximum size of CRYPTO frames
-// we send after the handshake completes.
-const MaxPostHandshakeCryptoFrameSize = 1000
-
 // MaxNumAckRanges is the maximum number of ACK ranges that we send in an ACK frame.
 // It also serves as a limit for the packet history.
 // If at any point we keep track of more ranges, old ranges are discarded.
@@ -113,11 +102,6 @@ const MaxPostHandshakeCryptoFrameSize = 1000
 // This value also guarantees that ACK Range Count value in the ACK frame can be encoded
 // in a single byte varint.
 const MaxNumAckRanges = 64
-
-// MinPacingDelay is the minimum duration that is used for packet pacing
-// If the packet packing frequency is higher, multiple packets might be sent at once.
-// Example: For a packet pacing delay of 200μs, we would send 5 packets at once, wait for 1ms, and so forth.
-const MinPacingDelay = time.Millisecond
 
 // DefaultConnectionIDLength is the connection ID length that is used for multiplexed connections
 // if no other value is configured.
@@ -139,25 +123,3 @@ const AckDelayExponent = 3
 // Estimated timer granularity.
 // The loss detection timer will not be set to a value smaller than granularity.
 const TimerGranularity = time.Millisecond
-
-// MaxAckDelay is the maximum time by which we delay sending ACKs.
-const MaxAckDelay = 25 * time.Millisecond
-
-// MaxAckDelayInclGranularity is the max_ack_delay including the timer granularity.
-// This is the value that should be advertised to the peer.
-const MaxAckDelayInclGranularity = MaxAckDelay + TimerGranularity
-
-// KeyUpdateInterval is the maximum number of packets we send or receive before initiating a key update.
-const KeyUpdateInterval = 100 * 1000
-
-// Max0RTTQueueingDuration is the maximum time that we store 0-RTT packets in order to wait for the corresponding Initial to be received.
-const Max0RTTQueueingDuration = 100 * time.Millisecond
-
-// Max0RTTQueues is the maximum number of connections that we buffer 0-RTT packets for.
-const Max0RTTQueues = 32
-
-// Max0RTTQueueLen is the maximum number of 0-RTT packets that we buffer for each connection.
-// When a new connection is created, all buffered packets are passed to the connection immediately.
-// To avoid blocking, this value has to be smaller than MaxConnUnprocessedPackets.
-// To avoid packets being dropped as undecryptable by the connection, this value has to be smaller than MaxUndecryptablePackets.
-const Max0RTTQueueLen = 31

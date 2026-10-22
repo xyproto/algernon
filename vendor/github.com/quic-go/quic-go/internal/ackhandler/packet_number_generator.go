@@ -5,51 +5,31 @@ import (
 	"github.com/quic-go/quic-go/internal/utils"
 )
 
-type packetNumberGenerator interface {
-	Peek() protocol.PacketNumber
-	// Pop pops the packet number.
-	// It reports if the packet number (before the one just popped) was skipped.
-	// It never skips more than one packet number in a row.
-	Pop() (skipped bool, _ protocol.PacketNumber)
-}
+const (
+	// skipPacketInitialPeriod is the initial period length used for packet number skipping
+	// to prevent an Optimistic ACK attack.
+	// Every time a packet number is skipped, the period is doubled, up to skipPacketMaxPeriod.
+	skipPacketInitialPeriod = 256
 
-type sequentialPacketNumberGenerator struct {
-	next protocol.PacketNumber
-}
+	// skipPacketMaxPeriod is the maximum period length used for packet number skipping.
+	skipPacketMaxPeriod = 128 * 1024
+)
 
-var _ packetNumberGenerator = &sequentialPacketNumberGenerator{}
-
-func newSequentialPacketNumberGenerator(initial protocol.PacketNumber) packetNumberGenerator {
-	return &sequentialPacketNumberGenerator{next: initial}
-}
-
-func (p *sequentialPacketNumberGenerator) Peek() protocol.PacketNumber {
-	return p.next
-}
-
-func (p *sequentialPacketNumberGenerator) Pop() (bool, protocol.PacketNumber) {
-	next := p.next
-	p.next++
-	return false, next
-}
-
-// The skippingPacketNumberGenerator generates the packet number for the next packet
+// The packetNumberGenerator generates the packet number for the next packet
 // it randomly skips a packet number every averagePeriod packets (on average).
 // It is guaranteed to never skip two consecutive packet numbers.
-type skippingPacketNumberGenerator struct {
-	period    protocol.PacketNumber
-	maxPeriod protocol.PacketNumber
+type packetNumberGenerator struct {
+	next protocol.PacketNumber
 
-	next       protocol.PacketNumber
-	nextToSkip protocol.PacketNumber
+	period           uint32
+	maxPeriod        uint32
+	packetsUntilSkip uint32
 
 	rng utils.Rand
 }
 
-var _ packetNumberGenerator = &skippingPacketNumberGenerator{}
-
-func newSkippingPacketNumberGenerator(initial, initialPeriod, maxPeriod protocol.PacketNumber) packetNumberGenerator {
-	g := &skippingPacketNumberGenerator{
+func newPacketNumberGenerator(initial protocol.PacketNumber, initialPeriod, maxPeriod uint32) *packetNumberGenerator {
+	g := &packetNumberGenerator{
 		next:      initial,
 		period:    initialPeriod,
 		maxPeriod: maxPeriod,
@@ -58,27 +38,31 @@ func newSkippingPacketNumberGenerator(initial, initialPeriod, maxPeriod protocol
 	return g
 }
 
-func (p *skippingPacketNumberGenerator) Peek() protocol.PacketNumber {
-	if p.next == p.nextToSkip {
+func (p *packetNumberGenerator) Peek(allowSkip bool) protocol.PacketNumber {
+	if allowSkip && p.packetsUntilSkip == 0 {
 		return p.next + 1
 	}
 	return p.next
 }
 
-func (p *skippingPacketNumberGenerator) Pop() (bool, protocol.PacketNumber) {
+// Pop reports whether the packet number before the returned number was skipped.
+func (p *packetNumberGenerator) Pop(allowSkip bool) (bool, protocol.PacketNumber) {
 	next := p.next
-	if p.next == p.nextToSkip {
+	if allowSkip && p.packetsUntilSkip == 0 {
 		next++
 		p.next += 2
 		p.generateNewSkip()
 		return true, next
 	}
+	if allowSkip {
+		p.packetsUntilSkip--
+	}
 	p.next++ // generate a new packet number for the next packet
 	return false, next
 }
 
-func (p *skippingPacketNumberGenerator) generateNewSkip() {
+func (p *packetNumberGenerator) generateNewSkip() {
 	// make sure that there are never two consecutive packet numbers that are skipped
-	p.nextToSkip = p.next + 3 + protocol.PacketNumber(p.rng.Int31n(int32(2*p.period)))
+	p.packetsUntilSkip = 3 + p.rng.Uint32N(2*p.period)
 	p.period = min(2*p.period, p.maxPeriod)
 }

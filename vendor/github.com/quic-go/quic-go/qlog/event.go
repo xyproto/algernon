@@ -7,6 +7,7 @@ import (
 
 	"github.com/quic-go/quic-go/internal/protocol"
 	"github.com/quic-go/quic-go/internal/qerr"
+	"github.com/quic-go/quic-go/qlogwriter"
 	"github.com/quic-go/quic-go/qlogwriter/jsontext"
 )
 
@@ -414,6 +415,36 @@ func (e PacketDropped) Encode(enc *jsontext.Encoder, _ time.Time) error {
 	return h.err
 }
 
+// DatagramDropped is the quic:datagram_dropped event.
+type DatagramDropped struct {
+	Direction Direction
+	Raw       RawInfo
+	Trigger   string
+}
+
+var _ qlogwriter.Event = DatagramDropped{}
+
+func (e DatagramDropped) Name() string { return "quic:datagram_dropped" }
+
+func (e DatagramDropped) Encode(enc *jsontext.Encoder, _ time.Time) error {
+	h := encoderHelper{enc: enc}
+	h.WriteToken(jsontext.BeginObject)
+	if e.Direction != "" {
+		h.WriteToken(jsontext.String("direction"))
+		h.WriteToken(jsontext.String(string(e.Direction)))
+	}
+	h.WriteToken(jsontext.String("raw"))
+	if err := e.Raw.encode(enc); err != nil {
+		return err
+	}
+	if e.Trigger != "" {
+		h.WriteToken(jsontext.String("trigger"))
+		h.WriteToken(jsontext.String(e.Trigger))
+	}
+	h.WriteToken(jsontext.EndObject)
+	return h.err
+}
+
 // StreamPriorityUpdated closely follows the http3:priority_updated event from
 // draft-ietf-quic-qlog-h3-events.
 type StreamPriorityUpdated struct {
@@ -453,6 +484,48 @@ func (e MTUUpdated) Encode(enc *jsontext.Encoder, _ time.Time) error {
 	h.WriteToken(jsontext.Uint(uint64(e.Value)))
 	h.WriteToken(jsontext.String("done"))
 	h.WriteToken(jsontext.Bool(e.Done))
+	h.WriteToken(jsontext.EndObject)
+	return h.err
+}
+
+// RecoveryParametersSet is the quic:recovery_parameters_set event.
+type RecoveryParametersSet struct {
+	EncryptionLevel         EncryptionLevel
+	ReorderingThreshold     uint16
+	PacketThresholdDisabled bool
+	TimeThreshold           float64 // RTT multiplier.
+	TimerGranularity        time.Duration
+	InitialCongestionWindow protocol.ByteCount
+	InitialRTT              time.Duration
+}
+
+var _ qlogwriter.Event = RecoveryParametersSet{}
+
+func (e RecoveryParametersSet) Name() string { return "quic:recovery_parameters_set" }
+
+func (e RecoveryParametersSet) Encode(enc *jsontext.Encoder, _ time.Time) error {
+	h := encoderHelper{enc: enc}
+	h.WriteToken(jsontext.BeginObject)
+	h.WriteToken(jsontext.String("packet_number_space"))
+	h.WriteToken(jsontext.String(encLevelToPacketNumberSpace(e.EncryptionLevel)))
+	h.WriteToken(jsontext.String("reordering_threshold"))
+	if e.PacketThresholdDisabled {
+		h.WriteToken(jsontext.String("disabled"))
+	} else {
+		h.WriteToken(jsontext.Uint(uint64(e.ReorderingThreshold)))
+	}
+	h.WriteToken(jsontext.String("time_threshold"))
+	h.WriteToken(jsontext.Float(e.TimeThreshold))
+	h.WriteToken(jsontext.String("timer_granularity"))
+	h.WriteToken(jsontext.Uint(uint64(e.TimerGranularity / time.Millisecond)))
+	if e.InitialCongestionWindow != 0 {
+		h.WriteToken(jsontext.String("initial_congestion_window"))
+		h.WriteToken(jsontext.Uint(uint64(e.InitialCongestionWindow)))
+	}
+	if e.InitialRTT != 0 {
+		h.WriteToken(jsontext.String("initial_rtt"))
+		h.WriteToken(jsontext.Float(milliseconds(e.InitialRTT)))
+	}
 	h.WriteToken(jsontext.EndObject)
 	return h.err
 }
@@ -545,8 +618,10 @@ func (e PacketLost) Encode(enc *jsontext.Encoder, _ time.Time) error {
 }
 
 type SpuriousLoss struct {
-	EncryptionLevel  protocol.EncryptionLevel
-	PacketNumber     protocol.PacketNumber
+	EncryptionLevel protocol.EncryptionLevel
+	PacketNumber    protocol.PacketNumber
+	// PacketReordering is the distance to the ACK's largest acknowledged packet,
+	// adjusted for known skipped packet numbers. Reordered ACKs can yield zero.
 	PacketReordering uint64
 	TimeReordering   time.Duration
 }
