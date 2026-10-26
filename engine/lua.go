@@ -3,6 +3,7 @@ package engine
 import (
 	"html/template"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -27,9 +28,33 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 )
 
+func setOSExit(L *lua.LState, fn lua.LGFunction) {
+	if osTable, ok := L.GetGlobal("os").(*lua.LTable); ok {
+		L.SetField(osTable, "exit", L.NewFunction(fn))
+	}
+}
+
+func disableOSExit(L *lua.LState) {
+	setOSExit(L, func(L *lua.LState) int {
+		L.RaiseError("os.exit is not allowed while serving requests")
+		return 0
+	})
+}
+
+func enableOSExit(L *lua.LState) {
+	setOSExit(L, func(L *lua.LState) int {
+		code := L.OptInt(1, 0)
+		L.Close()
+		os.Exit(code)
+		return 0
+	})
+}
+
 // LoadCommonFunctions adds most of the available Lua functions in algernon to
 // the given Lua state struct
 func (ac *Config) LoadCommonFunctions(w http.ResponseWriter, req *http.Request, filename string, L *lua.LState, flushFunc func(), httpStatus *FutureStatus) {
+	disableOSExit(L)
+
 	// Make basic functions, like print, available to the Lua script.
 	// Only exports functions that can relate to HTTP responses or requests.
 	ac.LoadBasicWeb(w, req, L, filename, flushFunc, httpStatus)
@@ -329,6 +354,7 @@ func (ac *Config) loadServerConfigNoopFunctions(L *lua.LState) {
 // inside a pool state. Request-scoped functions (LoadCommonFunctions) are
 // rebound on every request, so here we only cover what the setup phase uses.
 func (ac *Config) loadPoolStateFunctions(L *lua.LState, filename string, mux *http.ServeMux) {
+	disableOSExit(L)
 	ac.LoadBasicSystemFunctions(L)
 	ac.loadServerConfigNoopFunctions(L)
 

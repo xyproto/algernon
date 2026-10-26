@@ -256,6 +256,7 @@ func (ac *Config) REPL(ready, done chan bool) error {
 
 	// Export a selection of functions to the Lua state
 	ac.LoadLuaFunctionsForREPL(L, o)
+	enableOSExit(L)
 
 	<-ready // Wait for the server to be ready
 
