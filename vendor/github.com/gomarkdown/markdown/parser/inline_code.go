@@ -136,8 +136,10 @@ func codeSpan(p *Parser, data []byte, offset int) (int, ast.Node) {
 		// after the end marker, then this is a code block.
 		if hasLFBeforeDelimiter && !hasCharsAfterDelimiter {
 			codeblock := &ast.CodeBlock{
-				IsFenced: true,
-				Info:     data[syntaxStart : syntaxStart+syntaxLen],
+				IsFenced:    true,
+				Info:        data[syntaxStart : syntaxStart+syntaxLen],
+				FenceChar:   '`',
+				FenceLength: nb,
 			}
 			codeblock.Literal = data[i:fEnd]
 			return end, codeblock

@@ -608,22 +608,10 @@ func (re *Regexp) GroupNumberFromName(name string) int {
 		return -1
 	}
 
-	// convert to an int if it looks like a number
-	result := 0
-	for i := 0; i < len(name); i++ {
-		ch := name[i]
-
-		if ch > '9' || ch < '0' {
-			return -1
-		}
-
-		result *= 10
-		result += int(ch - '0')
-	}
-
-	// return int if it's in range
-	if result >= 0 && result < re.capsize {
-		return result
+	// Parse the decimal name without allowing empty input or integer overflow.
+	result, err := strconv.ParseUint(name, 10, 64)
+	if err == nil && result < uint64(re.capsize) {
+		return int(result)
 	}
 
 	return -1

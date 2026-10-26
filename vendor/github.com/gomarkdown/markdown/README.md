@@ -4,7 +4,7 @@
 
 Package `github.com/gomarkdown/markdown` is a Go library for parsing Markdown text and rendering as HTML.
 
-It's very fast and supports common extensions.
+It's very fast, supports common extensions and has a [CommonMark](#commonmark) mode that passes all 652 examples of the [CommonMark 0.31.2 spec](https://spec.commonmark.org/0.31.2/).
 
 Tutorial: https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html
 
@@ -72,15 +72,14 @@ Example source: [examples/basic.go](examples/basic.go)
 
 ## CommonMark
 
-`parser.CommonMark` selects the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) grammar. All 652 official examples are tested against exact HTML output. The flag is off by default, preserving existing parsing and rendering behavior.
+`parser.NewCommonMark()` creates a parser for the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) grammar. It's a shortcut for setting the `parser.CommonMark` flag. All 652 official examples are tested against exact HTML output. The flag is off by default, preserving existing parsing and rendering behavior.
 
 CommonMark mode uses this library's parser and usual `ast` nodes, so AST traversal, transformation, custom renderers, and HTML rendering hooks remain available. It uses strict CommonMark syntax regardless of the parser's `Extensions` setting; extensions and custom block/inline parsers apply only when the flag is off. Reference destination and title overrides remain available.
 
 When `markdown.ToHTML` receives no renderer, CommonMark documents use XHTML tags and no smart punctuation, matching the official examples. To customize rendering, supply an `html.Renderer` with your own flags.
 
 ```go
-p := parser.New()
-p.Opts.Flags |= parser.CommonMark
+p := parser.NewCommonMark()
 output := markdown.ToHTML([]byte("# Hello\n"), p, nil)
 ```
 
@@ -125,6 +124,10 @@ You can install it with:
 To run: `mdtohtml input-file [output-file]`
 
 ## Features
+
+- **CommonMark compliance**. With `parser.NewCommonMark()`, parsing follows
+  the [CommonMark 0.31.2 spec](https://spec.commonmark.org/0.31.2/) and the
+  output matches all 652 official examples exactly. See [CommonMark](#commonmark).
 
 - **Compatibility**. The Markdown v1.0.3 test suite passes with
   the `--tidy` option. Without `--tidy`, the differences are

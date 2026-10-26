@@ -282,10 +282,16 @@ type HTMLBlock struct{ Leaf }
 type CodeBlock struct {
 	Leaf
 
-	IsFenced    bool   // Specifies whether it's a fenced code block or an indented one
-	Info        []byte // This holds the info string
-	FenceChar   byte
+	IsFenced bool   // Specifies whether it's a fenced code block or an indented one
+	Info     []byte // This holds the info string
+	// FenceChar is the fence character ('`' or '~'), 0 for indented code blocks
+	FenceChar byte
+	// FenceLength is the number of fence characters in the opening fence
 	FenceLength int
+	// FenceOffset is the number of spaces (0-3) before the opening fence,
+	// relative to the content of the enclosing container as the parser sees it.
+	// It's always 0 for fenced blocks recognized inside a paragraph (when the
+	// FencedCode extension is off).
 	FenceOffset int
 }
 

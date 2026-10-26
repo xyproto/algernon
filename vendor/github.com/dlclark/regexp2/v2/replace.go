@@ -77,7 +77,7 @@ func replace(regex *Regexp, data *syntax.ReplacerData, evaluator MatchEvaluator,
 		return "", errors.New("count too small")
 	}
 	if count == 0 {
-		return "", nil
+		return input, nil
 	}
 
 	if evaluator == nil {

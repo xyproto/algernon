@@ -61,6 +61,14 @@ func New() *Parser {
 	return NewWithExtensions(CommonExtensions)
 }
 
+// NewCommonMark creates a markdown parser that follows the CommonMark 0.31.2
+// spec. It sets the CommonMark flag; extensions don't apply in this mode.
+func NewCommonMark() *Parser {
+	p := NewWithExtensions(NoExtensions)
+	p.Opts.Flags |= CommonMark
+	return p
+}
+
 // NewWithExtensions creates a markdown parser with the given extensions.
 func NewWithExtensions(extension Extensions) *Parser {
 	doc := &ast.Document{}

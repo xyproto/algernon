@@ -640,14 +640,14 @@ func executeDefault(r *Runner) error {
 			}
 
 		case syntax.Bol:
-			if r.leftchars() > 0 && r.charAt(r.textPos()-1) != '\n' {
+			if r.leftchars() > 0 && !r.isLineBreak(r.charAt(r.textPos()-1)) {
 				break
 			}
 			r.advance(0)
 			continue
 
 		case syntax.Eol:
-			if r.rightchars() > 0 && r.charAt(r.textPos()) != '\n' {
+			if r.rightchars() > 0 && !r.isLineBreak(r.charAt(r.textPos())) {
 				break
 			}
 			r.advance(0)
@@ -1462,7 +1462,7 @@ func (r *Runner) refmatch(index, len int) bool {
 			cmpos--
 			pos--
 
-			if unicode.ToLower(r.Runtext[cmpos]) != unicode.ToLower(r.Runtext[pos]) {
+			if !syntax.IsCaseEquivalent(r.Runtext[cmpos], r.Runtext[pos], syntax.RegexOptions(r.re.options)) {
 				return false
 			}
 		}
@@ -2312,9 +2312,9 @@ func requiredLandmarkAnchorsHold(r *Runner, anchors []syntax.NodeType, pos int) 
 		ok := true
 		switch anchor {
 		case syntax.NtBol:
-			ok = pos == 0 || r.Runtext[pos-1] == '\n'
+			ok = pos == 0 || r.isLineBreak(r.Runtext[pos-1])
 		case syntax.NtEol:
-			ok = pos == r.Runtextend || r.Runtext[pos] == '\n'
+			ok = pos == r.Runtextend || r.isLineBreak(r.Runtext[pos])
 		case syntax.NtBoundary:
 			ok = r.IsBoundary(pos)
 		case syntax.NtNonboundary:
@@ -2687,6 +2687,11 @@ func (r *Runner) textposDescription() string {
 func (r *Runner) IsBoundary(index int) bool {
 	return (index > 0 && syntax.IsWordChar(r.Runtext[index-1])) !=
 		(index < r.Runtextend && syntax.IsWordChar(r.Runtext[index]))
+}
+
+// isLineBreak reports whether ch ends a line for the multiline ^ and $ anchors.
+func (r *Runner) isLineBreak(ch rune) bool {
+	return ch == '\n' || r.re.options&ECMAScript != 0 && syntax.IsECMALineTerminator(ch)
 }
 
 func (r *Runner) IsECMABoundary(index int) bool {

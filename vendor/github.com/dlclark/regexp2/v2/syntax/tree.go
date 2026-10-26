@@ -193,19 +193,14 @@ func nodeWithCaseConversion(n *RegexNode) *RegexNode {
 
 	if n.Ch > 0 {
 		ch := n.Ch
-		if isLow, isUp := unicode.IsLower(ch), unicode.IsUpper(ch); isLow || isUp {
-			/*var upper, lower rune
-			// it's a capitalizable char
-			if isUp {
-				upper = ch
-				lower = unicode.ToLower(ch)
-			} else {
-				lower = ch
-				upper = unicode.ToUpper(ch)
-			}*/
+		folds := unicode.IsLower(ch) || unicode.IsUpper(ch)
+		if n.Options&ECMAScript != 0 {
+			folds = unicode.SimpleFold(ch) != ch
+		}
+		if folds {
 			set := &CharSet{}
 			set.addChar(ch)
-			set.addCaseEquivalences()
+			set.addCaseEquivalences(n.Options)
 			t := NtSet
 
 			switch n.T {
@@ -226,7 +221,7 @@ func nodeWithCaseConversion(n *RegexNode) *RegexNode {
 		// just to be safe we don't modify the original set pointer
 		// just in case it's used in a case-sensitive area
 		s := n.Set.Copy()
-		s.addCaseEquivalences()
+		s.addCaseEquivalences(n.Options)
 		n.Set = &s
 		n.Options &= ^IgnoreCase
 	}
@@ -970,6 +965,15 @@ func (n *RegexNode) FindLastExpressionInLoopForAutoAtomic() *RegexNode {
 	return nil
 }
 
+// containsLineBreak reports whether the set holds a character that $ can match
+// before in Multiline mode (see IsLineBreak).
+func (c *CharSet) containsLineBreak(options RegexOptions) bool {
+	if options&ECMAScript == 0 {
+		return c.CharIn('\n')
+	}
+	return c.CharIn('\n') || c.CharIn('\r') || c.CharIn('\u2028') || c.CharIn('\u2029')
+}
+
 // Determines whether a node can be switched to an atomic loop.
 //
 // The node following is subsequent, used to determine whether it overlaps.
@@ -1037,7 +1041,7 @@ func (n *RegexNode) canBeMadeAtomic(subsequent *RegexNode, iterateNullableSubseq
 				(subsequent.T == NtMulti && n.Ch != subsequent.Str[0]) ||
 				(subsequent.T == NtEnd) ||
 				(subsequent.T == NtEndZ && n.Ch != '\n') ||
-				(subsequent.T == NtEol && n.Ch != '\n') {
+				(subsequent.T == NtEol && !IsLineBreak(n.Options, n.Ch)) {
 				return true
 			}
 
@@ -1076,7 +1080,7 @@ func (n *RegexNode) canBeMadeAtomic(subsequent *RegexNode, iterateNullableSubseq
 				(subsequent.T == NtMulti && !n.Set.CharIn(subsequent.Str[0])) ||
 				(subsequent.T == NtEnd) ||
 				(subsequent.T == NtEndZ && !n.Set.CharIn('\n')) ||
-				(subsequent.T == NtEol && !n.Set.CharIn('\n')) {
+				(subsequent.T == NtEol && !n.Set.containsLineBreak(n.Options)) {
 				return true
 			}
 
@@ -1922,6 +1926,9 @@ func (n *RegexNode) reduceGroup() *RegexNode {
 // or empty, it's transformed accordingly.
 func (n *RegexNode) reduceSet() *RegexNode {
 	// Extract empty-set, one and not-one case as special
+	if n.Set != nil {
+		n.Set.simplify()
+	}
 
 	if n.Set == nil {
 		n.T = NtNothing

@@ -136,9 +136,12 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 		return beg
 	}
 	codeBlock := &ast.CodeBlock{
-		Leaf:     ast.Leaf{Literal: work.Bytes()},
-		IsFenced: true,
-		Info:     unescapeString([]byte(syntax)),
+		Leaf:        ast.Leaf{Literal: work.Bytes()},
+		IsFenced:    true,
+		Info:        unescapeString([]byte(syntax)),
+		FenceChar:   marker[0],
+		FenceLength: len(marker),
+		FenceOffset: skipCharN(data, 0, ' ', 3),
 	}
 
 	if p.extensions&Mmark != 0 {
