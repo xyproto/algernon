@@ -665,8 +665,7 @@ func (ac *Config) MustServe(mux *http.ServeMux) error {
 		withHandlerFunctions := true
 		errLua := ac.RunConfiguration(ac.luaServerFilename, mux, withHandlerFunctions)
 		if errLua != nil {
-			logrus.Errorf("Error in %s (interpreted as a server script):\n%s\n", ac.luaServerFilename, errLua)
-			return errLua
+			return fmt.Errorf("error in %s (interpreted as a server script):\n%w", ac.luaServerFilename, errLua)
 		}
 	} else {
 		// Register HTTP handler functions

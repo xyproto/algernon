@@ -54,6 +54,11 @@ func containsFormula(mdContent []byte) bool {
 // ValidGCSS checks if the given data is valid GCSS.
 // The error value is returned on the channel.
 func ValidGCSS(gcssdata []byte, errorReturn chan error) {
+	defer func() {
+		if r := recover(); r != nil {
+			errorReturn <- fmt.Errorf("panic while compiling GCSS: %v", r)
+		}
+	}()
 	buf := bytes.NewBuffer(gcssdata)
 	var w bytes.Buffer
 	_, err := gcss.Compile(&w, buf)

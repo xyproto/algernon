@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -13,8 +14,21 @@ import (
 
 // Lua2funcMap runs in a Lua file and returns the functions as a template.FuncMap (or an error)
 func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string, errChan chan error, funcMapChan chan template.FuncMap) {
+	funcs, err := ac.lua2funcMap(w, req, filename, luafilename, ext)
+	funcMapChan <- funcs
+	errChan <- err
+}
+
+func (ac *Config) lua2funcMap(w http.ResponseWriter, req *http.Request, filename, luafilename, ext string) (funcs template.FuncMap, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			funcs = make(template.FuncMap)
+			err = fmt.Errorf("panic while running %s: %v", luafilename, r)
+		}
+	}()
+
 	// Make functions from the given Lua data available
-	funcs := make(template.FuncMap)
+	funcs = make(template.FuncMap)
 
 	// Try reading data.lua, if possible
 	luablock, err := ac.cache.Read(luafilename, ac.shouldCache(ext))
@@ -31,9 +45,7 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 		// variables available for the template.
 		funcs, err = ac.LuaFunctionMap(w, req, luablock.Bytes(), luafilename)
 		if err != nil {
-			funcMapChan <- funcs
-			errChan <- err
-			return
+			return funcs, err
 		}
 		if ac.debugMode && ac.verboseMode {
 			var sb strings.Builder
@@ -56,6 +68,5 @@ func (ac *Config) Lua2funcMap(w http.ResponseWriter, req *http.Request, filename
 			logrus.Info(sb.String())
 		}
 	}
-	funcMapChan <- funcs
-	errChan <- err
+	return funcs, err
 }

@@ -101,8 +101,6 @@ func libImport(L *lua.LState) int {
 	}
 
 	if err := L.DoString(code); err != nil {
-		L.Close()
-
 		logrus.Errorf("Error when importing Lua code:\n%s", err)
 		L.Push(lua.LBool(false)) // error
 		return 1                 // number of results

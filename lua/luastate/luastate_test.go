@@ -107,3 +107,21 @@ func TestConcurrentWith(_ *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestReturnClosedStateIsDiscarded(t *testing.T) {
+	p := New()
+	defer p.Shutdown()
+
+	L := p.Borrow()
+	L.Close()
+	p.Return(L)
+
+	L2 := p.Borrow()
+	defer p.Return(L2)
+	if L2 == L || L2.IsClosed() {
+		t.Fatal("a closed Lua state was handed out again")
+	}
+	if err := L2.DoString(`x = 1`); err != nil {
+		t.Fatal(err)
+	}
+}

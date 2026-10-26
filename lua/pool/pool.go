@@ -66,6 +66,9 @@ func (pl *LStatePool) Get() *lua.LState {
 
 // Put delivers back a borrowed Lua state
 func (pl *LStatePool) Put(L *lua.LState) {
+	if L == nil || L.IsClosed() {
+		return
+	}
 	pl.m.Lock()
 	defer pl.m.Unlock()
 	pl.saved = append(pl.saved, L)

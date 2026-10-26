@@ -551,6 +551,14 @@ func classifyPositionalArgs(args []string, pathExists func(string) bool) positio
 			return false
 		}
 	}
+	looksLikeServerFile := func(arg string) bool {
+		switch strings.ToLower(filepath.Ext(arg)) {
+		case ".lua", ".md", ".markdown", ".zip", ".alg":
+			return true
+		default:
+			return false
+		}
+	}
 	looksLikeRedisAddr := func(arg string) bool {
 		return strings.HasSuffix(arg, ":6379") || strings.HasSuffix(arg, ":6380")
 	}
@@ -564,7 +572,7 @@ func classifyPositionalArgs(args []string, pathExists func(string) bool) positio
 			result.Remaining = append(result.Remaining, arg)
 			continue
 		}
-		if !result.ServerDirSet && pathExists(arg) {
+		if !result.ServerDirSet && (pathExists(arg) || looksLikeServerFile(arg)) {
 			if strings.HasSuffix(arg, string(os.PathSeparator)) {
 				result.ServerDirOrFilename = arg[:len(arg)-1]
 			} else {
