@@ -29,5 +29,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Serve HTTP, HTTP/2 and/or HTTPS. Quit when done.
-	algernon.MustServe(mux)
+	if err := algernon.MustServe(mux); err != nil {
+		logrus.Fatalln(err)
+	}
 }
