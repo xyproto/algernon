@@ -157,7 +157,33 @@ func hasBlankLineBefore(data []byte, pos int, skipIndent bool) bool {
 	return len(bytes.Trim(data[lineStart:lineEnd], " \t")) == 0
 }
 
+// htmlCloseKey identifies a buffer by its last byte, so slices that end at the
+// same place share what is known about their tails.
+type htmlCloseKey struct {
+	end   *byte
+	tag   string
+	loose bool
+}
+
 func (p *Parser) findHTMLCloseTag(data []byte, tag string, start int, loose bool) (closeStart int, consumed int) {
+	// A search that failed from some position also fails from any later one,
+	// so each unclosed tag scans to the end of the buffer only once.
+	key := htmlCloseKey{&data[len(data)-1], tag, loose}
+	tail := len(data) - start
+	if tail <= p.htmlCloseMisses[key] {
+		return 0, 0
+	}
+	closeStart, consumed = p.scanHTMLCloseTag(data, tag, start, loose)
+	if consumed == 0 {
+		if p.htmlCloseMisses == nil {
+			p.htmlCloseMisses = map[htmlCloseKey]int{}
+		}
+		p.htmlCloseMisses[key] = tail
+	}
+	return closeStart, consumed
+}
+
+func (p *Parser) scanHTMLCloseTag(data []byte, tag string, start int, loose bool) (closeStart int, consumed int) {
 	for i := start; i < len(data); i++ {
 		for i < len(data) && !(data[i-1] == '<' && data[i] == '/') {
 			i++

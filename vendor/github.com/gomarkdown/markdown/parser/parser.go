@@ -82,6 +82,10 @@ type Parser struct {
 	nextGt         nextMatchCache
 	nextCommentEnd nextMatchCache
 
+	// htmlCloseMisses remembers, per buffer and tag, the longest tail known
+	// to hold no closing tag, so unclosed HTML blocks do not rescan it.
+	htmlCloseMisses map[htmlCloseKey]int
+
 	// pendingRefDef is a reference definition detected at the start of a
 	// paragraph line. It is added after the preceding paragraph so source
 	// order is preserved.

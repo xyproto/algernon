@@ -112,6 +112,7 @@ func Highlight(htmlData []byte, styleName string, unescape bool) ([]byte, []byte
 		cssBuf       bytes.Buffer // buffer for generated CSS
 		mutableBytes = htmlData[:]
 		outerErr     error
+		highlighted  bool
 	)
 
 	// Replace the non-highlighted code with highlighted code
@@ -190,13 +191,6 @@ func Highlight(htmlData []byte, styleName string, unescape bool) ([]byte, []byte
 			return []byte{}
 		}
 
-		// Write the needed CSS to cssBuf
-		err = formatter.WriteCSS(&cssBuf, style)
-		if err != nil {
-			outerErr = err
-			return []byte{}
-		}
-
 		// Write the highlightet HTML to the hiBuf buffer
 		var hiBuf bytes.Buffer
 		err = formatter.Format(&hiBuf, style, iterator)
@@ -245,11 +239,19 @@ func Highlight(htmlData []byte, styleName string, unescape bool) ([]byte, []byte
 
 		hiBytes = bytes.ReplaceAll(hiBytes, []byte("</code></pre></code></pre>"), []byte("</code></pre>"))
 
+		highlighted = true
 		return hiBytes
 	})
 
 	if outerErr != nil {
 		return []byte{}, []byte{}, outerErr
+	}
+
+	// Write the needed CSS to cssBuf, once, regardless of how many blocks were highlighted
+	if highlighted {
+		if err := formatter.WriteCSS(&cssBuf, style); err != nil {
+			return []byte{}, []byte{}, err
+		}
 	}
 
 	re = regexp.MustCompile(`(?s)/\*.*?\*/|\n`) // Strip comments and newlines

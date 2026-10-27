@@ -78,6 +78,39 @@ func regexp2FindAllString(re *regexp2.Regexp, s string) []string {
 
 `FindNextMatch` is optmized so that it re-uses the underlying string/rune slice.
 
+For capture positions on rune input, `FindRunesMatches` avoids allocating a full
+`Match` and its text metadata for every result:
+
+```go
+input := []rune("first=one second=two")
+re := regexp2.MustCompile(`(\w+)=(\w+)`)
+err := re.FindRunesMatches(input, -1, func(view regexp2.MatchView) bool {
+	index, length, ok := view.GroupRange(2)
+	if ok {
+		fmt.Println(string(input[index : index+length]))
+	}
+	return true // return false to stop successfully
+})
+if err != nil {
+	// Handle a timeout or backtracking-stack limit error.
+	log.Fatal(err)
+}
+```
+
+`MatchView` exposes only `GroupRange` and `GroupCount`. Group 0 is the whole match;
+other groups report their last remaining capture. A participating empty capture
+has `ok == true` and length 0, while an unmatched or fully balanced group has
+`ok == false`. Ranges use rune indexes in the original input, even with a nonzero
+`startAt`. For explicitly numbered groups, use `re.GetGroupNumbers()` to enumerate
+their possibly sparse numbers. ECMAScript capture clearing and duplicate-name
+group numbering follow the same rules as the full matching API.
+
+The view borrows reusable engine storage and is valid only during its callback.
+Save returned indexes and lengths to keep results; copying the view does not
+extend its lifetime. Do not modify the input during iteration. Initial setup and
+buffer growth may allocate, but range lookup does not. Use the full matching API
+when you need capture histories or independently owned matches.
+
 The internals of `regexp2` always operate on `[]rune` so `RuneIndex` and `RuneLength` data in a `Match` always reference a position in `rune`s rather than `byte`s (even if the input was given as a string). `ByteRange()` provides UTF-8 byte offsets, matching the original string input for string APIs. It's advisable to use the provided `String()` methods when you do not need explicit offsets. `ByteRange()` lazily caches byte offsets on the shared match text, so the first call on captures from the same match is not safe to run concurrently with other `ByteRange()` calls on that match.
 
 ## Compatibility and Unicode case folding
@@ -334,7 +367,7 @@ This flag should not be treated as compatibility with C#'s `RegexOptions.ECMAScr
 
 Without `Unicode`, escapes such as `\a`, `\e`, `\A`, `\G`, `\Z`, and `\z` match their literal letters. A control escape `\c` requires an ASCII letter; inside a character class, digits and `_` are also accepted, with character value modulo 32. Otherwise the backslash is literal and `c` and the following syntax are parsed normally: `\c*` matches a backslash followed by zero or more `c` characters, and `[\c]` matches either a backslash or `c`. With `Unicode`, Annex B is not applied, so `\c` must be followed by an ASCII letter and any other character is a compile error. `Escape` emits `\x07` for BEL so that its output also preserves that character in ECMAScript mode.
 
-Additionally a Unicode mode is provided which allows parsing of `\u{CodePoint}` syntax only when both `ECMAScript` and `Unicode` are provided.
+Additionally a Unicode mode is provided which allows parsing of `\u{CodePoint}` syntax only when both `ECMAScript` and `Unicode` are provided. In that mode, adjacent four-hex high/low surrogate escapes, such as `\uD83D\uDE00`, form one code point in atoms, character classes, and ranges. Braced surrogate escapes and isolated surrogates remain separate.
 
 With `ECMAScript|Unicode`, property escapes use the exact names and aliases allowed by [ECMA-262](https://tc39.es/ecma262/multipage/text-processing.html#sec-runtime-semantics-unicodematchproperty-p):
 

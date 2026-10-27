@@ -2274,6 +2274,20 @@ func (p *parser) scanCharEscape(inClass bool) (r rune, err error) {
 			return p.scanHexUntilBrace()
 		} else {
 			r, err = p.scanHex(4)
+			if err == nil && p.useOptionE() && p.useOptionU() && r >= 0xD800 && r <= 0xDBFF &&
+				p.charsRight() >= 6 && p.rightChar(0) == '\\' && p.rightChar(1) == 'u' {
+				// Only adjacent four-hex escapes combine. Restore the cursor
+				// for a non-low or malformed follower so it is parsed normally,
+				// including its own early error, on the next scan.
+				pos := p.textpos()
+				p.moveRight(2)
+				low, pairErr := p.scanHex(4)
+				if pairErr == nil && low >= 0xDC00 && low <= 0xDFFF {
+					r = utf16.DecodeRune(r, low)
+				} else {
+					p.textto(pos)
+				}
+			}
 		}
 	case 'a':
 		if p.useOptionE() && !p.useOptionU() {

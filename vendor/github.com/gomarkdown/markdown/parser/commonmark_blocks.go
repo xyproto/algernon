@@ -358,17 +358,30 @@ func (p *Parser) commonMarkFencedCode(data []byte, i int, marker byte, count, in
 
 func (p *Parser) commonMarkParagraph(data []byte) int {
 	i := 0
-	// Definitions are accepted only at the beginning of a paragraph.
-	if n := p.commonMarkReference(data); n > 0 {
-		return n
+	// Definitions are accepted only at the beginning of a paragraph. The lines
+	// after them still belong to that paragraph, so only a block that can
+	// interrupt a paragraph may start there.
+	for {
+		n := p.commonMarkReference(data[i:])
+		if n == 0 {
+			break
+		}
+		i += n
+		if i >= len(data) {
+			return i
+		}
+		if line, _ := commonMarkLine(data[i:]); commonMarkBlank(line) || commonMarkInterrupts(line) {
+			return i
+		}
 	}
+	start := i
 	var work bytes.Buffer
 	for i < len(data) {
 		line, end := commonMarkLine(data[i:])
 		if commonMarkBlank(line) {
 			break
 		}
-		if i > 0 {
+		if i > start {
 			if level := commonMarkSetext(line); level > 0 && !p.commonMarkLazy(data[i:]) {
 				p.AddBlock(&ast.Heading{Level: level, Container: ast.Container{Content: bytes.Trim(work.Bytes(), " \t\n")}})
 				return i + end
