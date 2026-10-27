@@ -59,13 +59,6 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 				return false
 			}
 
-			// If we encounter a backtick (`), stop looking for keywords (due to Markdown formatting of code)
-			if bytes.Contains(strippedLine, backtick) {
-				// Contains a backtick
-				stopLooking = true
-				return false
-			}
-
 			// Check if we are in a HTML comment block
 			singleLineComment = false
 			switch {
@@ -79,6 +72,12 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 				inCommentBlock = false
 			}
 			// fmt.Println("LINE", string(strippedLine), "IN COMMENT BLOCK", inCommentBlock, "SINGLE LINE COMMENT", singleLineComment)
+
+			// If we encounter a backtick (`) outside of a comment, stop looking for keywords (due to Markdown formatting of code)
+			if !inCommentBlock && !singleLineComment && bytes.Contains(strippedLine, backtick) {
+				stopLooking = true
+				return false
+			}
 
 			keywordColon = append([]byte(keyword), ':')
 			// Lines starting with "% " can be used for specifying a title, ref pandoc

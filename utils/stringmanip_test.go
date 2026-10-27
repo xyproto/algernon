@@ -157,3 +157,22 @@ func TestExtractLocalImagePaths(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractKeywordsBacktickInCommentBlock(t *testing.T) {
+	data := "<!--\ntitle: Upgrades skip `post_install()`\nkeywords: arch, packaging\n-->\n\nAn `.INSTALL` script.\n\ntitle: not this\n"
+	_, kwMap := ExtractKeywords([]byte(data), []string{"title", "keywords"})
+	if got := string(kwMap["title"]); got != "Upgrades skip `post_install()`" {
+		t.Errorf("title = %q", got)
+	}
+	if got := string(kwMap["keywords"]); got != "arch, packaging" {
+		t.Errorf("keywords = %q", got)
+	}
+}
+
+func TestExtractKeywordsStopsAtBacktickOutsideComment(t *testing.T) {
+	data := "Some `code` here\ntitle: not a title\n"
+	_, kwMap := ExtractKeywords([]byte(data), []string{"title"})
+	if _, ok := kwMap["title"]; ok {
+		t.Errorf("title should not be extracted after a backtick outside a comment, got %q", kwMap["title"])
+	}
+}
