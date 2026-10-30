@@ -52,11 +52,11 @@ func (s *vfsShm) Close() error {
 		return nil
 	}
 
+	s.vfsShmParent = nil
+	delete(vfsShmList, s.path)
 	if err := dotlk.Unlock(s.path); err != nil {
 		return sysError{err, _IOERR_UNLOCK}
 	}
-	delete(vfsShmList, s.path)
-	s.vfsShmParent = nil
 	return nil
 }
 

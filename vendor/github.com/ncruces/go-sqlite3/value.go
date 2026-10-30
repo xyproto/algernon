@@ -29,6 +29,10 @@ func (v Value) Dup() *Value {
 //
 // https://sqlite.org/c3ref/value_dup.html
 func (v *Value) Close() error {
+	if v == nil || v.handle == 0 {
+		return nil
+	}
+
 	v.c.wrp.Xsqlite3_value_free(int32(v.handle))
 	v.handle = 0
 	return nil

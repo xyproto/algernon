@@ -54,10 +54,9 @@ func (m *vfsMapper) fetch(wrp *sqlite3_wrap.Wrapper, iOfst int64, iAmt int32, pp
 }
 
 func (m *vfsMapper) Close() error {
-	c := m.mmap
-	if c == nil {
-		return nil
+	if u := m.mmap; u != nil {
+		m.mmap = nil
+		return u.Unmap()
 	}
-	m.mmap = nil
-	return c.Unmap()
+	return nil
 }

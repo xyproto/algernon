@@ -7,6 +7,7 @@ type Backup struct {
 	c      *Conn
 	handle ptr_t
 	otherc ptr_t
+	errorc ptr_t
 }
 
 // Backup backs up srcDB on the src connection to the "main" database in dstURI.
@@ -75,15 +76,17 @@ func (c *Conn) backupInit(dst ptr_t, dstName string, src ptr_t, srcName string) 
 		int32(dst), int32(dstPtr),
 		int32(src), int32(srcPtr)))
 	if ptr == 0 {
-		defer c.closeDB(other)
 		rc := res_t(c.wrp.Xsqlite3_errcode(int32(dst)))
-		return nil, c.errorFor(dst, rc)
+		err := c.errorFor(dst, rc)
+		c.closeDB(other)
+		return nil, err
 	}
 
 	return &Backup{
 		c:      c,
-		otherc: other,
 		handle: ptr,
+		errorc: dst,
+		otherc: other,
 	}, nil
 }
 
@@ -98,9 +101,12 @@ func (b *Backup) Close() error {
 	}
 
 	rc := res_t(b.c.wrp.Xsqlite3_backup_finish(int32(b.handle)))
+	err := b.c.errorFor(b.errorc, rc)
 	b.c.closeDB(b.otherc)
 	b.handle = 0
-	return b.c.error(rc)
+	b.otherc = 0
+	b.errorc = 0
+	return err
 }
 
 // Step copies up to nPage pages between the source and destination databases.
@@ -112,7 +118,7 @@ func (b *Backup) Step(nPage int) (done bool, err error) {
 	if rc == _DONE {
 		return true, nil
 	}
-	return false, b.c.error(rc)
+	return false, b.c.errorFor(b.errorc, rc)
 }
 
 // Remaining returns the number of pages still to be backed up

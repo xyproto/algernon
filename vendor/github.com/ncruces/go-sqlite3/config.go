@@ -106,7 +106,7 @@ func (c *Conn) FileControl(schema string, op FcntlOpcode, arg ...any) (any, erro
 	default:
 		return nil, MISUSE
 
-	case FCNTL_RESET_CACHE, FCNTL_NULL_IO:
+	case FCNTL_RESET_CACHE:
 		rc = res_t(c.wrp.Xsqlite3_file_control(
 			int32(c.handle), int32(schemaPtr),
 			int32(op), 0))

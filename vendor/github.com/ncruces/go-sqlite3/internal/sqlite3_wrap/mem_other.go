@@ -29,6 +29,9 @@ func (m *Memory) Grow(delta, max int64) int64 {
 }
 
 func (m *Memory) Close() error {
-	m.Buf = nil
+	if m == nil {
+		return nil
+	}
+	*m = Memory{}
 	return nil
 }

@@ -119,29 +119,25 @@ func (m *Memory) reserve(size int64) int64 {
 }
 
 func (m *Memory) Close() (err error) {
-	if m.ptr == 0 {
-		m.Buf = nil
+	if m == nil {
 		return nil
 	}
+	if m.ptr != 0 {
+		for _, r := range m.regions {
+			e := r.Close()
+			if err == nil {
+				err = e
+			}
+		}
 
-	for _, r := range m.regions {
-		e := r.Close()
-		if err == nil {
-			err = e
+		for _, off := range m.pieces {
+			e := windows.VirtualFree(m.ptr+off, 0, windows.MEM_RELEASE)
+			if err == nil {
+				err = e
+			}
 		}
 	}
-
-	for _, off := range m.pieces {
-		e := windows.VirtualFree(m.ptr+off, 0, windows.MEM_RELEASE)
-		if err == nil {
-			err = e
-		}
-	}
-
-	m.Buf = nil
-	m.pieces = nil
-	m.regions = nil
-	m.ptr = 0
+	*m = Memory{}
 	return err
 }
 

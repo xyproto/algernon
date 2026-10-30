@@ -12355,30 +12355,48 @@ func (m *Module) _sqlite3VdbeRewind(v0 int32) {
 	store32(*m.memory, uint64(uint32(v0))+48, uint32(i32(0)))
 }
 func (m *Module) Xsqlite3_clear_bindings(v0 int32) int32 {
-	var v1, v2 int32
+	var v1, v2, v3, v4 int32
 	if v0 != 0 {
-	l0:
+	l1:
 		{
 			t0 := int32(int16(load16(*m.memory, uint64(uint32(v0))+16)))
-			if t0 > v2 {
-				t1 := int32(load32(*m.memory, uint64(uint32(v0))+100))
-				m._sqlite3VdbeMemRelease(t1 + v1)
-				t2 := int32(load32(*m.memory, uint64(uint32(v0))+100))
-				store16(*m.memory, uint64(uint32(t2+v1))+16, uint16(i32(1)))
-				v1 = v1 + i32(40)
-				v2 = v2 + i32(1)
-				goto l0
+			if t0 > v1 {
+				{
+					t1 := int32(load32(*m.memory, uint64(uint32(v0))+100))
+					v2 = t1 + v3
+					t2 := int32((*m.memory)[uint64(uint32(v2))+16])
+					if t2&i32(4) == 0 {
+						goto l0
+					}
+					t3 := int64(load64(*m.memory, uint32(v2)))
+					if uint64(t3) > uint64(i64(1)) {
+						goto l0
+					}
+					p4 := i32_shl(i32(1), v1)
+					if uint32(v1) > uint32(i32(30)) {
+						p4 = i32(-0x80000000)
+					}
+					v4 = p4 | v4
+				}
+			l0:
+				m._sqlite3VdbeMemRelease(v2)
+				store16(*m.memory, uint64(uint32(v2))+16, uint16(i32(1)))
+				v3 = v3 + i32(40)
+				v1 = v1 + i32(1)
+				goto l1
 			}
 		}
-		t3 := int32(load32(*m.memory, uint64(uint32(v0))+220))
-		if t3 != 0 {
-			t4 := int32(load16(*m.memory, uint64(uint32(v0))+152))
-			store16(*m.memory, uint64(uint32(v0))+152, uint16(t4&i32(65532)|i32(1)))
+		t5 := int32(load32(*m.memory, uint64(uint32(v0))+220))
+		v1 = t5
+		t6 := int32(load32(*m.memory, uint64(uint32(v0))+224))
+		if v1^t6&(v1^v4) != 0 {
+			t7 := int32(load16(*m.memory, uint64(uint32(v0))+152))
+			store16(*m.memory, uint64(uint32(v0))+152, uint16(t7&i32(65532)|i32(1)))
 		}
 		return i32(0)
 	}
-	t5 := m._sqlite3ReportError(i32(21), i32(93408), i32(80505))
-	return t5
+	t8 := m._sqlite3ReportError(i32(21), i32(93409), i32(80505))
+	return t8
 }
 func (m *Module) _sqlite3VdbeMemRelease(v0 int32) {
 	t0 := int32((*m.memory)[uint64(uint32(v0))+17])
@@ -13996,7 +14014,7 @@ func (m *Module) Xsqlite3_result_zeroblob(v0, v1 int32) {
 func (m *Module) Xsqlite3_result_zeroblob64(v0 int32, v1 int64) int32 {
 	var v2 int32
 	if v0 == 0 {
-		t0 := m._sqlite3ReportError(i32(21), i32(93922), i32(80505))
+		t0 := m._sqlite3ReportError(i32(21), i32(93928), i32(80505))
 		return t0
 	}
 	t1 := int32(load32(*m.memory, uint32(v0)))
@@ -14209,7 +14227,7 @@ func (m *Module) Xsqlite3_step(v0 int32) int32 {
 	{
 		t1 := m._vdbeSafetyNotNull(v0)
 		if t1 != 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(94231), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(94237), i32(80505))
 			v2 = t2
 			goto l0
 		}
@@ -15673,7 +15691,7 @@ func (m *Module) _sqlite3VdbeExec(v0 int32) int32 {
 																																t1302 := m._sqlite3BtreePayloadSize(v1)
 																																v2 = t1302
 																																if v2 <= i32(0) {
-																																	t1303 := m._sqlite3ReportError(i32(11), i32(103321), i32(77390))
+																																	t1303 := m._sqlite3ReportError(i32(11), i32(103327), i32(77390))
 																																	store32(*m.memory, uint64(uint32(v3))+304, uint32(t1303))
 																																	goto l166
 																																}
@@ -17991,7 +18009,7 @@ func (m *Module) _sqlite3VdbeExec(v0 int32) int32 {
 																																	}
 																																	t1367 := int64(load64(*m.memory, uint64(uint32(v7))+32))
 																																	if t1367&i64(0x10000001) != i64(1) {
-																																		_ = m._sqlite3ReportError(i32(779), i32(103097), i32(77373))
+																																		_ = m._sqlite3ReportError(i32(779), i32(103103), i32(77373))
 																																		store32(*m.memory, uint64(uint32(v3))+304, uint32(i32(779)))
 																																		goto l166
 																																	}
@@ -18542,7 +18560,7 @@ func (m *Module) _sqlite3VdbeExec(v0 int32) int32 {
 																																		if v2|t1199 != 0 {
 																																			goto l307
 																																		}
-																																		t1200 := m._sqlite3ReportError(i32(11), i32(103623), i32(77390))
+																																		t1200 := m._sqlite3ReportError(i32(11), i32(103629), i32(77390))
 																																		store32(*m.memory, uint64(uint32(v3))+304, uint32(t1200))
 																																	}
 																																l307:
@@ -22857,7 +22875,7 @@ func (m *Module) _sqlite3VdbeExec(v0 int32) int32 {
 																							if t1820 != 0 {
 																								goto l155
 																							}
-																							t1821 := m._sqlite3ReportError(i32(11), i32(101972), i32(77390))
+																							t1821 := m._sqlite3ReportError(i32(11), i32(101978), i32(77390))
 																							store32(*m.memory, uint64(uint32(v3))+304, uint32(t1821))
 																							goto l166
 																						}
@@ -23923,7 +23941,7 @@ func (m *Module) _sqlite3VdbeExec(v0 int32) int32 {
 										v5 = v16 + v1*i32(20) - i32(20)
 										goto l75
 									}
-									t2443 := m._sqlite3ReportError(i32(11), i32(99674), i32(77390))
+									t2443 := m._sqlite3ReportError(i32(11), i32(99680), i32(77390))
 									store32(*m.memory, uint64(uint32(v3))+304, uint32(t2443))
 									goto l166
 								}
@@ -24166,7 +24184,7 @@ l504:
 						if v1 != i32(8458) {
 							goto l498
 						}
-						t2487 := m._sqlite3ReportError(i32(11), i32(105759), i32(77390))
+						t2487 := m._sqlite3ReportError(i32(11), i32(105765), i32(77390))
 						v1 = t2487
 					}
 					store32(*m.memory, uint64(uint32(v3))+304, uint32(v1))
@@ -24292,7 +24310,7 @@ l0:
 func (m *Module) _sqlite3LockAndPrepare(v0, v1, v2, v3, v4, v5, v6 int32) int32 {
 	var v7, v8, v9 int32
 	if v5 == 0 {
-		t0 := m._sqlite3ReportError(i32(21), i32(149300), i32(80505))
+		t0 := m._sqlite3ReportError(i32(21), i32(149306), i32(80505))
 		return t0
 	}
 	store32(*m.memory, uint32(v5), uint32(i32(0)))
@@ -24338,7 +24356,7 @@ func (m *Module) _sqlite3LockAndPrepare(v0, v1, v2, v3, v4, v5, v6 int32) int32 
 		return t4
 	}
 l0:
-	t5 := m._sqlite3ReportError(i32(21), i32(149304), i32(80505))
+	t5 := m._sqlite3ReportError(i32(21), i32(149310), i32(80505))
 	return t5
 }
 func (m *Module) _sqlite3VdbeMemMove(v0, v1 int32) {
@@ -24407,7 +24425,7 @@ func (m *Module) _valueFromValueList(v0, v1, v2 int32) int32 {
 	store32(*m.memory, uint32(v1), uint32(i32(0)))
 	{
 		if v0 == 0 {
-			t1 := m._sqlite3ReportError(i32(21), i32(94352), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(94358), i32(80505))
 			v3 = t1
 			goto l0
 		}
@@ -25127,7 +25145,7 @@ func (m *Module) _columnName(v0, v1, v2 int32) int32 {
 	var v3, v4, v5, v6 int32
 	{
 		if v0 == 0 {
-			_ = m._sqlite3ReportError(i32(21), i32(94808), i32(80505))
+			_ = m._sqlite3ReportError(i32(21), i32(94814), i32(80505))
 			goto l0
 		}
 		if v1 < i32(0) {
@@ -25215,7 +25233,7 @@ func (m *Module) Xsqlite3_column_origin_name(v0, v1 int32) int32 {
 }
 func (m *Module) Xsqlite3_bind_blob(v0, v1, v2, v3, v4 int32) int32 {
 	if v3 < i32(0) {
-		t0 := m._sqlite3ReportError(i32(21), i32(95079), i32(80505))
+		t0 := m._sqlite3ReportError(i32(21), i32(95085), i32(80505))
 		return t0
 	}
 	t1 := m._bindText(v0, v1, v2, int64(uint32(v3)), v4, i32(0))
@@ -25297,19 +25315,19 @@ func (m *Module) _vdbeUnbind(v0, v1 int32) int32 {
 	{
 		t2 := m._vdbeSafetyNotNull(v0)
 		if t2 != 0 {
-			t3 := m._sqlite3ReportError(i32(21), i32(94968), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(94974), i32(80505))
 			p1 = t3
 			goto l0
 		}
 		t4 := int32((*m.memory)[uint64(uint32(v0))+151])
 		if t4 != i32(1) {
 			t5 := int32(load32(*m.memory, uint32(v0)))
-			t6 := m._sqlite3ReportError(i32(21), i32(94972), i32(80505))
+			t6 := m._sqlite3ReportError(i32(21), i32(94978), i32(80505))
 			m._sqlite3Error(t5, t6)
 			t7 := int32(load32(*m.memory, uint64(uint32(v0))+200))
 			store32(*m.memory, uint32(v3), uint32(t7))
 			m.Xsqlite3_log(i32(21), i32(87053), v3)
-			t8 := m._sqlite3ReportError(i32(21), i32(94976), i32(80505))
+			t8 := m._sqlite3ReportError(i32(21), i32(94982), i32(80505))
 			p1 = t8
 			goto l0
 		}
@@ -25389,19 +25407,19 @@ func (m *Module) Xsqlite3_bind_int64(v0, v1 int32, v2 int64) int32 {
 	{
 		t2 := m._vdbeSafetyNotNull(v0)
 		if t2 != 0 {
-			t3 := m._sqlite3ReportError(i32(21), i32(95111), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(95117), i32(80505))
 			p1 = t3
 			goto l0
 		}
 		t4 := int32((*m.memory)[uint64(uint32(v0))+151])
 		if t4 != i32(1) {
 			t5 := int32(load32(*m.memory, uint32(v0)))
-			t6 := m._sqlite3ReportError(i32(21), i32(95115), i32(80505))
+			t6 := m._sqlite3ReportError(i32(21), i32(95121), i32(80505))
 			m._sqlite3Error(t5, t6)
 			t7 := int32(load32(*m.memory, uint64(uint32(v0))+200))
 			store32(*m.memory, uint32(v5), uint32(t7))
 			m.Xsqlite3_log(i32(21), i32(87053), v5)
-			t8 := m._sqlite3ReportError(i32(21), i32(95119), i32(80505))
+			t8 := m._sqlite3ReportError(i32(21), i32(95125), i32(80505))
 			p1 = t8
 			goto l0
 		}
@@ -25591,7 +25609,7 @@ func (m *Module) Xsqlite3_bind_zeroblob(v0, v1, v2 int32) int32 {
 func (m *Module) Xsqlite3_bind_zeroblob64(v0, v1 int32, v2 int64) int32 {
 	var v3, v4 int32
 	if v0 == 0 {
-		t0 := m._sqlite3ReportError(i32(21), i32(95266), i32(80505))
+		t0 := m._sqlite3ReportError(i32(21), i32(95272), i32(80505))
 		return t0
 	}
 	v3 = i32(18)
@@ -25741,7 +25759,7 @@ func (m *Module) Xsqlite3_stmt_status(v0, v1, v2 int32) int32 {
 				goto l0
 			}
 		}
-		_ = m._sqlite3ReportError(i32(21), i32(95466), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(95472), i32(80505))
 		v1 = i32(0)
 		goto l1
 	l0:
@@ -26726,7 +26744,7 @@ func (m *Module) Xsqlite3_preupdate_old(v0, v1, v2 int32) int32 {
 			p2 = p3
 		}
 		if p2 == 0 {
-			t4 := m._sqlite3ReportError(i32(21), i32(95570), i32(80505))
+			t4 := m._sqlite3ReportError(i32(21), i32(95576), i32(80505))
 			p1 = t4
 			goto l0
 		}
@@ -26740,7 +26758,7 @@ func (m *Module) Xsqlite3_preupdate_old(v0, v1, v2 int32) int32 {
 						goto l1
 					}
 				}
-				t7 := m._sqlite3ReportError(i32(21), i32(95577), i32(80505))
+				t7 := m._sqlite3ReportError(i32(21), i32(95583), i32(80505))
 				v3 = t7
 				goto l2
 			}
@@ -26759,7 +26777,7 @@ func (m *Module) Xsqlite3_preupdate_old(v0, v1, v2 int32) int32 {
 				v4 = t11
 				t12 := int32(int16(load16(*m.memory, uint64(uint32(v4))+34)))
 				if t12 <= v1 {
-					t13 := m._sqlite3ReportError(i32(21), i32(95583), i32(80505))
+					t13 := m._sqlite3ReportError(i32(21), i32(95589), i32(80505))
 					v3 = t13
 					goto l2
 				}
@@ -26875,7 +26893,7 @@ func (m *Module) Xsqlite3_preupdate_old(v0, v1, v2 int32) int32 {
 							if v4 != 0 {
 								goto l7
 							}
-							t52 := m._sqlite3ReportError(i32(11), i32(95639), i32(77390))
+							t52 := m._sqlite3ReportError(i32(11), i32(95645), i32(77390))
 							v3 = t52
 						}
 					l7:
@@ -28036,7 +28054,7 @@ func (m *Module) Xsqlite3_preupdate_new(v0, v1, v2 int32) int32 {
 		p0 = p1
 	}
 	if p0 == 0 {
-		t2 := m._sqlite3ReportError(i32(21), i32(95730), i32(80505))
+		t2 := m._sqlite3ReportError(i32(21), i32(95736), i32(80505))
 		return t2
 	}
 	{
@@ -28050,7 +28068,7 @@ func (m *Module) Xsqlite3_preupdate_new(v0, v1, v2 int32) int32 {
 					goto l0
 				}
 			}
-			t5 := m._sqlite3ReportError(i32(21), i32(95735), i32(80505))
+			t5 := m._sqlite3ReportError(i32(21), i32(95741), i32(80505))
 			v4 = t5
 			goto l1
 		}
@@ -28076,7 +28094,7 @@ func (m *Module) Xsqlite3_preupdate_new(v0, v1, v2 int32) int32 {
 			v6 = t9
 			t10 := int32(int16(load16(*m.memory, uint64(uint32(v6))+34)))
 			if t10 <= v1 {
-				t11 := m._sqlite3ReportError(i32(21), i32(95741), i32(80505))
+				t11 := m._sqlite3ReportError(i32(21), i32(95747), i32(80505))
 				return t11
 			}
 			t12 := m._sqlite3TableColumnToStorage(v6, int32(int16(v1)))
@@ -28660,7 +28678,7 @@ func (m *Module) Xsqlite3_blob_open(v0, v1, v2, v3 int32, v4 int64, v5, v6 int32
 	var p1 int32
 	{
 		if v6 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(105994), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(106000), i32(80505))
 			p1 = t2
 			goto l0
 		}
@@ -28678,7 +28696,7 @@ func (m *Module) Xsqlite3_blob_open(v0, v1, v2, v3 int32, v4 int64, v5, v6 int32
 				goto l2
 			}
 		l1:
-			t4 := m._sqlite3ReportError(i32(21), i32(106000), i32(80505))
+			t4 := m._sqlite3ReportError(i32(21), i32(106006), i32(80505))
 			p1 = t4
 			goto l0
 		}
@@ -30995,7 +31013,7 @@ func (m *Module) Xsqlite3_errmsg(v0 int32) int32 {
 		{
 			t1 := m._sqlite3SafetyCheckSickOrOk(v0)
 			if t1 == 0 {
-				t2 := m._sqlite3ReportError(i32(21), i32(191103), i32(80505))
+				t2 := m._sqlite3ReportError(i32(21), i32(191109), i32(80505))
 				p0 = t2
 				goto l1
 			}
@@ -31093,7 +31111,7 @@ func (m *Module) _blobReadWrite(v0, v1, v2, v3, v4 int32) int32 {
 	var p1 int32
 	{
 		if v0 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(106246), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(106252), i32(80505))
 			p1 = t2
 			goto l0
 		}
@@ -31432,7 +31450,7 @@ func (m *Module) Xsqlite3_blob_reopen(v0 int32, v1 int64) int32 {
 	var p1 int32
 	{
 		if v0 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(106361), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(106367), i32(80505))
 			p1 = t2
 			goto l0
 		}
@@ -31917,7 +31935,7 @@ func (m *Module) Xsqlite3_exec(v0, v1, v2, v3, v4 int32) int32 {
 	{
 		t1 := m._sqlite3SafetyCheckOk(v0)
 		if t1 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(142851), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(142857), i32(80505))
 			v1 = t2
 			goto l0
 		}
@@ -32152,7 +32170,7 @@ func (m *Module) _sqlite3_auto_extension(v0 int32) {
 		}
 		return
 	}
-	_ = m._sqlite3ReportError(i32(21), i32(144517), i32(80505))
+	_ = m._sqlite3ReportError(i32(21), i32(144523), i32(80505))
 }
 func (m *Module) Xsqlite3_prepare(v0, v1, v2, v3, v4 int32) int32 {
 	return m._sqlite3LockAndPrepare(v0, v1, v2, i32(0), i32(0), v3, v4)
@@ -32483,7 +32501,7 @@ func (m *Module) Xsqlite3_create_module(v0, v1, v2, v3 int32) int32 {
 		p1 = p2
 	}
 	if p1 == 0 {
-		t3 := m._sqlite3ReportError(i32(21), i32(162719), i32(80505))
+		t3 := m._sqlite3ReportError(i32(21), i32(162725), i32(80505))
 		return t3
 	}
 	t4 := m._createModule(v0, v1, v2, v3, i32(0))
@@ -32514,7 +32532,7 @@ func (m *Module) Xsqlite3_create_module_v2(v0, v1, v2, v3, v4 int32) int32 {
 		p1 = p2
 	}
 	if p1 == 0 {
-		t3 := m._sqlite3ReportError(i32(21), i32(162735), i32(80505))
+		t3 := m._sqlite3ReportError(i32(21), i32(162741), i32(80505))
 		return t3
 	}
 	t4 := m._createModule(v0, v1, v2, v3, v4)
@@ -32667,14 +32685,14 @@ func (m *Module) Xsqlite3_declare_vtab(v0, v1 int32) int32 {
 					goto l2
 				}
 			}
-			t8 := m._sqlite3ReportError(i32(21), i32(163454), i32(80505))
+			t8 := m._sqlite3ReportError(i32(21), i32(163460), i32(80505))
 			m._sqlite3Error(v0, t8)
-			t9 := m._sqlite3ReportError(i32(21), i32(163456), i32(80505))
+			t9 := m._sqlite3ReportError(i32(21), i32(163462), i32(80505))
 			p2 = t9
 			goto l2
 		}
 	l0:
-		t41 := m._sqlite3ReportError(i32(21), i32(163431), i32(80505))
+		t41 := m._sqlite3ReportError(i32(21), i32(163437), i32(80505))
 		p2 = t41
 	}
 l2:
@@ -38735,7 +38753,7 @@ func (m *Module) _yy_destructor(v0, v1, v2 int32) {
 func (m *Module) Xsqlite3_vtab_on_conflict(v0 int32) int32 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(163941), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(163947), i32(80505))
 		return t1
 	}
 	t2 := int32((*m.memory)[uint64(uint32(v0))+92])
@@ -38750,7 +38768,7 @@ func (m *Module) Xsqlite3_vtab_config(v0, v1, v2 int32) int32 {
 	{
 		t1 := m._sqlite3SafetyCheckOk(v0)
 		if t1 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(163960), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(163966), i32(80505))
 			v2 = t2
 			goto l0
 		}
@@ -38759,7 +38777,7 @@ func (m *Module) Xsqlite3_vtab_config(v0, v1, v2 int32) int32 {
 			t4 := int32(load32(*m.memory, uint64(uint32(v0))+420))
 			v4 = t4
 			if v4 == 0 {
-				t5 := m._sqlite3ReportError(i32(21), i32(163965), i32(80505))
+				t5 := m._sqlite3ReportError(i32(21), i32(163971), i32(80505))
 				p3 = t5
 				goto l1
 			}
@@ -38792,7 +38810,7 @@ func (m *Module) Xsqlite3_vtab_config(v0, v1, v2 int32) int32 {
 			v2 = i32(0)
 			goto l0
 		l6:
-			t13 := m._sqlite3ReportError(i32(21), i32(163987), i32(80505))
+			t13 := m._sqlite3ReportError(i32(21), i32(163993), i32(80505))
 			p3 = t13
 		}
 	l1:
@@ -38942,7 +38960,7 @@ func (m *Module) Xsqlite3_vtab_rhs_value(v0, v1, v2 int32) int32 {
 					goto l0
 				}
 			}
-			t1 := m._sqlite3ReportError(i32(21), i32(174312), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(174318), i32(80505))
 			v3 = t1
 			goto l1
 		}
@@ -39195,7 +39213,7 @@ func (m *Module) _sqlite3_config(v0, v1 int32) int32 {
 				goto l0
 			}
 		}
-		t2 := m._sqlite3ReportError(i32(21), i32(188808), i32(80505))
+		t2 := m._sqlite3ReportError(i32(21), i32(188814), i32(80505))
 		v3 = t2
 		goto l1
 	}
@@ -39423,7 +39441,7 @@ func (m *Module) Xsqlite3_db_release_memory(v0 int32) int32 {
 				goto l1
 			}
 		}
-		t9 := m._sqlite3ReportError(i32(21), i32(189269), i32(80505))
+		t9 := m._sqlite3ReportError(i32(21), i32(189275), i32(80505))
 		v4 = t9
 	}
 l0:
@@ -39522,7 +39540,7 @@ func (m *Module) Xsqlite3_db_cacheflush(v0 int32) int32 {
 		}
 		return p20
 	}
-	t21 := m._sqlite3ReportError(i32(21), i32(189295), i32(80505))
+	t21 := m._sqlite3ReportError(i32(21), i32(189301), i32(80505))
 	return t21
 }
 func (m *Module) _pagerStress(v0, v1 int32) int32 {
@@ -39611,7 +39629,7 @@ func (m *Module) Xsqlite3_db_config(v0, v1, v2 int32) int32 {
 	{
 		t1 := m._sqlite3SafetyCheckOk(v0)
 		if t1 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(189323), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(189329), i32(80505))
 			v2 = t2
 			goto l0
 		}
@@ -39898,7 +39916,7 @@ func (m *Module) _setupLookaside(v0, v1, v2, v3 int32) int32 {
 func (m *Module) Xsqlite3_last_insert_rowid(v0 int32) int64 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(189488), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(189494), i32(80505))
 		return i64(0)
 	}
 	t2 := int64(load64(*m.memory, uint64(uint32(v0))+40))
@@ -39907,7 +39925,7 @@ func (m *Module) Xsqlite3_last_insert_rowid(v0 int32) int64 {
 func (m *Module) Xsqlite3_set_last_insert_rowid(v0 int32, v1 int64) {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(189504), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(189510), i32(80505))
 		return
 	}
 	store64(*m.memory, uint64(uint32(v0))+40, uint64(v1))
@@ -39915,7 +39933,7 @@ func (m *Module) Xsqlite3_set_last_insert_rowid(v0 int32, v1 int64) {
 func (m *Module) Xsqlite3_changes64(v0 int32) int64 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(189521), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(189527), i32(80505))
 		return i64(0)
 	}
 	t2 := int64(load64(*m.memory, uint64(uint32(v0))+104))
@@ -39928,7 +39946,7 @@ func (m *Module) Xsqlite3_changes(v0 int32) int32 {
 func (m *Module) Xsqlite3_total_changes64(v0 int32) int64 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(189541), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(189547), i32(80505))
 		return i64(0)
 	}
 	t2 := int64(load64(*m.memory, uint64(uint32(v0))+112))
@@ -39943,7 +39961,7 @@ func (m *Module) Xsqlite3_txn_state(v0, v1 int32) int32 {
 	{
 		t0 := m._sqlite3SafetyCheckOk(v0)
 		if t0 == 0 {
-			_ = m._sqlite3ReportError(i32(21), i32(189705), i32(80505))
+			_ = m._sqlite3ReportError(i32(21), i32(189711), i32(80505))
 			v2 = i32(-1)
 			goto l0
 		}
@@ -40001,7 +40019,7 @@ func (m *Module) _sqlite3Close(v0, v1 int32) int32 {
 	if v0 != 0 {
 		t0 := m._sqlite3SafetyCheckSickOrOk(v0)
 		if t0 == 0 {
-			t1 := m._sqlite3ReportError(i32(21), i32(189645), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(189651), i32(80505))
 			return t1
 		}
 		t2 := int32((*m.memory)[uint64(uint32(v0))+94])
@@ -40124,7 +40142,7 @@ func (m *Module) Xsqlite3_close_v2(v0 int32) int32 {
 func (m *Module) _sqlite3_busy_handler(v0, v1, v2 int32) int32 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(190176), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(190182), i32(80505))
 		return t1
 	}
 	store64(*m.memory, uint64(uint32(v0))+516, uint64(i64(0)))
@@ -40136,7 +40154,7 @@ func (m *Module) _sqlite3_busy_handler(v0, v1, v2 int32) int32 {
 func (m *Module) Xsqlite3_busy_timeout(v0, v1 int32) int32 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(190229), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(190235), i32(80505))
 		return t1
 	}
 	if v1 > i32(0) {
@@ -40164,7 +40182,7 @@ func (m *Module) Xsqlite3_interrupt(v0 int32) {
 				goto l0
 			}
 		}
-		_ = m._sqlite3ReportError(i32(21), i32(190288), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190294), i32(80505))
 		return
 	}
 l0:
@@ -40182,7 +40200,7 @@ func (m *Module) Xsqlite3_is_interrupted(v0 int32) int32 {
 				goto l0
 			}
 		}
-		_ = m._sqlite3ReportError(i32(21), i32(190304), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190310), i32(80505))
 		return i32(0)
 	}
 l0:
@@ -40200,7 +40218,7 @@ func (m *Module) _createFunctionApi(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 
 	var v11 int32
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(190470), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(190476), i32(80505))
 		return t1
 	}
 	{
@@ -40358,7 +40376,7 @@ func (m *Module) _sqlite3CreateFunc(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 
 			}
 		}
 	l0:
-		t6 := m._sqlite3ReportError(i32(21), i32(190342), i32(80505))
+		t6 := m._sqlite3ReportError(i32(21), i32(190348), i32(80505))
 		return t6
 	}
 }
@@ -40527,7 +40545,7 @@ func (m *Module) Xsqlite3_overload_function(v0, v1, v2 int32) int32 {
 				goto l1
 			}
 		l0:
-			t3 := m._sqlite3ReportError(i32(21), i32(190619), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(190625), i32(80505))
 			p2 = t3
 			goto l2
 		}
@@ -40797,7 +40815,7 @@ func (m *Module) _sqlite3_autovacuum_pages(v0, v1, v2, v3 int32) int32 {
 		if v3 != 0 {
 			m.t0[uint(v3)].(func(int32))(v2)
 		}
-		t1 := m._sqlite3ReportError(i32(21), i32(190834), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(190840), i32(80505))
 		return t1
 	}
 	t2 := int32(load32(*m.memory, uint64(uint32(v0))+260))
@@ -40814,7 +40832,7 @@ func (m *Module) _sqlite3_autovacuum_pages(v0, v1, v2, v3 int32) int32 {
 func (m *Module) Xsqlite3_wal_autocheckpoint(v0, v1 int32) int32 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(190888), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(190894), i32(80505))
 		return t1
 	}
 	if v1 > i32(0) {
@@ -40848,7 +40866,7 @@ l0:
 func (m *Module) _sqlite3_wal_hook(v0, v1, v2 int32) {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(190912), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190918), i32(80505))
 		return
 	}
 	store32(*m.memory, uint64(uint32(v0))+284, uint32(v1))
@@ -40866,7 +40884,7 @@ func (m *Module) Xsqlite3_wal_checkpoint_v2(v0, v1, v2, v3, v4 int32) int32 {
 	{
 		t1 := m._sqlite3SafetyCheckOk(v0)
 		if t1 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(190952), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(190958), i32(80505))
 			v4 = t2
 			goto l0
 		}
@@ -40877,7 +40895,7 @@ func (m *Module) Xsqlite3_wal_checkpoint_v2(v0, v1, v2, v3, v4 int32) int32 {
 			store32(*m.memory, uint32(v4), uint32(i32(-1)))
 		}
 		if uint32(v2-i32(4)) <= uint32(i32(-6)) {
-			t3 := m._sqlite3ReportError(i32(21), i32(190967), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(190973), i32(80505))
 			v4 = t3
 			goto l0
 		}
@@ -41810,7 +41828,7 @@ func (m *Module) Xsqlite3_set_errmsg(v0, v1, v2 int32) int32 {
 	{
 		t2 := m._sqlite3SafetyCheckOk(v0)
 		if t2 == 0 {
-			t3 := m._sqlite3ReportError(i32(21), i32(191130), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(191136), i32(80505))
 			p1 = t3
 			goto l0
 		}
@@ -41858,7 +41876,7 @@ func (m *Module) Xsqlite3_errcode(v0 int32) int32 {
 		}
 		t0 := m._sqlite3SafetyCheckSickOrOk(v0)
 		if t0 == 0 {
-			t1 := m._sqlite3ReportError(i32(21), i32(191209), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(191215), i32(80505))
 			return t1
 		}
 		t2 := int32((*m.memory)[uint64(uint32(v0))+87])
@@ -41881,7 +41899,7 @@ func (m *Module) Xsqlite3_extended_errcode(v0 int32) int32 {
 		}
 		t0 := m._sqlite3SafetyCheckSickOrOk(v0)
 		if t0 == 0 {
-			t1 := m._sqlite3ReportError(i32(21), i32(191224), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(191230), i32(80505))
 			return t1
 		}
 		t2 := int32((*m.memory)[uint64(uint32(v0))+87])
@@ -41901,7 +41919,7 @@ func (m *Module) Xsqlite3_limit(v0, v1, v2 int32) int32 {
 	var v3, v4 int32
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(191412), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(191418), i32(80505))
 		return i32(-1)
 	}
 	v3 = i32(-1)
@@ -41948,7 +41966,7 @@ func (m *Module) _openDatabase(v0, v1, v2, v3 int32) int32 {
 	store32(*m.memory, uint64(uint32(v4))+32, uint32(i32(0)))
 	{
 		if v1 == 0 {
-			t1 := m._sqlite3ReportError(i32(21), i32(191753), i32(80505))
+			t1 := m._sqlite3ReportError(i32(21), i32(191759), i32(80505))
 			v5 = t1
 			goto l0
 		}
@@ -42036,7 +42054,7 @@ func (m *Module) _openDatabase(v0, v1, v2, v3 int32) int32 {
 			var p20 int32
 			{
 				if i32_shl(i32(1), v5&i32(7))&i32(70) == 0 {
-					t21 := m._sqlite3ReportError(i32(21), i32(191975), i32(80505))
+					t21 := m._sqlite3ReportError(i32(21), i32(191981), i32(80505))
 					p20 = t21
 					goto l3
 				}
@@ -42254,7 +42272,7 @@ func (m *Module) _createCollation(v0, v1, v2, v3, v4, v5 int32) int32 {
 	}
 	v6 = p1
 	if uint32(v6-i32(4)) <= uint32(i32(-4)) {
-		t2 := m._sqlite3ReportError(i32(21), i32(191282), i32(80505))
+		t2 := m._sqlite3ReportError(i32(21), i32(191288), i32(80505))
 		return t2
 	}
 	{
@@ -42836,7 +42854,7 @@ func (m *Module) Xsqlite3_create_collation_v2(v0, v1, v2, v3, v4, v5 int32) int3
 		p1 = p2
 	}
 	if p1 == 0 {
-		t3 := m._sqlite3ReportError(i32(21), i32(0x2eebb), i32(80505))
+		t3 := m._sqlite3ReportError(i32(21), i32(192193), i32(80505))
 		return t3
 	}
 	t4 := m._createCollation(v0, v1, v2&i32(255), v3, v4, v5)
@@ -42905,7 +42923,7 @@ l1:
 func (m *Module) Xsqlite3_get_autocommit(v0 int32) int32 {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(192358), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(192364), i32(80505))
 		return i32(0)
 	}
 	t2 := int32((*m.memory)[uint64(uint32(v0))+85])
@@ -42929,7 +42947,7 @@ func (m *Module) Xsqlite3_table_column_metadata(v0, v1, v2, v3, v4, v5, v6, v7, 
 			p3 = p4
 		}
 		if p3 == 0 {
-			t5 := m._sqlite3ReportError(i32(21), i32(192456), i32(80505))
+			t5 := m._sqlite3ReportError(i32(21), i32(192462), i32(80505))
 			p1 = t5
 			goto l0
 		}
@@ -43475,7 +43493,7 @@ func (m *Module) Xsqlite3_file_control(v0, v1, v2, v3 int32) int32 {
 	var v4, v5, v6 int32
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		t1 := m._sqlite3ReportError(i32(21), i32(192580), i32(80505))
+		t1 := m._sqlite3ReportError(i32(21), i32(192586), i32(80505))
 		return t1
 	}
 	t2 := m._sqlite3DbNameToBtree(v0, v1)
@@ -44536,7 +44554,7 @@ func (m *Module) Xsqlite3_db_name(v0, v1 int32) int32 {
 	var v2 int32
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(193393), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(193399), i32(80505))
 		return i32(0)
 	}
 	{
@@ -44558,7 +44576,7 @@ func (m *Module) Xsqlite3_db_filename(v0, v1 int32) int32 {
 	{
 		t0 := m._sqlite3SafetyCheckOk(v0)
 		if t0 == 0 {
-			_ = m._sqlite3ReportError(i32(21), i32(193413), i32(80505))
+			_ = m._sqlite3ReportError(i32(21), i32(193419), i32(80505))
 			goto l0
 		}
 		t2 := m._sqlite3DbNameToBtree(v0, v1)
@@ -44582,7 +44600,7 @@ func (m *Module) Xsqlite3_db_readonly(v0, v1 int32) int32 {
 	{
 		t0 := m._sqlite3SafetyCheckOk(v0)
 		if t0 == 0 {
-			_ = m._sqlite3ReportError(i32(21), i32(193429), i32(80505))
+			_ = m._sqlite3ReportError(i32(21), i32(193435), i32(80505))
 			goto l0
 		}
 		t2 := m._sqlite3DbNameToBtree(v0, v1)
@@ -44599,7 +44617,7 @@ l0:
 func (m *Module) _sqlite3_compileoption_used(v0 int32) int32 {
 	var v1, v2, v3 int32
 	if v0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(193589), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(193595), i32(80505))
 		return i32(0)
 	}
 	v1 = i32(-244)
@@ -47516,7 +47534,7 @@ func (m *Module) Xsqlite3_collation_needed_go(v0, v1 int32) int32 {
 		v1 = p1
 		t2 := m._sqlite3SafetyCheckOk(v0)
 		if t2 == 0 {
-			t3 := m._sqlite3ReportError(i32(21), i32(192237), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(192243), i32(80505))
 			p0 = t3
 			goto l0
 		}
@@ -47583,7 +47601,7 @@ func (m *Module) Xsqlite3_log_go(v0, v1 int32) {
 func (m *Module) Xsqlite3_progress_handler_go(v0, v1 int32) {
 	t0 := m._sqlite3SafetyCheckOk(v0)
 	if t0 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(190204), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190210), i32(80505))
 		return
 	}
 	if v1 > i32(0) {
@@ -47611,7 +47629,7 @@ func (m *Module) Xsqlite3_commit_hook_go(v0, v1 int32) {
 	v1 = p0
 	t1 := m._sqlite3SafetyCheckOk(v0)
 	if t1 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(190732), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190738), i32(80505))
 		return
 	}
 	store32(*m.memory, uint64(uint32(v0))+236, uint32(v1))
@@ -47626,7 +47644,7 @@ func (m *Module) Xsqlite3_rollback_hook_go(v0, v1 int32) {
 	v1 = p0
 	t1 := m._sqlite3SafetyCheckOk(v0)
 	if t1 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(190782), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190788), i32(80505))
 		return
 	}
 	store32(*m.memory, uint64(uint32(v0))+244, uint32(v1))
@@ -47652,7 +47670,7 @@ func (m *Module) Xsqlite3_update_hook_go(v0, v1 int32) {
 	v1 = p0
 	t1 := m._sqlite3SafetyCheckOk(v0)
 	if t1 == 0 {
-		_ = m._sqlite3ReportError(i32(21), i32(190757), i32(80505))
+		_ = m._sqlite3ReportError(i32(21), i32(190763), i32(80505))
 		return
 	}
 	store32(*m.memory, uint64(uint32(v0))+252, uint32(v1))
@@ -47677,7 +47695,7 @@ func (m *Module) Xsqlite3_set_authorizer_go(v0, v1 int32) int32 {
 		v1 = p1
 		t2 := m._sqlite3SafetyCheckOk(v0)
 		if t2 == 0 {
-			t3 := m._sqlite3ReportError(i32(21), i32(126575), i32(80505))
+			t3 := m._sqlite3ReportError(i32(21), i32(126581), i32(80505))
 			p0 = t3
 			goto l0
 		}
@@ -47695,7 +47713,7 @@ func (m *Module) Xsqlite3_trace_go(v0, v1 int32) int32 {
 	{
 		t1 := m._sqlite3SafetyCheckOk(v0)
 		if t1 == 0 {
-			t2 := m._sqlite3ReportError(i32(21), i32(190671), i32(80505))
+			t2 := m._sqlite3ReportError(i32(21), i32(190677), i32(80505))
 			p0 = t2
 			goto l0
 		}
@@ -66964,7 +66982,7 @@ func (m *Module) _corruptSchema(v0, v1, v2 int32) {
 			}
 			t12 := int32((*m.memory)[uint64(uint32(v4))+32])
 			if t12&i32(1) != 0 {
-				t13 := m._sqlite3ReportError(i32(11), i32(148476), i32(77390))
+				t13 := m._sqlite3ReportError(i32(11), i32(148482), i32(77390))
 				p1 = t13
 				goto l0
 			}
@@ -66994,7 +67012,7 @@ func (m *Module) _corruptSchema(v0, v1, v2 int32) {
 		l2:
 			t20 := int32(load32(*m.memory, uint64(uint32(v0))+4))
 			store32(*m.memory, uint32(t20), uint32(v1))
-			t21 := m._sqlite3ReportError(i32(11), i32(148483), i32(77390))
+			t21 := m._sqlite3ReportError(i32(11), i32(148489), i32(77390))
 			p1 = t21
 		}
 	l0:
@@ -79828,7 +79846,7 @@ func (m *Module) _sqlite3CreateIndex(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10
 												goto l42
 											}
 											m._sqlite3ErrorMsg(v0, i32(82552), i32(0))
-											t195 := m._sqlite3ReportError(i32(11), i32(131258), i32(77390))
+											t195 := m._sqlite3ReportError(i32(11), i32(131264), i32(77390))
 											store32(*m.memory, uint64(uint32(v0))+12, uint32(t195))
 											p89 = i32(0)
 											goto l20
@@ -144716,7 +144734,7 @@ func (m *Module) _renameParseSql(v0, v1, v2, v3, v4 int32) int32 {
 	}
 	t0 := m.Xsqlite3_strnicmp(v3, i32(120985), i32(7))
 	if t0 != 0 {
-		t1 := m._sqlite3ReportError(i32(11), i32(121913), i32(77390))
+		t1 := m._sqlite3ReportError(i32(11), i32(121919), i32(77390))
 		return t1
 	}
 	v5 = i32(1)
@@ -144758,7 +144776,7 @@ func (m *Module) _renameParseSql(v0, v1, v2, v3, v4 int32) int32 {
 		if t10 != 0 {
 			goto l0
 		}
-		t11 := m._sqlite3ReportError(i32(11), i32(121934), i32(77390))
+		t11 := m._sqlite3ReportError(i32(11), i32(121940), i32(77390))
 		v3 = t11
 	}
 l0:
@@ -145988,7 +146006,7 @@ func (m *Module) _dropColumnFunc(v0, v1, v2 int32) {
 				}
 			}
 		l1:
-			t20 := m._sqlite3ReportError(i32(11), i32(122949), i32(77390))
+			t20 := m._sqlite3ReportError(i32(11), i32(122955), i32(77390))
 			v2 = t20
 			goto l0
 		}
@@ -146508,7 +146526,7 @@ func (m *Module) _skipCreateTable(v0, v1, v2 int32) int32 {
 				goto l2
 			}
 		}
-		t3 := m._sqlite3ReportError(i32(11), i32(123267), i32(77390))
+		t3 := m._sqlite3ReportError(i32(11), i32(123273), i32(77390))
 		m.Xsqlite3_result_error_code(v0, t3)
 		goto l0
 	}
@@ -146721,7 +146739,7 @@ func (m *Module) _addConstraintFunc(v0, v1, v2 int32) {
 						if v7 != i32(186) {
 							goto l3
 						}
-						t14 := m._sqlite3ReportError(i32(11), i32(123444), i32(77390))
+						t14 := m._sqlite3ReportError(i32(11), i32(123450), i32(77390))
 						m.Xsqlite3_result_error_code(v0, t14)
 						goto l0
 					}

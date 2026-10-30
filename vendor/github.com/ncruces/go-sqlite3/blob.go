@@ -87,6 +87,9 @@ func (b *Blob) Size() int64 {
 //
 // https://sqlite.org/c3ref/blob_read.html
 func (b *Blob) Read(p []byte) (n int, err error) {
+	if b.handle == 0 {
+		return 0, MISUSE
+	}
 	if b.offset >= b.bytes {
 		return 0, io.EOF
 	}
@@ -120,6 +123,9 @@ func (b *Blob) Read(p []byte) (n int, err error) {
 //
 // https://sqlite.org/c3ref/blob_read.html
 func (b *Blob) WriteTo(w io.Writer) (n int64, err error) {
+	if b.handle == 0 {
+		return 0, MISUSE
+	}
 	if b.offset >= b.bytes {
 		return 0, nil
 	}
@@ -166,6 +172,10 @@ func (b *Blob) WriteTo(w io.Writer) (n int64, err error) {
 //
 // https://sqlite.org/c3ref/blob_write.html
 func (b *Blob) Write(p []byte) (n int, err error) {
+	if b.handle == 0 {
+		return 0, MISUSE
+	}
+
 	want := int64(len(p))
 	if want > b.buflen {
 		b.bufptr = b.c.wrp.Realloc(b.bufptr, want)
@@ -187,6 +197,10 @@ func (b *Blob) Write(p []byte) (n int, err error) {
 //
 // https://sqlite.org/c3ref/blob_write.html
 func (b *Blob) ReadFrom(r io.Reader) (n int64, err error) {
+	if b.handle == 0 {
+		return 0, MISUSE
+	}
+
 	want := int64(1024 * 1024)
 	avail := b.bytes - b.offset
 	if l, ok := r.(*io.LimitedReader); ok && want > l.N {

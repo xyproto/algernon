@@ -226,7 +226,7 @@ func (e env) Xgo_inverse(pCtx, pAgg, nArg, pArg int32) {
 	fn, ok := db.wrp.GetHandle(ptr_t(pAgg)).(WindowFunction)
 	if !ok {
 		Context{db, ptr_t(pCtx)}.ResultError(
-			errutil.ErrorString("may not be used as a window function"))
+			errutil.ErrorString("sqlite3: may not be used as a window function"))
 		return // notest
 	}
 	fn.Inverse(Context{db, ptr_t(pCtx)}, *args...)

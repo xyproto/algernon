@@ -158,16 +158,16 @@ func (c *Conn) closeDB(handle ptr_t) {
 //
 // https://sqlite.org/c3ref/close.html
 func (c *Conn) Close() error {
-	if c == nil || c.handle == 0 {
+	if c == nil {
 		return nil
 	}
-
-	rc := res_t(c.wrp.Xsqlite3_close(int32(c.handle)))
-	if err := c.error(rc); err != nil {
-		return err
+	if c.handle != 0 {
+		rc := res_t(c.wrp.Xsqlite3_close(int32(c.handle)))
+		if err := c.error(rc); err != nil {
+			return err
+		}
+		c.handle = 0
 	}
-
-	c.handle = 0
 	return c.wrp.Close()
 }
 

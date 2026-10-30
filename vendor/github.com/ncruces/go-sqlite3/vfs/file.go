@@ -159,12 +159,19 @@ var (
 )
 
 func (f *vfsFile) Close() error {
+	if f.flags == 0 {
+		return nil
+	}
 	if !isUnix && f.flags&OPEN_DELETEONCLOSE != 0 {
 		defer os.Remove(f.Name())
+	}
+	if f.mmap != nil {
+		f.mmap.Close()
 	}
 	if f.shm != nil {
 		f.shm.Close()
 	}
+	f.flags = 0
 	f.Unlock(LOCK_NONE)
 	return f.File.Close()
 }
@@ -189,7 +196,7 @@ func (f *vfsFile) Sync(flags SyncFlag) error {
 			return nil
 		}
 		defer d.Close()
-		err = osSync(f.File, f.flags, flags)
+		err = osSync(d, f.flags, flags)
 		if err != nil {
 			return sysError{err, _IOERR_DIR_FSYNC}
 		}

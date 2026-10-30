@@ -251,21 +251,26 @@ func (s *Stmt) BindText(param int, value string) error {
 
 // BindRawText binds a []byte to the prepared statement as text.
 // The leftmost SQL parameter has an index of 1.
+// Binding a nil slice is the same as calling [Stmt.BindNull].
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindRawText(param int, value []byte) error {
+	if value == nil {
+		return s.BindNull(param)
+	}
 	return s.BindText(param, string(value)) // does not escape
 }
 
 // BindBlob binds a []byte to the prepared statement.
 // The leftmost SQL parameter has an index of 1.
+// Binding a nil slice is the same as calling [Stmt.BindNull].
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindBlob(param int, value []byte) error {
 	if len(value) > _MAX_LENGTH {
 		return TOOBIG
 	}
-	if len(value) == 0 {
+	if value != nil && len(value) == 0 {
 		return s.BindZeroBlob(param, 0)
 	}
 	ptr := s.c.wrp.NewBytes(value)

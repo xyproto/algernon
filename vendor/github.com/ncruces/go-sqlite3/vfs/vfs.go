@@ -320,10 +320,6 @@ func vfsFileControlImpl(wrp *sqlite3_wrap.Wrapper, file File, op _FcntlOpcode, p
 			file.SetDB(wrp.DB)
 			return _OK
 		}
-
-	case _FCNTL_NULL_IO:
-		file.Close()
-		return _OK
 	}
 
 	return _NOTFOUND

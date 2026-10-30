@@ -14,7 +14,7 @@ type Wrapper struct {
 	SysError error
 
 	handles []any
-	deleted int
+	deleted int // count of deleted handles
 }
 
 func (w *Wrapper) Close() (err error) {
@@ -25,7 +25,7 @@ func (w *Wrapper) Close() (err error) {
 			}
 		}
 	}
-	if e := w.Memory.Close(); e != nil {
+	if e := w.Memory.Close(); err == nil {
 		err = e
 	}
 	*w = Wrapper{}

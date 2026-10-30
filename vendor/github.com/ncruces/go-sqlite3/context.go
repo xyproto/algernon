@@ -87,17 +87,23 @@ func (ctx Context) ResultText(value string) {
 }
 
 // ResultRawText sets the text result of the function to a []byte.
+// Returning a nil slice is the same as calling [Context.ResultNull].
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultRawText(value []byte) {
+	if value == nil {
+		ctx.ResultNull()
+		return
+	}
 	ctx.ResultText(string(value)) // does not escape
 }
 
 // ResultBlob sets the result of the function to a []byte.
+// Returning a nil slice is the same as calling [Context.ResultNull].
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultBlob(value []byte) {
-	if len(value) == 0 {
+	if value != nil && len(value) == 0 {
 		ctx.ResultZeroBlob(0)
 		return
 	}
@@ -181,6 +187,9 @@ func (ctx Context) ResultValue(value Value) {
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultError(err error) {
+	if err == nil {
+		return
+	}
 	if errors.Is(err, NOMEM) {
 		ctx.c.wrp.Xsqlite3_result_error_nomem(int32(ctx.handle))
 		return

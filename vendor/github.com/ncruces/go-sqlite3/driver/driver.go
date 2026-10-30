@@ -423,6 +423,7 @@ func (c *conn) ExecContext(ctx context.Context, query string, args []driver.Name
 		return resultRowsAffected(0), nil
 	}
 
+	c.Conn.SetLastInsertRowID(0)
 	if old := c.Conn.SetInterrupt(ctx); old != ctx {
 		defer c.Conn.SetInterrupt(old)
 	}
@@ -489,6 +490,7 @@ func (s *stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (drive
 	}
 
 	c := s.Stmt.Conn()
+	c.SetLastInsertRowID(0)
 	if old := c.SetInterrupt(ctx); old != ctx {
 		defer c.SetInterrupt(old)
 	}
@@ -575,8 +577,7 @@ func (s *stmt) CheckNamedValue(arg *driver.NamedValue) error {
 func newResult(c *sqlite3.Conn) driver.Result {
 	rows := c.Changes()
 	if rows != 0 {
-		id := c.LastInsertRowID()
-		if id != 0 {
+		if id := c.LastInsertRowID(); id != 0 {
 			return result{id, rows}
 		}
 	}
