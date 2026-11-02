@@ -83,6 +83,12 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 		}
 	case *ast.Image:
 		if r.Opts.Flags&SkipImages == 0 && entering {
+			if needSkipImage(r, n.Destination) {
+				r.Outs(w, "<tt>")
+				r.commonMarkImageText(w, n)
+				r.Outs(w, "</tt>")
+				return ast.SkipChildren, true
+			}
 			attrs := BlockAttrs(n)
 			if r.Opts.Flags&LazyLoadImages != 0 {
 				attrs = append(attrs, `loading="lazy"`)

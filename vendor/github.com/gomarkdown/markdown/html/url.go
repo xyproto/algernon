@@ -79,15 +79,81 @@ func appendLinkAttrs(attrs []string, flags Flags, link []byte) []string {
 	return attrs
 }
 
+// outputDest returns a link or image destination as it will be written to the
+// output, before HTML escaping. Safety checks must look at this value so they
+// judge the same URL the browser gets. The CommonMark parser has already
+// decoded character references.
+func (r *Renderer) outputDest(dest []byte) []byte {
+	if r.commonMark {
+		return dest
+	}
+	return unescapeEntities(dest)
+}
+
+func (r *Renderer) isSafeURL(dest []byte) bool {
+	if r.IsSafeURLOverride != nil {
+		return r.IsSafeURLOverride(dest)
+	}
+	return parser.IsSafeURL(dest)
+}
+
 func needSkipLink(r *Renderer, dest []byte) bool {
 	if r.Opts.Flags&SkipLinks != 0 {
 		return true
 	}
-	isSafeURL := r.IsSafeURLOverride
-	if isSafeURL == nil {
-		isSafeURL = parser.IsSafeURL
+	dest = r.outputDest(dest)
+	return r.Opts.Flags&Safelink != 0 && !r.isSafeURL(dest) && !bytes.HasPrefix(dest, []byte("mailto:"))
+}
+
+// needSkipImage reports whether Safelink rejects an image source. Images also
+// accept what is normal for a source but not for IsSafeURL: bare relative paths
+// such as foo.png and inline raster images.
+func needSkipImage(r *Renderer, dest []byte) bool {
+	if r.Opts.Flags&Safelink == 0 {
+		return false
 	}
-	return r.Opts.Flags&Safelink != 0 && !isSafeURL(dest) && !bytes.HasPrefix(dest, []byte("mailto:"))
+	dest = r.outputDest(dest)
+	return !r.isSafeURL(dest) && !isSchemelessPath(dest) && !isDataRasterImage(dest)
+}
+
+// normalizeURLBytes removes what browsers ignore when parsing a URL: leading
+// control characters and spaces, and any tab or newline. Otherwise a tab inside
+// "javascript:" could hide the scheme.
+func normalizeURLBytes(url []byte) []byte {
+	url = bytes.TrimLeftFunc(url, func(c rune) bool { return c <= ' ' })
+	if bytes.IndexAny(url, "\t\r\n") < 0 {
+		return url
+	}
+	return bytes.Map(func(c rune) rune {
+		if c == '\t' || c == '\r' || c == '\n' {
+			return -1
+		}
+		return c
+	}, url)
+}
+
+var slashes = []byte(`/\`)
+
+// isSchemelessPath reports whether url stays on the current scheme and host.
+// Browsers treat a backslash like a slash, so /\evil.com is another host.
+func isSchemelessPath(url []byte) bool {
+	url = normalizeURLBytes(url)
+	if len(url) >= 2 && bytes.IndexByte(slashes, url[0]) >= 0 && bytes.IndexByte(slashes, url[1]) >= 0 {
+		return false
+	}
+	i := bytes.IndexAny(url, `:/\?#`)
+	return i < 0 || url[i] != ':'
+}
+
+func isDataRasterImage(url []byte) bool {
+	url = bytes.ToLower(normalizeURLBytes(url))
+	for _, mime := range []string{"png", "gif", "jpeg", "jpg", "webp"} {
+		rest, ok := bytes.CutPrefix(url, []byte("data:image/"+mime))
+		if ok && len(rest) > 0 && (rest[0] == ';' || rest[0] == ',') {
+			return true
+		}
+	}
+	return false
 }
 
 func appendLanguageAttr(attrs []string, info []byte) []string {

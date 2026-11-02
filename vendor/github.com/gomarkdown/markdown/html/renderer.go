@@ -143,15 +143,10 @@ func (r *Renderer) HTMLSpan(w io.Writer, span *ast.HTMLSpan) {
 
 func (r *Renderer) linkEnter(w io.Writer, link *ast.Link) {
 	attrs := link.AdditionalAttributes
-	dest := link.Destination
-	dest = AddAbsPrefix(dest, r.Opts.AbsolutePrefix)
+	dest := AddAbsPrefix(r.outputDest(link.Destination), r.Opts.AbsolutePrefix)
 	var hrefBuf bytes.Buffer
 	hrefBuf.WriteString("href=\"")
-	if r.commonMark {
-		EscapeHTML(&hrefBuf, dest)
-	} else {
-		EscLink(&hrefBuf, dest)
-	}
+	EscapeHTML(&hrefBuf, dest)
 	hrefBuf.WriteByte('"')
 	attrs = append(attrs, hrefBuf.String())
 	if link.NoteID != 0 {
@@ -198,15 +193,14 @@ func (r *Renderer) imageEnter(w io.Writer, image *ast.Image) {
 	if r.DisableTags > 1 {
 		return
 	}
-	src := image.Destination
-	src = AddAbsPrefixToImage(src, r.Opts.AbsolutePrefix)
+	src := AddAbsPrefixToImage(r.outputDest(image.Destination), r.Opts.AbsolutePrefix)
 	attrs := BlockAttrs(image)
 	if r.Opts.Flags&LazyLoadImages != 0 {
 		attrs = append(attrs, `loading="lazy"`)
 	}
 
 	r.Outs(w, tagStart("<img", attrs)+` src="`)
-	EscLink(w, src)
+	EscapeHTML(w, src)
 	r.Outs(w, `" alt="`)
 }
 
@@ -224,6 +218,20 @@ func (r *Renderer) imageExit(w io.Writer, image *ast.Image) {
 
 // Image writes ast.Image node
 func (r *Renderer) Image(w io.Writer, node *ast.Image, entering bool) {
+	// mark the alt text instead of loading an unsafe source, same as Link.
+	// DisableTags keeps nested markup out of the text; Outs strips <tt> when
+	// this image is itself inside another image's alt text.
+	if needSkipImage(r, node.Destination) {
+		if entering {
+			r.Outs(w, "<tt>")
+			r.DisableTags++
+		} else {
+			r.DisableTags--
+			r.Outs(w, "</tt>")
+		}
+		return
+	}
+
 	if entering {
 		r.imageEnter(w, node)
 	} else {

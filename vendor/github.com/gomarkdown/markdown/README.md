@@ -97,6 +97,10 @@ extensions let the markdown author set arbitrary HTML attributes such as
 `onclick` via `{: key="value"}`. That is by design, so never enable them for
 untrusted input, even with `html.SkipHTML`.
 
+`html.Safelink` is not a sanitizer. It restricts the URL scheme of links and
+images, but doesn't check hosts (`http://example.com@evil.com/` is allowed) and
+doesn't affect raw HTML, which is only removed by `html.SkipHTML`.
+
 Here's an example of simple usage with Bluemonday:
 
 ```go

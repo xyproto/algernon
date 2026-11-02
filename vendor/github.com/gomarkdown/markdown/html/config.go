@@ -17,7 +17,7 @@ const (
 	SkipHTML                Flags = 1 << iota // Skip raw HTML blocks.
 	SkipImages                                // Skip embedded images.
 	SkipLinks                                 // Render link text without links.
-	Safelink                                  // Link only to trusted protocols.
+	Safelink                                  // Allow only trusted URL schemes in links and images. Doesn't check hosts or sanitize HTML.
 	NofollowLinks                             // Add rel="nofollow" to external links.
 	NoreferrerLinks                           // Add rel="noreferrer" to external links.
 	NoopenerLinks                             // Add rel="noopener" to external links.
@@ -68,7 +68,7 @@ type Renderer struct {
 	lastOutputLen     int
 	commonMark        bool
 	DisableTags       int               // Strip tags from Out and Outs when positive.
-	IsSafeURLOverride func([]byte) bool // Optional safe-URL predicate.
+	IsSafeURLOverride func([]byte) bool // Optional safe-URL predicate. Gets the URL as written to the output.
 	sr                *SPRenderer
 	documentMatter    ast.DocumentMatters
 }
