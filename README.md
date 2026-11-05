@@ -1,6 +1,6 @@
 <!--
 title: Algernon
-description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Permissions2, users and permissions, IPv6, React19
+description: Web server with built-in support for Lua, Teal, Markdown, Pongo2, Amber, Sass, SCSS, GCSS, JSX, TypeScript, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, MSSQL, Tollbooth, Pie, Permissions2, users and permissions, IPv6 and React19
 keywords: web server, QUIC, lua, teal, markdown, pongo2, application server, http, http2, HTTP/2, HTTP/3, go, golang, algernon, JSX, TSX, TypeScript, React, BoltDB, Bolt, PostgreSQL, SQLite, Redis, Valkey, MariaDB, MySQL, Three.js, ipv6, react19
 theme: material
 -->
