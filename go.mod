@@ -2,6 +2,9 @@ module github.com/xyproto/algernon
 
 go 1.27.3
 
+// Don't listen with Multipath TCP, ref CVE-2026-98432
+godebug multipathtcp=0
+
 require (
 	github.com/caddyserver/certmagic v0.25.6
 	github.com/chzyer/readline v1.5.1
