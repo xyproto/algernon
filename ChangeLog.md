@@ -1,5 +1,15 @@
 # Changelog
 
+Changes from 1.17.12 to 1.17.13
+===============================
+
+* Don't listen with Multipath TCP, ref CVE-2026-98432.
+* Fix the Lua pool, and recover from panics in Lua template functions and when compiling GCSS.
+* Disallow `os.exit` from Lua while serving requests.
+* Various minor improvements.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.17.11 to 1.17.12
 ===============================
 
