@@ -53,7 +53,7 @@ func getContent(node Node) string {
 }
 
 func shortenString(s string, maxLen int) string {
-	// for cleaner, one-line ouput, replace some white-space chars
+	// for cleaner, one-line output, replace some white-space chars
 	// with their escaped version
 	s = strings.Replace(s, "\n", `\n`, -1)
 	s = strings.Replace(s, "\r", `\r`, -1)

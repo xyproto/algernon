@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// IsCallout detects a callout in the following format: <<N>> Where N is a integer > 0.
+// IsCallout detects a callout in the following format: <<N>>, where N is an integer > 0.
 func IsCallout(data []byte) (id []byte, consumed int) {
 	if !bytes.HasPrefix(data, []byte("<<")) {
 		return nil, 0

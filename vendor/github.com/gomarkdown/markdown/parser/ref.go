@@ -7,8 +7,9 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 )
 
-// parse '(#r, text)', where r does not contain spaces, but text may (similar to a citation). Or. (!item) (!item,
-// subitem), for an index, (!!item) signals primary.
+// parse a cross reference '(#r, text)', where r can't contain spaces but text
+// can (similar to a citation), or an index entry: (!item) or (!item, subitem),
+// where (!!item) marks the primary entry.
 func maybeShortRefOrIndex(p *Parser, data []byte, offset int) (int, ast.Node) {
 	if len(data[offset:]) < 4 {
 		return 0, nil

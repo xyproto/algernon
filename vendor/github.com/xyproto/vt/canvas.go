@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // umin returns the smaller of two uint values
@@ -18,11 +19,10 @@ func umin(a, b uint) uint {
 
 // ColorRune holds a single terminal cell
 type ColorRune struct {
-	fg    AttributeColor
-	bg    AttributeColor
-	r     rune
-	drawn bool
-	cw    uint8 // 0=normal, 1=continuation (skip), 2=wide (2-col)
+	fg AttributeColor
+	bg AttributeColor
+	r  rune
+	cw uint8 // 0=normal, 1=continuation (skip), 2=wide (2-col)
 }
 
 // Char is an alias for ColorRune, for API stability
@@ -111,7 +111,6 @@ func (c *Canvas) FillBackground(bg AttributeColor) {
 	c.mut.Lock()
 	for i := range c.chars {
 		c.chars[i].bg = converted
-		c.chars[i].drawn = false
 	}
 	c.mut.Unlock()
 }
@@ -192,7 +191,7 @@ func (c *Canvas) Clear() {
 	defer c.mut.Unlock()
 	for i := range c.chars {
 		c.chars[i].r = rune(0)
-		c.chars[i].drawn = false
+		c.chars[i].cw = 0
 	}
 }
 
@@ -288,8 +287,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	// Quick change detection with early exit
 	if !firstRun {
 		skipAll := true
-		size := w*h - 1
-		for i := range size {
+		for i := range w * h {
 			cr := (*c).chars[i]
 			if cr.cw == 1 {
 				continue
@@ -502,32 +500,20 @@ func (c *Canvas) HideCursorAndDraw() {
 	c.draw(true)
 }
 
-// Redraw marks all cells dirty and re-renders
+// Redraw re-renders every cell, also the ones that have not changed
 func (c *Canvas) Redraw() {
-	c.mut.Lock()
-	for i := range c.chars {
-		c.chars[i].drawn = false
-	}
-	c.mut.Unlock()
-	c.draw(false)
+	c.RedrawFull()
 }
 
-// HideCursorAndRedraw marks all cells dirty, hides the cursor, and re-renders
+// HideCursorAndRedraw hides the cursor and re-renders every cell, also the
+// ones that have not changed
 func (c *Canvas) HideCursorAndRedraw() {
-	c.mut.Lock()
-	for i := range c.chars {
-		c.chars[i].drawn = false
-	}
-	c.mut.Unlock()
-	c.draw(true)
+	c.HideCursorAndRedrawFull()
 }
 
 // RedrawFull forces a full-frame redraw by discarding the previous frame
 func (c *Canvas) RedrawFull() {
 	c.mut.Lock()
-	for i := range c.chars {
-		c.chars[i].drawn = false
-	}
 	c.oldchars = nil
 	c.mut.Unlock()
 	c.draw(false)
@@ -536,9 +522,6 @@ func (c *Canvas) RedrawFull() {
 // HideCursorAndRedrawFull hides the cursor and forces a full-frame redraw
 func (c *Canvas) HideCursorAndRedrawFull() {
 	c.mut.Lock()
-	for i := range c.chars {
-		c.chars[i].drawn = false
-	}
 	c.oldchars = nil
 	c.mut.Unlock()
 	c.draw(true)
@@ -565,7 +548,7 @@ func (c *Canvas) At(x, y uint) (rune, error) {
 	return chars[index].r, nil
 }
 
-// Plot sets the rune at (x, y) and marks the cell as undrawn
+// Plot sets the rune at (x, y)
 func (c *Canvas) Plot(x, y uint, r rune) {
 	if x >= c.w || y >= c.h {
 		return
@@ -575,7 +558,6 @@ func (c *Canvas) Plot(x, y uint, r rune) {
 	chars := (*c).chars
 	clearWidePartners(chars, index, index+1)
 	chars[index].r = r
-	chars[index].drawn = false
 	chars[index].cw = 0
 	c.mut.Unlock()
 }
@@ -591,7 +573,6 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 	clearWidePartners(chars, index, index+1)
 	chars[index].r = r
 	chars[index].fg = fg
-	chars[index].drawn = false
 	chars[index].cw = 0
 	c.mut.Unlock()
 }
@@ -605,11 +586,30 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 func clearWidePartners(chars []ColorRune, start, end uint) {
 	n := uint(len(chars))
 	if start > 0 && start < n && chars[start].cw == 1 {
-		chars[start-1] = ColorRune{chars[start-1].fg, chars[start-1].bg, ' ', false, 0}
+		chars[start-1] = ColorRune{chars[start-1].fg, chars[start-1].bg, ' ', 0}
 	}
 	if end > 0 && end < n && chars[end-1].cw == 2 {
-		chars[end] = ColorRune{chars[end].fg, chars[end].bg, ' ', false, 0}
+		chars[end] = ColorRune{chars[end].fg, chars[end].bg, ' ', 0}
 	}
+}
+
+// isWide returns true if r is a double-width rune, such as a CJK character
+func isWide(r rune) bool {
+	return r >= 0x80 && runewidth.RuneWidth(r) == 2
+}
+
+// CellCount returns the number of canvas cells that WriteString uses for s,
+// where double-width runes, such as CJK characters, use two cells
+func CellCount(s string) uint {
+	n := uint(0)
+	for _, r := range s {
+		if isWide(r) {
+			n += 2
+		} else {
+			n++
+		}
+	}
+	return n
 }
 
 // Write is an alias for WriteString, for backwards compatibility
@@ -629,19 +629,32 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	// Stop at the end of the row, or the tail of the string would land on the
 	// row below instead of being cut off at the right edge
 	endpos := umin((y+1)*c.w, uint(len(chars)))
-	clearWidePartners(chars, startpos, umin(startpos+uint(utf8.RuneCountInString(s)), endpos))
-	counter := uint(0)
+	if s != "" && chars[startpos].cw == 1 {
+		// Blank the left half of a wide rune that is being partly overwritten
+		chars[startpos-1] = ColorRune{chars[startpos-1].fg, chars[startpos-1].bg, ' ', 0}
+	}
+	i := startpos
 	for _, r := range s {
-		i := startpos + counter
 		if i >= endpos {
 			break
 		}
-		chars[i].r = r
-		chars[i].fg = fg
-		chars[i].bg = bgb
-		chars[i].drawn = false
-		chars[i].cw = 0
-		counter++
+		if isWide(r) {
+			if i+1 >= endpos {
+				// No room for both halves of the wide rune
+				chars[i] = ColorRune{fg, bgb, ' ', 0}
+				break
+			}
+			chars[i] = ColorRune{fg, bgb, r, 2}
+			chars[i+1] = ColorRune{fg, bgb, 0, 1}
+			i += 2
+			continue
+		}
+		chars[i] = ColorRune{fg, bgb, r, 0}
+		i++
+	}
+	if i < uint(len(chars)) && chars[i].cw == 1 && chars[i-1].cw != 2 {
+		// Blank the right half of a wide rune whose left half was overwritten
+		chars[i] = ColorRune{chars[i].fg, chars[i].bg, ' ', 0}
 	}
 	c.mut.Unlock()
 }
@@ -659,7 +672,6 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	chars[index].r = r
 	chars[index].fg = fg
 	chars[index].bg = bg.Background()
-	chars[index].drawn = false
 	chars[index].cw = 0
 }
 
@@ -670,7 +682,7 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	clearWidePartners((*c).chars, index, index+1)
-	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
+	(*c).chars[index] = ColorRune{fg, bgb, r, 0}
 }
 
 // WriteRuneBNoLock will write a colored rune to the canvas.
@@ -679,7 +691,7 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	index := y*c.w + x
 	clearWidePartners((*c).chars, index, index+1)
-	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
+	(*c).chars[index] = ColorRune{fg, bgb, r, 0}
 }
 
 // WriteWideRuneB writes a double-width (CJK) rune to the canvas.
@@ -690,8 +702,8 @@ func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	clearWidePartners((*c).chars, base, base+2)
-	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
-	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
+	(*c).chars[base] = ColorRune{fg, bgb, r, 2}
+	(*c).chars[base+1] = ColorRune{fg, bgb, 0, 1}
 }
 
 // WriteWideRuneBNoLock writes a double-width (CJK) rune to the canvas without locking.
@@ -700,8 +712,8 @@ func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 func (c *Canvas) WriteWideRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	base := y*c.w + x
 	clearWidePartners((*c).chars, base, base+2)
-	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
-	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
+	(*c).chars[base] = ColorRune{fg, bgb, r, 2}
+	(*c).chars[base+1] = ColorRune{fg, bgb, 0, 1}
 }
 
 // WriteBackground sets the background color at (x, y)
@@ -713,7 +725,6 @@ func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	(*c).chars[index].bg = bg
-	(*c).chars[index].drawn = false
 }
 
 // WriteBackgroundAddRuneIfEmpty sets the background color at (x, y) and writes r if the cell is empty
@@ -728,14 +739,12 @@ func (c *Canvas) WriteBackgroundAddRuneIfEmpty(x, y uint, bg AttributeColor, r r
 	if (*c).chars[index].r == 0 {
 		(*c).chars[index].r = r
 	}
-	(*c).chars[index].drawn = false
 }
 
 // WriteBackgroundNoLock sets the background color at (x, y) without locking
 func (c *Canvas) WriteBackgroundNoLock(x, y uint, bg AttributeColor) {
 	index := y*c.w + x
 	(*c).chars[index].bg = bg
-	(*c).chars[index].drawn = false
 }
 
 // Lock the canvas mutex
@@ -761,9 +770,19 @@ func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count ui
 	chars := (*c).chars
 	clearWidePartners(chars, startIndex, afterLastIndex)
 	for i := startIndex; i < afterLastIndex; i++ {
-		chars[i] = ColorRune{fg, bgb, r, false, 0}
+		chars[i] = ColorRune{fg, bgb, r, 0}
 	}
 	c.mut.Unlock()
+}
+
+// newChars returns w*h empty cells with the default colors
+func newChars(w, h uint) []ColorRune {
+	chars := make([]ColorRune, w*h)
+	for i := range chars {
+		chars[i].fg = Default
+		chars[i].bg = DefaultBackground
+	}
+	return chars
 }
 
 // Resize adjusts the canvas to the current terminal size, discarding old content
@@ -774,7 +793,7 @@ func (c *Canvas) Resize() {
 	if (w != c.w) || (h != c.h) {
 		c.w = w
 		c.h = h
-		c.chars = make([]ColorRune, w*h)
+		c.chars = newChars(w, h)
 		c.oldchars = nil
 	}
 }
@@ -783,29 +802,32 @@ func (c *Canvas) Resize() {
 // Returns nil if the size has not changed.
 func (c *Canvas) Resized() *Canvas {
 	w, h := MustTermSize()
-	if (w != c.w) || (h != c.h) {
-		// The terminal was resized!
-		oldc := c
-
-		nc := &Canvas{}
-		nc.w = w
-		nc.h = h
-		nc.chars = make([]ColorRune, w*h)
-		nc.mut = &sync.RWMutex{}
-
-		nc.mut.Lock()
-		c.mut.Lock()
-		defer c.mut.Unlock()
-		defer nc.mut.Unlock()
-		// Copy over old characters, marking them as not yet drawn
-		for y := uint(0); y < umin(oldc.h, h); y++ {
-			for x := uint(0); x < umin(oldc.w, w); x++ {
-				cr := oldc.chars[y*oldc.w+x]
-				cr.drawn = false
-				nc.chars[y*nc.w+x] = cr
-			}
-		}
-		return nc
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	if w == c.w && h == c.h {
+		return nil
 	}
-	return nil
+	// The terminal was resized!
+	nc := &Canvas{
+		w:                 w,
+		h:                 h,
+		chars:             newChars(w, h),
+		mut:               &sync.RWMutex{},
+		cursorVisible:     c.cursorVisible,
+		termCursorVisible: c.termCursorVisible,
+		lineWrap:          c.lineWrap,
+		runewise:          c.runewise,
+	}
+	// Copy over old characters
+	cols := umin(c.w, w)
+	for y := uint(0); y < umin(c.h, h); y++ {
+		copy(nc.chars[y*w:y*w+cols], c.chars[y*c.w:y*c.w+cols])
+		// A wide rune that lost its right half at the new right edge would
+		// make the row one column too wide
+		if cols > 0 && nc.chars[y*w+cols-1].cw == 2 {
+			nc.chars[y*w+cols-1].r = ' '
+			nc.chars[y*w+cols-1].cw = 0
+		}
+	}
+	return nc
 }

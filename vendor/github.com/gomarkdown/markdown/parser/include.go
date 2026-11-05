@@ -8,9 +8,8 @@ import (
 
 var includeCaptions = [...]string{captionFigure, captionTable, captionQuote}
 
-// isInclude parses {{...}}[...], that contains a path between the {{, the [...] syntax contains
-// an address to select which lines to include. It is treated as an opaque string and just given
-// to readInclude.
+// isInclude parses {{path}}[address]. The optional address selects which lines
+// to include. It is treated as an opaque string and just given to readInclude.
 func isInclude(data []byte) (filename string, address []byte, consumed int) {
 	i := skipCharN(data, 0, ' ', 3) // start with up to 3 spaces
 	if len(data[i:]) < 3 {
@@ -55,7 +54,8 @@ func (p *Parser) readInclude(from, file string, address []byte) []byte {
 	return nil
 }
 
-// isCodeInclude parses <{{...}} which is similar to isInclude the returned bytes are, however wrapped in a code block.
+// isCodeInclude parses <{{...}}, which is like isInclude, except that the
+// returned bytes are wrapped in a code block.
 func isCodeInclude(data []byte) (filename string, address []byte, consumed int) {
 	i := skipCharN(data, 0, ' ', 3) // start with up to 3 spaces
 	if len(data[i:]) < 3 {
@@ -125,8 +125,8 @@ func (p *Parser) parseInclude(data []byte) int {
 	return consumed
 }
 
-// incStack hold the current stack of chained includes. Each value is the containing
-// path of the file being parsed.
+// incStack holds the current stack of chained includes. Each value is the
+// directory of the file being parsed.
 type incStack struct {
 	stack []string
 }
@@ -135,7 +135,8 @@ func newIncStack() *incStack {
 	return &incStack{}
 }
 
-// Push updates i with new.
+// Push adds the directory of new, which is relative to the current one unless
+// it's absolute, to the stack.
 func (i *incStack) Push(new string) {
 	if !path.IsAbs(new) {
 		new = filepath.Join(i.Last(), new)

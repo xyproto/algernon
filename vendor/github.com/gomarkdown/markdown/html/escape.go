@@ -92,8 +92,16 @@ func unescapeEntities(text []byte) []byte {
 	})
 }
 
-// Escape writes text while removing Markdown escape backslashes.
+// Escape writes text while removing Markdown escape backslashes. It doesn't
+// escape HTML: use EscapeHTML for that.
 func Escape(w io.Writer, text []byte) {
+	w.Write(removeBackslashEscapes(text))
+}
+
+// removeBackslashEscapes returns text without the backslashes of Markdown
+// escapes.
+func removeBackslashEscapes(text []byte) []byte {
+	out := make([]byte, 0, len(text))
 	escaped := false
 	for _, char := range text {
 		if char == '\\' {
@@ -102,6 +110,7 @@ func Escape(w io.Writer, text []byte) {
 				continue
 			}
 		}
-		w.Write([]byte{char})
+		out = append(out, char)
 	}
+	return out
 }

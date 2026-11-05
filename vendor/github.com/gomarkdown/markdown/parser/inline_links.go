@@ -10,11 +10,13 @@ func (p *Parser) inlineHTMLComment(data []byte) int {
 	if !bytes.HasPrefix(data, []byte("<!--")) {
 		return 0
 	}
-	i := bytes.Index(data[3:], commentEnd)
+	// the block index finds the end without scanning the rest of the buffer
+	// for every unclosed comment
+	i := p.blockIndex.commentEnd(data, 3)
 	if i < 0 {
 		return 0
 	}
-	return i + 3 + len(commentEnd)
+	return i + len(commentEnd)
 }
 
 func stripMailto(link []byte) []byte {
@@ -239,7 +241,7 @@ func isEndOfLink(char byte) bool {
 	return IsSpace(char) || char == '<'
 }
 
-// return the length of the given tag, or 0 is it's not valid
+// return the length of the given tag, or 0 if it's not valid
 func tagLength(data []byte) (autolink autolinkType, end int) {
 	if len(data) < 3 || data[0] != '<' {
 		return

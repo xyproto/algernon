@@ -30,7 +30,7 @@ func sanitizeHeadingID(text string) string {
 	return string(anchorName)
 }
 
-// Parse Block-level data.
+// isPrefixHeading returns true if data starts with a # heading.
 // Note: this function and many that it calls assume that
 // the input buffer ends with a newline.
 func (p *Parser) isPrefixHeading(data []byte) bool {
@@ -119,7 +119,7 @@ func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
 	if data[1] != '#' {
 		return false
 	}
-	if data[2] == '#' { // we don't support level, so nack this.
+	if data[2] == '#' { // levels aren't supported, so reject this
 		return false
 	}
 
@@ -167,16 +167,21 @@ func (p *Parser) titleBlock(data []byte) int {
 	if data[0] != '%' {
 		return 0
 	}
-	splitData := bytes.Split(data, []byte("\n"))
-	var i int
-	for idx, b := range splitData {
-		if !bytes.HasPrefix(b, []byte("%")) {
-			i = idx // - 1
-			break
+	// The block is the lines that start with %. Find its end without splitting
+	// the rest of the document into lines, which made a run of title blocks
+	// quadratic.
+	end := 0
+	for start := 0; start < len(data) && data[start] == '%'; {
+		nl := bytes.IndexByte(data[start:], '\n')
+		if nl < 0 {
+			// the last line has no newline, so it's not a title block
+			return 0
 		}
+		end = start + nl
+		start = end + 1
 	}
 
-	data = bytes.Join(splitData[0:i], []byte("\n"))
+	data = data[:end]
 	consumed := len(data)
 	data = bytes.TrimPrefix(data, []byte("% "))
 	data = bytes.Replace(data, []byte("\n% "), []byte("\n"), -1)

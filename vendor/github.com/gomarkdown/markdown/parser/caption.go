@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-// caption checks for a caption, it returns the caption data and a potential "headingID".
+// caption checks for a caption. It returns the caption data and a potential "headingID".
 func parseCaption(data, prefix []byte) ([]byte, string, int) {
 	if !bytes.HasPrefix(data, prefix) {
 		return nil, "", 0
@@ -56,7 +56,7 @@ func captionID(data []byte) (string, int) {
 	}
 	for k = j + 1; k < end && data[k] != '}'; k++ {
 	}
-	// remains must be whitespace.
+	// the rest must be whitespace.
 	for l := k + 1; l < end; l++ {
 		if !IsSpace(data[l]) {
 			return "", 0

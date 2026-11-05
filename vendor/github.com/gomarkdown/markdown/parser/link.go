@@ -145,7 +145,7 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 		// find the reference with matching id
 		lr, ok := p.getRef(string(id))
-		if !ok {
+		if !ok || !p.expandRef(lr) {
 			return 0, nil
 		}
 
@@ -204,6 +204,11 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 			// find the reference with matching id
 			lr, ok := p.getRef(string(id))
 			if !ok {
+				return 0, nil
+			}
+
+			// a footnote's text is rendered once, however often it's used
+			if t != linkDeferredFootnote && t != linkInlineFootnote && !p.expandRef(lr) {
 				return 0, nil
 			}
 

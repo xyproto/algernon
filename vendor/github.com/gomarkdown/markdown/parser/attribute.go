@@ -63,6 +63,16 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 			quote = !quote
 		case '\\':
 			esc = !esc
+		case '{':
+			// not part of any attribute list, and stopping here keeps a line
+			// with many unclosed lists from being scanned again for each one
+			if esc {
+				esc = false
+				continue
+			}
+			if !quote {
+				return nil, 0
+			}
 		case '}':
 			if esc {
 				esc = false

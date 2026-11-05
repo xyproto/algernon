@@ -52,7 +52,7 @@ func (r *Renderer) listEnter(w io.Writer, nodeData *ast.List) {
 			attrs = append(attrs, fmt.Sprintf(`start="%d"`, nodeData.Start))
 		}
 	}
-	attrs = append(attrs, BlockAttrs(nodeData)...)
+	attrs = append(attrs, r.blockAttrs(nodeData, attrNames(attrs)...)...)
 	r.OutTag(w, "<"+listTag(nodeData.ListFlags), attrs)
 	r.CR(w)
 }

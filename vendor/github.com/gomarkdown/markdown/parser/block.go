@@ -96,7 +96,7 @@ func (p *Parser) blockMath(data []byte) int {
 	for end = 2; end+1 < len(data) && (data[end] != '$' || data[end+1] != '$'); end++ {
 	}
 
-	// $$ not match
+	// no matching $$
 	if end+1 == len(data) {
 		return 0
 	}

@@ -8,6 +8,30 @@ type bracketTable struct {
 	data  []byte
 	pairs delimiterTable
 	emph  [3][]int
+	// emphFails records positions from which a search for the closer of
+	// emphasis is known to fail. The search only depends on where it is, so
+	// a later search that gets there stops instead of scanning on.
+	emphFails map[emphSearch]struct{}
+}
+
+type emphSearch struct {
+	pos    int
+	c      byte
+	double bool
+}
+
+func (t *bracketTable) emphFailed(s emphSearch) bool {
+	_, failed := t.emphFails[s]
+	return failed
+}
+
+func (t *bracketTable) markEmphFailed(searches []emphSearch) {
+	if t.emphFails == nil {
+		t.emphFails = make(map[emphSearch]struct{})
+	}
+	for _, s := range searches {
+		t.emphFails[s] = struct{}{}
+	}
 }
 
 func (t *bracketTable) lookup(open int) (closeAt int, nested, ok bool) {

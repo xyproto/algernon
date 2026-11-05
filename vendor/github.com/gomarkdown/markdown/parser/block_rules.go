@@ -123,7 +123,7 @@ func parseOrderedList(p *Parser, data []byte) int {
 	delimiter := byte('.')
 	if prefix > 2 {
 		if p.extensions&OrderedListStart != 0 {
-			start, _ = strconv.Atoi(string(data[:prefix-2]))
+			start, _ = strconv.Atoi(string(bytes.TrimLeft(data[:prefix-2], " ")))
 			if start == 1 {
 				start = 0
 			}

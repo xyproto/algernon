@@ -35,7 +35,7 @@ func oliPrefix(data []byte) int {
 		return 0
 	}
 
-	// we need >= 1 digits followed by a dot and a space or a tab
+	// we need one or more digits followed by a dot and a space or a tab
 	if data[i] != '.' && data[i] != ')' || !(data[i+1] == ' ' || data[i+1] == '\t') {
 		return 0
 	}

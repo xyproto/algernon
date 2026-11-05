@@ -18,14 +18,19 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 				r.Outs(w, "\n")
 			}
 		} else if entering {
-			r.OutTag(w, "<"+r.paragraphTag(), BlockAttrs(n))
+			r.OutTag(w, "<"+r.paragraphTag(), r.blockAttrs(n))
 		} else {
 			r.Outs(w, "</"+r.paragraphTag()+">\n")
 		}
 	case *ast.Heading:
 		if entering {
-			attrs := BlockAttrs(n)
-			if id := r.MakeUniqueHeadingID(n); id != "" {
+			var own []string
+			id := r.MakeUniqueHeadingID(n)
+			if id != "" {
+				own = []string{"id"}
+			}
+			attrs := r.blockAttrs(n, own...)
+			if id != "" {
 				attrs = append(attrs, `id="`+escapeAttr(id)+`"`)
 			}
 			r.OutTag(w, HeadingOpenTagFromLevel(n.Level), attrs)
@@ -34,16 +39,18 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 		}
 	case *ast.BlockQuote:
 		if entering {
-			r.OutTag(w, "<blockquote", BlockAttrs(n))
+			r.OutTag(w, "<blockquote", r.blockAttrs(n))
 			r.Outs(w, "\n")
 		} else {
 			r.Outs(w, "</blockquote>\n")
 		}
 	case *ast.List:
 		if entering {
-			attrs := BlockAttrs(n)
+			var attrs []string
 			if n.ListFlags&ast.ListTypeOrdered != 0 && n.Start != 1 {
-				attrs = append(attrs, fmt.Sprintf(`start="%d"`, n.Start))
+				attrs = append(r.blockAttrs(n, "start"), fmt.Sprintf(`start="%d"`, n.Start))
+			} else {
+				attrs = r.blockAttrs(n)
 			}
 			r.OutTag(w, "<"+listTag(n.ListFlags), attrs)
 			r.Outs(w, "\n")
@@ -52,7 +59,7 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 		}
 	case *ast.ListItem:
 		if entering {
-			r.OutTag(w, "<li", BlockAttrs(n))
+			r.OutTag(w, "<li", r.blockAttrs(n))
 			first := firstCommonMarkBlock(n)
 			if para, ok := first.(*ast.Paragraph); first != nil && (!ok || !SkipParagraphTags(para)) {
 				r.Outs(w, "\n")
@@ -61,11 +68,11 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 			r.Outs(w, "</li>\n")
 		}
 	case *ast.HorizontalRule:
-		r.OutHRTag(w, BlockAttrs(n))
+		r.OutHRTag(w, r.blockAttrs(n))
 		r.Outs(w, "\n")
 	case *ast.CodeBlock:
 		attrs := appendLanguageAttr(nil, n.Info)
-		attrs = coalesceClassAttrs(append(attrs, BlockAttrs(n)...))
+		attrs = coalesceClassAttrs(append(attrs, r.blockAttrs(n)...))
 		r.Outs(w, "<pre>")
 		r.OutTag(w, "<code", attrs)
 		if r.Opts.Comments != nil {
@@ -89,7 +96,7 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 				r.Outs(w, "</tt>")
 				return ast.SkipChildren, true
 			}
-			attrs := BlockAttrs(n)
+			attrs := r.blockAttrs(n, imageAttrNames(r, n.Title)...)
 			if r.Opts.Flags&LazyLoadImages != 0 {
 				attrs = append(attrs, `loading="lazy"`)
 			}

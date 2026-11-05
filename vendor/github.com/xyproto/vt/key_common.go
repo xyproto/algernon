@@ -1,6 +1,7 @@
 package vt
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 	"time"
@@ -337,8 +338,7 @@ func modifiedKeyString(code, modifier int) (string, bool) {
 	shift := bits&1 != 0
 	alt := bits&2 != 0
 	ctrl := bits&4 != 0
-	switch code {
-	case 13, 10: // Return / Enter
+	if code == 13 || code == 10 { // Return / Enter
 		if shift && !alt && !ctrl {
 			return KeyShiftReturnString, true
 		}
@@ -346,6 +346,37 @@ func modifiedKeyString(code, modifier int) (string, bool) {
 			return KeyAltReturnString, true
 		}
 		return "c:13", true
+	}
+	key, ok := unmodifiedKeyString(code, shift, ctrl)
+	if ok && alt {
+		return altMarker + keyBytes(key), true
+	}
+	return key, ok
+}
+
+// altMarker prefixes the bytes of keys that were reported together with Alt,
+// in the key strings that parseFirstKey returns. takePendingKey turns it into
+// an Escape key, followed by the key.
+const altMarker = "\x1b\x00"
+
+// keyBytes returns the bytes that a terminal sends for the given key string
+// from unmodifiedKeyString
+func keyBytes(key string) string {
+	if key == "backtab" {
+		return "\x1b[Z"
+	}
+	if code, ok := strings.CutPrefix(key, "c:"); ok {
+		if n, err := strconv.Atoi(code); err == nil {
+			return string([]byte{byte(n)})
+		}
+	}
+	return key
+}
+
+// unmodifiedKeyString maps a key code, with Shift and Ctrl taken into account,
+// to its key string
+func unmodifiedKeyString(code int, shift, ctrl bool) (string, bool) {
+	switch code {
 	case 9: // Tab
 		if shift {
 			return "backtab", true
@@ -387,6 +418,73 @@ func modifiedKeyString(code, modifier int) (string, bool) {
 	return "", false
 }
 
+// namedKeyFinals maps the final byte of ESC [ 1 ; modifier X and ESC O X to
+// the key string for X
+var namedKeyFinals = map[byte]string{
+	'A': "↑", 'B': "↓", 'C': "→", 'D': "←",
+	'H': "⇱", 'F': "⇲",
+	'P': "F1", 'Q': "F2", 'R': "F3", 'S': "F4",
+}
+
+// namedKeyTildeCodes maps the number in ESC [ number ; modifier ~ to the key
+// string for that key
+var namedKeyTildeCodes = map[int]string{
+	1: "⇱", 2: "⎀", 3: "⌦", 4: "⇲", 5: "⇞", 6: "⇟", 7: "⇱", 8: "⇲",
+	11: "F1", 12: "F2", 13: "F3", 14: "F4", 15: "F5",
+	17: "F6", 18: "F7", 19: "F8", 20: "F9", 21: "F10", 23: "F11", 24: "F12",
+}
+
+// modifierPrefix returns the prefix that is used for key strings of keys that
+// are pressed together with the given xterm modifier value, such as "ctrl" or
+// "ctrlshift"
+func modifierPrefix(modifier int) string {
+	if modifier < 1 {
+		return ""
+	}
+	bits := modifier - 1
+	var sb strings.Builder
+	if bits&4 != 0 {
+		sb.WriteString("ctrl")
+	}
+	if bits&2 != 0 {
+		sb.WriteString("alt")
+	}
+	if bits&1 != 0 {
+		sb.WriteString("shift")
+	}
+	if bits&8 != 0 {
+		sb.WriteString("super")
+	}
+	return sb.String()
+}
+
+// modifiedNamedKeyString recognizes the xterm reports for arrows, Home, End,
+// Insert, Delete, Page Up, Page Down and F1-F12 pressed together with any
+// combination of Shift, Alt, Ctrl and Super, such as ESC [ 1 ; 6 A for
+// Ctrl-Shift-Up or ESC [ 15 ; 5 ~ for Ctrl-F5
+func modifiedNamedKeyString(final byte, params []string) (string, bool) {
+	if len(params) != 2 {
+		return "", false
+	}
+	modifier := csiParam(params, 1, -1)
+	if modifier < 1 {
+		return "", false
+	}
+	if final == '~' {
+		if name, ok := namedKeyTildeCodes[csiParam(params, 0, -1)]; ok {
+			return modifierPrefix(modifier) + name, true
+		}
+		return "", false
+	}
+	if csiParam(params, 0, 1) != 1 {
+		return "", false
+	}
+	if name, ok := namedKeyFinals[final]; ok {
+		return modifierPrefix(modifier) + name, true
+	}
+	return "", false
+}
+
 // parseLongCSI recognizes the modified-key reports that terminals send when
 // the kitty keyboard protocol (ESC [ code ; modifier u) or xterm
 // modifyOtherKeys=2 (ESC [ 27 ; modifier ; code ~) is enabled, and returns the
@@ -397,6 +495,9 @@ func parseLongCSI(seq string) (string, bool) {
 	}
 	final := seq[len(seq)-1]
 	params := strings.Split(seq[2:len(seq)-1], ";")
+	if key, ok := modifiedNamedKeyString(final, params); ok {
+		return key, true
+	}
 	switch final {
 	case 'u': // kitty keyboard protocol
 		if len(params) > 3 {
@@ -487,6 +588,23 @@ func parseFirstKey(buf []byte) (string, int) {
 	if n == 3 && buf[1] == '[' && buf[2] == '[' {
 		return "", 0
 	}
+	// ESC [ M is followed by three raw bytes in X10 / normal mouse reporting
+	if n >= 3 && buf[1] == '[' && buf[2] == 'M' {
+		if n < 6 {
+			return "", 0
+		}
+		return string(buf[:6]), 6
+	}
+	// Some terminals report modified F1-F4 and arrows as ESC O modifier X
+	if n >= 3 && buf[1] == 'O' && buf[2] >= '2' && buf[2] <= '9' {
+		if n < 4 {
+			return "", 0
+		}
+		if name, ok := namedKeyFinals[buf[3]]; ok {
+			return modifierPrefix(int(buf[2]-'0')) + name, 4
+		}
+		return string(buf[:4]), 4
+	}
 	// Unknown CSI sequence. Consume up to the terminator so stray bytes don't
 	// get re-emitted as literal "^[[..." text. A CSI/SS3 final byte is in the
 	// range 0x40-0x7E (or '~' for page-type sequences). rxvt also terminates
@@ -510,6 +628,45 @@ func parseFirstKey(buf []byte) (string, int) {
 	}
 	// Fallback: consume one byte.
 	return string(buf[:1]), 1
+}
+
+// takePendingKey removes the first complete key from the pending buffer and
+// returns it. A key that was reported together with Alt, through the kitty
+// keyboard protocol or xterm modifyOtherKeys, is split into Escape followed by
+// the key, which is what terminals without those protocols send.
+func (tty *TTY) takePendingKey() (string, bool) {
+	key, consumed := parseFirstKey(tty.pending)
+	if consumed == 0 {
+		return "", false
+	}
+	if len(key) > 1 && key[1] == 0 {
+		if rest, ok := strings.CutPrefix(key, altMarker); ok {
+			tty.pending = append([]byte(rest), tty.pending[consumed:]...)
+			return "c:27", true
+		}
+	}
+	tty.pending = tty.pending[consumed:]
+	return key, true
+}
+
+// readRestOfKey waits briefly for the rest of an incomplete key in the pending
+// buffer, which may arrive in several parts over a slow connection, and then
+// restores the read timeout to blockTimeout
+func (tty *TTY) readRestOfKey(readBuf []byte, blockTimeout time.Duration) (string, bool) {
+	tty.SetTimeoutNoSave(defaultTimeout)
+	for {
+		numRead, _ := tty.readBytes(readBuf)
+		if numRead <= 0 {
+			break
+		}
+		tty.pending = append(tty.pending, readBuf[:numRead]...)
+		if key, ok := tty.takePendingKey(); ok {
+			tty.SetTimeoutNoSave(blockTimeout)
+			return key, true
+		}
+	}
+	tty.SetTimeoutNoSave(blockTimeout)
+	return "", false
 }
 
 // readBufSize is large enough that a pasted chunk usually arrives in one read
@@ -541,8 +698,7 @@ func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	// especially on macOS where those ioctls are expensive. Parsing from the
 	// pending buffer does not read from the file descriptor, so the terminal
 	// mode does not need to be re-applied here.
-	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
-		tty.pending = tty.pending[consumed:]
+	if key, ok := tty.takePendingKey(); ok {
 		return key
 	}
 
@@ -576,18 +732,11 @@ func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	// If the pending buffer currently holds only an incomplete escape
 	// sequence (e.g. lone ESC or ESC [ without a terminator), do one short
 	// follow-up read to let the rest arrive before classifying.
-	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
-		tty.pending = tty.pending[consumed:]
+	if key, ok := tty.takePendingKey(); ok {
 		return key
 	}
-	// Incomplete: wait briefly for the tail of the escape sequence.
-	tty.SetTimeoutNoSave(defaultTimeout)
-	numRead2, _ := tty.readBytes(readBuf)
-	if numRead2 > 0 {
-		tty.pending = append(tty.pending, readBuf[:numRead2]...)
-	}
-	if key, consumed := parseFirstKey(tty.pending); consumed > 0 {
-		tty.pending = tty.pending[consumed:]
+	// Incomplete: wait briefly for the tail of the escape sequence
+	if key, ok := tty.readRestOfKey(readBuf, blockTimeout); ok {
 		return key
 	}
 	// Nothing arrived: the timeout expired or the input ended
@@ -611,4 +760,53 @@ func (tty *TTY) readKey(blockTimeout time.Duration) string {
 	s := string(tty.pending)
 	tty.pending = tty.pending[:0]
 	return s
+}
+
+// ReadPaste reads pasted text, after ReadKey has returned KeyPasteStartString,
+// until the terminal sends KeyPasteEndString. The text is returned exactly as
+// the terminal sent it, instead of being split up into keys, so that pasted
+// control characters and escape sequences are kept as they are. Reading also
+// stops when no input arrives within idle, in case the end marker is lost.
+// An idle duration of zero or less waits for the end marker forever.
+func (tty *TTY) ReadPaste(idle time.Duration) string {
+	start := []byte(KeyPasteStartString)
+	end := []byte(KeyPasteEndString)
+	tty.pending = bytes.TrimPrefix(tty.pending, start)
+	tty.RawMode()
+	savedTimeout, err := tty.SetTimeout(idle)
+	if err == nil {
+		defer tty.SetTimeout(savedTimeout)
+	}
+	var text []byte
+	readBuf := make([]byte, readBufSize)
+	for {
+		if i := bytes.Index(tty.pending, end); i >= 0 {
+			text = append(text, tty.pending[:i]...)
+			tty.pending = tty.pending[i+len(end):]
+			return string(text)
+		}
+		// Keep what could be the first part of an end marker that is split
+		// across two reads
+		keep := partialSuffixLength(tty.pending, end)
+		text = append(text, tty.pending[:len(tty.pending)-keep]...)
+		tty.pending = append(tty.pending[:0], tty.pending[len(tty.pending)-keep:]...)
+		numRead, _ := tty.readBytes(readBuf)
+		if numRead <= 0 {
+			text = append(text, tty.pending...)
+			tty.pending = tty.pending[:0]
+			return string(text)
+		}
+		tty.pending = append(tty.pending, readBuf[:numRead]...)
+	}
+}
+
+// partialSuffixLength returns the length of the longest end of buf that is
+// also the start of marker, without being the whole marker
+func partialSuffixLength(buf, marker []byte) int {
+	for n := min(len(marker)-1, len(buf)); n > 0; n-- {
+		if bytes.HasSuffix(buf, marker[:n]) {
+			return n
+		}
+	}
+	return 0
 }

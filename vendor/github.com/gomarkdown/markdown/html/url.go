@@ -121,7 +121,7 @@ func needSkipImage(r *Renderer, dest []byte) bool {
 // "javascript:" could hide the scheme.
 func normalizeURLBytes(url []byte) []byte {
 	url = bytes.TrimLeftFunc(url, func(c rune) bool { return c <= ' ' })
-	if bytes.IndexAny(url, "\t\r\n") < 0 {
+	if !bytes.ContainsAny(url, "\t\r\n") {
 		return url
 	}
 	return bytes.Map(func(c rune) rune {

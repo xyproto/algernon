@@ -33,6 +33,17 @@ func skipCodeSpan(data []byte, i int) int {
 	return bestEnd
 }
 
+// padCell reports whether a row with too few cells can get another empty one,
+// which it can until that has added expansionLimit cells in all. Then the
+// rest of the rows only have the cells they have.
+func (p *Parser) padCell() bool {
+	if p.paddedCells >= p.expansionLimit() {
+		return false
+	}
+	p.paddedCells++
+	return true
+}
+
 func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool) {
 	p.AddBlock(&ast.TableRow{})
 	col := 0
@@ -46,6 +57,8 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 		i = skipChar(data, i, ' ')
 
 		cellStart := i
+		// past the end of the row, the remaining columns get empty cells
+		padding := i >= n || data[i] == '\n'
 
 		for i < n && (data[i] != '|' || isEscape(data, i)) && data[i] != '\n' {
 			i = skipCodeSpan(data, i)
@@ -60,7 +73,7 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 			i++
 			colspan++
 		}
-		// only colspan > 1 make sense.
+		// only colspan > 1 makes sense.
 		if colspan < 2 {
 			colspan = 0
 		}
@@ -78,6 +91,8 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 		if cellStart == cellEnd && colspans > 0 {
 			// an empty cell that we should ignore, it exists because of colspan
 			colspans--
+		} else if padding && !p.padCell() {
+			break
 		} else {
 			p.AddBlock(block)
 		}
@@ -88,7 +103,7 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 	}
 
 	// pad it out with empty columns to get the right number
-	for ; col < len(columns); col++ {
+	for ; col < len(columns) && p.padCell(); col++ {
 		block := &ast.TableCell{
 			IsHeader: header,
 			Align:    columns[col],
@@ -176,7 +191,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 		colCount--
 	}
 
-	// if the header looks like a underline, then we omit the header
+	// if the header looks like an underline, then we omit the header
 	// and parse the first line again as underline
 	if headerIsUnderline && !headerIsWithEmptyFields {
 		header = nil

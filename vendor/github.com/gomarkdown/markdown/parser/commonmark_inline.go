@@ -378,7 +378,7 @@ func (p *Parser) commonMarkLinkTarget(data []byte, start int, label []byte) (end
 		return 0, nil, nil, false
 	}
 	ref, found := p.getRef(string(label))
-	if !found {
+	if !found || !p.expandRef(ref) {
 		return 0, nil, nil, false
 	}
 	return end, commonMarkURL(commonMarkLiteral(ref.link)), commonMarkLiteral(ref.title), true

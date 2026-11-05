@@ -85,7 +85,7 @@ func (p *Parser) paragraph(data []byte) int {
 
 		// did we find a blank line marking the end of the paragraph?
 		if n := IsEmpty(current); n > 0 {
-			// did this blank line followed by a definition list item?
+			// is this blank line followed by a definition list item?
 			if p.extensions&DefinitionLists != 0 {
 				if i < len(data)-1 && data[i+1] == ':' {
 					listLen := p.list(data[prev:], ast.ListTypeDefinition, 0, '.')

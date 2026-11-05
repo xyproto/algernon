@@ -27,7 +27,7 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 		return 0, ""
 	}
 
-	// if just read the beginning marker, read the syntax
+	// if we just read the beginning marker, read the syntax
 	if oldmarker == "" {
 		i = skipChar(data, i, ' ')
 		if i >= len(data) {

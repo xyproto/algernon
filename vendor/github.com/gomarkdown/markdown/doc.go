@@ -4,14 +4,14 @@ Package markdown implements a markdown parser and HTML renderer.
 It parses markdown into AST format which can be serialized to HTML
 (using html.Renderer) or possibly other formats (using alternate renderers).
 
-Convert markdown to HTML
+# Convert markdown to HTML
 
 The simplest way to convert a markdown document to HTML:
 
-  md := []byte("## markdown document")
-  html := markdown.ToHTML(md, nil, nil)
+	md := []byte("## markdown document")
+	html := markdown.ToHTML(md, nil, nil)
 
-Customizing parsing and HTML rendering
+# Customizing parsing and HTML rendering
 
 You can customize the parser and HTML renderer:
 

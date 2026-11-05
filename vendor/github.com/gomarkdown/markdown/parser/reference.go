@@ -18,11 +18,13 @@ type reference struct {
 	footnote ast.Node // a link to the Item node within a list of footnotes
 
 	text []byte // only gets populated by refOverride feature with Reference.Text
+
+	overridden bool // comes from ReferenceOverride
 }
 
 // Check whether or not data starts with a reference link.
 // If so, it is parsed and stored in the list of references
-// (in the render struct).
+// (in p.refs).
 // Returns the number of bytes to skip to move past it,
 // or zero if the first line is not a reference.
 func isReference(p *Parser, data []byte, tabSize int) int {
@@ -52,7 +54,7 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 		return 0
 	}
 	idEnd := i
-	// footnotes can have empty ID, like this: [^], but a reference can not be
+	// footnotes can have empty ID, like this: [^], but a reference cannot be
 	// empty like this: []. Break early if it's not a footnote and there's no ID
 	if noteID == 0 && idOffset == idEnd {
 		return 0

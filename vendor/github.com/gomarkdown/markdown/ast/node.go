@@ -61,7 +61,7 @@ const (
 	DocumentMatterBack
 )
 
-// CitationTypes holds the type of a citation, informative, normative or suppressed
+// CitationTypes holds the type of a citation: informative, normative or suppressed.
 type CitationTypes int
 
 const (
@@ -94,8 +94,8 @@ type Container struct {
 	*Attribute // Block level attribute
 }
 
-// return true if can contain children of a given node type
-// used by custom nodes to over-ride logic in canNodeContain
+// CanContain is implemented by custom nodes to override canNodeContain: it
+// returns true if the node can contain a child of the given node type.
 type CanContain interface {
 	CanContain(Node) bool
 }
@@ -115,7 +115,7 @@ func (c *Container) SetParent(newParent Node) { c.Parent = newParent }
 // GetChildren returns children nodes
 func (c *Container) GetChildren() []Node { return c.Children }
 
-// SetChildren sets children node
+// SetChildren sets the children of the node
 func (c *Container) SetChildren(newChildren []Node) {
 	c.Children = newChildren
 	linkSiblings(newChildren)
@@ -176,7 +176,7 @@ type DocumentMatter struct {
 // BlockQuote represents markdown block quote node
 type BlockQuote struct{ Container }
 
-// Aside represents an markdown aside node.
+// Aside represents a markdown aside node.
 type Aside struct{ Container }
 
 // List represents markdown list node
@@ -207,10 +207,10 @@ type ListItem struct {
 // Paragraph represents markdown paragraph node
 type Paragraph struct{ Container }
 
-// Math represents markdown MathAjax inline node
+// Math represents markdown MathJax inline node
 type Math struct{ Leaf }
 
-// MathBlock represents markdown MathAjax block node
+// MathBlock represents markdown MathJax block node
 type MathBlock struct{ Container }
 
 // Heading represents markdown heading node
@@ -220,7 +220,7 @@ type Heading struct {
 	Level        int    // This holds the heading level number
 	HeadingID    string // This might hold heading ID, if present
 	IsTitleblock bool   // Specifies whether it's a title block
-	IsSpecial    bool   // We are a special heading (starts with .#)
+	IsSpecial    bool   // Heading is special (starts with .#)
 }
 
 // HorizontalRule represents markdown horizontal rule node
@@ -252,7 +252,7 @@ type CrossReference struct {
 	Container
 
 	Destination []byte // Destination is where the reference points to
-	Suffix      []byte // Potential citation suffix, i.e. (#myid, text)
+	Suffix      []byte // Potential citation suffix, e.g. (#myid, text)
 }
 
 // Citation is a citation node.
@@ -261,14 +261,14 @@ type Citation struct {
 
 	Destination [][]byte        // Destination is where the citation points to. Multiple ones are allowed.
 	Type        []CitationTypes // 1:1 mapping of destination and citation type
-	Suffix      [][]byte        // Potential citation suffix, i.e. [@!RFC1035, p. 144]
+	Suffix      [][]byte        // Potential citation suffix, e.g. [@!RFC1035, p. 144]
 }
 
 // Image represents markdown image node
 type Image struct {
 	Container
 
-	Destination []byte // Destination is what goes into a href
+	Destination []byte // Destination is what goes into a src
 	Title       []byte // Title is the tooltip thing that goes in a title attribute
 }
 
@@ -352,7 +352,7 @@ type Callout struct {
 	ID []byte // number of this callout
 }
 
-// Index is a node that contains an Index item and an optional, subitem.
+// Index is a node that contains an Index item and an optional subitem.
 type Index struct {
 	Leaf
 

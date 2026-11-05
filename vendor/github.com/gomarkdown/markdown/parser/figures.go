@@ -71,7 +71,7 @@ func (p *Parser) figureBlock(data []byte, doRender bool) int {
 	for {
 		// safe to assume beg < len(data)
 
-		// check for the end of the code block
+		// check for the end of the figure block
 		figEnd, _ := sFigureLine(data[beg:], marker)
 		if figEnd != 0 {
 			beg += figEnd

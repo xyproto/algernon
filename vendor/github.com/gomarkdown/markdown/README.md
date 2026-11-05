@@ -23,6 +23,7 @@ Those examples are also in the [examples](./examples) directory.
 - https://pkg.go.dev/github.com/gomarkdown/markdown/ast : defines abstract syntax tree of parsed markdown document
 - https://pkg.go.dev/github.com/gomarkdown/markdown/parser : parser
 - https://pkg.go.dev/github.com/gomarkdown/markdown/html : html renderer
+- https://pkg.go.dev/github.com/gomarkdown/markdown/md : markdown renderer, see [Rendering to Markdown](#rendering-to-markdown)
 
 ## Usage
 
@@ -85,6 +86,29 @@ output := markdown.ToHTML([]byte("# Hello\n"), p, nil)
 
 For more documentation, read [this guide](https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html)
 
+## Rendering to Markdown
+
+`md.NewRenderer()` renders an AST back to Markdown, for example to reformat a
+document or to write one after modifying its AST:
+
+```go
+p := parser.NewWithExtensions(parser.CommonExtensions)
+doc := p.Parse(input)
+output := markdown.Render(doc, md.NewRenderer())
+```
+
+The output parses to the same HTML as the input, with the parser that read
+the input. It escapes whatever would otherwise be read as Markdown syntax.
+`md.WithRenderInFooter(true)` writes link destinations as reference
+definitions at the end of the document instead of inline.
+
+The output is a normalized form of the input: the lines of a paragraph are
+joined, emphasis is written with `*`, headings with `#` and code blocks with
+fences. A few things don't round-trip: whitespace that HTML ignores anyway,
+the leading `.` of a code block's info string (`{.go}` is written as `go`),
+and emphasis nested three levels deep with punctuation next to the
+delimiters.
+
 Comparing to other markdown parsers: https://babelmark.github.io/
 
 ## Sanitize untrusted content
@@ -92,14 +116,23 @@ Comparing to other markdown parsers: https://babelmark.github.io/
 We don't protect against malicious content. When dealing with user-provided
 markdown, run the rendered HTML through an HTML sanitizer such as [Bluemonday](https://github.com/microcosm-cc/bluemonday).
 
-In particular, the `parser.Attributes` and `parser.InlineAttributes`
-extensions let the markdown author set arbitrary HTML attributes such as
-`onclick` via `{: key="value"}`. That is by design, so never enable them for
-untrusted input, even with `html.SkipHTML`.
+The HTML renderer has two flags for untrusted input, which reduce what a
+document can do but don't replace a sanitizer:
 
-`html.Safelink` is not a sanitizer. It restricts the URL scheme of links and
-images, but doesn't check hosts (`http://example.com@evil.com/` is allowed) and
-doesn't affect raw HTML, which is only removed by `html.SkipHTML`.
+- `html.SkipHTML` removes raw HTML.
+- `html.Safelink` restricts the URL scheme of links and images to `http`,
+  `https`, `ftp`, `mailto` and relative paths. It doesn't check hosts
+  (`http://example.com@evil.com/` is allowed) and doesn't affect raw HTML.
+
+The `parser.Attributes` and `parser.InlineAttributes` extensions let a document
+set HTML attributes with `{key="value"}`. With `html.SkipHTML` or
+`html.Safelink`, only attributes that can't run script or load anything are
+kept: `id`, `class`, `title`, `lang`, `dir`, `role`, `width`, `height`,
+`align`, `data-*` and `aria-*`. Without those flags a document can set any
+attribute, such as `onclick` or `style`, so only enable these extensions for
+documents you trust or with one of those flags. Either way, a document can't
+replace an attribute the renderer writes, like the `href` of a link or the
+`src` of an image.
 
 Here's an example of simple usage with Bluemonday:
 
@@ -123,7 +156,7 @@ You can also use it as an example of how to use the library.
 
 You can install it with:
 
-    go get -u github.com/gomarkdown/mdtohtml
+    go install github.com/gomarkdown/mdtohtml@latest
 
 To run: `mdtohtml input-file [output-file]`
 
@@ -146,6 +179,18 @@ To run: `mdtohtml input-file [output-file]`
   happening. The test suite stress tests this and there are no
   known inputs that make it crash. If you find one, please let me
   know and send me the input that does it.
+
+  Parsing takes time linear in the size of the input, and the output can't
+  grow much faster than the input. To keep it that way, the parser has limits
+  that normal documents don't reach:
+
+  - Blocks and inline content are nested at most 64 levels deep.
+  - Once references (`[text][label]`) have expanded to more bytes of
+    destinations and titles than the size of the document or 100KB,
+    whichever is larger, further references are left as text. Footnotes and
+    references from `ReferenceOverride` don't count.
+  - Once table rows with too few cells have been padded with that many empty
+    cells, further rows only get the cells they have.
 
   NOTE: "safety" in this context means _runtime safety only_. In order to
   protect yourself against JavaScript injection in untrusted content, see
@@ -298,6 +343,8 @@ implements the following extensions:
 
 - **Super- and subscript**. With this extension enabled, text between `^` is
   superscript and text between `~` is subscript. For example: H~2~O is a liquid, 2^10^ is 1024.
+  They can't contain spaces unless escaped with a backslash, and `\^` or `\~`
+  includes the character itself.
 
 - **Block-level attributes** allow setting attributes (ID, classes and key/value pairs) on block-level
   elements. The attribute must be enclosed in braces and put on a line before the
@@ -309,6 +356,21 @@ implements the following extensions:
   ```
 
   Will convert into `<h1 id="id3" class="myclass" fontsize="tiny">Header 1</h1>`.
+
+  With `Attributes`, an attribute can also go on the line after the block in
+  kramdown style, as `{: key="value"}`.
+
+- **Inline attributes**. With the `InlineAttributes` extension, attributes
+  can follow a link or an image:
+
+  ```
+  [docs](https://example.com){.external target="_blank"}
+  ![logo](logo.png){width="64"}
+  ```
+
+  For both kinds of attributes, see
+  [Sanitize untrusted content](#sanitize-untrusted-content) for what's kept
+  for untrusted documents.
 
 - **Mmark support**, see <https://mmark.miek.nl/post/syntax/> for all new syntax elements this adds.
   Table captions (`Table: ...`) require both `Tables` and `Mmark`.

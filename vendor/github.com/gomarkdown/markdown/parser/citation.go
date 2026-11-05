@@ -6,16 +6,16 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 )
 
-// citation parses a citation. In its most simple form [@ref], we allow multiple
-// being separated by semicolons and a sub reference inside ala pandoc: [@ref, p. 23].
-// Each citation can have a modifier: !, ? or - wich mean:
+// citation parses a citation. Its simplest form is [@ref]. Multiple citations
+// are separated by semicolons, and each can have a suffix, like in Pandoc:
+// [@ref, p. 23]. Each citation can have a modifier: !, ? or -, which mean:
 //
 // ! - normative
-// ? - formative
+// ? - informative
 // - - suppressed
 //
-// The suffix starts after a comma, we strip any whitespace before and after. If the output
-// allows for it, this can be rendered.
+// The suffix starts after a comma and has whitespace stripped from both ends.
+// It can be rendered if the output format allows it.
 func citation(p *Parser, data []byte, offset int) (int, ast.Node) {
 	// Use the Inline-scoped bracket table so unmatched citation openers do not
 	// each rescan the remainder of the buffer.

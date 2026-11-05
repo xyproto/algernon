@@ -59,10 +59,11 @@ destinationEnd:
 	for destinationEnd > destinationStart && IsSpace(data[destinationEnd-1]) {
 		destinationEnd--
 	}
-	if data[destinationStart] == '<' {
+	// <> around the destination are removed together, so a lone < or an
+	// escaped > stays part of it
+	if destinationEnd-destinationStart >= 2 && data[destinationStart] == '<' &&
+		data[destinationEnd-1] == '>' && !isEscape(data, destinationEnd-1) {
 		destinationStart++
-	}
-	if data[destinationEnd-1] == '>' {
 		destinationEnd--
 	}
 	if destinationEnd > destinationStart {

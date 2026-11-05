@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xyproto/env/v2"
 )
@@ -18,8 +19,8 @@ const (
 	cursorBackward     = "\033[D"
 	saveCursor         = "\033[s"
 	restoreCursor      = "\033[u"
-	saveCursorAttrs    = "\033[7"
-	restoreCursorAttrs = "\033[8"
+	saveCursorAttrs    = "\0337"
+	restoreCursorAttrs = "\0338"
 	resetDevice        = "\033c"
 	eraseScreen        = "\033[2J"
 	eraseEndOfLine     = "\033[K"
@@ -35,6 +36,28 @@ const (
 	attributeTemplate  = "\033[%sm"
 	beginSyncUpdate    = "\033[?2026h"
 	endSyncUpdate      = "\033[?2026l"
+)
+
+// Terminal sequences for turning on and off the alternate screen, bracketed
+// paste, focus events and mouse reporting. Writing these is harmless on
+// terminals that don't understand them.
+const (
+	EnterAltScreenSeq        = "\033[?1049h"
+	ExitAltScreenSeq         = "\033[?1049l"
+	EnableBracketedPasteSeq  = "\033[?2004h"
+	DisableBracketedPasteSeq = "\033[?2004l"
+	EnableFocusEventsSeq     = "\033[?1004h"
+	DisableFocusEventsSeq    = "\033[?1004l"
+	EnableMouseSeq           = "\033[?1000h\033[?1002h\033[?1006h"
+	DisableMouseSeq          = "\033[?1006l\033[?1003l\033[?1002l\033[?1000l"
+)
+
+// Key strings that ReadKey returns for bracketed paste and focus events
+const (
+	KeyPasteStartString = "\033[200~"
+	KeyPasteEndString   = "\033[201~"
+	KeyFocusInString    = "\033[I"
+	KeyFocusOutString   = "\033[O"
 )
 
 // NoColor is the escape sequence for resetting all color attributes
@@ -210,6 +233,51 @@ func CloseKeepContent() {
 	Home()
 }
 
+// EnterAltScreen switches to the alternate screen, so that the current
+// contents of the terminal can be restored with ExitAltScreen
+func EnterAltScreen() {
+	fmt.Print(EnterAltScreenSeq)
+}
+
+// ExitAltScreen switches back from the alternate screen
+func ExitAltScreen() {
+	fmt.Print(ExitAltScreenSeq)
+}
+
+// EnableBracketedPaste makes the terminal surround pasted text with
+// KeyPasteStartString and KeyPasteEndString. Use TTY.ReadPaste to read the
+// pasted text after ReadKey has returned KeyPasteStartString.
+func EnableBracketedPaste() {
+	fmt.Print(EnableBracketedPasteSeq)
+}
+
+// DisableBracketedPaste turns off bracketed paste
+func DisableBracketedPaste() {
+	fmt.Print(DisableBracketedPasteSeq)
+}
+
+// EnableFocusEvents makes ReadKey return KeyFocusInString and
+// KeyFocusOutString when the terminal gains and loses focus
+func EnableFocusEvents() {
+	fmt.Print(EnableFocusEventsSeq)
+}
+
+// DisableFocusEvents turns off focus events
+func DisableFocusEvents() {
+	fmt.Print(DisableFocusEventsSeq)
+}
+
+// EnableMouse turns on reporting of mouse button presses, releases, drags and
+// the scroll wheel. Use ParseMouseEvent on the keys that ReadKey returns.
+func EnableMouse() {
+	fmt.Print(EnableMouseSeq)
+}
+
+// DisableMouse turns off mouse reporting
+func DisableMouse() {
+	fmt.Print(DisableMouseSeq)
+}
+
 // EchoOff disables terminal echo
 func EchoOff() {
 	if echoOffHelper() {
@@ -239,45 +307,108 @@ func ShowCursor(enable bool) {
 // GetBackgroundColor queries the terminal for its background color.
 // Returns normalized RGB values in [0.0, 1.0], or an error.
 // The terminal response format is "rgb:RRRR/GGGG/BBBB" where each component
-// is a 16-bit hex value (0000–ffff).
+// is a hex value of 1 to 4 digits.
 func GetBackgroundColor(tty *TTY) (float64, float64, float64, error) {
 	// First try the escape code used by e.g. alacritty
-	if err := tty.WriteString("\033]11;?\a"); err != nil {
-		return 0, 0, 0, err
-	}
-	result, err := tty.ReadString()
+	result, err := queryTerminal(tty, "\033]11;?\a")
 	if err != nil {
 		return 0, 0, 0, err
 	}
-	if !strings.Contains(result, "rgb:") {
+	if !strings.Contains(result, "]11;rgb:") {
 		// Then try the escape code used by e.g. gnome-terminal
-		if err := tty.WriteString("\033]10;?\a\033]11;?\a"); err != nil {
-			return 0, 0, 0, err
-		}
-		result, err = tty.ReadString()
+		more, err := queryTerminal(tty, "\033]10;?\a\033]11;?\a")
 		if err != nil {
 			return 0, 0, 0, err
 		}
+		result += more
 	}
-	if _, after, ok := strings.Cut(result, "rgb:"); ok {
-		// Trim anything after the three hex components (e.g. trailing BEL, ST, newline)
-		rgb := strings.FieldsFunc(after, func(r rune) bool {
-			return r < 0x20 || r == '\033' || r == '\a' || r == '\\'
-		})
-		if len(rgb) > 0 {
-			parts := strings.SplitN(rgb[0], "/", 3)
-			if len(parts) == 3 {
-				rv, err1 := strconv.ParseUint(strings.TrimSpace(parts[0]), 16, 16)
-				gv, err2 := strconv.ParseUint(strings.TrimSpace(parts[1]), 16, 16)
-				bv, err3 := strconv.ParseUint(strings.TrimSpace(parts[2]), 16, 16)
-				if err1 == nil && err2 == nil && err3 == nil {
-					return float64(rv) / 65535.0, float64(gv) / 65535.0, float64(bv) / 65535.0, nil
-				}
+	if r, g, b, ok := parseOSCColor(result, "]11;rgb:"); ok {
+		return r, g, b, nil
+	}
+	return 0, 0, 0, fmt.Errorf("could not read rgb value from terminal emulator, got: %q", result)
+}
+
+// queryTimeout is how long queryTerminal waits for a terminal that does not
+// answer the primary device attributes request
+const queryTimeout = 2 * time.Second
+
+// queryTerminal sends the given query to the terminal, followed by a primary
+// device attributes request, which practically all terminals answer. Since
+// terminals answer in order, the reply to the query, if any, has arrived once
+// the device attributes reply has arrived. This avoids both giving up too
+// early on slow connections and leaving a late reply in the input.
+func queryTerminal(tty *TTY, query string) (string, error) {
+	if err := tty.WriteString(query + "\033[c"); err != nil {
+		return "", err
+	}
+	var sb strings.Builder
+	deadline := time.Now().Add(queryTimeout)
+	for time.Now().Before(deadline) {
+		s, err := tty.ReadStringKeepTiming()
+		if err != nil {
+			if tty.reader != nil {
+				break // the input of a mock TTY has ended
 			}
+			continue
+		}
+		sb.WriteString(s)
+		if hasDeviceAttributesReply(sb.String()) {
+			break
 		}
 	}
+	return sb.String(), nil
+}
 
-	return 0, 0, 0, fmt.Errorf("could not read rgb value from terminal emulator, got: %q", result)
+// hasDeviceAttributesReply returns true if s contains a reply to a primary
+// device attributes request, ESC [ ? digits and semicolons c
+func hasDeviceAttributesReply(s string) bool {
+	for {
+		_, after, found := strings.Cut(s, "\033[?")
+		if !found {
+			return false
+		}
+		i := 0
+		for i < len(after) && (after[i] >= '0' && after[i] <= '9' || after[i] == ';') {
+			i++
+		}
+		if i < len(after) && after[i] == 'c' {
+			return true
+		}
+		s = after
+	}
+}
+
+// parseOSCColor finds the color that follows the given prefix in an OSC color
+// reply such as "\033]11;rgb:RRRR/GGGG/BBBB\a", and returns its components
+// as values in [0.0, 1.0]
+func parseOSCColor(reply, prefix string) (float64, float64, float64, bool) {
+	_, after, ok := strings.Cut(reply, prefix)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	// Trim anything after the three hex components (e.g. trailing BEL, ST, newline)
+	if i := strings.IndexFunc(after, func(r rune) bool {
+		return r < 0x20 || r == '\033' || r == '\a' || r == '\\'
+	}); i >= 0 {
+		after = after[:i]
+	}
+	parts := strings.Split(after, "/")
+	if len(parts) != 3 {
+		return 0, 0, 0, false
+	}
+	var values [3]float64
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if len(part) < 1 || len(part) > 4 {
+			return 0, 0, 0, false
+		}
+		v, err := strconv.ParseUint(part, 16, 16)
+		if err != nil {
+			return 0, 0, 0, false
+		}
+		values[i] = float64(v) / float64(uint64(1)<<(4*len(part))-1)
+	}
+	return values[0], values[1], values[2], true
 }
 
 // BeginSyncUpdate sends the terminal's begin synchronized update escape sequence
