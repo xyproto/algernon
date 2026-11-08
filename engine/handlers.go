@@ -477,7 +477,7 @@ func (ac *Config) FilePage(w http.ResponseWriter, req *http.Request, filename, l
 		// http.ServeContent will first seek to the end of the file, then
 		// serve the file. The alternative here is to use io.Copy(w, f),
 		// but io.Copy does not support ranges.
-		http.ServeContent(w, req, fInfo.Name(), fInfo.ModTime(), f)
+		http.ServeContent(newDeadlineWriter(w, req), req, fInfo.Name(), fInfo.ModTime(), f)
 
 		return
 	}
