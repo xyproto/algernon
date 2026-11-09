@@ -3,7 +3,7 @@ package parser
 // parseInlineLink parses the parenthesized destination and optional title
 // following link text. open is the index of the opening parenthesis.
 func parseInlineLink(p *Parser, data []byte, open int) (end int, destination, title []byte, ok bool) {
-	i := skipSpace(data, open+1)
+	i := skipWhile(data, open+1, IsSpace)
 	destinationStart := i
 
 	for i < len(data) {

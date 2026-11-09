@@ -34,9 +34,7 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 	if i < len(data) && data[i] == ':' {
 		i++
 	}
-	for i < len(data) && (data[i] == ' ' || data[i] == '\t' || data[i] == '\f' || data[i] == '\v') {
-		i++
-	}
+	i = skipWhile(data, i, func(b byte) bool { return byteIn(b, " \t\f\v") })
 
 	b := &ast.Attribute{Attrs: make(map[string][]byte)}
 	esc := false
@@ -163,7 +161,7 @@ func parseAfterBlockAttribute(data []byte) (*ast.Attribute, int) {
 		i++
 	}
 	i = skipCharN(data, i, ' ', 3)
-	if i+1 >= len(data) || data[i] != '{' || data[i+1] != ':' {
+	if !pairAt(data, i, '{', ':') {
 		return nil, 0
 	}
 	attr, n := parseAttributeList(data[i:], true)
@@ -201,7 +199,7 @@ func keyValue(data []byte) ([]byte, []byte) {
 	}
 	key, value := data[:separator], data[separator+1:]
 
-	if len(value) < 3 || value[0] != '"' || value[len(value)-1] != '"' {
+	if len(value) < 3 || !enclosedBy(value, '"', '"') {
 		return key, nil
 	}
 	return key, value[1 : len(value)-1]

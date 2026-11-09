@@ -1,6 +1,9 @@
 package parser
 
-import "sort"
+import (
+	"bytes"
+	"sort"
+)
 
 // byteIndex stores positions of a small set of bytes in one input buffer.
 // It is useful when many parser callbacks need the next occurrence without
@@ -17,23 +20,17 @@ func (x *byteIndex) ensure() {
 		return
 	}
 	x.positions = make(map[byte][]int, len(x.chars))
-	backslashes := 0
-	for i, c := range x.data {
-		if x.honorEscapes && c == '\\' {
-			backslashes++
+	for i := 0; i < len(x.data); i++ {
+		j := bytes.IndexAny(x.data[i:], x.chars)
+		if j < 0 {
+			break
+		}
+		i += j
+		if x.honorEscapes && isEscape(x.data, i) {
 			continue
 		}
-		escaped := x.honorEscapes && backslashes%2 != 0
-		backslashes = 0
-		if escaped {
-			continue
-		}
-		for j := 0; j < len(x.chars); j++ {
-			if c == x.chars[j] {
-				x.positions[c] = append(x.positions[c], i)
-				break
-			}
-		}
+		c := x.data[i]
+		x.positions[c] = append(x.positions[c], i)
 	}
 }
 

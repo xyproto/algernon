@@ -6,6 +6,7 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/internal/render"
 	"github.com/gomarkdown/markdown/parser"
 )
 
@@ -57,11 +58,15 @@ func Parse(markdown []byte, p *parser.Parser) ast.Node {
 //
 // To convert to HTML, pass html.Renderer
 func Render(doc ast.Node, renderer Renderer) []byte {
+	return renderSized(doc, renderer, 0)
+}
+
+// renderSized is Render with the output buffer sized to sizeHint up front.
+func renderSized(doc ast.Node, renderer Renderer, sizeHint int) []byte {
 	var buf bytes.Buffer
+	buf.Grow(sizeHint)
 	renderer.RenderHeader(&buf, doc)
-	ast.WalkFunc(doc, func(node ast.Node, entering bool) ast.WalkStatus {
-		return renderer.RenderNode(&buf, node, entering)
-	})
+	render.Tree(&buf, doc, renderer.RenderNode)
 	renderer.RenderFooter(&buf, doc)
 	return buf.Bytes()
 }
@@ -86,7 +91,9 @@ func ToHTML(markdown []byte, p *parser.Parser, renderer Renderer) []byte {
 		}
 		renderer = html.NewRenderer(opts)
 	}
-	return Render(doc, renderer)
+	// HTML is typically 1.2-1.5 times the size of its markdown source, so
+	// most documents fit without growing the buffer.
+	return renderSized(doc, renderer, len(markdown)+len(markdown)/2)
 }
 
 // NormalizeNewlines converts Windows and Mac newlines to Unix newlines.

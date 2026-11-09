@@ -2,12 +2,38 @@ package html
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/internal/textutil"
 )
+
+// crAfterBlock ends the line after a block, except for the last block of a
+// list item, which the item's closing tag follows directly.
+func (r *Renderer) crAfterBlock(w io.Writer, node ast.Node) {
+	if !(IsListItem(node.GetParent()) && ast.GetNextNode(node) == nil) {
+		r.CR(w)
+	}
+}
+
+// blockElement writes the opening tag of a block element, with the node's
+// block attributes, or its closing tag, each on a line of its own.
+func (r *Renderer) blockElement(w io.Writer, node ast.Node, name string, entering bool) {
+	tag := TagWithAttributes("<"+name, r.blockAttrs(node))
+	r.OutOneOfCr(w, entering, tag, "</"+name+">")
+}
+
+// enterOrExit renders node with enter when the walk enters it and with exit
+// when it leaves it.
+func enterOrExit[N any](r *Renderer, w io.Writer, node N, entering bool, enter, exit func(*Renderer, io.Writer, N)) {
+	if entering {
+		enter(r, w, node)
+	} else {
+		exit(r, w, node)
+	}
+}
 
 func IsList(node ast.Node) bool { _, ok := node.(*ast.List); return ok }
 

@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"bytes"
+
 	"github.com/gomarkdown/markdown/ast"
 )
 
@@ -47,20 +49,9 @@ func (p *Parser) Block(data []byte) {
 		}
 
 		// user supplied parser function
-		if p.Opts.ParserHook != nil {
-			node, blockdata, consumed := p.Opts.ParserHook(data)
-			if consumed > 0 {
-				data = data[consumed:]
-
-				if node != nil {
-					p.AddBlock(node)
-					if blockdata != nil {
-						p.Block(blockdata)
-						p.Finalize(node)
-					}
-				}
-				continue
-			}
+		if consumed := p.runParserHook(data); consumed > 0 {
+			data = data[consumed:]
+			continue
 		}
 
 		if len(data) == 0 {
@@ -70,6 +61,27 @@ func (p *Parser) Block(data []byte) {
 	}
 
 	p.nesting--
+}
+
+// runParserHook runs Opts.ParserHook at the start of a block, adds the node
+// it returns and parses that node's block data, and returns how much of
+// data the hook consumed.
+func (p *Parser) runParserHook(data []byte) int {
+	if p.Opts.ParserHook == nil {
+		return 0
+	}
+	node, blockData, consumed := p.Opts.ParserHook(data)
+	if consumed <= 0 {
+		return 0
+	}
+	if node != nil {
+		p.AddBlock(node)
+		if blockData != nil {
+			p.Block(blockData)
+			p.Finalize(node)
+		}
+	}
+	return consumed
 }
 
 func (p *Parser) AddBlock(n ast.Node) ast.Node {
@@ -87,7 +99,7 @@ func (p *Parser) AddBlock(n ast.Node) ast.Node {
 }
 
 func (p *Parser) blockMath(data []byte) int {
-	if len(data) <= 4 || data[0] != '$' || data[1] != '$' || data[2] == '$' {
+	if len(data) <= 4 || !bytes.HasPrefix(data, []byte("$$")) || data[2] == '$' {
 		return 0
 	}
 

@@ -56,12 +56,8 @@ func (x *blockIndex) ensureFences(prefix string) map[string][]int {
 	closers := make(map[string][]int)
 	x.fenceClosers[prefix] = closers
 	for start := 0; start < len(x.data); {
-		end := bytes.IndexByte(x.data[start:], '\n')
-		if end < 0 {
-			end = len(x.data)
-		} else {
-			end += start + 1
-		}
+		_, n := commonMarkLine(x.data[start:])
+		end := start + n
 		line := x.data[start:end]
 		if prefix != "" {
 			line = line[prefixedBlock(line, prefix):]

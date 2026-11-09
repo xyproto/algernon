@@ -50,8 +50,7 @@ func (m *Memory) allocate(max uint64) {
 	}
 
 	// Reserve res bytes of address space, to ensure we won't need to move it.
-	// A protected, private, anonymous mapping should not commit memory.
-	b, err := unix.Mmap(-1, 0, int(res), unix.PROT_NONE, unix.MAP_PRIVATE|unix.MAP_ANON)
+	b, err := unix.Mmap(-1, 0, int(res), unix.PROT_NONE, _MAP_PLACEHOLDER)
 	if err != nil {
 		panic(err)
 	}

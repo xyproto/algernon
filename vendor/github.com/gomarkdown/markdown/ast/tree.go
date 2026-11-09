@@ -17,9 +17,8 @@ func AppendChild(parent Node, child Node) {
 	child.SetParent(parent)
 	children := parent.GetChildren()
 	prev := GetLastChild(parent)
-	setPrevNode(child, prev)
-	setNextNode(child, nil)
-	setNextNode(prev, child)
+	linkNodes(prev, child)
+	linkNodes(child, nil)
 	if container := parent.AsContainer(); container != nil {
 		container.Children = append(container.Children, child)
 		return
@@ -39,10 +38,9 @@ func RemoveFromTree(n Node) {
 	n.SetChildren(nil)
 	prev := GetPrevNode(n)
 	next := GetNextNode(n)
-	setNextNode(prev, next)
-	setPrevNode(next, prev)
-	setPrevNode(n, nil)
-	setNextNode(n, nil)
+	linkNodes(prev, next)
+	linkNodes(nil, n)
+	linkNodes(n, nil)
 	newChildren := removeNodeFromArray(p.GetChildren(), n)
 	if newChildren != nil {
 		p.SetChildren(newChildren)
@@ -109,17 +107,12 @@ func GetPrevNode(n Node) Node {
 }
 
 func linkSiblings(children []Node) {
-	for i, child := range children {
-		var prev, next Node
-		if i > 0 {
-			prev = children[i-1]
-		}
-		if i+1 < len(children) {
-			next = children[i+1]
-		}
-		setPrevNode(child, prev)
-		setNextNode(child, next)
+	var prev Node
+	for _, child := range children {
+		linkNodes(prev, child)
+		prev = child
 	}
+	linkNodes(prev, nil)
 }
 
 func siblingLinks(n Node) (prev, next *Node, ok bool) {
@@ -135,14 +128,13 @@ func siblingLinks(n Node) (prev, next *Node, ok bool) {
 	return nil, nil, false
 }
 
-func setPrevNode(n Node, prev Node) {
-	if link, _, ok := siblingLinks(n); ok {
-		*link = prev
+// linkNodes makes b the next sibling of a and a the previous sibling of b.
+// Either may be nil, which clears the other's link.
+func linkNodes(a, b Node) {
+	if _, next, ok := siblingLinks(a); ok {
+		*next = b
 	}
-}
-
-func setNextNode(n Node, next Node) {
-	if _, link, ok := siblingLinks(n); ok {
-		*link = next
+	if prev, _, ok := siblingLinks(b); ok {
+		*prev = a
 	}
 }

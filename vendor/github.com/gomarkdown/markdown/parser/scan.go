@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -33,12 +34,56 @@ func IsEmpty(data []byte) int {
 	return i
 }
 
-// skipChar advances i as long as data[i] == c
-func skipChar(data []byte, i int, c byte) int {
-	for i < len(data) && data[i] == c {
+// skipWhile advances i as long as keep(data[i]) holds.
+func skipWhile(data []byte, i int, keep func(byte) bool) int {
+	for i < len(data) && keep(data[i]) {
 		i++
 	}
 	return i
+}
+
+// skipChar advances i as long as data[i] == c
+func skipChar(data []byte, i int, c byte) int {
+	return skipWhile(data, i, func(b byte) bool { return b == c })
+}
+
+// nextByteIs reports whether the byte after data[i] is c.
+func nextByteIs(data []byte, i int, c byte) bool {
+	return i+1 < len(data) && data[i+1] == c
+}
+
+// byteIn reports whether c is one of the bytes in set.
+func byteIn(c byte, set string) bool {
+	return strings.IndexByte(set, c) >= 0
+}
+
+// pairAt reports whether data[i] is a and the byte after it is b.
+func pairAt(data []byte, i int, a, b byte) bool {
+	return i >= 0 && i < len(data) && data[i] == a && nextByteIs(data, i, b)
+}
+
+// enclosedBy reports whether s starts with open and ends with a separate
+// close.
+func enclosedBy(s []byte, open, close byte) bool {
+	return len(s) >= 2 && s[0] == open && s[len(s)-1] == close
+}
+
+// skipUntilAny advances i to the first byte at or after it that is in set,
+// or to len(data). A set of more than one byte must be ASCII.
+func skipUntilAny(data []byte, i int, set string) int {
+	if i >= len(data) {
+		return i
+	}
+	var j int
+	if len(set) == 1 {
+		j = bytes.IndexByte(data[i:], set[0])
+	} else {
+		j = bytes.IndexAny(data[i:], set)
+	}
+	if j < 0 {
+		return len(data)
+	}
+	return i + j
 }
 
 // like skipChar but only skips up to max characters
@@ -52,10 +97,7 @@ func skipCharN(data []byte, i int, c byte, max int) int {
 
 // skipUntilChar advances i as long as data[i] != c
 func skipUntilChar(data []byte, i int, c byte) int {
-	for i < len(data) && data[i] != c {
-		i++
-	}
-	return i
+	return skipUntilAny(data, i, string([]byte{c}))
 }
 
 // skipUntilUnescapedChar is like skipUntilChar for a c that is not escaped
@@ -70,25 +112,8 @@ func skipUntilUnescapedChar(data []byte, i int, c byte) int {
 	}
 }
 
-func skipAlnum(data []byte, i int) int {
-	for i < len(data) && IsAlnum(data[i]) {
-		i++
-	}
-	return i
-}
-
-func skipSpace(data []byte, i int) int {
-	for i < len(data) && IsSpace(data[i]) {
-		i++
-	}
-	return i
-}
-
 func skipHSpace(data []byte, i int) int {
-	for i < len(data) && (data[i] == ' ' || data[i] == '\t') {
-		i++
-	}
-	return i
+	return skipWhile(data, i, func(b byte) bool { return b == ' ' || b == '\t' })
 }
 
 func backChar(data []byte, i int, c byte) int {
@@ -98,11 +123,12 @@ func backChar(data []byte, i int, c byte) int {
 	return i
 }
 
+// backUntilChar moves i back to just after the last c before it, or to 0.
 func backUntilChar(data []byte, i int, c byte) int {
-	for i > 0 && data[i-1] != c {
-		i--
+	if i <= 0 {
+		return i
 	}
-	return i
+	return bytes.LastIndexByte(data[:i], c) + 1
 }
 
 func prefixedBlock(data []byte, marker string) int {

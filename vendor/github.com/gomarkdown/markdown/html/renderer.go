@@ -90,9 +90,9 @@ func (r *Renderer) OutHRTag(w io.Writer, attrs []string) {
 // Text writes ast.Text node
 func (r *Renderer) Text(w io.Writer, text *ast.Text) {
 	if r.Opts.Flags&Smartypants != 0 {
-		var tmp bytes.Buffer
-		EscapeHTML(&tmp, text.Literal)
-		r.sr.Process(w, tmp.Bytes())
+		r.textBuf.Reset()
+		EscapeHTML(&r.textBuf, text.Literal)
+		r.sr.Process(w, r.textBuf.Bytes())
 	} else {
 		_, parentIsLink := text.Parent.(*ast.Link)
 		if parentIsLink && !r.commonMark {
@@ -181,11 +181,7 @@ func (r *Renderer) Link(w io.Writer, link *ast.Link, entering bool) {
 		return
 	}
 
-	if entering {
-		r.linkEnter(w, link)
-	} else {
-		r.linkExit(w, link)
-	}
+	enterOrExit(r, w, link, entering, (*Renderer).linkEnter, (*Renderer).linkExit)
 }
 
 func (r *Renderer) imageEnter(w io.Writer, image *ast.Image) {
@@ -245,11 +241,17 @@ func (r *Renderer) Image(w io.Writer, node *ast.Image, entering bool) {
 		return
 	}
 
+	enterOrExit(r, w, node, entering, (*Renderer).imageEnter, (*Renderer).imageExit)
+}
+
+// scriptText writes a subscript or superscript as <tag>text</tag>, with
+// backslash escapes removed from its text.
+func (r *Renderer) scriptText(w io.Writer, tag string, literal []byte, entering bool) {
+	r.Outs(w, "<"+tag+">")
 	if entering {
-		r.imageEnter(w, node)
-	} else {
-		r.imageExit(w, node)
+		EscapeHTML(w, removeBackslashEscapes(literal))
 	}
+	r.Outs(w, "</"+tag+">")
 }
 
 // RenderNode renders a markdown node to HTML
@@ -284,11 +286,9 @@ func (r *Renderer) RenderNode(w io.Writer, node ast.Node, entering bool) ast.Wal
 	case *ast.Del:
 		r.OutOneOf(w, entering, "<del>", "</del>")
 	case *ast.BlockQuote:
-		tag := TagWithAttributes("<blockquote", r.blockAttrs(node))
-		r.OutOneOfCr(w, entering, tag, "</blockquote>")
+		r.blockElement(w, node, "blockquote", entering)
 	case *ast.Aside:
-		tag := TagWithAttributes("<aside", r.blockAttrs(node))
-		r.OutOneOfCr(w, entering, tag, "</aside>")
+		r.blockElement(w, node, "aside", entering)
 	case *ast.Link:
 		r.Link(w, node, entering)
 	case *ast.CrossReference:
@@ -325,8 +325,7 @@ func (r *Renderer) RenderNode(w io.Writer, node ast.Node, entering bool) ast.Wal
 	case *ast.ListItem:
 		r.ListItem(w, node, entering)
 	case *ast.Table:
-		tag := TagWithAttributes("<table", r.blockAttrs(node))
-		r.OutOneOfCr(w, entering, tag, "</table>")
+		r.blockElement(w, node, "table", entering)
 	case *ast.TableCell:
 		r.TableCell(w, node, entering)
 	case *ast.TableHeader:
@@ -353,17 +352,9 @@ func (r *Renderer) RenderNode(w io.Writer, node ast.Node, entering bool) ast.Wal
 	case *ast.Index:
 		r.Index(w, node)
 	case *ast.Subscript:
-		r.Outs(w, "<sub>")
-		if entering {
-			EscapeHTML(w, removeBackslashEscapes(node.Literal))
-		}
-		r.Outs(w, "</sub>")
+		r.scriptText(w, "sub", node.Literal, entering)
 	case *ast.Superscript:
-		r.Outs(w, "<sup>")
-		if entering {
-			EscapeHTML(w, removeBackslashEscapes(node.Literal))
-		}
-		r.Outs(w, "</sup>")
+		r.scriptText(w, "sup", node.Literal, entering)
 	case *ast.Footnotes:
 		// nothing by default; just output the list.
 	case *ast.ReferenceDefinition:

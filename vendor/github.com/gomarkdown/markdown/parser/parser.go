@@ -102,6 +102,12 @@ type Parser struct {
 	// Lazy container continuation lines cannot become setext underlines.
 	commonMarkLazyLines map[*byte]bool
 
+	// commonMarkExtensions are the extensions that apply in CommonMark mode,
+	// and commonMarkHooks is set when Opts.ParserHook runs in it; both are
+	// set by NewCommonMarkWithExtensions.
+	commonMarkExtensions Extensions
+	commonMarkHooks      bool
+
 	// Matching ']' for each '[' in the current Inline() buffer.
 	brackets bracketTable
 	// Citation brackets preserve Mmark's immediate-backslash escape rule.
@@ -198,11 +204,12 @@ func (p *Parser) addChild(node ast.Node) ast.Node {
 }
 
 func canNodeContain(n ast.Node, v ast.Node) bool {
+	_, vIsListItem := v.(*ast.ListItem)
 	switch n.(type) {
 	case *ast.List:
-		return isListItem(v)
+		return vIsListItem
 	case *ast.Document, *ast.BlockQuote, *ast.Aside, *ast.ListItem, *ast.CaptionFigure:
-		return !isListItem(v)
+		return !vIsListItem
 	case *ast.Table:
 		switch v.(type) {
 		case *ast.TableHeader, *ast.TableBody, *ast.TableFooter:
@@ -282,7 +289,9 @@ func (p *Parser) Parse(input []byte) ast.Node {
 
 	if p.Opts.Flags&CommonMark != 0 {
 		p.Doc.(*ast.Document).CommonMark = true
-		input = bytes.ReplaceAll(input, []byte{0}, []byte("\ufffd"))
+		if bytes.IndexByte(input, 0) >= 0 {
+			input = bytes.ReplaceAll(input, []byte{0}, []byte("\ufffd"))
+		}
 		defer func() { p.commonMarkLazyLines = nil }()
 	}
 
@@ -412,9 +421,4 @@ func (p *Parser) parseInlineContainers(root ast.Node, includeTableCells bool) {
 		container.Content = nil
 		return ast.GoToNext
 	})
-}
-
-func isListItem(d ast.Node) bool {
-	_, ok := d.(*ast.ListItem)
-	return ok
 }

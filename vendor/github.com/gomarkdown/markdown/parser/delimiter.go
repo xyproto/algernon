@@ -86,8 +86,8 @@ func lookupDelimiter(t *delimiterTable, data []byte, offset int, open, close byt
 // closerBalanceCache incrementally determines whether a closing delimiter has
 // an unmatched opener earlier on the same line.
 type closerBalanceCache struct {
-	data                    *byte
-	n, scanned              int
+	buf                     bufferID
+	scanned                 int
 	parens, squares, braces int
 	lastMatched             bool
 }
@@ -96,8 +96,8 @@ func (c *closerBalanceCache) hasOpener(data []byte, closeAt int) bool {
 	if len(data) == 0 || closeAt < 0 || closeAt >= len(data) {
 		return false
 	}
-	if c.data != &data[0] || c.n != len(data) || closeAt < c.scanned {
-		*c = closerBalanceCache{data: &data[0], n: len(data), scanned: -1}
+	if c.buf != idOf(data) || closeAt < c.scanned {
+		*c = closerBalanceCache{buf: idOf(data), scanned: -1}
 	}
 	if closeAt == c.scanned {
 		return c.lastMatched

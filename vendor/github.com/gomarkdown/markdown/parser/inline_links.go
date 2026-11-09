@@ -68,7 +68,7 @@ func leftAngle(p *Parser, data []byte, offset int) (int, ast.Node) {
 	// A comment "<!--" ends at the first "-->" that does not reuse the
 	// opener's dashes. Searching for it through the cache means an opener
 	// that nothing closes does not scan to the end of the buffer again.
-	if len(data) >= 5 && data[1] == '!' && data[2] == '-' && data[3] == '-' {
+	if len(data) >= 5 && bytes.HasPrefix(data[1:], []byte("!--")) {
 		if at := p.nextCommentEnd.next(buf, offset+3, findCommentEnd); at < len(buf) {
 			end = at + len(commentEnd) - offset
 		}

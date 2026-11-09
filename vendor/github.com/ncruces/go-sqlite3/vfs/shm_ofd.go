@@ -183,3 +183,23 @@ func (s *vfsShm) shmBarrier() {
 func (s *vfsShm) shmEnableBlocking(block bool) {
 	s.blocking = block
 }
+
+func (s *vfsShm) IOLock(lock LockLevel, id int64) error {
+	if !s.fileLock {
+		// The WAL-index is not open.
+		return nil
+	}
+
+	off := _SHM_IOLK + int64(uint64(id)%_SHM_NIOLK)
+
+	switch lock {
+	case LOCK_NONE:
+		return osUnlock(s.File, off, 1)
+	case LOCK_SHARED:
+		return osLockWait(s.File, unix.F_RDLCK, off, 1, _IOERR_RDLOCK)
+	case LOCK_EXCLUSIVE:
+		return osLockWait(s.File, unix.F_WRLCK, off, 1, _IOERR_LOCK)
+	default:
+		panic(errutil.AssertErr())
+	}
+}

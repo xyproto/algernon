@@ -20,11 +20,11 @@ func escape(p *Parser, data []byte, offset int) (int, ast.Node) {
 		return 0, nil
 	}
 
-	if p.extensions&NonBlockingSpace != 0 && data[1] == ' ' {
+	// "\ " and "\" at the end of a line become nodes with their extension
+	switch {
+	case data[1] == ' ' && p.extensions&NonBlockingSpace != 0:
 		return 2, &ast.NonBlockingSpace{}
-	}
-
-	if p.extensions&BackslashLineBreak != 0 && data[1] == '\n' {
+	case data[1] == '\n' && p.extensions&BackslashLineBreak != 0:
 		return 2, &ast.Hardbreak{}
 	}
 
@@ -68,7 +68,7 @@ func entity(p *Parser, data []byte, offset int) (int, ast.Node) {
 	data = data[offset:]
 
 	end := skipCharN(data, 1, '#', 1)
-	end = skipAlnum(data, end)
+	end = skipWhile(data, end, IsAlnum)
 
 	if end < len(data) && data[end] == ';' {
 		end++ // real entity
@@ -109,13 +109,11 @@ func entity(p *Parser, data []byte, offset int) (int, ast.Node) {
 		return end, newTextNode(ent)
 	}
 
-	codepoint := uint64(0)
-	var err error
+	digits, base := ent[2:len(ent)-1], 10
 	if ent[2] == 'x' || ent[2] == 'X' { // hexadecimal
-		codepoint, err = strconv.ParseUint(string(ent[3:len(ent)-1]), 16, 64)
-	} else {
-		codepoint, err = strconv.ParseUint(string(ent[2:len(ent)-1]), 10, 64)
+		digits, base = ent[3:len(ent)-1], 16
 	}
+	codepoint, err := strconv.ParseUint(string(digits), base, 64)
 	if err == nil { // only if conversion was valid return here.
 		// Replace invalid codepoints with U+FFFD per CommonMark spec section
 		// 6.2. Check before converting to rune, which would wrap large values.

@@ -150,10 +150,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 	headerIsWithEmptyFields := true
 	// Most lines are not table headers. A header needs a '|', so reject
 	// the first line with a SIMD IndexByte before the per-byte scan.
-	lineEnd := bytes.IndexByte(data, '\n')
-	if lineEnd < 0 {
-		lineEnd = len(data)
-	}
+	lineEnd := skipUntilChar(data, 0, '\n')
 	if bytes.IndexByte(data[:lineEnd], '|') < 0 {
 		return
 	}
@@ -165,7 +162,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 		if data[i] == '|' && !isEscape(data, i) {
 			colCount++
 		}
-		if data[i] != '-' && data[i] != ' ' && data[i] != ':' && data[i] != '|' {
+		if !byteIn(data[i], "- :|") {
 			headerIsUnderline = false
 		}
 		if data[i] != ' ' && data[i] != '|' {

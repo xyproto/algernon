@@ -52,15 +52,21 @@ func (p *Parser) isPrefixHeading(data []byte) bool {
 // It returns the heading id ("" if none), the index where the heading text ends
 // (after trimming a trailing {#id} and any closing '#' markers and spaces), and
 // the number of bytes the whole heading line occupies.
+// findBraceID finds a {#id} in data[from:end]. It returns the index j of the
+// first "{#", or end-1 when there is none, and the index k of the first '}'
+// after j, or end when there is none.
+func findBraceID(data []byte, from, end int) (j, k int) {
+	for j = from; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
+	}
+	for k = j + 1; k < end && data[k] != '}'; k++ {
+	}
+	return j, k
+}
+
 func (p *Parser) parseHeadingContent(data []byte, i, end int) (id string, contentEnd, skip int) {
 	skip = end
 	if p.extensions&HeadingIDs != 0 {
-		j, k := 0, 0
-		// find start/end of heading id
-		for j = i; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
-		}
-		for k = j + 1; k < end && data[k] != '}'; k++ {
-		}
+		j, k := findBraceID(data, i, end)
 		// extract heading id iff found
 		if j < end && k < end {
 			id = string(data[j+2 : k])
@@ -85,9 +91,15 @@ func (p *Parser) parseHeadingContent(data []byte, i, end int) (id string, conten
 func (p *Parser) setHeadingID(block *ast.Heading, id string, text []byte) {
 	block.HeadingID = id
 	if id == "" && p.extensions&AutoHeadingIDs != 0 {
-		block.HeadingID = sanitizeHeadingID(string(text))
-		p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
+		p.autoHeadingID(block, text)
 	}
+}
+
+// autoHeadingID sets block's id from text and records the heading so that
+// its id is made unique after parsing.
+func (p *Parser) autoHeadingID(block *ast.Heading, text []byte) {
+	block.HeadingID = sanitizeHeadingID(string(text))
+	p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
 }
 
 func (p *Parser) prefixHeading(data []byte) int {
@@ -154,7 +166,7 @@ func isUnderlinedHeading(data []byte) int {
 	}
 	i := skipChar(data, 1, marker)
 	i = skipChar(data, i, ' ')
-	if i < len(data) && data[i] == '\n' {
+	if i == len(data) || data[i] == '\n' {
 		if marker == '=' {
 			return 1
 		}

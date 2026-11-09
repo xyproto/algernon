@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 func uliPrefix(data []byte) int {
@@ -28,9 +29,7 @@ func oliPrefix(data []byte) int {
 
 	// count the digits
 	start := i
-	for i < len(data) && data[i] >= '0' && data[i] <= '9' {
-		i++
-	}
+	i = textutil.SkipDigits(data, i)
 	if start == i || i >= len(data)-1 {
 		return 0
 	}

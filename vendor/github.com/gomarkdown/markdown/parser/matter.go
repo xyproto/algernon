@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/matter"
 )
 
 func (p *Parser) documentMatter(data []byte) int {
@@ -11,26 +12,15 @@ func (p *Parser) documentMatter(data []byte) int {
 		return 0
 	}
 
-	consumed := 0
-	matter := ast.DocumentMatterNone
-	if bytes.HasPrefix(data, []byte("{frontmatter}")) {
-		consumed = len("{frontmatter}")
-		matter = ast.DocumentMatterFront
+	for _, kind := range matter.Kinds {
+		tag := matter.Tag(kind)
+		if !bytes.HasPrefix(data, []byte(tag)) {
+			continue
+		}
+		node := &ast.DocumentMatter{Matter: kind}
+		p.AddBlock(node)
+		p.Finalize(node)
+		return len(tag)
 	}
-	if bytes.HasPrefix(data, []byte("{mainmatter}")) {
-		consumed = len("{mainmatter}")
-		matter = ast.DocumentMatterMain
-	}
-	if bytes.HasPrefix(data, []byte("{backmatter}")) {
-		consumed = len("{backmatter}")
-		matter = ast.DocumentMatterBack
-	}
-	if consumed == 0 {
-		return 0
-	}
-	node := &ast.DocumentMatter{Matter: matter}
-	p.AddBlock(node)
-	p.Finalize(node)
-
-	return consumed
+	return 0
 }

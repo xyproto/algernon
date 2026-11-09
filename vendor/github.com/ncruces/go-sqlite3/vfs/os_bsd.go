@@ -92,6 +92,23 @@ func osLock(file *os.File, typ int16, start, len int64, def _ErrorCode) error {
 	return osLockErrorCode(err, def)
 }
 
+func osLockWait(file *os.File, typ int16, start, len int64, def _ErrorCode) error {
+	lock := unix.Flock_t{
+		Type:  typ,
+		Start: start,
+		Len:   len,
+	}
+	for {
+		err := unix.FcntlFlock(file.Fd(), unix.F_SETLKW, &lock)
+		if err == nil {
+			return nil
+		}
+		if err != unix.EINTR {
+			return sysError{err, def}
+		}
+	}
+}
+
 func osUnlock(file *os.File, start, len int64) error {
 	lock := unix.Flock_t{
 		Type:  unix.F_UNLCK,

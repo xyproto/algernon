@@ -69,6 +69,31 @@ func NewCommonMark() *Parser {
 	return p
 }
 
+// CommonMarkExtensions are the extensions NewCommonMarkWithExtensions
+// supports. They follow GitHub Flavored Markdown where it differs from the
+// historical parser.
+const CommonMarkExtensions = Tables | Strikethrough | Autolink | AutoHeadingIDs
+
+// NewCommonMarkWithExtensions creates a markdown parser that follows the
+// CommonMark 0.31.2 spec plus the given extensions, of which those in
+// CommonMarkExtensions apply and the rest are ignored:
+//
+//   - Tables: pipe tables, which can interrupt a paragraph.
+//   - Strikethrough: ~~text~~.
+//   - Autolink: bare http://, https://, ftp:// and mailto: URLs become links.
+//     Trailing punctuation and unbalanced closing parentheses or brackets
+//     are not part of the URL.
+//   - AutoHeadingIDs: heading ids made from the heading text.
+//
+// Unlike NewCommonMark, the parser also runs Opts.ParserHook, at the start
+// of each block.
+func NewCommonMarkWithExtensions(extensions Extensions) *Parser {
+	p := NewCommonMark()
+	p.commonMarkExtensions = extensions & CommonMarkExtensions
+	p.commonMarkHooks = true
+	return p
+}
+
 // maxNesting limits how deeply blocks and inline content are nested.
 const maxNesting = 64
 

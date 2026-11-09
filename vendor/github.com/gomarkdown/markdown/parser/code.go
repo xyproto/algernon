@@ -163,16 +163,23 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 	return beg
 }
 
+// startCopy returns out, or when out is nil a new buffer that holds str[:i]
+// and has room for the rest of str. It starts the copy the first time an
+// unescape changes str.
+func startCopy(out, str []byte, i int) []byte {
+	if out == nil {
+		out = append(make([]byte, 0, len(str)), str[:i]...)
+	}
+	return out
+}
+
 func unescapeString(str []byte) []byte {
 	var out []byte
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
 		case '\\':
-			if i+1 < len(str) && isEscapable(str[i+1]) {
-				if out == nil {
-					out = make([]byte, 0, len(str))
-					out = append(out, str[:i]...)
-				}
+			if isBackslashEscape(str, i) {
+				out = startCopy(out, str, i)
 				out = append(out, str[i+1])
 				i++
 				continue
@@ -182,10 +189,7 @@ func unescapeString(str []byte) []byte {
 			if entityEnd > i {
 				replacement := html.UnescapeString(string(str[i:entityEnd]))
 				if replacement != string(str[i:entityEnd]) {
-					if out == nil {
-						out = make([]byte, 0, len(str))
-						out = append(out, str[:i]...)
-					}
+					out = startCopy(out, str, i)
 					out = append(out, replacement...)
 					i = entityEnd - 1
 					continue
@@ -200,6 +204,12 @@ func unescapeString(str []byte) []byte {
 		return out
 	}
 	return str
+}
+
+// isBackslashEscape reports whether data[i] is a backslash that escapes the
+// punctuation character after it.
+func isBackslashEscape(data []byte, i int) bool {
+	return data[i] == '\\' && i+1 < len(data) && isEscapable(data[i+1])
 }
 
 func isEscapable(c byte) bool {

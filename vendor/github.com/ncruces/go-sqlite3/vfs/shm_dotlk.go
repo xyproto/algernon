@@ -12,11 +12,13 @@ import (
 )
 
 type vfsShmParent struct {
-	shared [][_WALINDEX_PGSZ]byte
-	refs   int // +checklocks:vfsShmListMtx
+	shared [][_WALINDEX_PGSZ]byte // +checklocks:Mutex
+	refs   int                    // +checklocks:vfsShmListMtx
 
 	lock [_SHM_NLOCK]int8 // +checklocks:Mutex
 	sync.Mutex
+
+	ioLock vfsShmIOLock
 }
 
 var (
@@ -29,8 +31,8 @@ type vfsShm struct {
 	*vfsShmParent
 	wrp    *sqlite3_wrap.Wrapper
 	path   string
-	shadow [][_WALINDEX_PGSZ]byte
 	ptrs   []ptr_t
+	shadow [_WALINDEX_HDR_SIZE]byte
 	lock   [_SHM_NLOCK]bool
 }
 
@@ -103,7 +105,7 @@ func (s *vfsShm) shmMap(wrp *sqlite3_wrap.Wrapper, id, size int32, extend bool) 
 
 	s.Lock()
 	defer s.Unlock()
-	defer s.shmAcquire(nil)
+	defer s.shmAcquire(nil, s.lock[_WAL_WRITE_LOCK])
 
 	// Extend shared memory.
 	if int(id) >= len(s.shared) {
@@ -113,22 +115,16 @@ func (s *vfsShm) shmMap(wrp *sqlite3_wrap.Wrapper, id, size int32, extend bool) 
 		s.shared = append(s.shared, make([][_WALINDEX_PGSZ]byte, int(id)-len(s.shared)+1)...)
 	}
 
-	// Allocate shadow memory.
-	if int(id) >= len(s.shadow) {
-		s.shadow = append(s.shadow, make([][_WALINDEX_PGSZ]byte, int(id)-len(s.shadow)+1)...)
-	}
-
-	// Allocate local memory.
+	// Allocate local memory, initialized from shared memory.
 	for int(id) >= len(s.ptrs) {
 		ptr := wrp.Xsqlite3_malloc64(int64(size))
 		if ptr == 0 {
 			return 0, _IOERR_NOMEM
 		}
-		clear(wrp.Bytes(ptr_t(ptr), _WALINDEX_PGSZ))
+		copy(wrp.Bytes(ptr_t(ptr), _WALINDEX_PGSZ), s.shared[len(s.ptrs)][:])
 		s.ptrs = append(s.ptrs, ptr_t(ptr))
 	}
 
-	s.shadow[0][4] = 1
 	return s.ptrs[id], nil
 }
 
@@ -139,12 +135,13 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) (err error) {
 
 	s.Lock()
 	defer s.Unlock()
+	writer := s.lock[_WAL_WRITE_LOCK]
 
 	switch {
 	case flags&_SHM_LOCK != 0:
-		defer s.shmAcquire(&err)
+		defer s.shmAcquire(&err, writer)
 	case flags&_SHM_EXCLUSIVE != 0:
-		s.shmRelease()
+		s.shmRelease(writer)
 	}
 
 	return s.shmMemLock(offset, n, flags)
@@ -157,12 +154,16 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	defer s.Close()
 
 	s.Lock()
-	s.shmRelease()
+	s.shmRelease(s.lock[_WAL_WRITE_LOCK])
 	defer s.Unlock()
 
 	for _, p := range s.ptrs {
 		s.wrp.Xsqlite3_free(int32(p))
 	}
 	s.ptrs = nil
-	s.shadow = nil
+	clear(s.shadow[:])
 }
+
+// The WAL-index is private to this process: no file locks are needed.
+
+func (*vfsShmParent) ioLockFile(LockLevel, int64) error { return nil }

@@ -63,7 +63,7 @@ func (r *MappedRegion) Unmap() error {
 	// Instead, map anonymous (zeroed) pages readonly.
 	// If successful, the region can be reused for a subsequent mmap.
 	_, err := unix.MmapPtr(-1, 0, r.addr, uintptr(r.size),
-		unix.PROT_READ, unix.MAP_PRIVATE|unix.MAP_FIXED|unix.MAP_ANON)
+		unix.PROT_READ, unix.MAP_FIXED|_MAP_PLACEHOLDER)
 	r.used = err != nil
 	return err
 }

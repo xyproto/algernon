@@ -84,6 +84,21 @@ p := parser.NewCommonMark()
 output := markdown.ToHTML([]byte("# Hello\n"), p, nil)
 ```
 
+`parser.NewCommonMarkWithExtensions(extensions)` adds the extensions most documents need on top of CommonMark, following [GitHub Flavored Markdown](https://github.github.com/gfm/) where it differs from the historical parser. Of `extensions`, those in `parser.CommonMarkExtensions` apply and the rest are ignored:
+
+- `parser.Tables`: pipe tables, which can interrupt a paragraph
+- `parser.Strikethrough`: `~~text~~`
+- `parser.Autolink`: bare `http://`, `https://`, `ftp://` and `mailto:` URLs become links, without trailing punctuation or an unbalanced closing parenthesis
+- `parser.AutoHeadingIDs`: heading ids made from the heading text
+
+It also runs `Opts.ParserHook` at the start of each block, so custom block syntax works in CommonMark documents:
+
+```go
+p := parser.NewCommonMarkWithExtensions(parser.CommonMarkExtensions)
+p.Opts.ParserHook = myBlockParser
+output := markdown.ToHTML(input, p, renderer)
+```
+
 For more documentation, read [this guide](https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html)
 
 ## Rendering to Markdown

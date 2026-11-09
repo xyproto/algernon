@@ -71,16 +71,8 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 		r.OutHRTag(w, r.blockAttrs(n))
 		r.Outs(w, "\n")
 	case *ast.CodeBlock:
-		attrs := appendLanguageAttr(nil, n.Info)
-		attrs = coalesceClassAttrs(append(attrs, r.blockAttrs(n)...))
-		r.Outs(w, "<pre>")
-		r.OutTag(w, "<code", attrs)
-		if r.Opts.Comments != nil {
-			r.EscapeHTMLCallouts(w, n.Literal)
-		} else {
-			EscapeHTML(w, n.Literal)
-		}
-		r.Outs(w, "</code></pre>\n")
+		r.codeBlockElement(w, n)
+		r.Outs(w, "\n")
 	case *ast.HTMLBlock:
 		if r.Opts.Flags&SkipHTML == 0 {
 			r.Out(w, n.Literal)

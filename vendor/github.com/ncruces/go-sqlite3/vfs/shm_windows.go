@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync/atomic"
 
+	"golang.org/x/sys/windows"
+
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
 )
@@ -121,4 +123,24 @@ func (s *vfsShm) shmUnmap(delete bool) {
 func (s *vfsShm) shmBarrier() {
 	var b atomic.Bool
 	b.Swap(true)
+}
+
+func (s *vfsShm) IOLock(lock LockLevel, id int64) error {
+	if !s.fileLock {
+		// The WAL-index is not open.
+		return nil
+	}
+
+	off := _SHM_IOLK + uint32(uint64(id)%_SHM_NIOLK)
+
+	switch lock {
+	case LOCK_NONE:
+		return osUnlock(s.File, off, 1)
+	case LOCK_SHARED:
+		return osLockWait(s.File, 0, off, 1, _IOERR_RDLOCK)
+	case LOCK_EXCLUSIVE:
+		return osLockWait(s.File, windows.LOCKFILE_EXCLUSIVE_LOCK, off, 1, _IOERR_LOCK)
+	default:
+		panic(errutil.AssertErr())
+	}
 }

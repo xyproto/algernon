@@ -50,12 +50,7 @@ func LinesUntilEmpty(data []byte) int {
 func captionID(data []byte) (string, int) {
 	end := len(data)
 
-	j, k := 0, 0
-	// find start/end of heading id
-	for j = 0; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
-	}
-	for k = j + 1; k < end && data[k] != '}'; k++ {
-	}
+	j, k := findBraceID(data, 0, end)
 	// the rest must be whitespace.
 	for l := k + 1; l < end; l++ {
 		if !IsSpace(data[l]) {

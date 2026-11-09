@@ -54,14 +54,14 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	switch {
 	// special case: ![^text] == deferred footnote (that follows something with
 	// an exclamation point)
-	case p.extensions&Footnotes != 0 && len(data)-1 > offset && data[offset+1] == '^':
+	case p.extensions&Footnotes != 0 && nextByteIs(data, offset, '^'):
 		t = linkDeferredFootnote
 	// ![alt] == image
 	case offset >= 0 && data[offset] == '!':
 		t = linkImg
 		offset++
 	// [@citation], [@-citation], [@?citation], [@!citation]
-	case p.extensions&Mmark != 0 && len(data)-1 > offset && data[offset+1] == '@':
+	case p.extensions&Mmark != 0 && nextByteIs(data, offset, '@'):
 		t = linkCitation
 	// [text] == regular link
 	// ^[text] == inline footnote
@@ -107,7 +107,7 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 	// skip any amount of whitespace or newline
 	// (this is much more lax than original markdown syntax)
-	i = skipSpace(data, i)
+	i = skipWhile(data, i, IsSpace)
 
 	// inline style link
 	switch {

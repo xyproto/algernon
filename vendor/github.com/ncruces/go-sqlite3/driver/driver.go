@@ -12,7 +12,7 @@
 //
 //	sql.Open("sqlite3", "file:demo.db?_txlock=immediate")
 //
-// Possible values are: "deferred" (the default), "immediate", "exclusive".
+// Possible values are: "deferred", "immediate" (the default), "exclusive".
 // Regardless of "_txlock":
 //   - a [linearizable] transaction is always "exclusive";
 //   - a [serializable] transaction is always "immediate";
@@ -265,7 +265,7 @@ func (n *connector) Connect(ctx context.Context) (ret driver.Conn, err error) {
 		}
 		defer s.Close()
 		if s.Step() {
-			c.readOnly = s.ColumnBool(0)
+			c.qryOnly = s.ColumnBool(0)
 		}
 		err = s.Close()
 		if err != nil {
@@ -279,6 +279,9 @@ func (n *connector) Connect(ctx context.Context) (ret driver.Conn, err error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	if c.txLock == "" && !c.qryOnly {
+		c.txLock = "immediate"
 	}
 	return c, nil
 }
@@ -317,11 +320,11 @@ type Conn interface {
 
 type conn struct {
 	*sqlite3.Conn
-	txLock   string
-	txReset  string
-	tmRead   sqlite3.TimeFormat
-	tmWrite  sqlite3.TimeFormat
-	readOnly bool
+	txLock  string
+	txReset string
+	tmRead  sqlite3.TimeFormat
+	tmWrite sqlite3.TimeFormat
+	qryOnly bool
 }
 
 var (
@@ -357,7 +360,7 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 
 	c.txReset = ``
 	txBegin := `BEGIN ` + txLock
-	if opts.ReadOnly && !c.readOnly {
+	if opts.ReadOnly && !c.qryOnly {
 		txBegin += ` ; PRAGMA query_only=on`
 		c.txReset = `; PRAGMA query_only=off`
 	}

@@ -37,9 +37,8 @@ func codeSpanEnd(data []byte) int {
 // backtick. Without the cache every retry rescanned to the end of the
 // input, which is quadratic in the run length.
 type codeSpanCache struct {
-	data     *byte // first byte of the slice the entries index into
-	n        int
-	runStart int // the run the entries describe is data[runStart:runEnd]
+	buf      bufferID // the slice the entries index into
+	runStart int      // the run the entries describe is data[runStart:runEnd]
 	runEnd   int
 	closers  []int  // closers[m]: index just past the m-th backtick of the first run of at least m backticks after runEnd, or 0
 	small    [8]int // backing store for closers when the run is short, which is nearly always
@@ -52,7 +51,7 @@ type codeSpanCache struct {
 // count of the remaining backticks.
 func (p *Parser) codeSpanClosers(data []byte, offset int) (int, []int) {
 	c := &p.codeSpans
-	if c.data == &data[0] && c.n == len(data) && offset >= c.runStart && offset < c.runEnd {
+	if c.buf.covers(data, offset, c.runStart, c.runEnd) {
 		return c.runEnd - offset, c.closers
 	}
 
@@ -81,7 +80,7 @@ func (p *Parser) codeSpanClosers(data []byte, offset int) (int, []int) {
 	for len(closers) <= k {
 		closers = append(closers, 0)
 	}
-	c.data, c.n = &data[0], len(data)
+	c.buf = idOf(data)
 	c.runStart, c.runEnd = offset, runEnd
 	c.closers = closers
 	return k, closers

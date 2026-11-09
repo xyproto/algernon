@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/matter"
 	"github.com/gomarkdown/markdown/parser"
 )
 
@@ -44,9 +45,7 @@ func (r *Renderer) paragraphEnter(w io.Writer, para *ast.Paragraph) {
 
 func (r *Renderer) paragraphExit(w io.Writer, para *ast.Paragraph) {
 	r.Outs(w, "</"+r.paragraphTag()+">")
-	if !(IsListItem(para.Parent) && ast.GetNextNode(para) == nil) {
-		r.CR(w)
-	}
+	r.crAfterBlock(w, para)
 }
 
 func (r *Renderer) paragraphTag() string {
@@ -61,11 +60,7 @@ func (r *Renderer) Paragraph(w io.Writer, para *ast.Paragraph, entering bool) {
 	if SkipParagraphTags(para) {
 		return
 	}
-	if entering {
-		r.paragraphEnter(w, para)
-	} else {
-		r.paragraphExit(w, para)
-	}
+	enterOrExit(r, w, para, entering, (*Renderer).paragraphEnter, (*Renderer).paragraphExit)
 }
 
 // Code writes ast.Code node
@@ -135,18 +130,12 @@ func (r *Renderer) HeadingEnter(w io.Writer, hdr *ast.Heading) {
 
 func (r *Renderer) HeadingExit(w io.Writer, hdr *ast.Heading) {
 	r.Outs(w, HeadingCloseTagFromLevel(hdr.Level))
-	if !(IsListItem(hdr.Parent) && ast.GetNextNode(hdr) == nil) {
-		r.CR(w)
-	}
+	r.crAfterBlock(w, hdr)
 }
 
 // Heading writes ast.Heading node
 func (r *Renderer) Heading(w io.Writer, hdr *ast.Heading, entering bool) {
-	if entering {
-		r.HeadingEnter(w, hdr)
-	} else {
-		r.HeadingExit(w, hdr)
-	}
+	enterOrExit(r, w, hdr, entering, (*Renderer).HeadingEnter, (*Renderer).HeadingExit)
 }
 
 // HorizontalRule writes ast.HorizontalRule node
@@ -192,23 +181,26 @@ Parse:
 
 // CodeBlock writes ast.CodeBlock node
 func (r *Renderer) CodeBlock(w io.Writer, codeBlock *ast.CodeBlock) {
-	attrs := appendLanguageAttr(nil, codeBlock.Info)
-	attrs = append(attrs, r.blockAttrs(codeBlock)...)
-	attrs = coalesceClassAttrs(attrs)
 	r.CR(w)
+	r.codeBlockElement(w, codeBlock)
+	if !IsListItem(codeBlock.Parent) {
+		r.CR(w)
+	}
+}
 
+// codeBlockElement writes the <pre><code> element of a code block, with its
+// language and block attributes and its escaped text.
+func (r *Renderer) codeBlockElement(w io.Writer, codeBlock *ast.CodeBlock) {
+	attrs := appendLanguageAttr(nil, codeBlock.Info)
+	attrs = coalesceClassAttrs(append(attrs, r.blockAttrs(codeBlock)...))
 	r.Outs(w, "<pre>")
-	code := TagWithAttributes("<code", attrs)
-	r.Outs(w, code)
+	r.OutTag(w, "<code", attrs)
 	if r.Opts.Comments != nil {
 		r.EscapeHTMLCallouts(w, codeBlock.Literal)
 	} else {
 		EscapeHTML(w, codeBlock.Literal)
 	}
 	r.Outs(w, "</code></pre>")
-	if !IsListItem(codeBlock.Parent) {
-		r.CR(w)
-	}
 }
 
 // Caption writes ast.Caption node
@@ -275,13 +267,8 @@ func (r *Renderer) DocumentMatter(w io.Writer, node *ast.DocumentMatter, enterin
 	if r.documentMatter != ast.DocumentMatterNone {
 		r.Outs(w, "</section>\n")
 	}
-	switch node.Matter {
-	case ast.DocumentMatterFront:
-		r.Outs(w, `<section data-matter="front">`)
-	case ast.DocumentMatterMain:
-		r.Outs(w, `<section data-matter="main">`)
-	case ast.DocumentMatterBack:
-		r.Outs(w, `<section data-matter="back">`)
+	if name := matter.Name(node.Matter); name != "" {
+		r.Outs(w, `<section data-matter="`+name+`">`)
 	}
 	r.documentMatter = node.Matter
 }

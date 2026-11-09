@@ -278,18 +278,23 @@ func (p *Parser) addHTMLBlock(literal []byte) {
 
 // HTML comment, lax form
 func (p *Parser) htmlComment(data []byte, doRender bool) int {
-	i := p.inlineHTMLComment(data)
-	// needs to end with a blank line
-	if j := IsEmpty(data[i:]); j > 0 {
-		size := i + j
-		if doRender {
-			// trim trailing newlines
-			end := backChar(data, size, '\n')
-			p.addHTMLBlock(data[:end])
-		}
-		return size
+	return p.htmlBlockBeforeBlank(data, p.inlineHTMLComment(data), doRender)
+}
+
+// htmlBlockBeforeBlank ends an HTML block at data[:i] when the rest of that
+// line is blank. It adds the block, without trailing newlines, if doRender
+// is set, and returns the size including the blank rest of the line, or 0.
+func (p *Parser) htmlBlockBeforeBlank(data []byte, i int, doRender bool) int {
+	j := IsEmpty(data[i:])
+	if j == 0 {
+		return 0
 	}
-	return 0
+	size := i + j
+	if doRender {
+		end := backChar(data, size, '\n')
+		p.addHTMLBlock(data[:end])
+	}
+	return size
 }
 
 // HR, which is the only self-closing block tag considered
@@ -304,27 +309,15 @@ func (p *Parser) htmlHr(data []byte, doRender bool) int {
 		// not an <hr> tag after all; at least not a valid one
 		return 0
 	}
-	i := 3
-	for i < len(data) && data[i] != '>' && data[i] != '\n' {
-		i++
-	}
+	i := skipUntilAny(data, 3, ">\n")
 	if i < len(data) && data[i] == '>' {
-		i++
-		if j := IsEmpty(data[i:]); j > 0 {
-			size := i + j
-			if doRender {
-				// trim newlines
-				end := backChar(data, size, '\n')
-				p.addHTMLBlock(data[:end])
-			}
-			return size
-		}
+		return p.htmlBlockBeforeBlank(data, i+1, doRender)
 	}
 	return 0
 }
 
 func (p *Parser) htmlFindTag(data []byte) (string, bool) {
-	i := skipAlnum(data, 0)
+	i := skipWhile(data, 0, IsAlnum)
 	key := string(data[:i])
 	if inStringSet(blockTags, key) ||
 		p.extensions&MarkdownInHTML != 0 && inStringSet(markdownInHTMLTags, key) {

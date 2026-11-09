@@ -7,27 +7,30 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 )
 
-func listTag(flags ast.ListType) string {
-	switch {
-	case flags&ast.ListTypeDefinition != 0:
-		return "dl"
-	case flags&ast.ListTypeOrdered != 0:
-		return "ol"
-	default:
-		return "ul"
-	}
+// flagTag is the tag of a list or list item whose flags include flag. A
+// zero flag matches any flags.
+type flagTag struct {
+	flag ast.ListType
+	tag  string
 }
 
-func listItemTag(flags ast.ListType) string {
-	switch {
-	case flags&ast.ListTypeTerm != 0:
-		return "dt"
-	case flags&ast.ListTypeDefinition != 0:
-		return "dd"
-	default:
-		return "li"
+var (
+	listTags     = []flagTag{{ast.ListTypeDefinition, "dl"}, {ast.ListTypeOrdered, "ol"}, {0, "ul"}}
+	listItemTags = []flagTag{{ast.ListTypeTerm, "dt"}, {ast.ListTypeDefinition, "dd"}, {0, "li"}}
+)
+
+// tagForFlags returns the tag of the first entry of tags that matches flags.
+func tagForFlags(flags ast.ListType, tags []flagTag) string {
+	for _, t := range tags {
+		if t.flag == 0 || flags&t.flag != 0 {
+			return t.tag
+		}
 	}
+	return ""
 }
+
+func listTag(flags ast.ListType) string     { return tagForFlags(flags, listTags) }
+func listItemTag(flags ast.ListType) string { return tagForFlags(flags, listItemTags) }
 
 func (r *Renderer) listEnter(w io.Writer, nodeData *ast.List) {
 	var attrs []string
@@ -76,11 +79,7 @@ func (r *Renderer) listExit(w io.Writer, list *ast.List) {
 
 // List writes ast.List node
 func (r *Renderer) List(w io.Writer, list *ast.List, entering bool) {
-	if entering {
-		r.listEnter(w, list)
-	} else {
-		r.listExit(w, list)
-	}
+	enterOrExit(r, w, list, entering, (*Renderer).listEnter, (*Renderer).listExit)
 }
 
 func (r *Renderer) listItemEnter(w io.Writer, listItem *ast.ListItem) {
@@ -111,9 +110,5 @@ func (r *Renderer) listItemExit(w io.Writer, listItem *ast.ListItem) {
 
 // ListItem writes ast.ListItem node
 func (r *Renderer) ListItem(w io.Writer, listItem *ast.ListItem, entering bool) {
-	if entering {
-		r.listItemEnter(w, listItem)
-	} else {
-		r.listItemExit(w, listItem)
-	}
+	enterOrExit(r, w, listItem, entering, (*Renderer).listItemEnter, (*Renderer).listItemExit)
 }

@@ -54,19 +54,19 @@ func (r *Renderer) writeDocumentHeader(w io.Writer) {
 	io.WriteString(w, ">\n  <meta charset=\"utf-8\"")
 	io.WriteString(w, ending)
 	io.WriteString(w, ">\n")
-	if r.Opts.CSS != "" {
-		writeHeadLink(w, "stylesheet", "text/css", r.Opts.CSS, ending)
-	}
-	if r.Opts.Icon != "" {
-		writeHeadLink(w, "icon", "image/x-icon", r.Opts.Icon, ending)
-	}
+	writeHeadLink(w, "stylesheet", "text/css", r.Opts.CSS, ending)
+	writeHeadLink(w, "icon", "image/x-icon", r.Opts.Icon, ending)
 	if r.Opts.Head != nil {
 		w.Write(r.Opts.Head)
 	}
 	io.WriteString(w, "</head>\n<body>\n\n")
 }
 
+// writeHeadLink writes a <link> to href in the document head, if href is set.
 func writeHeadLink(w io.Writer, rel, typ, href, ending string) {
+	if href == "" {
+		return
+	}
 	fmt.Fprintf(w, `  <link rel="%s" type="%s" href="`, rel, typ)
 	EscapeHTML(w, []byte(href))
 	io.WriteString(w, `"`+ending+">\n")

@@ -19,9 +19,18 @@ type SPRenderer struct {
 	inSingleQuote bool
 	inDoubleQuote bool
 	callbacks     [256]smartCallback
+	tmp           bytes.Buffer // reused by Process for each callback's output
 }
 
 func wordBoundary(c byte) bool { return c == 0 || isSpace(c) || isPunctuation(c) }
+
+// byteAt returns text[i], or 0 when i is outside text.
+func byteAt(text []byte, i int) byte {
+	if i < 0 || i >= len(text) {
+		return 0
+	}
+	return text[i]
+}
 
 func tolower(c byte) byte {
 	if c >= 'A' && c <= 'Z' {
@@ -90,12 +99,7 @@ func (r *SPRenderer) smartSingleQuote(out *bytes.Buffer, previousChar byte, text
 		t1 := tolower(text[1])
 
 		if t1 == '\'' {
-			nextChar := byte(0)
-			if len(text) >= 3 {
-				nextChar = text[2]
-			}
-			smartQuote(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false)
-			return 1
+			return r.smartDoubledQuote(out, previousChar, text)
 		}
 
 		for _, suffix := range [...]string{"s", "t", "m", "d", "re", "ll", "ve"} {
@@ -108,28 +112,38 @@ func (r *SPRenderer) smartSingleQuote(out *bytes.Buffer, previousChar byte, text
 		}
 	}
 
-	nextChar := byte(0)
-	if len(text) > 1 {
-		nextChar = text[1]
+	return quoteToken(out, previousChar, text, 1, 's', &r.inSingleQuote, false)
+}
+
+// smartToken is a run of characters that smartypants writes as an entity.
+type smartToken struct{ token, entity string }
+
+var (
+	parenTokens  = []smartToken{{"(c)", "&copy;"}, {"(r)", "&reg;"}, {"(tm)", "&trade;"}}
+	latexDashes  = []smartToken{{"---", "&mdash;"}, {"--", "&ndash;"}}
+	periodTokens = []smartToken{{"...", "&hellip;"}, {". . .", "&hellip;"}}
+)
+
+// smartReplace writes the entity of the first token that text starts with,
+// ignoring case, and returns how many bytes after text[0] it used. Without
+// a match it writes text[0] and returns 0.
+func smartReplace(out *bytes.Buffer, text []byte, tokens []smartToken) int {
+	for _, t := range tokens {
+		if len(text) >= len(t.token) && bytes.EqualFold(text[:len(t.token)], []byte(t.token)) {
+			out.WriteString(t.entity)
+			return len(t.token) - 1
+		}
 	}
-	smartQuote(out, previousChar, nextChar, 's', &r.inSingleQuote, false)
+	out.WriteByte(text[0])
 	return 0
 }
 
-func (r *SPRenderer) smartParens(out *bytes.Buffer, previousChar byte, text []byte) int {
-	for _, replacement := range [...]struct{ token, entity string }{
-		{"(c)", "&copy;"},
-		{"(r)", "&reg;"},
-		{"(tm)", "&trade;"},
-	} {
-		if len(text) >= len(replacement.token) && bytes.EqualFold(text[:len(replacement.token)], []byte(replacement.token)) {
-			out.WriteString(replacement.entity)
-			return len(replacement.token) - 1
-		}
+// tokenCallback returns a callback that writes the entity of the first of
+// tokens that the text starts with.
+func tokenCallback(tokens []smartToken) smartCallback {
+	return func(out *bytes.Buffer, _ byte, text []byte) int {
+		return smartReplace(out, text, tokens)
 	}
-
-	out.WriteByte(text[0])
-	return 0
 }
 
 func (r *SPRenderer) smartDash(out *bytes.Buffer, previousChar byte, text []byte) int {
@@ -149,28 +163,9 @@ func (r *SPRenderer) smartDash(out *bytes.Buffer, previousChar byte, text []byte
 	return 0
 }
 
-func (r *SPRenderer) smartDashLatex(out *bytes.Buffer, previousChar byte, text []byte) int {
-	if len(text) >= 3 && text[1] == '-' && text[2] == '-' {
-		out.WriteString("&mdash;")
-		return 2
-	}
-	if len(text) >= 2 && text[1] == '-' {
-		out.WriteString("&ndash;")
-		return 1
-	}
-
-	out.WriteByte(text[0])
-	return 0
-}
-
 func (r *SPRenderer) smartAmpVariant(out *bytes.Buffer, previousChar byte, text []byte, quote byte, addNBSP bool) int {
 	if bytes.HasPrefix(text, []byte("&quot;")) {
-		nextChar := byte(0)
-		if len(text) >= 7 {
-			nextChar = text[6]
-		}
-		smartQuote(out, previousChar, nextChar, quote, &r.inDoubleQuote, addNBSP)
-		return 5
+		return quoteToken(out, previousChar, text, len("&quot;"), quote, &r.inDoubleQuote, addNBSP)
 	}
 
 	if bytes.HasPrefix(text, []byte("&#0;")) {
@@ -181,29 +176,23 @@ func (r *SPRenderer) smartAmpVariant(out *bytes.Buffer, previousChar byte, text 
 	return 0
 }
 
-func (r *SPRenderer) smartPeriod(out *bytes.Buffer, previousChar byte, text []byte) int {
-	if len(text) >= 3 && text[1] == '.' && text[2] == '.' {
-		out.WriteString("&hellip;")
-		return 2
-	}
+// smartDoubledQuote writes a doubled quote mark (two apostrophes or two
+// backticks) at the start of text as a double quote, and returns 1 to skip
+// its second mark.
+func (r *SPRenderer) smartDoubledQuote(out *bytes.Buffer, previousChar byte, text []byte) int {
+	return quoteToken(out, previousChar, text, 2, 'd', &r.inDoubleQuote, false)
+}
 
-	if len(text) >= 5 && text[1] == ' ' && text[2] == '.' && text[3] == ' ' && text[4] == '.' {
-		out.WriteString("&hellip;")
-		return 4
-	}
-
-	out.WriteByte(text[0])
-	return 0
+// quoteToken writes the quote mark that the n-byte token at the start of
+// text stands for, and returns n-1, the bytes it used after text[0].
+func quoteToken(out *bytes.Buffer, previous byte, text []byte, n int, quote byte, isOpen *bool, addNBSP bool) int {
+	smartQuote(out, previous, byteAt(text, n), quote, isOpen, addNBSP)
+	return n - 1
 }
 
 func (r *SPRenderer) smartBacktick(out *bytes.Buffer, previousChar byte, text []byte) int {
 	if len(text) >= 2 && text[1] == '`' {
-		nextChar := byte(0)
-		if len(text) >= 3 {
-			nextChar = text[2]
-		}
-		smartQuote(out, previousChar, nextChar, 'd', &r.inDoubleQuote, false)
-		return 1
+		return r.smartDoubledQuote(out, previousChar, text)
 	}
 
 	out.WriteByte(text[0])
@@ -295,27 +284,22 @@ func NewSmartypantsRenderer(flags Flags) *SPRenderer {
 		quote = 'a'
 	}
 	r.callbacks['"'] = func(out *bytes.Buffer, previous byte, text []byte) int {
-		next := byte(0)
-		if len(text) > 1 {
-			next = text[1]
-		}
-		smartQuote(out, previous, next, quote, &r.inDoubleQuote, false)
-		return 0
+		return quoteToken(out, previous, text, 1, quote, &r.inDoubleQuote, false)
 	}
 	addNBSP := flags&SmartypantsQuotesNBSP != 0
 	r.callbacks['&'] = func(out *bytes.Buffer, previous byte, text []byte) int {
 		return r.smartAmpVariant(out, previous, text, quote, addNBSP)
 	}
 	r.callbacks['\''] = r.smartSingleQuote
-	r.callbacks['('] = r.smartParens
+	r.callbacks['('] = tokenCallback(parenTokens)
 	if flags&SmartypantsDashes != 0 {
 		if flags&SmartypantsLatexDashes == 0 {
 			r.callbacks['-'] = r.smartDash
 		} else {
-			r.callbacks['-'] = r.smartDashLatex
+			r.callbacks['-'] = tokenCallback(latexDashes)
 		}
 	}
-	r.callbacks['.'] = r.smartPeriod
+	r.callbacks['.'] = tokenCallback(periodTokens)
 	if flags&SmartypantsFractions == 0 {
 		r.callbacks['1'] = r.smartNumber
 		r.callbacks['3'] = r.smartNumber
@@ -337,13 +321,9 @@ func (r *SPRenderer) Process(w io.Writer, text []byte) {
 			if i > mark {
 				w.Write(text[mark:i])
 			}
-			previousChar := byte(0)
-			if i > 0 {
-				previousChar = text[i-1]
-			}
-			var tmp bytes.Buffer
-			i += action(&tmp, previousChar, text[i:])
-			w.Write(tmp.Bytes())
+			r.tmp.Reset()
+			i += action(&r.tmp, byteAt(text, i-1), text[i:])
+			w.Write(r.tmp.Bytes())
 			mark = i + 1
 		}
 	}

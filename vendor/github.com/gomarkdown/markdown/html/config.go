@@ -1,6 +1,7 @@
 package html
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/gomarkdown/markdown/ast"
@@ -72,6 +73,7 @@ type Renderer struct {
 	IsSafeURLOverride func([]byte) bool // Optional safe-URL predicate. Gets the URL as written to the output.
 	sr                *SPRenderer
 	documentMatter    ast.DocumentMatters
+	textBuf           bytes.Buffer // reused by Text for escaped text before smartypants
 }
 
 // NewRenderer creates an HTML renderer.
