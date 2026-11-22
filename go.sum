@@ -253,8 +253,8 @@ github.com/xyproto/simplemaria v1.4.0 h1:ji4Ot26cBsabEbFWSPyeQ1D4SuQNnBiGlK3sqG9
 github.com/xyproto/simplemaria v1.4.0/go.mod h1:XP7XH2k3a6A4SqX2hDEW4xpqWSKxHwQ1GrlQdUDbSq0=
 github.com/xyproto/simpleredis/v2 v2.9.0 h1:63bwcxCZbxzaJjhnTvNO2NnF8rRe5JphmKLgxPLTuic=
 github.com/xyproto/simpleredis/v2 v2.9.0/go.mod h1:edDsEFCiPZHSaF0lDtfzQYvLV2jCwGB8r2uYxK0jvpM=
-github.com/xyproto/simplesqlite_noc v1.3.0 h1:kClBAlM0h3s287a/BWjM61n/pSyfgZ6FVQEe++/bVsE=
-github.com/xyproto/simplesqlite_noc v1.3.0/go.mod h1:2JU1XXk/hCOe+PYRXsPfqmCw3EwGUl1B3LWz3eGerZk=
+github.com/xyproto/simplesqlite_noc v1.3.1 h1:pa7N2y+iHh5qVol8FoA+VrofVZRl1K3IpsKh/kvveKw=
+github.com/xyproto/simplesqlite_noc v1.3.1/go.mod h1:ieOfGrE/OgCzskK848pVbJv2/Ucmfq+MwkDk5E3dtko=
 github.com/xyproto/splash v1.3.2 h1:wQ6qW9Ko8n1eVstSjsJaunFaOaGotBz97AR2v0/EBQg=
 github.com/xyproto/splash v1.3.2/go.mod h1:bk3i+MPiIY+7JBUGpVN+1/3d2qJWq/f59CLy8/2M1fo=
 github.com/xyproto/symwalk v1.2.0 h1:kxerJ0I486w5les5X5u8IWRoz7davmsEFiIS29EQ2TQ=

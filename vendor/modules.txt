@@ -417,7 +417,7 @@ github.com/xyproto/simplemaria
 # github.com/xyproto/simpleredis/v2 v2.9.0
 ## explicit; go 1.17
 github.com/xyproto/simpleredis/v2
-# github.com/xyproto/simplesqlite_noc v1.3.0
+# github.com/xyproto/simplesqlite_noc v1.3.1
 ## explicit; go 1.26.6
 github.com/xyproto/simplesqlite_noc
 # github.com/xyproto/splash v1.3.2

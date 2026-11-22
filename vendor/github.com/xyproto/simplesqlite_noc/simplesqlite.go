@@ -12,7 +12,6 @@ import (
 	"log"
 	"strconv"
 
-	_ "github.com/liustack/sqlite"
 	"github.com/xyproto/env/v2"
 )
 
@@ -61,7 +60,7 @@ func TestConnection() (err error) {
 // connectionString may be on the form "sqlite.db&cache=shared&mode=memory".
 func TestConnectionFile(connectionString string) (err error) {
 	// Connect to the given string
-	db, err := sql.Open("sqlite", connectionString)
+	db, err := sql.Open(driverName, connectionString)
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,7 @@ func TestConnectionFile(connectionString string) (err error) {
 // Create a new database connection.
 // connectionString may be on the form "sqlite.db&cache=shared&mode=memory".
 func NewFile(connectionString string) *File {
-	db, err := sql.Open("sqlite", connectionString)
+	db, err := sql.Open(driverName, connectionString)
 	if err != nil {
 		log.Fatalln("Could not open " + connectionString + "!")
 	}

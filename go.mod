@@ -110,7 +110,7 @@ require (
 	github.com/xyproto/randomstring v1.2.0 // indirect
 	github.com/xyproto/simplehstore v1.9.0 // indirect
 	github.com/xyproto/simplemaria v1.4.0 // indirect
-	github.com/xyproto/simplesqlite_noc v1.3.0 // indirect
+	github.com/xyproto/simplesqlite_noc v1.3.1 // indirect
 	github.com/xyproto/symwalk v1.2.0 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
