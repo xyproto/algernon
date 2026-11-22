@@ -1,5 +1,19 @@
 # Changelog
 
+Changes from 1.17.14 to 1.17.15
+===============================
+* Update the `simplesqlite_noc` dependency so that it also works on ARM.
+
+Changes from 1.17.13 to 1.17.14
+===============================
+
+* Security: Relative directories in the Lua `upload()` function are now checked against `scriptdir`.
+* Security: Let `HMRUpdateHandler` go through `os.Root` before reading a file.
+* Update the default server configuration script.
+* Import write timeout behavior when serving large files.
+* Update dependencies.
+* Update documentation.
+
 Changes from 1.17.12 to 1.17.13
 ===============================
 
