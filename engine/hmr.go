@@ -74,7 +74,18 @@ func (ac *Config) HMRUpdateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	src, err := os.ReadFile(absPath)
+	rootRelPath, err := filepath.Rel(serverRoot, absPath)
+	if err != nil || !filepath.IsLocal(rootRelPath) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	root, err := os.OpenRoot(serverRoot)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	defer root.Close()
+	src, err := root.ReadFile(rootRelPath)
 	if err != nil {
 		logrus.Errorf("hmr: cannot read %s: %s", absPath, err)
 		http.Error(w, "not found", http.StatusNotFound)
