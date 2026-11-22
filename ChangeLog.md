@@ -1,5 +1,10 @@
 # Changelog
 
+Changes from 1.17.15 to 1.18.0
+==============================
+
+* Fix a typo in the default `serverconf.lua` script.
+
 Changes from 1.17.14 to 1.17.15
 ===============================
 
