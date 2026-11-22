@@ -22,6 +22,10 @@ func JSON(value any) any {
 
 // ResultJSON sets the result of the function to the JSON encoding of value.
 //
+// If you return JSON from application-defined functions,
+// consider registering those functions with [RESULT_SUBTYPE]
+// and calling [Context.ResultSubtype] with 'J'.
+//
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultJSON(value any) {
 	w := bytesWriter{wrp: ctx.c.wrp}
@@ -67,7 +71,7 @@ func (s *Stmt) ColumnJSON(col int, ptr any) error {
 	case INTEGER:
 		data = strconv.AppendInt(nil, s.ColumnInt64(col), 10)
 	case FLOAT:
-		data = util.AppendNumber(nil, s.ColumnFloat(col))
+		data = util.AppendFloat(nil, s.ColumnFloat(col), 64)
 	default:
 		panic(errutil.AssertErr())
 	}
@@ -88,7 +92,7 @@ func (v Value) JSON(ptr any) error {
 	case INTEGER:
 		data = strconv.AppendInt(nil, v.Int64(), 10)
 	case FLOAT:
-		data = util.AppendNumber(nil, v.Float())
+		data = util.AppendFloat(nil, v.Float(), 64)
 	default:
 		panic(errutil.AssertErr())
 	}

@@ -4,7 +4,6 @@ package util
 
 import (
 	"encoding/json"
-	"math"
 	"strconv"
 	"time"
 	"unsafe"
@@ -25,7 +24,7 @@ func (j JSON) Scan(value any) error {
 	case int64:
 		buf = strconv.AppendInt(nil, v, 10)
 	case float64:
-		buf = AppendNumber(nil, v)
+		buf = AppendFloat(nil, v, 64)
 	case time.Time:
 		buf = append(buf, '"')
 		buf = v.AppendFormat(buf, time.RFC3339Nano)
@@ -39,16 +38,16 @@ func (j JSON) Scan(value any) error {
 	return json.Unmarshal(buf, j.Value)
 }
 
-func AppendNumber(dst []byte, f float64) []byte {
-	switch {
-	case math.IsNaN(f):
-		dst = append(dst, "null"...)
-	case math.IsInf(f, 1):
-		dst = append(dst, "9.0e999"...)
-	case math.IsInf(f, -1):
-		dst = append(dst, "-9.0e999"...)
-	default:
-		return strconv.AppendFloat(dst, f, 'g', -1, 64)
-	}
-	return dst
+func AppendQuote(dst []byte, src string) ([]byte, error) {
+	err := json.NewEncoder(JSONWriter(func(p []byte) error {
+		dst = append(dst, p...)
+		return nil
+	})).Encode(src)
+	return dst, err
+}
+
+type JSONWriter func(p []byte) error
+
+func (fn JSONWriter) Write(p []byte) (int, error) {
+	return len(p), fn(p[:len(p)-1]) // remove the newline
 }

@@ -486,7 +486,6 @@ func (e env) Xgo_vtab_best_index(pVTab, pIdxInfo int32) int32 {
 func (e env) Xgo_vtab_update(pVTab, nArg, pArg, pRowID int32) int32 {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nArg, ptr_t(pArg))
-	defer returnArgs(args)
 
 	vtab := e.vtabGetHandle(pVTab).(VTabUpdater)
 	rowID, err := vtab.Update(*args...)
@@ -494,6 +493,7 @@ func (e env) Xgo_vtab_update(pVTab, nArg, pArg, pRowID int32) int32 {
 		e.Memory.Write64(ptr_t(pRowID), uint64(rowID))
 	}
 
+	returnArgs(args)
 	return e.vtabError(pVTab, _VTAB_ERROR, err, ERROR)
 }
 
@@ -588,7 +588,6 @@ func (e env) Xgo_cur_close(pCur int32) int32 {
 func (e env) Xgo_cur_filter(pCur, idxNum, idxStr, nArg, pArg int32) int32 {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nArg, ptr_t(pArg))
-	defer returnArgs(args)
 
 	var idxName string
 	if idxStr != 0 {
@@ -597,6 +596,8 @@ func (e env) Xgo_cur_filter(pCur, idxNum, idxStr, nArg, pArg int32) int32 {
 
 	cursor := e.vtabGetHandle(pCur).(VTabCursor)
 	err := cursor.Filter(int(idxNum), idxName, *args...)
+
+	returnArgs(args)
 	return e.vtabError(pCur, _CURSOR_ERROR, err, ERROR)
 }
 

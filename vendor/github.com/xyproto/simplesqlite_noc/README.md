@@ -16,7 +16,7 @@ Features and limitations
 
 * Supports simple use of lists, hashmaps, sets and key/values.
 * Deals mainly with strings.
-* Uses the pure-Go [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite) driver, so CGO is not required.
+* Uses a [pure Go sqlite package](https://github.com/liustack/sqlite), so that CGO is not needed.
 * Modeled after [simplemaria](https://github.com/xyproto/simplemaria).
 * The hash maps behaves like hash maps, but are not backed by actual hashmaps, unlike with [simpleredis](https://github.com/xyproto/simpleredis). This is for keeping compatibility with simpleredis. If performance when scaling up is a concern, simpleredis backed by [redis](https://redis.io) might be a better choice.
 
@@ -81,7 +81,7 @@ The tests will create a file (sqlite.db) for `go test` to work.
 Version, license and author
 ---------------------------
 
-* Version: 1.2.0
+* Version: 1.3.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 * Author: Björn Kalkbrenner &lt;terminar@cyberphoria.org&gt;

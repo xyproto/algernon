@@ -39,6 +39,8 @@ func Register(name string, vfs VFS) {
 }
 
 // Unregister unregisters a VFS.
+// A VFS should not be unregistered while
+// any database connection is using it.
 //
 // https://sqlite.org/c3ref/vfs_find.html
 func Unregister(name string) {

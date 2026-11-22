@@ -3,6 +3,7 @@
 package vfs
 
 import (
+	"errors"
 	"os"
 	"syscall"
 
@@ -32,7 +33,7 @@ func osAccess(path string, flags AccessFlag) error {
 
 func osReadAt(file *os.File, p []byte, off int64) (int, error) {
 	n, err := file.ReadAt(p, off)
-	if errno, ok := err.(unix.Errno); ok {
+	if errno, ok := errors.AsType[unix.Errno](err); ok {
 		switch errno {
 		case
 			unix.ERANGE,
@@ -46,7 +47,7 @@ func osReadAt(file *os.File, p []byte, off int64) (int, error) {
 
 func osWriteAt(file *os.File, p []byte, off int64) (int, error) {
 	n, err := file.WriteAt(p, off)
-	if errno, ok := err.(unix.Errno); ok && errno == unix.ENOSPC {
+	if errno, ok := errors.AsType[unix.Errno](err); ok && errno == unix.ENOSPC {
 		return n, sysError{err, _FULL}
 	}
 	return n, err

@@ -15,6 +15,9 @@ import (
 func vfsFullPathname(wrp *sqlite3_wrap.Wrapper, pVfs, zRelative ptr_t, nFull int32, zFull ptr_t) _ErrorCode {
 	vfs := vfsGet(wrp, pVfs)
 	path := wrp.ReadString(zRelative, _MAX_PATHNAME)
+	if vfs == nil {
+		return _CANTOPEN_FULLPATH
+	}
 
 	path, err := vfs.FullPathname(path)
 
@@ -30,6 +33,9 @@ func vfsFullPathname(wrp *sqlite3_wrap.Wrapper, pVfs, zRelative ptr_t, nFull int
 func vfsDelete(wrp *sqlite3_wrap.Wrapper, pVfs, zPath ptr_t, syncDir int32) _ErrorCode {
 	vfs := vfsGet(wrp, pVfs)
 	path := wrp.ReadString(zPath, _MAX_PATHNAME)
+	if vfs == nil {
+		return _IOERR_DELETE
+	}
 
 	err := vfs.Delete(path, syncDir != 0)
 	return vfsErrorCode(wrp, err, _IOERR_DELETE)
@@ -39,6 +45,9 @@ func vfsDelete(wrp *sqlite3_wrap.Wrapper, pVfs, zPath ptr_t, syncDir int32) _Err
 func vfsAccess(wrp *sqlite3_wrap.Wrapper, pVfs, zPath ptr_t, flags AccessFlag, pResOut ptr_t) _ErrorCode {
 	vfs := vfsGet(wrp, pVfs)
 	path := wrp.ReadString(zPath, _MAX_PATHNAME)
+	if vfs == nil {
+		return _IOERR_ACCESS
+	}
 
 	ok, err := vfs.Access(path, flags)
 	wrp.WriteBool(pResOut, ok)
@@ -49,6 +58,9 @@ func vfsAccess(wrp *sqlite3_wrap.Wrapper, pVfs, zPath ptr_t, flags AccessFlag, p
 func vfsOpen(wrp *sqlite3_wrap.Wrapper, pVfs, zPath, pFile ptr_t, flags OpenFlag, pOutFlags, pOutVFS ptr_t) _ErrorCode {
 	vfs := vfsGet(wrp, pVfs)
 	name := GetFilename(wrp, zPath, flags)
+	if vfs == nil {
+		return _CANTOPEN
+	}
 
 	var file File
 	var err error
@@ -97,11 +109,14 @@ func vfsRead(wrp *sqlite3_wrap.Wrapper, pFile, zBuf ptr_t, iAmt int32, iOfst int
 	if n == int(iAmt) {
 		return _OK
 	}
-	if err != io.EOF {
-		return vfsErrorCode(wrp, err, _IOERR_READ)
+	if err == io.EOF {
+		clear(buf[n:])
+		return _IOERR_SHORT_READ
 	}
-	clear(buf[n:])
-	return _IOERR_SHORT_READ
+	if err == nil {
+		err = io.ErrUnexpectedEOF // notest
+	}
+	return vfsErrorCode(wrp, err, _IOERR_READ)
 }
 
 //go:linkname vfsWrite
@@ -109,7 +124,10 @@ func vfsWrite(wrp *sqlite3_wrap.Wrapper, pFile, zBuf ptr_t, iAmt int32, iOfst in
 	file := vfsFileGet(wrp, pFile).(File)
 	buf := wrp.Bytes(zBuf, int64(iAmt))
 
-	_, err := file.WriteAt(buf, iOfst)
+	n, err := file.WriteAt(buf, iOfst)
+	if err == nil && n != int(iAmt) {
+		err = io.ErrShortWrite // notest
+	}
 	return vfsErrorCode(wrp, err, _IOERR_WRITE)
 }
 
@@ -391,7 +409,8 @@ func vfsGet(wrp *sqlite3_wrap.Wrapper, pVfs ptr_t) VFS {
 	if vfs := Find(name); vfs != nil {
 		return vfs
 	}
-	panic(errutil.NoVFSErr + errutil.ErrorString(name))
+	wrp.SysError = errutil.ErrorString("no such vfs: " + name)
+	return nil
 }
 
 func vfsFileRegister(wrp *sqlite3_wrap.Wrapper, pFile ptr_t, file File) {

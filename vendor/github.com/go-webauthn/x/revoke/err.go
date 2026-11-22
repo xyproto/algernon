@@ -14,6 +14,13 @@ import (
 type Error struct {
 	ErrorCode int    `json:"code"`
 	Message   string `json:"message"`
+
+	err error
+}
+
+// Unwrap returns the error this Error was created from by WrapError, if any.
+func (e *Error) Unwrap() error {
+	return e.err
 }
 
 // The error interface implementation, which formats to a JSON object string.
@@ -433,10 +440,37 @@ func WrapError(category Category, reason Reason, err error) *Error {
 			category))
 	}
 
-	return &Error{ErrorCode: errorCode, Message: err.Error()}
+	return &Error{ErrorCode: errorCode, Message: err.Error(), err: err}
 
 }
 
 var (
+	// ErrFailedGetCRL is returned when a CRL can't be retrieved.
 	ErrFailedGetCRL = errors.New("failed to retrieve CRL")
+
+	// ErrCertificateExpired is returned when the certificate is past its validity period.
+	ErrCertificateExpired = errors.New("certificate expired")
+
+	// ErrCertificateNotYetValid is returned when the certificate has not reached its validity period.
+	ErrCertificateNotYetValid = errors.New("certificate is not valid")
+
+	// ErrNoIssuer is returned when no issuer is available to authenticate revocation data with.
+	ErrNoIssuer = errors.New("no verifiable issuer certificate is available")
+
+	// ErrIssuerMismatch is returned when the issuer certificate did not issue the certificate being checked.
+	ErrIssuerMismatch = errors.New("issuer certificate did not issue the certificate")
+
+	// ErrNoSupportedSource is returned when the certificate names revocation sources but none of them are supported.
+	ErrNoSupportedSource = errors.New("certificate has no supported revocation source")
+
+	// ErrResponseTooLarge is returned when a response body exceeds the size limit.
+	ErrResponseTooLarge = errors.New("response is too large")
+
+	// ErrCRLInvalid is returned when a CRL can't be parsed, can't be authenticated by the issuer, is not current, or
+	// does not cover the certificate.
+	ErrCRLInvalid = errors.New("invalid CRL")
+
+	// ErrOCSPInvalid is returned when an OCSP response can't be parsed, can't be authenticated by the issuer, is not
+	// current, or does not give a status for the certificate.
+	ErrOCSPInvalid = errors.New("invalid OCSP response")
 )

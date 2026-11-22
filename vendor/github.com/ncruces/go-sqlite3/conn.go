@@ -13,6 +13,7 @@ import (
 
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
+	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/ncruces/go-sqlite3/vfs"
 )
 
@@ -40,6 +41,7 @@ type Conn struct {
 	busylst time.Time
 	arena   sqlite3_wrap.Arena
 	handle  ptr_t
+	stack   int32
 	gosched uint8
 }
 
@@ -80,6 +82,7 @@ func newConn(ctx context.Context, filename string, flags OpenFlag) (ret *Conn, _
 	if err != nil {
 		return nil, err
 	}
+	c.stack = *c.wrp.X__stack_pointer()
 	defer func() {
 		if ret == nil {
 			c.Close()
@@ -104,6 +107,19 @@ func newConn(ctx context.Context, filename string, flags OpenFlag) (ret *Conn, _
 }
 
 func (c *Conn) openDB(filename string, flags OpenFlag) (ptr_t, error) {
+	var pragmas []string
+	if flags&OPEN_URI != 0 && strings.HasPrefix(filename, "file:") {
+		u, err := url.Parse(filename)
+		if err != nil {
+			return 0, err
+		}
+		q, err := url.ParseQuery(u.RawQuery)
+		if err != nil {
+			return 0, err
+		}
+		pragmas = q["_pragma"]
+	}
+
 	defer c.arena.Mark()()
 	connPtr := c.arena.New(ptrlen)
 	namePtr := c.arena.String(filename)
@@ -118,24 +134,32 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (ptr_t, error) {
 	}
 
 	c.wrp.Xsqlite3_progress_handler_go(int32(handle), 1000)
-	if flags|OPEN_URI != 0 && strings.HasPrefix(filename, "file:") {
-		var pragmas strings.Builder
-		if u, err := url.Parse(filename); err == nil {
-			query := u.Query()
-			for _, p := range query["_pragma"] {
-				pragmas.WriteString(`PRAGMA `)
-				pragmas.WriteString(p)
-				pragmas.WriteString(`;`)
-			}
+	tmp := Conn{
+		wrp:       c.wrp,
+		arena:     c.arena,
+		interrupt: c.interrupt,
+		handle:    handle,
+	}
+	if _, ok := c.interrupt.(util.DriverCtx); ok {
+		if err := tmp.BusyTimeout(time.Minute); err != nil {
+			c.closeDB(handle)
+			return 0, err
 		}
-		if pragmas.Len() != 0 {
-			pragmaPtr := c.arena.String(pragmas.String())
-			rc := res_t(c.wrp.Xsqlite3_exec(int32(handle), int32(pragmaPtr), 0, 0, 0))
-			if err := c.errorFor(handle, rc, pragmas.String()); err != nil {
-				err = fmt.Errorf("sqlite3: invalid _pragma: %w", err)
-				c.closeDB(handle)
-				return 0, err
-			}
+	}
+	for _, p := range pragmas {
+		s, tail, err := tmp.Prepare("PRAGMA " + p)
+		if err == nil && tail != "" {
+			err = errutil.TailErr
+		}
+		if err == nil {
+			err = s.Exec()
+		}
+		if e := s.Close(); err == nil {
+			err = e
+		}
+		if err != nil {
+			c.closeDB(handle)
+			return 0, fmt.Errorf("sqlite3: invalid _pragma: %w", err)
 		}
 	}
 	return handle, nil
@@ -158,10 +182,10 @@ func (c *Conn) closeDB(handle ptr_t) {
 //
 // https://sqlite.org/c3ref/close.html
 func (c *Conn) Close() error {
-	if c == nil {
+	if c == nil || c.wrp == nil {
 		return nil
 	}
-	if c.handle != 0 {
+	if c.handle != 0 && !connBad(c) {
 		rc := res_t(c.wrp.Xsqlite3_close(int32(c.handle)))
 		if err := c.error(rc); err != nil {
 			return err
@@ -501,12 +525,12 @@ func (c *Conn) errorFor(handle ptr_t, rc res_t, sql ...string) error {
 			msg = strings.TrimPrefix(msg, "sqlite3: ")
 			msg = strings.TrimPrefix(msg, sqlite3_wrap.ErrorCodeString(rc)[len("sqlite3: "):])
 			msg = strings.TrimPrefix(msg, ": ")
-			if msg == "" || msg == "not an error" {
+			if msg == "not an error" {
 				msg = ""
 			}
 		}
 
-		if len(sql) != 0 {
+		if len(sql) > 0 {
 			if i := c.wrp.Xsqlite3_error_offset(int32(handle)); i != -1 {
 				query = sql[0][i:]
 			}

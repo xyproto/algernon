@@ -1,0 +1,3 @@
+# Every checkout has LF line ends, also on Windows: the tests read
+# engine/flags.sh and compare generated files byte for byte.
+* text=auto eol=lf

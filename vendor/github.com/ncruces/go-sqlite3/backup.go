@@ -34,6 +34,9 @@ func (src *Conn) Backup(srcDB, dstURI string) error {
 //
 // https://sqlite.org/backup.html
 func (dst *Conn) Restore(dstDB, srcURI string) error {
+	if dst.interrupt.Err() != nil {
+		return INTERRUPT
+	}
 	src, err := dst.openDB(srcURI, OPEN_READONLY|OPEN_URI)
 	if err != nil {
 		return err
@@ -55,6 +58,9 @@ func (dst *Conn) Restore(dstDB, srcURI string) error {
 //
 // https://sqlite.org/c3ref/backup_finish.html#sqlite3backupinit
 func (src *Conn) BackupInit(srcDB, dstURI string) (*Backup, error) {
+	if src.interrupt.Err() != nil {
+		return nil, INTERRUPT
+	}
 	dst, err := src.openDB(dstURI, OPEN_READWRITE|OPEN_CREATE|OPEN_URI)
 	if err != nil {
 		return nil, err
@@ -114,6 +120,9 @@ func (b *Backup) Close() error {
 //
 // https://sqlite.org/c3ref/backup_finish.html#sqlite3backupstep
 func (b *Backup) Step(nPage int) (done bool, err error) {
+	if b.c.interrupt.Err() != nil {
+		return false, INTERRUPT
+	}
 	rc := res_t(b.c.wrp.Xsqlite3_backup_step(int32(b.handle), int32(nPage)))
 	if rc == _DONE {
 		return true, nil

@@ -2579,7 +2579,7 @@ func (r *Runner) CheckTimeout() error {
 		return nil
 	}
 
-	return fmt.Errorf("match timeout after %v on input `%v`", r.timeout, string(r.Runtext))
+	return fmt.Errorf("%w after %v", ErrMatchTimeout, r.timeout)
 }
 
 func (r *Runner) initTrackCount() {

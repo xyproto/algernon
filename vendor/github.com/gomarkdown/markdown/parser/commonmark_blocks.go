@@ -350,7 +350,8 @@ func (p *Parser) commonMarkTable(data []byte) int {
 
 func (p *Parser) commonMarkCode(data []byte) int {
 	var work bytes.Buffer
-	i, last := 0, 0
+	// last is the end of the last code line in work; consumed is its end in data.
+	i, last, consumed := 0, 0, 0
 	for i < len(data) {
 		line, end := commonMarkLine(data[i:])
 		if commonMarkBlank(line) {
@@ -363,11 +364,14 @@ func (p *Parser) commonMarkCode(data []byte) int {
 			work.Write(commonMarkDedent(line, 4))
 			work.WriteByte('\n')
 			last = work.Len()
+			consumed = i + end
 		}
 		i += end
 	}
 	p.AddBlock(&ast.CodeBlock{Leaf: ast.Leaf{Literal: work.Bytes()[:last]}})
-	return i
+	// Trailing blank lines are not part of the code block. Leave them to the
+	// caller so a blank line before the next block makes a list item loose.
+	return consumed
 }
 
 func (p *Parser) commonMarkFencedCode(data []byte, i int, marker byte, count, indent int, info []byte) int {

@@ -134,7 +134,7 @@ func cksmCompute(a []byte) (cksm [8]byte) {
 		s2 += binary.LittleEndian.Uint32(a[4:8]) + s1
 		a = a[8:]
 	}
-	if len(a) != 0 {
+	if len(a) > 0 {
 		panic(errutil.AssertErr())
 	}
 	binary.LittleEndian.PutUint32(cksm[0:4], s1)

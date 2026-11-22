@@ -60,17 +60,12 @@ func ParseOneCertificateFromPEM(certsPEM []byte) ([]*x509.Certificate, []byte, e
 	return []*x509.Certificate{cert}, rest, nil
 }
 
-// We can't handle LDAP certificates, so this checks to see if the
-// URL string points to an LDAP resource so that we can ignore it.
-func ldapURL(uri string) bool {
-	u, err := url.Parse(uri)
-	if err != nil {
-		return false
+func supportedURLs(uris []string) (supported []string) {
+	for _, uri := range uris {
+		if u, err := url.Parse(uri); err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" {
+			supported = append(supported, uri)
+		}
 	}
 
-	if u.Scheme == "ldap" {
-		return true
-	}
-
-	return false
+	return supported
 }

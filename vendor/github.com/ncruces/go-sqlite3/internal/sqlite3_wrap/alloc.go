@@ -84,13 +84,16 @@ func (a *Arena) Free() {
 }
 
 func (a *Arena) Mark() (reset func()) {
+	sptr := *a.sqlt.X__stack_pointer()
 	ptrs := len(a.ptrs)
 	next := a.next
 	return func() {
-		for _, ptr := range a.ptrs[ptrs:] {
-			a.sqlt.Free(ptr)
+		if len(a.ptrs) > ptrs && sptr == *a.sqlt.X__stack_pointer() {
+			for _, ptr := range a.ptrs[ptrs:] {
+				a.sqlt.Free(ptr)
+			}
+			a.ptrs = a.ptrs[:ptrs]
 		}
-		a.ptrs = a.ptrs[:ptrs]
 		a.next = next
 	}
 }

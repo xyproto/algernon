@@ -3,6 +3,7 @@
 package vfs
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -15,7 +16,7 @@ func osReadAt(file *os.File, p []byte, off int64) (int, error) {
 
 func osWriteAt(file *os.File, p []byte, off int64) (int, error) {
 	n, err := file.WriteAt(p, off)
-	if errno, ok := err.(windows.Errno); ok {
+	if errno, ok := errors.AsType[windows.Errno](err); ok {
 		switch errno {
 		case
 			windows.ERROR_HANDLE_DISK_FULL,

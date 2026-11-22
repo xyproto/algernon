@@ -27,9 +27,9 @@ func JSON(value any) any {
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultJSON(value any) {
-	err := json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		ctx.ResultRawText(p[:len(p)-1]) // remove the newline
-		return 0, nil
+	err := json.NewEncoder(util.JSONWriter(func(p []byte) error {
+		ctx.ResultRawText(p)
+		return nil
 	})).Encode(value)
 
 	if err != nil {
@@ -43,8 +43,8 @@ func (ctx Context) ResultJSON(value any) {
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindJSON(param int, value any) error {
-	return json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
-		return 0, s.BindRawText(param, p[:len(p)-1]) // remove the newline
+	return json.NewEncoder(util.JSONWriter(func(p []byte) error {
+		return s.BindRawText(param, p)
 	})).Encode(value)
 }
 
@@ -65,7 +65,7 @@ func (s *Stmt) ColumnJSON(col int, ptr any) error {
 	case INTEGER:
 		data = strconv.AppendInt(nil, s.ColumnInt64(col), 10)
 	case FLOAT:
-		data = util.AppendNumber(nil, s.ColumnFloat(col))
+		data = util.AppendFloat(nil, s.ColumnFloat(col), 64)
 	default:
 		panic(errutil.AssertErr())
 	}
@@ -86,15 +86,11 @@ func (v Value) JSON(ptr any) error {
 	case INTEGER:
 		data = strconv.AppendInt(nil, v.Int64(), 10)
 	case FLOAT:
-		data = util.AppendNumber(nil, v.Float())
+		data = util.AppendFloat(nil, v.Float(), 64)
 	default:
 		panic(errutil.AssertErr())
 	}
 	return json.Unmarshal(data, ptr)
 }
-
-type callbackWriter func(p []byte) (int, error)
-
-func (fn callbackWriter) Write(p []byte) (int, error) { return fn(p) }
 
 func (c *Conn) uuid() error { return nil }

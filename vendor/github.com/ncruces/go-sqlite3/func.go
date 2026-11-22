@@ -186,17 +186,17 @@ func (e env) Xgo_compare(pApp, nKey1, pKey1, nKey2, pKey2 int32) int32 {
 func (e env) Xgo_func(pCtx, pApp, nArg, pArg int32) {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nArg, ptr_t(pArg))
-	defer returnArgs(args)
 	fn := db.wrp.GetHandle(ptr_t(pApp)).(ScalarFunction)
 	fn(Context{db, ptr_t(pCtx)}, *args...)
+	returnArgs(args)
 }
 
 func (e env) Xgo_step(pCtx, pAgg, pApp, nArg, pArg int32) {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nArg, ptr_t(pArg))
-	defer returnArgs(args)
 	fn, _ := callbackAggregate(db, ptr_t(pAgg), ptr_t(pApp))
 	fn.Step(Context{db, ptr_t(pCtx)}, *args...)
+	returnArgs(args)
 }
 
 func (e env) Xgo_value(pCtx, pAgg, pApp, final int32) {
@@ -221,15 +221,15 @@ func (e env) Xgo_value(pCtx, pAgg, pApp, final int32) {
 
 func (e env) Xgo_inverse(pCtx, pAgg, nArg, pArg int32) {
 	db := e.DB.(*Conn)
-	args := callbackArgs(db, nArg, ptr_t(pArg))
-	defer returnArgs(args)
 	fn, ok := db.wrp.GetHandle(ptr_t(pAgg)).(WindowFunction)
 	if !ok {
 		Context{db, ptr_t(pCtx)}.ResultError(
 			errutil.ErrorString("sqlite3: may not be used as a window function"))
 		return // notest
 	}
+	args := callbackArgs(db, nArg, ptr_t(pArg))
 	fn.Inverse(Context{db, ptr_t(pCtx)}, *args...)
+	returnArgs(args)
 }
 
 func callbackAggregate(db *Conn, pAgg, pApp ptr_t) (AggregateFunction, ptr_t) {
@@ -272,6 +272,7 @@ func callbackArgs(db *Conn, nArg int32, pArg ptr_t) *[]Value {
 }
 
 func returnArgs(p *[]Value) {
+	clear(*p)
 	valueArgsPool.Put(p)
 }
 

@@ -78,7 +78,7 @@
 //
 //	sql.Open("sqlite3", "file:demo.db?_pragma=busy_timeout(10000)")
 //
-// If no PRAGMAs are specified, a busy timeout of 1 minute is set.
+// A default busy timeout of 1 minute is set before any PRAGMAs are executed.
 //
 // Order matters:
 // encryption keys, busy timeout and locking mode should be the first PRAGMAs set,
@@ -232,7 +232,7 @@ func (n *connector) Connect(ctx context.Context) (ret driver.Conn, err error) {
 		tmWrite: n.tmWrite,
 	}
 
-	c.Conn, err = sqlite3.OpenContext(ctx, n.name)
+	c.Conn, err = sqlite3.OpenContext(util.DriverCtx{Context: ctx}, n.name)
 	if err != nil {
 		return nil, err
 	}
@@ -246,12 +246,6 @@ func (n *connector) Connect(ctx context.Context) (ret driver.Conn, err error) {
 		defer c.Conn.SetInterrupt(old)
 	}
 
-	if !n.pragmas {
-		err = c.Conn.BusyTimeout(time.Minute)
-		if err != nil {
-			return nil, err
-		}
-	}
 	if n.init != nil {
 		err = n.init(c.Conn)
 		if err != nil {
@@ -330,11 +324,16 @@ type conn struct {
 var (
 	// Ensure these interfaces are implemented:
 	_ Conn                 = &conn{}
+	_ driver.Validator     = &conn{}
 	_ driver.ExecerContext = &conn{}
 )
 
 func (c *conn) Raw() *sqlite3.Conn {
 	return c.Conn
+}
+
+func (c *conn) IsValid() bool {
+	return !connBad(c.Conn)
 }
 
 // Deprecated: use BeginTx instead.
@@ -362,7 +361,7 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 	txBegin := `BEGIN ` + txLock
 	if opts.ReadOnly && !c.qryOnly {
 		txBegin += ` ; PRAGMA query_only=on`
-		c.txReset = `; PRAGMA query_only=off`
+		c.txReset = `PRAGMA query_only=off ; `
 	}
 
 	if old := c.Conn.SetInterrupt(ctx); old != ctx {
@@ -377,7 +376,10 @@ func (c *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 }
 
 func (c *conn) Commit() error {
-	err := c.Conn.Exec(`COMMIT` + c.txReset)
+	if connBad(c.Conn) {
+		return driver.ErrBadConn
+	}
+	err := c.Conn.Exec(c.txReset + `COMMIT`)
 	if err != nil && !c.Conn.GetAutocommit() {
 		c.Rollback()
 	}
@@ -385,12 +387,15 @@ func (c *conn) Commit() error {
 }
 
 func (c *conn) Rollback() error {
+	if connBad(c.Conn) {
+		return driver.ErrBadConn
+	}
 	// ROLLBACK even if interrupted.
 	ctx := context.Background()
 	if old := c.Conn.SetInterrupt(ctx); old != ctx {
 		defer c.Conn.SetInterrupt(old)
 	}
-	return c.Conn.Exec(`ROLLBACK` + c.txReset)
+	return c.Conn.Exec(c.txReset + `ROLLBACK`)
 }
 
 func (c *conn) Prepare(query string) (driver.Stmt, error) {
@@ -415,7 +420,7 @@ func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, e
 }
 
 func (c *conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	if len(args) != 0 {
+	if len(args) > 0 {
 		// Slow path.
 		return nil, driver.ErrSkip
 	}
@@ -458,6 +463,13 @@ var (
 	_ driver.StmtQueryContext  = &stmt{}
 	_ driver.NamedValueChecker = &stmt{}
 )
+
+func (s *stmt) Close() error {
+	if connBad(s.Stmt.Conn()) {
+		return driver.ErrBadConn
+	}
+	return s.Stmt.Close()
+}
 
 func (s *stmt) NumInput() int {
 	if s.inputs >= -1 {
@@ -667,6 +679,9 @@ var (
 )
 
 func (r *rows) Close() error {
+	if connBad(r.Stmt.Conn()) {
+		return driver.ErrBadConn
+	}
 	return errors.Join(
 		r.Stmt.Reset(),
 		r.Stmt.ClearBindings())
@@ -847,3 +862,6 @@ func (r *rows) convert(i int, val driver.Value) driver.Value {
 	}
 	return val
 }
+
+//go:linkname connBad github.com/ncruces/go-sqlite3.connBad
+func connBad(*sqlite3.Conn) bool

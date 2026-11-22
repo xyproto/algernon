@@ -104,8 +104,8 @@ func (e *ExtEnv) X__table_base() *int32  { return &e.tableBase }
 func (e *ExtEnv) CallWithContextValues(pCtx, nVal, pVal int32, fn func(Context, ...Value)) {
 	db := e.DB.(*Conn)
 	args := callbackArgs(db, nVal, ptr_t(pVal))
-	defer returnArgs(args)
 	fn(Context{db, ptr_t(pCtx)}, *args...)
+	returnArgs(args)
 }
 
 // ExtensionInit loads an SQLite extension library.

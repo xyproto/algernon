@@ -7,6 +7,8 @@ import (
 )
 
 // Value is any value that can be stored in a database table.
+// A Value is bound to its [Conn] and, unless copied with [Value.Dup],
+// must not be retained beyond the callback or [Stmt.Step] that produced it.
 //
 // https://sqlite.org/c3ref/value.html
 type Value struct {

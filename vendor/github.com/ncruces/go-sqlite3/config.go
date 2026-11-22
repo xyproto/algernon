@@ -16,7 +16,7 @@ import (
 //
 // https://sqlite.org/c3ref/db_config.html
 func (c *Conn) Config(op DBConfig, arg ...bool) (bool, error) {
-	if op < DBCONFIG_ENABLE_FKEY || op > DBCONFIG_REVERSE_SCANORDER {
+	if op < DBCONFIG_ENABLE_FKEY || op > DBCONFIG_ENABLE_COMMENTS {
 		return false, MISUSE
 	}
 
