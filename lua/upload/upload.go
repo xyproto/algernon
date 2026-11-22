@@ -243,7 +243,7 @@ func uploadedFileSaveIn(L *lua.LState) int {
 		baseDir = givenDirectory
 	} else {
 		writeFilename = filepath.Join(ulf.scriptdir, givenDirectory, ulf.filename)
-		baseDir = filepath.Join(ulf.scriptdir, givenDirectory)
+		baseDir = ulf.scriptdir
 	}
 
 	// prevent path traversal
