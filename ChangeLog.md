@@ -2,6 +2,7 @@
 
 Changes from 1.17.14 to 1.17.15
 ===============================
+
 * Update the `simplesqlite_noc` dependency so that it also works on ARM.
 
 Changes from 1.17.13 to 1.17.14
