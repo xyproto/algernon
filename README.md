@@ -10,15 +10,17 @@ theme: material
 
 [![Build](https://github.com/xyproto/algernon/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/algernon/actions/workflows/build.yml)
 [![GoDoc](https://godoc.org/github.com/xyproto/algernon?status.svg)](https://godoc.org/github.com/xyproto/algernon)
-[![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Falgernon.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Falgernon?ref=badge_shield)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/algernon.svg)](https://repology.org/project/algernon/versions)
+[![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/main/LICENSE)
 
 Web server with built-in support for HTTP/2, HTTP/3 (QUIC), Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, TypeScript, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, npm-less React 19, rate limiting, graceful shutdown, plugins, users and permissions.
 
 All in one small self-contained executable.
+
+Pull requests are welcome.
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/algernon.svg)](https://repology.org/project/algernon/versions)
 
 Quick installation
 ------------------
