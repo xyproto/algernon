@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // Print is for debugging. It prints a string representation of parsed
@@ -88,16 +90,13 @@ func printDefault(w io.Writer, indent string, typeName string, content string) {
 	}
 }
 
-var listFlagNames = []struct {
-	flag ListType
-	name string
-}{
-	{ListTypeOrdered, "ordered"},
-	{ListTypeDefinition, "definition"},
-	{ListTypeTerm, "term"},
-	{ListItemContainsBlock, "has_block"},
-	{ListItemBeginningOfList, "start"},
-	{ListItemEndOfList, "end"},
+var listFlagNames = []textutil.FlagName[ListType]{
+	{Flag: ListTypeOrdered, Name: "ordered"},
+	{Flag: ListTypeDefinition, Name: "definition"},
+	{Flag: ListTypeTerm, Name: "term"},
+	{Flag: ListItemContainsBlock, Name: "has_block"},
+	{Flag: ListItemBeginningOfList, Name: "start"},
+	{Flag: ListItemEndOfList, Name: "end"},
 }
 
 func listDetails(content string, flags ListType, start int, tight, footnotes bool) string {
@@ -110,17 +109,14 @@ func listDetails(content string, flags ListType, start int, tight, footnotes boo
 	if footnotes {
 		content += "footnotes "
 	}
-	var names []string
-	for _, entry := range listFlagNames {
-		if flags&entry.flag != 0 {
-			names = append(names, entry.name)
-		}
-	}
-	if len(names) > 0 {
+	if names := textutil.FlagNames(flags, listFlagNames); len(names) > 0 {
 		content += "flags=" + strings.Join(names, " ") + " "
 	}
 	return content
 }
+
+// urlDetails is the printed content of a link or image to dest.
+func urlDetails(dest []byte) string { return "url=" + string(dest) }
 
 func printRecur(w io.Writer, node Node, prefix string, depth int) {
 	if node == nil {
@@ -132,22 +128,17 @@ func printRecur(w io.Writer, node Node, prefix string, depth int) {
 	typeName := getNodeType(node)
 	switch v := node.(type) {
 	case *Link:
-		content := "url=" + string(v.Destination)
-		printDefault(w, indent, typeName, content)
+		content = urlDetails(v.Destination)
 	case *Image:
-		content := "url=" + string(v.Destination)
-		printDefault(w, indent, typeName, content)
+		content = urlDetails(v.Destination)
 	case *List:
 		content = listDetails(content, v.ListFlags, v.Start, v.Tight, v.IsFootnotesList)
-		printDefault(w, indent, typeName, content)
 	case *ListItem:
 		content = listDetails(content, v.ListFlags, 0, v.Tight, v.IsFootnotesList)
-		printDefault(w, indent, typeName, content)
 	case *CodeBlock:
-		printDefault(w, indent, typeName+":"+string(v.Info), content)
-	default:
-		printDefault(w, indent, typeName, content)
+		typeName += ":" + string(v.Info)
 	}
+	printDefault(w, indent, typeName, content)
 	for _, child := range node.GetChildren() {
 		printRecur(w, child, prefix, depth+1)
 	}

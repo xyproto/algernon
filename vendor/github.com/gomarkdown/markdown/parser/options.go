@@ -22,7 +22,9 @@ const (
 	// CommonMark selects the CommonMark 0.31.2 grammar for Parse, independent
 	// of Extensions. The resulting document uses the usual ast node types.
 	// The flag is off by default to preserve historical parsing behavior.
-	// Custom block and inline parsers are only used by the historical parser.
+	// Custom inline parsers are only used by the historical parser.
+	// ParserHook runs in CommonMark mode only for a parser created with
+	// NewCommonMarkWithExtensions.
 	CommonMark
 )
 

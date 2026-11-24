@@ -4,12 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 )
 
 // RenderHeader writes HTML document preamble and TOC if requested.
 func (r *Renderer) RenderHeader(w io.Writer, doc ast.Node) {
+	// Each document starts with empty heading ids. Reusing one renderer must
+	// not turn the next document's "intro" into "intro-1", and must not keep
+	// the previous document's heading nodes alive.
+	r.headingIDs = make(map[string]int)
+	r.headingAnchors = nil
 	root, ok := doc.(*ast.Document)
 	r.commonMark = ok && root.CommonMark
 	r.writeDocumentHeader(w)
@@ -20,9 +26,7 @@ func (r *Renderer) RenderHeader(w io.Writer, doc ast.Node) {
 
 // RenderFooter writes HTML document footer.
 func (r *Renderer) RenderFooter(w io.Writer, _ ast.Node) {
-	if r.documentMatter != ast.DocumentMatterNone {
-		r.Outs(w, "</section>\n")
-	}
+	r.closeMatterSection(w)
 	if r.Opts.Flags&CompletePage != 0 {
 		io.WriteString(w, "\n</body>\n</html>\n")
 	}
@@ -42,16 +46,19 @@ func (r *Renderer) writeDocumentHeader(w io.Writer) {
 		io.WriteString(w, "<!DOCTYPE html>\n<html>\n")
 	}
 	io.WriteString(w, "<head>\n  <title>")
+	// Escape before smart punctuation. Process leaves a raw '<' in place, and
+	// CommonFlags turns smart punctuation on, so a title would otherwise be
+	// able to close the <title> element.
+	var title bytes.Buffer
+	EscapeHTML(&title, []byte(r.Opts.Title))
 	if r.Opts.Flags&Smartypants != 0 {
-		r.sr.Process(w, []byte(r.Opts.Title))
+		r.sr.Process(w, title.Bytes())
 	} else {
-		EscapeHTML(w, []byte(r.Opts.Title))
+		title.WriteTo(w)
 	}
 	io.WriteString(w, "</title>\n")
 	io.WriteString(w, r.Opts.Generator)
-	io.WriteString(w, "\"")
-	io.WriteString(w, ending)
-	io.WriteString(w, ">\n  <meta charset=\"utf-8\"")
+	io.WriteString(w, "\n  <meta charset=\"utf-8\"")
 	io.WriteString(w, ending)
 	io.WriteString(w, ">\n")
 	writeHeadLink(w, "stylesheet", "text/css", r.Opts.CSS, ending)
@@ -72,6 +79,11 @@ func writeHeadLink(w io.Writer, rel, typ, href, ending string) {
 	io.WriteString(w, `"`+ending+">\n")
 }
 
+// closeTOCLevels closes n levels of nested TOC lists.
+func closeTOCLevels(buf *bytes.Buffer, n int) {
+	buf.WriteString(strings.Repeat("</li>\n</ul>", n))
+}
+
 func (r *Renderer) writeTOC(w io.Writer, doc ast.Node) {
 	var buf bytes.Buffer
 	inHeading := false
@@ -88,22 +100,17 @@ func (r *Renderer) writeTOC(w io.Writer, doc ast.Node) {
 			if heading.HeadingID == "" {
 				heading.HeadingID = fmt.Sprintf("toc_%d", headingCount)
 			}
-			switch {
-			case heading.Level == tocLevel:
+			// The same id the heading element gets, including the prefix,
+			// suffix and any suffix added to keep ids unique.
+			headingID := r.MakeUniqueHeadingID(heading)
+			if heading.Level > tocLevel {
+				buf.WriteString(strings.Repeat("\n<ul>\n<li>", heading.Level-tocLevel))
+			} else {
+				closeTOCLevels(&buf, tocLevel-heading.Level)
 				buf.WriteString("</li>\n\n<li>")
-			case heading.Level < tocLevel:
-				for heading.Level < tocLevel {
-					tocLevel--
-					buf.WriteString("</li>\n</ul>")
-				}
-				buf.WriteString("</li>\n\n<li>")
-			default:
-				for heading.Level > tocLevel {
-					tocLevel++
-					buf.WriteString("\n<ul>\n<li>")
-				}
 			}
-			fmt.Fprintf(&buf, `<a href="#%s">`, escapeAttr(heading.HeadingID))
+			tocLevel = heading.Level
+			fmt.Fprintf(&buf, `<a href="#%s">`, escapeAttr(headingID))
 			headingCount++
 			return ast.GoToNext
 		}
@@ -113,9 +120,7 @@ func (r *Renderer) writeTOC(w io.Writer, doc ast.Node) {
 		return ast.GoToNext
 	})
 
-	for ; tocLevel > 0; tocLevel-- {
-		buf.WriteString("</li>\n</ul>")
-	}
+	closeTOCLevels(&buf, tocLevel)
 	tocLen := buf.Len()
 	if tocLen > 0 {
 		io.WriteString(w, "<nav>\n")

@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // skipCodeSpan returns the closing backtick index, allowing table scanners to
@@ -14,7 +15,7 @@ func skipCodeSpan(data []byte, i int) int {
 	}
 	// If no later run reaches the opener length, the inline parser retries
 	// shorter suffixes of the opener, so the longest later run wins.
-	k := skipChar(data, i, '`') - i
+	k := textutil.SkipChar(data, i, '`') - i
 	best, bestEnd := 0, i+k-1
 	run := 0
 	for j := i + k; j < len(data); j++ {
@@ -48,13 +49,13 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 	p.AddBlock(&ast.TableRow{})
 	col := 0
 
-	i := skipChar(data, 0, '|')
+	i := textutil.SkipChar(data, 0, '|')
 
 	n := len(data)
 	colspans := 0 // keep track of total colspan in this row.
 	for col = 0; col < len(columns) && i < n; col++ {
 		colspan := 0
-		i = skipChar(data, i, ' ')
+		i = textutil.SkipChar(data, i, ' ')
 
 		cellStart := i
 		// past the end of the row, the remaining columns get empty cells
@@ -69,7 +70,7 @@ func (p *Parser) tableRow(data []byte, columns []ast.CellAlignFlags, header bool
 
 		// skip the end-of-cell marker, possibly taking us past end of buffer
 		// each _extra_ | means a colspan
-		for i < len(data) && data[i] == '|' && !isEscape(data, i) {
+		for textutil.ByteAt(data, i, '|') && !isEscape(data, i) {
 			i++
 			colspan++
 		}
@@ -120,7 +121,7 @@ func (p *Parser) tableFooter(data []byte) bool {
 
 	// ignore up to 3 spaces
 	n := len(data)
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 	for ; i < n && data[i] != '\n'; i++ {
 		if data[i] == '|' && !isEscape(data, i) {
 			colCount++
@@ -176,7 +177,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 	}
 
 	// include the newline in the data sent to tableRow
-	j := skipCharN(data, i, '\n', 1)
+	j := textutil.SkipCharN(data, i, '\n', 1)
 	header := data[:j]
 
 	// column count ignores pipes at beginning or end of line
@@ -207,7 +208,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 	if data[i] == '|' && !isEscape(data, i) {
 		i++
 	}
-	i = skipChar(data, i, ' ')
+	i = textutil.SkipChar(data, i, ' ')
 
 	// each column header is of form: / *:?-+:? *|/ with # dashes + # colons >= 3
 	// and trailing | optional on last column
@@ -221,16 +222,15 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 			columns[col] |= ast.TableAlignmentLeft
 			dashes++
 		}
-		for i < n && data[i] == '-' {
-			i++
-			dashes++
-		}
+		j := textutil.SkipChar(data, i, '-')
+		dashes += j - i
+		i = j
 		if i < n && data[i] == ':' {
 			i++
 			columns[col] |= ast.TableAlignmentRight
 			dashes++
 		}
-		i = skipChar(data, i, ' ')
+		i = textutil.SkipChar(data, i, ' ')
 		if i == n {
 			return
 		}
@@ -243,7 +243,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 		case data[i] == '|' && !isEscape(data, i):
 			// marker found, now skip past trailing whitespace
 			col++
-			i = skipChar(data, i+1, ' ')
+			i = textutil.SkipChar(data, i+1, ' ')
 
 			// trailing junk found after last column
 			if col >= colCount && i < len(data) && data[i] != '\n' {
@@ -275,7 +275,7 @@ func (p *Parser) tableHeader(data []byte, doRender bool) (size int, columns []as
 			p.tableRow(header, columns, true)
 		}
 	}
-	size = skipCharN(data, i, '\n', 1)
+	size = textutil.SkipCharN(data, i, '\n', 1)
 	return
 }
 
@@ -301,7 +301,7 @@ func (p *Parser) table(data []byte) int {
 		}
 
 		// include the newline in data sent to tableRow
-		i = skipCharN(data, i, '\n', 1)
+		i = textutil.SkipCharN(data, i, '\n', 1)
 
 		if p.tableFooter(data[rowStart:i]) {
 			continue

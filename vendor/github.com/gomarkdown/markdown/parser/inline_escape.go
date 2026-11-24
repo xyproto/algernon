@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // '\\' backslash escape
@@ -39,9 +40,7 @@ func unescapeText(ob *bytes.Buffer, src []byte) {
 	i := 0
 	for i < len(src) {
 		org := i
-		for i < len(src) && src[i] != '\\' {
-			i++
-		}
+		i = skipUntilChar(src, i, '\\')
 
 		if i > org {
 			ob.Write(src[org:i])
@@ -67,10 +66,10 @@ func unescapeBytes(src []byte) []byte {
 func entity(p *Parser, data []byte, offset int) (int, ast.Node) {
 	data = data[offset:]
 
-	end := skipCharN(data, 1, '#', 1)
-	end = skipWhile(data, end, IsAlnum)
+	end := textutil.SkipCharN(data, 1, '#', 1)
+	end = textutil.SkipWhile(data, end, IsAlnum)
 
-	if end < len(data) && data[end] == ';' {
+	if textutil.ByteAt(data, end, ';') {
 		end++ // real entity
 	} else {
 		return 0, nil // lone '&'

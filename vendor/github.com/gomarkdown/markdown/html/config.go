@@ -10,8 +10,11 @@ import (
 // Flags control optional behavior of the HTML renderer.
 type Flags int
 
-// IDTag is the name of the HTML attribute that holds a block attribute's ID.
-// It defaults to "id".
+// IDTag is the former package-wide name of the HTML attribute that holds a
+// block attribute's ID. Renderers do not read it, so setting it cannot race
+// with rendering. Set RendererOptions.IDTag on each renderer instead.
+//
+// Deprecated: setting IDTag has no effect.
 var IDTag = "id"
 
 const (
@@ -59,7 +62,13 @@ type RendererOptions struct {
 	Flags                      Flags          // Optional renderer behavior.
 	RenderNodeHook             RenderNodeFunc // Optional node rendering override.
 	Comments                   [][]byte       // Code comment markers for callouts.
-	Generator                  string         // Complete-page generator meta tag.
+	// Generator is the complete generator element written into a complete page,
+	// including its closing quote and '>'. An empty value selects the default
+	// element, which uses the XHTML closer when UseXHTML is set.
+	Generator string
+	// IDTag is the attribute name used for a block attribute's ID.
+	// An empty value means "id".
+	IDTag string
 }
 
 // Renderer renders an AST as HTML. Construct one with NewRenderer.
@@ -74,6 +83,15 @@ type Renderer struct {
 	sr                *SPRenderer
 	documentMatter    ast.DocumentMatters
 	textBuf           bytes.Buffer // reused by Text for escaped text before smartypants
+	// headingAnchors remembers the id written for a heading. The table of
+	// contents and the heading itself both ask for it, and a later render of
+	// the same node must not add the prefix and suffix a second time.
+	headingAnchors map[*ast.Heading]headingAnchor
+}
+
+// headingAnchor is the output id of a heading and the HeadingID it was built from.
+type headingAnchor struct {
+	base, id string
 }
 
 // NewRenderer creates an HTML renderer.
@@ -89,7 +107,10 @@ func NewRenderer(opts RendererOptions) *Renderer {
 		opts.CitationFormatString = `<sup>[%s]</sup>`
 	}
 	if opts.Generator == "" {
-		opts.Generator = `  <meta name="GENERATOR" content="github.com/gomarkdown/markdown markdown processor for Go`
+		opts.Generator = `  <meta name="GENERATOR" content="github.com/gomarkdown/markdown markdown processor for Go"` + closeTag
+	}
+	if opts.IDTag == "" {
+		opts.IDTag = "id"
 	}
 	return &Renderer{
 		Opts:       opts,

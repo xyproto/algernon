@@ -143,7 +143,7 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
-# github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c
+# github.com/gomarkdown/markdown v0.0.0-20261123200727-167101872811
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -265,7 +265,7 @@ github.com/pingcap/errors
 # github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1
 ## explicit; go 1.25
 github.com/pingcap/log
-# github.com/pingcap/tidb/pkg/parser v0.0.0-20261122003531-bca43971a06d
+# github.com/pingcap/tidb/pkg/parser v0.0.0-20261124123402-a935aa47b6e7
 ## explicit; go 1.27.3
 github.com/pingcap/tidb/pkg/parser/charset
 github.com/pingcap/tidb/pkg/parser/format
@@ -277,7 +277,7 @@ github.com/pkg/browser
 # github.com/quic-go/qpack v0.6.0
 ## explicit; go 1.24
 github.com/quic-go/qpack
-# github.com/quic-go/quic-go v0.65.0
+# github.com/quic-go/quic-go v0.66.0
 ## explicit; go 1.26.0
 github.com/quic-go/quic-go
 github.com/quic-go/quic-go/http3
@@ -288,6 +288,7 @@ github.com/quic-go/quic-go/internal/handshake
 github.com/quic-go/quic-go/internal/monotime
 github.com/quic-go/quic-go/internal/protocol
 github.com/quic-go/quic-go/internal/qerr
+github.com/quic-go/quic-go/internal/udp
 github.com/quic-go/quic-go/internal/utils
 github.com/quic-go/quic-go/internal/utils/linkedlist
 github.com/quic-go/quic-go/internal/utils/minheap

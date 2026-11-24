@@ -5,6 +5,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // sliceOffset reports where part starts in whole when part is a suffix backed
@@ -30,26 +32,13 @@ func IsEmpty(data []byte) int {
 			return 0
 		}
 	}
-	i = skipCharN(data, i, '\n', 1)
+	i = textutil.SkipCharN(data, i, '\n', 1)
 	return i
-}
-
-// skipWhile advances i as long as keep(data[i]) holds.
-func skipWhile(data []byte, i int, keep func(byte) bool) int {
-	for i < len(data) && keep(data[i]) {
-		i++
-	}
-	return i
-}
-
-// skipChar advances i as long as data[i] == c
-func skipChar(data []byte, i int, c byte) int {
-	return skipWhile(data, i, func(b byte) bool { return b == c })
 }
 
 // nextByteIs reports whether the byte after data[i] is c.
 func nextByteIs(data []byte, i int, c byte) bool {
-	return i+1 < len(data) && data[i+1] == c
+	return textutil.ByteAt(data, i+1, c)
 }
 
 // byteIn reports whether c is one of the bytes in set.
@@ -59,7 +48,7 @@ func byteIn(c byte, set string) bool {
 
 // pairAt reports whether data[i] is a and the byte after it is b.
 func pairAt(data []byte, i int, a, b byte) bool {
-	return i >= 0 && i < len(data) && data[i] == a && nextByteIs(data, i, b)
+	return textutil.ByteAt(data, i, a) && nextByteIs(data, i, b)
 }
 
 // enclosedBy reports whether s starts with open and ends with a separate
@@ -86,15 +75,6 @@ func skipUntilAny(data []byte, i int, set string) int {
 	return i + j
 }
 
-// like skipChar but only skips up to max characters
-func skipCharN(data []byte, i int, c byte, max int) int {
-	for i < len(data) && max > 0 && data[i] == c {
-		i++
-		max--
-	}
-	return i
-}
-
 // skipUntilChar advances i as long as data[i] != c
 func skipUntilChar(data []byte, i int, c byte) int {
 	return skipUntilAny(data, i, string([]byte{c}))
@@ -113,14 +93,43 @@ func skipUntilUnescapedChar(data []byte, i int, c byte) int {
 }
 
 func skipHSpace(data []byte, i int) int {
-	return skipWhile(data, i, func(b byte) bool { return b == ' ' || b == '\t' })
+	return textutil.SkipWhile(data, i, func(b byte) bool { return b == ' ' || b == '\t' })
 }
 
-func backChar(data []byte, i int, c byte) int {
-	for i > 0 && data[i-1] == c {
-		i--
+// lineEnd returns the end of the line holding data[i-1]: the index after its
+// '\n', or len(data). It returns i if i is 0 or not before len(data).
+func lineEnd(data []byte, i int) int {
+	if i <= 0 || i >= len(data) {
+		return i
 	}
-	return i
+	if j := skipUntilChar(data, i-1, '\n'); j < len(data) {
+		return j + 1
+	}
+	return len(data)
+}
+
+// nextGatheredLine finds the next line of a block whose lines are gathered
+// one at a time: the line starts at data[start] and ends at or after i+1. It
+// returns the end of the line and whether it is blank, and records a blank
+// line in *sawBlank.
+func nextGatheredLine(data []byte, start, i int, sawBlank *bool) (end int, blank bool) {
+	end = lineEnd(data, i+1)
+	blank = IsEmpty(data[start:end]) > 0
+	if blank {
+		*sawBlank = true
+	}
+	return end, blank
+}
+
+// hasUnescapedSpace reports whether data[start:end] has a space that is not
+// escaped with a backslash.
+func hasUnescapedSpace(data []byte, start, end int) bool {
+	for i := start; i < end; i++ {
+		if IsSpace(data[i]) && !isEscape(data, i) {
+			return true
+		}
+	}
+	return false
 }
 
 // backUntilChar moves i back to just after the last c before it, or to 0.
@@ -132,15 +141,12 @@ func backUntilChar(data []byte, i int, c byte) int {
 }
 
 func prefixedBlock(data []byte, marker string) int {
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 	if !bytes.HasPrefix(data[i:], []byte(marker)) {
 		return 0
 	}
 	i += len(marker)
-	if i < len(data) && data[i] == ' ' {
-		i++
-	}
-	return i
+	return textutil.SkipCharN(data, i, ' ', 1)
 }
 
 func terminatesPrefixedBlock(data []byte, begin, end int, prefix func([]byte) int) bool {
@@ -148,9 +154,13 @@ func terminatesPrefixedBlock(data []byte, begin, end int, prefix func([]byte) in
 		(end >= len(data) || prefix(data[end:]) == 0 && IsEmpty(data[end:]) == 0)
 }
 
+// punctuation is the ASCII set IsPunctuation recognizes. A string avoids
+// allocating that set on every call; emphasis checks it for each closer.
+const punctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
 // IsPunctuation returns true if c is a punctuation symbol.
 func IsPunctuation(c byte) bool {
-	return bytes.IndexByte([]byte("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"), c) >= 0
+	return strings.IndexByte(punctuation, c) >= 0
 }
 
 func IsPunctuation2(d []byte) bool {

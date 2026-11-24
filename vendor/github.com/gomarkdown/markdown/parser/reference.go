@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // reference is the parser's resolved target for both reference-style links and
@@ -32,7 +33,7 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 	if len(data) < 4 {
 		return 0
 	}
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 
 	noteID := 0
 
@@ -41,7 +42,7 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 		return 0
 	}
 	i++
-	if p.extensions&Footnotes != 0 && i < len(data) && data[i] == '^' {
+	if p.extensions&Footnotes != 0 && textutil.ByteAt(data, i, '^') {
 		// The final pass assigns the real ID; this only marks a footnote.
 		noteID = 1
 		i++
@@ -50,7 +51,7 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 	for i < len(data) && data[i] != '\n' && data[i] != '\r' && data[i] != ']' {
 		i++
 	}
-	if i >= len(data) || data[i] != ']' {
+	if !textutil.ByteAt(data, i, ']') {
 		return 0
 	}
 	idEnd := i
@@ -61,14 +62,14 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 	}
 	// spacer: colon (space | tab)* newline? (space | tab)*
 	i++
-	if i >= len(data) || data[i] != ':' {
+	if !textutil.ByteAt(data, i, ':') {
 		return 0
 	}
 	i++
 	i = skipHSpace(data, i)
 	if i < len(data) && (data[i] == '\n' || data[i] == '\r') {
 		i++
-		if i < len(data) && data[i] == '\n' && data[i-1] == '\r' {
+		if textutil.ByteAt(data, i, '\n') && data[i-1] == '\r' {
 			i++
 		}
 	}
@@ -129,15 +130,18 @@ func isReference(p *Parser, data []byte, tabSize int) int {
 }
 
 func scanLinkRef(data []byte, i int) (linkOffset, linkEnd, titleOffset, titleEnd, lineEnd int) {
-	// link: whitespace-free sequence, optionally between angle brackets
+	// link: whitespace-free sequence, optionally between angle brackets.
+	// The opening '<' is not part of the destination, so remember it before
+	// advancing; checking data[linkOffset] afterwards never sees it.
+	bracketed := false
 	if data[i] == '<' {
 		i++
+		bracketed = true
 	}
 	linkOffset = i
 	i = skipUntilAny(data, i, " \t\n\r")
 	linkEnd = i
-	if linkEnd < len(data) && data[linkOffset] == '<' && data[linkEnd-1] == '>' {
-		linkOffset++
+	if bracketed && linkEnd > linkOffset && data[linkEnd-1] == '>' {
 		linkEnd--
 	}
 
@@ -199,17 +203,13 @@ func scanFootnote(data []byte, i, indentSize int) (blockStart, blockEnd int, con
 	}
 
 	// skip leading whitespace on first line
-	for i < len(data) && data[i] == ' ' {
-		i++
-	}
+	i = textutil.SkipChar(data, i, ' ')
 
 	blockStart = i
 
 	// find the end of the line
 	blockEnd = i
-	for i < len(data) && data[i-1] != '\n' {
-		i++
-	}
+	i = lineEnd(data, i)
 
 	// get working buffer
 	var raw bytes.Buffer
@@ -223,17 +223,10 @@ func scanFootnote(data []byte, i, indentSize int) (blockStart, blockEnd int, con
 
 gatherLines:
 	for blockEnd < len(data) {
-		i++
-
-		// find the end of this line
-		for i < len(data) && data[i-1] != '\n' {
-			i++
-		}
-
 		// if it is an empty line, guess that it is part of this item
 		// and move on to the next line
-		if IsEmpty(data[blockEnd:i]) > 0 {
-			containsBlankLine = true
+		var blank bool
+		if i, blank = nextGatheredLine(data, blockEnd, i, &containsBlankLine); blank {
 			blockEnd = i
 			continue
 		}

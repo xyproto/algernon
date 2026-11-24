@@ -94,6 +94,21 @@ type Container struct {
 	*Attribute // Block level attribute
 }
 
+// AttributeField returns the address of the block level attribute of n, which
+// may be a Container or a Leaf, or nil if n is neither.
+func AttributeField(n Node) **Attribute {
+	if n == nil {
+		return nil
+	}
+	if c := n.AsContainer(); c != nil {
+		return &c.Attribute
+	}
+	if l := n.AsLeaf(); l != nil {
+		return &l.Attribute
+	}
+	return nil
+}
+
 // CanContain is implemented by custom nodes to override canNodeContain: it
 // returns true if the node can contain a child of the given node type.
 type CanContain interface {

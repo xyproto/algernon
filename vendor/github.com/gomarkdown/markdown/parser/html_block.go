@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 var (
@@ -52,52 +53,53 @@ func (p *Parser) html(data []byte, doRender bool) int {
 	}
 	curtag, tagfound := p.htmlFindTag(data[1:])
 
-	// handle special cases
+	// handle special cases: an HTML comment or an <hr> tag
 	if !tagfound {
-		// check for an HTML comment
-		if size := p.htmlComment(data, doRender); size > 0 {
-			return size
-		}
-
-		// check for an <hr> tag
-		if size := p.htmlHr(data, doRender); size > 0 {
-			return size
-		}
-
-		// no special case recognized
-		return 0
+		return firstConsumed(
+			func() int { return p.htmlComment(data, doRender) },
+			func() int { return p.htmlHr(data, doRender) },
+		)
 	}
 
-	if p.markdownHTMLTag(curtag) {
-		if p.extensions&MarkdownInHTML != 0 && isHTMLStructureTag(curtag) {
-			if size := p.htmlStructuredBlock(data, curtag, doRender); size > 0 {
-				return size
+	markdownTag := p.markdownHTMLTag(curtag)
+	return firstConsumed(
+		func() int {
+			if !markdownTag || p.extensions&MarkdownInHTML == 0 || !isHTMLStructureTag(curtag) {
+				return 0
 			}
-		}
-		if size := p.htmlMarkdownBlock(data, curtag, doRender); size > 0 {
-			return size
-		}
-	}
+			return p.htmlStructuredBlock(data, curtag, doRender)
+		},
+		func() int {
+			if !markdownTag {
+				return 0
+			}
+			return p.htmlMarkdownBlock(data, curtag, doRender)
+		},
+		func() int { return p.htmlRawBlock(data, curtag, doRender) },
+	)
+}
 
+// htmlRawBlock parses an HTML block that ends at the closing tag of tag.
+func (p *Parser) htmlRawBlock(data []byte, tag string, doRender bool) int {
 	// Following Markdown.pl, ins and del cannot form these blocks.
-	if curtag == "ins" || curtag == "del" {
+	if tag == "ins" || tag == "del" {
 		return 0
 	}
-	_, consumed := p.findHTMLCloseTag(data, curtag, 1, false)
+	_, consumed := p.findHTMLCloseTag(data, tag, 1, false)
 	if consumed == 0 {
 		return 0
 	}
-
-	if doRender {
-		end := backChar(data, consumed, '\n')
-		p.addHTMLBlock(data[:end])
-	}
-	return consumed
+	return p.emitHTMLBlock(data, consumed, doRender)
 }
 
 func (p *Parser) markdownHTMLTag(tag string) bool {
-	return inStringSet(markdownHTMLBlockTags, tag) ||
-		p.extensions&MarkdownInHTML != 0 && inStringSet(markdownInHTMLTags, tag)
+	return inStringSet(markdownHTMLBlockTags, tag) || p.markdownInHTMLTag(tag)
+}
+
+// markdownInHTMLTag reports whether tag is a block tag only because the
+// MarkdownInHTML extension is on.
+func (p *Parser) markdownInHTMLTag(tag string) bool {
+	return p.extensions&MarkdownInHTML != 0 && inStringSet(markdownInHTMLTags, tag)
 }
 
 func isHTMLStructureTag(tag string) bool {
@@ -175,10 +177,7 @@ func (p *Parser) findHTMLCloseTag(data []byte, tag string, start int, loose bool
 	}
 	closeStart, consumed = p.scanHTMLCloseTag(data, tag, start, loose)
 	if consumed == 0 {
-		if p.htmlCloseMisses == nil {
-			p.htmlCloseMisses = map[htmlCloseKey]int{}
-		}
-		p.htmlCloseMisses[key] = tail
+		textutil.MapSet(&p.htmlCloseMisses, key, tail)
 	}
 	return closeStart, consumed
 }
@@ -211,16 +210,13 @@ func htmlFindEndLoose(tag string, data []byte) int {
 		return 0
 	}
 	i := len(closetag)
-	for i < len(data) && data[i] != '\n' {
-		if data[i] != ' ' && data[i] != '\t' {
-			return 0
-		}
-		i++
+	if i == len(data) {
+		return i
 	}
-	if i < len(data) && data[i] == '\n' {
-		i++
+	if n := IsEmpty(data[i:]); n > 0 {
+		return i + n
 	}
-	return i
+	return 0
 }
 
 func (p *Parser) htmlStructuredBlock(data []byte, tag string, doRender bool) int {
@@ -251,7 +247,7 @@ func (p *Parser) parseHTMLInterior(data []byte) {
 			continue
 		}
 		i := skipHSpace(data, 0)
-		if i < len(data) && data[i] == '<' {
+		if textutil.ByteAt(data, i, '<') {
 			if n := p.html(data[i:], true); n > 0 {
 				data = data[i+n:]
 				continue
@@ -289,10 +285,14 @@ func (p *Parser) htmlBlockBeforeBlank(data []byte, i int, doRender bool) int {
 	if j == 0 {
 		return 0
 	}
-	size := i + j
+	return p.emitHTMLBlock(data, i+j, doRender)
+}
+
+// emitHTMLBlock adds data[:size], without trailing newlines, as an HTML block
+// if doRender is set, and returns size.
+func (p *Parser) emitHTMLBlock(data []byte, size int, doRender bool) int {
 	if doRender {
-		end := backChar(data, size, '\n')
-		p.addHTMLBlock(data[:end])
+		p.addHTMLBlock(data[:textutil.BackChar(data, size, '\n')])
 	}
 	return size
 }
@@ -310,27 +310,24 @@ func (p *Parser) htmlHr(data []byte, doRender bool) int {
 		return 0
 	}
 	i := skipUntilAny(data, 3, ">\n")
-	if i < len(data) && data[i] == '>' {
+	if textutil.ByteAt(data, i, '>') {
 		return p.htmlBlockBeforeBlank(data, i+1, doRender)
 	}
 	return 0
 }
 
 func (p *Parser) htmlFindTag(data []byte) (string, bool) {
-	i := skipWhile(data, 0, IsAlnum)
+	i := textutil.SkipWhile(data, 0, IsAlnum)
 	key := string(data[:i])
-	if inStringSet(blockTags, key) ||
-		p.extensions&MarkdownInHTML != 0 && inStringSet(markdownInHTMLTags, key) {
+	if inStringSet(blockTags, key) || p.markdownInHTMLTag(key) {
 		return key, true
 	}
 	return "", false
 }
 
 func (p *Parser) htmlFindEnd(tag string, data []byte) int {
-	// assume data[0] == '<' && data[1] == '/' already tested
-	if tag == "hr" {
-		return 2
-	}
+	// assume data[0] == '<' && data[1] == '/' already tested.
+	// hr is not a block tag, so it never reaches this function.
 	// check if tag is a match
 	closetag := []byte("</" + tag + ">")
 	if !bytes.HasPrefix(data, closetag) {

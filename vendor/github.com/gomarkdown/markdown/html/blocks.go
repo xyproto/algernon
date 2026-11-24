@@ -10,12 +10,19 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
+// emitsHTML reports whether block n produces HTML output; reference
+// definitions do not.
+func emitsHTML(n ast.Node) bool {
+	_, hidden := n.(*ast.ReferenceDefinition)
+	return !hidden
+}
+
 // prevVisibleBlock returns the previous sibling of n, skipping siblings that
 // emit no HTML, such as reference definitions, so inter-block spacing stays
 // stable.
 func prevVisibleBlock(n ast.Node) ast.Node {
 	for prev := ast.GetPrevNode(n); prev != nil; prev = ast.GetPrevNode(prev) {
-		if _, hidden := prev.(*ast.ReferenceDefinition); !hidden {
+		if emitsHTML(prev) {
 			return prev
 		}
 	}
@@ -103,9 +110,14 @@ func (r *Renderer) MakeUniqueHeadingID(hdr *ast.Heading) string {
 	if hdr.HeadingID == "" {
 		return ""
 	}
-	id := r.EnsureUniqueHeadingID(hdr.HeadingID)
-	id = r.Opts.HeadingIDPrefix + id + r.Opts.HeadingIDSuffix
-	hdr.HeadingID = id
+	if anchor, ok := r.headingAnchors[hdr]; ok && anchor.base == hdr.HeadingID {
+		return anchor.id
+	}
+	id := r.Opts.HeadingIDPrefix + r.EnsureUniqueHeadingID(hdr.HeadingID) + r.Opts.HeadingIDSuffix
+	if r.headingAnchors == nil {
+		r.headingAnchors = map[*ast.Heading]headingAnchor{}
+	}
+	r.headingAnchors[hdr] = headingAnchor{base: hdr.HeadingID, id: id}
 	return id
 }
 
@@ -150,6 +162,13 @@ func (r *Renderer) HorizontalRule(w io.Writer, node *ast.HorizontalRule) {
 // ast.Callout node.
 func (r *Renderer) EscapeHTMLCallouts(w io.Writer, d []byte) {
 	ld := len(d)
+	// start is the first byte of the current run of characters that need no escape.
+	start := 0
+	flush := func(end int) {
+		if end > start {
+			w.Write(d[start:end])
+		}
+	}
 Parse:
 	for i := 0; i < ld; i++ {
 		for _, comment := range r.Opts.Comments {
@@ -161,31 +180,29 @@ Parse:
 			lc := len(comment)
 			if i+lc < ld {
 				if id, consumed := parser.IsCallout(d[i+lc:]); consumed > 0 {
-					// We have seen a callout
-					callout := &ast.Callout{ID: id}
-					r.Callout(w, callout)
+					flush(i)
+					r.Callout(w, &ast.Callout{ID: id})
 					i += consumed + lc - 1
+					start = i + 1
 					continue Parse
 				}
 			}
 		}
 
-		escSeq := Escaper[d[i]]
-		if escSeq != nil {
+		if escSeq := Escaper[d[i]]; escSeq != nil {
+			flush(i)
 			w.Write(escSeq)
-		} else {
-			w.Write(d[i : i+1])
+			start = i + 1
 		}
 	}
+	flush(ld)
 }
 
 // CodeBlock writes ast.CodeBlock node
 func (r *Renderer) CodeBlock(w io.Writer, codeBlock *ast.CodeBlock) {
 	r.CR(w)
 	r.codeBlockElement(w, codeBlock)
-	if !IsListItem(codeBlock.Parent) {
-		r.CR(w)
-	}
+	r.crIf(w, !IsListItem(codeBlock.Parent))
 }
 
 // codeBlockElement writes the <pre><code> element of a code block, with its
@@ -238,9 +255,7 @@ func (r *Renderer) TableCell(w io.Writer, tableCell *ast.TableCell, entering boo
 	if colspan := tableCell.ColSpan; colspan > 0 {
 		attrs = append(attrs, fmt.Sprintf(`colspan="%d"`, colspan))
 	}
-	if ast.GetPrevNode(tableCell) == nil {
-		r.CR(w)
-	}
+	r.crIf(w, ast.GetPrevNode(tableCell) == nil)
 	r.OutTag(w, openTag, attrs)
 }
 
@@ -250,12 +265,18 @@ func (r *Renderer) TableBody(w io.Writer, node *ast.TableBody, entering bool) {
 		r.CR(w)
 		r.Outs(w, "<tbody>")
 		// Preserve the historical newline for empty table bodies.
-		if ast.GetFirstChild(node) == nil {
-			r.CR(w)
-		}
+		r.crIf(w, ast.GetFirstChild(node) == nil)
 	} else {
 		r.Outs(w, "</tbody>")
 		r.CR(w)
+	}
+}
+
+// closeMatterSection closes the <section> of the current document matter, if
+// one is open.
+func (r *Renderer) closeMatterSection(w io.Writer) {
+	if r.documentMatter != ast.DocumentMatterNone {
+		r.Outs(w, "</section>\n")
 	}
 }
 
@@ -264,9 +285,7 @@ func (r *Renderer) DocumentMatter(w io.Writer, node *ast.DocumentMatter, enterin
 	if !entering {
 		return
 	}
-	if r.documentMatter != ast.DocumentMatterNone {
-		r.Outs(w, "</section>\n")
-	}
+	r.closeMatterSection(w)
 	if name := matter.Name(node.Matter); name != "" {
 		r.Outs(w, `<section data-matter="`+name+`">`)
 	}
@@ -297,13 +316,13 @@ func (r *Renderer) Citation(w io.Writer, node *ast.Citation) {
 // Callout writes ast.Callout node
 func (r *Renderer) Callout(w io.Writer, node *ast.Callout) {
 	r.OutTag(w, "<span", []string{`class="callout"`})
-	r.Out(w, node.ID)
+	EscapeHTML(w, node.ID)
 	r.Outs(w, "</span>")
 }
 
 // Index writes ast.Index node
 func (r *Renderer) Index(w io.Writer, node *ast.Index) {
 	// there is no in-text representation.
-	r.OutTag(w, "<span", []string{`class="index"`, fmt.Sprintf(`id="%s"`, node.ID)})
+	r.OutTag(w, "<span", []string{`class="index"`, `id="` + escapeAttr(node.ID) + `"`})
 	r.Outs(w, "</span>")
 }

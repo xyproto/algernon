@@ -1,6 +1,6 @@
 //go:build linux
 
-package quic
+package udp
 
 import (
 	"encoding/binary"
@@ -11,7 +11,10 @@ import (
 	"syscall"
 	"unsafe"
 
+	"golang.org/x/net/ipv4"
 	"golang.org/x/sys/unix"
+
+	"github.com/quic-go/quic-go/internal/utils"
 )
 
 const (
@@ -61,6 +64,11 @@ func parseIPv4PktInfo(body []byte) (ip netip.Addr, ifIndex uint32, ok bool) {
 	return netip.AddrFrom4(*(*[4]byte)(body[8:12])), binary.NativeEndian.Uint32(body), true
 }
 
+func marshalIPv4PktInfo(ip [4]byte, ifIndex uint32) []byte {
+	cm := ipv4.ControlMessage{Src: ip[:], IfIndex: int(ifIndex)}
+	return cm.Marshal()
+}
+
 // isGSOEnabled tests if the kernel supports GSO.
 // Sending with GSO might still fail later on, if the interface doesn't support it (see isGSOError).
 func isGSOEnabled(conn syscall.RawConn) bool {
@@ -95,7 +103,7 @@ func appendUDPSegmentSizeMsg(b []byte, size uint16) []byte {
 	return b
 }
 
-func isGSOError(err error) bool {
+func IsGSOError(err error) bool {
 	if serr, ok := errors.AsType[*os.SyscallError](err); ok {
 		// EIO is returned by udp_send_skb() if the device driver does not have tx checksums enabled,
 		// which is a hard requirement of UDP_SEGMENT. See:
@@ -109,7 +117,7 @@ func isGSOError(err error) bool {
 // The first sendmsg call on a new UDP socket sometimes errors on Linux.
 // It's not clear why this happens.
 // See https://github.com/golang/go/issues/63322.
-func isPermissionError(err error) bool {
+func IsPermissionError(err error) bool {
 	if serr, ok := errors.AsType[*os.SyscallError](err); ok {
 		return serr.Syscall == "sendmsg" && serr.Err == unix.EPERM
 	}
@@ -152,3 +160,35 @@ func kernelVersion() (major, minor int) {
 
 	return values[0], values[1]
 }
+
+func setDF(rawConn syscall.RawConn) (bool, error) {
+	// Enabling IP_MTU_DISCOVER will force the kernel to return "sendto: message too long"
+	// and the datagram will not be fragmented
+	var errDFIPv4, errDFIPv6 error
+	if err := rawConn.Control(func(fd uintptr) {
+		errDFIPv4 = unix.SetsockoptInt(int(fd), unix.IPPROTO_IP, unix.IP_MTU_DISCOVER, unix.IP_PMTUDISC_PROBE)
+		errDFIPv6 = unix.SetsockoptInt(int(fd), unix.IPPROTO_IPV6, unix.IPV6_MTU_DISCOVER, unix.IPV6_PMTUDISC_PROBE)
+	}); err != nil {
+		return false, err
+	}
+	switch {
+	case errDFIPv4 == nil && errDFIPv6 == nil:
+		utils.DefaultLogger.Debugf("Setting DF for IPv4 and IPv6.")
+	case errDFIPv4 == nil && errDFIPv6 != nil:
+		utils.DefaultLogger.Debugf("Setting DF for IPv4.")
+	case errDFIPv4 != nil && errDFIPv6 == nil:
+		utils.DefaultLogger.Debugf("Setting DF for IPv6.")
+	case errDFIPv4 != nil && errDFIPv6 != nil:
+		return false, errors.New("setting DF failed for both IPv4 and IPv6")
+	}
+	return true, nil
+}
+
+func IsSendMsgSizeErr(err error) bool {
+	// https://man7.org/linux/man-pages/man7/udp.7.html
+	return errors.Is(err, unix.EMSGSIZE)
+}
+
+func IsRecvMsgSizeErr(error) bool { return false }
+
+const desiredBufferSize = 7 << 20 // 7 MiB

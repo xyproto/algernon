@@ -209,7 +209,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 			i++
 			continue
 		}
-		end := skipChar(data, i, '`')
+		end := textutil.SkipChar(data, i, '`')
 		backticks[end-i] = append(backticks[end-i], i)
 		i = end
 	}
@@ -229,7 +229,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 		switch c {
 		case '~':
 			if strikethrough {
-				end := skipChar(data, i, c)
+				end := textutil.SkipChar(data, i, c)
 				token := appendNode(newTextNode(data[i:end]))
 				if end-i == 2 {
 					open, close := commonMarkFlanking(data, i, end)
@@ -243,7 +243,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 				continue
 			}
 		case '*', '_':
-			end := skipChar(data, i, c)
+			end := textutil.SkipChar(data, i, c)
 			token := appendNode(newTextNode(data[i:end]))
 			open, close := commonMarkFlanking(data, i, end)
 			d := &commonMarkDelimiter{token: token, char: c, length: end - i, open: open, close: close, prev: lastDelimiter}
@@ -255,7 +255,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 			continue
 		case '[', '!':
 			image := c == '!'
-			if !image || i+1 < len(data) && data[i+1] == '[' {
+			if !image || textutil.ByteAt(data, i+1, '[') {
 				width := 1
 				if image {
 					width = 2
@@ -292,7 +292,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 				}
 			}
 		case '`':
-			end := skipChar(data, i, '`')
+			end := textutil.SkipChar(data, i, '`')
 			count := end - i
 			positions := backticks[count]
 			for len(positions) > 0 && positions[0] <= i {
@@ -329,7 +329,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 				continue
 			}
 		case '\\':
-			if i+1 < len(data) && data[i+1] == '\n' {
+			if textutil.ByteAt(data, i+1, '\n') {
 				appendNode(&ast.Hardbreak{})
 				i = skipHSpace(data, i+2)
 				continue
@@ -373,10 +373,7 @@ func (p *Parser) commonMarkInline(parent ast.Node, data []byte) {
 				literal := commonMarkLiteral(data[i : i+n])
 				link := &ast.Link{Destination: commonMarkURL(literal)}
 				ast.AppendChild(link, newTextNode(literal))
-				if autolinks == nil {
-					autolinks = map[*ast.Link]bool{}
-				}
-				autolinks[link] = true
+				textutil.MapSet(&autolinks, link, true)
 				appendNode(link)
 				i += n
 				continue
@@ -516,11 +513,14 @@ func commonMarkUnicodeSpace(r rune) bool {
 	return r == '\t' || r == '\n' || r == '\f' || r == '\r' || unicode.Is(unicode.Zs, r)
 }
 
+// commonMarkURLEscapes are the ASCII bytes percent-encoded in a destination.
+const commonMarkURLEscapes = "\"<>\\`{}|^[]"
+
 func commonMarkURL(source []byte) []byte {
 	const hex = "0123456789ABCDEF"
 	result := make([]byte, 0, len(source))
 	for _, c := range source {
-		if c >= 0x80 || c <= 0x20 || bytes.IndexByte([]byte("\"<>\\`{}|^[]"), c) >= 0 {
+		if c >= 0x80 || c <= 0x20 || strings.IndexByte(commonMarkURLEscapes, c) >= 0 {
 			result = append(result, '%', hex[c>>4], hex[c&15])
 		} else {
 			result = append(result, c)
@@ -530,13 +530,13 @@ func commonMarkURL(source []byte) []byte {
 }
 
 func (p *Parser) commonMarkLinkTarget(data []byte, start int, label []byte) (end int, destination, title []byte, ok bool) {
-	if start < len(data) && data[start] == '(' {
+	if textutil.ByteAt(data, start, '(') {
 		if end, destination, title, ok = p.parseCommonMarkInlineLink(data, start); ok {
 			return
 		}
 	}
 	end = start
-	if start < len(data) && data[start] == '[' {
+	if textutil.ByteAt(data, start, '[') {
 		if close := commonMarkLabelEnd(data, start+1); close >= 0 {
 			if close > start+1 {
 				label = data[start+1 : close]
@@ -682,7 +682,7 @@ func (p *Parser) commonMarkTitle(data []byte, start int) (end int, title []byte,
 
 func (p *Parser) parseCommonMarkInlineLink(data []byte, open int) (end int, destination, title []byte, ok bool) {
 	i := commonMarkLinkSpace(data, open+1)
-	if i < len(data) && data[i] == ')' {
+	if textutil.ByteAt(data, i, ')') {
 		return i + 1, nil, nil, true
 	}
 	destEnd, dest, found := commonMarkDestination(data, i)
@@ -696,7 +696,7 @@ func (p *Parser) parseCommonMarkInlineLink(data []byte, open int) (end int, dest
 			j = commonMarkLinkSpace(data, titleEnd)
 		}
 	}
-	if j >= len(data) || data[j] != ')' {
+	if !textutil.ByteAt(data, j, ')') {
 		return 0, nil, nil, false
 	}
 	return j + 1, commonMarkURL(commonMarkLiteral(dest)), title, true
@@ -704,7 +704,7 @@ func (p *Parser) parseCommonMarkInlineLink(data []byte, open int) (end int, dest
 
 func commonMarkLinkSpace(data []byte, start int) int {
 	i := skipHSpace(data, start)
-	if i < len(data) && data[i] == '\n' {
+	if textutil.ByteAt(data, i, '\n') {
 		i = skipHSpace(data, i+1)
 	}
 	return i
@@ -730,7 +730,7 @@ func commonMarkAngle(source []byte, offset int, closers *[4]nextMatchCache) (int
 		if commonMarkAutolink.Match(label) || commonMarkEmail.Match(label) {
 			destination := commonMarkURL(label)
 			if commonMarkEmail.Match(label) {
-				destination = append([]byte("mailto:"), destination...)
+				destination = textutil.Concat("mailto:", destination)
 			}
 			link := &ast.Link{Destination: destination}
 			ast.AppendChild(link, newTextNode(label))

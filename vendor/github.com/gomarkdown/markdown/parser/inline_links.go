@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 func (p *Parser) inlineHTMLComment(data []byte) int {
@@ -20,11 +21,8 @@ func (p *Parser) inlineHTMLComment(data []byte) int {
 }
 
 func stripMailto(link []byte) []byte {
-	if bytes.HasPrefix(link, []byte("mailto://")) {
-		return link[9:]
-	}
-	if bytes.HasPrefix(link, []byte("mailto:")) {
-		return link[7:]
+	if rest, ok := bytes.CutPrefix(link, []byte("mailto:")); ok {
+		return bytes.TrimPrefix(rest, []byte("//"))
 	}
 	return link
 }
@@ -90,7 +88,7 @@ func leftAngle(p *Parser, data []byte, offset int) (int, ast.Node) {
 		Destination: link,
 	}
 	if altype == emailAutolink {
-		node.Destination = append([]byte("mailto:"), link...)
+		node.Destination = textutil.Concat("mailto:", link)
 	}
 	ast.AppendChild(node, newTextNode(stripMailto(link)))
 	return end, node
@@ -257,13 +255,13 @@ func tagLength(data []byte) (autolink autolinkType, end int) {
 	for i < len(data) && (IsAlnum(data[i]) || data[i] == '.' || data[i] == '+' || data[i] == '-') {
 		i++
 	}
-	if i > 1 && i < len(data) && data[i] == '@' {
+	if i > 1 && textutil.ByteAt(data, i, '@') {
 		if j := isMailtoAutoLink(data[i:]); j != 0 {
 			return emailAutolink, i + j
 		}
 	}
 
-	if i > 2 && i < len(data) && data[i] == ':' {
+	if i > 2 && textutil.ByteAt(data, i, ':') {
 		autolink = normalAutolink
 		i++
 		contentStart := i

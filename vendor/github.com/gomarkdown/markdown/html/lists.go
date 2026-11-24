@@ -45,9 +45,7 @@ func (r *Renderer) listEnter(w io.Writer, nodeData *ast.List) {
 	r.CR(w)
 	if IsListItem(nodeData.Parent) {
 		grand := nodeData.Parent.GetParent()
-		if IsListTight(grand) {
-			r.CR(w)
-		}
+		r.crIf(w, IsListTight(grand))
 	}
 
 	if nodeData.ListFlags&ast.ListTypeOrdered != 0 {
@@ -65,9 +63,7 @@ func (r *Renderer) listExit(w io.Writer, list *ast.List) {
 	parent := list.Parent
 	switch parent.(type) {
 	case *ast.ListItem:
-		if ast.GetNextNode(list) != nil {
-			r.CR(w)
-		}
+		r.crIf(w, ast.GetNextNode(list) != nil)
 	case *ast.Document, *ast.BlockQuote, *ast.Aside:
 		r.CR(w)
 	}
@@ -83,9 +79,7 @@ func (r *Renderer) List(w io.Writer, list *ast.List, entering bool) {
 }
 
 func (r *Renderer) listItemEnter(w io.Writer, listItem *ast.ListItem) {
-	if ListItemOpenCR(listItem) {
-		r.CR(w)
-	}
+	r.crIf(w, ListItemOpenCR(listItem))
 	if listItem.RefLink != nil {
 		slug := Slugify(listItem.RefLink)
 		r.Outs(w, FootnoteItem(r.Opts.FootnoteAnchorPrefix, slug))

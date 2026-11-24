@@ -3,6 +3,8 @@ package parser
 import (
 	"bytes"
 	"sort"
+
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // blockIndex stores line-oriented facts that would otherwise be rediscovered
@@ -50,11 +52,8 @@ func (x *blockIndex) ensureFences(prefix string) map[string][]int {
 	if closers, ok := x.fenceClosers[prefix]; ok {
 		return closers
 	}
-	if x.fenceClosers == nil {
-		x.fenceClosers = make(map[string]map[string][]int)
-	}
 	closers := make(map[string][]int)
-	x.fenceClosers[prefix] = closers
+	textutil.MapSet(&x.fenceClosers, prefix, closers)
 	for start := 0; start < len(x.data); {
 		_, n := commonMarkLine(x.data[start:])
 		end := start + n

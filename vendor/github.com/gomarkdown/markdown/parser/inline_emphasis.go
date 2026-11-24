@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // single and double emphasis parsing
@@ -11,7 +12,7 @@ func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 	// Registering '~' for subscript must not enable double-tilde syntax or
 	// reinterpret the suffix of a double-tilde opener as a single opener.
 	if data[offset] == '~' && p.extensions&Strikethrough == 0 {
-		if offset+1 < len(data) && data[offset+1] == '~' ||
+		if textutil.ByteAt(data, offset+1, '~') ||
 			offset > 0 && data[offset-1] == '~' && !isEscape(data, offset-1) {
 			return 0, nil
 		}
@@ -35,10 +36,8 @@ func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 				return 0, nil
 			}
 			ret++ // we started with data[1:] above.
-			for i := 1; i < ret; i++ {
-				if IsSpace(data[i]) && !isEscape(data, i) {
-					return 0, nil
-				}
+			if hasUnescapedSpace(data, 1, ret) {
+				return 0, nil
 			}
 			sub := &ast.Subscript{Leaf: ast.Leaf{Literal: data[1:ret]}}
 			return ret + 1, sub

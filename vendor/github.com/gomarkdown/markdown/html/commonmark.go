@@ -88,13 +88,7 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 				r.Outs(w, "</tt>")
 				return ast.SkipChildren, true
 			}
-			attrs := r.blockAttrs(n, imageAttrNames(r, n.Title)...)
-			if r.Opts.Flags&LazyLoadImages != 0 {
-				attrs = append(attrs, `loading="lazy"`)
-			}
-			r.Outs(w, tagStart("<img", attrs)+` src="`)
-			EscapeHTML(w, AddAbsPrefixToImage(n.Destination, r.Opts.AbsolutePrefix))
-			r.Outs(w, `" alt="`)
+			r.imageOpen(w, n, n.Destination)
 			r.commonMarkImageText(w, n)
 			r.Outs(w, `"`)
 			if n.Title != nil {
@@ -113,7 +107,7 @@ func (r *Renderer) renderCommonMarkNode(w io.Writer, node ast.Node, entering boo
 
 func firstCommonMarkBlock(parent ast.Node) ast.Node {
 	for _, child := range parent.GetChildren() {
-		if _, hidden := child.(*ast.ReferenceDefinition); !hidden {
+		if emitsHTML(child) {
 			return child
 		}
 	}
@@ -128,9 +122,9 @@ func (r *Renderer) commonMarkImageText(w io.Writer, image ast.Node) {
 				EscapeHTML(w, n.Literal)
 			case *ast.Code:
 				EscapeHTML(w, n.Literal)
-			case *ast.Hardbreak:
-				r.HardBreak(w, n)
-			case *ast.Softbreak:
+			case *ast.Hardbreak, *ast.Softbreak:
+				// Alt text is an attribute. A <br> here would be literal text
+				// inside the quotes; the other image path strips that tag.
 				r.Outs(w, "\n")
 			}
 		}

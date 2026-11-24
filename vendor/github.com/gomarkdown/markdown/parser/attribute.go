@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // attribute parses a (potential) block attribute and adds it to p.
@@ -30,11 +31,8 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 		}
 	}
 
-	i := 1
-	if i < len(data) && data[i] == ':' {
-		i++
-	}
-	i = skipWhile(data, i, func(b byte) bool { return byteIn(b, " \t\f\v") })
+	i := textutil.SkipCharN(data, 1, ':', 1)
+	i = textutil.SkipWhile(data, i, func(b byte) bool { return byteIn(b, " \t\f\v") })
 
 	b := &ast.Attribute{Attrs: make(map[string][]byte)}
 	esc := false
@@ -48,8 +46,7 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 			if quote {
 				continue
 			}
-			chunk := data[trail+1 : i]
-			if len(chunk) > 0 && !addAttrChunk(b, chunk) {
+			if !addAttrChunk(b, data[trail+1:i], true) {
 				return nil, 0
 			}
 			trail = i
@@ -76,8 +73,7 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 				esc = false
 				continue
 			}
-			chunk := data[trail+1 : i]
-			if len(chunk) == 0 || !addAttrChunk(b, chunk) {
+			if !addAttrChunk(b, data[trail+1:i], false) {
 				return nil, 0
 			}
 			i++
@@ -89,8 +85,12 @@ func parseAttributeList(data []byte, requireEOL bool) (*ast.Attribute, int) {
 	return nil, 0
 }
 
-func addAttrChunk(b *ast.Attribute, chunk []byte) bool {
+// addAttrChunk adds chunk, a .class, #id or key=value, to b, and reports
+// whether chunk is valid. An empty chunk is valid only if emptyOK is set.
+func addAttrChunk(b *ast.Attribute, chunk []byte, emptyOK bool) bool {
 	switch {
+	case len(chunk) == 0:
+		return emptyOK
 	case chunk[0] == '.':
 		b.Classes = append(b.Classes, chunk[1:])
 	case chunk[0] == '#':
@@ -116,25 +116,15 @@ func mergeAttribute(dst, src *ast.Attribute) *ast.Attribute {
 		dst.ID = src.ID
 	}
 	dst.Classes = append(dst.Classes, src.Classes...)
-	if dst.Attrs == nil {
-		dst.Attrs = make(map[string][]byte)
-	}
 	for k, v := range src.Attrs {
-		dst.Attrs[k] = v
+		textutil.MapSet(&dst.Attrs, k, v)
 	}
 	return dst
 }
 
 func applyAttribute(n ast.Node, attr *ast.Attribute) {
-	if n == nil || attr == nil {
-		return
-	}
-	if c := n.AsContainer(); c != nil {
-		c.Attribute = mergeAttribute(c.Attribute, attr)
-		return
-	}
-	if l := n.AsLeaf(); l != nil {
-		l.Attribute = mergeAttribute(l.Attribute, attr)
+	if field := ast.AttributeField(n); field != nil && attr != nil {
+		*field = mergeAttribute(*field, attr)
 	}
 }
 
@@ -160,7 +150,7 @@ func parseAfterBlockAttribute(data []byte) (*ast.Attribute, int) {
 	if len(data) > 0 && data[0] == '\n' {
 		i++
 	}
-	i = skipCharN(data, i, ' ', 3)
+	i = textutil.SkipCharN(data, i, ' ', 3)
 	if !pairAt(data, i, '{', ':') {
 		return nil, 0
 	}
@@ -169,10 +159,7 @@ func parseAfterBlockAttribute(data []byte) (*ast.Attribute, int) {
 		return nil, 0
 	}
 	consumed := i + n
-	if consumed < len(data) && data[consumed] == '\n' {
-		consumed++
-	}
-	return attr, consumed
+	return attr, textutil.SkipCharN(data, consumed, '\n', 1)
 }
 
 func isAfterBlockIAL(data []byte) bool {

@@ -3,7 +3,9 @@ package parser
 import (
 	"bytes"
 	"path"
-	"path/filepath"
+	"strings"
+
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 var includeCaptions = [...]string{captionFigure, captionTable, captionQuote}
@@ -11,7 +13,7 @@ var includeCaptions = [...]string{captionFigure, captionTable, captionQuote}
 // isInclude parses {{path}}[address]. The optional address selects which lines
 // to include. It is treated as an opaque string and just given to readInclude.
 func isInclude(data []byte) (filename string, address []byte, consumed int) {
-	i := skipCharN(data, 0, ' ', 3) // start with up to 3 spaces
+	i := textutil.SkipCharN(data, 0, ' ', 3) // start with up to 3 spaces
 	if len(data[i:]) < 3 {
 		return "", nil, 0
 	}
@@ -32,7 +34,7 @@ func isInclude(data []byte) (filename string, address []byte, consumed int) {
 	}
 	filename = string(data[start:end])
 
-	if i+1 < len(data) && data[i+1] == '[' { // potential address specification
+	if textutil.ByteAt(data, i+1, '[') { // potential address specification
 		start := i + 2
 
 		end = skipUntilChar(data, start, ']')
@@ -57,7 +59,7 @@ func (p *Parser) readInclude(from, file string, address []byte) []byte {
 // isCodeInclude parses <{{...}}, which is like isInclude, except that the
 // returned bytes are wrapped in a code block.
 func isCodeInclude(data []byte) (filename string, address []byte, consumed int) {
-	i := skipCharN(data, 0, ' ', 3) // start with up to 3 spaces
+	i := textutil.SkipCharN(data, 0, ' ', 3) // start with up to 3 spaces
 	if len(data[i:]) < 3 {
 		return "", nil, 0
 	}
@@ -135,11 +137,28 @@ func newIncStack() *incStack {
 	return &incStack{}
 }
 
+// includePathIsAbs reports whether p is absolute. p uses slashes.
+// path.IsAbs only accepts a leading slash, so a Windows drive path such as
+// C:/dir/file is absolute here as well.
+func includePathIsAbs(p string) bool {
+	if path.IsAbs(p) {
+		return true
+	}
+	return len(p) >= 3 && p[1] == ':' && p[2] == '/' && isDriveLetter(p[0])
+}
+
+func isDriveLetter(b byte) bool {
+	return (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z')
+}
+
 // Push adds the directory of new, which is relative to the current one unless
-// it's absolute, to the stack.
+// it's absolute, to the stack. Paths stay slash-separated: include names are
+// document paths, and path.Dir does not treat a backslash as a separator.
+// A drive path (C:\dir\file) and a UNC path (\\server\share\file) are absolute.
 func (i *incStack) Push(new string) {
-	if !path.IsAbs(new) {
-		new = filepath.Join(i.Last(), new)
+	new = strings.ReplaceAll(new, `\`, `/`)
+	if !includePathIsAbs(new) {
+		new = path.Join(i.Last(), new)
 	}
 	i.stack = append(i.stack, path.Dir(new))
 }

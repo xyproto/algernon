@@ -31,9 +31,7 @@ func LinesUntilEmpty(data []byte) int {
 		i++
 
 		// find the end of this line
-		for i < len(data) && data[i-1] != '\n' {
-			i++
-		}
+		i = lineEnd(data, i)
 
 		if IsEmpty(data[line:i]) == 0 {
 			line = i

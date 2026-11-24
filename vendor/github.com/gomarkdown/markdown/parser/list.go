@@ -9,7 +9,7 @@ import (
 
 func uliPrefix(data []byte) int {
 	// start with up to 3 spaces
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 
 	if i >= len(data)-1 {
 		return 0
@@ -25,7 +25,7 @@ func uliPrefix(data []byte) int {
 // returns ordered list item prefix
 func oliPrefix(data []byte) int {
 	// start with up to 3 spaces
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 
 	// count the digits
 	start := i
@@ -156,13 +156,11 @@ func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 	}
 
 	// skip leading whitespace on first line
-	i = skipChar(data, i, ' ')
+	i = textutil.SkipChar(data, i, ' ')
 
 	// find the end of the line
 	line := i
-	for i > 0 && i < len(data) && data[i-1] != '\n' {
-		i++
-	}
+	i = lineEnd(data, i)
 
 	// get working buffer
 	var raw bytes.Buffer
@@ -180,17 +178,10 @@ func (p *Parser) listItem(data []byte, flags *ast.ListType) int {
 
 gatherlines:
 	for line < len(data) {
-		i++
-
-		// find the end of this line
-		for i < len(data) && data[i-1] != '\n' {
-			i++
-		}
-
 		// if it is an empty line, guess that it is part of this item
 		// and move on to the next line
-		if IsEmpty(data[line:i]) > 0 {
-			containsBlankLine = true
+		var blank bool
+		if i, blank = nextGatheredLine(data, line, i, &containsBlankLine); blank {
 			line = i
 			continue
 		}
@@ -226,7 +217,7 @@ gatherlines:
 			// if indent is 4 or more spaces on unordered or ordered lists
 			// we need to add leadingWhiteSpaces + 1 spaces in the beginning of the chunk
 			if indentIndex >= 4 && !definitionItem {
-				leadingWhiteSpaces := skipChar(chunk, 0, ' ')
+				leadingWhiteSpaces := textutil.SkipChar(chunk, 0, ' ')
 				chunk = data[line+indentIndex-(leadingWhiteSpaces+1) : i]
 			}
 

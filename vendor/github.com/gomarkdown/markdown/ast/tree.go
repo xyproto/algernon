@@ -26,16 +26,14 @@ func AppendChild(parent Node, child Node) {
 	parent.SetChildren(append(children, child))
 }
 
-// RemoveFromTree removes this node from tree
+// RemoveFromTree removes n from its parent. n keeps its own children, so
+// AppendChild can move a subtree. The parent pointer of n stays as it was
+// until the caller sets a new one.
 func RemoveFromTree(n Node) {
 	p := n.GetParent()
 	if p == nil {
 		return
 	}
-	// important: don't clear n.Children if n has no parent
-	// we're called from AppendChild and that might happen on a node
-	// that accumulated Children but hasn't been inserted into the tree
-	n.SetChildren(nil)
 	prev := GetPrevNode(n)
 	next := GetNextNode(n)
 	linkNodes(prev, next)

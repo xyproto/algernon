@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // quotePrefix returns the blockquote prefix length.
@@ -20,11 +21,8 @@ func (p *Parser) prefixedBlockContent(data []byte, prefix string) ([]byte, int) 
 	beg, end := 0, 0
 	fenceMarker := ""
 	for beg < len(data) {
-		end = beg
-		for end < len(data) && data[end] != '\n' {
-			end++
-		}
-		end = skipCharN(data, end, '\n', 1)
+		end = skipUntilChar(data, beg, '\n')
+		end = textutil.SkipCharN(data, end, '\n', 1)
 		contentBeg := beg
 		if pre := hasPrefix(data[beg:]); pre > 0 {
 			contentBeg += pre

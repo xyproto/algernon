@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"bytes"
+
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 func (p *Parser) renderParagraph(data []byte) {
@@ -10,7 +13,7 @@ func (p *Parser) renderParagraph(data []byte) {
 	}
 
 	// trim leading spaces
-	beg := skipChar(data, 0, ' ')
+	beg := textutil.SkipChar(data, 0, ' ')
 
 	end := len(data)
 	// trim trailing newline
@@ -19,9 +22,7 @@ func (p *Parser) renderParagraph(data []byte) {
 	}
 
 	// trim trailing spaces
-	for end > beg && data[end-1] == ' ' {
-		end--
-	}
+	end = beg + len(bytes.TrimRight(data[beg:end], " "))
 	para := &ast.Paragraph{}
 	para.Content = data[beg:end]
 	p.AddBlock(para)
@@ -105,12 +106,8 @@ func (p *Parser) paragraph(data []byte) int {
 
 				// ignore leading and trailing whitespace
 				eol := i - 1
-				for prev < eol && data[prev] == ' ' {
-					prev++
-				}
-				for eol > prev && data[eol-1] == ' ' {
-					eol--
-				}
+				prev = textutil.SkipChar(data[:eol], prev, ' ')
+				eol = prev + len(bytes.TrimRight(data[prev:eol], " "))
 
 				block := &ast.Heading{
 					Level: level,

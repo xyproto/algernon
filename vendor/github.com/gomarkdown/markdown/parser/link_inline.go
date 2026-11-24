@@ -1,9 +1,11 @@
 package parser
 
+import "github.com/gomarkdown/markdown/internal/textutil"
+
 // parseInlineLink parses the parenthesized destination and optional title
 // following link text. open is the index of the opening parenthesis.
 func parseInlineLink(p *Parser, data []byte, open int) (end int, destination, title []byte, ok bool) {
-	i := skipWhile(data, open+1, IsSpace)
+	i := textutil.SkipWhile(data, open+1, IsSpace)
 	destinationStart := i
 
 	for i < len(data) {

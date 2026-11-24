@@ -20,13 +20,13 @@ func citation(p *Parser, data []byte, offset int) (int, ast.Node) {
 	// Use the Inline-scoped bracket table so unmatched citation openers do not
 	// each rescan the remainder of the buffer.
 	i, _, found := lookupDelimiter(&p.citationBrackets, data, offset, '[', ']')
-	if !found || bytes.IndexByte(data[offset+1:i], '\n') >= 0 {
+	if !found || i < offset+1 || bytes.IndexByte(data[offset+1:i], '\n') >= 0 {
 		return 0, nil
 	}
 
 	node := &ast.Citation{}
 
-	citations := bytes.Split(data[1:i], []byte(";"))
+	citations := bytes.Split(data[offset+1:i], []byte(";"))
 	for _, citation := range citations {
 		var suffix []byte
 		citation = bytes.TrimSpace(citation)
@@ -71,5 +71,5 @@ func citation(p *Parser, data []byte, offset int) (int, ast.Node) {
 		node.Suffix = append(node.Suffix, suffix)
 	}
 
-	return i + 1, node
+	return i - offset + 1, node
 }

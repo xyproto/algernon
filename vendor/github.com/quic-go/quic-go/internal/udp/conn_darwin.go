@@ -1,16 +1,56 @@
 //go:build darwin
 
-package quic
+package udp
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"net/netip"
 	"strconv"
 	"strings"
 	"syscall"
 
+	"golang.org/x/net/ipv4"
 	"golang.org/x/sys/unix"
 )
+
+const (
+	msgTypeIPTOS = unix.IP_RECVTOS
+	ipv4PKTINFO  = unix.IP_RECVPKTINFO
+)
+
+const ecnIPv4DataLen = 4
+
+const desiredBufferSize = 7 << 20 // 7 MiB
+
+// ReadBatch only returns a single packet on OSX,
+// see https://godoc.org/golang.org/x/net/ipv4#PacketConn.ReadBatch.
+const batchSize = 1
+
+func parseIPv4PktInfo(body []byte) (ip netip.Addr, ifIndex uint32, ok bool) {
+	// struct in_pktinfo {
+	// 	unsigned int   ipi_ifindex;  /* Interface index */
+	// 	struct in_addr ipi_spec_dst; /* Local address */
+	// 	struct in_addr ipi_addr;     /* Header Destination address */
+	// };
+	if len(body) != 12 {
+		return netip.Addr{}, 0, false
+	}
+	return netip.AddrFrom4(*(*[4]byte)(body[8:12])), binary.NativeEndian.Uint32(body), true
+}
+
+// The interface index is not set: if it is, macOS ignores ipi_spec_dst
+// and picks a source address of that interface, see
+// https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/netinet/udp_usrreq.c#L1531-L1546.
+func marshalIPv4PktInfo(ip [4]byte, _ uint32) []byte {
+	cm := ipv4.ControlMessage{Src: ip[:]}
+	return cm.Marshal()
+}
+
+func isGSOEnabled(syscall.RawConn) bool { return false }
+
+func isECNEnabled() bool { return !isECNDisabledUsingEnv() }
 
 // for macOS versions, see https://en.wikipedia.org/wiki/Darwin_(operating_system)#Darwin_20_onwards
 const (
@@ -67,11 +107,11 @@ func setDF(rawConn syscall.RawConn) (bool, error) {
 	return !disableDF, nil
 }
 
-func isSendMsgSizeErr(err error) bool {
+func IsSendMsgSizeErr(err error) bool {
 	return errors.Is(err, unix.EMSGSIZE)
 }
 
-func isRecvMsgSizeErr(error) bool { return false }
+func IsRecvMsgSizeErr(error) bool { return false }
 
 func getMacOSVersion() (int, error) {
 	uname := &unix.Utsname{}
@@ -88,3 +128,5 @@ func getMacOSVersion() (int, error) {
 	}
 	return version, nil
 }
+
+func appendUDPSegmentSizeMsg([]byte, uint16) []byte { return nil }

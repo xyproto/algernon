@@ -5,6 +5,7 @@ import (
 	"unicode"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // sanitizeHeadingID returns a sanitized anchor name for the given text.
@@ -39,7 +40,7 @@ func (p *Parser) isPrefixHeading(data []byte) bool {
 	}
 
 	if p.extensions&SpaceHeadings != 0 {
-		level := skipCharN(data, 0, '#', 6)
+		level := textutil.SkipCharN(data, 0, '#', 6)
 		if level == len(data) || data[level] != ' ' {
 			return false
 		}
@@ -72,7 +73,7 @@ func (p *Parser) parseHeadingContent(data []byte, i, end int) (id string, conten
 			id = string(data[j+2 : k])
 			end = j
 			skip = k + 1
-			end = backChar(data, end, ' ')
+			end = textutil.BackChar(data, end, ' ')
 		}
 	}
 	// strip trailing closing '#' markers and surrounding spaces
@@ -82,7 +83,7 @@ func (p *Parser) parseHeadingContent(data []byte, i, end int) (id string, conten
 		}
 		end--
 	}
-	end = backChar(data, end, ' ')
+	end = textutil.BackChar(data, end, ' ')
 	return id, end, skip
 }
 
@@ -103,8 +104,8 @@ func (p *Parser) autoHeadingID(block *ast.Heading, text []byte) {
 }
 
 func (p *Parser) prefixHeading(data []byte) int {
-	level := skipCharN(data, 0, '#', 6)
-	i := skipChar(data, level, ' ')
+	level := textutil.SkipCharN(data, 0, '#', 6)
+	i := textutil.SkipChar(data, level, ' ')
 	end := skipUntilChar(data, i, '\n')
 	id, end, skip := p.parseHeadingContent(data, i, end)
 	if end > i {
@@ -144,12 +145,14 @@ func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
 }
 
 func (p *Parser) prefixSpecialHeading(data []byte) int {
-	i := skipChar(data, 2, ' ') // ".#" skipped
+	i := textutil.SkipChar(data, 2, ' ') // ".#" skipped
 	end := skipUntilChar(data, i, '\n')
 	id, end, skip := p.parseHeadingContent(data, i, end)
 	if end > i {
+		// Content only, same as other headings. Literal would be written again
+		// on top of the inlines parsed from Content.
 		block := &ast.Heading{
-			Container: ast.Container{Literal: data[i:end], Content: data[i:end]},
+			Container: ast.Container{Content: data[i:end]},
 			IsSpecial: true,
 			Level:     1,
 		}
@@ -164,8 +167,8 @@ func isUnderlinedHeading(data []byte) int {
 	if marker != '=' && marker != '-' {
 		return 0
 	}
-	i := skipChar(data, 1, marker)
-	i = skipChar(data, i, ' ')
+	i := textutil.SkipChar(data, 1, marker)
+	i = textutil.SkipChar(data, i, ' ')
 	if i == len(data) || data[i] == '\n' {
 		if marker == '=' {
 			return 1
@@ -183,7 +186,7 @@ func (p *Parser) titleBlock(data []byte) int {
 	// the rest of the document into lines, which made a run of title blocks
 	// quadratic.
 	end := 0
-	for start := 0; start < len(data) && data[start] == '%'; {
+	for start := 0; textutil.ByteAt(data, start, '%'); {
 		nl := bytes.IndexByte(data[start:], '\n')
 		if nl < 0 {
 			// the last line has no newline, so it's not a title block
@@ -208,7 +211,7 @@ func (p *Parser) titleBlock(data []byte) int {
 }
 
 func isHRule(data []byte) bool {
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 
 	// look at the hrule char
 	if data[i] != '*' && data[i] != '-' && data[i] != '_' {

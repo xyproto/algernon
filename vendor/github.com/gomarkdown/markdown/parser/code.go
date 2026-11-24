@@ -5,17 +5,18 @@ import (
 	"html"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker string) {
-	i := skipCharN(data, 0, ' ', 3)
+	i := textutil.SkipCharN(data, 0, ' ', 3)
 	if i >= len(data) || data[i] != '~' && data[i] != '`' {
 		return 0, ""
 	}
 
 	c := data[i]
 	start := i
-	i = skipChar(data, i, c)
+	i = textutil.SkipChar(data, i, c)
 	size := i - start
 	if size < 3 {
 		return 0, ""
@@ -29,7 +30,7 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 
 	// if we just read the beginning marker, read the syntax
 	if oldmarker == "" {
-		i = skipChar(data, i, ' ')
+		i = textutil.SkipChar(data, i, ' ')
 		if i >= len(data) {
 			return i, marker
 		}
@@ -45,7 +46,7 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 		}
 	}
 
-	i = skipChar(data, i, ' ')
+	i = textutil.SkipChar(data, i, ' ')
 	if i >= len(data) {
 		return i, marker
 	}
@@ -63,11 +64,8 @@ func syntaxRange(data []byte, iout *int) (int, int) {
 	if data[i] == '{' {
 		i++
 		syntaxStart++
-
-		for i < n && data[i] != '}' && data[i] != '\n' {
-			syn++
-			i++
-		}
+		i = skipUntilAny(data, i, "}\n")
+		syn = i - syntaxStart
 
 		if i >= n || data[i] != '}' {
 			return 0, 0
@@ -86,10 +84,8 @@ func syntaxRange(data []byte, iout *int) (int, int) {
 
 		i++
 	} else {
-		for i < n && data[i] != '\n' {
-			syn++
-			i++
-		}
+		i = skipUntilChar(data, i, '\n')
+		syn = i - syntaxStart
 	}
 
 	*iout = i
@@ -141,7 +137,7 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 		Info:        unescapeString([]byte(syntax)),
 		FenceChar:   marker[0],
 		FenceLength: len(marker),
-		FenceOffset: skipCharN(data, 0, ' ', 3),
+		FenceOffset: textutil.SkipCharN(data, 0, ' ', 3),
 	}
 
 	if p.extensions&Mmark != 0 {
@@ -240,7 +236,7 @@ func findEntityEnd(str []byte, start int) int {
 		for i < len(str) && i-digitStart < 8 && (str[i] >= '0' && str[i] <= '9' || hex && isHexDigit(str[i])) {
 			i++
 		}
-		if i == digitStart || i >= len(str) || str[i] != ';' {
+		if i == digitStart || !textutil.ByteAt(str, i, ';') {
 			return 0
 		}
 		return i + 1
@@ -252,7 +248,7 @@ func findEntityEnd(str []byte, start int) int {
 	for i < len(str) && i-start <= 32 && IsAlnum(str[i]) {
 		i++
 	}
-	if i >= len(str) || str[i] != ';' {
+	if !textutil.ByteAt(str, i, ';') {
 		return 0
 	}
 	return i + 1
@@ -281,7 +277,7 @@ func (p *Parser) code(data []byte) int {
 		beg := i
 
 		i = skipUntilChar(data, i, '\n')
-		i = skipCharN(data, i, '\n', 1)
+		i = textutil.SkipCharN(data, i, '\n', 1)
 
 		blankline := IsEmpty(data[beg:i]) > 0
 		if pre := codePrefix(data[beg:i]); pre > 0 {
@@ -303,7 +299,7 @@ func (p *Parser) code(data []byte) int {
 	// trim all the \n off the end of work
 	workbytes := work.Bytes()
 
-	eol := backChar(workbytes, len(workbytes), '\n')
+	eol := textutil.BackChar(workbytes, len(workbytes), '\n')
 
 	if eol != len(workbytes) {
 		work.Truncate(eol)

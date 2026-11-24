@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 func (r *Renderer) OutTag(w io.Writer, name string, attrs []string) {
@@ -67,8 +68,15 @@ func (r *Renderer) CR(w io.Writer) {
 	}
 }
 
+// crIf writes a new line, as CR does, if cond is true.
+func (r *Renderer) crIf(w io.Writer, cond bool) {
+	if cond {
+		r.CR(w)
+	}
+}
+
 func normalizedHeadingLevel(level int) int {
-	if level < 1 || level > 5 {
+	if level < 1 || level > 6 {
 		return 6
 	}
 	return level
@@ -83,8 +91,12 @@ func HeadingCloseTagFromLevel(level int) string {
 }
 
 func (r *Renderer) OutHRTag(w io.Writer, attrs []string) {
-	hr := TagWithAttributes("<hr", attrs)
-	r.OutOneOf(w, r.Opts.Flags&UseXHTML == 0, hr, "<hr />")
+	hr := tagStart("<hr", attrs)
+	if r.Opts.Flags&UseXHTML != 0 {
+		r.Outs(w, hr+" />")
+		return
+	}
+	r.Outs(w, hr+">")
 }
 
 // Text writes ast.Text node
@@ -189,28 +201,29 @@ func (r *Renderer) imageEnter(w io.Writer, image *ast.Image) {
 	if r.DisableTags > 1 {
 		return
 	}
-	src := AddAbsPrefixToImage(r.outputDest(image.Destination), r.Opts.AbsolutePrefix)
-	attrs := r.blockAttrs(image, imageAttrNames(r, image.Title)...)
-	if r.Opts.Flags&LazyLoadImages != 0 {
-		attrs = append(attrs, `loading="lazy"`)
-	}
-
-	r.Outs(w, tagStart("<img", attrs)+` src="`)
-	EscapeHTML(w, src)
-	r.Outs(w, `" alt="`)
+	r.imageOpen(w, image, r.outputDest(image.Destination))
 }
 
-// imageAttrNames returns the names of the attributes the renderer writes on
-// an image with the given title.
-func imageAttrNames(r *Renderer, title []byte) []string {
+// imageOpen writes the <img tag of image, with src set to dest, up to the
+// start of the alt text.
+func (r *Renderer) imageOpen(w io.Writer, image *ast.Image, dest []byte) {
+	// the attributes the renderer writes itself, which user attributes of the
+	// same name must not repeat
 	names := []string{"src", "alt"}
-	if len(title) > 0 || (r.commonMark && title != nil) {
+	if len(image.Title) > 0 || (r.commonMark && image.Title != nil) {
 		names = append(names, "title")
 	}
-	if r.Opts.Flags&LazyLoadImages != 0 {
+	lazy := r.Opts.Flags&LazyLoadImages != 0
+	if lazy {
 		names = append(names, "loading")
 	}
-	return names
+	attrs := r.blockAttrs(image, names...)
+	if lazy {
+		attrs = append(attrs, `loading="lazy"`)
+	}
+	r.Outs(w, tagStart("<img", attrs)+` src="`)
+	EscapeHTML(w, AddAbsPrefixToImage(dest, r.Opts.AbsolutePrefix))
+	r.Outs(w, `" alt="`)
 }
 
 func (r *Renderer) imageExit(w io.Writer, image *ast.Image) {
@@ -222,7 +235,7 @@ func (r *Renderer) imageExit(w io.Writer, image *ast.Image) {
 		r.Outs(w, `" title="`)
 		EscapeHTML(w, image.Title)
 	}
-	r.Outs(w, `" />`)
+	r.Outs(w, `"`+r.closeTag)
 }
 
 // Image writes ast.Image node
@@ -292,7 +305,7 @@ func (r *Renderer) RenderNode(w io.Writer, node ast.Node, entering bool) ast.Wal
 	case *ast.Link:
 		r.Link(w, node, entering)
 	case *ast.CrossReference:
-		link := &ast.Link{Destination: append([]byte("#"), node.Destination...)}
+		link := &ast.Link{Destination: textutil.Concat("#", node.Destination)}
 		r.Link(w, link, entering)
 	case *ast.Citation:
 		r.Citation(w, node)

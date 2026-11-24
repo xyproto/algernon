@@ -92,6 +92,16 @@ type closerBalanceCache struct {
 	lastMatched             bool
 }
 
+// closeBracket reports whether a closing bracket matches one of the *open
+// brackets counted so far, and if so, uses that opener up.
+func closeBracket(open *int) bool {
+	if *open == 0 {
+		return false
+	}
+	*open--
+	return true
+}
+
 func (c *closerBalanceCache) hasOpener(data []byte, closeAt int) bool {
 	if len(data) == 0 || closeAt < 0 || closeAt >= len(data) {
 		return false
@@ -110,24 +120,15 @@ func (c *closerBalanceCache) hasOpener(data []byte, closeAt int) bool {
 		case '(':
 			c.parens++
 		case ')':
-			matched = c.parens > 0
-			if matched {
-				c.parens--
-			}
+			matched = closeBracket(&c.parens)
 		case '[':
 			c.squares++
 		case ']':
-			matched = c.squares > 0
-			if matched {
-				c.squares--
-			}
+			matched = closeBracket(&c.squares)
 		case '{':
 			c.braces++
 		case '}':
-			matched = c.braces > 0
-			if matched {
-				c.braces--
-			}
+			matched = closeBracket(&c.braces)
 		}
 	}
 	c.scanned = closeAt

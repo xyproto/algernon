@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // codeSpanEnd returns the index just past the code span that opens with the
@@ -12,7 +13,7 @@ import (
 // It is the reference form of the search that codeSpanClosers memoises.
 func codeSpanEnd(data []byte) int {
 	// count the number of backticks in the delimiter
-	nb := skipChar(data, 0, '`')
+	nb := textutil.SkipChar(data, 0, '`')
 
 	// find the next delimiter
 	i, end := 0, 0
@@ -55,7 +56,7 @@ func (p *Parser) codeSpanClosers(data []byte, offset int) (int, []int) {
 		return c.runEnd - offset, c.closers
 	}
 
-	runEnd := skipChar(data, offset, '`')
+	runEnd := textutil.SkipChar(data, offset, '`')
 	k := runEnd - offset
 	closers := c.closers
 	if cap(closers) <= k {
@@ -117,10 +118,7 @@ func codeSpan(p *Parser, data []byte, offset int) (int, ast.Node) {
 		fBegin++
 	}
 
-	fEnd := end - nb
-	for fEnd > fBegin && data[fEnd-1] == ' ' {
-		fEnd--
-	}
+	fEnd := fBegin + len(bytes.TrimRight(data[fBegin:end-nb], " "))
 
 	if fBegin == fEnd {
 		return end, nil

@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // sFigureLine checks if there's a figure line (e.g., !--- ) at the beginning of data,
@@ -47,7 +48,7 @@ func sFigureLine(data []byte, oldmarker string) (end int, marker string) {
 
 	// there is no syntax modifier although it might be an idea to re-use this space for something?
 
-	i = skipChar(data, i, ' ')
+	i = textutil.SkipChar(data, i, ' ')
 	if i >= n || data[i] != '\n' {
 		if i == n {
 			return i, marker

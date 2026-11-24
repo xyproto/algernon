@@ -22,6 +22,6 @@ I use it myself to do syntax-highlighting of code snippets.
 Running `go test` was really slow (17 secs) because it did a poor man's version of fuzzing by feeding the parser all subsets of test strings in order to find panics
 due to incorrect parsing logic.
 
-That logic was removed from the default test run. Crashers live in `fuzz_crashes_test.go`, and `fuzz.go` is for go-fuzz.
+That logic was removed from the default test run. Crashers live in `fuzz_crashes_test.go`. `FuzzParse` and `FuzzCommonMark` are `go test -fuzz` targets, and `s/fuzz.sh` runs them.
 
 Now `go test` is blazing fast.

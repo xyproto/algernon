@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 
+	"github.com/gomarkdown/markdown/internal/textutil"
 	"github.com/gomarkdown/markdown/parser"
 )
 
@@ -38,8 +39,6 @@ func tolower(c byte) byte {
 	}
 	return c
 }
-
-func isdigit(c byte) bool { return c >= '0' && c <= '9' }
 
 func quoteContext(c byte) int {
 	switch {
@@ -204,10 +203,7 @@ func (r *SPRenderer) smartNumberGeneric(out *bytes.Buffer, previousChar byte, te
 		// is it of the form digits/digits(word boundary)?, i.e., \d+/\d+\b
 		// note: check for regular slash (/) or fraction slash (⁄, 0x2044, or 0xe2 81 84 in utf-8)
 		//       and avoid changing dates like 1/23/2005 into fractions.
-		numEnd := 0
-		for len(text) > numEnd && isdigit(text[numEnd]) {
-			numEnd++
-		}
+		numEnd := textutil.SkipDigits(text, 0)
 		if numEnd == 0 {
 			out.WriteByte(text[0])
 			return 0
@@ -219,10 +215,7 @@ func (r *SPRenderer) smartNumberGeneric(out *bytes.Buffer, previousChar byte, te
 			out.WriteByte(text[0])
 			return 0
 		}
-		denEnd := denStart
-		for len(text) > denEnd && isdigit(text[denEnd]) {
-			denEnd++
-		}
+		denEnd := textutil.SkipDigits(text, denStart)
 		if denEnd == denStart {
 			out.WriteByte(text[0])
 			return 0
