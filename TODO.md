@@ -1,12 +1,9 @@
 # Plans
 
-Next patch release
-------------------
-
+- [ ] Serving a directory + subdirectories has stopped working on Windows. Fix.
 - [ ] Quote table names in `NewKeyValue` (and the other table constructors) in `simplesqlite_noc` and `simplemaria`, like `simplehstore` does, so that names like `a:b` work. WebAuthn no longer depends on this.
 - [ ] Check that WebAuthn works with `--maria` (Bolt and SQLite are covered by the tests in `lua/webauthn`).
 - [ ] Doublecheck that `/admin/x`, `/%2fadmin/x` and `/ADMIN/x` are denied over HTTP/1.1, HTTP/2 and HTTP/3, also with `--postgres` on a case-insensitive filesystem.
-- [ ] Publish a new advisory for the permission bypass over HTTP/3 in 1.17.11 (and the case-sensitive `pstore` check), patched in 1.17.12.
 
 General
 -------
