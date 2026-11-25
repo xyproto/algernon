@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/internal/textutil"
@@ -186,7 +187,6 @@ func autoLink(p *Parser, data []byte, offset int) (int, ast.Node) {
 		return 0, nil
 	}
 
-	origData := data
 	data = data[offset-rewind:]
 
 	isSafeURL := p.IsSafeURLOverride
@@ -212,16 +212,10 @@ func autoLink(p *Parser, data []byte, offset int) (int, ast.Node) {
 		linkEnd--
 	}
 
-	// See if the link finishes with a punctuation sign that has an opener on
-	// this line. The balance cache advances with the inline cursor, so repeated
-	// URLs do not each scan back to the beginning of the line.
-	switch data[linkEnd-1] {
-	case ')', ']', '}':
-		closeAt := offset - rewind + linkEnd - 1
-		if p.closerBalance.hasOpener(origData, closeAt) {
-			linkEnd--
-		}
-	}
+	// Drop closing ')', ']' or '}' that have no opener inside the link:
+	// "((see https://x.org/a))" ends before both, but a balanced pair at the
+	// end of a URL (https://en.wikipedia.org/wiki/Go_(language)) stays.
+	linkEnd = trimUnbalancedClosers(data, linkEnd)
 
 	link := unescapeBytes(data[:linkEnd])
 	if len(link) > 0 {
@@ -233,6 +227,29 @@ func autoLink(p *Parser, data []byte, offset int) (int, ast.Node) {
 	}
 
 	return linkEnd, nil
+}
+
+// trimUnbalancedClosers returns end moved back past every trailing ')', ']'
+// or '}' that has more closers than openers of its kind in data[:end].
+func trimUnbalancedClosers(data []byte, end int) int {
+	// excess[i] is closers minus openers for "()", "[]" and "{}".
+	var excess [3]int
+	for _, c := range data[:end] {
+		if i := strings.IndexByte("([{", c); i >= 0 {
+			excess[i]--
+		} else if i := strings.IndexByte(")]}", c); i >= 0 {
+			excess[i]++
+		}
+	}
+	for end > 0 {
+		i := strings.IndexByte(")]}", data[end-1])
+		if i < 0 || excess[i] <= 0 {
+			break
+		}
+		excess[i]--
+		end--
+	}
+	return end
 }
 
 func isEndOfLink(char byte) bool {

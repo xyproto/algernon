@@ -313,6 +313,11 @@ func Environ() []string {
 	if useCaching {
 		var xs []string
 		mut.RLock()
+		if environment == nil {
+			mut.RUnlock()
+			Load()
+			mut.RLock()
+		}
 		defer mut.RUnlock()
 		for k, v := range environment {
 			xs = append(xs, k+"="+v)
@@ -327,6 +332,11 @@ func Keys() []string {
 	var keys []string
 	if useCaching {
 		mut.RLock()
+		if environment == nil {
+			mut.RUnlock()
+			Load()
+			mut.RLock()
+		}
 		defer mut.RUnlock()
 		for k := range environment {
 			keys = append(keys, k)
@@ -345,6 +355,13 @@ func Keys() []string {
 // Map returns the current environment variables as a map from name to value
 func Map() map[string]string {
 	if useCaching {
+		mut.RLock()
+		if environment == nil {
+			mut.RUnlock()
+			Load()
+			mut.RLock()
+		}
+		defer mut.RUnlock()
 		return environment
 	}
 	m := make(map[string]string)

@@ -18,7 +18,7 @@ require (
 	github.com/flosch/pongo2/v6 v6.1.0
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-webauthn/webauthn v0.18.2
-	github.com/gomarkdown/markdown v0.0.0-20261123200727-167101872811
+	github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d
 	github.com/lib/pq v1.12.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
@@ -31,8 +31,8 @@ require (
 	github.com/wellington/sass v0.0.0-20160911051022-cab90b3986d6
 	github.com/xyproto/ask v1.1.0
 	github.com/xyproto/datablock v1.2.1
-	github.com/xyproto/env/v2 v2.5.6
-	github.com/xyproto/files v1.10.8
+	github.com/xyproto/env/v2 v2.6.0
+	github.com/xyproto/files v1.11.1
 	github.com/xyproto/gluamapper v1.2.2
 	github.com/xyproto/gopher-lua v1.0.2
 	github.com/xyproto/huldra v0.0.3
@@ -98,7 +98,7 @@ require (
 	github.com/philhofer/fwd v1.2.1 // indirect
 	github.com/pingcap/errors v0.11.5-0.20260310054046-9c8b3586e4b2 // indirect
 	github.com/pingcap/log v1.1.1-0.20260227082333-572e590d08f1 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20261124123402-a935aa47b6e7 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20261125085629-3c244286c36a // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect

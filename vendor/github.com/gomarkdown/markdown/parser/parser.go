@@ -119,8 +119,6 @@ type Parser struct {
 	// Plain parenthesis matching for Mmark index syntax, whose grammar does not
 	// treat quoted content specially.
 	plainParens delimiterTable
-	// Opening-delimiter balance before autolink closing punctuation.
-	closerBalance closerBalanceCache
 
 	// Line-oriented indexes for the current Block() buffer.
 	blockIndex blockIndex
