@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// GracefulServer is a http.Server that stops accepting new connections when
+// GracefulServer is an http.Server that stops accepting new connections when
 // SIGINT or SIGTERM is received, then gives the ongoing requests up to Timeout
 // to finish before the remaining connections are closed.
 type GracefulServer struct {

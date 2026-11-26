@@ -9,7 +9,7 @@ import (
 	"github.com/xyproto/ollamaclient/v2"
 )
 
-// DataToClient is a helper function for sending file data (that might be cached) to a HTTP client
+// DataToClient is a helper function for sending file data (that might be cached) to an HTTP client
 func (ac *Config) DataToClient(w http.ResponseWriter, req *http.Request, filename string, data []byte) {
 	datablock.NewDataBlock(data, true).ToClient(w, req, filename, ac.ClientCanGzip(req), gzipThreshold)
 }

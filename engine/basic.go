@@ -392,7 +392,7 @@ func (ac *Config) LoadBasicWeb(w http.ResponseWriter, req *http.Request, L *lua.
 	// Throw an error/exception in Lua
 	L.SetGlobal("throw", L.GetGlobal("error"))
 
-	// Set a HTTP status code and print a message (optional)
+	// Set an HTTP status code and print a message (optional)
 	L.SetGlobal("error", L.NewFunction(func(L *lua.LState) int {
 		if httpStatus.closed {
 			return 0 // number of results

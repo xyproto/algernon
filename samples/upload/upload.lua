@@ -32,7 +32,7 @@ function handleUpload()
   print("Saved: " .. tostring(saved) .. [[<br>]])
 end
 
--- Output the contents in a HTML document
+-- Output the contents in an HTML document
 function main()
   head()
   handleUpload()

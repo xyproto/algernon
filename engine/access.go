@@ -61,8 +61,8 @@ func (ac *Config) CombinedLogFormat(req *http.Request, statusCode int, byteSize 
 	return fmt.Sprintf("%s - %s [%s] \"%s %s %s\" %s %s \"%s\" \"%s\"", host, username, timestamp, req.Method, req.RequestURI, req.Proto, statusCodeString, byteSizeString, referer, userAgent)
 }
 
-// LogAccess creates one entry in the access log, given a http.Request,
-// a HTTP status code and the amount of bytes that have been transferred.
+// LogAccess creates one entry in the access log, given an http.Request,
+// an HTTP status code and the amount of bytes that have been transferred.
 // The line is formatted while the request is still valid, then written.
 func (ac *Config) LogAccess(req *http.Request, statusCode int, byteSize int64) {
 	if ac.commonAccessLog != nil {

@@ -59,7 +59,7 @@ func ExtractKeywords(data []byte, keywordsToLookFor []string) ([]byte, map[strin
 				return false
 			}
 
-			// Check if we are in a HTML comment block
+			// Check if we are in an HTML comment block
 			singleLineComment = false
 			switch {
 			case bytes.HasPrefix(strippedLine, commentStart) && bytes.HasSuffix(strippedLine, commentEnd):

@@ -16,7 +16,7 @@ theme: material
 
 Web server with built-in support for HTTP/2, HTTP/3 (QUIC), Lua, Teal, Markdown, Pongo2, HyperApp, Amber, Sass(SCSS), GCSS, JSX, TypeScript, Ollama (LLMs), BoltDB (built-in, stores the database in a file, like SQLite), Redis, Valkey, PostgreSQL, SQLite, MariaDB, MySQL, MSSQL, IPv6, npm-less React 19, rate limiting, graceful shutdown, plugins, users and permissions.
 
-All in one small self-contained executable.
+All in one small, self-contained executable.
 
 Pull requests are welcome.
 
@@ -118,11 +118,11 @@ Features and limitations
 * Live editing/preview when using the auto-refresh feature.
 * The use of Lua allows for short development cycles, where code is interpreted when the page is refreshed (or when the Lua file is modified, if using auto-refresh).
 * Self-contained Algernon applications can be zipped into an archive (ending with `.zip` or `.alg`) and be loaded at start.
-* Built-in support for [Markdown](https://github.com/gomarkdown/markdown), [Pongo2](https://github.com/flosch/pongo2), [Amber](https://github.com/eknkc/amber), [Sass](https://github.com/wellington/sass)(SCSS), [GCSS](https://github.com/yosssi/gcss) and [JSX/TSX](https://github.com/evanw/esbuild).
+* Built-in support for [Markdown](https://github.com/gomarkdown/markdown), [Pongo2](https://github.com/flosch/pongo2), [Amber](https://github.com/eknkc/amber), [Sass](https://github.com/wellington/sass) (SCSS), [GCSS](https://github.com/yosssi/gcss) and [JSX/TSX](https://github.com/evanw/esbuild).
 * Redis is used for the database backend, by default.
 * Algernon will fall back to the built-in Bolt database if no Redis server is available.
 * The HTML title for a rendered Markdown page can be provided by the first line specifying the title, like this: `title: Title goes here`. This is a subset of MultiMarkdown.
-* No file converters needs to run in the background (like for SASS). Files are converted on the fly.
+* No file converter needs to run in the background (like for SASS). Files are converted on the fly.
 * If `-autorefresh` is enabled, the browser will automatically refresh pages when the source files are changed. Works for Markdown, Lua error pages and Amber (including Sass, GCSS and *data.lua*). This only works on Linux and macOS, for now. If listening for changes on too many files, the OS limit for the number of open files may be reached.
 * Includes an interactive REPL.
 * If only given a Markdown filename as the first argument, it will be served on port 3000, without using any database, as regular HTTP. This can be handy for viewing `README.md` files locally. Use `-m` to display it in a browser and only serve it once.
@@ -153,7 +153,7 @@ A:
 >
 > I guess the main benefit is that Algernon covers a lot of ground, with a minimum of configuration, while being powerful enough to have a plugin system and support for programming in Lua. There is an auto-refresh feature that uses Server Sent Events, when editing Markdown or web pages. There is also support for the latest in Web technologies, like HTTP/2, QUIC and TLS 1.3. The caching system is decent. And the use of Go ensures that also smaller platforms like NetBSD and systems like Raspberry Pi are covered. There are no external dependencies, so Algernon can run on any system that Go can support.
 >
-> The main benefit is that is is versatile, fresh, and covers many platforms and use cases.
+> The main benefit is that it is versatile, fresh, and covers many platforms and use cases.
 >
 > For a more specific description of a potential benefit, a more specific use case would be needed.
 
@@ -175,7 +175,7 @@ This method is using the latest commit from the main branch:
 
     go install github.com/xyproto/algernon@main
 
-If neeed, add `~/go/bin` to the path. For example: `export PATH=$PATH:$HOME/go/bin`.
+If needed, add `~/go/bin` to the path. For example: `export PATH=$PATH:$HOME/go/bin`.
 
 Utilities
 ---------
@@ -195,9 +195,9 @@ Screenshot of an earlier version:
 
 ---
 
-The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React or HyperApp), depending on the need, and styled with CSS, Sass(SCSS) or GCSS, while data can be provided by a Lua or Teal script that talks to Redis, BoltDB, PostgreSQL, MSQL or MariaDB/MySQL.
+The idea is that web pages can be written in Markdown, Pongo2, Amber, HTML or JSX (+React or HyperApp), depending on the need, and styled with CSS, Sass(SCSS) or GCSS, while data can be provided by a Lua or Teal script that talks to Redis, BoltDB, PostgreSQL, MSSQL or MariaDB/MySQL.
 
-Amber and GCSS is a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It˙s also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
+Amber and GCSS are a good combination for static pages, that allows for more clarity and less repetition than HTML and CSS. It's also easy to use Lua for providing data for the Amber templates, which helps separate model, controller and view.
 
 Pongo2, Sass and Lua or Teal also combines well. Pongo2 is more flexible than Amber.
 
@@ -336,7 +336,7 @@ let rec qsort = function
       let smaller, greater = List.partition (fun x -> x < pivot) rest in
       qsort smaller @ [pivot] @ qsort greater
 
-This function takes a list as input and returns a new list with the same elements but sorted in ascending order using the quicksort algorithm. The `qsort` funct.
+This function takes a list as input and returns a new list with the same elements but sorted in ascending order using the quicksort algorithm.
 
 Here are some examples of using the `qsort` function:
 
@@ -473,17 +473,17 @@ headers() -> table
 // Return the HTTP body in the request (will only read the body once, since it's streamed).
 body() -> string
 
-// Set a HTTP status code (like 200 or 404). Must be used before other functions that writes to the client!
+// Set an HTTP status code (like 200 or 404). Must be used before other functions that write to the client!
 status(number)
 
-// Set a HTTP status code and output a message (optional).
+// Set an HTTP status code and output a message (optional).
 error(number[, string])
 
 // Serve a file that exists in the same directory as the script. Takes a filename.
 serve(string)
 
 // Serve a Pongo2 template file, with an optional table with template key/values.
-serve2(string[, table)
+serve2(string, table)
 
 // Return the rendered contents of a file that exists in the same directory as the script. Takes a filename.
 render(string) -> string
@@ -650,11 +650,11 @@ hc:SetCookie(string, string)
 // Set the user agent (ie. "curl")
 hc:SetUserAgent(string)
 
-// Perform a HTTP GET request. First comes the URL, then an optional table with
+// Perform an HTTP GET request. First comes the URL, then an optional table with
 // URL parameters, then an optional table with HTTP headers.
 hc:Get(string, [table], [table]) -> string
 
-// Perform a HTTP POST request. It's the same arguments as for `Get`, except
+// Perform an HTTP POST request. It's the same arguments as for `Get`, except
 // the fourth optional argument is the POST body.
 hc:Post(string, [table], [table], [string]) -> string
 
@@ -708,7 +708,7 @@ oc:bytesize(string) -> number
 
 // Given two prompts, return how similar they are.
 // The first optional string is the algorithm for measuring the distance: cosine, euclidean, manhattan, chebyshev or hamming.
-// Only the two first letters of the algorithm name are needed, so "co" or "ma" are also valid. The default is cosine.
+// Only the first two letters of the algorithm name are needed, so "co" or "ma" are also valid. The default is cosine.
 // The second optional string is the model name.
 oc:distance(string, string, [string], [string]) -> number
 
@@ -890,7 +890,7 @@ hash:set(string, string, string) -> bool
 
 // For a given element id (for instance a user id), and a key
 // (for instance "password"), return a value.
-// Returns a value only if they key was found and if there were no errors.
+// Returns a value only if the key was found and if there were no errors.
 hash:get(string, string) -> string
 
 // For a given element id (for instance a user id), and a key
@@ -1024,7 +1024,7 @@ PQ([string], [string]) -> table
 The default connection string is `host=localhost port=5432 user=postgres dbname=test sslmode=disable` and the default SQL query is `SELECT version()`. Database connections are re-used if they still answer to `.Ping()`, for the same connection string.
 
 ~~~c
-// Query a MSSQL database with SQL, a connection string, and a parameter table
+// Query an MSSQL database with SQL, a connection string, and a parameter table
 MSSQL([string], [string], [table]) -> table
 ~~~
 
@@ -1302,9 +1302,9 @@ servedir(string, string)
 Functions related to HTTP requests and JSON
 -------------------------------------------
 
-* `formjson()` return the JSON from the current request as a Lua table.
-* `formdata()` return the given URL or form data as a Lua table.
-* `json(table)` convert a Lua table to a JSON string.
+* `formjson()` returns the JSON from the current request as a Lua table.
+* `formdata()` returns the given URL or form data as a Lua table.
+* `json(table)` converts a Lua table to a JSON string.
 
 Example use:
 
@@ -1354,7 +1354,7 @@ Extra Lua functions
 // Pretty print. Outputs the values in, or a description of, the given Lua value(s).
 pprint(...)
 
-// Takes a Python filename, executes the script with the `python` binary in the Path.
+// Takes a Python filename, executes the script with the `python` binary in the PATH.
 // Returns the output as a Lua table, where each line is an entry.
 py(string) -> table
 
@@ -1414,7 +1414,7 @@ Follow the guide at [certbot.eff.org](https://certbot.eff.org/) for the "None of
 
 First make Algernon serve a directory for the domain, like `/srv/myhappydomain.com`, then use that as the webroot when configuring `certbot` with the `certbot certonly` command.
 
-Remember to set up a cron-job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates.
+Remember to set up a cron job or something similar to run `certbot renew` every once in a while (every 12 hours is suggested by [certbot.eff.org](https://certbot.eff.org/)). Also remember to restart the algernon service after updating the certificates.
 
 #### Method 2
 
@@ -1459,7 +1459,7 @@ The wonderful [goaccess](https://goaccess.io) utility can then be used to view t
 
     goaccess --no-global-config --log-format=COMBINED access.log
 
-If you have goaccess setup correctly, running goaccess without any flags should work too:
+If you have goaccess set up correctly, running goaccess without any flags should work too:
 
     goaccess access.log
 

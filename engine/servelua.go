@@ -112,7 +112,7 @@ func (ac *Config) LoadServeFile(w http.ResponseWriter, req *http.Request, L *lua
 			return 0 // Number of results
 		}
 
-		// Render the filename to a httptest.Recorder
+		// Render the filename to an httptest.Recorder
 		recorder := httptest.NewRecorder()
 		ac.FilePage(recorder, req, serveFilename, dataFilename)
 
