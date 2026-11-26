@@ -1,4 +1,4 @@
-// Package httpclient provides Lua functions for a HTTP client
+// Package httpclient provides Lua functions for an HTTP client
 package httpclient
 
 import (
@@ -13,7 +13,7 @@ import (
 	lua "github.com/xyproto/gopher-lua"
 )
 
-// HTTPClient represents a HTTP client
+// HTTPClient represents an HTTP client
 type HTTPClient struct {
 	client    *httpclient.HttpClient
 	cookieMap map[string]string
@@ -23,7 +23,7 @@ type HTTPClient struct {
 	invalid   bool
 }
 
-// NewHTTPClient creates a HTTPClient struct
+// NewHTTPClient creates an HTTPClient struct
 func NewHTTPClient() *HTTPClient {
 	var hc HTTPClient
 	hc.client = httpclient.NewHttpClient()
@@ -32,7 +32,7 @@ func NewHTTPClient() *HTTPClient {
 	return &hc
 }
 
-// Begin applies the settings in the HTTPClient struct and returns a httpclient.HttpClient
+// Begin applies the settings in the HTTPClient struct and returns an httpclient.HttpClient
 func (hc *HTTPClient) Begin() *httpclient.HttpClient {
 	hclient := hc.client.Begin()
 	if hc.userAgent != "" {
@@ -429,7 +429,7 @@ func Load(L *lua.LState, userAgent string) {
 		return 1 // number of results
 	}))
 
-	// Make a HTTP GET request to the given URL
+	// Make an HTTP GET request to the given URL
 	L.SetGlobal("GET", L.NewFunction(func(L *lua.LState) int {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)
@@ -441,7 +441,7 @@ func Load(L *lua.LState, userAgent string) {
 		return hcGet(L) // Return the number of returned values
 	}))
 
-	// Make a HTTP POST request to the given URL
+	// Make an HTTP POST request to the given URL
 	L.SetGlobal("POST", L.NewFunction(func(L *lua.LState) int {
 		// Construct a new HTTPClient
 		userdata, err := constructHTTPClient(L, userAgent)

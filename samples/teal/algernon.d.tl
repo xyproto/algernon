@@ -85,7 +85,7 @@ global flush: function()
 -- Return a table containing the parsed JSON document.
 global json: function(data: any): string
 
--- Query a MSSQL database with SQL, a connection string, and a parameter table.
+-- Query an MSSQL database with SQL, a connection string, and a parameter table.
 global MSSQL: function(sql: string, conn: string, args: {string:any} | nil): {{string:any}}
 
 -- Send an HTTP POST request.
@@ -229,7 +229,7 @@ global GenerateUniqueConfirmationCode: function(): string
 -- Pretty print. Outputs the values in, or a description of, the given Lua value(s).
 global pprint: function(...: any)
 
--- Takes a Python filename, executes the script with the `python` binary in the Path. Returns the output as a Lua table, where each line is an entry.
+-- Takes a Python filename, executes the script with the `python` binary in the PATH. Returns the output as a Lua table, where each line is an entry.
 global py: function(filename: string): {string}
 
 -- Takes one or more system commands (possibly separated by `;`) and runs them. Returns the output lines as a table.

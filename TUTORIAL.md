@@ -21,7 +21,7 @@ end)
 
 * `handle` is a built-in function that can serve an endpoint with a given function.
 * `function() [...] end` is an anonymous Lua function.
-* `content` is a built-in function for settting the content type / MIME type, such as `text/plain`, `text/html` or `image/png`.
+* `content` is a built-in function for setting the content type / MIME type, such as `text/plain`, `text/html` or `image/png`.
 * `print` is a built-in function for outputting text to the HTTP client (typically a browser) that is visiting this page.
 
 #### Start Algernon:
@@ -136,7 +136,7 @@ Note that the `-e` flag is for "development mode", where error messages may appe
 
 * In ie. Firefox, press `F12` (or `fn`+`F12` on macOS). Select the `Network` tab and then reload the page.
 * Click the `200 | GET | localhost:3000 | eye.lua | ...` row.
-* On the right hand side, observe that `Content-Type` is `image/svg+xml` and that the `Server` is `Algernon` and a version number.
+* On the right-hand side, observe that `Content-Type` is `image/svg+xml` and that the `Server` is `Algernon` and a version number.
 * There are also various security-related headers that have been set (that can be turned off with the `--no-headers` flag).
 
 ## "Auto-Refresh"

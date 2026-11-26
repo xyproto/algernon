@@ -208,10 +208,10 @@ hc:SetTimeout(number)
 hc:SetCookie(string, string)
 // Set the user agent (ie. "curl")
 hc:SetUserAgent(string)
-// Perform a HTTP GET request. First comes the URL, then an optional table with
+// Perform an HTTP GET request. First comes the URL, then an optional table with
 // URL paramets, then an optional table with HTTP headers.
 hc:Get(string, [table], [table]) -> string
-// Perform a HTTP POST request. It's the same arguments as for hc:Get, except
+// Perform an HTTP POST request. It's the same arguments as for hc:Get, except
 // the fourth optional argument is the POST body.
 hc:Post(string, [table], [table], [string]) -> string
 // Like hc:Get, except the first argument is the HTTP method (like "PUT")
@@ -317,7 +317,7 @@ maxlen(string, number) -> string
 // Query a PostgreSQL database with a query and a connection string.
 // Default connection string: "host=localhost port=5432 user=postgres dbname=test sslmode=disable"
 PQ([string], [string]) -> table
-// Query a MSSQL database with a query and a connection string.
+// Query an MSSQL database with a query and a connection string.
 // Default connection string: "server=localhost;user=user;password=password,port=1433"
 MSSQL([string], [string]) -> table
 // Query a SQLite database with a query and a filename.
@@ -362,7 +362,7 @@ exit | halt | quit | shutdown
 
 Extra
 
-// Takes a Python filename, executes the script with the "python" binary in the Path.
+// Takes a Python filename, executes the script with the "python" binary in the PATH.
 // Returns the output as a Lua table, where each line is an entry.
 py(string) -> table
 // Takes one or more system commands (separated by ";") and runs them.
@@ -554,10 +554,10 @@ headers() -> table
 // Return the HTTP body in the request
 // (will only read the body once, since it's streamed).
 body() -> string
-// Set a HTTP status code (like 200 or 404).
+// Set an HTTP status code (like 200 or 404).
 // Must be used before other functions that writes to the client!
 status(number)
-// Set a HTTP status code and output a message (optional).
+// Set an HTTP status code and output a message (optional).
 error(number[, string])
 // Return the directory where the script is running. If a filename (optional)
 // is given, then the path to where the script is running, joined with a path
@@ -582,7 +582,7 @@ render(string) -> string
 formdata() -> table
 // Read a JSON request body and return a table with the decoded fields.
 formjson() -> table
-// Redirect to an absolute or relative URL. Also takes a HTTP status code.
+// Redirect to an absolute or relative URL. Also takes an HTTP status code.
 // Returns false if the connection has been closed.
 redirect(string[, number]) -> bool
 // Permanently redirect to an absolute or relative URL. Uses status code 302.

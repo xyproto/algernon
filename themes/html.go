@@ -26,7 +26,7 @@ const (
 // MetaKeywords contains a selection of allowed keywords for the HTML meta tag
 var MetaKeywords = []string{"application-name", "author", "description", "generator", "keywords", "robots", "language", "googlebot", "Slurp", "bingbot", "geo.position", "geo.placename", "geo.region", "ICBM", "viewport"}
 
-// MessagePage is an easy way to output a HTML page only given a title, the body
+// MessagePage is an easy way to output an HTML page only given a title, the body
 // (will be placed between the <body></body> tags) and the name of one of the
 // built-in themes. Does not close <body> and <html>.
 // Deprecated
@@ -79,7 +79,7 @@ func MessagePageBytes(title string, body []byte, theme string) []byte {
 	return buf.Bytes()
 }
 
-// SimpleHTMLPage provides a quick way to build a HTML page
+// SimpleHTMLPage provides a quick way to build an HTML page
 func SimpleHTMLPage(title, headline, inhead, body, language []byte) []byte {
 
 	// Sanitize the title, headline and language
@@ -193,13 +193,13 @@ func InsertDoctype(htmldata []byte) []byte {
 	return htmldata
 }
 
-// NoPage generates a HTML page for when a file is not found
+// NoPage generates an HTML page for when a file is not found
 func NoPage(filename, theme string) []byte {
 
 	// Sanitize the filename and the theme name
 	filename = policy.Sanitize(filename)
 	theme = policy.Sanitize(theme)
 
-	// Return a HTML page
+	// Return an HTML page
 	return MessagePageBytes("Not found", []byte("File not found: "+filename), theme)
 }

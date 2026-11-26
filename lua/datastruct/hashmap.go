@@ -64,7 +64,7 @@ func hashSet(L *lua.LState) int {
 }
 
 // For a given element id (for instance a user id), and a key (for instance "password"), return a value.
-// Returns a value only if they key was found and if there were no errors.
+// Returns a value only if the key was found and if there were no errors.
 // hash:get(string, string) -> string
 func hashGet(L *lua.LState) int {
 	hash := checkHash(L) // arg 1
